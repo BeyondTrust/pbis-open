@@ -1,0 +1,210 @@
+SUBDIRS="include utils ipc common libshareinfo client server drivers tools fuse etc tests"
+ 
+_in_list()
+{
+    _needle="$1"
+    shift
+    for _item in $@
+    do
+        [ "$_needle" = "$_item" ] && return 0
+    done
+    return 1
+}
+
+lwio_driver_enabled()
+{
+    _in_list "$1" ${LWIO_DRIVERS}
+}
+
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN_DRIVERS="yes"
+            ;;
+        *)
+            _default_BUILTIN_DRIVERS="no"
+            ;;
+    esac
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            _default_DRIVERS="rdr"
+            _default_FUSE="no"
+            ;;
+        *)
+            _default_DRIVERS="rdr"
+            _default_FUSE="yes"
+            ;;
+    esac  
+
+    mk_option \
+        OPTION=lwio-fuse \
+        VAR=LWIO_FUSE \
+        PARAM="yes|no" \
+        DEFAULT="$_default_FUSE" \
+        HELP="Enable building fuse module"
+
+    mk_option \
+        OPTION=lwio-drivers \
+        VAR=LWIO_DRIVERS \
+        PARAM=... \
+        DEFAULT="$_default_DRIVERS" \
+        HELP="Enabled drivers"
+
+    mk_option \
+        OPTION=lwio-builtin-drivers \
+        VAR=LWIO_BUILTIN_DRIVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN_DRIVERS" \
+        HELP="Build drivers directly into service"
+}
+
+configure()
+{
+    mk_config_header \
+        HEADER="include/config.h"
+
+    lw_define_feature_macros
+
+    case "$MK_OS" in
+        freebsd)
+            mk_define HAVE_DECL_KERN_PROC_PATHNAME 1 # FIXME
+            ;;
+        darwin)
+            mk_define HAVE_DECL_KERN_PROCARGS 1 # FIXME
+            ;;
+    esac
+
+    mk_multiarch_do
+        mk_check_endian
+    mk_multiarch_done
+    
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        providerdir="$MK_LIBDIR/lwio-driver"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define LIBDIR "\"${MK_LIBDIR}\""
+    mk_define PREFIXDIR "\"${MK_PREFIX}\""
+
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_DRIVERS
+        
+        for _driver in ${LWIO_DRIVERS}
+        do
+            mk_define "ENABLE_`echo $_driver | tr 'a-z' 'A-Z'`"
+        done
+    fi
+
+    # FIXME: do a real configure test here
+    mk_define HAVE_SOCKLEN_T 1
+    mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
+
+    mk_define UNICODE 1
+    mk_define _FILE_OFFSET_BITS 64
+
+    # Hack around buggy system header on HP-UX 11.11
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h" \
+        blksize_t
+
+    mk_check_libraries \
+        FAIL="yes" \
+        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi uuid
+
+    mk_check_headers \
+        FAIL="yes" \
+        reg/reg.h lw/base.h krb5.h gssapi.h openssl/crypto.h wc16str.h \
+        openssl/md5.h openssl/hmac.h openssl/rand.h uuid/uuid.h
+
+    mk_check_headers \
+        inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \
+        time.h sys/time.h strings.h stdbool.h sys/socket.h netinet/tcp.h \
+        netdb.h wc16str.h wc16printf.h sys/param.h sys/pstat.h \
+        procfs.h sys/procfs.h sys/vfs.h netinet/in.h netinet/in6.h
+
+    mk_check_headers \
+        fuse.h
+
+    mk_check_headers \
+        HEADERDEPS="stdlib.h" \
+        attr/xattr.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h sys/param.h" \
+        sys/sysctl.h sys/user.h
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h sys/socket.h" \
+        "socklen_t"
+
+    mk_check_libraries \
+        attr pthread nsl socket fuse dl
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h attr/xattr.h" \
+        LIBDEPS="$LIB_ATTR" \
+        setxattr fsetxattr getxattr fgetxattr
+
+    if [ "$HAVE_SETXATTR" = yes -a "$HAVE_GETXATTR" = yes ] ||
+       [ "$HAVE_FSETXATTR" = yes -a "$HAVE_FGETXATTR" = yes ]
+    then
+        LWIO_EA_ENABLED=yes
+    else
+        LWIO_EA_ENABLED=no
+    fi
+
+    mk_msg "EA support: $LWIO_EA_ENABLED"
+
+    mk_check_functions \
+        HEADERDEPS="sys/vfs.h" \
+        statfs fstatfs
+
+    mk_check_functions \
+        HEADERDEPS="unistd.h" \
+        fdatasync fsync
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h dirent.h" \
+        dirfd
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h" \
+        strtoll __strtoll strtoull __strtoull
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
+
+    if mk_check_function \
+        HEADERDEPS="ctype.h" \
+        FUNCTION="isblank"
+    then
+        mk_define HAVE_DECL_ISBLANK 1
+    fi
+
+    lw_check_pthread_once_init
+
+    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" -a "$LWIO_FUSE" = "yes" ]
+    then
+        LWIO_FUSE_ENABLED=yes
+    else
+        LWIO_FUSE_ENABLED=no
+        mk_skip_subdir fuse
+    fi
+
+    mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"
+
+    mk_output_file etc/lwiod.reg
+    for _driver in ${LWIO_DRIVERS}
+    do
+        mk_output_file "etc/${_driver}.reg"
+    done
+}

@@ -1,0 +1,15 @@
+--- export/src/vis.c	2009-09-05 13:37:56.000000000 +0200
++++ ../src/vis.c	2009-09-05 13:47:56.000000000 +0200
+@@ -55,12 +55,10 @@
+  * POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include <sys/cdefs.h>
+ #if defined(LIBC_SCCS) && !defined(lint)
+ __RCSID("$NetBSD: vis.c,v 1.40 2009/02/11 13:52:28 christos Exp $");
+ #endif /* LIBC_SCCS and not lint */
+ 
+-#include "namespace.h"
+ #include <sys/types.h>
+ 
+ #include <assert.h>

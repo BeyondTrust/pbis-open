@@ -1,0 +1,21 @@
+Likewise Development Environment
+
+Note: Choose the Software Development Package when building installing RHEL
+
+[ Rhel 5.3 ]
+
+The following packages are required.
+
+ncurses-devel
+bison-devel
+pam-devel
+openssl-devel
+libglade2-devel
+gtk2-devel
+rpm-devel
+expat-devel
+
+[optional for extended attribute support in cifs]
+
+libattr-devel
+

@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+        PROGRAM="authmechanism" \
+        SOURCES="authmechanism.c" \
+        HEADERDEPS="lw/types.h lwerror.h" \
+        INCLUDEDIRS="../../../include" \
+        INSTALLDIR="${MK_LIBEXECDIR}" \
+        LIBDEPS="${LIB_DL}"
+}

@@ -1,0 +1,28 @@
+lwbase conventions:
+------------------
+
+Indentation is 4.
+No tabs in source code.
+No trailing whitespace.
+
+The only goto label allowed is "cleanup".
+Use GOTO_CLEANUP_XXX() macros to go to this label.
+
+lwbase code should return NTSTATUS codes.
+lwbase public function are named LwRtlXxx.
+
+Types:
+-----
+
+base types used in lwbase should be NT native types:
+
+64 bits - LONG64, ULONG64
+32 bits - LONG, ULONG
+16 bits - SHORT, USHORT
+unsigned 8 bits - BYTE
+void - VOID
+
+normal characters - CHAR
+WC16 characters - WCHAR (native byte order)
+
+DO NOT USE: DWORD, int, uint16, uint32_t, etc.

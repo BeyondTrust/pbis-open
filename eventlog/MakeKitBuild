@@ -1,0 +1,49 @@
+SUBDIRS="include utils ipc client server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+    
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        LIBDIR="$MK_LIBDIR"
+
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+    mk_define LWREPORT_XML "\"${LW_CACHEDIR}/lwreport.xml\""
+
+    mk_check_headers FAIL=yes \
+        popt.h sqlite3.h gssapi.h
+
+    mk_check_libraries FAIL=yes \
+        popt sqlite3 gssapi_krb5
+
+    mk_check_libraries pthread dl
+
+    lw_check_libxml2
+
+    mk_check_headers \
+	limits.h sys/limits.h sys/syslimits.h wc16str.h
+
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    lw_check_pthread_once_init
+
+    mk_output_file etc/eventlogd.reg
+    mk_output_file etc/likewise-platform-snmp.reg
+    mk_output_file etc/lwreport.xml
+
+    MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
+
+}

@@ -1,0 +1,18 @@
+[HKEY_THIS_MACHINE\Services\lsass\Privileges\SeBackupPrivilege]
+"ValueLow" = {
+    default = dword:00000011
+    doc = "Low part of privilege LUID"
+}
+"ValueHigh" = {
+    default = dword:00000000
+    doc = "High part of privilege LUID"
+}
+"Description" = {
+    default = "Backup files and directories."
+    doc = ""
+}
+"EnabledByDefault" = {
+    default = dword:00000000
+    range = boolean
+    doc = "When assigned this privilege is enabled by default"
+}

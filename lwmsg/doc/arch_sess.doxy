@@ -1,0 +1,130 @@
+/*
+ * Copyright (c) Likewise Software.  All rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the license, or (at
+ * your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.  You should have received a copy
+ * of the GNU Lesser General Public License along with this program.  If
+ * not, see <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+/*
+ * Module Name:
+ *
+ *        arch_sess.doxy
+ *
+ * Abstract:
+ *
+ *        Architecture documentation
+ *        Session management page
+ *
+ * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
+ *
+ */
+/**
+@page arch_sess Session Management
+
+@section arch_sess_mgr Session Managers
+
+A session manager is an abstract object which is responsible for tracking
+the lifetimes of sessions and other stateful connection information such
+as handles.  It is generally not necessary for client applications to
+implement or even interact with session managers directly.  However, their
+behavior does manifest itself in user-visible ways.
+
+Each session manager has a (probablistically) unique, randomly-generated
+session manager ID (<tt>smid</tt>) which is 64 bits in length.  This ID is important
+in session establishment and lifecycle.
+
+@section arch_sess_assoc Associations
+
+Each association operates under a specific session manager.  Even
+if an association does not have a session manager explicitly set,
+it will implictly create a private instance as necessary.  Associations
+which have the same session manager and endpoint are considered to be part
+of the same session, and thus may share state such as handles.
+Associations delegate session and handle logic to the session manager:
+
+- Entering into a session with a peer
+- Leaving a session with a peer
+- Registration of handles
+- Deregistration of handles
+- Mapping handle IDs to handle pointers and vice versa
+
+@section arch_sess_conn Connections
+
+During the handshake stage of connection setup, each peer queries the
+session manager responsible for the connection for its <tt>smid</tt>
+and sends it its counterpart.  Each peer then notifies its own session manager
+of its entry into a session, passing along the remote session manager ID
+(<tt>rsmid</tt>) along with any security token it received.  When the connection
+is closed, it notifies the session manager that it is leaving the session.
+
+@section arch_sess_life Session Lifecycle
+
+When a session manager is notified of entry into a session, it first
+consults an internal table of active sessions.  If the session is found,
+the manager increments a count in the session record indicating the number
+of associations currently participating in that session.  Otherwise, it
+creates a new session record with said count set to 1.  Upon notification
+of the session being left, it decrements this count.
+
+When the count of a session reaches zero, the session is torn down and
+freed.  In particular, any active handles remaining in the session are
+cleaned up using the cleanup function registered with
+#lwmsg_session_register_handle().
+
+During the lifetime of a session, handles may be registered and unregistered
+by participating associations.  Handles, unlike sessions, are not reference
+counted -- when unregistered by an association, a handle immediately becomes
+invalid, and subsequent use by the peer will result in undefined behavior.
+
+While a session remains active, any association in that session may
+use any handle regardless of which association created it.
+
+@section arch_sess_sec Security
+
+When a session manager first creates a session record in its table,
+it stores a copy of the peer security token given to it by the
+association.  When a session is entered, it checks that the
+old and new security tokens are compatible.  If they are not,
+the session manager rejects entry into the session -- this typically
+leads to the connection being aborted.
+
+Because of this security check, the ill effects of <tt>smid</tt>
+collisions are mitigated.  There are two scenarios:
+
+- The colliding <tt>smid</tt>s are associated with the same security token, e.g.
+they are from two processes running as the same user.  When this occurs,
+the presumably unrelated processes will unintentionally enter into the same
+session, causing inexplicable handle collisions.  Assuming users don't attempt
+collision attacks against themselves, the likelihood of this occuring is a remote
+1 in 2<sup>64</sup>.
+
+- The colliding <tt>smid</tt>s are associated with different security tokens, e.g.
+they are from two processes running as different users.  In this case,
+one of the two will have the connection aborted.  This could potentially
+lead to a denial-of-service attack if it were possible to discover the <tt>smid</tt>
+that the victim will use.  To mitigate this possibility, clients and servers do not
+share session managers between ingoing and outgoing connections or between outgoing
+connections to different endpoints.  This prevents an attacker from using the ID
+received from a peer to impersonate it.  In addition, the session manager uses the
+best entropy sources possible in order to make guessing <tt>smid</tt>s prohibitively
+difficult.
+
+**/

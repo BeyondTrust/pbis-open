@@ -1,0 +1,32 @@
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
+        VERSION="$LW_VERSION" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+}
+
+make()
+{
+    mk_stage DEST="${MK_BINDIR}/lw-local-user-migrate.sh" SOURCE="lw-local-user-migrate.sh.in"
+    mk_stage DESTDIR="${MK_BINDIR}" macuninstall.sh
+    mk_stage DESTDIR="${MK_SYSCONFDIR}" user-home-directory-in-dock.plist
+    mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.beyondtrust.pbis.lwsmd.plist
+    mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="startup.sh"
+
+    mk_target \
+        TARGET="${MK_BINDIR}/PBIS Logon Message.app" \
+        DEPS="'PBIS Logon Message.app'" \
+            _rsync_files '$<' '$@'
+    mk_add_all_target "$result"
+}
+
+_rsync_files()
+{
+    rsync -a --exclude=.svn "$1" "$2"
+}

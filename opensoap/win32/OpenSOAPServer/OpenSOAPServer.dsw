@@ -1,0 +1,299 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# åxçê: Ç±ÇÃ‹∞∏ΩÕﬂ∞Ω Ãß≤Ÿ Çï“èWÇ‹ÇΩÇÕçÌèúÇµÇ»Ç¢Ç≈Ç≠ÇæÇ≥Ç¢!
+
+###############################################################################
+
+Project: "idManager"=".\idManager.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "idManagerWinService"=".\idManagerWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "libHTTPMessage"=".\libHTTPMessage.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libOpenSOAPServer"=".\libOpenSOAPServer.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "libconnection"=".\libconnection.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "msgDrvCreator"=".\msgDrvCreator.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libconnection
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "msgDrvCreatorWinService"=".\msgDrvCreatorWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "queueManager"=".\queueManager.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "queueManagerFwdWinService"=".\queueManagerFwdWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "queueManagerWinService"=".\queueManagerWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "soapInterface"=".\soapInterface.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libconnection
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "spoolManager"=".\spoolManager.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "spoolManagerWinService"=".\spoolManagerWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "srvConfAttrMgr"=".\srvConfAttrMgr.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "srvConfAttrMgrWinService"=".\srvConfAttrMgrWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ssmlAttrMgr"=".\ssmlAttrMgr.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ssmlAttrMgrWinService"=".\ssmlAttrMgrWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ttlManager"=".\ttlManager.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ttlManagerWinService"=".\ttlManagerWinService.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libOpenSOAPServer
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

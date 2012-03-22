@@ -1,0 +1,150 @@
+==========================
+OpenSOAP Install procedure
+==========================
+
+Platforms on which OpenSOAP has been verified
+=============================================
+opensoap2 compilation and operation has been verified on the following
+platforms
+(from opensoap-2.0.1)
+Linux
+ [ok] Red Hat Linux 7.3 (RPM package available, no DSO support for apache1)
+ [ok] Red Hat Linux 9 (RPM package available)
+ [ok] Fedora Core 2 (RPM package available)
+ [ok] VineLinux 2.6 (RPM package available, no DSO support for apache1)
+ [ok] SuSE Linux 9.1 Personal (RPM package available)
+ [ok] Debian Woody (no DSO support for apache1)
+ [ok] Debian Sarge
+ [ok] Slackware 10.0
+ [ok] Mandrake Linux 10.0
+BSD
+ [ok] FreeBSD 4.7
+ [ok] FreeBSD 5.2.1
+ [NG] FreeBSD 5.3 (Currently compilation failure)
+Sun
+ [ok] Solaris8 sparc
+ [ok] Solaris9 x86
+Apple
+ [ok] MacOSX 10.3.3
+ [ok] MacOSX 10.3.5
+ [NG] MacOSX 10.2 (Build failure)
+Microsoft
+ [NG] Microsoft Windows VisualStudio, etc (opensoap2 currently not supported)
+
+Before INSTALL
+==============
+
+ To install this package, you need to pre-install the following:
+
+  1. libxml2 (http://xmlsoft.org/)
+  2. OpenSSL (http://www.openssl.org/)
+
+* Warning
+   If you install from pkgsrc on NetBSD, `xml2-config' has a bug and
+  you need to modify it so that the output of "xml2-config --cflags"
+  is valid.
+
+   You may require the development environment for libxml2 like
+  "libxml2-devel" for certain packages like Linux rpm.
+
+Simple Installation
+===================
+
+  The following shows how to perform a simple installation:
+
+  $ ./configure
+  $ make
+  $ su 
+  # make install
+
+* Warning
+   GNU make may have to be used on the above make.
+  If installing on *BSD, replace the above "make" with "gmake".
+
+configure options
+=================
+
+  ./configure --help  shows a list of configuration options.
+
+  If OpenSSL is not installed on the default /usr/local directory, you
+  need to specify the installed directory by --with-ssl=DIR.
+  For example, if files like
+  /usr/local/ssl/include/openssl/rsa.h
+  /usr/local/ssl/lib/libcrypt.o
+  are installed, you can specify that by
+  ./configure --with-ssl=/usr/local/ssl
+
+  On RedHat9, you may need to specify /usr/kerberos/include directory
+  for compiling OpenSSL.
+  Please refer the result of `pkg-config --cflags openssl`.  The
+  easiest way is following:
+  ./configure --with-ssl-include=/usr/kerberos/include
+
+  If the conversion routine of multibyte strings to widecharacter
+  strings on the system has a bug, "--enable-buildin-mbfuncs" option
+  may possibly avoid the problem.  But this workaround can handle only
+  US-ASCII(ISO-8859-1) character encoding.
+
+  On such enviorments like NetBSD and so on, where iconv doesn't work
+  as expected, using "--disable-system-iconv" option can be a
+  workaround.
+
+  The OpenSOAP Server CGI interface has now been implemented as an Apache2
+  DSO module.
+  When using configure, you can now specify --with-apxs[=apxs command path].
+  By default, the apxs command is assumed to be in /usr/sbin/apxs, and
+  if Apache is version 2  or greater, then a DSO module will be
+  built. If, however no appropriate apxs command cannot be found, then
+  as for OpenSOAP version configuration will proceed without
+  generationg the DSO module. If required, the DSO module creation
+  step can be skipped with --with-out-apxs or --with-apxs=no options
+  to configure.
+  Settings for the Apache 2 DSO module can be found in the file
+    doc/server/README-APACHE-DSO.txt
+  Please read this for more details.
+
+Compiling your original program
+===============================
+
+  On the default settings, add "/usr/local/opensoap/include" to the Include
+  Path and "/usr/local/opensoap/lib" to the Library Path.
+  Specify the library with "-lOpenSOAPClient" for client programs, and
+  "-lOpenSOAPService -lOpenSOAPClient" for service programs.
+  On the system with shared libraries, add "/usr/local/lib" to the
+  search path of execution library.  For example, with gcc, add
+  "-Wl,-rpath -Wl,/usr/local/lib" to the options for linking
+  libraries.
+
+Installation Directories
+========================
+
+  By default, the OpenSOAP Server is installed under /usr/local/opensoap.
+  Use the -prefix option of configure to specify an alternate installation directory.
+
+  In previous versions (up to opensoap-1.0-20021130) of this package, the default installation
+  directories were /var/tmp/OpenSOAP, and /usr/local for libraries, header files and executables.
+  To remove older files that have been installed in these directories use the uninstall-olddir.sh
+  script.
+
+  Also, if there are any services that have been created using the previous
+  OpenSOAP directory structure, attention should be paid to the following points.
+
+  1. Libraries Path
+       (/usr/local/lib -> /usr/local/opensoap/lib)
+     If the dynamically linked libraries libOpenSOAP*.so are used, then add the 
+     path /usr/local/opensoap/lib to /etc/ld.so.conf and as root run ldconfig to
+     update the library search path.
+
+  2. OpenSOAP Server Configuration Files
+       (/var/tmp/OpenSOAP/conf -> /usr/local/opensoap/etc)
+     Previous configuration files (backward.conf, forward.conf, signature.conf) are
+     combined to form a single configuration file server.conf.
+     The keys files for the server are also located in this directory.
+
+  3. Running Services From The OpenSOAP Server
+     SSML files are now located in /usr/local/opensoap/etc/ssml/ .
+       (/var/tmp/OpenSOAP/conf/ssml/*.ssml -> /usr/local/opensoap/etc/ssml/*.ssml)
+     Program related files for each service are now located under /usr/local/opensoap/services/
+     in their respective directories.
+     Eg. for the HelloService,
+       (/usr/localsbin/HelloService -> /usr/local/opensoap/services/HelloService/HelloService).

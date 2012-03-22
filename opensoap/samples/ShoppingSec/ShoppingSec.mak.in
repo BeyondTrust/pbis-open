@@ -1,0 +1,430 @@
+# -*- mode: makefile; -*-
+# -----------------------------------------------------------------------------
+#   $RCSfile: ShoppingSec.mak.in,v $
+#  
+#   See Copyright for the status of this software.
+#  
+#   The OpenSOAP Project
+#   http://opensoap.jp/
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME = ShoppingSec
+
+SAMPLE_MESSAGE_DIR = SampleMessages
+#
+console_client_PROGRAMFILES = ShoppingClientSec
+
+#
+cgi_client_PROGRAMFILES = ShoppingClientSec.cgi
+
+CLIENT_HTML_DIR = ShoppingHtml
+CLIENT_HTML_FILES = \
+	${CLIENT_HTML_DIR}/CommonFtr.html \
+	${CLIENT_HTML_DIR}/CommonHdr.html \
+	${CLIENT_HTML_DIR}/ErrorFtr.html \
+	${CLIENT_HTML_DIR}/ErrorHdr.html \
+	${CLIENT_HTML_DIR}/GetProductList.html \
+	${CLIENT_HTML_DIR}/GetProductListFtr.html \
+	${CLIENT_HTML_DIR}/GetProductListHdr.html \
+	${CLIENT_HTML_DIR}/GetStockQtyErr.html \
+	${CLIENT_HTML_DIR}/GetStockQtyFtr.html \
+	${CLIENT_HTML_DIR}/GetStockQtyHdr.html \
+	${CLIENT_HTML_DIR}/OrderResultErr.html \
+	${CLIENT_HTML_DIR}/OrderResultFtr.html \
+	${CLIENT_HTML_DIR}/OrderResultHdr.html \
+	${CLIENT_HTML_DIR}/PlaceOrderErr.html \
+	${CLIENT_HTML_DIR}/PlaceOrderFtr.html \
+	${CLIENT_HTML_DIR}/PlaceOrderHdr.html
+
+cgi_client_USEKEYFILES = \
+	 	pubKey_ShoppingService.pem \
+		privKey_ShoppingClient.pem
+
+#
+cgi_service_PROGRAMFILES = ShoppingServiceSec.cgi
+
+KEYCONF_IN_FILES = Shopping.keys.in
+KEYCONF_FILES = ${KEYCONF_IN_FILES:.in=}
+
+#
+service_USEKEYFILES = \
+	 	privKey_ShoppingService.pem \
+		pubKey_ShoppingClient.pem \
+		${KEYCONF_FILES}
+service_CONFFILES = Shopping.conf
+service_DATAFILES = ProductSpec.data ProductStock.data
+
+#
+stdio_service_PROGRAMFILES = ShoppingServiceSec
+
+#
+SSML_IN_FILES = ${SERVICE_NAME}.ssml.in
+SSML_FILES = ${SSML_IN_FILES:.in=}
+
+#
+RPATH_COPTION = @RPATH_COPTION@
+#
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+sysconfdir = @sysconfdir@
+localstatedir = @localstatedir@
+includedir = @includedir@
+libdir = @libdir@
+
+# OpenSOAP conf and data directory
+OPENSOAP_SYSCONFDIR = @sysconfdir@
+OPENSOAP_LOCALSTATEDIR = @localstatedir@
+OPENSOAP_SERVICE_LOCALSTATEDIR = ${OPENSOAP_LOCALSTATEDIR}/services
+SSML_DIR=${OPENSOAP_SYSCONFDIR}/ssml
+
+#
+SERVICE_DIR = @servicesdir@/${SERVICE_NAME}
+SERVICE_LOCALSTATEDIR = ${OPENSOAP_SERVICE_LOCALSTATEDIR}/${SERVICE_NAME}
+
+#
+CGI_BIN_DIR = @CGI_BIN_DIR@
+
+#
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+
+# libiconv
+ICONV_LIBS = @ICONV_LIBS@
+# libxml2 libs
+XML2_LIBS = @XML2_LIBS@
+# ssl libs
+SSL_LIB_DIR = @SSL_LIB_DIR@
+SSL_LIBS = @SSL_LIBS@
+SSL_LDFLAGS = -L${SSL_LIB_DIR} ${RPATH_COPTION}${SSL_LIB_DIR}
+#SSL_LIBS = 
+#SSL_LDFLAGS =
+#
+LIBS = @LIBS@
+CC = @CC@
+
+#
+PROGRAMS = \
+	${console_client_PROGRAMFILES} \
+	${cgi_client_PROGRAMFILES} \
+	${stdio_service_PROGRAMFILES} \
+	${cgi_service_PROGRAMFILES}
+
+#
+COMMON_LIBS=${XML2_LIBS} ${ICONV_LIBS} ${SSL_LIBS} ${LIBS}
+
+#
+# DEBUG_CFLAGS = -g
+CFLAGS = ${DEBUG_CFLAGS} -Wall -I${includedir} \
+	-DSERVICE_DIR=\"${SERVICE_DIR}\" \
+	-DSERVICE_LOCALSTATEDIR=\"${SERVICE_LOCALSTATEDIR}\"
+#	-DSERVICE_NAME=\"${SERVICE_NAME}\"
+CGI_CFLAGS = ${CFLAGS} -DCONNECT_TYPE_CGI
+CGI_CLIENT_CFLAGS = ${CFLAGS} -DCLIENT_CGI
+CGI_SERVICE_CFLAGS = ${CFLAGS} -DCONNECT_TYPE_CGI
+#
+COMMON_LDFLAGS = -L${libdir} ${RPATH_COPTION}${libdir} ${SSL_LDFLAGS}
+
+#
+SECURITY_LIBS = -lOpenSOAPSecurity
+CLIENT_LIBS = ${SECURITY_LIBS} -lOpenSOAPClient
+SERVICE_LIBS = -lOpenSOAPService ${CLIENT_LIBS}
+CLIENT_LDFLAGS = ${COMMON_LDFLAGS} ${CLIENT_LIBS} ${COMMON_LIBS}
+SERVICE_LDFLAGS = ${COMMON_LDFLAGS} ${SERVICE_LIBS} ${COMMON_LIBS}
+
+#
+SOURCES = \
+	ClSecCmn.c \
+	ClCmn.c \
+	ShClCmn.c \
+	ShClProductList.c \
+	ShClGetProductCount.c \
+	ShClGetProductSpec.c \
+	ShClGetStockQty.c \
+	ShClPlaceOrderCmn.c \
+	ShClPlaceOrderSec.c \
+	ShClMainSec.c \
+	ShClMainSecWeb.c \
+	SvCmn.c \
+	SvSecCmn.c \
+	ShSvCmn.c \
+	ShSvGetProductCount.c \
+	ShSvGetProductSpec.c \
+	ShSvGetStockQty.c \
+	ShSvPlaceOrderSec.c \
+	ShSvMainSec.c
+
+OBJS=${SOURCES:.c=.o} ShSvMainSec.cgi.o
+
+all: ${PROGRAMS} ${SSML_FILES} ${KEYCONF_FILES}
+
+## Make Client Programs
+
+ShoppingClientSec: \
+	ClCmn.o \
+	ClSecCmn.o \
+	ShClCmn.o \
+	ShClProductList.o \
+	ShClGetProductCount.o \
+	ShClGetProductSpec.o \
+	ShClGetStockQty.o \
+	ShClPlaceOrderCmn.o \
+	ShClPlaceOrderSec.o \
+	ShClMainSec.o
+	${CC}  -o $@ $^ ${CLIENT_LDFLAGS}
+
+ShoppingClientSec.cgi: \
+	ClCmn.o \
+	ClSecCmn.o \
+	ShClCmn.o \
+	ShClProductList.o \
+	ShClGetProductCount.o \
+	ShClGetProductSpec.o \
+	ShClGetStockQty.o \
+	ShClPlaceOrderCmn.o \
+	ShClPlaceOrderSec.o \
+	ShClMainSecWeb.o
+	${CC}  -o $@ $^ ${CLIENT_LDFLAGS}
+
+## Make Service Programs
+
+ShoppingServiceSec: \
+	SvCmn.o \
+	SvSecCmn.o \
+	ShSvCmn.o \
+	ShSvGetProductCount.o \
+	ShSvGetProductSpec.o \
+	ShSvGetStockQty.o \
+	ShSvPlaceOrderSec.o \
+	ShSvMainSec.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+ShoppingServiceSec.cgi: \
+	SvCmn.o \
+	SvSecCmn.o \
+	ShSvCmn.o \
+	ShSvGetProductCount.o \
+	ShSvGetProductSpec.o \
+	ShSvGetStockQty.o \
+	ShSvPlaceOrderSec.o \
+	ShSvMainSec.cgi.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+ShSvMainSec.cgi.o: ShSvMainSec.c
+	${CC} ${CGI_CFLAGS} -c -o $@ $<
+
+## Make SSML files
+${SSML_FILES}: ${SSML_IN_FILES} ShoppingSec.mak
+	@for i in ${SSML_IN_FILES}; do \
+		s=`echo $$i | sed 's/\.in$$//'`; \
+		sed "s%\@servicesdir\@%@servicesdir@%g" > $$s < $$i; \
+	done
+
+## Make KeyConf files
+${KEYCONF_FILES}: ${KEYCONF_IN_FILES} ShoppingSec.mak
+	@for i in ${KEYCONF_IN_FILES}; do \
+		s=`echo $$i | sed 's/\.in$$//'`; \
+		sed "s%\@servicesdir\@%@servicesdir@%g" > $$s < $$i; \
+	done
+
+## Install Programs
+
+#
+console-client-install: ${console_client_PROGRAMFILES}
+	if test -d ${DESTDIR}${bindir}; then \
+		echo "${DESTDIR}${bindir} exist."; \
+	else \
+		echo "${DESTDIR}${bindir} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${bindir}."; \
+		mkdir -p ${DESTDIR}${bindir}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${bindir}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${bindir}/$$f; \
+	done
+
+#
+cgi-client-programs-install: ${cgi_client_PROGRAMFILES}
+	if test -d ${DESTDIR}${CGI_BIN_DIR}; then \
+		echo "${DESTDIR}${CGI_BIN_DIR} exits."; \
+	else \
+		echo "${DESTDIR}${CGI_BIN_DIR} does not exit."; \
+		echo "mkdir -p ${DESTDIR}${CGI_BIN_DIR}."; \
+		mkdir -p ${DESTDIR}${CGI_BIN_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${CGI_BIN_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${CGI_BIN_DIR}/$$f; \
+	done
+
+cgi-client-datas-install: ${CLIENT_HTML_FILES} ${cgi_client_USEKEYFILES}
+	if test -d ${DESTDIR}${CGI_BIN_DIR}/${CLIENT_HTML_DIR}; then \
+		echo "${DESTDIR}${CGI_BIN_DIR}/${CLIENT_HTML_DIR} exits."; \
+	else \
+		echo "${DESTDIR}${CGI_BIN_DIR}/${CLIENT_HTML_DIR} does not exit."; \
+		echo "mkdir -p ${DESTDIR}${CGI_BIN_DIR}/${CLIENT_HTML_DIR}."; \
+		mkdir -p ${DESTDIR}${CGI_BIN_DIR}/${CLIENT_HTML_DIR}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${CGI_BIN_DIR}."; \
+		${INSTALL_PROGRAM} \
+			-m 0644 \
+			$$f ${DESTDIR}${CGI_BIN_DIR}/$$f; \
+	done
+
+cgi-client-install: cgi-client-programs-install cgi-client-datas-install
+#
+client-install: console-client-install cgi-client-install
+
+#
+service-conf-install: ${service_CONFFILES}
+	if test -d ${DESTDIR}${SERVICE_DIR}; then \
+		echo "${DESTDIR}${SERVICE_DIR} exist."; \
+	else \
+		echo "mkdir -p ${DESTDIR}${SERVICE_DIR}."; \
+		mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} -m 0666 \
+			$$f ${DESTDIR}${SERVICE_DIR}; \
+		for k in ${cgi_client_USEKEYFILES}; do \
+			echo "${CGI_BIN_DIR}/$$k" >> \
+			${DESTDIR}${SERVICE_DIR}/$$f; \
+		done; \
+	done
+
+service-datas-install: ${service_DATAFILES}
+	if test -d ${DESTDIR}${SERVICE_LOCALSTATEDIR}; then \
+		echo "${DESTDIR}${SERVICE_LOCALSTATEDIR} exist."; \
+	else \
+		echo "mkdir -m 777 -p ${DESTDIR}${SERVICE_LOCALSTATEDIR}."; \
+		mkdir -m 777 -p ${DESTDIR}${SERVICE_LOCALSTATEDIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_LOCALSTATEDIR}."; \
+		${INSTALL_PROGRAM} \
+			-m 0666 \
+			$$f ${DESTDIR}${SERVICE_LOCALSTATEDIR}/$$f; \
+	done
+
+service-usekeys-install: ${service_USEKEYFILES}
+	if test -d ${DESTDIR}${SERVICE_DIR}; then \
+		echo "${DESTDIR}${SERVICE_DIR} exist."; \
+	else \
+		echo "mkdir -p ${DESTDIR}${SERVICE_DIR}."; \
+		mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} \
+			-m 0644 \
+			$$f ${DESTDIR}${SERVICE_DIR}/$$f; \
+	done
+
+service-common-install: service-conf-install service-datas-install service-usekeys-install
+
+#
+ssml-install: ${SSML_FILES}
+	if test -d ${DESTDIR}${SSML_DIR}; then \
+		echo "${DESTDIR}${SSML_DIR} exist."; \
+	else \
+		echo "mkdir -p ${DESTDIR}${SSML_DIR}."; \
+		mkdir -p ${DESTDIR}${SSML_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SSML_DIR}."; \
+		${INSTALL_PROGRAM} \
+			-m 0644 \
+			$$f ${DESTDIR}${SSML_DIR}/$$f; \
+	done
+
+stdio-service-programs-install: ${stdio_service_PROGRAMFILES}
+	@if test -d ${DESTDIR}${SERVICE_DIR}; then \
+		echo "${DESTDIR}${SERVICE_DIR} exits."; \
+	else \
+		echo "${DESTDIR}${SERVICE_DIR} does not exit."; \
+		echo "mkdir -p ${DESTDIR}${SERVICE_DIR}."; \
+		mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${SERVICE_DIR}/$$f; \
+	done
+
+stdio-service-install: \
+	service-common-install \
+	stdio-service-programs-install \
+	ssml-install
+
+cgi-service-programs-install: ${cgi_service_PROGRAMFILES}
+	@if test -d ${DESTDIR}${CGI_BIN_DIR}; then \
+		echo "${DESTDIR}${CGI_BIN_DIR} exist."; \
+	else \
+		echo "${DESTDIR}${CGI_BIN_DIR} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${CGI_BIN_DIR}."; \
+		mkdir -p ${DESTDIR}${CGI_BIN_DIR}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${CGI_BIN_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${CGI_BIN_DIR}/$$f; \
+	done
+
+cgi-service-install: service-common-install cgi-service-programs-install
+
+service-install: cgi-service-install stdio-service-install
+
+#
+install-samples: client-install service-install
+
+# 
+install: cgi-client-install service-install
+
+## clean objects and programs
+clean: 
+	rm -f ${OBJS} ${PROGRAMS}
+
+ENDPOINT_CGI = http://localhost/cgi-bin/ShoppingServiceSec.cgi
+ENDPOINT_SRV = http://localhost/cgi-bin/soapInterface.cgi
+
+## Test Service Programs for Success Cases
+
+stest1:
+	./ShoppingServiceSec.cgi < ${SAMPLE_MESSAGE_DIR}/GetProductCountSecReq.xml 
+stest2:	    
+	./ShoppingServiceSec.cgi < ${SAMPLE_MESSAGE_DIR}/GetProductSpecSecReq.xml
+stest3:	    
+	./ShoppingServiceSec.cgi < ${SAMPLE_MESSAGE_DIR}/GetStockQtySecReq.xml 
+stest4:	    
+	./ShoppingServiceSec.cgi < ${SAMPLE_MESSAGE_DIR}/PlaceOrderSecReq.xml
+
+
+## Test Client-Service Hookups for Success Cases
+
+ctest1:
+	./ShoppingClientSec -s ${ENDPOINT_CGI} -c EUC-JP GetProductList
+ctest2:
+	./ShoppingClientSec -s ${ENDPOINT_CGI} -c EUC-JP GetStockQty NS01
+ctest3:
+	./ShoppingClientSec -s ${ENDPOINT_CGI} -c EUC-JP \
+		-b pubKey_ShoppingService.pem -v privKey_ShoppingClient.pem \
+		PlaceOrder NS01 1
+
+
+## Test Client-Server-Service Hookups for Success Cases
+
+cstest1:
+	./ShoppingClientSec -s ${ENDPOINT_SRV} -c EUC-JP GetProductList
+cstest2:
+	./ShoppingClientSec -s ${ENDPOINT_SRV} -c EUC-JP GetStockQty NS01
+cstest3:
+	./ShoppingClientSec -s ${ENDPOINT_SRV} -c EUC-JP \
+		-b pubKey_ShoppingService.pem -v privKey_ShoppingClient.pem \
+		PlaceOrder NS01 1

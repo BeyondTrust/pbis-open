@@ -1,0 +1,180 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: XMLNamespace.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/XMLNamespace.h
+ * @brief OpenSOAP API XML Namespace 処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPXMLNamespace OpenSOAPXMLNamespace
+     * @brief OpenSOAPXMLNamespace 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPXMLNamespace *OpenSOAPXMLNamespacePtr
+     * @brief OpenSOAPXMLNamespace ポインタ定義
+     */
+    /**
+     * @typedef struct tagOpenSOAPXMLElm OpenSOAPXMLElm
+     * @brief OpenSOAPXMLElm 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPXMLElm *OpenSOAPXMLElmPtr
+     * @brief OpenSOAPXMLElm ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPXMLNamespaceCreateMB(const char * ns_uri, const char * ns_prefix, OpenSOAPXMLNamespacePtr * ns)
+      * @brief OpenSOAP XML Namespace インスタンスの生成(MB)
+      *
+      * OpenSOAP XML Namespace インスタンスを生成します。(MB)
+      * @param
+      *    ns_uri const char * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const char * [in] ((|ns_prefix|)) Namespace prefix
+      * @param
+      *    ns OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceCreateWC(const wchar_t * ns_uri, const wchar_t * ns_prefix, OpenSOAPXMLNamespacePtr * ns)
+      * @brief OpenSOAP XML Namespace インスタンスの生成(WC)
+      *
+      * OpenSOAP XML Namespace インスタンスを生成します。(WC)
+      * @param
+      *    ns_uri const wchar_t * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const wchar_t * [in] ((|ns_prefix|)) Namespace prefix
+      * @param
+      *    ns OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceRelease(OpenSOAPXMLNamespacePtr ns)
+      * @brief XML Namespace 領域を開放
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceCreateString(OpenSOAPStringPtr nsUri, OpenSOAPStringPtr nsPrefix, OpenSOAPXMLNamespacePtr * ns)
+      * @brief XML Namespace Element インスタンスの生成(OpenSOAPString)
+      * @param
+      *    nsUri OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI
+      * @param
+      *    nsPrefix OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr * [out] ((|ns|)) XML Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceGetURI(OpenSOAPXMLNamespacePtr ns, OpenSOAPStringPtr * ns_uri)
+      * @brief Namespace URI の取得
+      *
+      * Namespaceポインタから URIを取得します。
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace
+      * @param
+      *    ns_uri OpenSOAPStringPtr * [out] ((|ns_uri|)) Namespace URI
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceDuplicate(OpenSOAPXMLNamespacePtr ns, OpenSOAPXMLNamespacePtr * dupNs)
+      * @brief Duplicate XML Namespace
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace
+      * @param
+      *    dupNs OpenSOAPXMLNamespacePtr * [out] ((|dupNs|)) XML Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceGetDefinedXMLElm(OpenSOAPXMLNamespacePtr ns, OpenSOAPXMLElmPtr * elm)
+      * @brief 指定 Namespaceポインタから Element を取得
+      *
+      * 指定 Namespaceポインタから Element を取得します。
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace
+      * @param
+      *    elm OpenSOAPXMLElmPtr * [out] ((|elm|)) XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceSetDefinedXMLElm(OpenSOAPXMLNamespacePtr ns, OpenSOAPXMLElmPtr elm, OpenSOAPXMLElmPtr * oldElm)
+      * @brief 指定 Namespaceポインタから Element を設定
+      *
+      * 指定 Namespaceポインタから Element を設定します。
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace
+      * @param
+      *    elm OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element
+      * @param
+      *    oldElm OpenSOAPXMLElmPtr * [out] ((|oldElm|)) XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceGetPrefix(OpenSOAPXMLNamespacePtr ns, OpenSOAPStringPtr * ns_prefix)
+      * @brief Namespace Prefix の取得
+      *
+      * Namespaceポインタから Prefixを取得します。
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in]  ((|ns|)) XML Namespace
+      * @param
+      *    ns_prefix OpenSOAPStringPtr * [out] ((|ns_prefix|)) Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator(OpenSOAPXMLNamespacePtr ns, char * (*memAllocator)(size_t), char **utf8NsURI, char **utf8NsPrefix)
+      * @brief Get XML Namespace Properties UTF-8 encoding
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in]  ((|ns|)) XML Namespace
+      * @param
+      *    memAllocator char * [in]  ( * ((|memAllocator|)) )(size_t) Character String
+      * @param
+      *    utf8NsURI char ** [out]  ((|utf8NsURI|)) Character String Array UTF8 Encoded Namespace URI
+      * @param
+      *    utf8NsPrefix char ** [out]  ((|utf8NsPrefix|)) Character String Array UTF8 Encoded Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceIsSameUriString(OpenSOAPXMLNamespacePtr ns, OpenSOAPStringPtr nsUri, int *isSame)
+      * @brief Same XML Namespace URI ?
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in]  ((|ns|)) XML Namespace
+      * @param
+      *    nsUri OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI
+      * @param
+      *    isSame int * [out] ((|isSame|)) Is same URI result
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLNamespaceIsSameString(OpenSOAPXMLNamespacePtr ns, OpenSOAPStringPtr nsUri, OpenSOAPStringPtr nsPrefix, int *isSame)
+      * @brief Same XML Namespace URI And Prefix ?
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr [in]  ((|ns|)) XML Namespace
+      * @param
+      *    nsUri OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI
+      * @param
+      *    nsPrefix OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix
+      * @param
+      *    isSame int * [out] ((|isSame|)) Is same result
+      * @return
+      *    エラーコード
+      */

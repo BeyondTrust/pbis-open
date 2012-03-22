@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='GetCert'
+	 nsuri='http://services.opensoap.jp/samples/GetCert/'>
+	    <connection name='GetCertStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/GetCert/GetCertService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='GetCertStdio'>GetCert</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

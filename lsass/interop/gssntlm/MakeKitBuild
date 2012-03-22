@@ -1,0 +1,14 @@
+make()
+{
+    mk_dlo \
+	DLO="libgssapi_ntlm" \
+	INSTALLDIR="${MK_LIBDIR}/gss" \
+	SOURCES="gssntlm.c" \
+	INCLUDEDIRS=". ../../include" \
+	HEADERDEPS="gssapi.h lwadvapi.h" \
+	LIBDEPS="lsacommon lsaclient_ntlm krb5 gssapi_krb5"
+
+    mk_stage \
+        SOURCE=mech \
+        DESTDIR="${MK_SYSCONFDIR}/gss"
+}

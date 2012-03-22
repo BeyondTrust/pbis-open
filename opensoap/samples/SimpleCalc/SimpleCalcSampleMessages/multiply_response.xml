@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <m:MultiplyResponse xmlns:m="http://services.opensoap.jp/samples/SimpleCalc/">
+            <Result>200.000000</Result>
+        </m:MultiplyResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+

@@ -1,0 +1,36 @@
+make()
+{
+    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h lwnet.h"
+    SERVER_SOURCES="\
+        container.c \
+        table.c \
+        api.c \
+        dispatch.c \
+        registry.c \
+        bootstrap.c \
+        logger.c \
+        main.c \
+        executable.c \
+        driver.c \
+        stub.c"
+    SERVER_GROUPS=""
+
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        SERVER_GROUPS="$SERVER_GROUPS ../../lwreg/server/lwregd/lwreg"
+        SERVER_GROUPS="$SERVER_GROUPS ../../netlogon/server/netlogond/netlogon"
+        SERVER_GROUPS="$SERVER_GROUPS ../../lwio/server/lwiod/lwio"
+        SERVER_GROUPS="$SERVER_GROUPS ../../lsass/server/lsassd/lsass"
+    fi
+   
+    mk_program \
+        PROGRAM=lwsmd \
+        SOURCES="$SERVER_SOURCES" \
+        GROUPS="$SERVER_GROUPS" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="\
+            lwsmcommon lwmsg lwmsg_nothr lwioclient lwnetclientapi \
+            regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr dcerpc $LIB_PTHREAD" \
+        INSTALLDIR="${MK_SBINDIR}"
+}

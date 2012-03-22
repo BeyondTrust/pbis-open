@@ -1,0 +1,59 @@
+make()
+{
+    RDR_SOURCES="\
+        connect.c             \
+        connect2.c            \
+        globals.c             \
+        session.c             \
+        session2.c            \
+        socket.c              \
+        tree.c                \
+        tree2.c               \
+        driver.c              \
+        create.c              \
+        create2.c             \
+        read.c                \
+        read2.c               \
+        write.c               \
+        write2.c              \
+        setinfo.c             \
+        setinfo2.c            \
+        queryinfo.c           \
+        queryinfo2.c          \
+        querydir.c            \
+        querydir2.c           \
+        deviceio.c            \
+        fsctl.c               \
+        fsctl2.c              \
+        ioctl.c               \
+        security.c            \
+        security2.c           \
+        queryfs.c             \
+        queryfs2.c            \
+        close.c               \
+        close2.c              \
+        smb2.c                \
+        dfs.c                 \
+        dfs1.c                \
+        dfs2.c                \
+        path.c"
+    
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        mk_group \
+            GROUP="rdr" \
+            SOURCES="$RDR_SOURCES" \
+            INCLUDEDIRS=". ../include ../../include" \
+            HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \
+            LIBDEPS="lwiosmbcommon iomgr lwnetclientapi"
+    else
+        mk_dlo \
+            DLO=rdr \
+            INSTALLDIR="$providerdir" \
+            SOURCES="$RDR_SOURCES" \
+            INCLUDEDIRS=". ../include ../../include" \
+            HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \
+            LIBDEPS="lwiosmbcommon iomgr lwnetclientapi" \
+            SYMFILE="rdr.sym"
+    fi
+}

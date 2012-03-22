@@ -1,0 +1,87 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\netlogon]
+"Description" = { 
+    value = "Site Affinity Service" 
+    default = "Site Affinity Service" 
+    doc = "" 
+}
+"Path" = { 
+    value = "@LIBDIR@/lw-svcm/netlogon@MOD_EXT@" 
+    default = "@LIBDIR@/lw-svcm/netlogon@MOD_EXT@" 
+    doc = "" 
+}
+"Arguments" = { 
+    value = "" 
+    default = "" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    value = "lwreg" 
+    default = "lwreg" 
+    doc = "" 
+}
+"Type" = { 
+    value = dword:00000002
+    default = dword:00000002
+    doc = "" 
+}
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
+"CoreSize" = {
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)"
+}
+
+[HKEY_THIS_MACHINE\Services\netlogon\Parameters]
+"PingAgainTimeout" = { 
+    default = dword:00000384 
+    doc = "" 
+}
+"NegativeCacheTimeout" = { 
+    default = dword:0000003C 
+    doc = "" 
+}
+"WritableRediscoveryTimeout" = { 
+    default = dword:00000708 
+    doc = "" 
+}
+"WritableTimestampMinimumChange" = { 
+    default = dword:00000000 
+    doc = "" 
+}
+"CLdapMaximumConnections" = { 
+    default = dword:00000064 
+    doc = "" 
+}
+"CLdapSearchTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}
+"CLdapSingleConnectionTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}
+"NetBiosUdpTimeout" = {
+    default = dword:00000001
+    "range" = integer:1-60
+    doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
+}
+"NetBiosWinsPrimary" = {
+    default = ""
+    doc = "IP address of primary WINS server used for name resolution"
+}
+"NetBiosWinsSecondary" = {
+    default = ""
+    doc = "IP address of secondary WINS server used for name resolution"
+}
+"ResolveNameOrder" = {
+    default = "DNS"
+    doc = "Enable name resolution type and order; DNS/NETBIOS/WINS"
+}

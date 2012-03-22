@@ -1,0 +1,9 @@
+#! /bin/sh
+# ex: set tabstop=4 expandtab shiftwidth=4:
+#
+# Copyright (c) BeyondTrust Software.  All rights reserved.
+#
+PREFIX="@MK_PREFIX@"
+SERVICE_NAME="pbis"
+
+. @MK_LIBEXECDIR@/init-pbis.sh

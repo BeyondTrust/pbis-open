@@ -1,0 +1,35 @@
+PUBLIC_HEADERS="\
+        tchar.h \
+        wchar16.h \
+        wc16str.h \
+        wc16printf.h \
+        lwprintf.h \
+        lw/dscache.h \
+        lw/errno.h \
+        lw/ntstatus.h \
+        lw/winerror.h \
+        lw/rpcstatus.h \
+        lw/types.h \
+        lw/attrs.h \
+        lw/atomic.h \
+        lw/hash.h \
+        lw/rtllog.h \
+        lw/rtlmemory.h \
+        lw/rtlstring.h \
+        lw/rtlgoto.h \
+        lw/rbtree.h \
+        lw/swab.h \
+        lw/safeint.h \
+        lw/security-types.h \
+        lw/security-api.h \
+        lw/threadpool.h \
+        lw/affinity.h \
+        lw/mapsecurity.h \
+        lw/mapsecurity-types.h \
+        lw/mapsecurity-plugin.h \
+        lw/svcm.h"
+
+make()
+{
+    mk_headers HEADERS="$PUBLIC_HEADERS" MASTER='lw/base.h'
+}

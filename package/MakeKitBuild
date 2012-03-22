@@ -1,0 +1,17 @@
+SUBDIRS="unpack open open-gui open-upgrade open-legacy application-integration"
+
+configure()
+{
+    [ "$DJ_GUI_INTERFACE" = "gtk" ] || mk_skip_subdir open-gui
+
+    [ "$LW_APPLICATION_INTEGRATION" = "yes" ] || mk_skip_subdir application-integration
+}
+
+make()
+{
+    mk_target \
+        TARGET="@package/cifs" \
+        echo "This target is obsolete.  Use 'make package'"
+
+    mk_add_phony_target "$result"
+}

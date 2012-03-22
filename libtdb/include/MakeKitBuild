@@ -1,0 +1,4 @@
+make()
+{
+    mk_headers tdb.h
+}

@@ -1,0 +1,99 @@
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
+
+/*
+ * Copyright Likewise Software
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.  You should have received a copy of the GNU General
+ * Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+
+
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        dirdefs.h
+ *
+ * Abstract:
+ *
+ *
+ *      Likewise Directory Wrapper Interface
+ *      
+ *      Defines
+ *
+ * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *
+ */
+#ifndef _DIR_DEFS_H__
+#define _DIR_DEFS_H__
+
+typedef enum
+{
+    LOCAL_SAM = 0
+} DirectoryType;
+
+#define SAM_DB_PROVIDER_PATH "@providerdir@/libsamdb@MOD_EXT@"
+
+#define DIRECTORY_LOG_ERROR(pszFormat, ...) LSA_LOG_ERROR(pszFormat, ## __VA_ARGS__)
+#define DIRECTORY_LOG_WARNING(pszFormat, ...) LSA_LOG_WARNING(pszFormat, ## __VA_ARGS__)
+#define DIRECTORY_LOG_INFO(pszFormat, ...) LSA_LOG_INFO(pszFormat, ## __VA_ARGS__)
+#define DIRECTORY_LOG_VERBOSE(pszFormat, ...) LSA_LOG_VERBOSE(pszFormat, ## __VA_ARGS__)
+#define DIRECTORY_LOG_DEBUG(pszFormat, ...) LSA_LOG_DEBUG(pszFormat, ## __VA_ARGS__)
+
+#define BAIL_ON_DIRECTORY_ERROR(dwError) \
+    BAIL_ON_LSA_ERROR((dwError));
+
+#define BAIL_ON_NTSTATUS_ERROR(ntStatus) \
+    BAIL_ON_NT_STATUS((ntStatus));
+
+#define BAIL_ON_INVALIR_PTR(ptr)              \
+    if ((ptr) == NULL)                        \
+    {                                         \
+        dwError = ERROR_INVALID_PARAMETER;    \
+	BAIL_ON_DIRECTORY_ERROR(dwError);     \
+    };
+    
+#define DIRECTORY_LOCK_MUTEX(bInLock, mutex) \
+	if (!bInLock) { \
+	   int thr_err = pthread_mutex_lock(mutex); \
+	   if (thr_err) { \
+	       DIRECTORY_LOG_ERROR("Failed to lock mutex. Aborting program"); \
+	       abort(); \
+	   } \
+	   bInLock = TRUE; \
+	}
+
+#define DIRECTORY_UNLOCK_MUTEX(bInLock, mutex) \
+	if (bInLock) { \
+	   int thr_err = pthread_mutex_unlock(mutex); \
+	   if (thr_err) { \
+	       DIRECTORY_LOG_ERROR("Failed to unlock mutex. Aborting program"); \
+	       abort(); \
+	   } \
+	   bInLock = FALSE; \
+	}
+
+#endif /* _DIR_DEFS_H__ */

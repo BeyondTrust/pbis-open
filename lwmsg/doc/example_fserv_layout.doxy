@@ -1,0 +1,90 @@
+/*
+ * Copyright (c) Likewise Software.  All rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the license, or (at
+ * your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.  You should have received a copy
+ * of the GNU Lesser General Public License along with this program.  If
+ * not, see <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+/*
+ * Module Name:
+ *
+ *        example_fserv_layout.doxy
+ *
+ * Abstract:
+ *
+ *        Fserv project layout documentation page
+ *
+ * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
+ *
+ */
+
+/**
+@page example_fserv_layout Source Code
+
+- include
+    - @subpage fserv_h
+    - @subpage protocol_h
+    - @subpage protocol_server_h
+- src
+    - @subpage protocol_c
+    - @subpage fserv_client_c
+    - @subpage fserver_dispatch_c
+    - @subpage fserver_c
+    - @subpage fcat_c
+    - @subpage fsink_c
+
+@page fserv_h fserv.h
+Client API header file
+@include fserv/include/fserv.h
+
+@page protocol_h protocol.h
+Common protocol definition header
+@include fserv/include/protocol.h
+
+@page protocol_server_h protocol-server.h
+Server-private protocol definition header
+@include fserv/include/protocol-server.h
+
+@page protocol_c protocol.c
+Protocol definition source
+@include fserv/src/protocol.c
+
+@page fserv_client_c fserv-client.c
+Client API implementation
+@include fserv/src/fserv-client.c
+
+@page fserver_dispatch_c fserver-dispatch.c
+Server call dispatch handlers
+@include fserv/src/fserver-dispatch.c
+
+@page fserver_c fserver.c
+Server program
+@include fserv/src/fserver.c
+
+@page fcat_c fcat.c
+Program that concatenates files like UNIX cat using the client API
+@include fserv/src/fcat.c
+
+@page fsink_c fsink.c
+Program that writes stdin to a file using the client API
+@include fserv/src/fsink.c
+
+**/

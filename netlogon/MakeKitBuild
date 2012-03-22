@@ -1,0 +1,66 @@
+SUBDIRS="include utils ipc common client server service_locator tools etc tests"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define LWNET_CACHE_DIR "\"$LW_CACHEDIR\""
+    mk_define LWNET_CONFIG_DIR "\"$MK_SYSCONFDIR\""
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+   
+    mk_multiarch_do
+        mk_check_endian
+
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+    mk_multiarch_done
+
+    mk_check_headers \
+        FAIL=yes \
+        reg/lwreg.h lwadvapi.h reg/regutil.h ldap.h krb5.h krb5/locate_plugin.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        rsutils regclient lwadvapi ldap_r krb5 k5crypto
+
+    mk_check_headers \
+        sys/types.h netinet/in.h netinet/in6.h arpa/nameser.h \
+        socket.h sys/socket.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h" \
+	resolv.h
+
+    mk_check_libraries \
+        rt pthread resolv dl
+
+    mk_check_functions \
+        HEADERDEPS="time.h sys/time.h" \
+        LIBDEPS="$LIB_RT" \
+        clock_settime settimeofday
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h resolv.h" \
+        LIBDEPS="$LIB_RESOLV" \
+        res_init res_query res_ninit res_ndestroy
+
+    lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
+    then
+        mk_define PTHREAD_ONCE_INIT_BROKEN 1
+    fi
+
+    mk_output_file "etc/netlogond.reg"
+}

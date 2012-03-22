@@ -1,0 +1,7 @@
+Code residing in the server, tests, and tools directories 
+is licensed under the GNU General Public License version 2.  See 
+{server,tests,tools}/COPYING for details.
+
+Code residing in the client, ipc, and include directories is licensed 
+under the GNU Lesser General Public License version 2.1.  See 
+{client,include,ipc,utils}/COPYING for details.

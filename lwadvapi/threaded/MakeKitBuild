@@ -1,0 +1,15 @@
+make()
+{
+    mk_group \
+        GROUP=threaded \
+        SOURCES="\
+            globals.c  \
+            krbtgt.c \
+            lwkrb5.c \
+            lwldap.c   \
+            lwsecurityidentifier.c \
+            lwtime.c" \
+        INCLUDEDIRS=". ../include ../include/public" \
+        HEADERDEPS="krb5.h ldap.h lwmsg/lwmsg.h sasl/sasl.h lw/base.h" \
+        LIBDEPS="krb5 gssapi_krb5 k5crypto ldap_r lwbase"
+}

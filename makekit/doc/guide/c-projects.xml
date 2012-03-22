@@ -1,0 +1,834 @@
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="c-projects">
+  <info>
+    <title>C Language Projects</title>
+  </info>
+  
+  <para>
+      This chapter will show you how to use <productname>MakeKit</productname>
+      to configure and build a C language project.
+  </para>
+
+  <section xml:id="c-programs">
+    <title>Building Programs</title>
+    <para>
+      Programs are built using the <function><xref linkend="mk_program"/></function> function, which requires
+      at a minimum a list of source files and a program name.  The program name is passed
+      as the <parameter>PROGRAM</parameter> parameter, and the list of sources files is passed
+      as the <parameter>SOURCES</parameter> parameter.  Consider <xref linkend="c-hello-world"/>
+      for a simple "Hello, World" program <filename>hello</filename>, it's source file
+      <filename>main.c</filename>, and the <filename>MakeKitBuild</filename> file to build it.
+    </para>
+    <example xml:id="c-hello-world">
+      <title>Using <function>mk_program</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+
+int main(int argc, char** argv)
+{
+    printf("Hello, world!\n");
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>MakeKitBuild</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c"
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      By default, the program will be installed in the usual binary directory
+      (e.g. <filename>/usr/local/bin</filename>).  The install location
+      can be changed with the <parameter>INSTALLDIR</parameter> parameter to
+      <function>mk_program</function>.
+    </para>
+    
+    <section>
+      <title>Finding Header Files</title>
+      <para>
+	A C project with a complex layout will typically need to look for headers
+	from multiple directories within the source tree.  Using the
+	<parameter>INCLUDEDIRS</parameter> parameter to <function>mk_program</function>,
+	you can specify a list of directories where the compiler should look for
+	header files.  Adding a header file <filename>include/values.h</filename>
+	to our small example project and modifying <filename>MakeKitBuild</filename>
+	to find it yields <xref linkend="c-include-dirs"/>.
+      </para>
+
+      <example xml:id="c-include-dirs">
+	<title>Using <parameter>INCLUDEDIRS</parameter></title>
+	<variablelist>
+	  <varlistentry>
+	    <term><filename>include/values.h</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#define MESSAGE "Hello, World!"
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>main.c</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include "values.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c" \
+        INCLUDEDIRS="include"
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </example>
+    </section>
+    <section>
+      <title>Linking To Libraries</title>
+      <para>
+	To link your program to other libraries, specify them as a list
+	via the <parameter>LIBDEPS</parameter> parameter.  Each library should be
+	specified exactly as you would with <parameter>-l</parameter> to the C
+	compiler (without the <filename>lib</filename> prefix).  See 
+	<xref linkend="c-link-lib"/>, which links to <filename>libm</filename>
+	to use the <function>sqrt()</function> function.
+      </para>
+      <example xml:id="c-link-lib">
+	<title>Using <parameter>LIBDEPS</parameter></title>
+	<variablelist>
+	  <varlistentry>
+	    <term><filename>main.c</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m"
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </example>
+    </section>
+  </section>
+  <section>
+    <title>Building Libraries</title>
+    <para>
+      <productname>MakeKit</productname> allows you to build two types of libraries:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term>Shared libraries</term>
+	<listitem>
+	  <para>
+	    A shared library is a collection of address-relocatable code which is combined
+	    with the program that links against it at startup by the system dynamic linker.
+	    Shared libraries are built with the <function>mk_library</function> function.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Dynamically loadable objects</term>
+	<listitem>
+	  <para>
+	    A dynamically loadable object is a blob of code which is explicitly loaded
+	    and executed by a program through functions like <function>dlopen()</function>.
+	    Dynamically loadable objects are typically used to implement plugins.  Although
+	    on many <productname>UNIX</productname> systems dynamically loadable objects and
+	    shared libraries are the same type of file, some systems distinguish between
+	    the two.  For example, <productname>Mac OS X</productname> distinguishes between
+	    <filename>.dylib</filename> (shared libraries) and <filename>.bundle</filename>
+	    or <filename>.so</filename> (dynamically loadable objects).  To build a dynamically
+	    loadable object, use the <function>mk_dlo</function> function, which takes nearly
+	    identical parameters to <function>mk_library</function>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      As with building programs, building a library requires a library name, passed as the
+      <parameter>LIB</parameter> parameter, and a list of sources, passed as the
+      <parameter>SOURCES</parameter> parameter.  The library name should be specified
+      without a filename extension or the <filename>lib</filename> prefix.  Consider
+      <xref linkend="c-library"/>, which expands on previous examples by building a
+      small library and linking it into the program <filename>hello</filename>.
+    </para>
+    <example xml:id="c-library">
+      <title>Using <function>mk_library</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>include/example.h</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+external unsigned long factorial(unsigned long i);
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+#include "example.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+    printf("5! is %lu\n", factorial(5));
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>example.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include "example.h"
+
+unsigned long factorial(unsigned long i)
+{
+    return i == 1 ? 1 : i * factorial(i - 1);
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_library \
+        LIB=example \
+        SOURCES="example.c" \
+        INCLUDEDIRS="include"
+
+    mk_program \
+        PROGRAM=hello \
+	SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m example"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      As you can see, <function>mk_library</function> accepts many of the same parameters
+      as <function>mk_program</function>, including <parameter>INCLUDEDIRS</parameter>.
+      As with programs, libraries can specify dependencies on other shared libraries
+      with <parameter>LIBDEPS</parameter>.
+    </para>
+    <note>
+      Some systems do not allow inter-dependencies between shared libraries.  On those
+      systems, <productname>MakeKit</productname> will propagate dependencies
+      forward to any program that links against them.  The resulting program may
+      explicitly depend on libraries from which it consumes no symbols.
+    </note>
+    <para>
+      Our new library was linked into <filename>hello</filename> the same way as the
+      system library <filename>libm</filename>.  Note that the order of the two function
+      invocations in <filename>MakeKitBuild</filename> is significant.
+      Because <function>mk_program</function> was called after
+      <function>mk_library</function>, it knows that <filename>libexample</filename>
+      is a library we build ourselves rather than pre-existing on the system, and it adds
+      appropriate dependencies to the generated <filename>Makefile</filename>.
+    </para>
+  </section>
+  <section id="c-projects-object-groups" xreflabel="Object Groups">
+    <title>Object Groups</title>
+    <para>
+      When a library or program grows large enough, it is often prudent to break its
+      source code up across multiple subdirectories to enhance organizational clarity
+      and separation of concerns.  Rather than maintaining a long list of source files
+      from disparate subdirectories in your invocation of <function>mk_library</function>
+      or <function>mk_program</function>, you can use the <function>mk_group</function>
+      function to compile related source files together into a single "object group"
+      file, and then reference just this file when building your program or library.
+      This feature is an analogue of "convenience libraries" available in
+      <orgname>GNU</orgname> <command>libtool</command>.
+    </para>
+    <para>
+      Imagine that the currently diminuitive <filename>libexample</filename> is destined
+      to become a vast utility library with both math and string manipulation functions.
+      In anticipation of this, we break it into two subdirectories, <filename>math</filename>
+      and <filename>string</filename>.  We will build each subdirectory as an object
+      group and then combine the two into <filename>libexample</filename> using the
+      <parameter>GROUPS</parameter> parameter to <function>mk_library</function>.
+      This yields <xref linkend="c-object-group"/>.
+    </para>
+    <example xml:id="c-object-group">
+      <title>Using <function>mk_group</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>include/example.h</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+/* Math functions */
+external unsigned long factorial(unsigned long i);
+/* String functions */
+external void reverse_string(char* str);
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>math/factorial.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include "example.h"
+
+unsigned long factorial(unsigned long i)
+{
+    return i == 1 ? 1 : i * factorial(i - 1);
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>math/MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_group \
+        GROUP=math \
+        SOURCES="*.c" \
+        INCLUDEDIRS="../include"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>string/reverse.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <string.h>
+#include "example.h"
+
+unsigned void reverse_string(char* str)
+{
+    char* front = NULL;
+    char* back = NULL;
+    char tmp = 0;
+
+    for (front = str, back = str + strlen(str) - 1;
+         back > front;
+         front++, back--)
+    {
+        tmp = *front;
+        *front = *back;
+        *back = tmp;
+    }
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>string/MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_group \
+        GROUP=string \
+        SOURCES="*.c" \
+        INCLUDEDIRS="../include"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+#include "example.h"
+
+int main(int argc, char** argv)
+{
+    char reverse[] = MESSAGE;
+
+    reverse_string(reverse);
+
+    printf("%s\n", MESSAGE);
+    printf("Reversed: %s\n", reverse);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+    printf("5! is %lu\n", factorial(5));
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+SUBDIRS="math string"
+
+make()
+{
+    mk_library \
+        LIB=example \
+        GROUPS="math/math string/string"
+
+    mk_program \
+        PROGRAM=hello \
+	SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m example"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      The <function>mk_group</function> function accepts nearly the same set of optional parameters as
+      <function>mk_library</function>; in fact, you can even use <parameter>GROUPS</parameter>
+      to combine several object groups together into one.
+    </para>
+    <para>
+      This particular example also demonstrates a useful shortcut enabled by keeping source
+      files neatly separated into subdirectories: filename patterns.  The invocations of
+      <function>mk_group</function> in the <filename>math</filename> and <filename>string</filename>
+      subdirectories can include all C source files with <literal>*.c</literal>.  In general,
+      <productname>MakeKit</productname> supports filename patterns whenever specifying
+      source files.
+    </para>
+    <important>
+      Filename patterns only work against files that exist at the time that
+      <filename>configure</filename> is run.  Files that are created by a
+      build rule will not be included.
+    </important>
+  </section>
+  <section xml:id="c-checks">
+    <title>Configuration Tests</title>
+    <para>
+      Most projects of any significant complexity will need to determine how
+      and what source code to build based on the attributes of the host operating
+      system, available libraries, and so forth.  To this end,
+      <productname>MakeKit</productname> provides an array of functions to use in
+      <function>configure()</function> within your <filename>MakeKitBuild</filename>
+      files.
+    </para>
+    <para>
+      The idioms used to configure projects with <productname>MakeKit</productname>
+      are very similar to <command>autoconf</command>'s.  This was an intentional
+      design decision to ease migration.
+    </para>
+    <para>
+      Most configuration tests result in <literal>#define</literal> statements being written
+      into a config header which you can include in your source files to make use of the test
+      results.  You can set the current config header with <function>mk_config_header</function>.
+      You can add <literal>#define</literal> statements to the current config header with
+      <function>mk_define</function>:
+    </para>
+    <example xml:id="c-config-header">
+      <title>Using <function>mk_config_header</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    # Place #defines in include/config.h relative
+    # to location of MakeKitBuild in source tree
+    mk_config_header "include/config.h"
+
+    # Define FOOBAR to 1
+    mk_define FOOBAR 1
+    
+    # Define BUILD_TIME to current time as a string
+    # using UNIX 'date' program
+    mk_define BUILD_TIME "\"`date`\""
+}
+]]></programlisting>
+    </example>
+    <section xml:id="c-check-basics">
+      <title>Test Basics</title>
+      <para>
+	Most configuration checks do one or more of the following:
+      </para>
+      <itemizedlist>
+	<listitem>Display the test being performed to the user</listitem>
+	<listitem>Perform a test using the C compiler</listitem>
+	<listitem>Set a variable to the result of the test</listitem>
+	<listitem>Add a define to the config header with the result of the test</listitem>
+	<listitem>Cache the results to speed up subsequent runs of <filename>configure</filename></listitem>
+	<listitem>Display the result of the test to the user</listitem>
+      </itemizedlist>
+      <para>
+	The names of variables and defines are usually based on the item in question (e.g.
+	the name of the header or library), with a few transformations:
+      </para>
+      <itemizedlist>
+	<listitem>All lowercase letters are converted to uppercase</listitem>
+	<listitem>
+	  All <literal>*</literal> (asterisk) characters are converted to <literal>P</literal>.
+	</listitem>
+	<listitem>All other characters are converted to _.</listitem>
+      </itemizedlist>
+      <para>
+	These rules are the same as those used in <command>autoconf</command>.  Hereafter, a
+	name derived by these rules will be referred to as a <replaceable>varname</replaceable>.
+      </para>
+      <para>
+	Most of the configuration checks have two forms, singular and plural.  The plural
+	form takes a list of items and performs the above steps for each item, and is the
+	most common and convenient way of performing a check.  The singular form takes
+	only a single item has none of the side effects of the plural form.  Instead, it
+	sets the variable <varname>result</varname> to the result of the test, and
+	returns 0 (logical true in shell script) if the test succeeded, and 1 (logical false)
+	otherwise.  This form is useful for writing more elaborate custom tests.
+      </para>
+      <para>
+	Many of the tests have 3 possible results: <literal>internal</literal>,
+	<literal>external</literal>, and <literal>no</literal>.  If the item being
+	checked for is provided by the current project -- for example, checking for
+	a library which is built in a preceding source directory -- the test will
+	trivially succeed with <literal>internal</literal>.  If the item was identified
+	as being provided by the operating system or build environment, such as a system
+	header, the result will be <literal>external</literal>.  If the item was not
+	found, the result will be <literal>no</literal>.
+      </para>
+    </section>
+    <section xml:id="c-check-headers">
+      <title>Checking For Headers</title>
+      <para>
+	To check for the presence of a header on the system, use
+	<function>mk_check_headers</function>.  This function takes
+	a list of header names and tests for the presence and usability
+	of each one by attempting to compile a small program that includes
+	it.  For each header, it will do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Set the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  to the result of the test.
+	</listitem>
+	<listitem>
+	  If the header was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>
+	</listitem>
+      </itemizedlist>
+      <example xml:id="c-mk-check-headers">
+	<title>Using <function>mk_check_headers</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some basic header files
+    mk_check_headers stdio.h stdlib.h string.h does-not-exist.h
+    
+    # On a reasonable system, the following variables will be set:
+    #
+    # HAVE_STDIO_H=external
+    # HAVE_STDLIB_H=external
+    # HAVE_STRING_H=external
+    # HAVE_DOES_NOT_EXIST_H=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_STDIO_H
+    # #define HAVE_STDLIB_H
+    # #define HAVE_STRING_H
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_header</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-libraries">
+      <title>Checking For Libraries</title>
+      <para>
+	To check for the presence of a library, use <function>mk_check_libraries</function>.
+	For each library name specified, it will test for its presence and usability by
+	attempting to compile and link a test program against it.  For each library
+	it will do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Set the variable <varname>HAVE_LIB_<replaceable>varname</replaceable></varname>
+	  to the result of the test.
+	</listitem>
+	<listitem>
+	  If the test succeeds, export the variable <varname>LIB_<replaceable>varname</replaceable></varname>
+	  with the name of the library exactly as passed to <function>mk_check_libraries</function>.
+	  Otherwise, the variable will be set as the empty string.  This is useful for conditionally
+	  including the library in a <literal>LIBDEPS=</literal> list to <function>mk_program</function>
+	  and friends.
+	</listitem>
+	<listitem>
+	  If the library was found, define <literal>HAVE_LIB_<replaceable>varname</replaceable></literal>.
+	</listitem>
+      </itemizedlist>
+      <para>
+	Library names should be specified the same way as when linking to them with
+	<function>mk_program</function>, with no <literal>lib</literal> prefix or
+	file extension.
+      </para>
+      <example xml:id="c-mk-check-libraries">
+	<title>Using <function>mk_check_headers</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some common UNIX libraries
+    mk_check_libraries m pthread does-not-exist
+    
+    # On a typical Linux system, the following variables will be set:
+    #
+    # HAVE_LIB_M=external
+    # HAVE_LIB_PTHREAD=external
+    # HAVE_LIB_DOES_NOT_EXIST=no
+    # LIB_M=m
+    # LIB_PTHREAD=pthread
+    # LIB_DOES_NOT_EXIST=
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_LIB_M
+    # #define HAVE_LIB_PTHREAD
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_library</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-functions">
+      <title>Checking For Functions</title>
+      <para>
+	<function>mk_check_functions</function> allows you to test for the availability
+	of a list of functions by attempting to compile and link test programs that
+	reference them.  For each function it will then do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Set the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  to the result of the test.  The possible results are <literal>yes</literal>
+	  and <literal>no</literal>.
+	</listitem>
+	<listitem>
+	  If the function was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>.
+	</listitem>
+	<listitem>
+	  If the function was found, define <literal>HAVE_DECL_<replaceable>varname</replaceable></literal>
+	  to 1.  Otherwise, define it to 0.
+	</listitem>
+      </itemizedlist>
+      <para>
+	Unlike <command>autoconf</command>, this check ensures that a declaration
+	of the function was available in addition to the function's symbol being
+	present in a library.  You can use <literal>HEADERDEPS=</literal> and
+	<literal>LIBDEPS=</literal> parameters to <function>mk_check_functions</function>
+	to specify header files and libraries that are necessary for the function
+	to be found.
+      </para>
+      <para>
+	Each function can be specified as a simple name, or as a full function prototype
+	in C syntax.  In the second case, <productname>MakeKit</productname> will verify
+	that the function exists and has a compatible prototype.  Bear in mind that
+	the resulting variable/define name will reflect any whitespace in your prototype.
+      </para>
+	<example xml:id="c-mk-check-functions">
+	<title>Using <function>mk_check_functions</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some functions in libm
+    mk_check_functions \
+        HEADERDEPS="math.h" \
+        LIBDEPS="m" \
+        sin cos "double sqrt(double)" does_not_exist
+    
+    # On a typical UNIX system, the following variables will be set:
+    #
+    # HAVE_SIN=yes
+    # HAVE_COS=yes
+    # HAVE_DOUBLE_SQRT__DOUBLE_=yes
+    # HAVE_DOES_NOT_EXIST=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_SIN
+    # #define HAVE_COS
+    # #define HAVE_DOUBLE_SQRT__DOUBLE_
+    # #define HAVE_DECL_SIN 1
+    # #define HAVE_DECL_COS 1
+    # #define HAVE_DECL_DOUBLE_SQRT__DOUBLE_ 1
+    # #define HAVE_DECL_DOES_NOT_EXIST 0
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_function</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-types">
+      <title>Checking For Types</title>
+      <para>
+	<function>mk_check_types</function> allows you to test for the availability
+	of a list of types by attempting to compile test programs that reference them.
+	For each type it will then do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Set the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  to the result of the test.  The possible results are <literal>yes</literal>
+	  and <literal>no</literal>.
+	</listitem>
+	<listitem>
+	  If the type was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>.
+	</listitem>
+      </itemizedlist>
+      <para>
+	You can use a <literal>HEADERDEPS=</literal> parameter to
+	<function>mk_check_types</function> to specify header
+	files necessary to find the type definition.
+      </para>
+      <example xml:id="c-mk-check-types">
+	<title>Using <function>mk_check_types</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some types in stdlib.h and inttypes.h
+    mk_check_types \
+        HEADERDEPS="stdlib.h inttypes.h" \
+        size_t int64_t uint64_t does_not_exist_t
+    
+    # On a typical UNIX system, the following variables will be set:
+    #
+    # HAVE_SIZE_T=yes
+    # HAVE_INT64_T=yes
+    # HAVE_UINT64_T=yes
+    # HAVE_DOES_NOT_EXIST_T=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_SIZE_T
+    # #define HAVE_INT64_T
+    # #define HAVE_UINT64_T
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_type</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-sizes">
+      <title>Checking For Sizes of Types</title>
+      <para>
+	<function>mk_check_sizeofs</function> allows you to test for the
+	sizes of a list of types.  For each type it will then do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Set the variable <varname>SIZEOF_<replaceable>varname</replaceable></varname>
+	  to the result of the test.
+	</listitem>
+	<listitem>
+	  Define <varname>SIZEOF_<replaceable>varname</replaceable></varname>
+	  to the result of the test.
+	</listitem>
+      </itemizedlist>
+      <para>
+	You can use a <literal>HEADERDEPS=</literal> parameter to
+	<function>mk_check_types</function> to specify header
+	files necessary to find the type definitions.  Note that
+	if this function fails to determine the size of a type
+	it will abort configuration, so you might want to first check
+	that the types exist with <function>mk_check_types</function>.
+      </para>
+      <example xml:id="c-mk-check-sizeofs">
+	<title>Using <function>mk_check_sizeofs</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for sizes of some types
+    mk_check_types \
+        HEADERDEPS="stdlib.h inttypes.h" \
+        size_t int64_t "void*"
+    
+    # On a typical 32-bit UNIX system, the following variables will be set:
+    #
+    # SIZEOF_SIZE_T=4
+    # SIZEOF_INT64_T=8
+    # SIZEOF_VOIDP=4
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define SIZEOF_SIZE_T 4
+    # #define SIZEOF_INT64_T 8
+    # #define SIZEOF_VOIDP 4
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_sizeof</function>.
+      </para>
+    </section>
+  </section>
+</chapter>

@@ -1,0 +1,36 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwreg]
+"Description" = { 
+    value = "PBIS Registry Service" 
+    default = "PBIS Registry Service" 
+    doc = "" 
+}
+"Path" = { 
+    value = "@LIBDIR@/lw-svcm/lwreg@MOD_EXT@" 
+    default = "@LIBDIR@/lw-svcm/lwreg@MOD_EXT@" 
+    doc = "" 
+}
+"Arguments" = { 
+    value = "" 
+    default = "" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    value = "" 
+    default = "" 
+    doc = "" 
+}
+"Type" = { 
+    value = dword:00000002
+    default = dword:00000002
+    doc = "" 
+}
+"CoreSize" = { 
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)" 
+}

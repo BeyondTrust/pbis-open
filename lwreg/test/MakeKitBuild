@@ -1,0 +1,61 @@
+make()
+{
+    mk_program \
+        PROGRAM=test_regdump \
+        SOURCES="test_regdump.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=test_reglex \
+        SOURCES="test_reglex.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=test_regparse \
+        SOURCES="test_regparse.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=test_regvalueattrs \
+        SOURCES="test_regvalueattrs.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=test_regio \
+        SOURCES="test_regio.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=test_openkey \
+        SOURCES="test_openkey.c" \
+        INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
+        INCLUDEDIRS="../include .." \
+	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+	LIBDEPS="regclient rsutils lwmsg lwbase"
+    lw_add_tool_target "$result"
+
+
+#test_ptlwregd.c
+#test_regiconv.c
+#test_tomulti.c
+}

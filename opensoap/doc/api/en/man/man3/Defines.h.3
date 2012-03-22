@@ -1,0 +1,53 @@
+.TH "Defines.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Defines.h \- OpenSOAP API definition header file.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBOPENSOAP_API\fP"
+.br
+.RI "\fIOpenSOAP API declare/definition prefix macro. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_VAR\fP"
+.br
+.RI "\fIOpenSOAP API variable declare/definition prefix macro. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_CLASS\fP"
+.br
+.RI "\fIOpenSOAP API C++ class definition prefix macro. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API definition header file. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Define Documentation"
+.PP 
+.SS "#define OPENSOAP_CLASS"
+.PP
+OpenSOAP API C++ class definition prefix macro. This macro is used when you shuld be exported all member functions. i.e. 
+.PP
+.nf
+  class OPENSOAP_CLASS TwoChannel {
+        public:
+                TwoChannel();
+                const std::string &getOne() const;
+        };
+
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

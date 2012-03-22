@@ -1,0 +1,110 @@
+<project default="build">
+    <property environment="env"/>
+
+    <property name="build.meta.current"
+              value="${pbis.objectdir}/lwjplatform"/>
+
+    <condition property="build.javac.debug" value="true" else="false">
+        <equals arg1="${env.BUILD_DEBUG}" arg2="1"/>
+    </condition>
+    <condition property="build.javac.debuglevel"
+               value="lines,vars,source"
+               else="">
+        <equals arg1="${env.BUILD_DEBUG}" arg2="1"/>
+    </condition>
+    <condition property="build.is.os.linux.i386">
+        <and>
+            <equals arg1="${mk.build.os}" arg2="linux"/>
+            <equals arg1="${mk.build.arch}" arg2="i386"/>
+        </and>
+    </condition>
+    <condition property="build.is.os.linux.x86_64">
+        <and>
+            <equals arg1="${mk.build.os}" arg2="linux"/>
+            <equals arg1="${mk.build.arch}" arg2="x86_64"/>
+        </and>
+    </condition>
+
+    <path id="classpath.base">
+        <pathelement location="${pbis.source}/vendor/apache-misc/lib/log4j-1.2.16.jar"/>
+        <fileset dir="${pbis.source}/vendor/jna/lib/linux/i386">
+           <include name="jna.jar"
+                    if="${build.is.os.linux.i386}"/>
+       </fileset>
+
+       <fileset dir="${pbis.source}/vendor/jna/lib/linux/x86_64">
+           <include name="jna.jar"
+                    if="${build.is.os.linux.x86_64}"/>
+       </fileset>
+
+    </path>
+
+    <path id="classpath.test">
+        <pathelement path="${build.meta.current}/lib/classes"/>
+        <pathelement path="${build.meta.current}/test/classes"/>
+        <pathelement location="${pbis.source}/vendor/junit/lib/junit-4.8.2.jar"/>
+        <path refid="classpath.base"/>
+    </path>
+
+    <target name="build">
+        <mkdir dir="${build.meta.current}/lib/classes"/>
+
+        <javac debug="${build.javac.debug}"
+               debuglevel="${build.javac.debuglevel}"
+               destdir="${build.meta.current}/lib/classes"
+               includeantruntime="false">
+            <classpath refid="classpath.base"/>
+            <src>
+                <pathelement location="src"/>
+            </src>
+        </javac>
+        <jar destfile="${build.meta.current}/lib/lwjplatform.jar"
+             basedir="${build.meta.current}/lib/classes"/>
+    </target>
+
+    <target name="doc">
+        <mkdir dir="${build.meta.current}/javadoc"/>
+
+        <javadoc packagenames="com.likewise.auth.*,com.likewise.Win32Exception,com.likewise.WinError,com.likewise.interop.*"
+                 sourcepath="src"
+                 defaultexcludes="yes"
+                 destdir="${build.meta.current}/javadoc"
+                 author="true"
+                 version="true"
+                 use="true"
+                 windowtitle="Likewise Platform API">
+           <bottom><![CDATA[<i>Copyright &#169; Likewise Software. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+
+    </target>
+
+
+    <target name="test" depends="build">
+        <mkdir dir="${build.meta.current}/test/classes"/>
+
+        <javac debug="${build.javac.debug}"
+               debuglevel="${build.javac.debuglevel}"
+               destdir="${build.meta.current}/test/classes"
+               includeantruntime="false">
+            <classpath refid="classpath.test"/>
+            <src>
+                <pathelement location="test/src"/>
+            </src>
+        </javac>
+        <junit>
+            <classpath refid="classpath.test"/>
+            <sysproperty key="basedir" value="${build.meta.current}"/>
+            <formatter type="brief" usefile="false"/>
+            <batchtest fork="yes">
+                <fileset dir="test/src" includes="**/*TestCase.java"/>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="stage" depends="build">
+        <jar destfile="${pbis.staging.lib}/lwjplatform.jar"
+             basedir="${build.meta.current}/lib/classes"/>
+         <jar destfile="${pbis.staging.docs}/lwjplatform-javadoc.jar"
+             basedir="${build.meta.current}/javadoc"/>
+    </target>
+</project>

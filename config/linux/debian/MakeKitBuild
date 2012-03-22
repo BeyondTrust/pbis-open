@@ -1,0 +1,24 @@
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
+        VERSION="$LW_VERSION" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+
+    mk_output_file lwsmd
+    mk_output_file pbis
+}
+
+make()
+{
+    mk_stage \
+        DESTDIR="${MK_DATADIR}" \
+        SOURCE="pbis.pam-auth-update"        
+
+    mk_stage DEST="${MK_SYSCONFDIR}/debian/lwsmd" MODE=0755 SOURCE="lwsmd"
+    mk_stage DEST="${MK_SYSCONFDIR}/debian/pbis" MODE=0755 SOURCE="pbis"
+}

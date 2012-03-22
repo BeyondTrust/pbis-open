@@ -1,0 +1,36 @@
+configure()
+{
+    mk_resolve_file "."
+
+    mk_declare -o \
+        srcdir="$result" \
+        ENABLE_INTERNAL_DOCS="NO"
+
+    mk_output_file Doxyfile
+}
+
+make()
+{
+    DOC_INPUT="\
+        main.doxy arch.doxy arch_rep.doxy arch_sess.doxy \
+        example_fserv.doxy example_fserv_layout.doxy \
+        example_fserv_source.doxy"
+
+    DOC_EXAMPLES="\
+        ../example/fserv/include/protocol.h \
+	../example/fserv/include/fserv.h \
+	../example/fserv/include/protocol-server.h \
+        ../example/fserv/src/protocol.c \
+        ../example/fserv/src/fserv-client.c \
+        ../example/fserv/src/fserver-dispatch.c \
+        ../example/fserv/src/fserver.c \
+        ../example/fserv/src/fcat.c \
+        ../example/fserv/src/fsink.c"
+
+
+    mk_have_doxygen && mk_doxygen_html \
+        INSTALLDIR="${MK_HTMLDIR}/lwmsg" \
+        HEADERDIRS="../include" \
+        INPUT="$DOC_INPUT" \
+        EXAMPLES="$DOC_EXAMPLES"
+}

@@ -1,0 +1,7 @@
+make()
+{
+    mk_headers \
+	INSTALLDIR="${MK_INCLUDEDIR}/compat" \
+	MASTER="dcerpc.h" \
+	HEADERS="rpcfields.h dcerpc.idl.include baserpc.h dce2msrpc.h"
+}

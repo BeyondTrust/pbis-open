@@ -1,0 +1,246 @@
+.\"     Title: domainjoin-cli
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.72.0 <http://docbook.sf.net/>
+.\"      Date: 03/14/2008
+.\"    Manual: 
+.\"    Source: 
+.\"
+.TH "DOMAINJOIN\-CLI" "8" "03/14/2008" "" ""
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+domainjoin\-cli \- Join a host to an Active Directory domain
+.SH "SYNOPSIS"
+.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] join [\fB\-\-ou\fR\ \fIorganizational_unit\fR]
+.br
+[\fB\-\-enable\fR\ \fImodule\fR...] [\fB\-\-disable\fR\ \fImodule\fR...]
+.br
+[\fB\-\-preview\fR] [\fB\-\-advanced\fR] [\fB\-\-details\fR\ \fImodule\fR]
+.br
+\fIdomain\fR \fIusername\fR [\fIpassword\fR]
+.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] leave
+.br
+[\fB\-\-enable\fR\ \fImodule\fR...] [\fB\-\-disable\fR\ \fImodule\fR...]
+.br
+[\fB\-\-preview\fR] [\fB\-\-advanced\fR] [\fB\-\-details\fR\ \fImodule\fR]
+.br
+[\fIusername\fR\ [\fIpassword\fR]]
+.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] query
+.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] fixfqdn
+.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] setname \fIname\fR
+.SH "DESCRIPTION"
+.PP
+
+\fBdomainjoin\-cli\fR
+is the command\-line version of the
+\fILikewise\fR
+AD domain join tool. In a basic invocation,
+\fBdomainjoin\-cli\fR
+will join the current machine into an AD domain, enable authentication of AD users, and enable group policy if it is available.
+.PP
+For systems with sensitive configurations,
+\fBdomainjoin\-cli\fR
+offers fine\-grained control over modifications to system configuration files that are typically required during a join, such as editing
+\fI/etc/nsswitch.conf\fR
+or the system PAM setup.
+.SH "USAGE"
+.SS "Commands"
+.PP
+
+\fBdomainjoin\-cli\fR
+supports the following major modes of operation:
+.PP
+join
+.RS 4
+Joins the machine to the AD domain
+\fIdomain\fR
+and configures AD authentication and group policy (where applicable). This operation requires valid AD credentials for
+\fIdomain\fR
+to be specified as
+\fIusername\fR
+and
+\fIpassword\fR. If
+\fIpassword\fR
+is not specified on the command line,
+\fBdomainjoin\-cli\fR
+will prompt you for it.
+.sp
+
+\fBdomainjoin\-cli\fR
+supports joining the machine to a specific OU (Organizational Unit) with
+\fB\-\-ou\fR \fIorganizational_unit\fR.
+.RE
+.PP
+leave
+.RS 4
+Leaves the currently\-joined AD domain and deconfigures AD authentication and group policy (where applicable).
+.sp
+In order to actually disable the machine account in AD, either administrative credentials for
+\fIdomain\fR
+or the same credentials originally used to join the machine must be specified as
+\fIusername\fR
+and
+\fIpassword\fR. If
+\fIpassword\fR
+is not specified on the command line,
+\fBdomainjoin\-cli\fR
+will prompt you for it.
+.sp
+If no credentials are specified, the machine will no longer behave as a member of
+\fIdomain\fR
+but its machine account will remain enabled in AD.
+.RE
+.PP
+query
+.RS 4
+Displays information about the currently\-joined AD domain and OU.
+.RE
+.PP
+fixfqdn
+.RS 4
+Makes local configuration modifications necessary to ensure that the fully\-qualified domain name of the machine is forward\- and backward\-resolvable. This can work around domain join issues on networks with sub\-optimal DNS setups.
+.RE
+.PP
+setname
+.RS 4
+Changes the hostname of this machine to
+\fIname\fR. As it is necessary to have a unique, non\-generic name before joining AD, this operation is provided as a convenient way to quickly rename this computer before performing a join.
+.RE
+.SS "Common options"
+.PP
+\fB\-\-log\fR \fIfilename\fR
+.RS 4
+Log details about the operation to
+\fIfile\fR. If
+\fIfile\fR
+is ".", logging is directed to the console.
+.RE
+.PP
+\fB\-\-loglevel\fR <error | warning | info | verbose >
+.RS 4
+Specifies the level of logging information which should be written to the log file.
+.RE
+.PP
+\fB\-\-help\fR
+.RS 4
+Displays brief usage and help information. No operation is performed.
+.RE
+.SS "Join and leave options"
+.PP
+\fB\-\-ou\fR \fIorganizational_unit\fR
+.RS 4
+Joins the machine to the OU
+\fIorganizational_unit\fR
+instead of the default "Computers" OU. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied. This option has no effect when leaving a domain.
+.RE
+.PP
+\fB\-\-enable\fR \fImodule\fR
+.RS 4
+Explicitly enables the configuration module
+\fImodule\fR
+during the join or leave operation.
+.RE
+.PP
+\fB\-\-disable\fR \fImodule\fR
+.RS 4
+Explicitly disables the configuration module
+\fImodule\fR
+during the join or leave operation.
+.sp
+Note that some modules are necessary for the proper operation of
+\fILikewise\fR
+while joined to AD. If you attempt to disable such a module,
+\fBdomainjoin\-cli\fR
+will refuse to proceed with a join operation.
+.sp
+For some modules, it is possible to make the relevant configuration changes by hand;
+\fBdomainjoin\-cli\fR
+will inform you of the necessary changes and will proceed with the module disabled if it detects that the changes have been made.
+.RE
+.PP
+\fB\-\-details\fR \fImodule\fR
+.RS 4
+Provide details about module
+\fImodule\fR
+and what specific configuration changes it would perform during a join or leave operation. No actual operation is performed.
+.RE
+.PP
+\fB\-\-preview\fR
+.RS 4
+Provide a summary of what configuration modules would be run during a join or leave operation. No actual operation is performed.
+.RE
+.PP
+\fB\-\-advanced\fR
+.RS 4
+Turns on debugging information during leave and join operations and provides more verbose output when using
+\fB\-\-preview\fR. This is generally only helpful when diagnosing unusual system or network configuration issues.
+.RE
+.SH "EXAMPLES"
+.PP
+Example invocations of
+\fBdomainjoin\-cli\fR
+and their effects follow:
+.sp
+.RS 4
+.nf
+$ domainjoin\-cli join sales.my\-company.com Administrator@sales rosebud
+.fi
+.RE
+.PP
+Joins the AD domain
+sales.my\-company.com
+using
+Administrator
+as the username and
+rosebud
+as the password. This is the typical join scenario.
+.sp
+.RS 4
+.nf
+$ domainjoin\-cli \-\-log . leave
+.fi
+.RE
+.PP
+Leaves the current AD domain without attempting to disable the machine account as no user credentials were specified. Information about the process will be logged to the console at the default logging level.
+.sp
+.RS 4
+.nf
+$ domainjoin\-cli join \-\-disable nsswitch sales.my\-company.com Administrator@sales
+.fi
+.RE
+.PP
+Joins the AD domain
+sales.my\-company.com
+using
+Administrator
+as the username and prompting for the password. If possible, nsswitch configuration will not be modified.
+.sp
+.RS 4
+.nf
+$ domainjoin\-cli join \-\-preview sales.my\-company.com Administrator@sales rosebud
+.fi
+.RE
+.PP
+Show what configuration modules would be run when joining the AD domain
+sales.my\-company.com.
+.sp
+.RS 4
+.nf
+$ domainjoin\-cli join \-\-details pam sales.my\-company.com Administrator@sales rosebud
+.fi
+.RE
+.PP
+Show what changes would be made to the system by the
+pam
+module when joining the AD domain
+sales.my\-company.com.
+.SH "VERSION"
+.PP
+This man page is correct for Likewise Open version 4.1.

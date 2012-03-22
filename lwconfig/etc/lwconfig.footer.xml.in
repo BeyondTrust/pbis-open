@@ -1,0 +1,4 @@
+  <xi:include href="file://@lwconfigdir@/lwconfig_end.xml">
+     <xi:fallback></xi:fallback>
+  </xi:include>
+</capabilities>

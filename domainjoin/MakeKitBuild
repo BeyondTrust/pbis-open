@@ -1,0 +1,69 @@
+SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui scripts"
+
+option()
+{
+    mk_option \
+        OPTION=dj-gui \
+        PARAM='yes|no' \
+        VAR=DJ_GUI \
+        DEFAULT="yes" \
+        HELP="Build domainjoin GUI"
+}
+
+configure()
+{
+    mk_config_header "include/DomainJoinConfig.h"
+    
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    
+    mk_define LOCALSTATEDIR "\"$MK_LOCALSTATEDIR\""
+    mk_define BINDIR "\"$MK_BINDIR\""
+    mk_define SBINDIR "\"$MK_SBINDIR\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define DATADIR "\"$MK_DATADIR\""
+
+    if [ "$DJ_GUI" = yes ] && mk_pkg_config \
+	VARPREFIX=GTK \
+	glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
+    then
+        DJ_GUI_INTERFACE="gtk"       
+
+        mk_check_functions \
+            HEADERDEPS="gtk/gtk.h" \
+            CPPFLAGS="$GTK_CPPFLAGS" \
+            CFLAGS="$GTK_CFLAGS" \
+            LDFLAGS="$GTK_LDFLAGS" \
+            LIBDEPS="$GTK_LIBS" \
+            gtk_file_chooser_dialog_new
+    elif [ "$MK_HOST_OS" = "darwin" ]
+    then
+        DJ_GUI_INTERFACE="carbon"
+    else
+        DJ_GUI_INTERFACE="no"
+	mk_skip_subdir domainjoin-gui
+    fi
+
+    mk_msg "GUI interface: $DJ_GUI_INTERFACE"
+    
+    mk_check_headers \
+	signal.h CoreFoundation/CoreFoundation.h
+
+    mk_check_functions \
+	HEADERDEPS="signal.h" \
+	sigprocmask
+
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    mk_check_functions \
+        HEADERDEPS="unistd.h" \
+        sysconf
+}

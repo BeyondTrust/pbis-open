@@ -1,0 +1,39 @@
+make()
+{
+    DSSETUP_SOURCES="\
+        globals.c                       \
+	dssetup.c                       \
+	dssetup_cfg.c                   \
+	dssetup_srv.c                   \
+	dsr_memory.c                    \
+	dsr_security.c                  \
+	dsr_accesstoken.c               \
+	dsr_rolegetprimarydomaininfo.c"
+    
+
+    lw_dceidl \
+	IDL=../../../idl/dssetup.idl \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADER="dssetup_h.h" \
+	SSTUB="dssetup_sstub.c" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=dssetup_stub \
+	SOURCES="dssetup_sstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_dlo \
+	DLO=dssetup \
+        INSTALLDIR="${rpcserverdir}" \
+	SOURCES="$DSSETUP_SOURCES" \
+	GROUPS="dssetup_stub" \
+	INCLUDEDIRS=". ../../include ../../api ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h" \
+	LIBDEPS="lsaserverapi lwnetclientapi lwioclient lwadvapi" \
+	DEPS="dssetup_h.h"
+}

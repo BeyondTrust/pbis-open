@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# Controlled only by:
+#
+# BUILD_DEBUG
+# BUILD_MKOUT_ROOT
+# BUILD_OS_TYPE
+
+usage()
+{
+    cat <<EOF
+usage: `basename $0` [options]
+
+    Runs make in BUILD_MKOUT_ROOT/{debug,release}
+    as determined by whether BUILD_DEBUG is defined.
+
+    Unrecognized options are passed through to make.
+
+    MAKE can be defined to override the default make.
+
+    If defined, BUILD_OS_TYPE is used to figure out
+    a default for -j flags.
+
+  options:
+
+    --make          This help.
+    --mkhelp        Show make help (can use -- --help instead).
+    --noj           Skip figuring out -j to pass into make.
+    --              Pass remaining options through to make (used
+                    to escape any options listed above).
+EOF
+    exit 1
+}
+
+if [ -z "${MAKE}" ]; then
+   MAKE=make
+fi
+
+OPT_J=true
+
+# Parse options
+while true ; do
+    case "$1" in
+        --)
+            break
+            ;;
+	--help)
+	    usage
+	    ;;
+	--mkhelp)
+            exec "${MAKE}" --help
+	    ;;
+	--noj)
+            OPT_J=false
+	    ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -z "${BUILD_MKOUT_ROOT}" ]; then
+    echo "You must define BUILD_MKROOT_ROOT (optionally by running buildenv)"
+    exit 1
+fi
+
+if [ -n "${BUILD_DEBUG}" ]; then
+    TYPE=debug
+else
+    TYPE=release
+fi
+
+jflag=
+if ${OPT_J} ; then
+    if [ "${BUILD_OS_TYPE}" = 'linux' ]; then
+        jflag="-j$((`cat /proc/cpuinfo | grep '^processor' | wc -l` * 2))"
+    elif [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+        num_procs=`/usr/sbin/psrinfo | /usr/bin/wc -l`
+        if [ -n "${num_procs}" ]; then
+            jflag="-j$((${num_procs} * 2))"
+        fi
+    elif [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+        num_procs=`sysctl -n hw.ncpu`
+        if [ -n "${num_procs}" ]; then
+            jflag="-j$((${num_procs} * 2))"
+        fi
+    fi
+fi
+
+DIR="${BUILD_MKOUT_ROOT}/${TYPE}"
+set -x -e
+cd "${DIR}"
+exec "${MAKE}" ${jflag} "$@"

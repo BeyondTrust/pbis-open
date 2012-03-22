@@ -1,0 +1,86 @@
+make()
+{
+    mk_get_system_var SYSTEM="build/$MK_BUILD_PRIMARY_ISA" "MK_CC"
+    BUILD_CC="$result"
+    mk_get_system_var SYSTEM="build/$MK_BUILD_PRIMARY_ISA" "MK_CFLAGS"
+    BUILD_CFLAGS="$result"
+
+    SASL_HEADERS="\
+        sasl/md5global.h \
+        sasl/sasl.h \
+        sasl/hmac-md5.h \
+        sasl/saslplug.h \
+        sasl/md5.h \
+        sasl/prop.h \
+        sasl/saslutil.h"
+
+    case "$MK_OS" in
+        freebsd)
+            SASL_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2.la \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego.la"
+            ;;
+        darwin)
+            SASL_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/sasl2/libgssapiv2.2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2.la \
+                ${MK_LIBDIR}/sasl2/libgssspnego.2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego.la"
+            ;;
+        hpux)
+            SASL_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2.23 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2.la \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2.23 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego.la"
+            ;;
+        *)
+            SASL_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2.0.23 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2.la \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2.0.23 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego.la"
+            ;;
+    esac
+
+    mk_autotools \
+        HEADERS="$SASL_HEADERS" \
+        LIBS='sasl2:2:23:0' \
+        TARGETS="$SASL_EXTRA_TARGETS" \
+	HEADERDEPS="gssapi.h" \
+	LIBDEPS="gssapi_krb5" \
+        CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE" \
+        -- \
+        --with-configdir="${MK_LIBDIR}/sasl2" \
+        --with-plugindir="${MK_LIBDIR}/sasl2" \
+        --without-dblib \
+        --without-saslauthd \
+        --without-authdaemond \
+        --disable-macos-framework \
+        --disable-sample \
+        --disable-cram \
+        --disable-digest \
+        --disable-otp \
+        --disable-plain \
+        --disable-anon \
+        --enable-gss_mutexes \
+        --disable-static \
+        --enable-shared \
+        --enable-fast-install \
+        BUILD_CC="$BUILD_CC" \
+        BUILD_CFLAGS="$BUILD_CFLAGS"
+}

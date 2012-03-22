@@ -1,0 +1,124 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Service.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Service.h
+ * @brief OpenSOAP API サービス処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPService OpenSOAPService
+     * @brief OpenSOAPService 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPService    *OpenSOAPServicePtr
+     * @brief OpenSOAPService ポインタ定義
+     */
+    /**
+      * @typedef int (*OpenSOAPServiceFuncPtr)(OpenSOAPEnvelopePtr request, OpenSOAPEnvelopePtr *response, void *opt)
+      * @brief サービスの関数ポインタ定義
+      * @param
+      *    request OpenSOAPEnvelopePtr [in] ((|request|)) サービス要求
+      * @param
+      *    response OpenSOAPEnvelopePtr * [out] ((|response|)) サービスレスポンス
+      * @param
+      *    opt void * [in, out] ((|opt|))
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPServiceCreateMB(OpenSOAPServicePtr *srv, const char *srv_name, const char *connect_type, int is_loop, ...)
+      * @brief OpenSOAP サービス生成(MB)
+      *
+      * サービス名と接続タイプを指定してOpenSOAP Service を生成します。
+      * @param
+      *    srv OpenSOAPServicePtr * [out] ((|srv|)) OpenSOAP サービスポインタ
+      * @param
+      *    srv_name const char * [in] ((|srv_name|)) サービス名
+      * @param
+      *    connect_type const char * [in] ((|connect_type|)) 接続方式 [stdio|cgi]
+      * @param
+      *    is_loop int [in] ((|is_loop|)) 
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPServiceCreateWC(OpenSOAPServicePtr *srv, const wchar_t *srv_name, const char *connect_type, int is_loop, ...)
+      * @brief OpenSOAP サービス生成(WC)
+      *
+      * サービス名と接続タイプを指定してOpenSOAP Service を生成します。
+      * @param
+      *    srv OpenSOAPServicePtr * [out] ((|srv|)) OpenSOAP サービスポインタ
+      * @param
+      *    srv_name const wchar_t * [in] ((|srv_name|)) サービス名
+      * @param
+      *    connect_type const wchar_t * [in] ((|connect_type|)) 接続方式 [stdio|cgi]
+      * @param
+      *    is_loop int [in] ((|is_loop|)) 
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPServiceRelease(OpenSOAPServicePtr srv)
+      * @brief OpenSOAP サービスの開放
+      *
+      * OpenSOAP サービスを開放します。
+      * @param
+      *    srv OpenSOAPServicePtr [in, out] ((|srv|)) OpenSOAP サービス
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPServiceRegisterMB(OpenSOAPServicePtr srv, const char *name, OpenSOAPServiceFuncPtr func, void *opt)
+      * @brief OpenSOAP サービスを登録(MB)
+      *
+      * Method名とサービス機能関数を指定して OpenSOAP サービスを登録します。
+      * @param
+      *    srv OpenSOAPServicePtr [in] ((|srv|)) OpenSOAP サービス
+      * @param
+      *    name const char * [in, out] ((|name|)) Method名（第１BodyBlock名）
+      * @param
+      *    func OpenSOAPServiceFuncPtr [in] ((|func|)) サービス関数ポインタ
+      * @param
+      *    opt void * [in] ((|opt|)) サービス関数へ渡すオプションパラメータ
+      * @return
+      *    エラーコード
+      * @note
+      *    In OpenSOAPServiceRun function, if service function name is equal to ((|name|)), then call func(request_env, response_env, opt) and return value is FAILED, stop OpenSOAPServiceRun and return func's return value.
+      */
+    /**
+      * @fn int OpenSOAPServiceRegisterWC(OpenSOAPServicePtr srv, const wchar_t *name, OpenSOAPServiceFuncPtr func, void *opt)
+      * @brief OpenSOAP サービスの登録(WC)
+      *
+      * Method名とサービス機能関数を指定して OpenSOAP Service を登録します。
+      * @param
+      *    srv OpenSOAPServicePtr [in] ((|srv|)) OpenSOAP サービス
+      * @param
+      *    name const wchar_t * [in, out] ((|name|)) Method名（第１BodyBlock名）
+      * @param
+      *    func OpenSOAPServiceFuncPtr [in] ((|func|)) サービス関数ポインタ
+      * @param
+      *    opt void * [in] ((|opt|)) サービス関数へ渡すオプションパラメータ
+      * @return
+      *    エラーコード
+      * @note
+      *    In OpenSOAPServiceRun function, if service function name is equal to ((|name|)), then call func(request_env, response_env, opt) and return value is FAILED, stop OpenSOAPServiceRun and return func's return value.
+      */
+    /**
+      * @fn int OpenSOAPServiceRun(OpenSOAPServicePtr srv)
+      * @brief OpenSOAP サービスを実行
+      *
+      * OpenSOAP サービスを実行します。
+      * @param
+      *    srv OpenSOAPServicePtr [in, out] ((|srv|)) OpenSOAP サービス
+      * @return
+      *    エラーコード
+      */

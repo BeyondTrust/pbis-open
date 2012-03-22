@@ -1,0 +1,16 @@
+# ex: set tabstop=4 expandtab shiftwidth=4:
+
+Name: 		@PKG_RPM_NAME@
+Summary: 	PowerBroker Identity Services Security Application Integration
+Version: 	@PKG_RPM_VERSION@
+Release: 	@PKG_RPM_RELEASE@
+License: 	Likewise Proprietary
+URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+Group: 		System Environment/Daemons
+Prereq: grep, sh-utils
+AutoReq: no
+AutoProv: no
+
+%description
+PowerBroker Identity Services Security Application Integration provide single sign on support.
+

@@ -1,0 +1,776 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: StringHash.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>StringHash.h</h1>OpenSOAP API ハッシュ処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="String_8h-source.html">OpenSOAP/String.h</a>&gt;</code><br>
+
+<p>
+<a href="StringHash_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a0" doxytag="StringHash.h::OpenSOAPStringHash" ></a>
+typedef tagOpenSOAPStringHash&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a0">OpenSOAPStringHash</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPStringHash 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="StringHash.h::OpenSOAPStringHashPtr" ></a>
+typedef <a class="el" href="StringHash_8h.html#a0">OpenSOAPStringHash</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPStringHash ポインタ定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a2">OpenSOAPStringHashCreate</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> *strh)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create OpenSOAPString Hash.  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a3">OpenSOAPStringHashRelease</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Release OpenSOAPString Hash.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a4">OpenSOAPStringHashClear</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clear OpenSOAPString Hash.  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a5">OpenSOAPStringHashRemoveKey</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> key, void **val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash から登録削除.  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a6">OpenSOAPStringHashSetValue</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> key, void *val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash に値の登録.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a7">OpenSOAPStringHashSetValueMB</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, const char *key, void *val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash に値の登録(MB).  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a8">OpenSOAPStringHashSetValueWC</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, const wchar_t *key, void *val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash に値の登録(WC).  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a9">OpenSOAPStringHashGetValue</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> key, void **val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash から値の取得.  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a10">OpenSOAPStringHashGetValueMB</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, const char *key, void **val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash から値の取得(MB).  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a11">OpenSOAPStringHashGetValueWC</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, const wchar_t *key, void **val)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash から値の取得(WC).  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a12">OpenSOAPStringHashGetSize</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, size_t *sz)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash の登録数の取得.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a13">OpenSOAPStringHashGetKeys</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, size_t *sz, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *keys)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash の登録Key全ての取得.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a14">OpenSOAPStringHashGetValues</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, size_t *sz, void **vals)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash の登録値全ての取得.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="StringHash_8h.html#a15">OpenSOAPStringHashApplyToValues</a> (<a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> strh, int(*aply)(void *, void *), void *opt)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString Hash の登録値全てへの関数の適用。.  <a href="#a15"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API ハッシュ処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>関数</h2>
+<a class="anchor" name="a15" doxytag="StringHash.h::OpenSOAPStringHashApplyToValues" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashApplyToValues </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>aply</em>)(void *, void *), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>opt</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash の登録値全てへの関数の適用。. 
+<p>
+OpenSOAPString Hash の登録値全てへの関数の適用。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>aply()</em>&nbsp;</td><td>int [in] ( * ((|aply|)) )(void *val, void *opt) 適用する関数。この関数の戻り値を ret として、OPENSOAP_FAILED(ret) が真になるかまたは、全ての値にこの関数を適用するまで続ける。 </td></tr>
+    <tr><td valign=top><em>opt</em>&nbsp;</td><td>void * [in] ((|opt|)) 適用する関数のオプションパラメータ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="StringHash.h::OpenSOAPStringHashClear" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashClear </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>strh</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Clear OpenSOAPString Hash. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a2" doxytag="StringHash.h::OpenSOAPStringHashCreate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashCreate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>strh</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Create OpenSOAPString Hash. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr * [out] ((|strh|)) 作成した OpenSOAP 文字列 Hashのポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="StringHash.h::OpenSOAPStringHashGetKeys" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetKeys </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>keys</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash の登録Key全ての取得. 
+<p>
+OpenSOAPString Hash の登録Key全ての取得 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [in, out] ((|sz|)) [in] 取得する登録Keyの格納場所のサイズ; [out] key に格納したサイズ。 </td></tr>
+    <tr><td valign=top><em>keys</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|keys|)) 取得する登録Keyの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="StringHash.h::OpenSOAPStringHashGetSize" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetSize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash の登録数の取得. 
+<p>
+OpenSOAPString Hash の登録数の取得。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [out] ((|sz|)) 取得する登録数の格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="StringHash.h::OpenSOAPStringHashGetValue" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetValue </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void **&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash から値の取得. 
+<p>
+OpenSOAPString Hash から値の取得 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void ** [out] ((|val|)) 取得する値の格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="StringHash.h::OpenSOAPStringHashGetValueMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetValueMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void **&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash から値の取得(MB). 
+<p>
+OpenSOAPString Hash から値の取得(MB) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>const char * [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void ** [out] ((|val|)) 取得する値の格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="StringHash.h::OpenSOAPStringHashGetValues" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetValues </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void **&nbsp;</td>
+          <td class="mdname" nowrap> <em>vals</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash の登録値全ての取得. 
+<p>
+OpenSOAPString Hash の登録値全ての取得 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [in, out] ((|sz|)) </td></tr>
+    <tr><td valign=top><em>vals</em>&nbsp;</td><td>void ** [out] ((|vals|)) 取得する登録値の格納場所。 値の順番は OpenSOAPStringHashGetKeys 関数で取得した key の順番とは無関係とする。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="StringHash.h::OpenSOAPStringHashGetValueWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashGetValueWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void **&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash から値の取得(WC). 
+<p>
+OpenSOAPString Hash から値の取得(WC) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>const wchar_t * [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void ** [out] ((|val|)) 取得する値の格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="StringHash.h::OpenSOAPStringHashRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>strh</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Release OpenSOAPString Hash. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="StringHash.h::OpenSOAPStringHashRemoveKey" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashRemoveKey </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void **&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash から登録削除. 
+<p>
+OpenSOAPString Hash から登録削除。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void ** [out] ((|val|)) 登録していた値の格納場所。NULL の場合は値を返さない。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="StringHash.h::OpenSOAPStringHashSetValue" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashSetValue </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash に値の登録. 
+<p>
+OpenSOAPString Hash に値の登録 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void * [in] ((|val|)) 登録する値。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="StringHash.h::OpenSOAPStringHashSetValueMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashSetValueMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash に値の登録(MB). 
+<p>
+OpenSOAPString Hash に値の登録(MB) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>const char * [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void * [in] ((|val|)) 登録する値。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="StringHash.h::OpenSOAPStringHashSetValueWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringHashSetValueWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>strh</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>key</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>val</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPString Hash に値の登録(WC). 
+<p>
+OpenSOAPString Hash に値の登録(WC) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>strh</em>&nbsp;</td><td>OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ </td></tr>
+    <tr><td valign=top><em>key</em>&nbsp;</td><td>const wchar_t * [in] ((|key|)) キー値 </td></tr>
+    <tr><td valign=top><em>val</em>&nbsp;</td><td>void * [in] ((|val|)) 登録する値。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:48 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

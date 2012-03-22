@@ -1,0 +1,23 @@
+make()
+{
+    mk_headers \
+        MASTER="lwadvapi.h" \
+        HEADERS="\
+            lwdef.h \
+            lwerror.h \
+            lwfile.h \
+            lwkrb5.h \
+            lwldap.h \
+            lwmem.h \
+            lwsecurityidentifier.h \
+            lwstr.h \
+            lwtime.h \
+            lwsid.h \
+            lwldap-error.h \
+            lwdscache.h \
+            lwhash.h \
+            lwbuffer.h \
+            lwdlinked-list.h \
+	    " \
+        HEADERDEPS="krb5.h gssapi.h ldap.h lwmsg/status.h"
+}

@@ -1,0 +1,40 @@
+OPERATING_SYSTEMS="aix darwin freebsd hpux linux solaris"
+SUBDIRS="$OPERATING_SYSTEMS"
+
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
+        VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
+        QFE="${LW_PRODUCT_QFE}" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+
+    for os in ${OPERATING_SYSTEMS}
+    do
+        if [ "$MK_HOST_OS" != "$os" ]; then
+            mk_skip_subdir "$os"
+        fi
+    done
+
+    mk_output_file VERSION
+    mk_output_file init-base.sh
+    mk_output_file init-pbis.sh
+}
+
+make()
+{
+    mk_stage \
+        DESTDIR="${MK_LIBEXECDIR}" \
+        init-base.sh init-pbis.sh
+
+    mk_stage \
+        SOURCE="VERSION" \
+        DESTDIR="${MK_PREFIX}/data"
+
+    mk_stage DESTDIR="${MK_PREFIX}/mib" likewise-platform.mib
+}

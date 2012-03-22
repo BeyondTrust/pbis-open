@@ -1,0 +1,644 @@
+#!/bin/sh
+
+Help()
+{
+    echo "usage:"
+    echo "$0 <Local user account> <AD user account> [--move] [--delete] [--keep-admin] [--use-spotlight] [--log <log file path>]"
+    echo ""
+    echo "Notes:"
+    echo "    * Source and AD user account homedir paths are for local system file paths."
+    echo "    * All files and sub-directories of target AD user homedir path will be chown'd"
+    echo "      to the ownership defined by the AD user's UID:GID."
+    echo "    * --move option will migrate the profile without copying the source contents,"
+    echo "      this helps if space is limited."
+    echo "    * --delete option will remove the former local account from the computer,"
+    echo "      this prevents continued use of the local account now replaced by an AD account."
+    echo "    * --keep-admin option will add the AD account to the local admin group"
+    echo "      if the local account was a member."
+    echo "    * --use-spotlight option will change the ownership of former account files based "
+    echo "      on what Spotlight indicates were owned by the former user's id. Not passing"
+    echo "      this option will make the migration tool simply chown all files found under the"
+    echo "      home directory path of the user's profile."
+}
+
+DisplayStatus()
+{
+    case "$rc" in
+        # No error
+        0)
+            echo "Success."
+            ;;
+
+        # General errors
+        1)
+            echo "Incorrect arguments to script."
+            echo ""
+            Help
+            ;;
+        2)
+            echo "Incorrect source homedir path argument."
+            ;;
+        3)
+            echo "Incorrect destination AD user account argument."
+            ;;
+        4)
+            echo "Unable to determine homedir from AD user account argument."
+            ;;
+        5)
+            echo "Unable to determine UID from AD user account argument."
+            ;;
+        6)
+            echo "Unable to determine GID from AD user account argument."
+            ;;
+        7)
+            echo "Failed to determine user id."
+            ;;
+        8)
+            echo "Migration tool not running as administrator, operation not possible."
+            ;;
+        9)
+            echo "Unable to determine homedir as the home prefix hasn't been properly set."
+            ;;
+        10)
+            echo "Unable to determine source local user account homedir."
+            ;;
+        11)
+            echo "Unable to determine source local user account UID."
+            ;;
+
+        # ChangeOwner errors
+        20)
+            echo "Failed to change profile contents ownership to new user/group IDs."
+            ;;
+        21)
+            echo "Spotlight Index reported disabled, please use traditional method."
+            ;;
+        22)
+            echo "Failed to detect old User ID. Please verify it exists."
+            ;;
+
+        # MigrateProfile errors
+        30)
+            echo "Failed to move existing directory to a backup location."
+            ;;
+        31)
+            echo "Failed to create new home directory."
+            ;;
+        32)
+            echo "Failed to make sub-folder for prior user profile."
+            ;;
+        33)
+            echo "Failed to move backup of existing directory to new home directory sub-folder."
+            ;;
+        34)
+            echo "Failed to move files from the source homedir to the destination homedir."
+            ;;
+        35)
+            echo "Failed to copy files from the source homedir to the destination homedir."
+            ;;
+
+        # Delete local account errors
+        40)
+            echo "Failed to remove the former local account from the computer."
+            ;;
+
+        50)
+            echo "Failed to add the AD account to the admin group."
+            ;;
+
+        51)
+            echo "Failed to remove the local account from the admin group."
+            ;;
+
+        # Default case error
+        *)
+            echo "Error: Unknown error occurred."
+            ;;
+    esac
+
+    echo ""
+}
+
+run()
+{
+    ( set -x ; "$@" )
+}
+
+GetOsType()
+{
+    /opt/pbis/bin/domainjoin-cli get_os_type
+}
+
+RemoveAccount()
+{
+    if dscl ${LocalNode} -read "/Users/$LocalUserAccount" > /dev/null; then
+        if [ $LocalIsAdmin -eq 1 ]; then
+            echo "Removing '$LocalUserAccount' from admin group."
+            run dseditgroup -o edit -d "$LocalUserAccount" -t user admin
+
+            #
+            # Failure should only abort the migration if
+            # it will leave the AD user as an admin when
+            # the user didn't check the "keep admin rights"
+            # box.
+            #
+            if [ $? -ne 0 -a "$LocalUserAccount" = "$AdUserAccount" ]; then
+                rc="51"
+                return $rc
+            fi
+        fi
+
+        echo "Removing local account for user '$LocalUserAccount'"
+        run dscl ${LocalNode} delete "/Users/$LocalUserAccount"
+
+        if [ $? -ne 0 ]; then
+            rc="40"
+        else
+            echo ""
+            rc="0"
+        fi
+    else
+        # The user must already be in AD.
+        rc="0"
+    fi
+
+    return $rc
+}
+
+PreserveAdminRights()
+{
+    #
+    # Add the AD user to the admin group. Since the local account
+    # name might be the same, we have to use the GUID to add the
+    # AD user.
+    #
+    local tmp=($(dscl "/Likewise - Active Directory" -read "/Users/$AdUserAccount" GeneratedUID))
+    local guid="${tmp[1]}"
+
+    echo "Local user $LocalUserAccount is an admin; adding $AdUserAccount to group 'admin'."
+    rc="0"
+
+    run dscl . -merge /Groups/admin GroupMembership "$AdUserAccount"
+    if [ $? -ne 0 ]; then
+        rc="50"
+    fi
+
+    if [ $rc -eq 0 ]
+    then
+        run dscl . -merge /Groups/admin GroupMembers "$guid"
+        if [ $? -ne 0 ]; then
+            rc="50"
+        fi
+    fi
+
+    echo
+    return $rc
+}
+
+ChangeOwner()
+{
+    echo "Changing profile content ownership for directory '$DestHomeDirectory'"
+    echo "chown -f -R $NewOwnerUID:$NewOwnerGID $DestHomeDirectory"
+    chown -f -R "$NewOwnerUID":"$NewOwnerGID" "$DestHomeDirectory"
+    if [ $? -ne 0 ]; then
+        rc="20"
+        return $rc
+    else
+        rc="0"
+    fi
+    # Get UID number ownership of users home directory
+    HOMEDIRUIDNUMBER=`stat -f %u $DestHomeDirectory`
+    HOMEDIRGIDNUMBER=`stat -f %g $DestHomeDirectory`
+    if [ $NewOwnerUID -ne $HOMEDIRUIDNUMBER ]; then
+        echo "Failed to change ownership of users home directory."
+        rc="20"
+        return $rc
+    elif [ $NewOwnerGID -ne $HOMEDIRGIDNUMBER ]; then
+        echo "Failed to change group ownership of users home directory."
+        rc="20"
+        return $rc
+    fi
+    echo "Finished changing ownership for directory '$DestHomeDirectory'"
+
+    return 0;
+}
+
+# Unsupported feature and should only be used when SourceHomeDir and DestHomeDir are the same.
+ChangeOwnerViaSpotlight()
+{
+    echo "Detecting if Spotlight is running"
+    mdutil -s / | grep "Indexing enabled" > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "Spotlight index reported enabled"
+    else
+        rc="21"
+        return $rc
+    fi
+
+    IFS=$'\n'
+    # Need to put semicolons after every line as we're setting IFS now...
+
+    echo "Looking for all other files owned by former user UID, outside of the user's home directory, and chowning to new UID and GID values"
+    for item in $(mdfind "kMDItemFSOwnerUserID == ${OldOwnerUID}" | grep -v ^"${SourceHomeDirectory}" );
+        do chown -v "${NewOwnerUID}":"${NewOwnerGID}" "$item";
+    done;
+
+    if [ $? -ne 0 ]; then
+        rc="20";
+        return $rc;
+        unset IFS;
+    else
+        rc="0";
+        unset IFS;
+    fi;
+
+    echo "";
+    return 0;
+}
+
+MigrateProfile()
+{
+    echo "Migrating user profile contents and updating ownership..."
+    echo "    Src:     $SourceHomeDirectory"
+    if [ $MoveOption -eq 1 ]; then
+        echo "    -- to be moved to --"
+    else
+        echo "    -- to be copied to --"
+    fi
+    echo "    Dest:    $DestHomeDirectory"
+    echo "    Profile contents will be set to owner:group ($NewOwnerUID:$NewOwnerGID)"
+    if [ $DeleteOption -eq 1 ]; then
+        echo "    -- Local account will no longer be available --"
+    else
+        echo "    -- Local account will continue to be available for use --"
+    fi
+    echo ""
+
+    USER_ID=`id -u`
+    if [ $? -ne 0 ]; then
+        rc="7"
+        return $rc
+    else
+        rc="0"
+    fi
+
+    if [ $USER_ID -ne 0 ]; then
+        rc="8"
+        return $rc
+    else
+        rc="0"
+    fi
+
+    if test -d $DestHomeDirectory; then
+        echo "Preparing Migration ..."
+
+        # Directory already present
+        echo "Destination directory already exists, backing up existing destination files to a subfolder"
+        echo "called  $DestHomeDirectory/prior-profile"
+        echo "Calling mv "$DestHomeDirectory" "$DestHomeDirectory"-original"
+        mv "$DestHomeDirectory" "$DestHomeDirectory"-original
+        if [ $? -ne 0 ]; then
+            rc="30"
+            return $rc
+        else
+            rc="0"
+        fi
+
+        echo "Calling mkdir -p $DestHomeDirectory"
+        mkdir -p "$DestHomeDirectory"
+        if [ $? -ne 0 ]; then
+            rc="31"
+            return $rc
+        else
+            rc="0"
+        fi
+
+        mkdir -p "$DestHomeDirectory"/prior-profile
+        if [ $? -ne 0 ]; then
+            rc="32"
+            return $rc
+        else
+            rc="0"
+        fi
+
+        mv -f "$DestHomeDirectory"-original/* "$DestHomeDirectory"/prior-profile/.
+        if [ $? -ne 0 ]; then
+            rc="33"
+            return $rc
+        else
+            rc="0"
+        fi
+
+        rm -rf "$DestHomeDirectory"-original
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove temporary backup of existing directory, going to otherwise continue profile migration"
+            rc="0"
+        fi
+        echo ""
+    fi
+
+    echo "Performing profile content migration..."
+    if [ $MoveOption -eq 1 ]; then
+        if [ -d $DestHomeDirectory ]; then
+            echo "Moving existing $DestHomeDirectory to $DestHomeDirectory.old"
+            mv -f "$DestHomeDirectory" "$DestHomeDirectory".old
+        fi
+        mkdir -p "$DestHomeDirectory"
+        rmdir "$DestHomeDirectory"
+        echo "mv -f -v $SourceHomeDirectory $DestHomeDirectory"
+        mv -f -v "$SourceHomeDirectory" "$DestHomeDirectory"
+        if [ $? -ne 0 ]; then
+            rc="34"
+            return $rc
+        else
+            rc="0"
+        fi
+
+        echo "rm -rf $SourceHomeDirectory"
+        rm -rf "$SourceHomeDirectory"
+        if [ $? -ne 0 ]; then
+            echo "Failed to remove the original source homedir"
+            rc="0"
+        fi
+
+        echo "ln -s $DestHomeDirectory $SourceHomeDirectory"
+        ln -s "$DestHomeDirectory" "$SourceHomeDirectory"
+        if [ $? -ne 0 ]; then
+            echo "Failed to create a symbolic link from the source to the destnation home directory"
+            rc="0"
+        fi
+    else
+        if [ -d $DestHomeDirectory ]; then
+            echo "$DestHomeDirectory exists, continuing migration"
+        else
+            mkdir -p $DestHomeDirectory
+        fi
+
+        echo "cp -Rfv $SourceHomeDirectory/* $DestHomeDirectory/"
+        cd $SourceHomeDirectory
+        find . -print | cpio -pdmv $DestHomeDirectory
+        if [ $? -ne 0 ]; then
+            rc="35"
+            return $rc
+        else
+            rc="0"
+        fi
+    fi
+    echo ""
+
+    #
+    # Now call ChangeOwner function to chown the profile contents to the AD account UID:GID
+    #
+    ChangeOwner
+    if [ $rc -ne 0 ]; then
+        return $rc
+    fi
+
+    if [ $UseSpotlightOption -eq 1 ]; then
+        ChangeOwnerViaSpotlight
+        if [ $rc -ne 0 ]; then
+            return $rc
+        fi
+    fi
+
+    return 0
+}
+
+ChownProfile()
+{
+    echo "The source and destination profile home directories are the same. Contents of the profile"
+    echo "will have ownership changed to account ($AdUserAccount)..."
+    echo "    Home dir:     $DestHomeDirectory"
+    echo "    Profile contents will be set to owner:group ($NewOwnerUID:$NewOwnerGID)"
+    if [ $DeleteOption -eq 1 ]; then
+        echo "    -- Local account will no longer be available --"
+    else
+        echo "    -- Local account will continue to be available for use --"
+    fi
+    echo ""
+
+    USER_ID=`id -u`
+    if [ $? -ne 0 ]; then
+        rc="7"
+        return $rc
+    else
+        rc="0"
+    fi
+
+    if [ $USER_ID -ne 0 ]; then
+        rc="8"
+        return $rc
+    else
+        rc="0"
+    fi
+
+    #
+    # Now call ChangeOwner function to chown the profile contents to the AD account UID:GID
+    #
+    ChangeOwner
+    if [ $rc -ne 0 ]; then
+        return $rc
+    fi
+
+    if [ $UseSpotlightOption -eq 1 ]; then
+        ChangeOwnerViaSpotlight
+        if [ $rc -ne 0 ]; then
+            return $rc
+        fi
+    fi
+
+    return 0
+}
+
+
+#
+# main
+#
+MoveOption=0
+DeleteOption=0
+KeepAdminOption=0
+UseSpotlightOption=0
+DestHomeDirectory=""
+OldOwnerUID=""
+NewOwnerUID=""
+NewOwnerGID=""
+SourceHomeDirectory=""
+LocalIsAdmin=0
+
+if [ -f /var/log/pbis-migrate.start ]; then
+    rm /var/log/pbis-migrate.start
+fi
+
+echo "$1 $2 $3 $4 $5 $6 $7 $8" >> /var/log/pbis-migrate.start
+
+# Verify that we have at least the 2 required arguments
+if [ $# -lt 2 ]; then
+   # if the script has no args, show help
+   rc="1"
+   Help
+   exit $rc
+fi
+
+# Process script arguments and store in global variables for use when processing migration
+#
+# Important note: These arguments are intended to be always supported such that the GUI
+#  Likewise Domain Join.app can call this script with the values determined by selecting
+# the user profiles from the Migrate profile dialog.
+#
+LocalUserAccount="$1"
+AdUserAccount="$2"
+shift 2
+
+while [ "$1" ]
+do
+    case "$1" in
+        --delete)
+            DeleteOption=1
+            ;;
+
+        --keep-admin-rights|--keep-admin)
+            KeepAdminOption=1
+            ;;
+
+        --use-spotlight|--spotlight)
+            UseSpotlightOption=1
+            ;;
+
+        --log)
+            exec >> "$2" 2>&1
+            shift
+            ;;
+
+        --move)
+            MoveOption=1
+            ;;
+
+        " ")
+            : The GUI uses a space in place of options it does not want.
+            ;;
+
+        *)
+            rc="1"
+            Help
+            exit $rc
+            ;;
+    esac
+
+    shift
+done
+
+echo ""
+
+if [ -z "$LocalUserAccount" ]; then
+    echo "Incorrect source Local user account argument..."
+    echo ""
+    rc="2"
+    DisplayStatus
+    exit $rc
+fi
+
+if [ -z "$AdUserAccount" ]; then
+    echo "Incorrect destination AD user account argument..."
+    echo ""
+    rc="3"
+    DisplayStatus
+    exit $rc
+fi
+
+#
+# Determine local node.
+#
+if dscl /Local/Default list / 2> /dev/null | grep -q Users; then
+    LocalNode=/Local/Default
+else
+    LocalNode=/NetInfo/root
+fi
+
+#
+# Determine whether the local user is an admin.
+#
+if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
+    LocalIsAdmin=1
+fi
+
+#
+# Get the homedir details for the source Local user.
+#
+SourceHomeDirectory=`dscl . read /Users/"$LocalUserAccount" NFSHomeDirectory | awk '{print $2}'`
+if [ -z "$SourceHomeDirectory" ]; then
+    rc="10"
+    DisplayStatus
+    exit $rc
+fi
+
+#
+# Get the UID details for the source Local user.
+#
+OldOwnerUID=`dscl . read "/Users/$LocalUserAccount" | awk '/UniqueID:/{ print $2 }'`
+if [ -z "$OldOwnerUID" ]; then
+    rc="11"
+    DisplayStatus
+    exit $rc
+fi
+
+#
+# Get the details about the destination AD user.
+#
+DestHomeDirectory=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Home | awk '{print $3}'`
+if [ -z "$DestHomeDirectory" ]; then
+    rc="4"
+    DisplayStatus
+    exit $rc
+fi
+
+# In certain scenarios the homedir prefix doesn't get properly detected.
+echo "$DestHomeDirectory" | grep "%H" > /dev/null
+if [ $? -eq 0 ]; then
+    rc="9"
+    exit $rc
+fi
+
+NewOwnerUID=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Uid | awk '{print $2}'`
+if [ -z "$NewOwnerUID" ]; then
+    rc="5"
+    DisplayStatus
+    exit $rc
+fi
+
+NewOwnerGID=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Gid | awk '{print $2}'`
+if [ -z "$NewOwnerGID" ]; then
+    rc="6"
+    DisplayStatus
+    exit $rc
+fi
+
+# Perform the migration...
+if [ "$SourceHomeDirectory" == "$DestHomeDirectory" ]; then
+    ChownProfile
+else
+    MigrateProfile
+fi
+
+#
+# Now call RemoveAccount function to delete the former local account.
+#
+if [ $rc -eq 0 -a $DeleteOption -eq 1 ]; then
+    RemoveAccount
+fi
+
+#
+# Now call PreserveAdminRights function to add the AD account to the
+# admin group if the local account is a member.
+#
+if [ $rc -eq 0 -a $LocalIsAdmin -eq 1 -a $KeepAdminOption -eq 1 ]; then
+    PreserveAdminRights
+fi
+
+if [ $rc -eq 0 ]; then
+    echo "Profile migration completed successfully"
+    echo ""
+fi
+
+DisplayStatus
+exit $rc
+

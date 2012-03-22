@@ -1,0 +1,68 @@
+MODULES="compiler doxygen"
+SUBDIRS='include src test example doc'
+
+option()
+{
+    mk_option \
+        OPTION=lwmsg-examples \
+        VAR="LWMSG_BUILD_EXAMPLES" \
+        DEFAULT="no" \
+        HELP="Build and install example programs"
+}
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes"
+
+    mk_check_headers \
+        string.h \
+        strings.h \
+        sys/types.h \
+        sys/socket.h \
+        sys/varargs.h \
+        sys/select.h \
+        unistd.h
+        
+    mk_check_libraries FAIL=yes \
+        lwbase lwbase_nothr
+        
+    mk_check_libraries \
+        pthread rt dl xnet
+
+    lw_check_iconv
+    
+    mk_msg_checking "pthread_sigmask in libc"
+    if mk_check_function HEADERDEPS="pthread.h signal.h" pthread_sigmask
+    then
+        mk_msg_result "yes"
+        mk_define HAVE_PTHREAD_SIGMASK_IN_LIBC
+    else
+        mk_msg_result "no"
+    fi
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h sys/socket.h unistd.h" \
+        getpeereid
+
+    if [ "$MK_OS" = "freebsd" ]
+    then
+        mk_check_functions \
+            HEADERDEPS="pthread-private.h" \
+            CPPFLAGS="-I${MK_SOURCE_DIR}${MK_SUBDIR}/include" \
+            _pthread_mutexattr_settype
+    fi
+
+    mk_multiarch_do
+        mk_define "MOD_EXT" "${MK_DLO_EXT}"
+        mk_check_endian
+    mk_multiarch_done
+
+    mk_check_doxygen
+    mk_check_moonunit
+    
+    [ "$LWMSG_BUILD_EXAMPLES" = "yes" ] || mk_skip_subdir example
+}

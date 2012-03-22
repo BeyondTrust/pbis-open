@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE SSML SYSTEM "ssml.dtd">
+<SSML name='CalcAsync' xmlns="x-schema:ssmlSchema.xml">
+	<service name='CalcAsync'
+	 nsuri='http://services.opensoap.jp/samples/CalcAsync/'>
+	    <connection name='CalcAsyncStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/CalcAsync/CalcAsyncService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+	    <operation type ='CalcAsyncStdio'>Add</operation>
+	    <operation type ='CalcAsyncStdio'>Subtract</operation>
+	    <operation type ='CalcAsyncStdio'>Multiply</operation>
+	    <operation type ='CalcAsyncStdio'>Divide</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

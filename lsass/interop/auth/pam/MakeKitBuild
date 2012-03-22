@@ -1,0 +1,28 @@
+make()
+{
+    PAM_SOURCES="\
+       pam-acct.c      \
+       pam-auth.c      \
+       pam-context.c   \
+       pam-conv.c      \
+       pam-error.c     \
+       pam-globals.c   \
+       pam-passwd.c    \
+       pam-session.c   \
+       pam-notify.c"
+
+    mk_multiarch_do
+        case "$MK_HOST_OS" in
+            hpux) PAMEXT=.sl ;;
+            *) PAMEXT="$MK_DLO_EXT" ;;
+        esac
+        mk_dlo \
+	    DLO=pam_lsass \
+	    EXT="$PAMEXT" \
+	    INSTALLDIR="$PAMDIR" \
+	    SOURCES="$PAM_SOURCES" \
+	    INCLUDEDIRS="../include ../../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lsaauth pam"
+    mk_multiarch_done
+}

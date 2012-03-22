@@ -1,0 +1,72 @@
+make()
+{
+    MK_HEADERDEPS="iconv.h lw/base.h"
+
+    LWMSG_NOTHR_SOURCES="\
+        assoc.c \
+        assoc-marshal.c \
+        assoc-session.c \
+        assoc-call.c \
+        buffer.c \
+        call.c \
+        convert.c \
+        connection.c \
+        connection-buffer.c \
+        connection-state.c \
+        connection-wire.c \
+        connection-security.c \
+        connection-marshal.c \
+        message.c \
+        protocol.c \
+        data-context.c \
+        data-graph.c \
+        data-marshal.c \
+        data-unmarshal.c \
+        data-print.c \
+        type.c \
+        type-iterate.c \
+        type-rep.c \
+        type-print.c \
+        status.c \
+        context.c \
+        util.c \
+        time.c \
+        xnet.c \
+        security.c \
+        mt19937ar.c \
+        session.c \
+        archive.c \
+        archive-format.c"
+
+    LWMSG_SOURCES="\
+        peer.c \
+        peer-task.c \
+        peer-call.c \
+        peer-session.c \
+        peer-direct.c \
+        peer-log.c"
+
+    mk_multiarch_do
+        mk_library \
+            LIB=lwmsg_nothr \
+            SOURCES="$LWMSG_NOTHR_SOURCES" \
+            INCLUDEDIRS="../include" \
+            LIBDEPS="$LIB_ICONV $LIB_DL $LIB_RT $LIB_XNET" \
+            SYMFILE="liblwmsg_nothr.sym"
+
+        mk_library \
+            LIB=lwmsg \
+            SOURCES="$LWMSG_SOURCES" \
+            INCLUDEDIRS="../include" \
+            LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
+            SYMFILE="liblwmsg.sym"
+
+    mk_multiarch_done
+
+    mk_program \
+        INSTALLDIR="${MK_LIBEXECDIR}" \
+        PROGRAM=lwma \
+        SOURCES="lwma-main.c" \
+        INCLUDEDIRS="../include" \
+        LIBDEPS="lwmsg_nothr"
+}

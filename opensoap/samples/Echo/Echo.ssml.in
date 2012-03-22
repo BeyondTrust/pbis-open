@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='Echo'
+	 nsuri='http://soapinterop.org/'>
+	    <connection name='EchoStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/Echo/EchoService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='EchoStdio'>Echo</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

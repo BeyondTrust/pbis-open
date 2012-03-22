@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<project>
+  <target name="local.build">
+    <delete failonerror="false">
+      <fileset>
+        <include name="${build.meta.current}/*.ilk" />
+        <include name="${build.meta.current}/*.obj" />
+        <include name="${build.meta.current}/*.pdb" />
+        <include name="${build.meta.current}/*.exe" />
+      </fileset>      
+    </delete>
+    <cl outputdir="${build.meta.current}/" options="/Zi">
+      <defines>
+        <define name="UNICODE"/>
+        <define name="_UNICODE"/>
+        <define name="WIN32_LEAN_AND_MEAN"/>
+      </defines>
+      <sources>
+        <include name="*.c"/>
+      </sources>
+    </cl>
+    <link output="${build.meta.current}/sspi-client.exe" options="/DEBUG /DEBUGTYPE:cv Ws2_32.lib secur32.lib" pdbfile="${build.meta.current}/sspi-client.pdb">
+      <sources basedir="${build.meta.current}/">
+        <include name="sspi-common.obj"/>
+        <include name="sspi-client.obj"/>
+      </sources>
+    </link>
+    <link output="${build.meta.current}/sspi-server.exe" options="/DEBUG /DEBUGTYPE:cv Ws2_32.lib secur32.lib" pdbfile="${build.meta.current}/sspi-server.pdb">
+      <sources basedir="${build.meta.current}/">
+        <include name="sspi-common.obj"/>
+        <include name="sspi-server.obj"/>
+      </sources>
+    </link>
+  </target>
+</project>
