@@ -3986,6 +3986,10 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
         RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
                  ("(rpc__cn_assoc_process_auth_tlr) Free'd auth_buffer: %x\n",
                  assoc->security.auth_buffer_info.auth_buffer));
+
+        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
+                     RPC_C_MEM_CN_PAC_BUF);
+        assoc->security.auth_buffer_info.auth_buffer = NULL;
         assoc->security.auth_buffer_info.auth_buffer_len = 0;
         assoc->security.auth_buffer_info.auth_buffer_max = 0;
     }
@@ -4415,11 +4419,11 @@ rpc_cn_packet_p_t	header;
             return (rpc_s_bad_pkt);
         }
         memcpy(auth_buffer, auth_value, auth_value_len);
-        }
-        else
-        {
-        if (auth_value_len < RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL)
+    }
+    else
     {
+        if (auth_value_len < RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL)
+        {
             RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
                             ("(save_sec_fragment) Error - auth_value_len too small %d < RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL %d \n",
                              auth_value_len, RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL));
@@ -4454,16 +4458,9 @@ rpc_cn_packet_p_t	header;
 
     auth_buffer_len += auth_value_len;
 
-    
     /*
      * Update our per-association data
      */
-    if (assoc->security.auth_buffer_info.auth_buffer)
-    {
-        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
-                     RPC_C_MEM_CN_PAC_BUF);
-        assoc->security.auth_buffer_info.auth_buffer = NULL;
-    }
     assoc->security.auth_buffer_info.auth_buffer = auth_buffer;
     assoc->security.auth_buffer_info.auth_buffer_len = auth_buffer_len;
     assoc->security.auth_buffer_info.auth_buffer_max = auth_buffer_max;
