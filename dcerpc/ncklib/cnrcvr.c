@@ -1307,12 +1307,6 @@ INTERNAL void receive_dispatch
     {
         (*ovf_fragbuf_p->fragbuf_dealloc)(ovf_fragbuf_p);
     }
-    if (assoc->security.auth_buffer_info.auth_buffer)
-    {
-        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
-                     RPC_C_MEM_CN_PAC_BUF);
-        assoc->security.auth_buffer_info.auth_buffer = NULL;
-    }
 }
 
 
@@ -1378,7 +1372,7 @@ INTERNAL void receive_packet
     /* Quit for valgrind report output */
     static int count = 0;
 
-    if (count++ > 10000)
+    if (count++ > 60000)
     {
         _exit(0);
     }
