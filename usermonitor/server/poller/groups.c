@@ -961,24 +961,33 @@ UmnSrvFindDeletedGroups(
                         0,
                         KEY_ALL_ACCESS,
                         &hMembers);
-        BAIL_ON_UMN_ERROR(dwError);
+        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            // This group was not fully written to the registry. Treat it like
+            // it has no members.
+            dwError = 0;
+        }
+        else
+        {
+            BAIL_ON_UMN_ERROR(dwError);
 
-        dwError = UmnSrvFindDeletedGroupMembers(
-                        pEventlog,
-                        hReg,
-                        pGroupKeyName,
-                        hMembers,
-                        Now,
-                        FALSE,
-                        old.gr_gid,
-                        old.gr_name);
-        BAIL_ON_UMN_ERROR(dwError);
+            dwError = UmnSrvFindDeletedGroupMembers(
+                            pEventlog,
+                            hReg,
+                            pGroupKeyName,
+                            hMembers,
+                            Now,
+                            FALSE,
+                            old.gr_gid,
+                            old.gr_name);
+            BAIL_ON_UMN_ERROR(dwError);
 
-        // Must close hMembers before trying to delete it
-        RegCloseKey(
-                hReg,
-                hMembers);
-        hMembers = NULL;
+            // Must close hMembers before trying to delete it
+            RegCloseKey(
+                    hReg,
+                    hMembers);
+            hMembers = NULL;
+        }
 
         if (old.LastUpdated < Now)
         {
