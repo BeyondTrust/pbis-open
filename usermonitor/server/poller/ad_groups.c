@@ -306,6 +306,21 @@ UmnSrvUpdateADGroup(
                     &hKey);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
+        dwError = 0;
+    }
+    else
+    {
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = UmnSrvReadGroup(
+                        "AD Groups",
+                        pEncodedGroup,
+                        &old);
+        BAIL_ON_UMN_ERROR(dwError);
+    }
+    // Check if the key does not exist yet, or it was not fully populated.
+    if (old.LastUpdated == 0)
+    {
         UMN_LOG_INFO("Adding group '%s' (gid %d)",
                         pGroup->groupInfo.pszUnixName, pGroup->groupInfo.gid);
 
@@ -320,6 +335,13 @@ UmnSrvUpdateADGroup(
                         NULL,
                         &hKey,
                         NULL);
+        if (dwError == LWREG_ERROR_KEYNAME_EXIST)
+        {
+            // The key exists, but the values were not fully populated on a
+            // previous run because the user monitor crashed or was killed. Use
+            // the existing key and let the values get overwritten.
+            dwError = 0;
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = RegCreateKeyExA(
@@ -333,6 +355,13 @@ UmnSrvUpdateADGroup(
                         NULL,
                         &hMembers,
                         NULL);
+        if (dwError == LWREG_ERROR_KEYNAME_EXIST)
+        {
+            // The key exists, but the values were not fully populated on a
+            // previous run because the user monitor crashed or was killed. Use
+            // the existing key and let the values get overwritten.
+            dwError = 0;
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvWriteADGroupValues(
@@ -349,83 +378,72 @@ UmnSrvUpdateADGroup(
                         pGroup);
         BAIL_ON_UMN_ERROR(dwError);
     }
-    else
+    else if (strcmp(pGroup->groupInfo.pszUnixName, old.gr_name))
     {
+        // The group's name changed. This is too drastic of a change for a
+        // change event. File a deletion and addition event.
+        dwError = UmnSrvWriteADGroupEvent(
+                        pEventlog,
+                        PreviousRun,
+                        &old,
+                        Now,
+                        NULL);
         BAIL_ON_UMN_ERROR(dwError);
 
-        dwError = UmnSrvReadGroup(
-                        "AD Groups",
-                        pEncodedGroup,
-                        &old);
+        dwError = UmnSrvWriteADGroupEvent(
+                        pEventlog,
+                        PreviousRun,
+                        NULL,
+                        Now,
+                        pGroup);
+        BAIL_ON_UMN_ERROR(dwError);
+    }
+    else if (strcmp((pGroup->groupInfo.pszPasswd ?
+                    pGroup->groupInfo.pszPasswd : "x"),
+                old.gr_passwd) ||
+            pGroup->groupInfo.gid != old.gr_gid)
+    {
+        UMN_LOG_INFO("Group '%s' (gid %d) changed",
+                        pGroup->groupInfo.pszUnixName,
+                        pGroup->groupInfo.gid);
+
+        dwError = UmnSrvWriteADGroupValues(
+                        hReg,
+                        hKey,
+                        pGroup);
         BAIL_ON_UMN_ERROR(dwError);
 
-        if (strcmp(pGroup->groupInfo.pszUnixName, old.gr_name))
-        {
-            // The group's name changed. This is too drastic of a change for a
-            // change event. File a deletion and addition event.
-            dwError = UmnSrvWriteADGroupEvent(
-                            pEventlog,
-                            PreviousRun,
-                            &old,
-                            Now,
-                            NULL);
-            BAIL_ON_UMN_ERROR(dwError);
+        dwError = UmnSrvWriteADGroupEvent(
+                        pEventlog,
+                        PreviousRun,
+                        &old,
+                        Now,
+                        pGroup);
+        BAIL_ON_UMN_ERROR(dwError);
 
-            dwError = UmnSrvWriteADGroupEvent(
-                            pEventlog,
-                            PreviousRun,
-                            NULL,
-                            Now,
-                            pGroup);
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-        else if (strcmp((pGroup->groupInfo.pszPasswd ?
-                        pGroup->groupInfo.pszPasswd : "x"),
-                    old.gr_passwd) ||
-                pGroup->groupInfo.gid != old.gr_gid)
+        if (pGroup->groupInfo.gid != old.gr_gid)
         {
-            UMN_LOG_INFO("Group '%s' (gid %d) changed",
-                            pGroup->groupInfo.pszUnixName,
-                            pGroup->groupInfo.gid);
-
-            dwError = UmnSrvWriteADGroupValues(
+            // Send out membership deletion events for all members. They
+            // will get readded through normal processing with the new gid
+            dwError = RegOpenKeyExA(
                             hReg,
                             hKey,
-                            pGroup);
+                            "Members",
+                            0,
+                            KEY_ALL_ACCESS,
+                            &hMembers);
             BAIL_ON_UMN_ERROR(dwError);
 
-            dwError = UmnSrvWriteADGroupEvent(
+            dwError = UmnSrvFindDeletedGroupMembers(
                             pEventlog,
-                            PreviousRun,
-                            &old,
+                            hReg,
+                            "AD Groups",
+                            hMembers,
                             Now,
-                            pGroup);
+                            TRUE,
+                            old.gr_gid,
+                            old.gr_name);
             BAIL_ON_UMN_ERROR(dwError);
-
-            if (pGroup->groupInfo.gid != old.gr_gid)
-            {
-                // Send out membership deletion events for all members. They
-                // will get readded through normal processing with the new gid
-                dwError = RegOpenKeyExA(
-                                hReg,
-                                hKey,
-                                "Members",
-                                0,
-                                KEY_ALL_ACCESS,
-                                &hMembers);
-                BAIL_ON_UMN_ERROR(dwError);
-
-                dwError = UmnSrvFindDeletedGroupMembers(
-                                pEventlog,
-                                hReg,
-                                "AD Groups",
-                                hMembers,
-                                Now,
-                                TRUE,
-                                old.gr_gid,
-                                old.gr_name);
-                BAIL_ON_UMN_ERROR(dwError);
-            }
         }
     }
 
