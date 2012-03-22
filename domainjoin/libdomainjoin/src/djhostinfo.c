@@ -1616,7 +1616,7 @@ DJGetFinalFqdn(
 
     *fqdn = NULL;
 
-    if(state != NULL && state->runModule)
+    if(state != NULL && state->disposition == EnableModule)
     {
         //The fqdn will be set
         ceError = CTAllocateStringPrintf(fqdn, "%s.%s", options->computerName, options->domainName);

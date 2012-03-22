@@ -134,7 +134,7 @@ static QueryResult QueryStartDaemons(const JoinProcessOptions *options, LWExcept
     if(!running)
         result = NotConfigured;
 
-    if(stopState != NULL && stopState->runModule)
+    if(stopState != NULL && stopState->disposition == EnableModule)
         result = NotConfigured;
 
 cleanup:

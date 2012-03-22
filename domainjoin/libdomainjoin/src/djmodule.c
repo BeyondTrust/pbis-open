@@ -233,7 +233,14 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
 
         LW_CLEANUP_CTERR(exc, CTArrayAppend(&options->moduleStates, sizeof(state), &state, 1));
         arrayState = DJGetModuleState(options, options->moduleStates.size - 1);
-        arrayState->runModule = module->runByDefault;
+        if (module->runByDefault)
+        {
+            arrayState->disposition = EnableModule;
+        }
+        else
+        {
+            arrayState->disposition = DisableModule;
+        }
 
         LW_TRY(exc, arrayState->lastResult = module->QueryState(options, &LW_EXC));
 
@@ -245,7 +252,7 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
                 break;
             case FullyConfigured:
             case CannotConfigure:
-                arrayState->runModule = FALSE;
+                arrayState->disposition = DisableModule;
                 break;
             case SufficientlyConfigured:
             case NotConfigured:
@@ -280,7 +287,7 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
                 LW_RAISE_EX(exc, LW_ERROR_MODULE_NOT_ENABLED, "Manual configuration required", "The configuration stage '%s' cannot be completed automatically. Please manually perform the following steps and rerun the domain join:\n\n%s", state->module->longName, exceptionMessage);
                 goto cleanup;
             case NotConfigured:
-                if(!state->runModule)
+                if(state->disposition == DisableModule)
                 {
                     LW_TRY(exc, exceptionMessage = state->module->GetChangeDescription(options, &LW_EXC));
                     LW_RAISE_EX(exc, LW_ERROR_MODULE_NOT_ENABLED, "Required configuration stage not enabled", "The configuration of module '%s' is required. Please either allow this configuration stage to be performed automatically (by passing '--enable %s'), or manually perform these configuration steps and rerun the domain join:\n\n%s", state->module->longName, state->module->shortName, exceptionMessage);
@@ -291,7 +298,7 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
                 break;
             case NotApplicable:
             case FullyConfigured:
-                if(state->runModule)
+                if(state->disposition == EnableModule)
                 {
                     //The UI shouldn't even let this happen.
                     LW_RAISE_EX(exc, LW_ERROR_MODULE_ALREADY_DONE, "Invalid module enabled", "Running module '%s' is not valid at this time because it is already configured. Please disable it and try again.", state->module->longName);
@@ -325,9 +332,9 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
     for(i = 0; i < options->moduleStates.size; i++)
     {
         ModuleState *state = DJGetModuleState(options, i);
-        if(!state->runModule)
+        if(state->disposition == DisableModule || state->disposition == IgnoreModule)
             continue;
-	DJ_LOG_INFO("Running module %s", state->module->shortName);
+        DJ_LOG_INFO("Running module %s", state->module->shortName);
         state->module->MakeChanges(options, &moduleException);
         LW_TRY(exc, state->lastResult = state->module->QueryState(options, &LW_EXC));
         if(!LW_IS_OK(moduleException))
@@ -368,7 +375,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
             {
                 case FullyConfigured:
                 case NotApplicable:
-                    state->runModule = FALSE;
+                    state->disposition = DisableModule;
                     break;
                 case NotConfigured:
                 case CannotConfigure:
@@ -406,13 +413,13 @@ cleanup:
     CT_SAFE_FREE_STRING(exceptionTitle);
 }
 
-void DJEnableModule(JoinProcessOptions *options, PCSTR shortName, BOOLEAN enable, LWException **exc)
+void DJSetModuleDisposition(JoinProcessOptions *options, PCSTR shortName, ModuleDisposition disposition, LWException **exc)
 {
     ModuleState *state = DJGetModuleStateByName(options, shortName);
     if(!state)
     {
-        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to enable/disable module", "Unable to enable/disable module '%s'. This module could not be found. Please check the name and try again. Keep in mind that some domainjoin modules may not be applicable on all platforms.", shortName);
+        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to enable/disable/ignore module", "Unable to enable/disable/ignore module '%s'. This module could not be found. Please check the name and try again. Keep in mind that some domainjoin modules may not be applicable on all platforms.", shortName);
         return;
     }
-    state->runModule = enable;
+    state->disposition = disposition;
 }
