@@ -22,11 +22,11 @@ make()
     mk_target \
         TARGET="${MK_BINDIR}/PBIS Logon Message.app" \
         DEPS="'PBIS Logon Message.app'" \
-            _rsync_files '$<' '$@'
+            _rsync_file '$<' '$@'
     mk_add_all_target "$result"
 }
 
-_rsync_files()
+_rsync_file()
 {
-    rsync -a --exclude=.svn "$1" "$2"
+    rsync -a --exclude=.svn "$1/" "$2"
 }
