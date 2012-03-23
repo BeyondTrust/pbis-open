@@ -215,12 +215,12 @@ enable_auth_plugin()
 
 configure_logon_message_application()
 {
-    /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'Likewise Logon Message.app' > /dev/null 2>&1
+    /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'PBIS Logon Message.app' > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        log "Configuring Likewise Logon Message application"
-        defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "@MK_BINDIR@/Likewise Logon Message.app"; "Hide" = "0"; }'
+        log "Configuring PBIS Logon Message application"
+        defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "@MK_BINDIR@/PBIS Logon Message.app"; "Hide" = "0"; }'
     else
-        log "Likewise Logon Message application already configured"
+        log "PBIS Logon Message application already configured"
     fi
 }
 
@@ -473,7 +473,7 @@ determine_join_status()
     if [ -z "$result" ]; then
         domain=`@MK_BINDIR@/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
         if [ -n "$domain" ]; then
-            logfile "Found domain $domain using ad-get-machine account"
+            logfile "Found domain $domain using lsa ad-get-machine account"
             result=$domain
         else
             result=""
@@ -663,7 +663,7 @@ EOF
     unset startup_dir
 fi
 
-# Create Global Login Item entry for Likewise Logon Message.app
+# Create Global Login Item entry for PBIS Logon Message.app
 # to display licensing and password expiration warning messages on
 # user logon activity.
 configure_logon_message_application
