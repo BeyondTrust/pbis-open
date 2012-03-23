@@ -55,9 +55,6 @@
 #include <sys/types.h>
 
 #include "config.h"
-#if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
-#define strtoll __strtoll
-#endif
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
 
@@ -488,7 +485,7 @@ ParseLONG64(
     LONG64 result = 0;
     PSTR pszEnd = NULL;
 
-    result = strtoll(pszString, &pszEnd, 10);
+    result = LwStrtoll(pszString, &pszEnd, 10);
     if (!pszEnd || pszEnd == pszString || *pszEnd)
     {
         dwError = ERROR_INVALID_PARAMETER;

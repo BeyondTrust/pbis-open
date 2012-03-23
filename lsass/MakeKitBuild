@@ -227,14 +227,6 @@ configure()
         isblank
 
     mk_check_functions \
-	HEADERDEPS="stdlib.h" \
-	strtol strtoll __strtoll strtoul strtoull __strtoull
-
-    mk_check_functions \
-	HEADERDEPS="inttypes.h" \
-	__strtoll __strtoull
-
-    mk_check_functions \
 	HEADERDEPS="time.h" \
         clock_settime
 

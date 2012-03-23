@@ -5667,7 +5667,7 @@ LWIQuery::SetPolicy(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
     {
         if (bSetValue)
         {
-            MaxPwdAge = strtoll(pUser->padUserInfo->pszMaxMinutesUntilChangePassword, &pszEndPtr, 10);
+            MaxPwdAge = LwStrtoll(pUser->padUserInfo->pszMaxMinutesUntilChangePassword, &pszEndPtr, 10);
             if (pszEndPtr == NULL ||
                 pszEndPtr == pUser->padUserInfo->pszMaxMinutesUntilChangePassword ||
                 *pszEndPtr != '\0')
@@ -5711,7 +5711,7 @@ LWIQuery::SetPolicy(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
     {
         if (bSetValue)
         {
-            MinPwdAge = strtoll(pUser->padUserInfo->pszMinMinutesUntilChangePassword, &pszEndPtr, 10);
+            MinPwdAge = LwStrtoll(pUser->padUserInfo->pszMinMinutesUntilChangePassword, &pszEndPtr, 10);
             if (pszEndPtr == NULL ||
                 pszEndPtr == pUser->padUserInfo->pszMinMinutesUntilChangePassword ||
                 *pszEndPtr != '\0')
@@ -5755,7 +5755,7 @@ LWIQuery::SetPolicy(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
     {
         if (bSetValue)
         {
-            qwPwdLastSet = strtoull(pUser->padUserInfo->pszPasswordLastSet, &pszEndPtr, 10);
+            qwPwdLastSet = LwStrtoull(pUser->padUserInfo->pszPasswordLastSet, &pszEndPtr, 10);
             if (pszEndPtr == NULL ||
                 pszEndPtr == pUser->padUserInfo->pszPasswordLastSet ||
                 *pszEndPtr != '\0')

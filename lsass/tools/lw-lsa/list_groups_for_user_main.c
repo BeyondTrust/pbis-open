@@ -124,7 +124,7 @@ StringToId(
     long long int result = 0;
 
     errno = 0;
-    result = strtoll(pszString, NULL, 10);
+    result = LwStrtoll(pszString, NULL, 10);
     if (errno)
     {
         perror("Cannot convert to id");
