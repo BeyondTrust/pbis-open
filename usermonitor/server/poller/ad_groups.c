@@ -540,6 +540,22 @@ UmnSrvUpdateADGroupMember(
                         0,
                         KEY_ALL_ACCESS,
                         &hMembers);
+        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            // Previous run left registry in inconsistent state
+            dwError = RegCreateKeyExA(
+                            hReg,
+                            hGroups,
+                            pMembersKeyName,
+                            0,
+                            NULL,
+                            0,
+                            KEY_ALL_ACCESS,
+                            NULL,
+                            &hMembers,
+                            NULL);
+            BAIL_ON_UMN_ERROR(dwError);
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = RegCreateKeyExA(
