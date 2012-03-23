@@ -1347,7 +1347,7 @@ LwLdapGetUInt64(
 #if SIZEOF_UNSIGNED_LONG == 8
         *pqwValue = strtoul(pszValue, &pszEndPtr, 10);
 #else
-        *pqwValue = strtoull(pszValue, &pszEndPtr, 10);
+        *pqwValue = LwStrtoull(pszValue, &pszEndPtr, 10);
 #endif
         if (pszEndPtr == NULL || pszEndPtr == pszValue || *pszEndPtr != '\0')
         {
@@ -1393,7 +1393,7 @@ LwLdapGetInt64(
 #if SIZEOF_LONG == 8
         *pqwValue = strtol(pszValue, &pszEndPtr, 10);
 #else
-        *pqwValue = strtoll(pszValue, &pszEndPtr, 10);
+        *pqwValue = LwStrtoll(pszValue, &pszEndPtr, 10);
 #endif
         if (pszEndPtr == NULL || pszEndPtr == pszValue || *pszEndPtr != '\0')
         {

@@ -123,41 +123,48 @@ __xnet_init__(
 int
 _xnet_accept (int s, struct sockaddr *addr, socklen_t *len)
 {
+    __xnet_init__();
     return _p_xnet_accept(s, addr, len);
 }
 
 int
 _xnet_bind (int s, const struct sockaddr *addr, socklen_t len)
 {
+    __xnet_init__();
     return _p_xnet_bind(s, addr, len);
 }
 
 int
 _xnet_connect (int s, const struct sockaddr *addr, socklen_t len)
 {
+    __xnet_init__();
     return _p_xnet_connect(s, addr, len);
 }
 
 int
 _xnet_getpeername (int s, struct sockaddr *addr, socklen_t *len)
 {
+    __xnet_init__();
     return _p_xnet_getpeername(s, addr, len);
 }
 
 int
 _xnet_getsockname (int s, struct sockaddr *addr, socklen_t *len)
 {
+    __xnet_init__();
     return _p_xnet_getsockname(s, addr, len);
 }
 
 int _xnet_getsockopt (int s, int level, int name, void *val, socklen_t *len)
 {
+    __xnet_init__();
     return _p_xnet_getsockopt(s, level, name, val, len);
 }
 
 ssize_t
 _xnet_recv (int s, void *buf, size_t len, int flags)
 {
+    __xnet_init__();
     return _p_xnet_recv(s, buf, len, flags);
 }
 
@@ -165,24 +172,28 @@ ssize_t
 _xnet_recvfrom (int s, void *buf, size_t len, int flags,
                 struct sockaddr *addr, socklen_t *slen)
 {
+    __xnet_init__();
     return _p_xnet_recvfrom(s, buf, len, flags, addr, slen);
 }
 
 ssize_t
 _xnet_recvmsg (int s, struct msghdr *msg, int flags)
 {
+    __xnet_init__();
     return _p_xnet_recvmsg(s, msg, flags);
 }
 
 ssize_t
 _xnet_send (int s, const void *buf, size_t len, int flags)
 {
+    __xnet_init__();
     return _p_xnet_send(s, buf, len, flags);
 }
 
 ssize_t
 _xnet_sendmsg (int s, const struct msghdr *msg, int flags)
 {
+    __xnet_init__();
     return _p_xnet_sendmsg(s, msg, flags);
 }
 
@@ -190,24 +201,28 @@ ssize_t
 _xnet_sendto (int s, const void * buf, size_t len, int flags,
               const struct sockaddr *addr, socklen_t slen)
 {
+    __xnet_init__();
     return _p_xnet_sendto(s, buf, len, flags, addr, slen);
 }
 
 int
 _xnet_setsockopt (int s, int level, int opt, const void *val, socklen_t len)
 {
+    __xnet_init__();
     return _p_xnet_setsockopt(s, level, opt, val, len);
 }
 
 int
 _xnet_socket (int d, int t, int p)
 {
+    __xnet_init__();
     return _p_xnet_socket(d, t, p); 
 }
 
 int
 _xnet_socketpair (int d, int t, int p, int pair[2])
 {
+    __xnet_init__();
     return _p_xnet_socketpair(d, t, p, pair);
 }
 

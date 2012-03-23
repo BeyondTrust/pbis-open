@@ -67,7 +67,7 @@ LsaSqliteReadUInt64(
 #endif
 
     BAIL_ON_INVALID_STRING(pszColumnValue);
-    *pqwResult = strtoull(pszColumnValue, &pszEndPtr, 10);
+    *pqwResult = LwStrtoull(pszColumnValue, &pszEndPtr, 10);
     if (pszEndPtr == NULL || pszEndPtr == pszColumnValue || *pszEndPtr != '\0')
     {
         dwError = LW_ERROR_DATA_ERROR;
@@ -102,7 +102,7 @@ LsaSqliteReadInt64(
     }
 #endif
 
-    *pqwResult = strtoll(pszColumnValue, &pszEndPtr, 10);
+    *pqwResult = LwStrtoll(pszColumnValue, &pszEndPtr, 10);
     if (pszEndPtr == NULL || pszEndPtr == pszColumnValue || *pszEndPtr != '\0')
     {
         dwError = LW_ERROR_DATA_ERROR;

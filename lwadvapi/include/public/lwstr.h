@@ -376,6 +376,20 @@ LwFreeUnicodeString(
     PUNICODE_STRING pString
     );
 
+long long int
+LwStrtoll(
+    const char* nptr,
+    char**      endptr,
+    int         base
+    );
+
+unsigned long long int
+LwStrtoull(
+    const char* nptr,
+    char**      endptr,
+    int         base
+    );
+
 LW_END_EXTERN_C
 
 

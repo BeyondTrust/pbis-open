@@ -866,7 +866,7 @@ LsaSidStringToBytes(
             BAIL_ON_LSA_ERROR(dwError);
             break;
         case PARSE_MODE_REVISION:
-            dwRevision = (DWORD) strtoll(pszToken, &pszEndPtr, 10);
+            dwRevision = (DWORD) LwStrtoll(pszToken, &pszEndPtr, 10);
 
             if (!pszEndPtr || (pszEndPtr == pszToken) || *pszEndPtr) {
                dwError = LW_ERROR_DATA_ERROR;
@@ -884,7 +884,7 @@ LsaSidStringToBytes(
             BAIL_ON_LSA_ERROR(dwError);
             break;
         case PARSE_MODE_AUTHORITY:
-            uiAuth = (DWORD) strtoll(pszToken, &pszEndPtr, 10);
+            uiAuth = (DWORD) LwStrtoll(pszToken, &pszEndPtr, 10);
 
             if (!pszEndPtr || (pszEndPtr == pszToken) || *pszEndPtr) {
                dwError = LW_ERROR_DATA_ERROR;
@@ -895,7 +895,7 @@ LsaSidStringToBytes(
             break;
         case PARSE_MODE_TAIL:
             pdwTail[dwTokenCount - 3] =
-                   (DWORD) strtoll(pszToken, &pszEndPtr, 10);
+                   (DWORD) LwStrtoll(pszToken, &pszEndPtr, 10);
 
             if (!pszEndPtr || (pszEndPtr == pszToken) || *pszEndPtr) {
                dwError = LW_ERROR_DATA_ERROR;
