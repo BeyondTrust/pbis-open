@@ -660,7 +660,17 @@ UmnSrvFindDeletedUsers(
                         NULL,
                         (PBYTE)&lastUpdated,
                         &lastUpdatedLen);
-        BAIL_ON_UMN_ERROR(dwError);
+        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            UMN_LOG_WARNING("User %s not completely written. The user monitor service may have previously terminated ungracefully.",
+                        LW_SAFE_LOG_STRING(pKeyName));
+            lastUpdated = 0;
+            dwError = 0;
+        }
+        else
+        {
+            BAIL_ON_UMN_ERROR(dwError);
+        }
 
         if (lastUpdated < Now)
         {
