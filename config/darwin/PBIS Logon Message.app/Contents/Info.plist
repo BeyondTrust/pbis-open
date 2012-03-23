@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Likewise Logon Message</string>
+	<string>PBIS Logon Message</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
@@ -36,7 +36,7 @@
 		<key>positionOfDivider</key>
 		<real>333</real>
 		<key>savedFrame</key>
-		<string>16 241 602 597 0 0 1680 1028 </string>
+		<string>12 167 602 597 0 0 1440 878 </string>
 		<key>selectedTabView</key>
 		<string>event log</string>
 	</dict>
