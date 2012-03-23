@@ -84,6 +84,8 @@ do
         --id) ID="$2"; shift 2;;
         --config) CONFIG="$2"; shift 2;;
         --tools) TOOLS="$2"; shift 2;;
+        --java) JAVA="$2"; shift 2;;
+        --ant) ANT="$2"; shift 2;;
         --archive) ARCHIVE="$2"; shift 2;;
         --clean) CLEAN="1"; shift;;
         --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
@@ -112,7 +114,17 @@ then
         [ -d "${TOOLS}/apache${ver}" ] && APACHE_PARAMS="$APACHE_PARAMS --apache${ver}-prefix=${TOOLS}/apache${ver}"
     done
 fi
-  
+ 
+if [ -n "$JAVA" ]
+then
+    PATH="${JAVA}/bin:$PATH"
+fi
+
+if [ -n "$ANT" ]
+then
+    PATH="${ANT}/bin:$PATH"
+fi
+
 export PATH
 
 echo "+ PATH=$PATH"
