@@ -13,7 +13,7 @@ configure()
         MK_HOST_ARCH
 
     STAGE_PREFIX=""
-    ANT_STAGING_ROOT=${MK_ROOT_DIR}/${STAGE-PREFIX}stage${MK_PREFIX}
+    ANT_STAGING_ROOT=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_PREFIX}
     ANT_STAGING_LIB=${MK_ROOT_DIR}/${STAGE_PREIFX}stage${MK_LIBDIR}
     ANT_STAGING_DOCS=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_DOCDIR}
     ANT_STAGING_CONF=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${LW_CONFIGDIR}
@@ -33,20 +33,21 @@ configure()
 
 make()
 {
-    mk_declare -e  BUILDXML=$MK_SOURCE_DIR/lwsecurity/build.xml
+    mk_resolve_file "build.xml"
+    mk_declare -e  BUILDXML="$result"
 
     mk_output_file INPUT="@${MK_SOURCE_DIR}/lwsecurity/properties.in" OUTPUT=".properties"
     PROPERTIES=$result
 
     mk_target \
-        TARGET=".build" \
+        TARGET=".build_stamp" \
         DEPS="$PROPERTIES" \
-        ant -propertyfile $PROPERTIES -buildfile "$BUILDXML" build
+        antscript "$PROPERTIES" "$BUILDXML" build
 
     mk_target \
-        TARGET=".stage" \
+        TARGET=".stage_stamp" \
         DEPS="$result $PROPERTIES" \
-        ant -propertyfile $PROPERTIES -buildfile "$BUILDXML" stage
+        antscript "$PROPERTIES" "$BUILDXML" stage
 
     stage_result=$result
     for f in ${MK_LIBDIR}/commons-codec-1.4.jar \
@@ -73,4 +74,11 @@ make()
     mk_target \
         TARGET="@lwsecurity" \
         DEPS="$lwsecurity_deps"
+}
+
+antscript()
+{
+    echo ant -propertyfile "$1" -buildfile "$2" $3
+    echo "PATH=$PATH"
+    ant -propertyfile "$1" -buildfile "$2" $3
 }

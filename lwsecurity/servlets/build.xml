@@ -14,7 +14,7 @@
     <condition property="build.is.os.linux.i386">
         <and>
             <equals arg1="${mk.build.os}" arg2="linux"/>
-            <equals arg1="${mk.build.arch}" arg2="i386"/>
+            <equals arg1="${mk.build.arch}" arg2="x86"/>
         </and>
     </condition>
     <condition property="build.is.os.linux.x86_64">
