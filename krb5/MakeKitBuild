@@ -39,7 +39,8 @@ make()
         ${MK_BINDIR}/klist \
         ${MK_BINDIR}/kdestroy \
         ${MK_BINDIR}/kvno \
-        ${MK_BINDIR}/ktutil"
+        ${MK_BINDIR}/ktutil \
+        ${MK_LIBDIR}/krb5/plugins/preauth/pkinit.so"
         
     mk_autotools \
         SOURCEDIR=src \
@@ -47,7 +48,6 @@ make()
         LIBS="$KRB5_LIBS" \
         TARGETS="$KRB5_EXTRA_TARGETS" \
         --enable-shared \
-	--disable-pkinit \
         --without-tcl
 
     unset KRB5_HEADERS KRB5_LIBS KRB5_EXTRA_TARGETS
