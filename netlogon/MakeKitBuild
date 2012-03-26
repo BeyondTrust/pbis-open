@@ -63,4 +63,5 @@ configure()
     fi
 
     mk_output_file "etc/netlogond.reg"
+    mk_output_file "etc/pbis-krb5-ad.conf"
 }
