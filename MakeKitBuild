@@ -1,8 +1,8 @@
 PROJECT_NAME="platform"
 MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
-LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
-                libuuid sqlite openssl curl libxml2 \
+LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
+                libuuid sqlite curl libxml2 \
                 libedit libtdb"
 
 SUBDIRS="$LW_ALL_BUNDLED \
@@ -37,17 +37,17 @@ option()
 
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt libedit"
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite popt libedit"
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libedit libtdb libxml2"
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2"
             ;;
         darwin-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit libtdb"
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit libtdb"
+            default_bundled="libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
             ;;
     esac
 
