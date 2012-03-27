@@ -425,7 +425,9 @@ LwSmTableStartEntry(
 
     while (status.state != LW_SERVICE_STATE_RUNNING)
     {
-        dwError = LwSmTablePollEntry(pEntry, &status);
+        UNLOCK(bLocked, pEntry->pLock);
+        dwError = pEntry->pVtbl->pfnGetStatus(&pEntry->object, &status);
+        LOCK(bLocked, pEntry->pLock);
         BAIL_ON_ERROR(dwError);
 
         switch (status.state)
