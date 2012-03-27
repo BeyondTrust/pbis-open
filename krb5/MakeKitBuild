@@ -44,6 +44,8 @@ make()
 
     mk_autotools \
         SOURCEDIR=src \
+        HEADERDEPS="openssl/opensslv.h" \
+        LIBDEPS="ssl crypto" \
         HEADERS="$KRB5_HEADERS" \
         LIBS="$KRB5_LIBS" \
         TARGETS="$KRB5_EXTRA_TARGETS" \
