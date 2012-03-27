@@ -84,7 +84,10 @@ do
         --id) ID="$2"; shift 2;;
         --config) CONFIG="$2"; shift 2;;
         --tools) TOOLS="$2"; shift 2;;
+        --java) JAVA="$2"; shift 2;;
+        --ant) ANT="$2"; shift 2;;
         --archive) ARCHIVE="$2"; shift 2;;
+        --application-integration) APPLICATION_INTEGRATION="1"; shift;;
         --clean) CLEAN="1"; shift;;
         --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
         --help) usage;;
@@ -112,7 +115,17 @@ then
         [ -d "${TOOLS}/apache${ver}" ] && APACHE_PARAMS="$APACHE_PARAMS --apache${ver}-prefix=${TOOLS}/apache${ver}"
     done
 fi
-  
+ 
+if [ -n "$JAVA" ]
+then
+    PATH="${JAVA}/bin:$PATH"
+fi
+
+if [ -n "$ANT" ]
+then
+    PATH="${ANT}/bin:$PATH"
+fi
+
 export PATH
 
 echo "+ PATH=$PATH"
@@ -121,7 +134,7 @@ echo "+ PATH=$PATH"
 [ -n "$REVISION" ] && REVISION_PARAM="--build-revision=$REVISION"
 [ -n "$ID" ] && ID_PARAM="--build-id=$ID"
 [ -n "$ARCHIVE" ] && ARCHIVE_PARAM="--unpack-archive=$ARCHIVE"
-
+[ -n "$APPLICATION_INTEGRATION" ] && APPLICATION_INTEGRATION_PARAM="--application-integration=yes"
 if [ -n "$CLEAN" -a -d "$BUILD_DIR" ]
 then
     show rm -rf "$BUILD_DIR"
@@ -140,7 +153,7 @@ show cd "$BUILD_DIR"
 if [ ! -f "Makefile" ]
 then
     show "${SOURCE_DIR}/configure" \
-        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} ${APACHE_PARAMS} \
+        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} ${APACHE_PARAMS} ${APPLICATION_INTEGRATION_PARAM} \
         CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
 fi
 
