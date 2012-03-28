@@ -40,7 +40,7 @@ make()
         ${MK_BINDIR}/kdestroy \
         ${MK_BINDIR}/kvno \
         ${MK_BINDIR}/ktutil \
-        ${MK_LIBDIR}/krb5/plugins/preauth/pkinit.so"
+        ${MK_LIBDIR}/krb5/plugins/preauth/pkinit${MK_DLO_EXT}"
 
     mk_autotools \
         SOURCEDIR=src \
