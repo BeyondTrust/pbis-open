@@ -2132,6 +2132,7 @@ AD_PostJoinDomain(
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = NULL;
     PSTR defaultDomain = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     dwError = LsaPstoreGetDefaultDomainA(&defaultDomain);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2161,9 +2162,16 @@ AD_PostJoinDomain(
 #ifndef DISABLE_RPC_SERVERS
     if (AD_GetAddDomainToLocalGroupsEnabled(pState))
     {
+        // The minimal state does not have pszDomainSID set yet, so it must be
+        // retrieved from pstore.
+        dwError = LsaPstoreGetPasswordInfoA(
+                        pState->pszDomainName,
+                        &pPasswordInfoA);
+        BAIL_ON_LSA_ERROR(dwError);
+
         dwError = LsaEnableDomainGroupMembership(
                       pState->pszDomainName,
-                      pState->pszDomainSID);
+                      pPasswordInfoA->Account.DomainSid);
         BAIL_ON_LSA_ERROR(dwError);
     }
 #endif
@@ -2174,6 +2182,10 @@ error:
     {
         LsaAdProviderStateDestroy(pState);
         pState = NULL;
+    }
+    if (pPasswordInfoA)
+    {
+        LsaPstoreFreePasswordInfoA(pPasswordInfoA);
     }
 
     LSA_PSTORE_FREE(&defaultDomain);
