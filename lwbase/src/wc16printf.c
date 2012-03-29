@@ -1095,6 +1095,8 @@ FilePrintfWriteWcs(
     const wchar_t *pwszWrite,
     size_t cchWrite)
 {
+    wchar_t *pwszWrite0 = NULL; // Null-terminated equivalent to pwszWrite
+
     if (pBuffer->dwError)
     {
         // Something already went wrong. Don't try to write anything else
@@ -1106,14 +1108,23 @@ FilePrintfWriteWcs(
         return;
     }
    
+    pwszWrite0 = calloc(cchWrite + 1, sizeof(*pwszWrite));
+    if (!pwszWrite0)
+    {
+        return;
+    }
+    
+    memcpy(pwszWrite0, pwszWrite, cchWrite);
+
     // This is the number of characters that would be written if the output
     // string had unlimited space.
     pBuffer->parent.sWrittenCount += cchWrite;
 
-    if (fprintf(pBuffer->pFile, "%.*ls", (int)cchWrite, pwszWrite) < 0)
+    if (fprintf(pBuffer->pFile, "%ls", pwszWrite0) < 0)
     {
         pBuffer->dwError = errno;
     }
+    free(pwszWrite0);
 }
 
 static
@@ -1132,7 +1143,7 @@ FilePrintfWriteWc16s(
         goto error;
     }
 
-    pwszWrite = malloc((cch16Write + 1) * sizeof(*pwszWrite));
+    pwszWrite = calloc(cch16Write + 1, sizeof(*pwszWrite));
     if (pwszWrite == NULL)
     {
         goto error;
@@ -1154,14 +1165,7 @@ FilePrintfWriteWc16s(
     // string had unlimited space.
     pBuffer->parent.sWrittenCount += cchWrite;
 
-    // Even though we ask to only print cchWrite characters, Solaris will
-    // return an error if it does not like some characters that come later.
-    if (cchWrite <= cch16Write)
-    {
-        pwszWrite[cchWrite] = 0;
-    }
-    cchWrite *= sizeof(*pw16szWrite);
-    if (fprintf(pBuffer->pFile, "%.*ls", (int)cchWrite, pwszWrite) < 0)
+    if (fprintf(pBuffer->pFile, "%ls", pwszWrite) < 0)
     {
         pBuffer->dwError = errno;
     }
