@@ -177,7 +177,7 @@ void PrintModuleState(ModuleState *state)
     if(state->lastResult != FullyConfigured &&
             state->lastResult != CannotConfigure)
     {
-        fprintf(stdout, "[%c] ", state->runModule? 'X' : ' ');
+        fprintf(stdout, "[%c] ", state->disposition == EnableModule ? 'X' : ' ');
     }
     else
     {
@@ -275,7 +275,7 @@ void PrintModuleStates(BOOLEAN showTristate, JoinProcessOptions *options)
         for(i = 0; i < options->moduleStates.size; i++)
         {
             ModuleState *state = DJGetModuleState(options, i);
-            if(state->runModule)
+            if(state->disposition == EnableModule)
             {
                 fprintf(stdout, "%-15s- %s\n", state->module->shortName,
                         state->module->longName);
@@ -289,7 +289,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
-    DynamicArray enableModules, disableModules;
+    DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
     size_t i;
     int passwordIndex = -1;
@@ -299,6 +299,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     DJZeroJoinProcessOptions(&options);
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
+    memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
@@ -336,6 +337,12 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         else if(!strcmp(argv[0], "--disable"))
         {
             LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR), &argv[1], 1));
+            argv++;
+            argc--;
+        }
+        else if(!strcmp(argv[0], "--ignore"))
+        {
+            LW_CLEANUP_CTERR(exc, CTArrayAppend(&ignoreModules, sizeof(PCSTR), &argv[1], 1));
             argv++;
             argc--;
         }
@@ -448,7 +455,12 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
-        LW_TRY(exc, DJEnableModule(&options, module, TRUE, &LW_EXC));
+        if(CTArrayFindString(&ignoreModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being ignored and enabled", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, EnableModule, &LW_EXC));
     }
 
     for(i = 0; i < disableModules.size; i++)
@@ -460,7 +472,29 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
-        LW_TRY(exc, DJEnableModule(&options, module, FALSE, &LW_EXC));
+        if(CTArrayFindString(&ignoreModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being ignored and enabled", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, DisableModule, &LW_EXC));
+    }
+
+    for(i = 0; i < ignoreModules.size; i++)
+    {
+        PCSTR module = *(PCSTR *)CTArrayGetItem(
+                    &ignoreModules, i, sizeof(PCSTR));
+        if(CTArrayFindString(&enableModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being enabled and ignored", module);
+            goto cleanup;
+        }
+        if(CTArrayFindString(&disableModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and ignored", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, IgnoreModule, &LW_EXC));
     }
 
     for(i = 0; i < detailModules.size; i++)
@@ -520,6 +554,7 @@ cleanup:
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
+    CTArrayFree(&ignoreModules);
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);
@@ -530,7 +565,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
-    DynamicArray enableModules, disableModules;
+    DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
     size_t i;
     PSTR moduleDetails = NULL;
@@ -540,6 +575,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
     DJZeroJoinProcessOptions(&options);
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
+    memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
@@ -562,6 +598,12 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
         else if(!strcmp(argv[0], "--disable"))
         {
             LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR *), &argv[1], 1));
+            argv++;
+            argc--;
+        }
+        else if(!strcmp(argv[0], "--ignore"))
+        {
+            LW_CLEANUP_CTERR(exc, CTArrayAppend(&ignoreModules, sizeof(PCSTR *), &argv[1], 1));
             argv++;
             argc--;
         }
@@ -625,7 +667,12 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
             LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
-        LW_TRY(exc, DJEnableModule(&options, module, TRUE, &LW_EXC));
+        if(CTArrayFindString(&ignoreModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being ignored and enabled", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, EnableModule, &LW_EXC));
     }
 
     for(i = 0; i < disableModules.size; i++)
@@ -637,7 +684,29 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
             LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
-        LW_TRY(exc, DJEnableModule(&options, module, FALSE, &LW_EXC));
+        if(CTArrayFindString(&ignoreModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and ignored", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, DisableModule, &LW_EXC));
+    }
+
+    for(i = 0; i < ignoreModules.size; i++)
+    {
+        PCSTR module = *(PCSTR *)CTArrayGetItem(
+                    &ignoreModules, i, sizeof(PCSTR));
+        if(CTArrayFindString(&enableModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being ignored and enabled", module);
+            goto cleanup;
+        }
+        if(CTArrayFindString(&disableModules, module) != -1)
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being ignored and disabled", module);
+            goto cleanup;
+        }
+        LW_TRY(exc, DJSetModuleDisposition(&options, module, IgnoreModule, &LW_EXC));
     }
 
     for(i = 0; i < detailModules.size; i++)
@@ -697,6 +766,7 @@ cleanup:
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
+    CTArrayFree(&ignoreModules);
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);

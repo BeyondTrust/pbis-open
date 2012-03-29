@@ -44,13 +44,20 @@ typedef enum _QueryResult
     ApplePluginInUse = 5
 } QueryResult;
 
+typedef enum _ModuleDisposition
+{
+    DisableModule = 0,
+    EnableModule = 1,
+    IgnoreModule = 2
+} ModuleDisposition;
+
 struct _JoinModule;
 typedef struct _JoinModule JoinModule;
 
 //Used inside of JoinProcessOptions
 typedef struct
 {
-    BOOLEAN runModule;
+    ModuleDisposition disposition;
     QueryResult lastResult;
     const JoinModule *module;
     //Can be used by domainjoin frontend.
@@ -162,7 +169,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **err);
 ModuleState *DJGetModuleState(const JoinProcessOptions *options, size_t index);
 ModuleState *DJGetModuleStateByName(const JoinProcessOptions *options, const char *shortName);
 
-void DJEnableModule(JoinProcessOptions *options, PCSTR shortName, BOOLEAN enable, LWException **exc);
+void DJSetModuleDisposition(JoinProcessOptions *options, PCSTR shortName, ModuleDisposition disposition, LWException **exc);
 
 void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc);
 
