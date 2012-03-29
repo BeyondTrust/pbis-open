@@ -1739,8 +1739,8 @@ error:
 
     switch (dwError)
     {
-        case LW_ERROR_NOT_HANDLED:
-            // normal for non-joined machines
+        case LW_ERROR_NOT_HANDLED: // normal for non-joined machines
+        case LW_ERROR_NO_SUCH_USER: // normal for local users
             break;
 
         case LW_ERROR_ACCESS_DENIED:
