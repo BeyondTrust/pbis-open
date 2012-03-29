@@ -389,11 +389,11 @@ postinstall()
 
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
-    if [ -f "@LW_INITDIR@/lwsmd" ]; then
+    if [ -f "@LW_INITDIR@/lwsmd" -o -h "@LW_INITDIR@/lwsmd" ]; then
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    if [ -f "@LW_INITDIR@/pbis" ]; then
+    if [ -f "@LW_INITDIR@/pbis" -o -h "@LW_INITDIR@/pbis" ]; then
         run rm -f '@LW_INITDIR@/pbis'
     fi
 
