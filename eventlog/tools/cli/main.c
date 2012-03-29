@@ -41,6 +41,7 @@
  */
 #include "includes.h"
 #include <popt.h>
+#include <locale.h>
 
 #define ACTION_NONE 0
 #define ACTION_SHOW 1
@@ -389,6 +390,7 @@ main(
         { NULL, 0, 0, NULL, 0}
     };
 
+    setlocale(LC_ALL, "");
     poptContext optCon = { 0 };
 
     optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
