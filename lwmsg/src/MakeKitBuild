@@ -46,20 +46,34 @@ make()
         peer-direct.c \
         peer-log.c"
 
+    DIRECT_FLAGS=""
+    if [ "$MK_HOST_OS" = "hpux" ]
+    then
+        # sshd version A.05.80.002 on HP-UX Itanium defines its own poll
+        # function as a wrapper around the select function. Sshd's poll wrapper
+        # does not implement the POLLWRNORM event, although the system poll
+        # function does implement it. The -B direct flag tells lwmsg to use
+        # only the libraries it links against to resolve the poll symbol,
+        # instead of trying to get it from the loading process (sshd).
+        DIRECT_FLAGS="-Wl,-B,direct"
+    fi
+
     mk_multiarch_do
         mk_library \
             LIB=lwmsg_nothr \
             SOURCES="$LWMSG_NOTHR_SOURCES" \
             INCLUDEDIRS="../include" \
             LIBDEPS="$LIB_ICONV $LIB_DL $LIB_RT $LIB_XNET" \
-            SYMFILE="liblwmsg_nothr.sym"
+            SYMFILE="liblwmsg_nothr.sym" \
+            LDFLAGS="$DIRECT_FLAGS"
 
         mk_library \
             LIB=lwmsg \
             SOURCES="$LWMSG_SOURCES" \
             INCLUDEDIRS="../include" \
             LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
-            SYMFILE="liblwmsg.sym"
+            SYMFILE="liblwmsg.sym" \
+            LDFLAGS="$DIRECT_FLAGS"
 
     mk_multiarch_done
 
