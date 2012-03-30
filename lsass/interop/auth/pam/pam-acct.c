@@ -109,6 +109,10 @@ pam_sm_acct_mgmt(
                     NULL);
     if (dwError && dwError != LW_ERROR_NO_SUCH_USER)
     {
+        if (dwError == LW_ERROR_NO_SUCH_USER)
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
         LSA_LOG_PAM_ERROR("User %s is denied access because they are not in the 'require membership of' list",
                           LSA_SAFE_LOG_STRING(pszLoginId));
         if (!LW_IS_NULL_OR_EMPTY_STR(pConfig->pszAccessDeniedMessage))
