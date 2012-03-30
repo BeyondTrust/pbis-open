@@ -1943,14 +1943,14 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
     rpc_cn_assoc_t              *assoc;
     rpc_cn_assoc_grp_t          *assoc_grp;
     rpc_cn_packet_t             *req_header;
-    rpc_cn_packet_t             *resp_header;
+    rpc_cn_packet_t             *resp_header = NULL;
     rpc_cn_pres_cont_list_t     *pres_cont_list;
     rpc_cn_pres_result_list_t   *pres_result_list;
     unsigned32                  header_size;
     unsigned32                  result_list_len;
     unsigned32                  auth_len;
     rpc_cn_local_id_t           grp_id;
-    rpc_cn_fragbuf_t            *fragbuf;
+    rpc_cn_fragbuf_t            *fragbuf = NULL;
     rpc_cn_sm_event_entry_t     event;
     rpc_cn_port_any_t           *sec_addr;
     boolean			old_client; 
