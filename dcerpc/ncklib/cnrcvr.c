@@ -1,24 +1,77 @@
 /*
- * 
- * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
- * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
- * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * Copyright (c) 2010 Apple Inc. All rights reserved.
+ *
+ * @APPLE_LICENSE_HEADER_START@
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
+ *     contributors may be used to endorse or promote products derived from
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Portions of this software have been released under the following terms:
+ *
+ * (c) Copyright 1989-1993 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989-1993 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989-1993 DIGITAL EQUIPMENT CORPORATION
+ *
  * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *                 permission to use, copy, modify, and distribute this
- * file for any purpose is hereby granted without fee, provided that
- * the above copyright notices and this notice appears in all source
- * code copies, and that none of the names of Open Software
- * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
- * Corporation be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Neither Open Software Foundation, Inc., Hewlett-
- * Packard Company, nor Digital Equipment Corporation makes any
- * representations about the suitability of this software for any
- * purpose.
- * 
- */
-/*
+ * permission to use, copy, modify, and distribute this file for any
+ * purpose is hereby granted without fee, provided that the above
+ * copyright notices and this notice appears in all source code copies,
+ * and that none of the names of Open Software Foundation, Inc., Hewlett-
+ * Packard Company or Digital Equipment Corporation be used
+ * in advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission.  Neither Open Software
+ * Foundation, Inc., Hewlett-Packard Company nor Digital
+ * Equipment Corporation makes any representations about the suitability
+ * of this software for any purpose.
+ *
+ * Copyright (c) 2007, Novell, Inc. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Novell Inc. nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @APPLE_LICENSE_HEADER_END@
  */
 /*
 **
@@ -584,20 +637,14 @@ INTERNAL void receive_dispatch
         /*
          * Point to the packet header.
          */
+        assert(fragbuf_p != NULL);
         pktp = (rpc_cn_packet_p_t) fragbuf_p->data_p;
 
         /*
          * Trace the incoming packet.
          */
         RPC_CN_PKT_TRC (pktp);
-        RPC_CN_PKT_DUMP (pktp, fragbuf_p->data_size);
-
-        /*
-         * Keep some stats on the packets received.
-         */
-        RPC_CN_STATS_INCR (pstats[RPC_CN_PKT_PTYPE (pktp)].rcvd);
-        RPC_CN_STATS_INCR (pkts_rcvd);
-
+      
         /*
          * Setup some local variables.
          */
@@ -614,6 +661,20 @@ INTERNAL void receive_dispatch
             st = rpc_s_protocol_error;
             break;
         }
+
+        RPC_CN_PKT_DUMP (pktp, fragbuf_p->data_size);
+
+        /*
+         * Keep some stats on the packets received.
+         */
+        RPC_CN_STATS_INCR (pstats[RPC_CN_PKT_PTYPE (pktp)].rcvd);
+        RPC_CN_STATS_INCR (pkts_rcvd);
+
+        /*
+         * Setup some local variables.
+         */
+        ptype = RPC_CN_PKT_PTYPE (pktp);
+
 
         /*
          * Do some first packet only processing...
@@ -702,12 +763,26 @@ INTERNAL void receive_dispatch
             auth_len = RPC_CN_PKT_AUTH_LEN (pktp);
             if (unpack_ints)
             {
+                /* no need to check end_of_pkt since its a copy of pkt data */
                 SWAB_INPLACE_16 (auth_len);
             }
             
 	    auth_tlr = (rpc_cn_auth_tlr_t *) ((unsigned8 *)(pktp) +
                 fragbuf_p->data_size - 
                 (auth_len + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR));
+            if ( ((unsigned8 *)(auth_tlr) < (unsigned8 *)(pktp)) ||
+                ((unsigned8 *)(auth_tlr) > (unsigned8 *)(pktp) + fragbuf_p->data_size) ||
+                ((unsigned8 *)(auth_tlr) + auth_len < (unsigned8 *)(pktp)) ||
+                ((unsigned8 *)(auth_tlr) + auth_len > (unsigned8 *)(pktp) + fragbuf_p->data_size) )
+            {
+                RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                ("CN: call_rep->%p assoc->%p desc->%p invalid auth_tlr\n",
+                                 assoc->call_rep,
+                                 assoc,
+                                 assoc->cn_ctlblk.cn_sock));
+                st = rpc_s_protocol_error;
+                break;
+            }
 
             /*
              * Find the appropriate security context element using the key ID
@@ -717,6 +792,7 @@ INTERNAL void receive_dispatch
             key_id = auth_tlr->key_id;
             if (unpack_ints)
             {
+                /* no need to check end_of_pkt since its a copy of pkt data */
                 SWAB_INPLACE_32 (key_id);
             }
 
@@ -773,7 +849,16 @@ INTERNAL void receive_dispatch
                          */
                         if (unpack_ints)
                         {
-                            rpc__cn_unpack_hdr (pktp);
+                            st = rpc__cn_unpack_hdr (pktp, fragbuf_p->data_size);
+                            if (st != rpc_s_ok)
+                            {
+                                RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                                ("CN: call_rep->%p assoc->%p desc->%p auth rpc__cn_unpack_hdr failed\n",
+                                                 assoc->call_rep,
+                                                 assoc,
+                                                 assoc->cn_ctlblk.cn_sock));
+                                break;
+                            }
                             already_unpacked = true;
                         }
                         auth_len = RPC_CN_PKT_AUTH_LEN (pktp);
@@ -782,9 +867,45 @@ INTERNAL void receive_dispatch
                                                           (auth_len
                                                            + 
                                                            RPC_CN_PKT_SIZEOF_COM_AUTH_TLR));
+                        if ( ((unsigned8 *)(auth_tlr) < (unsigned8 *)(pktp)) ||
+                            ((unsigned8 *)(auth_tlr) > (unsigned8 *)(pktp) + fragbuf_p->data_size) ||
+                            ((unsigned8 *)(auth_tlr) + auth_len < (unsigned8 *)(pktp)) ||
+                            ((unsigned8 *)(auth_tlr) + auth_len > (unsigned8 *)(pktp) + fragbuf_p->data_size) )
+                        {
+                            RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                            ("CN: call_rep->%p assoc->%p desc->%p invalid auth_tlr in sec context\n",
+                                             assoc->call_rep,
+                                             assoc,
+                                             assoc->cn_ctlblk.cn_sock));
+                            st = rpc_s_protocol_error;
+                            break;
+                        }
+
                         frag_len = RPC_CN_PKT_FRAG_LEN (pktp);
+                        if ( (frag_len > fragbuf_p->data_size) || (frag_len < auth_tlr->stub_pad_length) )
+                        {
+                            RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                            ("CN: call_rep->%p assoc->%p desc->%p invalid frag_len\n",
+                                             assoc->call_rep,
+                                             assoc,
+                                             assoc->cn_ctlblk.cn_sock));
+                            st = rpc_s_protocol_error;
+                            break;
+                        }
+
                         frag_len -= auth_tlr->stub_pad_length;
                         RPC_CN_PKT_FRAG_LEN (pktp) = frag_len;
+
+                        if (fragbuf_p->data_size < auth_tlr->stub_pad_length)
+                        {
+                            RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                            ("CN: call_rep->%p assoc->%p desc->%p invalid stub_pad_length\n",
+                                             assoc->call_rep,
+                                             assoc,
+                                             assoc->cn_ctlblk.cn_sock));
+                            st = rpc_s_protocol_error;
+                            break;
+                        }
                         fragbuf_p->data_size -= auth_tlr->stub_pad_length;
                     }
                     else
@@ -810,8 +931,8 @@ INTERNAL void receive_dispatch
                         if (assoc->assoc_flags & RPC_C_CN_ASSOC_CLIENT)
                         {
                             (*fragbuf_p->fragbuf_dealloc)(fragbuf_p);
+                            assert(sec_context != NULL);
                             sec_context->sec_status = auth_st;
-                            assoc->assoc_status = auth_st;
                             RPC_CN_ASSOC_WAKEUP (assoc);
                             continue;
                         }
@@ -874,7 +995,17 @@ INTERNAL void receive_dispatch
          */
         if (unpack_ints && !already_unpacked)
         {
-            rpc__cn_unpack_hdr (pktp);
+            st = rpc__cn_unpack_hdr (pktp, fragbuf_p->data_size);
+            if (st != rpc_s_ok)
+            {
+                RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                ("CN: call_rep->%p assoc->%p desc->%p rpc__cn_unpack_hdr failed\n",
+                                 assoc->call_rep,
+                                 assoc,
+                                 assoc->cn_ctlblk.cn_sock));
+                st = rpc_s_connection_closed;
+                break;
+            }
         }
 
         /*
@@ -921,6 +1052,7 @@ INTERNAL void receive_dispatch
                 rpc__cn_assoc_push_call (assoc, call_r, (unsigned32*)&st); 
                 if (st != rpc_s_ok)
                 {
+                    assoc->call_rep = NULL;
                     rpc__list_element_free (&rpc_g_cn_call_lookaside_list,
                                             (pointer_t) call_r);
                     break;
@@ -1504,7 +1636,6 @@ INTERNAL void receive_packet
                 SWAB_INPLACE_16 (frag_length);
             }
 
-#ifdef DEBUG
             /*
              * Sanity check the protocol versions in the header.
              * Except for BIND and BIND_NAK packets.
@@ -1585,7 +1716,6 @@ INTERNAL void receive_packet
                    return;
                 }
             }
-#endif
         }
 
         /*
