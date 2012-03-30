@@ -54,16 +54,16 @@ int isblank(int c)
 }
 #endif
 
-#if !defined(HAVE_STRTOLL)
-
 long long int
-strtoll(
+LwStrtoll(
     const char* nptr,
     char**      endptr,
     int         base
     )
 {
-#if defined(HAVE___STRTOLL)
+#if defined(HAVE_STRTOLL)
+    return strtoll(nptr, endptr, base);
+#elif defined(HAVE___STRTOLL)
     return __strtoll(nptr, endptr, base);
 #elif SIZEOF_LONG_LONG_INT == SIZEOF_LONG_INT && defined(HAVE_STRTOL)
     return (long long) strtol(nptr, endptr, base);
@@ -72,18 +72,16 @@ strtoll(
 #endif
 }
 
-#endif /* defined(HAVE_STRTOLL) */
-
-#if !defined(HAVE_STRTOULL)
-
 unsigned long long int
-strtoull(
+LwStrtoull(
     const char* nptr,
     char**      endptr,
     int         base
     )
 {
-#if defined(HAVE___STRTOULL)
+#if defined(HAVE_STRTOULL)
+    return strtoull(nptr, endptr, base);
+#elif defined(HAVE___STRTOULL)
     return __strtoull(nptr, endptr, base);
 #elif SIZEOF_LONG_LONG_INT == SIZEOF_LONG_INT && defined(HAVE_STRTOUL)
     return (unsigned long long) strtoul(nptr, endptr, base); 
@@ -91,8 +89,6 @@ strtoull(
 #error strtoull support is not available
 #endif
 }
-
-#endif /* defined(HAVE_STRTOULL) */
 
 #if !defined(HAVE_RPL_MALLOC) && !HAVE_MALLOC
 #undef malloc

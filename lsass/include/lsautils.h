@@ -363,29 +363,6 @@ typedef struct __LSA_CACHE
     DWORD dwNumCollisions;
 } LSA_CACHE, *PLSA_CACHE;
 
-
-#if !defined(HAVE_STRTOLL)
-
-long long int
-strtoll(
-    const char* nptr,
-    char**      endptr,
-    int         base
-    );
-
-#endif /* defined(HAVE_STRTOLL) */
-
-#if !defined(HAVE_STRTOULL)
-
-unsigned long long int
-strtoull(
-    const char* nptr,
-    char**      endptr,
-    int         base
-    );
-
-#endif /* defined(HAVE_STRTOULL) */
-
 DWORD
 LsaInitializeStringBuffer(
         LSA_STRING_BUFFER *pBuffer,
