@@ -163,7 +163,8 @@ package_pkg()
                 "${MK_SYSCONFDIR}/gss" \
                 "${MK_SYSCONFDIR}/krb5" \
                 "${MK_SYSCONFDIR}/krb5/plugins" \
-                "${MK_SYSCONFDIR}/krb5/plugins/libkrb5"
+                "${MK_SYSCONFDIR}/krb5/plugins/libkrb5" \
+                "${MK_SYSCONFDIR}/krb5/plugins/preauth"
 
         mk_pkg_sub_done
 
@@ -190,6 +191,7 @@ package_pkg()
                 "${MK_LIBDIR}/krb5" \
                 "${MK_LIBDIR}/krb5/plugins" \
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
+                "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
@@ -257,6 +259,7 @@ package_lpp()
                 "${MK_LIBDIR}/krb5" \
                 "${MK_LIBDIR}/krb5/plugins" \
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
+                "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
@@ -370,6 +373,7 @@ open_files_prefix()
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/krb5/plugins/preauth/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
