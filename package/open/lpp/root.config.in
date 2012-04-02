@@ -393,10 +393,10 @@ postinstall()
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    run ln -s '@MK_SYSCONFDIR@/aix/lwsmd' '@LW_INITDIR@/lwsmd'
+    run ln -s -f '@MK_SYSCONFDIR@/aix/lwsmd' '@LW_INITDIR@/lwsmd'
 
-    run ln -s '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/K08lwsmd
-    run ln -s '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/S17lwsmd
+    run ln -s -f '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/K08lwsmd
+    run ln -s -f '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/S17lwsmd
 
     run '@LW_INITDIR@/lwsmd' start
 
