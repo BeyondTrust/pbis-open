@@ -399,10 +399,8 @@ postinstall()
     if [ -f /usr/sbin/service ]
     then
         run /usr/sbin/service lwsmd start
-        run /usr/sbin/service pbis start
     else
         run '@LW_INITDIR@/lwsmd' start
-        run '@LW_INITDIR@/pbis' start
     fi
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
