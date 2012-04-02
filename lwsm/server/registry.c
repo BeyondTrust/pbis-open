@@ -41,7 +41,7 @@
 struct SM_LOGGER_MAP
 {
     PCSTR pszName;
-    LW_SM_LOG_LEVEL eValue;
+    LW_SM_LOGGER_TYPE eValue;
 };
 
 static struct SM_LOGGER_MAP gLoggerMap[] =
@@ -66,6 +66,7 @@ static struct SM_LOGLEVEL_MAP gLogLevelMap[] =
     { "warning", LW_RTL_LOG_LEVEL_WARNING },
     { "info", LW_RTL_LOG_LEVEL_INFO },
     { "verbose", LW_RTL_LOG_LEVEL_VERBOSE },
+    { "debug", LW_RTL_LOG_LEVEL_DEBUG },
     { "trace", LW_RTL_LOG_LEVEL_TRACE }
 };
 
@@ -242,11 +243,11 @@ LwSmRegistryReadServiceInfo(
     static const WCHAR wszFdLimit[] =
         {'F', 'd', 'L', 'i', 'm', 'i', 't', 0};
     static const WCHAR wszDefaultLogType[] =
-        {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'T', 'y', 'p', 'e', 0};
+        {'L', 'o', 'g', 'T', 'y', 'p', 'e', 0};
     static const WCHAR wszDefaultLogTarget[] =
-            {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'T', 'a', 'r', 'g', 'e', 't', 0};
+            {'L', 'o', 'g', 'T', 'a', 'r', 'g', 'e', 't', 0};
     static const WCHAR wszDefaultLogLevel[] =
-            {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'L', 'e', 'v', 'e', 'l', 0};
+            {'L', 'o', 'g', 'L', 'e', 'v', 'e', 'l', 0};
     static const WCHAR wszCoreSize[] =
         {'C', 'o', 'r', 'e', 'S', 'i', 'z', 'e', 0};
 
@@ -399,7 +400,7 @@ LwSmRegistryReadServiceInfo(
 
         for (i = 0; i < sizeof(gLoggerMap)/sizeof(gLoggerMap[0]); i++)
         {
-            if (!strcmp(gLoggerMap[i].pszName, pszDefaultLogType))
+            if (!strcasecmp(gLoggerMap[i].pszName, pszDefaultLogType))
             {
                 pInfo->DefaultLogType = gLoggerMap[i].eValue;
                 break;
@@ -407,7 +408,7 @@ LwSmRegistryReadServiceInfo(
         }
         if (i == sizeof(gLoggerMap)/sizeof(gLoggerMap[0]))
         {
-            SM_LOG_WARNING("Invalid value in registry for LogType");
+            SM_LOG_WARNING("Service %s has invalid LogType '%s'.", pszName, pszDefaultLogType);
             pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
         }
     }
@@ -431,16 +432,16 @@ LwSmRegistryReadServiceInfo(
 
         for (i = 0; i < sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]); i++)
         {
-            if (!strcmp(gLogLevelMap[i].pszName, pszDefaultLogType))
+            if (!strcmp(gLogLevelMap[i].pszName, pszDefaultLogLevel))
             {
-                pInfo->DefaultLogType = gLogLevelMap[i].eValue;
+                pInfo->DefaultLogLevel = gLogLevelMap[i].eValue;
                 break;
             }
         }
         if (i == sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]))
         {
-            SM_LOG_WARNING("Invalid value in registry for LogType");
-            pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
+            SM_LOG_WARNING("Service %s has invalid LogLevel '%s'.", pszName, pszDefaultLogLevel);
+            pInfo->DefaultLogLevel = LW_SM_LOG_LEVEL_DEFAULT;
         }
     }
     BAIL_ON_ERROR(dwError);
