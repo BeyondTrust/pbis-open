@@ -111,17 +111,13 @@ prerm_remove()
 
     if [ -f /usr/sbin/service ]
     then
-        run_quiet /usr/sbin/service pbis stop
         run_quiet /usr/sbin/service lwsmd stop
     else
-        run_quiet '@LW_INITDIR@/pbis' stop
         run_quiet '@LW_INITDIR@/lwsmd' stop
     fi
 
-    run_quiet /usr/sbin/update-rc.d pbis remove
     run_quiet /usr/sbin/update-rc.d lwsmd remove
 
-    run_quiet rm -f '@LW_INITDIR@/pbis'
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     for daemon in $DAEMONS_TO_HALT

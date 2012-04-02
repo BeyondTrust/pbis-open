@@ -50,6 +50,7 @@ SM_GLOBAL_STATE gState =
     .logLevel = 0,
     .pszLogFilePath = NULL,
     .bSyslog = FALSE,
+    .bDisableAutostart = FALSE,
     .bWatchdog = TRUE,
     .ControlLock = -1
 };
@@ -268,7 +269,6 @@ LwSmParseArguments(
         }
         gState.bContainer = TRUE;
         gState.pName = ppszArgv[1];
-        gState.bSyslog = TRUE;
     }
     else
     {
@@ -279,13 +279,10 @@ LwSmParseArguments(
             if (!strcmp(ppszArgv[i], "--start-as-daemon"))
             {
                 gState.bStartAsDaemon = TRUE;
-                gState.bSyslog = TRUE;
-                gState.logLevel = LW_SM_LOG_LEVEL_INFO;
             }
             else if (!strcmp(ppszArgv[i], "--syslog"))
             {
                 gState.bSyslog = TRUE;
-                gState.logLevel = LW_SM_LOG_LEVEL_INFO;
             }
             else if (!strcmp(ppszArgv[i], "--loglevel"))
             {
@@ -309,6 +306,10 @@ LwSmParseArguments(
                 }
 
                 gState.pszLogFilePath = ppszArgv[i];
+            }
+            else if (!strcmp(ppszArgv[i], "--disable-autostart"))
+            {
+                gState.bDisableAutostart = TRUE;
             }
             else if (!strcmp(ppszArgv[i], "--container"))
             {
@@ -555,6 +556,13 @@ Startup(
         /* Read configuration and populate service table */
         dwError = LwSmPopulateTable();
         BAIL_ON_ERROR(dwError);
+
+        /* Start services */
+        if (!gState.bDisableAutostart)
+        {
+            dwError = LwSmAutostartServices();
+            BAIL_ON_ERROR(dwError);
+        }
     }
 
     /* Start IPC servers */
@@ -775,7 +783,7 @@ LwSmConfigureLogging(
         dwError = LwSmSetLoggerToPath(NULL, gState.pszLogFilePath);
         BAIL_ON_ERROR(dwError);
     }
-    else if (gState.bSyslog)
+    else if (gState.bSyslog || gState.bStartAsDaemon || (gState.bContainer && !gState.pGroup))
     {
         dwError = LwSmSetLoggerToSyslog(NULL);
         BAIL_ON_ERROR(dwError);

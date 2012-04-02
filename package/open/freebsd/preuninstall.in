@@ -108,10 +108,8 @@ preuninstall()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /etc/rc.d/pbis stop
     run_quiet /etc/rc.d/lwsmd stop
 
-    run_quiet rm -f '@LW_INITDIR@/pbis'
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     for daemon in $DAEMONS_TO_HALT

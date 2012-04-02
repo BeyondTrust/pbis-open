@@ -112,10 +112,7 @@ preremove()
 
     run_quiet rm /etc/rc.d/rc2.d/K08lwsmd
     run_quiet rm /etc/rc.d/rc2.d/S17lwsmd
-    run_quiet rm /etc/rc.d/rc2.d/K07pbis
-    run_quiet rm /etc/rc.d/rc2.d/S18pbis
 
-    run_quiet rm -f '@LW_INITDIR@/pbis'
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     run_quiet '@MK_BINDIR@/lwsm' shutdown

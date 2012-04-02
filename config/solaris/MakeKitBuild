@@ -14,16 +14,14 @@ configure()
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file lwsmd
-    mk_output_file pbis
     mk_output_file OUTPUT="postinstall.sh" INPUT="@${MK_SOURCE_DIR}/package/open/pkg/postinstall.in"
 }
 
 make()
 {
     mk_stage DEST="${MK_SYSCONFDIR}/solaris/lwsmd" MODE=0755 SOURCE="lwsmd"
-    mk_stage DEST="${MK_SYSCONFDIR}/solaris/pbis" MODE=0755 SOURCE="pbis"
 
-    for i in lwsmd.xml pbis.xml
+    for i in lwsmd.xml
     do
         mk_stage \
             SOURCE="$i" \

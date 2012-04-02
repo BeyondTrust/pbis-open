@@ -622,7 +622,7 @@ restore_6_5_configuration
 
 restore_7_0_configuration
 
-run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
+run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
 restore_5_0123_configuration
 

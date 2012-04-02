@@ -372,7 +372,7 @@ postinstall()
 
     restore_6_1_configuration
 
-    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
 
@@ -392,15 +392,9 @@ postinstall()
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    if [ -f "@LW_INITDIR@/pbis" ]; then
-        run rm -f '@LW_INITDIR@/pbis'
-    fi
-
     run ln -s '@MK_SYSCONFDIR@/debian/lwsmd' '@LW_INITDIR@/lwsmd'
-    run ln -s '@MK_SYSCONFDIR@/debian/pbis' '@LW_INITDIR@/pbis'
 
     run /usr/sbin/update-rc.d -f lwsmd defaults 17 8
-    run /usr/sbin/update-rc.d -f pbis defaults 18 7
 
     if [ -f /usr/sbin/service ]
     then

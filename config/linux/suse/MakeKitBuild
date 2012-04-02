@@ -10,11 +10,9 @@ configure()
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file lwsmd
-    mk_output_file pbis
 }
 
 make()
 {
     mk_stage DEST="${MK_SYSCONFDIR}/suse/lwsmd" MODE=0755 SOURCE="lwsmd"
-    mk_stage DEST="${MK_SYSCONFDIR}/suse/pbis" MODE=0755 SOURCE="pbis"
 }

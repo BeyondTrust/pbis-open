@@ -128,10 +128,8 @@ case "$1" in
 
         if [ -f /usr/sbin/service ]
         then
-            run_quiet /usr/sbin/service pbis stop
             run_quiet /usr/sbin/service lwsmd stop
         else
-            run_quiet '@LW_INITDIR@/pbis' stop
             run_quiet '@LW_INITDIR@/lwsmd' stop
         fi
 
