@@ -183,6 +183,7 @@ typedef struct _SM_GLOBAL_STATE
     LW_SM_LOG_LEVEL logLevel;
     PCSTR pszLogFilePath;
     BOOLEAN bSyslog;
+    BOOLEAN bDisableAutostart;
     BOOLEAN bContainer;
     PWSTR pGroup;
     PCSTR pName;
@@ -382,6 +383,11 @@ LwSmRegistryReadServiceInfo(
 
 DWORD
 LwSmBootstrap(
+    VOID
+    );
+
+DWORD
+LwSmAutostartServices(
     VOID
     );
 

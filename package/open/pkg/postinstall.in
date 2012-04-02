@@ -102,21 +102,14 @@ enable_service_configurations_or_init_d_symlinks()
     if [ -x /usr/sbin/svcadm ]; then
         log 'Importing service configurations'
         import_service_configuration lwsmd
-        import_service_configuration pbis
 
         run /usr/sbin/svcadm enable lwsmd
-        run /usr/sbin/svcadm enable pbis
     else
         if [ -f "@LW_INITDIR@/lwsmd" ]; then
             run rm -f '@LW_INITDIR@/lwsmd'
         fi
 
-        if [ -f "@LW_INITDIR@/pbis" ]; then
-            run rm -f '@LW_INITDIR@/pbis'
-        fi
-
         run ln -s '@MK_SYSCONFDIR@/solaris/lwsmd' '@LW_INITDIR@/lwsmd'
-        run ln -s '@MK_SYSCONFDIR@/solaris/pbis' '@LW_INITDIR@/pbis'
 
 
     # On older Solaris systems, in order for a deamon to start in
@@ -127,13 +120,7 @@ enable_service_configurations_or_init_d_symlinks()
         run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rcS.d/K08lwsmd
         run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc2.d/S17lwsmd
 
-        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc0.d/K07pbis
-        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc1.d/K07pbis
-        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rcS.d/K07pbis
-        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc2.d/S18pbis
-
         run '@LW_INITDIR@/lwsmd' start
-        run '@LW_INITDIR@/pbis' start
     fi
 }
 
@@ -422,7 +409,7 @@ postinstall()
 
     restore_6_1_configuration
 
-    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
 

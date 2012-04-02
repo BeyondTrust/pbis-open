@@ -110,10 +110,8 @@ preremove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet rm -f '@LW_INITDIR@/pbis'
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
-    run rm -f /sbin/rc1.d/K400pbis /sbin/rc2.d/S592pbis
     run rm -f /sbin/rc1.d/K401lwsmd /sbin/rc2.d/S591lwsmd
 
     run_quiet '@MK_BINDIR@/lwsm' shutdown

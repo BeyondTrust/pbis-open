@@ -5,6 +5,7 @@ make()
         container.c \
         table.c \
         api.c \
+        autostart.c \
         dispatch.c \
         registry.c \
         bootstrap.c \

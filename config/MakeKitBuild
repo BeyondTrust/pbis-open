@@ -23,14 +23,13 @@ configure()
 
     mk_output_file VERSION
     mk_output_file init-base.sh
-    mk_output_file init-pbis.sh
 }
 
 make()
 {
     mk_stage \
         DESTDIR="${MK_LIBEXECDIR}" \
-        init-base.sh init-pbis.sh
+        init-base.sh
 
     mk_stage \
         SOURCE="VERSION" \

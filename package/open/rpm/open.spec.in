@@ -410,7 +410,7 @@ postinstall()
 
     restore_6_1_configuration
 
-    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
 
@@ -430,25 +430,17 @@ postinstall()
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    if [ -f "@LW_INITDIR@/pbis" ]; then
-        run rm -f '@LW_INITDIR@/pbis'
-    fi
-
     if [ -f /etc/redhat-release ]; then
         run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
-        run ln -s '@MK_SYSCONFDIR@/redhat/pbis' '@LW_INITDIR@/pbis'
     else
         run ln -s '@MK_SYSCONFDIR@/suse/lwsmd' '@LW_INITDIR@/lwsmd'
-        run ln -s '@MK_SYSCONFDIR@/suse/pbis' '@LW_INITDIR@/pbis'
     fi
 
     remove_old_init_symlinks
 
     run /sbin/chkconfig --add lwsmd
-    run /sbin/chkconfig --add pbis
 
     run '@LW_INITDIR@/lwsmd' start
-    run '@LW_INITDIR@/pbis' start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
@@ -563,7 +555,6 @@ pre_upgrade()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /etc/init.d/pbis stop
     run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -603,7 +594,6 @@ Check your system's documentation for details."
         fi
     fi
 
-    run_quiet /etc/init.d/pbis stop
     run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -732,7 +722,6 @@ preuninstall_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet '@LW_INITDIR@/pbis' stop
     run_quiet '@LW_INITDIR@/lwsmd' stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -740,10 +729,8 @@ preuninstall_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    run_quiet /sbin/chkconfig --del pbis
     run_quiet /sbin/chkconfig --del lwsmd
 
-    run_quiet rm -f '@LW_INITDIR@/pbis'
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     logfile "Package: PowerBroker Identity Services Open [preun remove] finished"

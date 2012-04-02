@@ -15,7 +15,6 @@ fi
         sleep 0.5
     done
 
-    /opt/pbis/bin/lwsm autostart
 ) &
 
 exec /opt/pbis/sbin/lwsmd "$@"

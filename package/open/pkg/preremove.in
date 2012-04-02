@@ -94,14 +94,10 @@ run_or_fail()
 remove_service_configurations_or_init_d_symlinks()
 {
     if [ -x /usr/sbin/svcadm ]; then
-        run_quiet /usr/sbin/svcadm disable pbis
         run_quiet /usr/sbin/svcadm disable lwsmd
-        run_quiet /usr/sbin/svccfg delete pbis
         run_quiet /usr/sbin/svccfg delete lwsmd
     else
         run_quiet rm -f /etc/rc0.d/K08lwsmd /etc/rc.1d/K08lwsmd /etc/rcS.d/K08lwmsd /etc/rc2.d/S17lwsmd
-        run_quiet rm -f /etc/rc0.d/K08pbis /etc/rc.1d/K08pbis /etc/rcS.d/K08pbis /etc/rc2.d/S17pbis
-        run_quiet rm -f '@LW_INITDIR@/pbis'
         run_quiet rm -f '@LW_INITDIR@/lwsmd'
     fi
 }
