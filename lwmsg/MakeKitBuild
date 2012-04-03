@@ -36,7 +36,9 @@ configure()
     lw_check_iconv
     
     mk_msg_checking "pthread_sigmask in libc"
-    if mk_check_function HEADERDEPS="pthread.h signal.h" pthread_sigmask
+    # On HP-UX, pthread_sigmask will abort if the library is linked with -B
+    # direct
+    if [ "$MK_OS" != hpux ] && mk_check_function HEADERDEPS="pthread.h signal.h" pthread_sigmask
     then
         mk_msg_result "yes"
         mk_define HAVE_PTHREAD_SIGMASK_IN_LIBC
