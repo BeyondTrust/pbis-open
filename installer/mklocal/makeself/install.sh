@@ -371,7 +371,7 @@ package_install_freebsd()
 {
     pkg_add $@ > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-        pkgName=`basename $@ | sed -e 's/-x86_64\.tbz$//' | sed -e 's/-i386\.tbz$//'`
+        pkgName=`basename $@ | sed -e 's/-x86_64\.tbz$//' | sed -e 's/-x86\.tbz$//'`
         # We don't want to be updated by the port system (bug 11833)
         touch "/var/db/pkg/$pkgName/+IGNOREME" >/dev/null 2>&1
         return 0
@@ -682,6 +682,24 @@ package_purge()
     return $?
 }
 
+remove_likewise_directories()
+{
+    if [ -d "/opt/likewise" ]
+    then
+        (
+            IFS='
+'
+            for file in `find /opt/likewise`
+            do
+                if [ -d "${file}" ]
+                then
+                    echo "${file}"
+                fi
+            done
+        ) | sort -r | xargs rmdir >/dev/null 2>&1
+    fi
+}
+
 do_install()
 {
     log_info "Installing packages and old packages will be removed"
@@ -734,6 +752,12 @@ do_install()
             exit 1
         fi
     fi
+
+    # Some of the earlier packages didn't delete their directories and this was
+    # masked by the install script cleaning up after them. So we have to
+    # continue the tradition.
+    remove_likewise_directories
+
 
     # Install base package.
     if [ -n "$INSTALL_BASE_PACKAGE" ]; then
@@ -870,7 +894,7 @@ do_uninstall()
     fi
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE  $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
