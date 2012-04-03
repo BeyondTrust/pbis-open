@@ -11,6 +11,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Provides: @PKG_DEB_NAME@
 Conflicts: @PKG_DEB_NAME@,
+ winbind,
  likewise-base (<< 6.2),
  likewise-domainjoin (<< 6.2),
  likewise-domainjoin-gui (<< 6.2),
