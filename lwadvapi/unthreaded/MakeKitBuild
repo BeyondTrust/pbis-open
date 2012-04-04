@@ -2,15 +2,28 @@ SUBDIRS='error lwunistr memory file dscache time'
 
 make()
 {
-	mk_multiarch_do
-            mk_library \
-                LIB="lwadvapi_nothr" \
-                GROUPS="\
-                    error/error \
-                    file/file \
-                    dscache/dscache \
-                    memory/memory \
-                    lwunistr/lwunistr \
-                    time/time"
-	mk_multiarch_done
+    DIRECT_FLAGS=""
+    if [ "$MK_HOST_OS" = "hpux" ]
+    then
+        # sshd version A.05.80.002 on HP-UX Itanium defines its own poll
+        # function as a wrapper around the select function. Sshd's poll wrapper
+        # does not implement the POLLWRNORM event, although the system poll
+        # function does implement it. The -B direct flag tells lwmsg to use
+        # only the libraries it links against to resolve the poll symbol,
+        # instead of trying to get it from the loading process (sshd).
+        DIRECT_FLAGS="-Wl,-B,direct"
+    fi
+
+    mk_multiarch_do
+        mk_library \
+            LIB="lwadvapi_nothr" \
+            GROUPS="\
+                error/error \
+                file/file \
+                dscache/dscache \
+                memory/memory \
+                lwunistr/lwunistr \
+                time/time" \
+            LDFLAGS="$DIRECT_FLAGS"
+    mk_multiarch_done
 }
