@@ -29,6 +29,7 @@
  * put all autoconf-specific definitions below here
  *
  */
+
 #ifndef NETSNMP_NO_AUTOCONF_DEFINITIONS
 
 
