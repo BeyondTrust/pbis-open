@@ -54,6 +54,8 @@ int main(int argc, const char **argv) {
     /* PCSTR errs; */
     AdtResultBaseTP result;
 
+    setlocale(LC_ALL, "");
+
     dwError = AdtOpen(&context);
     ADT_BAIL_ON_ERROR(dwError);
 

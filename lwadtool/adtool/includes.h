@@ -62,6 +62,8 @@
 /* adtool includes */
 #include <adtool/types.h>
 
+#include <locale.h>
+
 /* local includes */
 #include "defs.h"
 
