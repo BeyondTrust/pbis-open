@@ -1677,6 +1677,78 @@
 #undef SNMPCONFPATH
 #undef SNMPDLMODPATH
 
+/*  Pluggable transports.  */
+
+/*  This is defined if support for the UDP/IP transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_UDP_DOMAIN
+
+/*  This is defined if support for the "callback" transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_CALLBACK_DOMAIN
+
+/*  This is defined if support for the TCP/IP transport domain is
+    available.  */
+#undef NETSNMP_TRANSPORT_TCP_DOMAIN
+
+/*  This is defined if support for the Unix transport domain
+    (a.k.a. "local IPC") is available.  */
+#undef NETSNMP_TRANSPORT_UNIX_DOMAIN
+
+/*  This is defined if support for the AAL5 PVC transport domain is
+    available.  */
+#undef NETSNMP_TRANSPORT_AAL5PVC_DOMAIN
+
+/*  This is defined if support for the IPX transport domain is
+    available.  */
+#undef NETSNMP_TRANSPORT_IPX_DOMAIN
+
+/*  This is defined if support for the UDP/IPv6 transport domain is
+    available.  */
+#undef NETSNMP_TRANSPORT_UDPIPV6_DOMAIN
+
+/*  This is defined if support for the TCP/IPv6 transport domain is
+    available.  */
+#undef NETSNMP_TRANSPORT_TCPIPV6_DOMAIN
+
+/*  This is defined if support for the TLS transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_TLSBASE_DOMAIN
+
+/*  This is defined if support for the Alias transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_ALIAS_DOMAIN
+
+/*  This is defined if support for the SSH transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_SSH_DOMAIN
+
+/*  This is defined if support for the DTLS/UDP transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_DTLSUDP_DOMAIN
+
+/*  This is defined if support for the TLS/TCP transport domain is
+    available.   */
+#undef NETSNMP_TRANSPORT_TLSTCP_DOMAIN
+
+/*  This is defined if support for stdin/out transport domain is available.   */
+#undef NETSNMP_TRANSPORT_STD_DOMAIN
+
+/*  This is defined if support for the IPv4Base transport domain is available.   */
+#undef NETSNMP_TRANSPORT_IPV4BASE_DOMAIN
+
+/* define this if the USM security module is available */
+#undef NETSNMP_SECMOD_USM
+
+/* define this if the KSM (kerberos based snmp) security module is available */
+#undef NETSNMP_SECMOD_KSM
+
+/* define this if the local security module is available */
+#undef NETSNMP_SECMOD_LOCALSM
+
+/* define if configured as a "mini-agent" */
+#undef NETSNMP_MINI_AGENT
+
 #endif /* NETSNMP_NO_AUTOCONF_DEFINITIONS */
 
 
@@ -1951,77 +2023,6 @@
 /* internal define */
 #define NETSNMP_LASTFIELD -1
 
-/*  Pluggable transports.  */
-
-/*  This is defined if support for the UDP/IP transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_UDP_DOMAIN
-
-/*  This is defined if support for the "callback" transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_CALLBACK_DOMAIN
-
-/*  This is defined if support for the TCP/IP transport domain is
-    available.  */
-#undef NETSNMP_TRANSPORT_TCP_DOMAIN
-
-/*  This is defined if support for the Unix transport domain
-    (a.k.a. "local IPC") is available.  */
-#undef NETSNMP_TRANSPORT_UNIX_DOMAIN
-
-/*  This is defined if support for the AAL5 PVC transport domain is
-    available.  */
-#undef NETSNMP_TRANSPORT_AAL5PVC_DOMAIN
-
-/*  This is defined if support for the IPX transport domain is
-    available.  */
-#undef NETSNMP_TRANSPORT_IPX_DOMAIN
-
-/*  This is defined if support for the UDP/IPv6 transport domain is
-    available.  */
-#undef NETSNMP_TRANSPORT_UDPIPV6_DOMAIN
-
-/*  This is defined if support for the TCP/IPv6 transport domain is
-    available.  */
-#undef NETSNMP_TRANSPORT_TCPIPV6_DOMAIN
-
-/*  This is defined if support for the TLS transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_TLSBASE_DOMAIN
-
-/*  This is defined if support for the Alias transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_ALIAS_DOMAIN
-
-/*  This is defined if support for the SSH transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_SSH_DOMAIN
-
-/*  This is defined if support for the DTLS/UDP transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_DTLSUDP_DOMAIN
-
-/*  This is defined if support for the TLS/TCP transport domain is
-    available.   */
-#undef NETSNMP_TRANSPORT_TLSTCP_DOMAIN
-
-/*  This is defined if support for stdin/out transport domain is available.   */
-#undef NETSNMP_TRANSPORT_STD_DOMAIN
-
-/*  This is defined if support for the IPv4Base transport domain is available.   */
-#undef NETSNMP_TRANSPORT_IPV4BASE_DOMAIN
-
-/* define this if the USM security module is available */
-#undef NETSNMP_SECMOD_USM
-
-/* define this if the KSM (kerberos based snmp) security module is available */
-#undef NETSNMP_SECMOD_KSM
-
-/* define this if the local security module is available */
-#undef NETSNMP_SECMOD_LOCALSM
-
-/* define if configured as a "mini-agent" */
-#undef NETSNMP_MINI_AGENT
 
 /* this is the location of the net-snmp mib tree.  It shouldn't be
    changed, as the places it is used are expected to be constant
