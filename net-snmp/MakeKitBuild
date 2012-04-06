@@ -26,6 +26,20 @@ configure()
         sys/timeb.h sys/time.h sys/times.h sys/uio.h sys/un.h sys/utsname.h \
         unistd.h valgrind/memcheck.h winsock.h 
 
+    mk_msg_checking "header time.h"
+    if mk_check_header \
+        HEADERDEPS="sys/time.h" \
+        HEADER="time.h"
+    then
+        mk_msg_result "yes"
+        if [ -n "HAVE_SYS_TIME_H" ]
+        then
+            mk_define "TIME_WITH_SYS_TIME" 1
+        fi
+    else
+        mk_msg_result "no"
+    fi
+
     # Bundled openssl has AES support
     mk_define HAVE_AES 1
 
@@ -161,6 +175,9 @@ return (char*) __func < (char*) &main ? 0 : 1;
 
     mk_define SNMPSHAREPATH "\"${LW_CONFIGDIR}/snmp\""
     mk_define NETSNMP_DEFAULT_MIBDIRS "\"\$HOME/.snmp/mibs:$SNMPSHAREPATH/mibs\""
+
+    mk_define SNMPCONFPATH "\"${LW_CONFIGDIR}/snmp\""
+    mk_define SNMPLIBPATH "\"$MK_LIBDIR/snmp\""
 
     mk_multiarch_do
         mk_check_sizeofs \

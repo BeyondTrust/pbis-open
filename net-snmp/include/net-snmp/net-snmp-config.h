@@ -22,6 +22,27 @@
 
 #ifdef MK_CONFIG
 #include "net-snmp/net-snmp-config-mk.h"
+
+#define config_belongs_in(x)
+
+#define config_exclude(x)
+
+#define config_arch_require(x,y)
+
+#define config_version_require(x)
+
+#define config_require(x)
+
+#define config_add_mib(x)
+
+#define config_parse_dot_conf(w,x,y,z)
+
+#define config_error(x)
+
+#define config_warning(x)
+
+/* Size prefix to use to printf a size_t or ssize_t */
+#define NETSNMP_PRIz "z"
 #endif
 
 #if defined (WIN32) || defined (mingw32) || defined (cygwin)
@@ -1650,6 +1671,12 @@
 #define DMALLOC_FUNC_CHECK
 #endif
 
+/* net-snmp's major path names */
+#undef SNMPLIBPATH
+#undef SNMPSHAREPATH
+#undef SNMPCONFPATH
+#undef SNMPDLMODPATH
+
 #endif /* NETSNMP_NO_AUTOCONF_DEFINITIONS */
 
 
@@ -1713,12 +1740,6 @@
 #undef NETSNMP_DEFAULT_SERVER_RECV_BUF
 #undef NETSNMP_DEFAULT_CLIENT_SEND_BUF
 #undef NETSNMP_DEFAULT_CLIENT_RECV_BUF
-
-/* net-snmp's major path names */
-#undef SNMPLIBPATH
-#undef SNMPSHAREPATH
-#undef SNMPCONFPATH
-#undef SNMPDLMODPATH
 
 /* NETSNMP_LOGFILE:  If defined it closes stdout/err/in and opens this in 
    out/err's place.  (stdin is closed so that sh scripts won't wait for it) */
