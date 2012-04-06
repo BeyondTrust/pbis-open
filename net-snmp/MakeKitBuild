@@ -135,13 +135,32 @@ configure()
     fi
 
     mk_check_functions \
-        HEADERDEPS="stdlib.h unistd.h sys/types.h sys/socket.h netdb.h pwd.h net/if.h arpa/inet.h grp.h regex.h sys/time.h sys/times.h locale.h" \
+        HEADERDEPS="stdlib.h unistd.h sys/types.h sys/socket.h netdb.h pwd.h net/if.h arpa/inet.h grp.h regex.h sys/time.h sys/times.h locale.h dirent.h" \
         closesocket EVP_sha224 EVP_sha384 fork gai_strerror getaddrinfo \
         getgrnam gethostbyaddr gethostbyname gethostname getipnodebyname \
         getpwnam if_nametoindex inet_ntop inet_pton mkstemp read_config \
         read_premib_config regcomp setenv setitimer setlinebuf setlocale \
         setsid snprintf strcasestr strdup strerror strncasecmp strtoull \
-        sysconf times vsnprintf
+        sysconf times vsnprintf readdir
+
+    mk_msg_checking "Signal handler return type"
+    if mk_try_compile \
+        HEADERDEPS="signal.h"
+        CODE='
+typedef void (*test_sighandler_t)(int);
+test_sighandler_t (*__func)(int, test_sighandler_t) = &signal;
+return (char*) __func < (char*) &main ? 0 : 1;
+'
+    then
+        mk_msg_result "void"
+        mk_define RETSIGTYPE void
+    else
+        mk_msg_result "int"
+        mk_define RETSIGTYPE int
+    fi
+
+    mk_define SNMPSHAREPATH "\"${LW_CONFIGDIR}/snmp\""
+    mk_define NETSNMP_DEFAULT_MIBDIRS "\"\$HOME/.snmp/mibs:$SNMPSHAREPATH/mibs\""
 
     mk_multiarch_do
         mk_check_sizeofs \

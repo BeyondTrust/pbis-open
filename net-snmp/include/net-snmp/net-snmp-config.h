@@ -24,6 +24,14 @@
 #include "net-snmp/net-snmp-config-mk.h"
 #endif
 
+#if defined (WIN32) || defined (mingw32) || defined (cygwin)
+#define ENV_SEPARATOR ";"
+#define ENV_SEPARATOR_CHAR ';'
+#else
+#define ENV_SEPARATOR ":"
+#define ENV_SEPARATOR_CHAR ':'
+#endif
+
 /* ********* NETSNMP_MARK_BEGIN_AUTOCONF_DEFINITIONS ********* */
 /*
  * put all autoconf-specific definitions below here
@@ -32,14 +40,6 @@
 
 #ifndef NETSNMP_NO_AUTOCONF_DEFINITIONS
 
-
-#if defined (WIN32) || defined (mingw32) || defined (cygwin)
-#define ENV_SEPARATOR ";"
-#define ENV_SEPARATOR_CHAR ';'
-#else
-#define ENV_SEPARATOR ":"
-#define ENV_SEPARATOR_CHAR ':'
-#endif
 
 /* definitions added by configure on-the-fly */
 
