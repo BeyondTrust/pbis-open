@@ -180,10 +180,12 @@ return (char*) __func < (char*) &main ? 0 : 1;
     mk_define SNMPLIBPATH "\"$MK_LIBDIR/snmp\""
     mk_define PACKAGE_VERSION "\"5.7.1\""
 
+    mk_define NETSNMP_ENABLE_IPV6 1
     mk_define NETSNMP_TRANSPORT_TCP_DOMAIN 1
     mk_define NETSNMP_TRANSPORT_UDP_DOMAIN 1
     mk_define NETSNMP_TRANSPORT_UDPIPV6_DOMAIN 1
     mk_define NETSNMP_TRANSPORT_TCPIPV6_DOMAIN 1
+    mk_define NETSNMP_SECMOD_USM 1
 
     mk_multiarch_do
         mk_check_sizeofs \
