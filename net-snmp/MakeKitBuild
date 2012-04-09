@@ -12,6 +12,9 @@ configure()
     # Use large file offsets on Solaris
     mk_define _LARGEFILE_SOURCE 1
     mk_define _FILE_OFFSET_BITS 64
+
+    # Needed for CMSG_SPACE to be defined on AIX
+    mk_define _LINUX_SOURCE_COMPAT 1
     
     # Standard ANSI C headers are available
     mk_define STDC_HEADERS 1
@@ -150,7 +153,8 @@ configure()
 
     mk_check_functions \
         HEADERDEPS="stdlib.h unistd.h sys/types.h sys/socket.h netdb.h pwd.h net/if.h arpa/inet.h grp.h regex.h sys/time.h sys/times.h locale.h dirent.h" \
-        closesocket EVP_sha224 EVP_sha384 fork gai_strerror getaddrinfo \
+        closesocket EVP_sha224 EVP_sha384 fork gettimeofday gai_strerror \
+	getaddrinfo \
         getgrnam gethostbyaddr gethostbyname gethostname getipnodebyname \
         getpwnam if_nametoindex inet_ntop inet_pton mkstemp read_config \
         read_premib_config regcomp setenv setitimer setlinebuf setlocale \

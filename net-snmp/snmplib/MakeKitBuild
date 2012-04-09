@@ -12,14 +12,22 @@ make()
 	check_varbind.c 					\
 	mt_support.c snmp_enum.c snmp-tc.c snmp_service.c	\
 	snprintf.c						\
-	snmp_transport.c transports/snmpIPv4BaseDomain.c transports/snmpIPv6BaseDomain.c transports/snmpSocketBaseDomain.c transports/snmpUDPIPv4BaseDomain.c transports/snmpUDPBaseDomain.c transports/snmpTCPBaseDomain.c transports/snmpTCPDomain.c \
-	transports/snmpTCPIPv6Domain.c transports/snmpUDPDomain.c \
+	snmp_transport.c transports/snmpIPv4BaseDomain.c \
+	transports/snmpIPv6BaseDomain.c \
+	transports/snmpSocketBaseDomain.c \
+	transports/snmpUDPIPv4BaseDomain.c \
+	transports/snmpUDPBaseDomain.c \
+	transports/snmpTCPBaseDomain.c \
+	transports/snmpTCPDomain.c \
+	transports/snmpTCPIPv6Domain.c \
+	transports/snmpUDPDomain.c \
 	transports/snmpUDPIPv6Domain.c \
 	snmp_secmod.c snmp_version.c     \
 	container.c container_binary_array.c			\
 	ucd_compat.c		                                \
 	dir_utils.c file_utils.c 	                        \
-	container_null.c container_list_ssll.c container_iterator.c snmpusm.c snmptsm.c"
+	container_null.c container_list_ssll.c \
+	container_iterator.c snmpusm.c snmptsm.c"
 
     mk_library \
         LIB=netsnmp \
