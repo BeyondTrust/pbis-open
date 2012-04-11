@@ -488,11 +488,17 @@ UmnSrvUpdateUser(
     HKEY hKey = NULL;
     USER_MONITOR_PASSWD old = { 0 };
     DWORD dwNow = Now;
+    PSTR pEncodedUser = NULL;
+
+    dwError = LwURLEncodeString(
+                    pUser->pw_name,
+                    &pEncodedUser);
+    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
                     hReg,
                     hUsers,
-                    pUser->pw_name,
+                    pEncodedUser,
                     0,
                     KEY_ALL_ACCESS,
                     &hKey);
@@ -504,7 +510,7 @@ UmnSrvUpdateUser(
         dwError = RegCreateKeyExA(
                         hReg,
                         hUsers,
-                        pUser->pw_name,
+                        pEncodedUser,
                         0,
                         NULL,
                         0,
@@ -534,7 +540,7 @@ UmnSrvUpdateUser(
 
         dwError = UmnSrvReadUser(
                         "Users",
-                        pUser->pw_name,
+                        pEncodedUser,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
 
@@ -575,6 +581,7 @@ UmnSrvUpdateUser(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pEncodedUser);
     UmnSrvFreeUserContents(&old);
     if (hKey)
     {
