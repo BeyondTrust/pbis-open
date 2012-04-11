@@ -964,6 +964,7 @@ LsaAdBatchGatherPseudoObject(
     )
 {
     DWORD dwError = 0;
+    PSTR pszComparePseudoDn = NULL;
 
     LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(pProviderData), ppszKeywordValues));
 
@@ -981,6 +982,37 @@ LsaAdBatchGatherPseudoObject(
                         ppszKeywordValues,
                         hDirectory,
                         pMessage);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (!pItem->pszPseudoDn)
+    {
+        dwError = LwLdapGetString(
+                        hDirectory,
+                        pMessage,
+                        AD_LDAP_DN_TAG,
+                        &pItem->pszPseudoDn);
+        BAIL_ON_LSA_ERROR(dwError);
+        if (LW_IS_NULL_OR_EMPTY_STR(pItem->pszPseudoDn))
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+    pItem->FoundPseudoCount++;
+    if (pItem->FoundPseudoCount > 1)
+    {
+        dwError = LwLdapGetString(
+                        hDirectory,
+                        pMessage,
+                        AD_LDAP_DN_TAG,
+                        &pszComparePseudoDn);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        LSA_LOG_WARNING("Found pseudo object %s that conflicts with pseudo object %s for SID %s",
+            LSA_SAFE_LOG_STRING(pItem->pszPseudoDn),
+            LSA_SAFE_LOG_STRING(pszComparePseudoDn),
+            LSA_SAFE_LOG_STRING(pItem->pszSid));
+        dwError = LW_ERROR_DUPLICATE_USER_OR_GROUP;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1022,6 +1054,7 @@ LsaAdBatchGatherPseudoObject(
     }
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszComparePseudoDn);
     return dwError;
 
 error:

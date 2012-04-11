@@ -165,6 +165,8 @@ typedef struct _LSA_AD_BATCH_ITEM {
     PSTR pszSid;
     PSTR pszSamAccountName;
     PSTR pszDn;
+    PSTR pszPseudoDn;
+    DWORD FoundPseudoCount;
     LSA_AD_BATCH_OBJECT_TYPE ObjectType;
     // User/Group-specific fields:
     union {

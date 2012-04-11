@@ -316,6 +316,8 @@ LsaSrvLogUserIDConflictEvent(
             pszUserIDConflictDescription,
             pszData ? pszData : " ");
 
+    LSA_LOG_WARNING(pszUserIDConflictDescription);
+
 cleanup:
 
     LW_SAFE_FREE_STRING(pszUserIDConflictDescription);
@@ -359,6 +361,8 @@ LsaSrvLogUserGIDConflictEvent(
             SERVICE_EVENT_CATEGORY,
             pszUserGIDConflictDescription,
             pszData ? pszData : " ");
+
+    LSA_LOG_WARNING(pszUserGIDConflictDescription);
 
 cleanup:
 
@@ -450,6 +454,8 @@ LsaSrvLogDuplicateObjectFoundEvent(
             SERVICE_EVENT_CATEGORY,
             pszObjectDuplicateDescription,
             pszData ? pszData : " ");
+
+    LSA_LOG_WARNING(pszObjectDuplicateDescription);
 
 cleanup:
 

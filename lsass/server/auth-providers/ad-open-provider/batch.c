@@ -617,6 +617,7 @@ LsaAdBatchDestroyBatchItemContents(
     LW_SAFE_FREE_STRING(pItem->pszSid);
     LW_SAFE_FREE_STRING(pItem->pszSamAccountName);
     LW_SAFE_FREE_STRING(pItem->pszDn);
+    LW_SAFE_FREE_STRING(pItem->pszPseudoDn);
     switch (pItem->ObjectType)
     {
         case LSA_AD_BATCH_OBJECT_TYPE_USER:
@@ -2952,8 +2953,6 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
         {
             LSA_LOG_ERROR("Too many results returned (got %u, expected %u)",
                           dwFoundCount, dwQueryCount);
-            dwError = LW_ERROR_LDAP_ERROR;
-            BAIL_ON_LSA_ERROR(dwError);
         }
         else if (dwFoundCount == 0)
         {
