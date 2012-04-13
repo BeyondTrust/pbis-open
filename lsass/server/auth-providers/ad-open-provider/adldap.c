@@ -1123,6 +1123,7 @@ ADLdap_AddDomainLocalGroups(
         NULL
     };
     PSTR pDomainDN = NULL;
+    PSTR pszEscapedDN = NULL;
     // Do not free. This is owned by pConn
     HANDLE hDirectory = NULL;
     LDAPMessage* pMessage = NULL;
@@ -1144,12 +1145,15 @@ ADLdap_AddDomainLocalGroups(
                     &pDomainDN);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwLdapEscapeString(&pszEscapedDN, pObject->pszDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
     // groupType: 2147483652 = 0x80000004 = ( GROUP_TYPE_RESOURCE_GROUP |
     // GROUP_TYPE_SECURITY_ENABLED ) = domain local security group
     dwError = LwAllocateStringPrintf(
                     &pFilter,
                     "(&(|(member=%s)(member=CN=%s,CN=ForeignSecurityPrincipals,%s))(groupType=2147483652))",
-                    pObject->pszDN,
+                    pszEscapedDN,
                     pObject->pszObjectSid,
                     pDomainDN);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1191,6 +1195,7 @@ ADLdap_AddDomainLocalGroups(
 
 cleanup:
     LsaDmLdapClose(pConn);
+    LW_SAFE_FREE_STRING(pszEscapedDN);
     LW_SAFE_FREE_STRING(pDomainDN);
     LW_SAFE_FREE_STRING(pFilter);
     LW_SAFE_FREE_STRING(pGroupSid);
