@@ -71,5 +71,12 @@ ADLdap_GetAttributeValuesList(
     OUT PSTR** pppszValues
     );
 
+DWORD
+ADLdap_MoveHashKeysToArray(
+    IN OUT PLW_HASH_TABLE pHash,
+    OUT PDWORD pCount,
+    OUT PVOID** pppValues
+    );
+
 #endif
 
