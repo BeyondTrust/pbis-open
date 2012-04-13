@@ -67,10 +67,9 @@
    them.  This'll be fixed, but for better compatibility, let's prefer
    des-crc for now.  */
 static krb5_enctype default_enctype_list[] = {
-    ENCTYPE_AES256_CTS_HMAC_SHA1_96, ENCTYPE_AES128_CTS_HMAC_SHA1_96,
-    ENCTYPE_DES3_CBC_SHA1,
     ENCTYPE_ARCFOUR_HMAC,
-    ENCTYPE_DES_CBC_CRC, ENCTYPE_DES_CBC_MD5, ENCTYPE_DES_CBC_MD4,
+    ENCTYPE_DES_CBC_MD5,
+    ENCTYPE_DES_CBC_CRC, 
     0
 };
 
@@ -160,6 +159,13 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
     ctx->magic = KV5M_CONTEXT;
 
     ctx->profile_secure = secure;
+
+    /* Set the default encryption types, possible defined in krb5/conf */
+    if ((retval = krb5_set_default_in_tkt_ktypes(ctx, default_enctype_list)))
+            goto cleanup;
+
+    if ((retval = krb5_set_default_tgs_enctypes(ctx, default_enctype_list)))
+            goto cleanup;
 
     if ((retval = krb5_os_init_context(ctx, kdc)))
         goto cleanup;
