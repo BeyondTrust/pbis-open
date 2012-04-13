@@ -1110,6 +1110,156 @@ error:
 }
 
 DWORD
+ADLdap_AddDomainLocalGroups(
+    IN PAD_PROVIDER_CONTEXT pContext,
+    IN PLSA_SECURITY_OBJECT pObject,
+    IN OUT PLW_HASH_TABLE pGroupHash
+    )
+{
+    DWORD dwError =  0;
+    PLSA_DM_LDAP_CONNECTION pConn = NULL;
+    PSTR szAttributeList[] = {
+        AD_LDAP_OBJECTSID_TAG,
+        NULL
+    };
+    PSTR pDomainDN = NULL;
+    // Do not free. This is owned by pConn
+    HANDLE hDirectory = NULL;
+    LDAPMessage* pMessage = NULL;
+    // Do not free. This is owned by pConn
+    LDAP* pLd = NULL;
+    PSTR pGroupSid = NULL;
+    PSTR pFilter = NULL;
+    // Do not free
+    LDAPMessage* pCurrentMessage = NULL;
+
+    dwError = LsaDmLdapOpenDc(
+                    pContext,
+                    pContext->pState->pszDomainName,
+                    &pConn);
+    BAIL_ON_LSA_ERROR(dwError);
+    
+    dwError = LwLdapConvertDomainToDN(
+                    pContext->pState->pszDomainName,
+                    &pDomainDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    // groupType: 2147483652 = 0x80000004 = ( GROUP_TYPE_RESOURCE_GROUP |
+    // GROUP_TYPE_SECURITY_ENABLED ) = domain local security group
+    dwError = LwAllocateStringPrintf(
+                    &pFilter,
+                    "(&(|(member=%s)(member=CN=%s,CN=ForeignSecurityPrincipals,%s))(groupType=2147483652))",
+                    pObject->pszDN,
+                    pObject->pszObjectSid,
+                    pDomainDN);
+    BAIL_ON_LSA_ERROR(dwError);
+ 
+    dwError = LsaDmLdapDirectorySearch(
+                    pConn,
+                    pDomainDN,
+                    LDAP_SCOPE_SUBTREE,
+                    pFilter,
+                    szAttributeList,
+                    &hDirectory,
+                    &pMessage);
+    BAIL_ON_LSA_ERROR(dwError);                   
+
+    pLd = LwLdapGetSession(hDirectory);
+
+    pCurrentMessage = ldap_first_entry(pLd, pMessage);
+    while (pCurrentMessage)
+    {
+        LW_SAFE_FREE_STRING(pGroupSid);
+        dwError = ADLdap_GetObjectSid(
+                        hDirectory,
+                        pCurrentMessage,
+                        &pGroupSid);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (!LwHashExists(pGroupHash, pGroupSid))
+        {
+            // Set the value of the hash entry so this string gets freed with
+            // the hash.
+            dwError = LwHashSetValue(pGroupHash, pGroupSid, pGroupSid);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            pGroupSid = NULL;
+        }
+
+        pCurrentMessage = ldap_next_entry(pLd, pCurrentMessage);
+    }
+
+cleanup:
+    LsaDmLdapClose(pConn);
+    LW_SAFE_FREE_STRING(pDomainDN);
+    LW_SAFE_FREE_STRING(pFilter);
+    LW_SAFE_FREE_STRING(pGroupSid);
+    if (pMessage)
+    {
+        ldap_msgfree(pMessage);
+    }
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+ADLdap_MoveHashKeysToArray(
+    IN OUT PLW_HASH_TABLE pHash,
+    OUT PDWORD pCount,
+    OUT PVOID** pppValues
+    )
+{
+    LW_HASH_ITERATOR hashIterator = {0};
+    DWORD count = (DWORD) LwHashGetKeyCount(pHash);
+    DWORD index = 0;
+    DWORD dwError = 0;
+    PVOID* ppValues = NULL;
+    LW_HASH_ENTRY*   pHashEntry = NULL;
+    
+    if (count)
+    {
+        dwError = LwAllocateMemory(
+            sizeof(ppValues[0]) * count,
+            OUT_PPVOID(&ppValues));
+        BAIL_ON_LSA_ERROR(dwError);
+    
+        dwError = LwHashGetIterator(pHash, &hashIterator);
+        BAIL_ON_LSA_ERROR(dwError);
+        
+        for (index = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; index++)
+        {
+            ppValues[index] = pHashEntry->pKey;
+        }
+    }
+
+    *pCount = count;
+    *pppValues = ppValues;
+
+cleanup:
+    return dwError;
+
+error:
+    *pCount = 0;
+    *pppValues = NULL;
+    LW_SAFE_FREE_MEMORY(ppValues);
+    goto cleanup;
+}
+
+static
+VOID
+ADLdap_FreeHashStringValue(
+    const LW_HASH_ENTRY* pEntry
+    )
+{
+    if (pEntry->pValue)
+    {
+        LwFreeMemory(pEntry->pValue);
+    }
+}
+
+DWORD
 ADLdap_GetObjectGroupMembership(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pObject,
@@ -1161,6 +1311,8 @@ ADLdap_GetObjectGroupMembership(
                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
+    // We could only have the DN path for the user if (s)he came from a two way
+    // trusted domain or the joined domain.
     LSA_ASSERT(LSA_TRUST_DIRECTION_TWO_WAY == trustDirection ||
             LSA_TRUST_DIRECTION_SELF == trustDirection);
 
@@ -1209,7 +1361,7 @@ ADLdap_GetObjectGroupMembership(
                     (dcMembershipCount + gcMembershipCount + 1) * 2,
                     LwHashCaselessStringCompare,
                     LwHashCaselessStringHash,
-                    NULL,
+                    ADLdap_FreeHashStringValue,
                     NULL,
                     &pGroupHash);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1219,7 +1371,9 @@ ADLdap_GetObjectGroupMembership(
         PSTR pSid = ppGcMembershipList[index];
         if (!LwHashExists(pGroupHash, pSid))
         {
-            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            // Set the value of the hash entry as NULL so this string is not
+            // freed with the hash.
+            dwError = LwHashSetValue(pGroupHash, pSid, NULL);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -1229,7 +1383,9 @@ ADLdap_GetObjectGroupMembership(
         PSTR pSid = ppDcMembershipList[index];
         if (!LwHashExists(pGroupHash, pSid))
         {
-            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            // Set the value of the hash entry as NULL so this string is not
+            // freed with the hash.
+            dwError = LwHashSetValue(pGroupHash, pSid, NULL);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -1240,12 +1396,24 @@ ADLdap_GetObjectGroupMembership(
         PSTR pSid = pObject->userInfo.pszPrimaryGroupSid;
         if (!LwHashExists(pGroupHash, pSid))
         {
-            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            // Set the value of the hash entry as NULL so this string is not
+            // freed with the hash.
+            dwError = LwHashSetValue(pGroupHash, pSid, NULL);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
 
-    dwError = AD_MoveHashValuesToArray(
+    // Check if the user came from a domain other than the computer's domain
+    if (LSA_TRUST_DIRECTION_TWO_WAY == trustDirection)
+    {
+        dwError = ADLdap_AddDomainLocalGroups(
+                        pContext,
+                        pObject,
+                        pGroupHash);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = ADLdap_MoveHashKeysToArray(
                     pGroupHash,
                     &totalSidCount,
                     (PVOID**)(PVOID)&ppTotalSidList);
@@ -1289,7 +1457,7 @@ cleanup:
     LwFreeStringArray(ppGcMembershipList, gcMembershipCount);
     LwFreeStringArray(ppDcMembershipList, dcMembershipCount);
     // Do not free the string pointers inside. They are borrowed from the
-    // hashes.
+    // hash.
     LW_SAFE_FREE_MEMORY(ppTotalSidList);
 
     LsaDmLdapClose(pConn);
