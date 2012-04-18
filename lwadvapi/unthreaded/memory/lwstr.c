@@ -844,3 +844,274 @@ LwCaselessStringSearch(
     return NULL;
 #endif
 }
+
+DWORD
+LwURLEncodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    )
+{
+    DWORD dwError = 0;
+    const char *pRequireEscape = "$&+,/:;=?@ \"'<>#%{}|\\^~[]`";
+    size_t outputPos = 0;
+    size_t i = 0;
+    PSTR pOut = NULL;
+
+    for (i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] < 0x20 || pIn[i] >= 0x7F ||
+                strchr(pRequireEscape, pIn[i]) != NULL)
+        {
+            outputPos+=3;
+        }
+        else
+        {
+            outputPos++;
+        }
+    }
+
+    // Space for the NULL
+    outputPos++;
+
+    dwError = LwAllocateMemory(
+                    outputPos,
+                    OUT_PPVOID(&pOut));
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (outputPos = 0, i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] < 0x20 || pIn[i] >= 0x7F ||
+                strchr(pRequireEscape, pIn[i]) != NULL)
+        {
+            sprintf(pOut + outputPos, "%%%.2X", (BYTE)pIn[i]);
+            outputPos+=3;
+        }
+        else
+        {
+            pOut[outputPos] = pIn[i];
+            outputPos++;
+        }
+    }
+
+    *ppOut = pOut;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppOut = NULL;
+    LW_SAFE_FREE_STRING(pOut);
+    goto cleanup;
+}
+
+DWORD
+LwURLDecodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    )
+{
+    DWORD dwError = 0;
+    size_t outputPos = 0;
+    size_t i = 0;
+    PSTR pOut = NULL;
+    BYTE digit1 = 0;
+    BYTE digit2 = 0;
+
+    for (i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] == '%')
+        {
+            if (!isxdigit((int)(pIn[i+1])) || !isxdigit((int)(pIn[i+2])))
+            {
+                dwError = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LW_ERROR(dwError);
+            }
+            i += 2;
+        }
+        outputPos++;
+    }
+
+    // Space for the NULL
+    outputPos++;
+
+    dwError = LwAllocateMemory(
+                    outputPos,
+                    OUT_PPVOID(&pOut));
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (outputPos = 0, i = 0; pIn[i]; i++, outputPos++)
+    {
+        if (pIn[i] == '%')
+        {
+            i++;
+            dwError = LwHexCharToByte(
+                            pIn[i],
+                            &digit1);
+            BAIL_ON_LW_ERROR(dwError);
+
+            i++;
+            dwError = LwHexCharToByte(
+                            pIn[i],
+                            &digit2);
+            BAIL_ON_LW_ERROR(dwError);
+
+            pOut[outputPos] = (digit1 << 4) | digit2;
+        }
+        else
+        {
+            pOut[outputPos] = pIn[i];
+        }
+    }
+
+    *ppOut = pOut;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppOut = NULL;
+    LW_SAFE_FREE_STRING(pOut);
+    goto cleanup;
+}
+
+/*
+      The following are two example URIs and their component parts:
+
+       foo://example.com:8042/over/there?name=ferret#nose
+       \_/   \______________/\_________/ \_________/ \__/
+        |           |            |            |        |
+     scheme     authority       path        query   fragment
+        |   _____________________|__
+       / \ /                        \
+       urn:example:animal:ferret:nose
+*/
+DWORD
+LwURILdapDecode(
+    PCSTR pszURI,
+    PSTR *ppszScheme,
+    PSTR *ppszAuthority,
+    PSTR *ppszPath
+    )
+{
+    DWORD dwError = 0;
+    PCSTR pszSchemeStart = NULL;
+    PCSTR pszAuthorityStart = NULL;
+    PCSTR pszPathStart = NULL;
+    PCSTR pszIter = NULL;
+    PSTR pszScheme = NULL;
+    PSTR pszAuthority = NULL;
+    PSTR pszPath = NULL;
+    PSTR pszPathURLDecode = NULL;
+
+    pszSchemeStart = pszIter = pszURI;
+    if (('a' <= *pszIter && *pszIter <= 'z') ||
+        ('A' <= *pszIter && *pszIter <= 'Z'))
+    {
+        while (('a' <= *pszIter && *pszIter <= 'z') ||
+           ('A' <= *pszIter && *pszIter <= 'Z') ||
+           ('0' <= *pszIter && *pszIter <= '0') ||
+           *pszIter == '+' ||
+           *pszIter == '-' ||
+           *pszIter == '.' )
+        {
+            pszIter++;
+        }
+
+        dwError = LwStrndup(
+                    pszSchemeStart,
+                    pszIter - pszSchemeStart,
+                    &pszScheme);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    if (pszIter[0] != ':' ||
+        pszIter[1] != '/' ||
+        pszIter[2] != '/')
+    {
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    pszIter += 3;
+
+    pszAuthorityStart = pszIter;
+    while (*pszIter != '\0' && *pszIter != '/')
+    {
+        pszIter++;
+    }
+    if (pszAuthorityStart != pszIter)
+    {
+        dwError = LwStrndup(
+                    pszAuthorityStart,
+                    pszIter - pszAuthorityStart,
+                    &pszAuthority);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    if (*pszIter)
+    {
+        pszIter++; // Move past separator
+
+        pszPathStart = pszIter;
+        while (*pszIter)
+        {
+            pszIter++;
+        }
+
+        if (pszPathStart != pszIter)
+        {
+            dwError = LwStrndup(
+                        pszPathStart,
+                        pszIter - pszPathStart,
+                        &pszPath);
+            BAIL_ON_LW_ERROR(dwError);
+
+            dwError = LwURLDecodeString(pszPath, &pszPathURLDecode);
+            BAIL_ON_LW_ERROR(dwError);
+        }
+        else
+        {
+            dwError = LW_ERROR_INTERNAL;
+            BAIL_ON_LW_ERROR(dwError);
+        }
+    }
+
+    if (ppszScheme)
+    {
+        *ppszScheme = pszScheme;
+        pszScheme = NULL;
+    }
+
+    if (ppszAuthority)
+    {
+        *ppszAuthority = pszAuthority;
+        pszAuthority = NULL;
+    }
+ 
+    if (ppszPath)
+    {
+        *ppszPath = pszPathURLDecode;
+        pszPathURLDecode = NULL;
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszScheme);
+    LW_SAFE_FREE_STRING(pszAuthority);
+    LW_SAFE_FREE_STRING(pszPath);
+    LW_SAFE_FREE_STRING(pszPathURLDecode);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
