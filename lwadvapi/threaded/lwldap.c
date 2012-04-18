@@ -701,20 +701,13 @@ LwLdapDirectorySearch(
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
-    *ppMessage = pMessage;
-
 cleanup:
+
+    *ppMessage = pMessage; // even errors use this
 
     return(dwError);
 
 error:
-
-    *ppMessage = NULL;
-
-    if (pMessage)
-    {
-        ldap_msgfree(pMessage);
-    }
 
     goto cleanup;
 }
@@ -2030,6 +2023,61 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwLdapParseResultForReferrals(
+    IN HANDLE hDirectory,
+    IN LDAPMessage *pMessage,
+    OUT PSTR **pppszReferralArray,
+    OUT PDWORD pdwReferralCount
+    )
+{
+    DWORD dwError = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+    PSTR *ppszReferrals = NULL;
+    DWORD dwReferrals = 0;
+    PSTR *ppszReferralArray = NULL;
+    DWORD dwReferralCount = 0;
+
+
+    dwError = ldap_parse_result(pDirectory->ld,
+                           pMessage,
+                           NULL,
+                           NULL,
+                           NULL,
+                           &ppszReferrals,
+                           NULL,
+                           0);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+    if (ppszReferrals)
+    {
+        for (; ppszReferrals[dwReferrals]; dwReferrals++)
+            ;
+
+        dwError = LwDuplicateStringArray(
+                    &ppszReferralArray,
+                    &dwReferralCount,
+                    ppszReferrals,
+                    dwReferrals);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    *pppszReferralArray = ppszReferralArray;
+    *pdwReferralCount = dwReferrals;
+
+cleanup:
+    if (ppszReferrals)
+    {
+        ldap_value_free(ppszReferrals);
+    }
+    return dwError;
+
+error:
+
+    LwFreeStringArray(ppszReferralArray, dwReferralCount);
+
+    goto cleanup;
+}
 
 /*
 local variables:
