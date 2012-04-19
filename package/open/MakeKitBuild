@@ -387,6 +387,7 @@ open_files_prefix()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lwicompat_v*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
         "${MK_DOCDIR}/*" \
         "${MK_DOCDIR}/html/*" \
