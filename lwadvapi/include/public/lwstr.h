@@ -402,6 +402,15 @@ LwStrtoull(
     int         base
     );
 
+
+DWORD
+LwURILdapDecode(
+    PCSTR pszURI,
+    PSTR *ppszScheme,
+    PSTR *ppszAuthority,
+    PSTR *ppszPath
+    );
+
 LW_END_EXTERN_C
 
 
