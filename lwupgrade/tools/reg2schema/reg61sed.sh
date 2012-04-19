@@ -106,6 +106,14 @@ write_sed_script()
   s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.LinkedCell]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\LinkedCell]/
   /[^]/p
 }
+
+#
+# Move everything under LinkedCell to under the joined DOMAIN_FQDN
+#
+/\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.LinkedCell\\\\.*\]/,/^/{
+  s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.LinkedCell\\\\\\(.*\\)\]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\LinkedCell\\\\\\1]/
+  /[^]/p
+}
 NNNN
 }
 
