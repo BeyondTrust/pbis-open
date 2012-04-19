@@ -347,6 +347,14 @@ LwLdapBindDirectorySasl(
     BOOLEAN bSeal
     );
 
+DWORD
+LwLdapParseResultForReferrals(
+    IN HANDLE hDirectory,
+    IN LDAPMessage *pMessage,
+    OUT PSTR **pppszReferralArray,
+    OUT PDWORD pdwReferralCount
+    );
+
 LW_END_EXTERN_C
 
 
