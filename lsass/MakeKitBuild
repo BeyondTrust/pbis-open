@@ -304,6 +304,11 @@ return (int) (size_t) conversation.conv;
     mk_msg_result "$result"
     mk_define CONST_PAM_MESSAGE "$result"
 
+    mk_check_functions \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        pam_putenv
+
     mk_msg_checking "struct passwd has field pw_class"
 
     if mk_check_type \
