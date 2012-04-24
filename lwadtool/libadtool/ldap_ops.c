@@ -1164,11 +1164,19 @@ DWORD ConnectAD(IN AppContextTP appContext) {
                               LDAP_AUTH_SIMPLE);
     }
     else {
-        PrintStderr(appContext,
+        if(getenv("KRB5CCNAME")) {
+            PrintStderr(appContext,
                     LogLevelTrace,
                     "%s: Binding via GSS. Using krb5 cache file %s\n",
                     appContext->actionName,
                     getenv("KRB5CCNAME"));
+        }
+        else {
+            PrintStderr(appContext,
+                    LogLevelTrace,
+                    "%s: Binding via GSS. KRB5CCNAME environment variable is not set \n",
+                    appContext->actionName);
+        }
 
         dwError = ldap_gssapi_bind_s((LDAP *) appContext->workConn->conn, NULL, NULL);
     }
