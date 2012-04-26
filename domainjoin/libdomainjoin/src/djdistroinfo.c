@@ -371,6 +371,18 @@ DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info)
                 1
             },
             {
+                DISTRO_SCIENTIFIC,
+                "/etc/redhat-release",
+                /*
+                # The format of the line is something like:
+                #   Scientific Linux release 6.1 (Carbon)
+                */
+                "^[[:space:]]*(Scientific|Scientific Linux) release ([[:digit:]]+(\\.[[:digit:]]+)?)",
+                2,
+                -1,
+                1
+            },
+            {
                 DISTRO_SUSE,
                 "/etc/SuSE-release",
                 "^[[:space:]]*SUSE LINUX ([[:digit:]]+\\.[[:digit:]]+)[[:space:]]+",
@@ -748,6 +760,7 @@ struct
     { DISTRO_REDHAT, "Redhat" },
     { DISTRO_FEDORA, "Fedora" },
     { DISTRO_CENTOS, "CentOS" },
+    { DISTRO_SCIENTIFIC, "Scientific" },
     { DISTRO_SUSE, "SuSE" },
     { DISTRO_OPENSUSE, "OpenSuSE" },
     { DISTRO_SLES, "SLES" },
