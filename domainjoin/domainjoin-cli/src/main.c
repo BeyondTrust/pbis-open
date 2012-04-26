@@ -33,7 +33,6 @@
 #include "djsshconf.h"
 #include "djpamconf.h"
 #include "djcli.h"
-#include "djfirewall.h"
 #include "djauditing.h"
 #include "ctprocutils.h"
 #include "lwexc.h"
@@ -82,7 +81,6 @@ ShowUsageInternal()
     fprintf(stdout, "    configure { --enable | --disable } nsswitch [--testprefix <dir>]\n");
     fprintf(stdout, "    configure { --enable | --disable } ssh [--testprefix <dir>]\n");
     fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] [--long <longdomain>] [--short <shortdomain>] krb5\n");
-    fprintf(stdout, "    configure { --enable | --disable } firewall [--testprefix <dir>]\n");
     fprintf(stdout, "    configure { --enable | --disable } eventfwdd\n");
     fprintf(stdout, "    configure { --enable | --disable } reapsysld\n");
     fprintf(stdout, "    get_os_type\n");
