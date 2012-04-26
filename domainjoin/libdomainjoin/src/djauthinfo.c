@@ -29,7 +29,6 @@
  */
 
 #include "domainjoin.h"
-#include "djfirewall.h"
 #include "djauditing.h"
 #include "djdistroinfo.h"
 #include "djauthconf.h"
