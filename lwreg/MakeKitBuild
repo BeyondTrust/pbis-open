@@ -72,14 +72,16 @@ configure()
     lw_check_iconv
 
     mk_check_headers \
-	FAIL=yes \
-	sqlite3.h uuid/uuid.h histedit.h
-    
+        FAIL=yes \
+        sqlite3.h uuid/uuid.h histedit.h
+
     mk_check_libraries \
-	FAIL=yes \
-	sqlite3 uuid edit
+        FAIL=yes \
+        sqlite3 uuid edit
 
     mk_check_libraries pthread
+
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
 
     mk_output_file server/lwregd/lwreg.reg
     mk_output_file shell/lw-edit-reg.sh

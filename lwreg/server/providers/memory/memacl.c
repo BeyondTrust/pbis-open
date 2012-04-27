@@ -52,7 +52,6 @@ MemSetKeySecurity(
 {
     NTSTATUS status = STATUS_ACCESS_DENIED;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
-    PREG_KEY_CONTEXT pKeyCtx = NULL;
     ACCESS_MASK accessRequired = KEY_ALL_ACCESS;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)hNtRegConnection;
@@ -90,9 +89,6 @@ MemSetKeySecurity(
 
     status = RegSrvAccessCheckKeyHandle(pKeyHandle, accessRequired);
     BAIL_ON_NT_STATUS(status);
-
-    pKeyCtx = pKeyHandle->pKey;
-    //BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
     /* Sanity checks */
     if (SecurityInformation == 0)

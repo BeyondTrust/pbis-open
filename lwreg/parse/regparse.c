@@ -408,7 +408,7 @@ RegParseAppendData(
     DWORD attrSize = 0;
     PSTR pszAttr = NULL;
     DWORD binaryValue = 0;
-    REG_DATA_TYPE eDataType = 0;
+    REG_DATA_TYPE eDataType ATTRIBUTE_UNUSED = 0;
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
@@ -483,7 +483,7 @@ RegParseBinaryData(
     PREGPARSE_HANDLE parseHandle
     )
 {
-    PSTR dataName = NULL;
+    PSTR dataName ATTRIBUTE_UNUSED = NULL;
     BOOLEAN eof = FALSE;
     REGLEX_TOKEN token = 0;
     DWORD attrSize = 0;

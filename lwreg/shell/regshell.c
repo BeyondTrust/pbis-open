@@ -810,7 +810,7 @@ RegShellProcessCmd(
     DWORD dwOpenRootKeyError = 0;
     DWORD dwValuesListed = 0;
     PREGSHELL_CMD_ITEM rsItem = NULL;
-    PCSTR pszErrorPrefix = NULL;
+    PCSTR pszErrorPrefix ATTRIBUTE_UNUSED = NULL;
     PSTR pszPwd = NULL;
     PSTR pszToken = NULL;
     PSTR pszKeyName = NULL;
@@ -1478,7 +1478,6 @@ VOID
 RegShellPrependStringInput(EditLine *inel, PSTR pszPrefix, PSTR pszCursor)
 {
     PSTR pszTmp = NULL;
-    PSTR pszSaveCursor = NULL;
     LineInfo *el = (LineInfo *) el_line(inel);
 
     if (pszCursor && *pszCursor)
@@ -1487,7 +1486,6 @@ RegShellPrependStringInput(EditLine *inel, PSTR pszPrefix, PSTR pszCursor)
     }
     if (pszTmp)
     {
-        pszSaveCursor = pszTmp;
         el->cursor = pszTmp;
     }
     el_insertstr(inel, pszPrefix);
@@ -1836,7 +1834,6 @@ pfnRegShellCompleteCallback(
     int ch)
 {
     BOOLEAN bProcessingCommand = TRUE;
-    BOOLEAN bHasRootKey = FALSE;
     DWORD dwError = CC_ERROR;
     DWORD dwRootKeysCount = 0;
     DWORD i = 0;
@@ -1944,7 +1941,6 @@ pfnRegShellCompleteCallback(
                 {
                     /* Root key is valid, move to the next level... */
                     pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
-                    bHasRootKey = TRUE;
                 }
     
                 /* 
