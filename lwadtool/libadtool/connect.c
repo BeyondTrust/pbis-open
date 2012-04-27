@@ -194,6 +194,9 @@ ProcessConnectArgs(IN AppContextTP appContext, IN PSTR ipAddr, IN INT port, IN P
     if (!port) {
         appContext->workConn->port = 389;
     }
+    else {
+        appContext->workConn->port = port;
+    }
 
     if(!appContext->workConn->serverAddress) {
 
