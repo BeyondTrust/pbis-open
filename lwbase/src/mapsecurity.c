@@ -278,7 +278,7 @@ LwMapSecurityCreateContext(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     PLW_MAP_SECURITY_CONTEXT pContext = NULL;
     BOOLEAN bInLock = FALSE;
 
@@ -366,8 +366,8 @@ LwMapSecurityCreateContextInternal(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
-    PCSTR pszError = NULL;
+    int EE ATTRIBUTE_UNUSED = 0;
+    PCSTR pszError ATTRIBUTE_UNUSED = NULL;
     PLW_MAP_SECURITY_CONTEXT pContext = NULL;
     LWMSP_CREATE_CONTEXT_CALLBACK pCreateContextCallback = NULL;
 

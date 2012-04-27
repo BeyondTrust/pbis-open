@@ -134,7 +134,7 @@ LwRtlWC16StringDuplicate(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     size_t size = 0;
     PWSTR pszNewString = NULL;
 

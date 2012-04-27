@@ -1913,7 +1913,7 @@ RtlpFreeAbsoluteSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status ATTRIBUTE_UNUSED = STATUS_SUCCESS;
     PSID pOwner = NULL;
     PSID pGroup = NULL;
     PACL pDacl = NULL;

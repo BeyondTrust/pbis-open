@@ -209,7 +209,7 @@ LwRtlUnicodeStringDuplicate(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     UNICODE_STRING newString = { 0 };
 
     if (!pOriginalString || !pNewString)

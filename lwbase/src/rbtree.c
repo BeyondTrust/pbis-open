@@ -906,7 +906,7 @@ LwRtlRBTreeFixColors(
 {
     PLWRTL_RB_TREE_NODE pUncle = NULL;
     PLWRTL_RB_TREE_NODE pParent = NULL;
-    PLWRTL_RB_TREE_NODE pGrandParent = NULL;
+    PLWRTL_RB_TREE_NODE pGrandParent ATTRIBUTE_UNUSED = NULL;
 
     while ((pRBTree->pRoot != pTreeNode) && RB_IS_BLACK(pTreeNode))
     {

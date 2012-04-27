@@ -149,6 +149,7 @@ configure()
     mk_check_doxygen
     
     mk_declare -o ENABLE_INTERNAL_DOCS=no
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
 
     mk_output_file doc/Doxyfile
 }
