@@ -20,8 +20,8 @@ make()
             LDAP_EXTRA_TARGETS="\
                 ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.6 \
                 ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.6 \
-                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6"
-#                ${MK_BINDIR}/ldapsearch
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6 \
+                ${MK_BINDIR}/ldapsearch"
             ;;
         hpux)
             LDAP_EXTRA_TARGETS="\
@@ -30,15 +30,15 @@ make()
                 ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6.2 \
                 ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.6 \
                 ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.6 \
-                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6"
-#                ${MK_BINDIR}/ldapsearch
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6 \
+                ${MK_BINDIR}/ldapsearch"
             ;;
         darwin)
             LDAP_EXTRA_TARGETS="\
                 ${MK_LIBDIR}/libldap-2.4.2${MK_LIB_EXT} \
                 ${MK_LIBDIR}/liblber-2.4.2${MK_LIB_EXT} \
-                ${MK_LIBDIR}/libldap_r-2.4.2${MK_LIB_EXT}"
-#                ${MK_BINDIR}/ldapsearch
+                ${MK_LIBDIR}/libldap_r-2.4.2${MK_LIB_EXT} \
+                ${MK_BINDIR}/ldapsearch"
             ;;
         *)
             LDAP_EXTRA_TARGETS="\
@@ -47,8 +47,8 @@ make()
                 ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.2.4.2 \
                 ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.2 \
                 ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.2.4.2 \
-                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.2"
-#                ${MK_BINDIR}/ldapsearch
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.2 \
+                ${MK_BINDIR}/ldapsearch"
             ;;
     esac
 
