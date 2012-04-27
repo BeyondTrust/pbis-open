@@ -492,7 +492,6 @@ GetValuesFromRegistry(
     )
 {
     DWORD dwError = 0;
-    PSTR pszToken = NULL;
     PSTR pszPath = NULL;
     PSTR pszAbsoluteKey = NULL;
     RSYS_MESSAGE_PATTERN* pPattern = NULL;
@@ -558,7 +557,7 @@ GetValuesFromRegistry(
     dwError = LwAllocateStringPrintf(&pszAbsoluteKey, "%s", pszKeyName);
     BAIL_ON_RSYS_ERROR(dwError);
 
-    pszToken = (char*)strtok_r(pszAbsoluteKey,"\\",&pszPath);
+    strtok_r(pszAbsoluteKey,"\\",&pszPath);
 
     dwError = RegProcessConfig(
                 pszPath,
