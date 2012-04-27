@@ -7,5 +7,6 @@ make()
         INCLUDEDIRS=". ../include ../ncklib ../ncklib/include/${target_os}" \
         CFLAGS="-Wall -Werror" \
         HEADERDEPS="dce/rpc.h lw/base.h" \
-        GROUPS="../libdcethread/dcethread ../idl_lib/idl ../ncklib/nck ../uuid/uuid"
+        GROUPS="../libdcethread/dcethread ../idl_lib/idl ../ncklib/nck ../uuid/uuid" \
+        LIBS="uuid"
 }

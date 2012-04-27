@@ -247,7 +247,7 @@ configure()
     # Required libraries
     mk_check_libraries \
         FAIL=yes \
-        lwioclient gssapi_krb5
+        lwioclient gssapi_krb5 uuid
 
     # Schannel
     if [ "$ENABLE_SCHANNEL" = "yes" ]
