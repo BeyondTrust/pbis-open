@@ -5,5 +5,5 @@ make()
         SOURCES="libmain.c lwfileinfo.c lwsessioninfo.c lwshareinfo.c lwconnectioninfo.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwmsg/lwmsg.h" \
-        LIBDEPS="lwiocommon"
+        LIBDEPS="lwiocommon lwmsg lwmsg_nothr"
 }

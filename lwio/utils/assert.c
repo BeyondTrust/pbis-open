@@ -98,7 +98,7 @@ LwIoAssertionFailedFormat(
     ...
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status ATTRIBUTE_UNUSED = STATUS_SUCCESS;
     PSTR message = NULL;
     va_list args;
 

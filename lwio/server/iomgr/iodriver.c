@@ -202,7 +202,7 @@ IopDriverLoad(
     {
         dlerror();
 
-        pDriverObject->LibraryHandle = dlopen(pDriverObject->pszDriverPath, RTLD_NOW | RTLD_GLOBAL);
+        pDriverObject->LibraryHandle = dlopen(pDriverObject->pszDriverPath, RTLD_NOW | RTLD_LOCAL);
         if (!pDriverObject->LibraryHandle)
         {
             pszError = dlerror();

@@ -12,7 +12,7 @@ make()
         libmain.c     \
         lwlist.c      \
         memory.c      \
-	multistring.c \
+        multistring.c \
         queue.c       \
         path.c        \
         stack.c       \

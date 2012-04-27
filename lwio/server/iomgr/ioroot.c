@@ -589,7 +589,7 @@ IopRootReadConfigDriver(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     PSTR pszDriverPath = NULL;
     PSTR pszDriverKey = NULL;
 

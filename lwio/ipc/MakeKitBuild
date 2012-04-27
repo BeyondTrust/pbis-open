@@ -5,5 +5,5 @@ make()
         SOURCES="globals.c libmain.c ntipc.c ntipc-unicode_string.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwmsg/lwmsg.h" \
-        LIBDEPS="lwmsg"
+        LIBDEPS="lwmsg lwmsg_nothr"
 }

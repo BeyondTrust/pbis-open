@@ -51,7 +51,7 @@ ItDispatchDeviceIoControl(
     )
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
 
     switch (pIrp->Args.IoFsControl.ControlCode)
     {

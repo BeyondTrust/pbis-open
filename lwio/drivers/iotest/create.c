@@ -53,7 +53,7 @@ ItCreateInternal(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     UNICODE_STRING path = pIrp->Args.Create.FileName.Name;
     PIT_CCB pCcb = NULL;
 

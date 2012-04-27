@@ -602,7 +602,7 @@ IopIrpDispatch(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     BOOLEAN isAsyncCall = FALSE;
     LW_RTL_EVENT event = LW_RTL_EVENT_ZERO_INITIALIZER;
     PIRP pExtraIrpReference = NULL;

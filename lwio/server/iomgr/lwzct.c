@@ -389,7 +389,7 @@ LwZctCreate(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     PLW_ZCT_VECTOR pZct = NULL;
 
     switch (IoType)
@@ -447,7 +447,7 @@ LwpZctCheckEntry(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
 
     if (Entry->Length < 1)
     {
@@ -511,7 +511,7 @@ LwpZctAdd(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG i = 0;
     ULONG newCount = 0;
     PLW_ZCT_ENTRY pTarget = NULL;
@@ -656,7 +656,7 @@ LwZctPrepareIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
 
     if (pZct->Count < 1)
     {
@@ -780,7 +780,7 @@ LwpZctCountRangeForSocketIo(
     )
 {
     LW_ZCT_CURSOR_TYPE cursorType = 0;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG count = 0;
     PLW_ZCT_ENTRY pEntry = &pZct->Entries[StartIndex];
 
@@ -852,7 +852,7 @@ LwpZctCursorAllocateForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG i = 0;
     ULONG cursorEntryCount = 0;
     ULONG cursorEntrySize = 0;
@@ -1144,7 +1144,7 @@ LwpZctCursorInitializeForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG i = 0;
     ULONG cursorIndex = 0;
 
@@ -1213,7 +1213,7 @@ LwpZctPrepareForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     PLW_ZCT_CURSOR pCursor = NULL;
 
     status = LwpZctCursorAllocateForSocketIo(pZct, &pCursor);
@@ -1299,7 +1299,7 @@ LwpZctReadWrite(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG totalBytesTransferred = 0;
     ULONG bytesRemaining = 0;
     LW_ZCT_IO_TYPE ioType = IsWrite ? LW_ZCT_IO_TYPE_WRITE_SOCKET : LW_ZCT_IO_TYPE_READ_SOCKET;
@@ -1440,7 +1440,7 @@ LwpZctCursorEntryReadWriteSocket(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDoneEntry = FALSE;
 
@@ -1511,7 +1511,7 @@ LwpZctIoVecReadWrite(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     struct iovec* vector = &Cursor->Vector[Cursor->Index];
     int count = Cursor->Count - Cursor->Index;
     ssize_t result = 0;
@@ -1780,7 +1780,7 @@ LwpZctCursorEntryReadWriteBuffer(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
+    int EE ATTRIBUTE_UNUSED = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDoneEntry = FALSE;
 

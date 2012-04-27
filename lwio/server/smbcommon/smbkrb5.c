@@ -813,7 +813,7 @@ smb_display_status_1(
     int       type
     )
 {
-    OM_uint32 maj_stat, min_stat;
+    OM_uint32 maj_stat ATTRIBUTE_UNUSED, min_stat;
     gss_buffer_desc msg;
     OM_uint32 msg_ctx;
 

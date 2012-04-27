@@ -18,5 +18,5 @@ make()
         SOURCES="$CLIENT_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwmsg/lwmsg.h lw/base.h krb5.h" \
-        LIBDEPS="lwiocommon lwioshareinfo krb5"
+        LIBDEPS="lwiocommon lwioshareinfo krb5 lwmsg lwmsg_nothr"
 }

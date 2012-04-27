@@ -104,7 +104,16 @@ LwIoMultiStringFree(
     PSTR **pppszStrings
     )
 {
-    RegFreeMultiStrsA(*pppszStrings);
+    size_t idx = 0;
+    if (!pppszStrings || !*pppszStrings)
+    {
+        return;
+    }
+    while (*pppszStrings[idx])
+    {
+        LwRtlMemoryFree(*pppszStrings[idx++]);
+    }
+    LwRtlMemoryFree(*pppszStrings);
     *pppszStrings = NULL;
 }
 
