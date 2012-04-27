@@ -68,8 +68,6 @@ NetLocalGroupGetMembers(
     PNET_CONN pConn = NULL;
     SAMR_BINDING hSamrBinding = NULL;
     LSA_BINDING hLsaBinding = NULL;
-    DOMAIN_HANDLE hDomain = NULL;
-    DOMAIN_HANDLE hBtinDomain = NULL;
     ACCOUNT_HANDLE hAlias = NULL;
     PSID *ppSids = NULL;
     DWORD dwInfoLevelSize = 0;
@@ -130,8 +128,6 @@ NetLocalGroupGetMembers(
     BAIL_ON_NT_STATUS(status);
 
     hSamrBinding = pConn->Rpc.Samr.hBinding;
-    hDomain      = pConn->Rpc.Samr.hDomain;
-    hBtinDomain  = pConn->Rpc.Samr.hBuiltin;
 
     status = NetOpenAlias(pConn,
                           pwszAliasname,

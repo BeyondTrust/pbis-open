@@ -25,4 +25,6 @@ configure()
     mk_check_functions \
         HEADERDEPS="string.h" \
         strndup
+
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
 }

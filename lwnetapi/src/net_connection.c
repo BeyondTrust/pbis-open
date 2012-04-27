@@ -614,7 +614,7 @@ NetDisconnectSamr(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    WINERROR err = ERROR_SUCCESS;
+    WINERROR err ATTRIBUTE_UNUSED = ERROR_SUCCESS;
     SAMR_BINDING hSamrBinding = NULL;
     PNET_CONN pConn = NULL;
 
@@ -689,7 +689,7 @@ NetDisconnectLsa(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    WINERROR err = ERROR_SUCCESS;
+    WINERROR err ATTRIBUTE_UNUSED = ERROR_SUCCESS;
     LSA_BINDING hLsaBinding = NULL;
     PNET_CONN pConn = NULL;
 
@@ -738,7 +738,7 @@ NetDisconnectWkssvc(
     PNET_CONN  *ppConn
     )
 {
-    WINERROR err = ERROR_SUCCESS;
+    WINERROR err ATTRIBUTE_UNUSED = ERROR_SUCCESS;
     WKSS_BINDING hWkssBinding = NULL;
     PNET_CONN pConn = NULL;
 
