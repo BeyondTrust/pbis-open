@@ -108,10 +108,7 @@ SamDbSearchObject(
     )
 {
     DWORD dwError = 0;
-    PSAM_DIRECTORY_CONTEXT pDirectoryContext = NULL;
     BOOLEAN bInLock = FALSE;
-
-    pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hDirectory;
 
     SAMDB_LOCK_RWMUTEX_SHARED(bInLock, &gSamGlobals.rwLock);
 

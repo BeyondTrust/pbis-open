@@ -364,6 +364,8 @@ return (int) (size_t) conversation.conv;
         mk_define PTHREAD_ONCE_INIT_BROKEN 0
     fi
 
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
+
     mk_check_doxygen
 
     mk_output_file include/lsaregdef.h

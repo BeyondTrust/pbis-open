@@ -966,7 +966,6 @@ ADState_ReadRegDomainEntry(
     OUT PLW_DLINKED_LIST *ppDomainList)
 {
     HANDLE hReg = NULL;
-    PAD_REGDB_DOMAIN_INFO pDomainInfo = NULL;
     PLSA_DM_ENUM_DOMAIN_INFO pListEntry = NULL;
     DWORD dwError = 0;
     PWSTR *ppwszSubKeys = NULL;
@@ -980,9 +979,6 @@ ADState_ReadRegDomainEntry(
     PSTR *ppszDomainTrustOrder = NULL;
     REG_DATA_TYPE domainTrustOrderType = 0;
     PSTR pszFullRegistryPath = NULL;
-
-    pDomainInfo = NULL;
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);

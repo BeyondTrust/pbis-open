@@ -39,7 +39,6 @@ RpcSvcWorkerMain(
     void* pCtx
     )
 {
-    DWORD dwError = 0;
     unsigned32 dwRpcStatus = rpc_s_ok;
 
     DCETHREAD_TRY
@@ -50,10 +49,6 @@ RpcSvcWorkerMain(
     {
         if (!dwRpcStatus) {
             dwRpcStatus = dcethread_exc_getstatus(THIS_CATCH);
-        }
-
-        if (!dwRpcStatus) {
-            dwError = LW_ERROR_RPC_SERVER_RUNTIME_ERROR;
         }
     }
     DCETHREAD_ENDTRY;

@@ -1190,7 +1190,6 @@ LocalDirDeleteUser(
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwNumEntries = 0;
     PSID pUserSid = NULL;
-    PSID pDomainSid = NULL;
     BOOLEAN bLocked = FALSE;
 
     PWSTR pwszAttributes[] = {
@@ -1239,16 +1238,6 @@ LocalDirDeleteUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
-
-    pDomainSid = gLPGlobals.pLocalDomainSID;
-
-    /*if (LocalDirIsBuiltinAccount(
-                    pDomainSid,
-                    pUserSid))
-    {
-        dwError = ERROR_SPECIAL_ACCOUNT;
-        BAIL_ON_LSA_ERROR(dwError);
-    }*/
 
     dwError = DirectoryDeleteObject(
                     pContext->hDirectory,

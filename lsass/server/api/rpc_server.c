@@ -110,7 +110,7 @@ LsaSrvInitRpcServer(
     pszSrvLibPath = pRpc->pszSrvLibPath;
 
     dlerror();
-    pRpc->phLib = dlopen(pszSrvLibPath, RTLD_NOW | RTLD_GLOBAL);
+    pRpc->phLib = dlopen(pszSrvLibPath, RTLD_NOW | RTLD_LOCAL);
     if (pRpc->phLib == NULL) {
         LSA_LOG_ERROR("Failed to open rpc server at path [%s]", pszSrvLibPath);
 
@@ -238,14 +238,13 @@ LsaStartRpcServers(
     PLSA_RPC_SERVER pRpcServerList
     )
 {
-    DWORD dwError = 0;
     PLSA_RPC_SERVER pRpc = NULL;
 
     while (pRpcServerList) {
         pRpc = pRpcServerList;
         pRpcServerList = pRpcServerList->pNext;
 
-        dwError = LsaStartRpcSrv(pRpc);
+        LsaStartRpcSrv(pRpc);
     }
 }
 
@@ -277,14 +276,13 @@ LsaStopRpcServers(
     PLSA_RPC_SERVER pRpcServerList
     )
 {
-    DWORD dwError = 0;
     PLSA_RPC_SERVER pRpc = NULL;
 
     while (pRpcServerList) {
         pRpc = pRpcServerList;
         pRpcServerList = pRpcServerList->pNext;
 
-        dwError = LsaStopRpcSrv(pRpc);
+        LsaStopRpcSrv(pRpc);
     }
 }
 

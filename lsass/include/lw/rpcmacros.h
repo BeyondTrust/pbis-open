@@ -75,11 +75,8 @@
 
 #define DCERPC_CALL(status, fn_call)                                 \
     do {                                                             \
-        dcethread_exc *dceexc;                                       \
-                                                                     \
         DCETHREAD_TRY                                                \
         {                                                            \
-            dceexc = NULL;                                           \
             (status) = fn_call;                                      \
         }                                                            \
         DCETHREAD_CATCH_ALL(dceexc)                                  \
@@ -94,12 +91,10 @@
 
 #define DCERPC_CALL_WINERR(winerr, fn_call)                          \
     do {                                                             \
-        dcethread_exc *dceexc;                                       \
         NTSTATUS ntstat;                                             \
                                                                      \
         DCETHREAD_TRY                                                \
         {                                                            \
-            dceexc = NULL;                                           \
             ntstat = STATUS_SUCCESS;                                 \
             (winerr) = fn_call;                                      \
         }                                                            \

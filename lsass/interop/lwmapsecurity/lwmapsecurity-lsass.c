@@ -43,6 +43,7 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
+#include "config.h"
 #include <lw/base.h>
 #include <lw/mapsecurity-plugin.h>
 #include <lw/rtlgoto.h>
@@ -146,8 +147,8 @@ LsaMapSecurityCloseConnection(
 
     if (hConnection)
     {
-        NTSTATUS status = STATUS_SUCCESS;
-        DWORD dwError = LW_ERROR_SUCCESS;
+        NTSTATUS status ATTRIBUTE_UNUSED = STATUS_SUCCESS;
+        DWORD dwError ATTRIBUTE_UNUSED = LW_ERROR_SUCCESS;
 
         dwError = LsaCloseServer(hConnection);
         status = LsaLsaErrorToNtStatus(dwError);

@@ -86,14 +86,13 @@ LsaPstorepGetPluginNames(
     )
 {
     DWORD dwError = 0;
-    int EE = 0;
     HANDLE registryConnection = NULL;
     HKEY keyHandle = NULL;
     PSTR* loadOrder = NULL;
     DWORD loadOrderCount = 0;
 
     dwError = LwRegOpenServer(&registryConnection);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     dwError = LwRegOpenKeyExA(
                     registryConnection,
@@ -105,9 +104,9 @@ LsaPstorepGetPluginNames(
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         dwError = 0;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     dwError = LsaPstorepRegGetMultiStringA(
                     registryConnection,
@@ -119,7 +118,7 @@ LsaPstorepGetPluginNames(
     {
         dwError = 0;
     }
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
 cleanup:
     if (dwError)

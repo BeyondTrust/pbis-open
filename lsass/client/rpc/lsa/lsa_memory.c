@@ -566,7 +566,6 @@ LsaAllocateAuditEventsInfo(
     PVOID *ppBlob = NULL;
     DWORD dwBlobSize = 0;
     DWORD dwBlobSpaceLeft = 0;
-    DWORD dwBlobOffset = 0;
 
     LWBUF_ALLOC_DWORD(pBuffer, pIn->auditing_mode);
     LWBUF_ALIGN_PTR(pdwOffset, pdwSize, pdwSpaceLeft);
@@ -592,7 +591,6 @@ LsaAllocateAuditEventsInfo(
 
             dwBlobSpaceLeft = dwBlobSize;
             dwBlobSize      = 0;
-            dwBlobOffset    = 0;
 
             dwError = LwBufferAllocFixedBlob(
                                        pBlob,

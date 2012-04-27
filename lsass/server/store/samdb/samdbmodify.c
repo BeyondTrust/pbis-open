@@ -1356,7 +1356,6 @@ SamDbModifyDomainSid(
     sqlite3_stmt* pSqlStatement = NULL;
     DWORD iModified = 0;
     DWORD iMod = 0;
-    DWORD dwNumMods = 0;
     PWSTR pwszNewDomainSid = NULL;
     PSID pNewDomainSid = NULL;
     DWORD dwDomainFilterLen = 0;
@@ -1472,7 +1471,6 @@ SamDbModifyDomainSid(
         iMod++;
     }
 
-    dwNumMods = iMod;
 
     /*
      * Validate the SID
@@ -1907,7 +1905,6 @@ SamDbModifyObjectSid(
     DWORD dwObjectClass = 0;
     PWSTR pwszNewObjectSid = NULL;
     PSID pNewObjectSid = NULL;
-    DWORD dwNumMods = 0;
     DWORD iMod = 0;
     DWORD dwDomainFilterLen = 0;
     PWSTR pwszDomainFilter = NULL;
@@ -2015,8 +2012,6 @@ SamDbModifyObjectSid(
 
         iMod++;
     }
-
-    dwNumMods = iMod;
 
     /*
      * Validate the SID

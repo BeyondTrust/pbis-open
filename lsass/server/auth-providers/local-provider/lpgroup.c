@@ -956,7 +956,6 @@ LocalDirDeleteGroup(
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwNumEntries = 0;
     PSID pGroupSid = NULL;
-    PSID pDomainSid = NULL;
 
     PWSTR pwszAttributes[] = {
         wszAttrNameObjectClass,
@@ -1002,16 +1001,6 @@ LocalDirDeleteGroup(
                     &wszAttrNameObjectSid[0],
                     &pGroupSid);
     BAIL_ON_LSA_ERROR(dwError);
-
-    pDomainSid = gLPGlobals.pLocalDomainSID;
-
-    /*if (LocalDirIsBuiltinAccount(
-                    pDomainSid,
-                    pGroupSid))
-    {
-        dwError = ERROR_SPECIAL_ACCOUNT;
-        BAIL_ON_LSA_ERROR(dwError);
-    }*/
 
     dwError = DirectoryDeleteObject(
                     pContext->hDirectory,

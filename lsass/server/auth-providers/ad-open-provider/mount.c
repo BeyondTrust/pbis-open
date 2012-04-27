@@ -331,7 +331,7 @@ GetIpAddress(
     )
 {
     DWORD dwError = 0;
-    int addrinfoResult = 0;
+    int addrinfoResult ATTRIBUTE_UNUSED = 0;
     struct addrinfo hints;
     struct addrinfo *result = NULL;
     struct addrinfo *rp = NULL;

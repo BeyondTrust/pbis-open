@@ -143,7 +143,8 @@ NTSTATUS
 LsaSvcmStop(
     PLW_SVCM_INSTANCE pInstance
     )
-{   LsaSrvStopListenThread();
+{
+    LsaSrvStopListenThread();
     NtlmSrvStopListenThread();
     LsaSrvApiShutdown();
     NtlmClientIpcShutdown();

@@ -69,7 +69,7 @@ NtlmServerInitializeSecurityContext(
     PSTR pWorkstation = NULL;
     PSTR pDomain = NULL;
     PNTLM_CHALLENGE_MESSAGE pMessage = NULL;
-    DWORD dwMessageSize = 0;
+    DWORD dwMessageSize ATTRIBUTE_UNUSED = 0;
     BOOLEAN bInLock = FALSE;
 
     pOutput->pvBuffer = NULL;

@@ -195,7 +195,6 @@ LsaPstorepEnsureInitialized(
     )
 {
     DWORD dwError = 0;
-    int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
 
@@ -203,12 +202,12 @@ LsaPstorepEnsureInitialized(
     {
         pthread_once(&pState->Init.OnceControl, LsaPstoreInitializeLibraryOnce);
         dwError = pState->Init.Error;
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
     }
     else
     {
         dwError = ERROR_DLL_INIT_FAILED;
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
     }
 
     backendState = pState->BackendState;

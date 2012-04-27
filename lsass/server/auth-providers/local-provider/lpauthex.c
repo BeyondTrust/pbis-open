@@ -93,7 +93,7 @@ LocalAuthenticateUserExInternal(
     PSTR     pszAccountName = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
-    BOOLEAN bUsingNTLMv2 = FALSE;
+    BOOLEAN bUsingNTLMv2 ATTRIBUTE_UNUSED = FALSE;
     BOOLEAN bAcceptNTLMv1 = TRUE;
     PLSA_DATA_BLOB pSessionKey = NULL;
     LSA_QUERY_LIST QueryList;
