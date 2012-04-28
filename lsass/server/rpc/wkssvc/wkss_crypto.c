@@ -77,7 +77,7 @@ WkssSrvDecryptPasswordBlob(
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
+    NTSTATUS ntStatus ATTRIBUTE_UNUSED = STATUS_SUCCESS;
     PWSTR pwszPassword = NULL;
     PBYTE pPlainTextBlob = NULL;
     DWORD dwPlainTextBlobSize = 0;

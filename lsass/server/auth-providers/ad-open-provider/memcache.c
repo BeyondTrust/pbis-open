@@ -1427,8 +1427,6 @@ MemCacheCheckSizeInLock(
     // Do not free
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLW_HASH_TABLE pIndex = NULL;
-    // Do not free
     PLW_DLINKED_LIST pListEntry = NULL;
     // DWORD dwOut = 0;
     LW_HASH_ITERATOR iterator = {0};
@@ -1442,8 +1440,6 @@ MemCacheCheckSizeInLock(
     PLSA_LIST_LINKS pGuardian = NULL;
     // Do not free
     PLSA_LIST_LINKS pMemPos = NULL;
-
-    pIndex = pConn->pSIDToSecurityObject;
 
     // Start at the beginning of the list
     pListEntry = pConn->pObjects;

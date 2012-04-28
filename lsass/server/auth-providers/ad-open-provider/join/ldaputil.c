@@ -540,7 +540,6 @@ LdapMachDnsNameSearch(
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    size_t dnsname_len = 0;
     wchar16_t *dnsname = NULL;
     char *basedn = NULL;
     wchar16_t *filterw16 = NULL;
@@ -564,8 +563,6 @@ LdapMachDnsNameSearch(
         dwError = ERROR_OUTOFMEMORY;
         BAIL_ON_LSA_ERROR(dwError);
     }
-
-    dnsname_len = wc16slen(dnsname);
 
     dwError = LwAllocateWc16sPrintfW(
                     &filterw16,
@@ -610,7 +607,6 @@ LdapMachAcctSearch(
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    size_t basedn_len = 0;
     size_t filter_len = 0;
     size_t samacctname_len = 0;
     char *basedn = NULL;
@@ -627,8 +623,6 @@ LdapMachAcctSearch(
 
     dwError = LwWc16sToMbs(base, &basedn);
     BAIL_ON_LSA_ERROR(dwError);
-
-    basedn_len = strlen(basedn);
 
     samacctname_len = wc16slen(samacct_name);
 
