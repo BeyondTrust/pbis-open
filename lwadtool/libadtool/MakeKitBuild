@@ -30,5 +30,5 @@ make()
 	SOURCES="$LIBADTOOL_SOURCES" \
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="$COMMON_HEADERDEPS" \
-	LIBDEPS="lwbase krb5 gssapi_krb5 k5crypto ldap_r lber lwnetapi popt lwadvapi"
+	LIBDEPS="lsaclient lsacommon lwbase krb5 gssapi_krb5 k5crypto ldap_r lber lwnetapi popt lwadvapi"
 }
