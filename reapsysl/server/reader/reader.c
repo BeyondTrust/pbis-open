@@ -206,7 +206,6 @@ RSysSrvParseLine(
     PSTR pszNewIdent = NULL;
     PSTR pszHostname = NULL;
     PSTR pszMessage = NULL;
-    BOOLEAN bPidPresent = FALSE;
     pid_t pid = (pid_t)-1;
     HANDLE hLsaConnection = NULL;
     BOOLEAN bIsMatch = FALSE;
@@ -318,7 +317,6 @@ RSysSrvParseLine(
         {
             pszPos++;
             // Parse the pid
-            bPidPresent = TRUE;
             pid = strtoul(pszPos, &pszPos, 10);
             if (!pszPos || *pszPos != ']')
             {
