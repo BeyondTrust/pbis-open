@@ -5,7 +5,7 @@ make()
         SOURCES="djcli.c main.c" \
         INCLUDEDIRS="../include ../../include ../../libdomainjoin/include" \
         HEADERDEPS="ctbase.h" \
-        LIBDEPS="lsaclient centutils domainjoin lwadvapi lwadvapi_nothr lwsm"
+        LIBDEPS="lsaclient centutils domainjoin lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwsm"
 
     mk_symlink \
         LINK="/usr/bin/domainjoin-cli" \
