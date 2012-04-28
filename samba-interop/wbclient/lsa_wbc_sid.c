@@ -85,7 +85,6 @@ wbcSidAppendRid(
     )
 {
     DWORD dwErr = LW_ERROR_INTERNAL;    
-    wbcErr wbcStatus = WBC_ERR_UNKNOWN_FAILURE;
 
     BAIL_ON_NULL_PTR_PARAM(sid, dwErr);
 
@@ -102,7 +101,6 @@ wbcSidAppendRid(
     dwErr = LW_ERROR_SUCCESS;
 
 cleanup:
-    wbcStatus = map_error_to_wbc_status(dwErr);
 
     return dwErr;
 }

@@ -77,7 +77,6 @@ StrEqual(
     PCSTR pszStr2
     )
 {
-    DWORD dwError = LW_ERROR_INTERNAL;
     PSTR pszCopy1 = NULL;
     PSTR pszCopy2 = NULL;
     BOOLEAN bEqual = FALSE;
@@ -100,10 +99,16 @@ StrEqual(
     /* Now copy, convert to upper case, and compare */
 
     pszCopy1 = _wbc_strdup(pszStr1);
-    BAIL_ON_NULL_PTR(pszCopy1, dwError);
+    if (!pszCopy1)
+    {
+        goto cleanup;
+    }
 
     pszCopy2 = _wbc_strdup(pszStr2);
-    BAIL_ON_NULL_PTR(pszCopy2, dwError);
+    if (!pszCopy2)
+    {
+        goto cleanup;
+    }
 
     StrUpper(pszCopy1);
     StrUpper(pszCopy2);
@@ -130,7 +135,6 @@ StrnEqual(
     )
 {
     DWORD dwLen1, dwLen2;
-    DWORD dwError = LW_ERROR_INTERNAL;
     PSTR pszCopy1 = NULL;
     PSTR pszCopy2 = NULL;
     BOOLEAN bResult = FALSE;
@@ -149,10 +153,16 @@ StrnEqual(
     dwLen2 = strlen(pszStr2);
 
     pszCopy1 = _wbc_strdup(pszStr1);
-    BAIL_ON_NULL_PTR(pszCopy1, dwError);
+    if (!pszCopy1)
+    {
+        goto cleanup;
+    }
 
     pszCopy2 = _wbc_strdup(pszStr2);
-    BAIL_ON_NULL_PTR(pszCopy2, dwError);
+    if (!pszCopy2)
+    {
+        goto cleanup;
+    }
 
     if (dwLen1 > dwChars) {
         *(pszCopy1 + dwChars) = '\0';
