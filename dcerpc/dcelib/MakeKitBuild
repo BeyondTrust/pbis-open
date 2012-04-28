@@ -8,5 +8,5 @@ make()
         CFLAGS="-Wall -Werror" \
         HEADERDEPS="dce/rpc.h lw/base.h" \
         GROUPS="../libdcethread/dcethread ../idl_lib/idl ../ncklib/nck ../uuid/uuid" \
-        LIBS="uuid"
+        LIBDEPS="uuid"
 }
