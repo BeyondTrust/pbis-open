@@ -348,7 +348,10 @@ LsaEnumUsers(
                 dwError = 0;
                 break;
             }
-            BAIL_ON_LSA_ERROR(dwError);
+
+            if(dwError != 40009) {
+                BAIL_ON_LSA_ERROR(dwError);
+            }
         }
 
         while (pEnum->dwObjectIndex < pEnum->dwObjectCount)
