@@ -97,7 +97,8 @@ RSysSrvCheckLineMatch(
         if (dwError)
         {
             dwError = EINVAL;
-            BAIL_ON_RSYS_ERROR(dwError);
+            NO_BAIL_ON_RSYS_ERROR("Invalid regex pattern; check reapsysl configuration");
+            goto not_matched;
         }
         pPattern->bCompiled = TRUE;
     }
