@@ -58,6 +58,12 @@
 
 #endif
 
+#define NO_BAIL_ON_RSYS_ERROR(str) \
+    if (dwError) {                    \
+       RSYS_LOG_DEBUG("Error in %s at %s:%d [%s]", __FUNCTION__, __FILE__, __LINE__, str); \
+       goto error;                    \
+    }
+
 #define BAIL_ON_NON_LWREG_ERROR(dwError) \
         if (!(40700 <= dwError && dwError <= 41200)) {  \
            BAIL_ON_RSYS_ERROR(dwError);            \
