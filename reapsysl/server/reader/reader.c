@@ -1393,11 +1393,6 @@ RSysSrvReaderThreadRoutine(
                     RSYS_LOG_ERROR("Lsass not reachable. Reapsysl will buffer events in memory.");
                     break;
                 }
-                if (dwError == EINVAL)     
-                {
-                  dwError = 0;
-                  break;
-                 }        
                 BAIL_ON_RSYS_ERROR(dwError);
                 
                 if (bIncrementSize)
