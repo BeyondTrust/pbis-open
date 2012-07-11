@@ -684,19 +684,21 @@ LwLdapDirectorySearch(
             BAIL_ON_LDAP_ERROR(dwError);
         }
         if (dwError == LDAP_REFERRAL) {
-            LW_RTL_LOG_ERROR("Caught LDAP_REFERRAL Error on ldap search");
-            LW_RTL_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
-            LW_RTL_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
-            LW_RTL_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
+            LW_RTL_LOG_VERBOSE("Caught LDAP_REFERRAL Error on ldap search");
+            LW_RTL_LOG_VERBOSE("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
+            LW_RTL_LOG_VERBOSE("LDAP Search Info: scope: [%d]", scope);
+            LW_RTL_LOG_VERBOSE("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
             if (ppszAttributeList) {
                 size_t i;
                 for (i = 0; ppszAttributeList[i] != NULL; i++) {
-                    LW_RTL_LOG_ERROR("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
+                    LW_RTL_LOG_VERBOSE("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
                 }
             }
             else {
                 LW_RTL_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
             }
+            dwError = LwMapLdapErrorToLwError(dwError);
+            goto cleanup;
         }
         BAIL_ON_LDAP_ERROR(dwError);
     }
