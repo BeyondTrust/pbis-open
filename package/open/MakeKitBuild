@@ -381,6 +381,7 @@ open_files_prefix()
         "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/krb5/plugins/preauth/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-pstore/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwio-driver/*${MK_DLO_EXT}" \
