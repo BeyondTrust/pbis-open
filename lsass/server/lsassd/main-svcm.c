@@ -128,7 +128,10 @@ LsaSvcmStart(
     dwError = LsaSrvStartListenThread();
     BAIL_ON_LSA_ERROR(dwError);
 
-    LsaSrvLogProcessStartedEvent();
+    if(LsaSrvEventlogEnabled())
+    {
+        LsaSrvLogProcessStartedEvent();
+    }
 
 cleanup:
 

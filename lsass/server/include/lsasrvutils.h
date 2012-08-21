@@ -218,6 +218,16 @@ LsaGetCurrentTimeSeconds(
     OUT time_t* pTime
     );
 
+BOOLEAN
+LsaSrvEventlogEnabled(
+    VOID
+    );
+
+VOID
+LsaSrvEnableEventlog(
+    BOOLEAN bValue
+    );
+
 VOID
 LsaSrvLogUserIDConflictEvent(
     uid_t uid,

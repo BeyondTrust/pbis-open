@@ -73,6 +73,7 @@ LsaSrvApiFreeConfigContents(
     PLSA_SRV_API_CONFIG pConfig
     );
 
+#if 0
 BOOLEAN
 LsaSrvEventlogEnabled(
     VOID
@@ -82,6 +83,7 @@ VOID
 LsaSrvEnableEventlog(
     BOOLEAN bValue
     );
+#endif
 
 DWORD
 LsaSrvSetMachineSid(
