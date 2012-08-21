@@ -818,7 +818,10 @@ LsaAdProviderStateCreate(
                     &pState->config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LsaAdProviderLogConfigReloadEvent(pState);
+    if (AD_EventlogEnabled(pState))
+    {
+        LsaAdProviderLogConfigReloadEvent(pState);
+    }
 
     switch (pState->config.CacheBackend)
     {
@@ -4160,7 +4163,10 @@ AD_RefreshConfigurationByDomain(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    LsaAdProviderLogConfigReloadEvent(pState);
+    if (AD_EventlogEnabled(pState))
+    {
+        LsaAdProviderLogConfigReloadEvent(pState);
+    }
 
     dwError = AD_CreateProviderContext(
                   NULL,
@@ -4168,9 +4174,11 @@ AD_RefreshConfigurationByDomain(
                   &pContext);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LsaAdProviderLogRequireMembershipOfChangeEvent(pContext);
-
-    LsaAdProviderLogEventLogEnableChangeEvent(pState);
+    if (AD_EventlogEnabled(pState))
+    {
+        LsaAdProviderLogRequireMembershipOfChangeEvent(pContext);
+        LsaAdProviderLogEventLogEnableChangeEvent(pState);
+    }
 
 cleanup:
 

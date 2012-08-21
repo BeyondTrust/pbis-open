@@ -296,27 +296,30 @@ LsaSrvLogUserIDConflictEvent(
     PSTR pszUserIDConflictDescription = NULL;
     PSTR pszData = NULL;
 
-    dwError = LwAllocateStringPrintf(
-                 &pszUserIDConflictDescription,
-                 "Likewise account provisioning conflict.\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     Reason:                  Found duplicate entries for UIDs:\r\n" \
-                 "     UID:                     %u",
-                 pszProviderName,
-                 uid);
-    BAIL_ON_LSA_ERROR(dwError);
+    if(LsaSrvEventlogEnabled())
+    {
+		dwError = LwAllocateStringPrintf(
+					 &pszUserIDConflictDescription,
+					 "Likewise account provisioning conflict.\r\n\r\n" \
+					 "     Authentication provider: %s\r\n\r\n" \
+					 "     Reason:                  Found duplicate entries for UIDs:\r\n" \
+					 "     UID:                     %u",
+					 pszProviderName,
+					 uid);
+		BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetErrorMessageForLoggingEvent(
-                         dwErrCode,
-                         &pszData);
+		dwError = LsaGetErrorMessageForLoggingEvent(
+							 dwErrCode,
+							 &pszData);
 
-    LsaSrvLogServiceWarningEvent(
-            LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
-            SERVICE_EVENT_CATEGORY,
-            pszUserIDConflictDescription,
-            pszData ? pszData : " ");
+		LsaSrvLogServiceWarningEvent(
+				LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
+				SERVICE_EVENT_CATEGORY,
+				pszUserIDConflictDescription,
+				pszData ? pszData : " ");
 
-    LSA_LOG_WARNING(pszUserIDConflictDescription);
+		LSA_LOG_WARNING(pszUserIDConflictDescription);
+   }
 
 cleanup:
 
@@ -342,27 +345,30 @@ LsaSrvLogUserGIDConflictEvent(
     PSTR pszUserGIDConflictDescription = NULL;
     PSTR pszData = NULL;
 
-    dwError = LwAllocateStringPrintf(
-                 &pszUserGIDConflictDescription,
-                 "Likewise account provisioning conflict.\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     Reason:                  Found duplicate entries for GIDs:\r\n" \
-                 "     GID:                     %u",
-                 pszProviderName,
-                 gid);
-    BAIL_ON_LSA_ERROR(dwError);
+    if(LsaSrvEventlogEnabled())
+    {
+		dwError = LwAllocateStringPrintf(
+					 &pszUserGIDConflictDescription,
+					 "Likewise account provisioning conflict.\r\n\r\n" \
+					 "     Authentication provider: %s\r\n\r\n" \
+					 "     Reason:                  Found duplicate entries for GIDs:\r\n" \
+					 "     GID:                     %u",
+					 pszProviderName,
+					 gid);
+		BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetErrorMessageForLoggingEvent(
-                         dwErrCode,
-                         &pszData);
+		dwError = LsaGetErrorMessageForLoggingEvent(
+							 dwErrCode,
+							 &pszData);
 
-    LsaSrvLogServiceWarningEvent(
-            LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
-            SERVICE_EVENT_CATEGORY,
-            pszUserGIDConflictDescription,
-            pszData ? pszData : " ");
+		LsaSrvLogServiceWarningEvent(
+				LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
+				SERVICE_EVENT_CATEGORY,
+				pszUserGIDConflictDescription,
+				pszData ? pszData : " ");
 
-    LSA_LOG_WARNING(pszUserGIDConflictDescription);
+		LSA_LOG_WARNING(pszUserGIDConflictDescription);
+    }
 
 cleanup:
 
@@ -388,25 +394,28 @@ LsaSrvLogUserAliasConflictEvent(
     PSTR pszUserAliasConflictDescription = NULL;
     PSTR pszData = NULL;
 
-    dwError = LwAllocateStringPrintf(
-                 &pszUserAliasConflictDescription,
-                 "Likewise account provisioning conflict.\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     Reason:                  Found duplicate entries for alias:\r\n" \
-                 "     Alias:                   %s",
-                 pszProviderName,
-                 pszAlias);
-    BAIL_ON_LSA_ERROR(dwError);
+    if(LsaSrvEventlogEnabled())
+    {
+		dwError = LwAllocateStringPrintf(
+					 &pszUserAliasConflictDescription,
+					 "Likewise account provisioning conflict.\r\n\r\n" \
+					 "     Authentication provider: %s\r\n\r\n" \
+					 "     Reason:                  Found duplicate entries for alias:\r\n" \
+					 "     Alias:                   %s",
+					 pszProviderName,
+					 pszAlias);
+		BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetErrorMessageForLoggingEvent(
-                         dwErrCode,
-                         &pszData);
+		dwError = LsaGetErrorMessageForLoggingEvent(
+							 dwErrCode,
+							 &pszData);
 
-    LsaSrvLogServiceWarningEvent(
-            LSASS_EVENT_WARNING_CONFIGURATION_ALIAS_CONFLICT,
-            SERVICE_EVENT_CATEGORY,
-            pszUserAliasConflictDescription,
-            pszData ? pszData : " ");
+		LsaSrvLogServiceWarningEvent(
+				LSASS_EVENT_WARNING_CONFIGURATION_ALIAS_CONFLICT,
+				SERVICE_EVENT_CATEGORY,
+				pszUserAliasConflictDescription,
+				pszData ? pszData : " ");
+    }
 
 cleanup:
 
@@ -433,29 +442,32 @@ LsaSrvLogDuplicateObjectFoundEvent(
     PSTR pszObjectDuplicateDescription = NULL;
     PSTR pszData = NULL;
 
-    dwError = LwAllocateStringPrintf(
-                 &pszObjectDuplicateDescription,
-                 "Likewise account provisioning conflict\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     Reason:                  Found duplicate entries for names:\r\n" \
-                 "     Name 1:                  %s\r\n" \
-                 "     Name 2:                  %s",
-                 pszProviderName,
-                 pszName1,
-                 pszName2);
-    BAIL_ON_LSA_ERROR(dwError);
+    if(LsaSrvEventlogEnabled())
+    {
+		dwError = LwAllocateStringPrintf(
+					 &pszObjectDuplicateDescription,
+					 "Likewise account provisioning conflict\r\n\r\n" \
+					 "     Authentication provider: %s\r\n\r\n" \
+					 "     Reason:                  Found duplicate entries for names:\r\n" \
+					 "     Name 1:                  %s\r\n" \
+					 "     Name 2:                  %s",
+					 pszProviderName,
+					 pszName1,
+					 pszName2);
+		BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetErrorMessageForLoggingEvent(
-                         dwErrCode,
-                         &pszData);
+		dwError = LsaGetErrorMessageForLoggingEvent(
+							 dwErrCode,
+							 &pszData);
 
-    LsaSrvLogServiceWarningEvent(
-            1020, // Lsass assigned object conflict event id
-            SERVICE_EVENT_CATEGORY,
-            pszObjectDuplicateDescription,
-            pszData ? pszData : " ");
+		LsaSrvLogServiceWarningEvent(
+				1020, // Lsass assigned object conflict event id
+				SERVICE_EVENT_CATEGORY,
+				pszObjectDuplicateDescription,
+				pszData ? pszData : " ");
 
-    LSA_LOG_WARNING(pszObjectDuplicateDescription);
+		LSA_LOG_WARNING(pszObjectDuplicateDescription);
+    }
 
 cleanup:
 

@@ -1254,7 +1254,7 @@ LsaUmpAddUser(
                       Handle->pProviderState,
                       &pProviderContext);
 
-        if (dwError == 0)
+        if (LsaSrvEventlogEnabled() && dwError == 0)
         {
             LsaUmpLogUserActivityInitiated(pProviderContext, pRequest->uUid);
         }
@@ -1692,7 +1692,7 @@ LsaUmpRemoveUserFromList(
     }
 
     // Post an activity terminated event for given user account.
-    if (pProviderContext)
+    if (LsaSrvEventlogEnabled() && pProviderContext)
     {
         LsaUmpLogUserActivityTerminated(pProviderContext, uUid);
     }
