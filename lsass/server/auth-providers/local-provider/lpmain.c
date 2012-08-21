@@ -1018,7 +1018,10 @@ LocalRefreshConfiguration(
 
     LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
-    LocalEventLogConfigReload();
+    if (LsaSrvEventlogEnabled())
+    {
+        LocalEventLogConfigReload();
+    }
 
 cleanup:
 
