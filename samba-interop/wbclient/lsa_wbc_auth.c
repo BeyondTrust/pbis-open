@@ -568,7 +568,7 @@ wbcAuthenticateUserEx(
                              pLsaParams->pszAccountName);
         BAIL_ON_NULL_PTR(pszFullUsername, dwErr);
 
-        LOG("wbcAuthenticateUserEx: Calling LsaAuthenticationUser(handle, string '%s', string '%s', NULL)\n", pszFullUsername, pLsaParams->pass.clear.pszPassword);
+        LOG("wbcAuthenticateUserEx: Calling LsaAuthenticateUser(handle, string '%s', string '%s', NULL)\n", pszFullUsername, pLsaParams->pass.clear.pszPassword);
         dwErr = LsaAuthenticateUser(hLsa,
                         pszFullUsername,
                         pLsaParams->pass.clear.pszPassword,
@@ -580,6 +580,7 @@ wbcAuthenticateUserEx(
 
     case LSA_AUTH_CHAP:
     {
+        LOG("wbcAuthenticateUserEx: Calling LsaAuthenticateUserEx(handle, NULL, chap.{ pChallenge->dwLen %ld, pLM_resp->dwLen %ld, pNT_resp->dwLen %ld, ptr)\n", pLsaParams->pass.chap.pChallenge->dwLen, pLsaParams->pass.chap.pLM_resp->dwLen, pLsaParams->pass.chap.pNT_resp->dwLen);
         dwErr = LsaAuthenticateUserEx(hLsa,
                           NULL,
                           pLsaParams,
