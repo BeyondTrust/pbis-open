@@ -46,6 +46,7 @@
 #include "wbclient.h"
 #include "lsawbclient_p.h"
 #include "util_str.h"
+#include "util_log.h"
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +86,6 @@ wbcSidAppendRid(
     )
 {
     DWORD dwErr = LW_ERROR_INTERNAL;    
-    wbcErr wbcStatus = WBC_ERR_UNKNOWN_FAILURE;
 
     BAIL_ON_NULL_PTR_PARAM(sid, dwErr);
 
@@ -102,7 +102,6 @@ wbcSidAppendRid(
     dwErr = LW_ERROR_SUCCESS;
 
 cleanup:
-    wbcStatus = map_error_to_wbc_status(dwErr);
 
     return dwErr;
 }
@@ -344,6 +343,7 @@ wbcLookupName(
 
     /* First try to lookup the name as a user */
 
+    LOG("wbcLookupName: LsaFindUserByName(handle, '%s', 0, ptr)\n", pszQualifiedName);
     dwErr = LsaFindUserByName(hLsa, pszQualifiedName, 0, (PVOID*)&pUserInfo);
     if (dwErr ==  LW_ERROR_SUCCESS) {
         if (sid) {

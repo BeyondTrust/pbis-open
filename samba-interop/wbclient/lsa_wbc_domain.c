@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include <string.h>
 #include <lwmem.h>
 #include <lwstr.h>
@@ -93,7 +94,8 @@ wbcDomainInfo(
 
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
-    
+
+    LOG("wbcDomainInfo: LsaGetStatus\n");
     dwErr = LsaGetStatus(hLsa, &pLsaStatus);
     BAIL_ON_LSA_ERR(dwErr);
 
@@ -196,6 +198,7 @@ wbcListTrusts(
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
     
+    LOG("wbcListTrusts: LsaGetStatus\n");
     dwErr = LsaGetStatus(hLsa, &pLsaStatus);
     BAIL_ON_LSA_ERR(dwErr);
 

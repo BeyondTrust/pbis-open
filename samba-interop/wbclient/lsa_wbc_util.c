@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include "lwnet.h"
 #include <lsa/ad.h>
 #include <string.h>
@@ -149,6 +150,7 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcInterfaceDetails: LsaAdGetMachineAccountInfo(handle, NULL, ptr)\n");
     dwErr = LsaAdGetMachineAccountInfo(hLsa, NULL, &pAccountInfo);
     BAIL_ON_LSA_ERR(dwErr);
 

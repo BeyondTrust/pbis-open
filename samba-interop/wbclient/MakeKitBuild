@@ -14,7 +14,8 @@ make()
         lsa_wbc_wins.c \
         lsa_wbc_error.c \
         lsa_wbc_memory.c \
-        util_str.c"
+        util_str.c \
+        util_log.c"
 
     mk_library \
         LIB=wbclient \

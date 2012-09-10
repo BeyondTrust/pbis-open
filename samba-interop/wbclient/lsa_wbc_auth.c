@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include <lsa/lsa.h>
 #include <lwstr.h>
 #include <lwmem.h>
@@ -67,6 +68,7 @@ wbcErr wbcAuthenticateUser(
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcAuthenticateUser: LsaAuthenticationUser(handle, string '%s', string '%s', NULL)\n", username, password);
     dwErr = LsaAuthenticateUser(hLsa, username, password, NULL);
     BAIL_ON_LSA_ERR(dwErr);
 
@@ -566,6 +568,7 @@ wbcAuthenticateUserEx(
                              pLsaParams->pszAccountName);
         BAIL_ON_NULL_PTR(pszFullUsername, dwErr);
 
+        LOG("wbcAuthenticateUserEx: Calling LsaAuthenticationUser(handle, string '%s', string '%s', NULL)\n", pszFullUsername, pLsaParams->pass.clear.pszPassword);
         dwErr = LsaAuthenticateUser(hLsa,
                         pszFullUsername,
                         pLsaParams->pass.clear.pszPassword,

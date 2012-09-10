@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include <memory.h>
 #include <lwmem.h>
 #include <string.h>
@@ -202,6 +203,7 @@ wbcErr wbcGetpwnam(const char *name, struct passwd **pwd)
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcGetpwnam: LsaFindUserByName(handle, '%s', 0, ptr)\n", name);
     dwErr = LsaFindUserByName(hLsa, name, 0, (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
@@ -247,6 +249,7 @@ wbcErr wbcGetpwuid(uid_t uid, struct passwd **pwd)
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcGetpwuid: LsaFindUserById(handle, %d, 0, ptr)\n", uid);
     dwErr = LsaFindUserById(hLsa, uid, 0, (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
@@ -312,6 +315,7 @@ wbcErr wbcGetGroups(const char *account,
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcGetGroups: LsaGetGidsForUserByName(handle, '%s', ptr, ptr)\n", account);
     dwErr = LsaGetGidsForUserByName(hLsa, account,
                     &dwNumGids, &gids);
     BAIL_ON_LSA_ERR(dwErr);

@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include <stdio.h>
 #include <lwmem.h>
 
@@ -85,6 +86,7 @@ wbcErr wbcSidToUid(const struct wbcDomainSid *sid,
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcSidToUid: LsaGetNamesBySidList()\n");
     dwErr = LsaGetNamesBySidList(
                 hLsa,
                 1,
@@ -109,6 +111,7 @@ wbcErr wbcSidToUid(const struct wbcDomainSid *sid,
                  chDomainSeparator,
          pNameList[0].pszSamAccountName);
 
+    LOG("wbcSidToUid: LsaFindUserByName(handle, '%s', 0, ptr)\n", pszAccountName);
     dwErr = LsaFindUserByName(hLsa, pszAccountName, 0, (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERR(dwErr);
 

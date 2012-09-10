@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 #include <stdio.h>
 #include <lwmem.h>
 
@@ -85,6 +86,7 @@ wbcErr wbcLookupUserSids(const struct wbcDomainSid *user_sid,
     ppszSidList[0] = pszSidString;
     ppszSidList[1] = NULL;
 
+    LOG("wbcLookupUserSids: LsaGetNamesBySidList()\n");
     dwErr = LsaGetNamesBySidList(
                 hLsa,
                 1,
@@ -107,6 +109,7 @@ wbcErr wbcLookupUserSids(const struct wbcDomainSid *user_sid,
 
     /* Now lookup groups for user SID */
 
+    LOG("wbcLookupUserSids: LsaGetGidsForUserByName(handle, '%s', ptr, ptr)\n", pszAccountName);
     dwErr = LsaGetGidsForUserByName(hLsa, pszAccountName,
                     &dwNumGids, &gids);
     BAIL_ON_LSA_ERR(dwErr);
@@ -119,6 +122,7 @@ wbcErr wbcLookupUserSids(const struct wbcDomainSid *user_sid,
     /* Now convert gids to SIDs */
 
     for (i=0; i<dwNumGids; i++) {
+        LOG("wbcLookupUserSids: LsaFindGroupById(handle, %d, LSA_FIND_FLAGS_NSS, 1, ptr)\n", gids[i]);
         dwErr = LsaFindGroupById(hLsa, gids[i], LSA_FIND_FLAGS_NSS, 1, (PVOID*)&pGroupInfo);
         BAIL_ON_LSA_ERR(dwErr);
 
@@ -244,10 +248,13 @@ wbcErr wbcListUsers(const char *domain_name,
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+
+    LOG("wbcListUsers: LsaBeginEnumUsers(handle, 0, 250, 0, ptr);\n");
     dwErr = LsaBeginEnumUsers(hLsa, 0, 250, 0, &hResume);
     BAIL_ON_LSA_ERR(dwErr);
 
     while (!bDone) {
+        LOG("wbcListUsers: LsaEnumUsers(handle, handle, ptr, ptr);\n");
         dwErr = LsaEnumUsers(hLsa, hResume,
                      &dwNumUsers,
                      (PVOID**)&pUserInfo);

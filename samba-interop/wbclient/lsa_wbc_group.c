@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 
 static DWORD AddGroupsToList(char ***pppGroupList, uint32_t *pGroupSize,
                  LSA_GROUP_INFO_0 **ppGroupInfo, DWORD groupInfoSize)
@@ -125,10 +126,12 @@ wbcErr wbcListGroups(const char *domain_name,
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcListGroups: LsaBeginEnumGroups(handle, 0, 250, 0, &hResume)\n");
     dwErr = LsaBeginEnumGroups(hLsa, 0, 250, 0, &hResume);
     BAIL_ON_LSA_ERR(dwErr);
 
     while (!bDone) {
+        LOG("wbcListGroups: LsaEnumGroups(handle, hResume, ptr, ptr)\n");
         dwErr = LsaEnumGroups(hLsa, hResume,
                       &dwNumGroups,
                       (PVOID**)&pGroupInfo);

@@ -45,6 +45,7 @@
 
 #include "wbclient.h"
 #include "lsawbclient_p.h"
+#include "util_log.h"
 
 static int FreeStructGroup(void *p)
 {
@@ -151,6 +152,7 @@ wbcErr wbcGetgrnam(const char *name, struct group **grp)
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcGetgrnam: LsaFindGroupByName(handle, '%s', LSA_FIND_FLAGS_NSS, 1, ptr)\n", name);
     dwErr = LsaFindGroupByName(hLsa, name, LSA_FIND_FLAGS_NSS, 1, (PVOID*)&pGroupInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
@@ -195,6 +197,7 @@ wbcErr wbcGetgrgid(gid_t gid, struct group **grp)
     dwErr = LsaOpenServer(&hLsa);
     BAIL_ON_LSA_ERR(dwErr);
 
+    LOG("wbcGetgrnam: LsaFindGroupById(handle, %d, LSA_FIND_FLAGS_NSS, 1, ptr)\n", gid);
     dwErr = LsaFindGroupById(hLsa, gid, LSA_FIND_FLAGS_NSS, 1, (PVOID*)&pGroupInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
