@@ -585,6 +585,7 @@ wbcAuthenticateUserEx(
                           NULL,
                           pLsaParams,
                           &pLsaUserInfo);
+        LOG("wbcAuthenticateUserEx: LsaAuthenticateUserEx returned %ld\n", dwErr);
         BAIL_ON_LSA_ERR(dwErr);
         break;
     }
