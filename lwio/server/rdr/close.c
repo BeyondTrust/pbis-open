@@ -92,6 +92,8 @@ RdrClose(
     PCLOSE_REQUEST_HEADER pHeader = NULL;
     PRDR_OP_CONTEXT pContext = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrClose\n");
+
     status = RdrCreateContext(pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);
 
@@ -164,6 +166,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrClose\n");
+
     return status;
     
 error:
@@ -182,6 +186,8 @@ RdrFinishClose(
     PSMB_PACKET pPacket = pParam;
     PIRP pIrp = pContext->pIrp;
     PRDR_CCB pFile = IoFileGetContext(pIrp->FileHandle);
+
+    LWIO_LOG_TRACE("Entering RdrFinishClose\n");
     
     RdrFreePacket(pPacket);
 
@@ -197,6 +203,8 @@ RdrFinishClose(
     IoIrpComplete(pIrp);
     RdrFreeContext(pContext);
 
+    LWIO_LOG_TRACE("Exiting RdrFinishClose\n");
+
     return FALSE;
 }
 
@@ -205,6 +213,8 @@ RdrReleaseFile(
     PRDR_CCB pFile
     )
 {
+    LWIO_LOG_TRACE("Entering RdrReleaseFile\n");
+
     if (pFile->pTree)
     {
         RdrTreeRelease(pFile->pTree);
@@ -220,6 +230,8 @@ RdrReleaseFile(
     RTL_FREE(&pFile->find.pBuffer);
     
     LwIoFreeMemory(pFile);
+
+    LWIO_LOG_TRACE("Exiting RdrReleaseFile\n");
 }
 
 static
@@ -235,6 +247,8 @@ RdrTranscieveDelete(
     ULONG ulRemainingSpace = 0;
     PBYTE pFileName = NULL;
     PWSTR pwszPath = RDR_CCB_PATH(pFile);
+
+    LWIO_LOG_TRACE("Entering RdrTranscieveDelete\n");
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -304,6 +318,8 @@ RdrTranscieveDelete(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTranscieveDelete\n");
+
     return status;
 
 error:
@@ -323,6 +339,8 @@ RdrTranscieveDeleteDirectory(
     PBYTE pCursor = NULL;
     ULONG ulRemainingSpace = 0;
     PBYTE pFileName = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrTranscieveDeleteDirectory\n");
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -383,6 +401,8 @@ RdrTranscieveDeleteDirectory(
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
+
+    LWIO_LOG_TRACE("Exiting RdrTranscieveDeleteDirectory\n");
 
     return status;
 

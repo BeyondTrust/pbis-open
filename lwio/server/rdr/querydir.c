@@ -150,6 +150,8 @@ RdrQueryDirectory(
     PRDR_OP_CONTEXT pContext = NULL;
     BOOLEAN bLocked = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrQueryDirectory\n");
+
     pFile = IoFileGetContext(pIrp->FileHandle);
 
     switch (pIrp->Args.QueryDirectory.FileInformationClass)
@@ -249,6 +251,8 @@ error:
     }
 
     RTL_FREE(&pwszPattern);
+
+    LWIO_LOG_TRACE("Exiting RdrQueryDirectory\n");
 
     return status;
 }
@@ -658,6 +662,8 @@ RdrQueryDirComplete(
     PRDR_CCB pFile = pParam;
     BOOLEAN bLocked = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrQueryDirComplete\n");
+
     BAIL_ON_NT_STATUS(status);
 
     LWIO_LOCK_MUTEX(bLocked, &pFile->mutex);
@@ -688,6 +694,8 @@ cleanup:
 
     IoIrpComplete(pContext->pIrp);
     RdrFreeContext(pContext);
+
+    LWIO_LOG_TRACE("Exiting RdrQueryDirComplete\n");
 
     return FALSE;
 

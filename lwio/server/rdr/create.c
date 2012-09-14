@@ -111,6 +111,9 @@ RdrCreateTreeConnectComplete(
     )
 {
     PRDR_TREE pTree = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrCreateTreeConnectComplete\n");
+
     PIRP pIrp = pContext->pIrp;
     ACCESS_MASK DesiredAccess = pIrp->Args.Create.DesiredAccess;
     LONG64 AllocationSize = pIrp->Args.Create.AllocationSize;
@@ -249,6 +252,9 @@ cleanup:
         IoIrpComplete(pIrp);
     }
 
+
+    LWIO_LOG_TRACE("Exiting RdrCreateTreeConnectComplete\n");
+
     return FALSE;
 
 error:
@@ -278,6 +284,9 @@ RdrCreateQueryInfoPathComplete(
     PRDR_CCB pFile = pContext->State.Create.pFile;
     PSMB_PACKET pPacket = pParam;
     PIRP pIrp = pContext->pIrp;
+
+    LWIO_LOG_TRACE("Entering RdrCreateQueryInfoPathComplete\n");
+
     PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
           IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
@@ -327,6 +336,8 @@ cleanup:
         RdrFreeContext(pContext);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrCreateQueryInfoPathComplete\n");
+
     return FALSE;
 
 error:
@@ -354,6 +365,8 @@ RdrFinishCreate(
     PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
         IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
+
+    LWIO_LOG_TRACE("Entering RdrFinishCreate\n");
 
     if (status == STATUS_SUCCESS)
     {
@@ -409,6 +422,8 @@ cleanup:
         RdrFreeContext(pContext);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrFinishCreate\n");
+
     return FALSE;
 
 error:
@@ -432,6 +447,8 @@ RdrCreate(
     PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
         IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
+
+    LWIO_LOG_TRACE("Entering RdrCreate\n");
 
     status = RdrCreateContext(pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);
@@ -466,6 +483,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrCreate\n");
+
     return status;
 
 error:
@@ -490,6 +509,8 @@ RdrTransceiveCreate(
     uint32_t packetByteCount = 0;
     CREATE_REQUEST_HEADER *pHeader = NULL;
     PWSTR pwszPath = RDR_CCB_PATH(pFile);
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveCreate\n");
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -569,6 +590,8 @@ RdrTransceiveCreate(
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
+
+    LWIO_LOG_TRACE("Exiting RdrTransceiveCreate\n");
 
     return status;
 

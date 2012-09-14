@@ -213,6 +213,8 @@ RdrDfsResolvePath(
         BAIL_ON_NT_STATUS(status);
     }
 
+    LWIO_LOG_TRACE("Entering RdrDfsResolvePath\n");
+
     LWIO_LOCK_MUTEX(bLocked, &gDfsLock);
 
     /* Clear expired cache entries before we search it */
@@ -273,6 +275,8 @@ cleanup:
 
     LWIO_UNLOCK_MUTEX(bLocked, &gDfsLock);
 
+    LWIO_LOG_TRACE("Exiting  RdrDfsResolvePath\n");
+
     return status;
 
 error:
@@ -302,6 +306,8 @@ RdrDfsRegisterNamespace(
     USHORT usIndex = 0;
     USHORT usSize = 0;
     time_t now = 0;
+
+    LWIO_LOG_TRACE("Entering RdrDfsRegisterNamespace\n");
 
     if (time(&now) < 0)
     {
@@ -427,6 +433,8 @@ RdrDfsRegisterNamespace(
 cleanup:
 
     LWIO_UNLOCK_MUTEX(bLocked, &gDfsLock);
+
+    LWIO_LOG_TRACE("Exiting RdrDfsRegisterNamespace\n");
 
     return status;
 

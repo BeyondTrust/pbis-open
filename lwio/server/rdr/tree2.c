@@ -170,6 +170,8 @@ RdrTree2Invalidate(
     BOOLEAN bInLock = FALSE;
     BOOLEAN bInSessionLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrTree2Invalidate\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pTree->mutex);
 
     pTree->state = RDR_TREE_STATE_ERROR;
@@ -187,6 +189,8 @@ RdrTree2Invalidate(
         NULL);
 
     LWIO_UNLOCK_MUTEX(bInLock, &pTree->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrTree2Invalidate\n");
 
     return ntStatus;
 }
@@ -223,6 +227,9 @@ RdrTree2Timeout(
     PRDR_TREE2 pTree = _pTree;
     BOOLEAN bLocked = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrTree2Timeout \n");
+
 
     if (WakeMask & LW_TASK_EVENT_CANCEL)
     {
@@ -267,6 +274,8 @@ RdrTree2Timeout(
 
     LWIO_UNLOCK_MUTEX(bLocked, &pTree->pSession->mutex);
 
+    LWIO_LOG_TRACE("Exiting RdrTree2Timeout \n");
+
     return;
 }
 
@@ -278,6 +287,9 @@ RdrTree2Release(
     BOOLEAN bInLock = FALSE;
     LW_TASK_EVENT_MASK dummy = 0;
     LONG64 llDummy = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTree2Release\n");
+
 
     LWIO_LOCK_MUTEX(bInLock, &pTree->pSession->mutex);
 
@@ -317,6 +329,8 @@ RdrTree2Release(
     {
         LWIO_UNLOCK_MUTEX(bInLock, &pTree->pSession->mutex);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrTree2Release\n");
 }
 
 static

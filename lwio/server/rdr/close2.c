@@ -61,6 +61,8 @@ RdrReleaseFile2(
     PRDR_CCB2 pFile
     )
 {
+    LWIO_LOG_TRACE("Entering RdrReleaseFile2\n");
+
     if (pFile->pTree)
     {
         RdrTree2Release(pFile->pTree);
@@ -75,6 +77,8 @@ RdrReleaseFile2(
     RTL_FREE(&pFile->pwszCanonicalPath);
 
     LwIoFreeMemory(pFile);
+
+    LWIO_LOG_TRACE("Exiting RdrReleaseFile2\n");
 }
 
 static
@@ -97,6 +101,8 @@ RdrClose2(
     PRDR_CCB2 pFile = IoFileGetContext(pIrp->FileHandle);
     PRDR_OP_CONTEXT pContext = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrClose2\n");
+
     status = RdrCreateContext(pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);
 
@@ -118,6 +124,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrClose2\n");
+
     return status;
 
 error:
@@ -137,6 +145,9 @@ RdrFinishClose2(
     PIRP pIrp = pContext->pIrp;
     PRDR_CCB2 pFile = IoFileGetContext(pIrp->FileHandle);
 
+    LWIO_LOG_TRACE("Entering RdrFinishClose2\n");
+
+
     RdrFreePacket(pPacket);
 
     /*
@@ -150,6 +161,8 @@ RdrFinishClose2(
     pIrp->IoStatusBlock.Status = STATUS_SUCCESS;
     IoIrpComplete(pIrp);
     RdrFreeContext(pContext);
+
+    LWIO_LOG_TRACE("Exiting RdrFinishClose2\n");
 
     return FALSE;
 }
@@ -165,6 +178,8 @@ RdrTransceiveClose2(
     PRDR_SOCKET pSocket = pFile->pTree->pSession->pSocket;
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveClose2\n");
 
     status = RdrAllocateContextPacket(pContext, RDR_SMB2_CLOSE_SIZE);
     BAIL_ON_NT_STATUS(status);
@@ -198,6 +213,8 @@ RdrTransceiveClose2(
     BAIL_ON_NT_STATUS(status);
 
  cleanup:
+
+    LWIO_LOG_TRACE("Exiting RdrTransceiveClose2\n");
 
     return status;
 

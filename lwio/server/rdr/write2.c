@@ -93,6 +93,8 @@ RdrWrite2(
     LONG64 llOffset = 0;
     BOOLEAN bIsPipe = RdrShareIsIpc(pFile->pTree->pwszPath);
 
+    LWIO_LOG_TRACE("Entering RdrWrite2\n");
+
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
         llOffset = *pIrp->Args.ReadWrite.ByteOffset;
@@ -182,6 +184,8 @@ cleanup:
     }
 
     LWIO_UNLOCK_MUTEX(bLocked, &pFile->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrWrite2\n");
 
     return status;
 
@@ -319,6 +323,9 @@ RdrFinishWriteChunk2(
     BOOLEAN bLocked = 0;
     PRDR_OP_CONTEXT pMaster = &pContext[-pContext->State.Write2Chunk.usIndex];
 
+    LWIO_LOG_TRACE("Entering RdrFinishWriteChunk2\n");
+
+
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMB2Header->error;
@@ -349,6 +356,8 @@ cleanup:
         }
         LWIO_UNLOCK_MUTEX(bLocked, &pFile->mutex);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrFinishWriteChunk2\n");
 
     return FALSE;
 

@@ -97,6 +97,8 @@ RdrQuerySecurity(
     PRDR_OP_CONTEXT pContext = NULL;
     PRDR_CCB pFile = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrQuerySecurity\n");
+
     pFile = IoFileGetContext(pIrp->FileHandle);
 
     status = RdrCreateContext(pIrp, &pContext);
@@ -121,6 +123,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrQuerySecurity\n");
+
     return status;
 
 error:
@@ -142,6 +146,8 @@ RdrTransceiveQuerySecurity(
     SMB_NT_TRANS_QUERY_SECURITY_DESC_REQUEST_HEADER queryHeader = {0};
     USHORT usQueryHeaderOffset = 0;
     USHORT usSetDataOffset = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveQuerySecurity\n");
 
     status = RdrAllocateContextPacket(pContext, 1024*64);
     BAIL_ON_NT_STATUS(status);
@@ -207,6 +213,8 @@ RdrTransceiveQuerySecurity(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveQuerySecurity\n");
+
     return status;
 
 error:
@@ -227,6 +235,8 @@ RdrQuerySecurityComplete(
     ULONG ulTotalDataBytes = 0;
     ULONG ulDataBytes = 0;
     ULONG ulDataDisplacement = 0;
+
+    LWIO_LOG_TRACE("Entering RdrQuerySecurityComplete\n");
 
     status = pResponsePacket->pSMBHeader->error;
     BAIL_ON_NT_STATUS(status);
@@ -285,10 +295,14 @@ cleanup:
         pContext->pIrp->IoStatusBlock.Status = status;
         IoIrpComplete(pContext->pIrp);
         RdrFreeContext(pContext);
+
+        LWIO_LOG_TRACE("Exiting RdrQuerySecurityComplete FALSE\n");
+
         return FALSE;
     }
     else
     {
+        LWIO_LOG_TRACE("Exiting RdrQuerySecurityComplete TRUE\n");
         return TRUE;
     }
 
@@ -315,6 +329,8 @@ RdrSetSecurity(
     NTSTATUS status = STATUS_SUCCESS;
     PRDR_OP_CONTEXT pContext = NULL;
     PRDR_CCB pFile = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSetSecurity\n");
 
     pFile = IoFileGetContext(pIrp->FileHandle);
 
@@ -343,6 +359,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSetSecurity\n");
+
     return status;
 
 error:
@@ -367,6 +385,8 @@ RdrTransceiveSetSecurity(
     SMB_NT_TRANS_QUERY_SECURITY_DESC_REQUEST_HEADER setHeader = {0};
     USHORT usSetHeaderOffset = 0;
     USHORT usSetDataOffset = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveSetSecurity\n");
 
     status = RdrAllocateContextPacket(pContext, 1024*64);
     BAIL_ON_NT_STATUS(status);
@@ -433,6 +453,8 @@ RdrTransceiveSetSecurity(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveSetSecurity\n");
+
     return status;
 
 error:
@@ -450,6 +472,8 @@ RdrSetSecurityComplete(
 {
     PSMB_PACKET pResponsePacket = pParam;
 
+    LWIO_LOG_TRACE("Entering RdrSetSecurityComplete\n");
+
     BAIL_ON_NT_STATUS(status);
 
     status = pResponsePacket->pSMBHeader->error;
@@ -464,10 +488,12 @@ RdrSetSecurityComplete(
         pContext->pIrp->IoStatusBlock.Status = status;
         IoIrpComplete(pContext->pIrp);
         RdrFreeContext(pContext);
+        LWIO_LOG_TRACE("Exiting RdrSetSecurityComplete FALSE\n");
         return FALSE;
     }
     else
     {
+        LWIO_LOG_TRACE("Exiting RdrSetSecurityComplete TRUE\n");
         return TRUE;
     }
 

@@ -100,6 +100,8 @@ RdrSession2Create(
     RDR_SESSION2 *pSession = NULL;
     BOOLEAN bDestroyMutex = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSession2Create\n");
+
     status = LwIoAllocateMemory(
                 sizeof(RDR_SESSION2),
                 (PVOID*)&pSession);
@@ -139,6 +141,8 @@ RdrSession2Create(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrSession2Create\n");
+
     return status;
 
 error:
@@ -173,8 +177,12 @@ RdrLogoff2Complete(
     PSMB_PACKET pPacket = pParam;
     PRDR_SESSION2 pSession = pContext->State.TreeConnect.pSession2;
 
+    LWIO_LOG_TRACE("Entering RdrLogoff2Complete\n");
+
     RdrFreePacket(pPacket);
     RdrSession2Free(pSession);
+
+    LWIO_LOG_TRACE("Exiting RdrLogoff2Complete\n");
 
     /* We don't explicitly free pContext because RdrSession2Free() does it */
     return FALSE;
@@ -194,6 +202,8 @@ RdrSession2Timeout(
     PRDR_SESSION2 pSession = _pSession;
     BOOLEAN bLocked = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSession2Timeout\n");
 
     if (WakeMask & LW_TASK_EVENT_CANCEL)
     {
@@ -238,6 +248,8 @@ RdrSession2Timeout(
 
     LWIO_UNLOCK_MUTEX(bLocked, &pSession->pSocket->mutex);
 
+    LWIO_LOG_TRACE("Exiting RdrSession2Timeout\n");
+
     return;
 }
 
@@ -267,6 +279,8 @@ RdrSession2Release(
     BOOLEAN bInLock = FALSE;
     LW_TASK_EVENT_MASK dummy = 0;
     LONG64 llDummy = 0;
+
+    LWIO_LOG_TRACE("Entering RdrSession2Release\n");
 
     LWIO_LOCK_MUTEX(bInLock, &pSession->pSocket->mutex);
 
@@ -307,6 +321,8 @@ RdrSession2Release(
     {
         LWIO_UNLOCK_MUTEX(bInLock, &pSession->pSocket->mutex);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrSession2Release\n");
 }
 
 static
@@ -315,6 +331,8 @@ RdrSession2Free(
     PRDR_SESSION2 pSession
     )
 {
+    LWIO_LOG_TRACE("Entering RdrSession2Free\n");
+
     assert(!pSession->refCount);
 
     SMBHashSafeFree(&pSession->pTreeHashByPath);
@@ -343,6 +361,8 @@ RdrSession2Free(
     }
 
     LwIoFreeMemory(pSession);
+
+    LWIO_LOG_TRACE("Exiting RdrSession2Free\n");
 }
 
 VOID
@@ -353,6 +373,8 @@ RdrSession2Invalidate(
 {
     BOOLEAN bInLock = FALSE;
     BOOLEAN bInSocketLock = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrSession2Invalidate\n");
 
     LWIO_LOCK_MUTEX(bInLock, &pSession->mutex);
 
@@ -371,6 +393,8 @@ RdrSession2Invalidate(
         NULL);
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSession->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSession2Invalidate\n");
 }
 
 VOID
@@ -378,11 +402,15 @@ RdrSession2Revive(
     PRDR_SESSION2 pSession
     )
 {
+    LWIO_LOG_TRACE("Entering RdrSession2Revive\n");
+
     if (pSession->pTimeout)
     {
         LwRtlCancelTask(pSession->pTimeout);
         LwRtlReleaseTask(&pSession->pTimeout);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrSession2Revive\n");
 }
 
 NTSTATUS
@@ -400,6 +428,8 @@ RdrSession2FindOrCreate(
     struct _RDR_SESSION_KEY key = {0};
     PSTR pszUser = NULL;
     PSTR pszDomain = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSession2FindOrCreate\n");
 
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
@@ -491,6 +521,8 @@ cleanup:
     RTL_FREE(&pszUser);
     RTL_FREE(&pszDomain);
 
+    LWIO_LOG_TRACE("Exiting RdrSession2FindOrCreate\n");
+
     return ntStatus;
 
 error:
@@ -519,6 +551,8 @@ RdrTransceiveLogoff2(
      PBYTE pCursor = NULL;
      ULONG ulRemaining = 0;
 
+    LWIO_LOG_TRACE("Entering RdrTransceiveLogoff2\n");
+
      status = RdrSmb2BeginPacket(&pContext->Packet);
      BAIL_ON_NT_STATUS(status);
 
@@ -546,6 +580,8 @@ RdrTransceiveLogoff2(
      BAIL_ON_NT_STATUS(status);
 
  cleanup:
+
+    LWIO_LOG_TRACE("Exiting RdrTransceiveLogoff2\n");
 
      return status;
 

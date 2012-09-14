@@ -475,11 +475,15 @@ RdrSocketBeginSequence(
 {
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketBeginSequence\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
     
     pSocket->dwSequence = 2;
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketBeginSequence\n");
 }
 
 static
@@ -645,6 +649,9 @@ RdrSocketTransceive(
     USHORT usMid = 0;
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketTransceive\n");
+
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     status = RdrSocketAcquireMid(pSocket, &usMid);
@@ -673,6 +680,8 @@ RdrSocketTransceive(
 cleanup:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketTransceive\n");
 
     return status;
 
@@ -1053,6 +1062,8 @@ RdrSocketTaskTransceive(
     PLW_LIST_LINKS pLink = NULL;
     PRDR_OP_CONTEXT pIrpContext = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrSocketTaskTransceive\n");
+
     if (WakeMask & LW_TASK_EVENT_TIME)
     {
         if (pSocket->bEcho)
@@ -1191,6 +1202,8 @@ cleanup:
         RdrContinueContext(pIrpContext, status, NULL);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSocketTaskTransceive\n");
+
     return status;
 
 error:
@@ -1212,6 +1225,8 @@ RdrSocketTask(
     PRDR_SOCKET pSocket = (PRDR_SOCKET) pContext;
     BOOLEAN bGlobalLock = FALSE;
     BOOLEAN bInLock = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrSocketTask\n");
 
     if (WakeMask & LW_TASK_EVENT_CANCEL)
     {
@@ -1254,6 +1269,8 @@ RdrSocketTask(
 cleanup:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketTask\n");
 
     return;
 
@@ -1351,6 +1368,8 @@ RdrSocketDispatchPacket2(
     PRDR_SESSION2 pSession = NULL;
     ULONG64 ullSessionId = 0;
     PRDR_OP_CONTEXT pContext = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSocketDispatchPacket2\n");
 
     /*
      * To verify the signature, we need to look up the session so we
@@ -1458,6 +1477,8 @@ cleanup:
         RdrFreePacket(pPacket);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSocketDispatchPacket2\n");
+
     return status;
 
 error:
@@ -1477,6 +1498,8 @@ RdrSocketDispatchPacket1(
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSocketDispatchPacket1\n");
 
     if (!(pPacket->pSMBHeader->flags & FLAG_RESPONSE))
     {
@@ -1536,6 +1559,8 @@ cleanup:
         RdrFreePacket(pPacket);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSocketDispatchPacket1\n");
+
     return ntStatus;
 
 error:
@@ -1591,6 +1616,8 @@ RdrSocketTimeout(
     PRDR_SOCKET pSocket = pContext;
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketTimeout\n");
+
     if (WakeMask & LW_TASK_EVENT_INIT)
     {
         *pWaitMask = LW_TASK_EVENT_TIME;
@@ -1620,6 +1647,8 @@ RdrSocketTimeout(
     {
         *pWaitMask = LW_TASK_EVENT_COMPLETE;
     }
+
+    LWIO_LOG_TRACE("Exiting RdrSocketTimeout\n");
 }
 
 static
@@ -1633,6 +1662,8 @@ RdrSocketConnectDomain(
     PLWNET_DC_INFO pInfo = NULL;
     PSTR pszDomain = NULL;
     PWSTR pwszDomainController = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSocketConnectDomain\n");
 
     status = LwRtlCStringAllocateFromWC16String(&pszDomain, pwszDomain);
     BAIL_ON_NT_STATUS(status);
@@ -1669,6 +1700,8 @@ cleanup:
     RTL_FREE(&pszDomain);
     RTL_FREE(&pwszDomainController);
 
+    LWIO_LOG_TRACE("Exiting RdrSocketConnectDomain\n");
+
     return status;
 
 error:
@@ -1685,6 +1718,8 @@ RdrSocketConnectHost(
     )
 {
     NTSTATUS status = 0;
+
+    LWIO_LOG_TRACE("Entering RdrSocketConnectHost\n");
         
     status = LwWin32ErrorToNtStatus(
         LWNetResolveName(
@@ -1697,6 +1732,8 @@ RdrSocketConnectHost(
     LwRtlWakeTask(pSocket->pTask);
 
 cleanup:
+
+    LWIO_LOG_TRACE("Exiting RdrSocketConnectHost\n");
 
     return status;
 
@@ -1714,6 +1751,8 @@ RdrSocketConnect(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PWSTR pwszDomain = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSocketConnect\n");
 
     status = RdrResolveToDomain(pSocket->pwszHostname, &pwszDomain);
     switch (status)
@@ -1734,6 +1773,7 @@ error:
 
     RTL_FREE(&pwszDomain);
 
+    LWIO_LOG_TRACE("Exiting RdrSocketConnect\n");
     return status;
 }
 
@@ -1804,11 +1844,15 @@ RdrSocketInvalidate(
 {
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketInvalidate\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     RdrSocketInvalidate_InLock(pSocket, ntStatus);
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketInvalidate\n");
 }
 
 static
@@ -1820,8 +1864,11 @@ RdrSocketInvalidate_InLock(
 {
     BOOLEAN bInGlobalLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketInvalidate_InLock\n");
+
     if (pSocket->state == RDR_SOCKET_STATE_ERROR)
     {
+        LWIO_LOG_TRACE("Exiting RdrSocketInvalidate_InLock 1\n");
         return;
     }
 
@@ -1861,6 +1908,9 @@ RdrSocketInvalidate_InLock(
     LwListInit(&pSocket->PendingSend);
     LwListInit(&pSocket->PendingResponse);
     LwListInit(&pSocket->StateWaiters);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketInvalidate_InLock\n");
+
 }
 
 BOOLEAN
@@ -1898,6 +1948,8 @@ RdrSocketRelease(
     )
 {
     BOOLEAN bInLock = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrSocketRelease\n");
 
     LWIO_LOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
 
@@ -1941,6 +1993,8 @@ RdrSocketRelease(
     {
         LWIO_UNLOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrSocketRelease\n");
 }
 
 static
@@ -1970,6 +2024,8 @@ RdrSocketFreeContents(
     PRDR_SOCKET pSocket
     )
 {
+    LWIO_LOG_TRACE("Entering RdrSocketFreeContents\n");
+
     assert(!pSocket->refCount);
 
     if ((pSocket->fd >= 0) && (close(pSocket->fd) < 0))
@@ -2003,6 +2059,8 @@ RdrSocketFreeContents(
     LwRtlReleaseTask(&pSocket->pTask);
 
     LwIoFreeMemory(pSocket);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketFreeContents\n");
 }
 
 VOID
@@ -2013,11 +2071,15 @@ RdrSocketSetIgnoreServerSignatures(
 {
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketSetIgnoreServerSignatures\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     pSocket->bIgnoreServerSignatures = bValue;
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketSetIgnoreServerSignatures\n");
 }
 
 static
@@ -2052,6 +2114,9 @@ RdrSocketFindOrCreate(
 
     PRDR_SOCKET pSocket = NULL;
     BOOLEAN bInLock = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrSocketFindOrCreate\n");
+
 
     LWIO_LOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
     
@@ -2088,6 +2153,8 @@ RdrSocketFindOrCreate(
 cleanup:
     
     LWIO_UNLOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketFindOrCreate\n");
     
     return ntStatus;
     
@@ -2107,6 +2174,8 @@ RdrSocketAddSessionByUID(
     NTSTATUS ntStatus = 0;
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketAddSessionByUID\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     ntStatus = SMBHashSetValue(
@@ -2120,6 +2189,8 @@ RdrSocketAddSessionByUID(
 cleanup:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketAddSessionByUID\n");
 
     return ntStatus;
 
@@ -2137,6 +2208,8 @@ RdrSocketAddSession2ById(
     NTSTATUS ntStatus = 0;
     BOOLEAN bInLock = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSocketAddSession2ById\n");
+
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     ntStatus = SMBHashSetValue(
@@ -2150,6 +2223,8 @@ RdrSocketAddSession2ById(
 cleanup:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrSocketAddSession2ById\n");
 
     return ntStatus;
 
@@ -2334,6 +2409,8 @@ RdrEchoComplete(
     PRDR_SOCKET pSocket = pContext->State.Echo.pSocket;
     BOOLEAN bLocked = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrEchoComplete\n");
+
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMBHeader->error;
@@ -2349,6 +2426,8 @@ cleanup:
 
     RdrFreePacket(pPacket);
     RdrFreeContext(pContext);
+
+    LWIO_LOG_TRACE("Exiting RdrEchoComplete\n");
 
     return FALSE;
 

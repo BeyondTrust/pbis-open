@@ -111,6 +111,8 @@ RdrProcessNegotiateResponse2(
     PBYTE pNegHint = NULL;
     ULONG ulNegHintLength = 0;
 
+    LWIO_LOG_TRACE("Entering RdrProcessNegotiateResponse2\n");
+
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMB2Header->error;
@@ -177,6 +179,8 @@ RdrProcessNegotiateResponse2(
 
     RdrFreePacket(pPacket);
 
+    LWIO_LOG_TRACE("Exiting RdrProcessNegotiateResponse2\n");
+
     return FALSE;
 
 error:
@@ -203,6 +207,8 @@ RdrNegotiateComplete2(
     BOOLEAN bSessionLocked = FALSE;
     BOOLEAN bFreeContext = FALSE;
     PIO_CREDS pCreds = pContext->State.TreeConnect.pCreds;
+
+    LWIO_LOG_TRACE("Entering RdrNegotiateComplete2\n");
 
     BAIL_ON_NT_STATUS(status);
 
@@ -282,6 +288,8 @@ RdrNegotiateComplete2(
          RdrFreeTreeConnectContext(pContext);
      }
 
+     LWIO_LOG_TRACE("Exiting RdrNegotiateComplete2\n");
+     
      return FALSE;
 
  error:
@@ -320,6 +328,8 @@ RdrProcessSessionSetupResponse2(
     PSMB_PACKET pPacket = pParam;
     BOOLEAN bSessionLocked = FALSE;
     BOOLEAN bFreeContext = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrProcessSessionSetupResponse2\n");
 
     BAIL_ON_NT_STATUS(status);
 
@@ -372,6 +382,8 @@ cleanup:
 
     RdrFreePacket(pPacket);
 
+    LWIO_LOG_TRACE("Exiting RdrProcessSessionSetupResponse2\n");
+
     return FALSE;
 
 error:
@@ -402,6 +414,8 @@ RdrNegotiateGssContextWorkItem2(
     PBYTE pOutBlob = NULL;
     DWORD dwOutBlobLength = 0;
     BOOLEAN bSessionLocked = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrNegotiateGssContextWorkItem2\n");
 
     if (pPacket)
     {
@@ -524,6 +538,8 @@ cleanup:
         RdrSessionSetupComplete2(pContext, status, NULL);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrNegotiateGssContextWorkItem2\n");
+
     return;
 
 error:
@@ -544,6 +560,8 @@ RdrTransceiveSessionSetup2(
     PRDR_SOCKET pSocket = pSession->pSocket;
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveSessionSetup2\n");
 
     status = RdrAllocateContextPacket(pContext, RDR_SMB2_SESSION_SETUP_SIZE(dwBlobLength));
     BAIL_ON_NT_STATUS(status);
@@ -581,6 +599,8 @@ RdrTransceiveSessionSetup2(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveSessionSetup2\n");
+
     return status;
 
 error:
@@ -600,6 +620,8 @@ RdrTree2FindOrCreate(
     PRDR_TREE2 pTree = NULL;
     BOOLEAN   bInLock = FALSE;
     PRDR_SESSION2 pSession = *ppSession;
+
+    LWIO_LOG_TRACE("Entering RdrTree2FindOrCreate\n");
 
     LWIO_LOCK_MUTEX(bInLock, &pSession->mutex);
 
@@ -644,6 +666,8 @@ RdrTree2FindOrCreate(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTree2FindOrCreate\n");
+
     return ntStatus;
 
 error:
@@ -673,6 +697,8 @@ RdrSessionSetupComplete2(
     PRDR_TREE2 pTree = NULL;
     BOOLEAN bTreeLocked = FALSE;
     BOOLEAN bFreeContext = FALSE;
+
+    LWIO_LOG_TRACE("Entering RdrSessionSetupComplete2\n");
 
     BAIL_ON_NT_STATUS(status);
 
@@ -728,6 +754,8 @@ RdrSessionSetupComplete2(
         RdrFreeTreeConnectContext(pContext);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSessionSetupComplete2\n");
+
     return FALSE;
 
  error:
@@ -757,6 +785,8 @@ RdrTreeConnect2Complete(
 {
     PRDR_TREE2 pTree = pParam;
 
+    LWIO_LOG_TRACE("Entering RdrTreeConnect2Complete\n");
+
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
@@ -766,6 +796,8 @@ cleanup:
         RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pTree);
         RdrFreeTreeConnectContext(pContext);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrTreeConnect2Complete\n");
 
     return FALSE;
 
@@ -792,6 +824,8 @@ RdrTransceiveTreeConnect2(
     PRDR_SOCKET pSocket = pTree->pSession->pSocket;
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveTreeConnect2\n");
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -827,6 +861,8 @@ RdrTransceiveTreeConnect2(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveTreeConnect2\n");
+
     return status;
 
 error:
@@ -846,6 +882,8 @@ RdrFinishTreeConnect2(
     PSMB_PACKET pResponsePacket = pParam;
     BOOLEAN bTreeLocked = FALSE;
     PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrFinishTreeConnect2\n");
 
     LWIO_LOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
@@ -868,6 +906,8 @@ cleanup:
     RdrNotifyContextList(&pTree->StateWaiters, bTreeLocked, &pTree->mutex, status, pTree);
 
     LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
+
+    LWIO_LOG_TRACE("Exiting RdrFinishTreeConnect2...about to call RdrTreeConnect2Complete\n");
 
     return RdrTreeConnect2Complete(pContext, status, pTree);
 

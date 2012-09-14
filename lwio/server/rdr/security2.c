@@ -101,6 +101,8 @@ RdrQuerySecurity2(
     PRDR_OP_CONTEXT pContext = NULL;
     PRDR_CCB2 pFile = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrQuerySecurity2\n");
+
     pFile = IoFileGetContext(pIrp->FileHandle);
 
     if (pFile->pTree->pSession->pSocket->ulMaxTransactSize <
@@ -138,6 +140,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrQuerySecurity2\n");
+
     return status;
 
 error:
@@ -157,6 +161,8 @@ RdrTransceiveQuerySecurity2(
     NTSTATUS status = STATUS_SUCCESS;
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveQuerySecurity2\n");
 
     status = RdrAllocateContextPacket(pContext, RDR_SMB2_QUERY_INFO_SIZE(0));
     BAIL_ON_NT_STATUS(status);
@@ -196,6 +202,8 @@ RdrTransceiveQuerySecurity2(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveQuerySecurity2\n");
+
     return status;
 
 error:
@@ -214,6 +222,8 @@ RdrQuerySecurity2Complete(
     PSMB_PACKET pPacket = pParam;
     PBYTE pOutput = NULL;
     ULONG ulOutputSize = 0;
+
+    LWIO_LOG_TRACE("Entering RdrQuerySecurity2Complete\n");
 
     BAIL_ON_NT_STATUS(status);
 
@@ -250,6 +260,8 @@ cleanup:
         RdrFreeContext(pContext);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrQuerySecurity2Complete\n");
+
     return FALSE;
 
 error:
@@ -275,6 +287,8 @@ RdrSetSecurity2(
     NTSTATUS status = STATUS_SUCCESS;
     PRDR_OP_CONTEXT pContext = NULL;
     PRDR_CCB2 pFile = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrSetSecurity2\n");
 
     pFile = IoFileGetContext(pIrp->FileHandle);
 
@@ -310,6 +324,8 @@ cleanup:
         status = STATUS_PENDING;
     }
 
+    LWIO_LOG_TRACE("Exiting RdrSetSecurity2\n");
+
     return status;
 
 error:
@@ -331,6 +347,8 @@ RdrTransceiveSetSecurity2(
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
     PULONG pulLength = 0;
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveSetSecurity2\n");
 
     status = RdrAllocateContextPacket(pContext, RDR_SMB2_SET_INFO_SIZE(ulInfoLength));
     BAIL_ON_NT_STATUS(status);
@@ -373,6 +391,8 @@ RdrTransceiveSetSecurity2(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveSetSecurity2\n");
+
     return status;
 
 error:
@@ -390,6 +410,8 @@ RdrSetSecurity2Complete(
 {
     PSMB_PACKET pPacket = pParam;
 
+    LWIO_LOG_TRACE("Entering RdrSetSecurity2Complete\n");
+
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMB2Header->error;
@@ -405,6 +427,8 @@ cleanup:
         IoIrpComplete(pContext->pIrp);
         RdrFreeContext(pContext);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrSetSecurity2Complete\n");
 
     return FALSE;
 

@@ -668,6 +668,8 @@ RdrNotifyContextList(
     PLW_LIST_LINKS pLink = NULL;
     BOOLEAN bWasLocked = bLocked;
 
+    LWIO_LOG_TRACE("Entering RdrNotifyContextList\n");
+
     LWIO_LOCK_MUTEX(bLocked, pMutex);
 
     LwListInit(&List);
@@ -690,6 +692,8 @@ RdrNotifyContextList(
     {
         LWIO_UNLOCK_MUTEX(bLocked, pMutex);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrNotifyContextList\n");
 }
 
 BOOLEAN
@@ -700,9 +704,13 @@ RdrIsShutdownSet(
     BOOLEAN bLocked = FALSE;
     BOOLEAN bResult = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrIsShutdownSet\n");
+
     LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
     bResult = gRdrRuntime.bShutdown;
     LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    LWIO_LOG_TRACE("Exiting RdrIsShutdownSet\n");
 
     return bResult;
 }
@@ -714,9 +722,14 @@ RdrSetShutdown(
 {
     BOOLEAN bLocked = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSetShutdown\n");
+
+
     LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
     gRdrRuntime.bShutdown = TRUE;
     LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    LWIO_LOG_TRACE("Exiting RdrSetShutdown\n");
 }
 
 static
@@ -863,6 +876,8 @@ RdrSwapDomainHints(
     PLW_HASHMAP pExisting = NULL;
     BOOLEAN bLocked = FALSE;
 
+    LWIO_LOG_TRACE("Entering RdrSwapDomainHints\n");
+
     LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
 
     pExisting = gRdrRuntime.pDomainHints;
@@ -871,6 +886,8 @@ RdrSwapDomainHints(
     LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
 
     *ppMap = pExisting;
+
+    LWIO_LOG_TRACE("Exiting RdrSwapDomainHints\n");
 }
 
 NTSTATUS
@@ -882,6 +899,8 @@ RdrResolveToDomain(
     NTSTATUS status = STATUS_SUCCESS;
     BOOLEAN bLocked = FALSE;
     PWSTR pwszDomain = NULL;
+
+    LWIO_LOG_TRACE("Entering RdrResolveToDomain\n");
 
     LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
 
@@ -904,6 +923,8 @@ RdrResolveToDomain(
 error:
 
     LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    LWIO_LOG_TRACE("Exiting RdrResolveToDomain\n");
 
     return status;
 }

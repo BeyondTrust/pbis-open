@@ -82,6 +82,8 @@ RdrCreateTreeConnect2Complete(
         IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
     PRDR_CCB2 pFile = NULL;
 
+    LWIO_LOG_TRACE("Entering RdrCreateTreeConnect2Complete\n");
+
     BAIL_ON_NT_STATUS(status);
 
     status = LwIoAllocateMemory(
@@ -154,6 +156,8 @@ cleanup:
         IoIrpComplete(pIrp);
     }
 
+    LWIO_LOG_TRACE("Exiting RdrCreateTreeConnect2Complete\n");
+
     return FALSE;
 
 error:
@@ -188,6 +192,8 @@ RdrTransceiveCreate2(
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
     PWSTR pwszPath = RDR_CCB2_PATH(pFile);
+
+    LWIO_LOG_TRACE("Entering RdrTransceiveCreate2\n");
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -232,6 +238,8 @@ RdrTransceiveCreate2(
 
 cleanup:
 
+    LWIO_LOG_TRACE("Exiting RdrTransceiveCreate2\n");
+
     return status;
 
 error:
@@ -255,6 +263,8 @@ RdrFinishCreate2(
     PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
         IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
+
+    LWIO_LOG_TRACE("Entering RdrFinishCreate2\n");
 
     if (status == STATUS_SUCCESS)
     {
@@ -303,6 +313,8 @@ cleanup:
         IoIrpComplete(pContext->pIrp);
         RdrFreeContext(pContext);
     }
+
+    LWIO_LOG_TRACE("Exiting RdrFinishCreate2\n");
 
     return FALSE;
 
