@@ -8,6 +8,11 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
+    # Check endianness
+     mk_multiarch_do
+        mk_check_endian
+     mk_multiarch_done
+
     mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
 
     mk_declare -o MOD_EXT="${MK_DLO_EXT}"
