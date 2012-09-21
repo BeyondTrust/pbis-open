@@ -351,12 +351,15 @@ DNSUpdateUnmarshallPRSection(
                     hReceiveBuffer,
                     pRRHeader);
         BAIL_ON_LWDNS_ERROR(dwError);
-        
-        dwError = DNSUnmarshallRData(
-                    hReceiveBuffer,
-                    pRRHeader->wRDataSize,
-                    &pRRData, &dwRead);
-        BAIL_ON_LWDNS_ERROR(dwError);
+
+        if(pRRHeader->wRDataSize)
+        {
+            dwError = DNSUnmarshallRData(
+                        hReceiveBuffer,
+                        pRRHeader->wRDataSize,
+                        &pRRData, &dwRead);
+            BAIL_ON_LWDNS_ERROR(dwError);
+        }
 
         dwError = DNSAllocateMemory(
                     sizeof(DNS_RR_RECORD),
@@ -367,9 +370,12 @@ DNSUpdateUnmarshallPRSection(
                pRRHeader,
                sizeof(DNS_RR_HEADER));
         pRRHeader->pDomainName = NULL;
-        
-        pDNSRRRecord->pRData = pRRData;
-        pRRData = NULL;
+  
+	if(pRRData)
+        {     
+            pDNSRRRecord->pRData = pRRData;
+            pRRData = NULL;
+        }
 
         *(ppDNSPRRRRecords + i) = pDNSRRRecord;
         pDNSRRRecord = NULL;
@@ -440,13 +446,15 @@ DNSUpdateUnmarshallUpdateSection(
                     hReceiveBuffer,
                     pRRHeader);
         BAIL_ON_LWDNS_ERROR(dwError);
-        
-        dwError = DNSUnmarshallRData(
-                    hReceiveBuffer,
-                    pRRHeader->wRDataSize,
-                    &pRRData, &dwRead);
-        BAIL_ON_LWDNS_ERROR(dwError);
-
+     
+        if(pRRHeader->wRDataSize)
+        {
+            dwError = DNSUnmarshallRData(
+                        hReceiveBuffer,
+                        pRRHeader->wRDataSize,
+                        &pRRData, &dwRead);
+            BAIL_ON_LWDNS_ERROR(dwError);
+        }
         dwError = DNSAllocateMemory(
                     sizeof(DNS_RR_RECORD),
                     (PVOID *)&pDNSRRRecord);
@@ -456,11 +464,14 @@ DNSUpdateUnmarshallUpdateSection(
                pRRHeader,
                sizeof(DNS_RR_HEADER));
         pRRHeader->pDomainName = NULL;
+    
+	if(pRRData)
+        {   
+            pDNSRRRecord->pRData = pRRData;
+            pRRData = NULL;
+        }
         
-        pDNSRRRecord->pRData = pRRData;
-        pRRData = NULL;
-
-        *(ppDNSUpdateRRRecords + i) = pDNSRRRecord;
+	*(ppDNSUpdateRRRecords + i) = pDNSRRRecord;
         pDNSRRRecord = NULL;
     }    
 
@@ -529,13 +540,16 @@ DNSUpdateUnmarshallAdditionalSection(
                     hReceiveBuffer,
                     pRRHeader);
         BAIL_ON_LWDNS_ERROR(dwError);
-        
-        dwError = DNSUnmarshallRData(
-                    hReceiveBuffer, 
-                    pRRHeader->wRDataSize, 
-                    &pRRData, 
-                    &dwRead);
-        BAIL_ON_LWDNS_ERROR(dwError);
+  
+        if(pRRHeader->wRDataSize)
+        {
+            dwError = DNSUnmarshallRData(
+                        hReceiveBuffer, 
+                        pRRHeader->wRDataSize, 
+                        &pRRData, 
+                        &dwRead);
+            BAIL_ON_LWDNS_ERROR(dwError);
+         }
 
         dwError = DNSAllocateMemory(
                     sizeof(DNS_RR_RECORD),
@@ -546,9 +560,12 @@ DNSUpdateUnmarshallAdditionalSection(
                pRRHeader,
                sizeof(DNS_RR_HEADER));
         pRRHeader->pDomainName = NULL;
-        
-        pDNSRRRecord->pRData = pRRData;
-        pRRData = NULL;
+
+	if(pRRData)
+        {       
+            pDNSRRRecord->pRData = pRRData;
+            pRRData = NULL;
+        }
 
         *(ppDNSAdditionalRRRecords + i) = pDNSRRRecord;
         pDNSRRRecord = NULL;
