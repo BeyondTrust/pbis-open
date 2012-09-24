@@ -1,77 +1,24 @@
 /*
- * Copyright (c) 2010 Apple Inc. All rights reserved.
- *
- * @APPLE_LICENSE_HEADER_START@
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1.  Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- * 2.  Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
- *     contributors may be used to endorse or promote products derived from
- *     this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Portions of this software have been released under the following terms:
- *
- * (c) Copyright 1989-1993 OPEN SOFTWARE FOUNDATION, INC.
- * (c) Copyright 1989-1993 HEWLETT-PACKARD COMPANY
- * (c) Copyright 1989-1993 DIGITAL EQUIPMENT CORPORATION
- *
+ * 
+ * (c) Copyright 1990 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1990 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1990 DIGITAL EQUIPMENT CORPORATION
  * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- * permission to use, copy, modify, and distribute this file for any
- * purpose is hereby granted without fee, provided that the above
- * copyright notices and this notice appears in all source code copies,
- * and that none of the names of Open Software Foundation, Inc., Hewlett-
- * Packard Company or Digital Equipment Corporation be used
- * in advertising or publicity pertaining to distribution of the software
- * without specific, written prior permission.  Neither Open Software
- * Foundation, Inc., Hewlett-Packard Company nor Digital
- * Equipment Corporation makes any representations about the suitability
- * of this software for any purpose.
- *
- * Copyright (c) 2007, Novell, Inc. All rights reserved.
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1.  Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- * 2.  Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- * 3.  Neither the name of Novell Inc. nor the names of its contributors
- *     may be used to endorse or promote products derived from this
- *     this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * @APPLE_LICENSE_HEADER_END@
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
  */
 /*
 **
@@ -172,7 +119,7 @@ INTERNAL void send_frag_resp_pdu (
     rpc_cn_fragbuf_p_t      /*fragbuf*/,
     rpc_cn_packet_p_t       /*req_header*/);
 
-INTERNAL unsigned32 save_sec_fragment (
+INTERNAL void save_sec_fragment (
     rpc_cn_assoc_p_t        /*assoc*/,
     rpc_cn_packet_p_t	    /*header*/);
 
@@ -1481,7 +1428,6 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
     boolean 			old_client;
     rpc_cn_sec_context_p_t      sec_context = NULL;
     unsigned8                   resp_flags = 0;
-    unsigned32                  status = 0;
     
     RPC_CN_DBG_RTN_PRINTF(SERVER do_alter_cont_req_action_rtn);
 
@@ -1506,7 +1452,9 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
          * an old client who doesn't set the last_frag flag).
          * Save the security fragment, and wait for the next one.
          */
-        return (save_sec_fragment(assoc, req_header));
+        save_sec_fragment(assoc, req_header);
+		  /* FIXME: is this value correct ? */
+        return rpc_s_ok;
     }
     /*
      * Make sure if we have processed previous alter_context PDU's
@@ -1514,9 +1462,7 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
      */
     if (assoc->security.auth_buffer_info.auth_buffer != NULL)
     {
-        status = save_sec_fragment(assoc, req_header);
-        if (status != rpc_s_ok)
-            return (status);
+        save_sec_fragment(assoc, req_header);
     }
 
     /*
@@ -1809,7 +1755,6 @@ INTERNAL unsigned32     do_authent3_action_rtn
     unsigned8 tmp[rpc_g_cn_large_frag_size];
     unsigned8 new_state;
     rpc_cn_sec_context_p_t sec;
-    unsigned32 status;
 
     RPC_CN_DBG_RTN_PRINTF(SERVER do_authent3_action_rtn);
 
@@ -1829,13 +1774,13 @@ INTERNAL unsigned32     do_authent3_action_rtn
     if (!(RPC_CN_PKT_FLAGS (req_header)) &&
         !(RPC_CN_PKT_VERS_MINOR (req_header) < RPC_C_CN_PROTO_VERS_MINOR))
     {
-        return (save_sec_fragment (assoc, req_header));
+        save_sec_fragment (assoc, req_header);
+                   /* FIXME: is this value correct? */
+        return rpc_s_ok;
     }
     if (assoc->security.auth_buffer_info.auth_buffer != NULL)
     {
-        status = save_sec_fragment (assoc, req_header);
-        if (status != rpc_s_ok)
-            return (status);
+        save_sec_fragment (assoc, req_header);
     }
     assoc->security.assoc_current_sec_context = NULL;
 
@@ -1943,25 +1888,19 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
     rpc_cn_assoc_t              *assoc;
     rpc_cn_assoc_grp_t          *assoc_grp;
     rpc_cn_packet_t             *req_header;
-    rpc_cn_packet_t             *resp_header = NULL;
+    rpc_cn_packet_t             *resp_header;
     rpc_cn_pres_cont_list_t     *pres_cont_list;
     rpc_cn_pres_result_list_t   *pres_result_list;
     unsigned32                  header_size;
     unsigned32                  result_list_len;
     unsigned32                  auth_len;
     rpc_cn_local_id_t           grp_id;
-    rpc_cn_fragbuf_t            *fragbuf = NULL;
+    rpc_cn_fragbuf_t            *fragbuf;
     rpc_cn_sm_event_entry_t     event;
     rpc_cn_port_any_t           *sec_addr;
     boolean			old_client; 
     rpc_cn_sm_ctlblk_t 		*sm_p; 
-    unsigned8                   *end_of_pkt;    /* ptr to 1 byte past end of packet */
-    unsigned8                   *end_ptr;
-    rpc_socket_error_t          serr;
     rpc_cn_sec_context_p_t      sec_context = NULL;
-    unsigned32                  ssize = 0;
-    unsigned32                  rsize = 0;
-    unsigned32                  status;
     unsigned8                   resp_flags = 0;
 
     RPC_CN_DBG_RTN_PRINTF (SERVER do_assoc_req_action_rtn);
@@ -1971,21 +1910,6 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
      */
     assoc = (rpc_cn_assoc_t *) spc_struct;
     sm_p = (rpc_cn_sm_ctlblk_t *)sm; 
-
-    /*
-     * The event parameter is a pointer to the fragbuf containing
-     * the rpc_bind PDU.
-     */
-    req_header = (rpc_cn_packet_t *) ((rpc_cn_fragbuf_t *)event_param)->data_p;
-    end_of_pkt = (unsigned8 *) req_header;
-    end_of_pkt += ((rpc_cn_fragbuf_t *)event_param)->data_size;
-
-    if (sm_p->cur_state == RPC_C_SERVER_ASSOC_OPEN)
-    {
-        /* Server connection is already bound so reject another Bind request */
-        assoc->assoc_status = rpc_s_protocol_error;
-        goto done;
-    }
     
     /*
      * Since this is a new association we don't yet have an
@@ -2072,47 +1996,10 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
              */
             RPC_CN_PKT_MAX_XMIT_FRAG (req_header) = RPC_C_ASSOC_MUST_RECV_FRAG_SIZE;
         }
-
-         /* Set socket's max send/receive sizes to same as max fragment size. */
-        serr = rpc__socket_set_bufs (assoc->cn_ctlblk.cn_sock,
-                                     rpc_g_cn_large_frag_size,
-                                     rpc_g_cn_large_frag_size,
-                                     &ssize,
-                                     &rsize);
-        if (!RPC_SOCKET_IS_ERR (serr))
-        {
-            /* update socket buffer sizes with their actual values */
-            rpc__cn_set_sock_buffsize(rsize, ssize, &status);
-        }
-        else
-        {
-            /* 0 means we could not get any of the max sizes */
-            ssize = 0;
-            rsize = 0;
-        }
-
-        if ( (ssize != 0) && (ssize < rpc_g_cn_large_frag_size) )
-        {
-            RPC_CN_PKT_MAX_XMIT_FRAG (resp_header) =
-                MIN (ssize, RPC_CN_PKT_MAX_RECV_FRAG (req_header));
-        }
-        else
-        {
-            RPC_CN_PKT_MAX_XMIT_FRAG (resp_header) =             
-            MIN (rpc_g_cn_large_frag_size, RPC_CN_PKT_MAX_RECV_FRAG (req_header));
-        }
-
-        if ( (rsize != 0) && (rsize < rpc_g_cn_large_frag_size) )
-        {
-            RPC_CN_PKT_MAX_RECV_FRAG (resp_header) =
-                MIN (rsize, RPC_CN_PKT_MAX_XMIT_FRAG (req_header));
-        }
-        else
-        {
-            RPC_CN_PKT_MAX_RECV_FRAG (resp_header) = 
-            MIN (rpc_g_cn_large_frag_size, RPC_CN_PKT_MAX_XMIT_FRAG (req_header));
-        }
-
+        RPC_CN_PKT_MAX_XMIT_FRAG (resp_header) =             
+        MIN (rpc_g_cn_large_frag_size, RPC_CN_PKT_MAX_RECV_FRAG (req_header));
+        RPC_CN_PKT_MAX_RECV_FRAG (resp_header) = 
+        MIN (rpc_g_cn_large_frag_size, RPC_CN_PKT_MAX_XMIT_FRAG (req_header));
         assoc->assoc_max_xmit_frag = RPC_CN_PKT_MAX_XMIT_FRAG (resp_header);
         assoc->assoc_max_recv_frag = RPC_CN_PKT_MAX_RECV_FRAG (resp_header);
         
@@ -2146,7 +2033,6 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
                  * The association group was found. Determine whether it can
                  * support another association.
                  */
-                assert(assoc_grp != NULL);
                 if (assoc_grp->grp_cur_assoc == assoc_grp->grp_max_assoc)
                 {
                     /*
@@ -2176,7 +2062,6 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
              * Return the appropriate group ID for the client to use on
              * the next association request.
              */
-            assert(assoc_grp != NULL);
             RPC_CN_PKT_ASSOC_GROUP_ID (resp_header) = assoc_grp->grp_id.all;
 
             /*
@@ -2221,43 +2106,28 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
                 pres_cont_list = (rpc_cn_pres_cont_list_t *) 
                     ((unsigned8 *) req_header + RPC_CN_PKT_SIZEOF_BIND_HDR);
                 
-                /* points to end of pkt whether n_context_elem is 0 or not */
-                end_ptr = (unsigned8 *) &pres_cont_list->pres_cont_elem[pres_cont_list->n_context_elem];
+                result_list_len = rpc_g_cn_large_frag_size - header_size;
 
-                if ( ((unsigned8 *) pres_cont_list < (unsigned8 *) req_header) ||
-                    ((unsigned8 *) pres_cont_list > (unsigned8 *) end_of_pkt) ||
-                    ((unsigned8 *) end_ptr < (unsigned8 *) req_header) ||
-                    ((unsigned8 *) end_ptr > (unsigned8 *) end_of_pkt) )
+                rpc__cn_assoc_syntax_negotiate (assoc,
+                                                pres_cont_list,
+                                                &result_list_len,
+                                                pres_result_list,
+                                                &assoc->assoc_status);
+
+		header_size += result_list_len;
+                if (assoc->assoc_status == rpc_s_ok)
                 {
-                    RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
-                                    ("invalid pres_cont_list\n"));
-                    assoc->assoc_status = rpc_s_bad_pkt;
-                }
-                else
-                {
-		            result_list_len = rpc_g_cn_large_frag_size - header_size;
-
-		            rpc__cn_assoc_syntax_negotiate (assoc,
-		                                            pres_cont_list,
-		                                            &result_list_len,
-		                                            pres_result_list,
-		                                            &assoc->assoc_status);
-
-			header_size += result_list_len;
-		            if (assoc->assoc_status == rpc_s_ok)
-		            {
-		                auth_len = rpc_g_cn_large_frag_size - header_size;
-		                rpc__cn_assoc_process_auth_tlr (assoc,
-		                                                req_header, 
-		                                                ((rpc_cn_fragbuf_t *)event_param)->data_size,
-		                                                resp_header,
-		                                                &header_size, 
-		                                                &auth_len,
-		                                                &assoc->security.assoc_current_sec_context,
-								old_client,
-		                                                &assoc->assoc_status);
-			        }
-		        }
+                    auth_len = rpc_g_cn_large_frag_size - header_size;
+                    rpc__cn_assoc_process_auth_tlr (assoc,
+                                                    req_header, 
+                                                    ((rpc_cn_fragbuf_t *)event_param)->data_size,
+                                                    resp_header,
+                                                    &header_size, 
+                                                    &auth_len,
+                                                    &assoc->security.assoc_current_sec_context,
+						    old_client,
+                                                    &assoc->assoc_status);
+		}
             }
             else
             {
@@ -2273,7 +2143,6 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
     }
 #endif
 
-done:
     /*
      * Prepare header flags especially taking rpc_c_protect_flags_header_sign
      * into account if it has been requested and accepted
@@ -3598,7 +3467,7 @@ INTERNAL unsigned32     do_assoc_wait_action_rtn
     rpc_cn_packet_t                     *req_header;
     rpc_cn_sm_event_entry_t             event;
     rpc_cn_sm_ctlblk_t 			*sm_p;
-    unsigned32 status;
+
 
     RPC_CN_DBG_RTN_PRINTF(SERVER do_assoc_wait_action_rtn);
 
@@ -3617,10 +3486,7 @@ INTERNAL unsigned32     do_assoc_wait_action_rtn
     /*
      * Save the security frament in the association reconstruction buffer
      */
-    status = save_sec_fragment(assoc, req_header);
-    if (status != rpc_s_ok)
-        return (status);
-
+    save_sec_fragment(assoc, req_header);
 
     /*
      * Now we check to see if this is the last packet for this rpc_bind PDU
@@ -3922,20 +3788,12 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
         local_auth_value_len = RPC_CN_PKT_AUTH_LEN(req_header);
     }
 
-    /*
-     * Verifing the auth tlr may involve making rpc requests which could end up
-     * calling rpc__cn_binding_alloc().  Drop the global lock so we do not
-     * deadlock.
-     */
-    RPC_CN_UNLOCK ();
-
     RPC_CN_AUTH_VFY_CLIENT_REQ (&assoc->security, 
                                 sec,
                                 (pointer_t)local_auth_value,
                                 local_auth_value_len,
 				old_client,
                                 &sec->sec_status);
-    RPC_CN_LOCK ();
 
     if (sec->sec_status == rpc_s_ok)
     {
@@ -3987,7 +3845,7 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
                  ("(rpc__cn_assoc_process_auth_tlr) Free'd auth_buffer: %x\n",
                  assoc->security.auth_buffer_info.auth_buffer));
 
-        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
+        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer, 
                      RPC_C_MEM_CN_PAC_BUF);
         assoc->security.auth_buffer_info.auth_buffer = NULL;
         assoc->security.auth_buffer_info.auth_buffer_len = 0;
@@ -4316,7 +4174,7 @@ rpc_cn_packet_p_t       header;
 **/
 
 
-INTERNAL unsigned32 save_sec_fragment(assoc, 
+INTERNAL void save_sec_fragment(assoc, 
                                 header)
 
 rpc_cn_assoc_p_t        assoc;
@@ -4338,13 +4196,6 @@ rpc_cn_packet_p_t	header;
     auth_buffer_len = assoc->security.auth_buffer_info.auth_buffer_len;
     auth_buffer_max = assoc->security.auth_buffer_info.auth_buffer_max;
 
-    if (RPC_CN_PKT_AUTH_LEN (header) > UINT32_MAX - auth_buffer_len) {
-        RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                        ("(save_sec_fragment) Error - RPC_CN_PKT_AUTH_LEN %d + auth_buffer_len %d too large\n",
-                         RPC_CN_PKT_AUTH_LEN (header), auth_buffer_len));
-        return (rpc_s_bad_pkt);
-    }
-
     if (auth_buffer == NULL)
     {
         /*
@@ -4362,9 +4213,6 @@ rpc_cn_packet_p_t	header;
   ("(save_sec_fragment) Alloc'd auth_buffer: %x, auth_buffer_max = %d\n",
                         auth_buffer,
                         auth_buffer_max));
-
-        assoc->security.auth_buffer_info.auth_buffer = auth_buffer;
-        assoc->security.auth_buffer_info.auth_buffer_max = auth_buffer_max;
     }
 
     if ((RPC_CN_PKT_AUTH_LEN (header) + auth_buffer_len) > auth_buffer_max)
@@ -4380,9 +4228,6 @@ rpc_cn_packet_p_t	header;
 ("(save_sec_fragment) Realloc'd auth_buffer: %x, auth_buffer_max = %d\n",
                         auth_buffer,
                         auth_buffer_max));
-
-        assoc->security.auth_buffer_info.auth_buffer = auth_buffer;
-        assoc->security.auth_buffer_info.auth_buffer_max = auth_buffer_max;
     }
 
     /*
@@ -4393,15 +4238,8 @@ rpc_cn_packet_p_t	header;
      */
     auth_tlr = RPC_CN_PKT_AUTH_TLR(header,RPC_CN_PKT_FRAG_LEN (header));
     auth_value = (rpc_cn_bind_auth_value_priv_t *)auth_tlr->auth_value;
-
-    if (RPC_CN_PKT_AUTH_LEN (header) < auth_value->checksum_length)
-    {
-        RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                        ("(save_sec_fragment) Error - header auth len %d < checksum len %d \n",
-         RPC_CN_PKT_AUTH_LEN (header), auth_value->checksum_length));
-        return (rpc_s_bad_pkt);
-    }
-    auth_value_len = RPC_CN_PKT_AUTH_LEN (header) - auth_value->checksum_length;
+    auth_value_len = RPC_CN_PKT_AUTH_LEN (header) - 
+                         auth_value->checksum_length;
 
     /*
      * For the first packet, copy the header info, for the rest
@@ -4411,41 +4249,12 @@ rpc_cn_packet_p_t	header;
 
     if (auth_buffer_len == 0)
     {
-        if (auth_value_len > auth_buffer_max)
-        {
-            RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                            ("(save_sec_fragment) Error - auth_value_len %d > auth_buffer_max %d \n",
-                             auth_value_len, auth_buffer_max));
-            return (rpc_s_bad_pkt);
-        }
         memcpy(auth_buffer, auth_value, auth_value_len);
     }
     else
     {
-        if (auth_value_len < RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL)
-        {
-            RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                            ("(save_sec_fragment) Error - auth_value_len too small %d < RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL %d \n",
-                             auth_value_len, RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL));
-            return (rpc_s_bad_pkt);
-        }
         auth_value_len -= RPC_CN_PKT_SIZEOF_BIND_AUTH_VAL;
-
-        if (auth_value->cred_length > RPC_CN_PKT_AUTH_LEN (header))
-        {
-            RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                            ("(save_sec_fragment) Error - cred_length too large (%d) > RPC_CN_PKT_AUTH_LEN %d \n",
-                             auth_value->cred_length, RPC_CN_PKT_AUTH_LEN (header)));
-            return (rpc_s_bad_pkt);
-        }
-
-        if ((auth_buffer_len + auth_value->cred_length) > auth_buffer_max)
-        {
-            RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_BIG_PAC,
-                            ("(save_sec_fragment) Error - auth buffer too small (%d + %d) > auth_buffer_max %d \n",
-                             auth_buffer_len, auth_value->cred_length, auth_buffer_max));
-            return (rpc_s_bad_pkt);
-        }
+        assert(auth_value_len == auth_value->cred_length);
         memcpy(auth_buffer+auth_buffer_len, 
                auth_value->credentials, 
                auth_value->cred_length);
@@ -4458,6 +4267,7 @@ rpc_cn_packet_p_t	header;
 
     auth_buffer_len += auth_value_len;
 
+    
     /*
      * Update our per-association data
      */
@@ -4465,7 +4275,7 @@ rpc_cn_packet_p_t	header;
     assoc->security.auth_buffer_info.auth_buffer_len = auth_buffer_len;
     assoc->security.auth_buffer_info.auth_buffer_max = auth_buffer_max;
 
-    return (rpc_s_ok);
+    return;
 }
 /* vim:sw=4 ts=4
  * */
