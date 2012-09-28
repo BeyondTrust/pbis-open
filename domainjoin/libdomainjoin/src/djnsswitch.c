@@ -754,6 +754,8 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     static const char* moduleName = "lsass";
     static const char* oldModule = "lwidentity";
     const char* pszModule = NULL;
+    PSTR pOutput = NULL;
+    CHAR  szCommand[2 * PATH_MAX + 1] = {};
 
     GCE(ceError = DJGetDistroInfo(NULL, &distro));
 
@@ -869,8 +871,69 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
     }
 
+    if(distro.os == OS_SUNOS)
+    {
+        CTCaptureOutput("uname -rv", &pOutput);
+        CTStripWhitespace(pOutput);
+        if(!strcmp(pOutput, "5.11 11.0"))
+        {
+            if(enable)
+            {
+                sprintf(szCommand,
+                   "svccfg -s name-service/switch setprop config/password=\\\"files %s\\\"",
+                   moduleName);
+                if(system(szCommand) < 0)
+                {
+                   goto cleanup;
+                }
+                memset(szCommand, 0, sizeof(szCommand));
+                sprintf(szCommand,
+                   "svccfg -s name-service/switch setprop config/group=\\\"files %s\\\"",
+                   moduleName);
+                if(system(szCommand) < 0)
+                {
+                   goto cleanup;
+                }
+                memset(szCommand, 0, sizeof(szCommand));
+                sprintf(szCommand, "svcadm refresh name-service/switch");
+                if(system(szCommand) < 0)
+                {
+                    goto cleanup;
+                }
+            }
+            else
+            {
+                memset(szCommand, 0, sizeof(szCommand));
+                sprintf(szCommand,
+                   "svccfg -s name-service/switch setprop config/password=files");
+                if(system(szCommand) < 0)
+                {
+                    goto cleanup;
+                }
+                memset(szCommand, 0, sizeof(szCommand));
+                sprintf(szCommand,
+                   "svccfg -s name-service/switch setprop config/group=files");
+                if(system(szCommand) < 0)
+                {
+                    goto cleanup;
+                }
+                memset(szCommand, 0, sizeof(szCommand));
+                sprintf(szCommand, "svcadm refresh name-service/switch");
+                if(system(szCommand) < 0)
+                {
+                    goto cleanup;
+                }
+            }
+        }
+        else
+        {
+            goto cleanup;
+        }
+    }
+
 cleanup:
     DJFreeDistroInfo(&distro);
+    CT_SAFE_FREE_STRING(pOutput);
 
     return ceError;
 }
