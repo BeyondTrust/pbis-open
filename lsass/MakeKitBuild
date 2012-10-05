@@ -45,6 +45,15 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+    
+    # Declare configuration options which vary according to build profile
+    mk_declare -o \DEFAULT_ENABLE_EVENTLOG="dword:00000000" \
+        DEFAULT_AD_PROVIDER_ASSUME_DEFAULT_DOMAIN="dword:00000000" \
+        DEFAULT_AD_PROVIDER_CREATE_HOMEDIR="dword:00000001" \
+        DEFAULT_AD_PROVIDER_CREATE_K5LOGIN="dword:00000001" \
+        DEFAULT_AD_PROVIDER_TRIM_USER_MEMBERSHIP="dword:00000001" \
+        DEFAULT_AD_PROVIDER_REFRESH_USER_CREDENTIALS="dword:00000001" \
+        DEFAULT_AD_PROVIDER_DOMAINMANAGER_ONLINE_CHECK_TIME="dword:0000012C"
 
     # Declare which variable vary by system (ISA)
     mk_declare -s -o MOD_EXT
@@ -132,6 +141,24 @@ configure()
         esac
 
     mk_multiarch_done
+    
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            DEFAULT_ENABLE_EVENTLOG="dword:00000000"
+            DEFAULT_AD_PROVIDER_CREATE_HOMEDIR="dword:00000000"
+            DEFAULT_AD_PROVIDER_CREATE_K5LOGIN="dword:00000000"
+            DEFAULT_AD_PROVIDER_REFRESH_USER_CREDENTIALS="dword:00000000"
+            DEFAULT_AD_PROVIDER_DOMAINMANAGER_ONLINE_CHECK_TIME="dword:0000003C"
+            ;;
+    esac
+    
+    case "$LW_OEM_PROFILE" in
+        oem17)
+            DEFAULT_AD_PROVIDER_ASSUME_DEFAULT_DOMAIN="dword:00000001"
+            DEFAULT_AD_PROVIDER_TRIM_USER_MEMBERSHIP="dword:00000001"
+            ;;
+    esac
+            
 
     case "$MK_OS" in
         darwin)

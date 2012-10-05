@@ -46,7 +46,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters]
 "EnableEventlog" = {
-    default = dword:00000000
+    default = @DEFAULT_ENABLE_EVENTLOG@
     doc = "Configure lsass to log events to the event log"
     range = boolean
 }
@@ -164,7 +164,7 @@
     range = integer:3600-31536000
 }
 "AssumeDefaultDomain" = {
-    default = dword:00000000
+    default = @DEFAULT_AD_PROVIDER_ASSUME_DEFAULT_DOMAIN@
     doc = "Apply domain name prefix to account name at logon"
     range = boolean
 }
@@ -182,12 +182,12 @@
     doc = "Restrict logon access to computer to specific users or group members, or SIDs"
 }
 "CreateK5Login" = {
-    default = dword:00000001
+    default = @DEFAULT_AD_PROVIDER_CREATE_K5LOGIN@
     doc = "Whether .k5login file is to be created upon user logon"
     range = boolean
 }
 "CreateHomeDir" = {
-    default = dword:00000001
+    default = @DEFAULT_AD_PROVIDER_CREATE_HOMEDIR@
     doc = "Whether home directories should be automatically created upon user logon"
     range = boolean
 }
@@ -200,12 +200,12 @@
     doc = ""
 }
 "RefreshUserCredentials" = {
-    default = dword:00000001
+    default = @DEFAULT_AD_PROVIDER_REFRESH_USER_CREDENTIALS@
     doc = "Whether to refresh user credentials agaist AD domain controller"
     range = boolean
 }
 "TrimUserMembership" = {
-    default = dword:00000001
+    default = @DEFAULT_AD_PROVIDER_TRIM_USER_MEMBERSHIP@
     doc = "Whether to remove a cached group membership entry derived from PAC with information from LDAP showing the user disappearing from a group."
 }
 "NssGroupMembersQueryCacheOnly" = {
@@ -223,7 +223,7 @@
     range = boolean
 }
 "DomainManagerCheckDomainOnlineInterval" = {
-    default = dword:0000012C
+    default = @DEFAULT_AD_PROVIDER_DOMAINMANAGER_ONLINE_CHECK_TIME@
     doc = "How often the domain manager should check whether a domain is back online"
     range = integer:60-86400
 }

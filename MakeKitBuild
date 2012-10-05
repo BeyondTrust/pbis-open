@@ -65,6 +65,13 @@ option()
         DEFAULT="$default_bundled" \
         HELP="Use bundled libraries"
 
+    mk_option \
+        OPTION=oem \
+        PARAM='...' \
+        VAR=LW_OEM_PROFILE \
+        DEFAULT="" \
+        HELP="Build an OEM Profile default option set"
+
     _LW_BUNDLED="$LW_BUNDLED"
 
     unset LW_BUNDLED
@@ -118,6 +125,31 @@ configure()
     LW_PRODUCT_QFE=0
     LW_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}.${LW_BUILD_ID:-0}"
 
+    case "$LW_OEM_PROFILE" in
+        oem16)
+            LW_VENDOR="oem16"
+            LW_SAMBA_INTEROP="no"
+            LW_APPLICATION_INTEGRATION="yes"
+            LW_SAMBA_INTEROP="no"
+            mk_skip_subdir reapsysl
+            mk_skip_subdir lwupgrade
+            mk_skip_subdir usermonitor
+            mk_skip_subdir net-snmp
+            LW_DEVICE_PROFILE="full"
+            ;;
+        oem17)
+            mk_msg "Building OEM $LW_OEM_PROFILE configuration"
+            LW_VENDOR="oem17"
+            LW_APPLICATION_INTEGRATION="no"
+            LW_SAMBA_INTEROP="no"
+            mk_skip_subdir reapsysl
+            mk_skip_subdir lwupgrade
+            mk_skip_subdir usermonitor
+            mk_skip_subdir net-snmp
+            LW_DEVICE_PROFILE="embedded"
+            ;;
+    esac
+
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
@@ -140,7 +172,8 @@ configure()
     case "$LW_DEVICE_PROFILE" in
         embedded)
             mk_skip_subdir reapsysl
-            mk_skip_subdir eventlog
+            # mk_skip_subdir eventlog
+            # turning "eventlog" building back on, since lsass requires it in 7.x - bug 14311
             mk_skip_subdir domainjoin
             mk_skip_subdir centutils
             mk_skip_subdir lwconfig
@@ -148,6 +181,7 @@ configure()
             mk_skip_subdir usermonitor
             ;;
     esac
+
 }
 
 make()
