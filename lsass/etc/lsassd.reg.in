@@ -262,7 +262,7 @@
     doc = "Do not look up the specified group names in AD."
 }
 "MultiTenancyEnabled" = {
-    default = dword:00000000
+    default = @DEFAULT_AD_PROVIDER_MULTITENANCY@
     doc = "Configure lsass to join to multiple domains"
     range = boolean
 }
