@@ -164,6 +164,8 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
     INT j = 0;
     AttrValsT *avpGrp = NULL;
     PSTR member = NULL;
+    PSTR memberForeign = NULL;
+    PSTR sid = NULL;
 
     if(action->addToGroup.user) {
         member = action->addToGroup.user;
@@ -179,7 +181,24 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avpGrp[0].attr = "member";
-    avpGrp[0].vals[0] = member;
+    if(IsMultiForestMode(action))
+    {
+        SwitchConnection(action);
+        
+        dwError = GetObjectSID(appContext, action->addToGroup.user, &sid);
+        ADT_BAIL_ON_ERROR_NP(dwError);
+
+        SwitchConnection(action);
+        
+        dwError = LwAllocateStringPrintf(&memberForeign,"<SID=%s>",sid);
+        ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+        avpGrp[0].vals[0] = memberForeign;
+    }
+    else
+    {
+        avpGrp[0].vals[0] = member;
+    }
 
     PrintStderr(appContext,
                 LogLevelVerbose,
