@@ -50,6 +50,21 @@
 
 
 #ifndef VMS
+
+/* HPUX 11.11 has a bug in their headers. Nothing will define the sockaddr_in6
+ * structure if _XOPEN_SOURCE_EXTENDED is defined. This hack temporarily
+ * undefines it. */
+#ifdef HAVE_NETINET_IN6_H
+#if defined(__hpux) && defined(_XOPEN_SOURCE_EXTENDED)
+#undef _XOPEN_SOURCE_EXTENDED
+#define REDEFINE_XOPEN_SOURCE_EXTENDED
+#endif
+#include <netinet/in6.h>
+#ifdef REDEFINE_XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE_EXTENDED
+#endif
+#endif
+
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -76,7 +91,11 @@ typedef struct rpc_addr_ip_t
 {
     rpc_protseq_id_t        rpc_protseq_id;
     unsigned32              len;
-    struct sockaddr_in      sa;
+    union
+    {
+        struct sockaddr_in      sa;
+        struct sockaddr_in6     sa6;
+    };
 } rpc_ip_addr_t, *rpc_ip_addr_p_t;
 
 /***********************************************************************
