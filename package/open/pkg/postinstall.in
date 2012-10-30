@@ -427,8 +427,14 @@ postinstall()
 
     enable_service_configurations_or_init_d_symlinks
 
-    run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
-    run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+    if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
+        LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
+        if [ -n "${LOAD_ORDER}" ]; then
+
+            run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+            run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+        fi
+    fi
 
     run_quiet mv /var/lib/likewise /var/lib/likewise.old
     run_quiet rm -rf "${UPGRADEDIR}"
