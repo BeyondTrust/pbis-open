@@ -613,10 +613,21 @@ if [ -z "$NewOwnerGID" ]; then
 fi
 
 # Perform the migration...
-if [ "$SourceHomeDirectory" == "$DestHomeDirectory" ]; then
-    ChownProfile
+diskutil info / | grep -i "Case[-_ ]sensitive"
+if [ $? -eq 0 ]; then
+   if [ "$SourceHomeDirectory" == "$DestHomeDirectory" ]; then
+      ChownProfile
+   else
+      MigrateProfile
+   fi
 else
-    MigrateProfile
+   SourceHomeDirectory_lowercase=`echo $SourceHomeDirectory | tr [:upper:] [:lower:]`
+   DestHomeDirectory_lowercase=`echo $DestHomeDirectory | tr [:upper:] [:lower:]`
+   if [ "$SourceHomeDirectory_lowercase" == "$DestHomeDirectory_lowercase" ];then
+      ChownProfile
+   else
+      MigrateProfile
+   fi
 fi
 
 #
