@@ -793,6 +793,20 @@ LWIDirNodeQuery::DoDirNodeAuth(
     }
     else if (isChangePassword || isSetPassword)
     {
+        isAuthOnly = true;
+
+        if(pDoDirNodeAuth->fOutAuthStepDataResponse)
+        {
+            macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        pDoDirNodeAuth->fOutAuthStepDataResponse);
+            if(!strcmp(pDoDirNodeAuth->fOutAuthStepDataResponse->fBufferData+sizeof(UInt32), "newPasswordRequired=1"))
+            {
+                isAuthOnly = false;
+            }
+        }
+
         LOG("Going to change password for user %s", username);
         DEBUG_USER_PASSWORD(username, oldPassword, password);
 
@@ -800,7 +814,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
 
         LOG("Change password complete, now reauthenticate user to cache new password for next offline logon: %s", username);
-        macError = AuthenticateUser(username, password, true, &isOnlineLogon, &pszMessage);
+        macError = AuthenticateUser(username, password, isAuthOnly, &isOnlineLogon, &pszMessage);
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
 
         LOG("%sline logon successful for user: %s. Message: %s",
