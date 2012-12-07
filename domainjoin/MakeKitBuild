@@ -24,6 +24,12 @@ configure()
     mk_define LIBDIR "\"$MK_LIBDIR\""
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define DATADIR "\"$MK_DATADIR\""
+  
+    if [ "$LW_OEM_PROFILE" = "oem15" ]
+    then
+       DJ_GUI=no 
+       mk_msg "domainjoin-gui: $DJ_GUI"
+    fi
 
     if [ "$DJ_GUI" = yes ]
     then

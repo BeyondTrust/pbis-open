@@ -130,6 +130,12 @@ configure()
         HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
         kqueue
 
+   
+    if [ "$LW_OEM_PROFILE" = "oem15" ]
+    then
+       LWBASE_THREADPOOL_BACKEND="poll"
+    fi
+
     if [ "$LWBASE_THREADPOOL_BACKEND" = "autodetect" ]
     then
         if [ "$HAVE_EPOLL_CREATE" = "yes" ]

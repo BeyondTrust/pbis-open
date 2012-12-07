@@ -105,6 +105,12 @@ configure()
 {
     mk_config_header "include/config.h"
 
+    if [ "$LW_OEM_PROFILE" = "oem15" ]
+    then
+       ENABLE_HTTP="no"
+       mk_msg "rpc-http: $ENABLE_HTTP"
+    fi
+
     case "$MK_HOST_OS" in
         linux)
             target_os="linux-gnu"
