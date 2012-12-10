@@ -12,6 +12,7 @@ SUBDIRS="$LW_ALL_BUNDLED \
          mod_auth_kerb config docs reskit usermonitor \
          package installer qatools gssapps lwsecurity"
 
+
 defaults()
 {
     PREFIX="/opt/pbis"
@@ -128,7 +129,6 @@ configure()
     case "$LW_OEM_PROFILE" in
         oem15)
             mk_msg "Building OEM $LW_OEM_PROFILE configuration"
-            LW_VENDOR="oem15"
             LW_APPLICATION_INTEGRATION="no"
             LW_SAMBA_INTEROP="no"
             mk_skip_subdir gssapps
@@ -137,7 +137,6 @@ configure()
             LW_DEVICE_PROFILE="embedded"
             ;;
         oem16)
-            LW_VENDOR="oem16"
             LW_SAMBA_INTEROP="no"
             LW_APPLICATION_INTEGRATION="yes"
             mk_skip_subdir reapsysl
@@ -149,7 +148,6 @@ configure()
             ;;
         oem17)
             mk_msg "Building OEM $LW_OEM_PROFILE configuration"
-            LW_VENDOR="oem17"
             LW_APPLICATION_INTEGRATION="no"
             LW_SAMBA_INTEROP="no"
             mk_skip_subdir lwupgrade
@@ -160,7 +158,7 @@ configure()
             ;;
     esac
 
-    mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
+    mk_msg "configuring $LW_VENDOR $LW_OEM_PROFILE $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
     for comp in ${LW_ALL_BUNDLED}
@@ -194,6 +192,7 @@ configure()
 
 make()
 {
+
     bundled_targets=""
 
     for comp in ${LW_ALL_BUNDLED}
