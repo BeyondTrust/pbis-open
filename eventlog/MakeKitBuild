@@ -2,6 +2,11 @@ SUBDIRS="include utils ipc client server tools etc"
 
 configure()
 {
+    if [ "$LW_OEM_PROFILE" = "oem15" ]
+    then
+      mk_skip_subdir tools
+    fi
+
     mk_config_header "include/config.h"
     
     lw_define_feature_macros
