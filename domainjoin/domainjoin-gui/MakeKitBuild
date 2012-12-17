@@ -1,7 +1,6 @@
-SUBDIRS="gtk carbon"
+SUBDIRS="gtk"
 
 configure()
 {
     [ "$DJ_GUI_INTERFACE" = "gtk" ] || mk_skip_subdir "gtk"
-    [ "$DJ_GUI_INTERFACE" = "carbon" ] || mk_skip_subdir "carbon"
 }
