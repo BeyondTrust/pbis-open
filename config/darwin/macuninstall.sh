@@ -24,6 +24,8 @@ gather_version_info()
     IS_10_4=
     IS_10_5=
     IS_10_6=
+    IS_10_7=
+    IS_10_8=
     HAVE_LAUNCHCTL_V2=
 
     _get_os_version=`uname -r`
@@ -45,6 +47,11 @@ gather_version_info()
         11.*)
             IS_10_7=1
             echo "This is a Lion (10.7) version of Mac OS X"
+            HAVE_LAUNCHCTL_V2=1
+            ;;
+        12.*)
+            IS_10_8=1
+            echo "This is a Mountain Lion (10.8) version of Mac OS X"
             HAVE_LAUNCHCTL_V2=1
             ;;
         *)
