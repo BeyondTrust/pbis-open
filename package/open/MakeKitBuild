@@ -390,6 +390,14 @@ open_files_prefix()
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwicompat_v*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
+        "${MK_DATADIR}/rhel/*" \
+        "${MK_DATADIR}/rhel/6.0/*" \
+        "${MK_DATADIR}/fedora/*" \
+        "${MK_DATADIR}/fedora/17/*" \
+        "${MK_DATADIR}/fedora/16/*" \
+        "${MK_DATADIR}/fedora/15/*" \
+        "${MK_DATADIR}/fedora/14/*" \
+        "${MK_DATADIR}/fedora/13/*" \
         "${MK_DOCDIR}/*" \
         "${MK_DOCDIR}/html/*" \
         "${LW_CONFIGDIR}/*.reg" \

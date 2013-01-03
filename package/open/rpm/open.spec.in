@@ -126,6 +126,99 @@ import_registry_configurations()
     done
 }
 
+determine_os_version()
+{
+    PBIS_DISTRO=unknown
+    PBIS_DISTRO_VERSION=unknown
+
+    if [ -f '/etc/centos-release' ]; then
+        PBIS_DISTRO=centos
+        if [ -n "`grep '^CentOS release 6' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^CentOS release 5' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=5.0
+        fi
+    elif [ -f '/etc/fedora-release' ]; then
+        PBIS_DISTRO=fedora
+        if [ -n "`grep '^Fedora release 17 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=17
+        elif [ -n "`grep '^Fedora release 16 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=16
+        elif [ -n "`grep '^Fedora release 15 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=15
+        elif [ -n "`grep '^Fedora release 14 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=14
+        elif [ -n "`grep '^Fedora release 13 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=13
+        fi
+    elif [ -f '/etc/redhat-release' ]; then
+        if [ -n "`grep '^CentOS release 5' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=centos
+            PBIS_DISTRO_VERSION=5.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 5' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=5.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 6' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 6' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=6.0
+        fi
+    fi
+}
+
+setup_selinux_policy_module()
+{
+    DISTRO=$PBIS_DISTRO
+    VERSION=$PBIS_DISTRO_VERSION
+
+    # CentOS uses the same policy as RedHat Enterprise
+    if [ "$DISTRO" = "centos" ]; then
+        DISTRO="rhel"
+    fi
+
+    logfile "DISTRO=$DISTRO VERSION=$PBIS_DISTRO_VERSION"
+    if [ ! -x "/usr/sbin/semodule" ]; then
+        logfile "/usr/sbin/semodule not present."
+        return;
+    fi
+
+    if [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
+        log 'Setting up SELinux Policy Module'
+        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
+        run_quiet /sbin/fixfiles -R pbis-open restore
+    elif [ "$DISTRO" = "rhel" -a "$VERSION" = "5" ]; then
+        log 'Skipping SELinux for this system.'
+    else
+      log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package."
+      if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
+        logfile "/usr/sbin/selinuxenabled and /usr/sbin/getenforce are present"
+        if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
+            logfile "selinuxenabled indicates SELinux is enabled"
+            if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
+                if [ -f /etc/selinux/config ]; then                 
+                    log "SELinux found to be present, enabled, and enforcing.
+SELinux must be disabled or set to permissive mode by editing the file
+/etc/selinux/config and rebooting.
+For instructions on how to edit the file to disable SELinux, see the SELinux man page."
+                else
+                    log "SELinux found to be present, enabled, and enforcing.
+SELinux must be disabled or set to permissive mode.
+Check your system's documentation for details."
+                fi
+                log 'PowerBroker Identity Services will not install without an appropriate policy for SELinux.'
+                exit 1
+            else
+                logfile "getenforce indicates permissive (which is ok)"
+            fi
+        else
+            logfile "selinuxenabled indicates SELinux is not enabled"
+        fi
+      fi
+    fi
+}
+
 determine_upgrade_type()
 {
     PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
@@ -404,6 +497,10 @@ postinstall()
 {
     logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
 
+    determine_os_version
+
+    setup_selinux_policy_module
+
     determine_upgrade_type
 
     restore_6_0_configuration
@@ -440,7 +537,13 @@ postinstall()
 
     run /sbin/chkconfig --add lwsmd
 
-    run '@LW_INITDIR@/lwsmd' start
+
+    if [ -x /sbin/service ]
+    then
+        run /sbin/service lwsmd start
+    else
+        run '@LW_INITDIR@/lwsmd' start
+    fi
 
     if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
         LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
@@ -561,7 +664,12 @@ pre_upgrade()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /etc/init.d/lwsmd stop
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet /etc/init.d/lwsmd stop
+    fi
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -575,32 +683,12 @@ pre_install()
 {
     logfile "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
 
-    logfile "Checking SELinux"
-    if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
-        logfile "/usr/sbin/selinuxenabled and /usr/sbin/getenforce are present"
-        if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
-            logfile "selinuxenabled indicates SELinux is enabled"
-            if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
-                if [ -f /etc/selinux/config ]; then
-                    log "SELinux found to be present, enabled, and enforcing.
-SELinux must be disabled or set to permissive mode by editing the file
-/etc/selinux/config and rebooting.
-For instructions on how to edit the file to disable SELinux, see the SELinux man page."
-                else
-                    log "SELinux found to be present, enabled, and enforcing.
-SELinux must be disabled or set to permissive mode.
-Check your system's documentation for details."
-                fi
-                exit 1
-            else
-                logfile "getenforce indicates permissive (which is ok)"
-            fi
-        else
-            logfile "selinuxenabled indicates SELinux is not enabled"
-        fi
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet /etc/init.d/lwsmd stop
     fi
-
-    run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -728,7 +816,12 @@ preuninstall_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet '@LW_INITDIR@/lwsmd' stop
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet '@LW_INITDIR@/lwsmd' stop
+    fi
 
     for daemon in $DAEMONS_TO_HALT
     do
