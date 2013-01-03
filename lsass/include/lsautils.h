@@ -363,6 +363,9 @@ typedef struct __LSA_CACHE
     DWORD dwNumCollisions;
 } LSA_CACHE, *PLSA_CACHE;
 
+struct __SELINUX;
+typedef struct __SELINUX* PSELINUX;
+
 DWORD
 LsaInitializeStringBuffer(
         LSA_STRING_BUFFER *pBuffer,
@@ -538,6 +541,7 @@ LsaCopyDirectory(
     PCSTR pszSourceDirPath,
     uid_t ownerUid,
     gid_t ownerGid,
+    PSELINUX pSELinux,
     PCSTR pszDestDirPath
     );
 
@@ -603,6 +607,28 @@ LsaGetMatchingFilePathsInFolder(
     PCSTR pszFileNameRegExp,
     PSTR** pppszHostFilePaths,
     PDWORD pdwNPaths
+    );
+
+DWORD
+SELinuxCreate(
+    PSELINUX *ppSELinux
+    );
+
+DWORD
+SELinuxSetContext(
+    PCSTR pszPath,
+    mode_t mode,
+    PSELINUX pSELinux
+    );
+
+VOID
+SELinuxFree(
+    PSELINUX pSELinux
+    );
+
+DWORD
+LsaSELinuxManageHomeDir(
+    PCSTR pszHomeDir
     );
 
 DWORD

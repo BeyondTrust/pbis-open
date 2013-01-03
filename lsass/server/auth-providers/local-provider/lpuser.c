@@ -1558,6 +1558,7 @@ LocalProvisionHomeDir(
                         pszSkelPath,
                         ownerUid,
                         ownerGid,
+                        NULL,
                         pszHomedirPath);
             BAIL_ON_LSA_ERROR(dwError);
         }

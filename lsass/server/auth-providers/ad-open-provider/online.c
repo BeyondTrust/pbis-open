@@ -2519,6 +2519,8 @@ AD_CreateHomeDirectory_Generic(
 
     umask = AD_GetUmask(pState);
 
+    LsaSELinuxManageHomeDir(pObject->userInfo.pszHomedir);
+
     dwError = LsaCreateDirectory(
                  pObject->userInfo.pszHomedir,
                  perms);
@@ -2613,6 +2615,7 @@ AD_ProvisionHomeDir(
                         pszSkelPath,
                         ownerUid,
                         ownerGid,
+                        NULL,
                         pszHomedirPath);
             BAIL_ON_LSA_ERROR(dwError);
         }

@@ -489,6 +489,7 @@ LsaCreateDirectoryRecursive(
     PSTR pszCurDirPath,
     PSTR pszTmpPath,
     PSTR *ppszTmp,
+    PSELINUX pSELinux,
     DWORD dwFileMode,
     DWORD dwWorkingFileMode,
     int  iPart
@@ -499,8 +500,17 @@ LsaCreateDirectoryRecursive(
     BOOLEAN bDirCreated = FALSE;
     BOOLEAN bDirExists = FALSE;
     CHAR szDelimiters[] = "/";
+    PSELINUX pSELinuxLocal = NULL;
 
     PSTR pszToken = strtok_r((iPart ? NULL : pszTmpPath), szDelimiters, ppszTmp);
+
+    if (pSELinux == NULL)
+    {
+        dwError = SELinuxCreate(&pSELinuxLocal);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pSELinux = pSELinuxLocal;
+    }
 
     if (pszToken != NULL) {
 
@@ -522,6 +532,7 @@ LsaCreateDirectoryRecursive(
                 dwError = LwMapErrnoToLwError(errno);
                 BAIL_ON_LSA_ERROR(dwError);
             }
+            SELinuxSetContext(pszDirPath, dwWorkingFileMode, pSELinux);
             bDirCreated = TRUE;
         }
 
@@ -532,6 +543,7 @@ LsaCreateDirectoryRecursive(
             pszDirPath,
             pszTmpPath,
             ppszTmp,
+            pSELinux,
             dwFileMode,
             dwWorkingFileMode,
             iPart+1
@@ -542,9 +554,17 @@ LsaCreateDirectoryRecursive(
     if (bDirCreated && (dwFileMode != dwWorkingFileMode)) {
         dwError = LsaChangePermissions(pszDirPath, dwFileMode);
         BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = SELinuxSetContext(pszDirPath, dwFileMode, pSELinux);
+        BAIL_ON_LSA_ERROR(dwError);
     }
     if (pszDirPath) {
         LwFreeMemory(pszDirPath);
+    }
+
+    if (pSELinuxLocal) {
+        SELinuxFree(pSELinuxLocal);
+        pSELinuxLocal = NULL;
     }
 
     return dwError;
@@ -557,6 +577,11 @@ error:
 
     if (pszDirPath) {
         LwFreeMemory(pszDirPath);
+    }
+
+    if (pSELinuxLocal) {
+        SELinuxFree(pSELinuxLocal);
+        pSELinuxLocal = NULL;
     }
 
     return dwError;
@@ -573,6 +598,7 @@ LsaCreateDirectory(
     PSTR pszTmpPath = NULL;
     PSTR pszTmp = NULL;
     mode_t dwWorkingFileMode;
+    PSELINUX pSELinux = NULL;
 
     if (pszPath == NULL || *pszPath == '\0') {
         dwError = LW_ERROR_INVALID_PARAMETER;
@@ -594,16 +620,19 @@ LsaCreateDirectory(
     dwError = LwAllocateString(pszPath, &pszTmpPath);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = SELinuxCreate(&pSELinux);
+    BAIL_ON_LSA_ERROR(dwError);
+
     if (*pszPath == '/') {
         dwError = LsaChangeDirectory("/");
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaCreateDirectoryRecursive("/", pszTmpPath, &pszTmp, dwFileMode, dwWorkingFileMode, 0);
+        dwError = LsaCreateDirectoryRecursive("/", pszTmpPath, &pszTmp, pSELinux, dwFileMode, dwWorkingFileMode, 0);
         BAIL_ON_LSA_ERROR(dwError);
 
     } else {
 
-        dwError = LsaCreateDirectoryRecursive(pszCurDirPath, pszTmpPath, &pszTmp, dwFileMode, dwWorkingFileMode, 0);
+        dwError = LsaCreateDirectoryRecursive(pszCurDirPath, pszTmpPath, &pszTmp, pSELinux, dwFileMode, dwWorkingFileMode, 0);
         BAIL_ON_LSA_ERROR(dwError);
 
     }
@@ -921,6 +950,7 @@ LsaCopyDirectory(
     PCSTR pszSourceDirPath,
     uid_t ownerUid,
     gid_t ownerGid,
+    PSELINUX pSELinux,
     PCSTR pszDestDirPath
     )
 {
@@ -931,10 +961,19 @@ LsaCopyDirectory(
     CHAR  szSrcPath[PATH_MAX+1];
     CHAR  szDstPath[PATH_MAX+1];
     PSTR  pszTargetPath = NULL;
+    PSELINUX pSELinuxLocal = NULL;
 
     if (NULL == (pDir = opendir(pszSourceDirPath))) {
        dwError = LwMapErrnoToLwError(errno);
        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pSELinux == NULL)
+    {
+        dwError = SELinuxCreate(&pSELinuxLocal);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pSELinux = pSELinuxLocal;
     }
 
     while (NULL != (pDirEntry = readdir(pDir)))
@@ -968,24 +1007,38 @@ LsaCopyDirectory(
                             ownerGid);
             BAIL_ON_LSA_ERROR(dwError);
 
+            dwError = SELinuxSetContext(
+                            szDstPath,
+                            statbuf.st_mode,
+                            pSELinux);
+            BAIL_ON_LSA_ERROR(dwError);
+
             dwError = LsaCopyDirectory(
                             szSrcPath,
                             ownerUid,
                             ownerGid,
+                            pSELinux,
                             szDstPath);
             BAIL_ON_LSA_ERROR(dwError);
 
         } else if (S_ISREG(statbuf.st_mode)) {
 
-            dwError = LsaCopyFileWithOriginalPerms(
+            dwError = LsaCopyFileWithPerms(
                             szSrcPath,
-                            szDstPath);
+                            szDstPath,
+                            statbuf.st_mode);
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = LsaChangeOwner(
                             szDstPath,
                             ownerUid,
                             ownerGid);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = SELinuxSetContext(
+                            szDstPath,
+                            statbuf.st_mode,
+                            pSELinux);
             BAIL_ON_LSA_ERROR(dwError);
 
         } else if (S_ISLNK(statbuf.st_mode)) {
@@ -1005,6 +1058,13 @@ LsaCopyDirectory(
                             ownerUid,
                             ownerGid);
             BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = SELinuxSetContext(
+                            szDstPath,
+                            0,
+                            pSELinux);
+            BAIL_ON_LSA_ERROR(dwError);
+
         }
     }
 
@@ -1012,6 +1072,11 @@ cleanup:
 
     if (pDir) {
         closedir(pDir);
+    }
+
+    if (pSELinuxLocal) {
+        SELinuxFree(pSELinuxLocal);
+        pSELinuxLocal = NULL;
     }
 
     LW_SAFE_FREE_STRING(pszTargetPath);

@@ -200,6 +200,13 @@ configure()
         mk_define DISABLE_RPC_SERVERS
     fi
 
+    if [ "$LW_SELINUX" = "yes" ]
+    then
+        mk_declare -s -o LIBSELINUX
+        mk_define ENABLE_SELINUX 1
+        mk_define LIBSELINUX "\"/${MK_LIBDIR##*/}/libselinux.so.1\""
+    fi
+
     # FIXME
     mk_define COMPONENT_VERSION "\"${VERSION}.${REVISION}\""
     mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
