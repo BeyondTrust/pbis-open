@@ -1,0 +1,8 @@
+/etc/pbis(/.*)?			gen_context(system_u:object_r:pbis_etc_t,s0)
+/etc/pbis/pbis-krb5-ad.conf --	gen_context(system_u:object_r:pbis_krb5_ad_t,s0)
+
+/etc/pbis/redhat/lwsmd		--	gen_context(system_u:object_r:pbis_initrc_exec_t,s0)
+
+/opt/pbis/sbin/lwsmd		--	gen_context(system_u:object_r:pbis_exec_t,s0)
+
+/var/lib/pbis(/.*)?			gen_context(system_u:object_r:pbis_var_lib_t,s0)

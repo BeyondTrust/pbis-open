@@ -4,6 +4,7 @@ configure()
         MK_PREFIX \
         MK_LIBEXECDIR \
         MK_SBINDIR \
+        MK_DATADIR \
         LW_INITDIR \
         VERSION="$LW_VERSION" \
         BUILD="${LW_BUILD_ID:-0}" \
@@ -14,5 +15,25 @@ configure()
 
 make()
 {
+    # Works for many different RedHat products
     mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd" MODE=0755 SOURCE="lwsmd"
+
+    #### SELINUX ####
+
+    # You can generate the policy 'pbis.pp' on CentOS 6.0/Fedora 14/etc... by
+    # - Copying the *.te, *.fc, *.if files to a temporary directory.
+    # - Executing 'make -f /usr/share/selinux/devel/Makefile' in that directory.
+
+    # SELinux policy for RedHat Enterprise/CentOS 6.x
+    for distro in 'rhel/6.0' 'fedora/17' 'fedora/16' 'fedora/15' 'fedora/14' 'fedora/13'
+    do
+        mk_stage MODE=644 \
+            DEST="${MK_DATADIR}/$distro/pbis.$extte" SOURCE="$distro/pbis.te"
+        mk_stage MODE=644 \
+            DEST="${MK_DATADIR}/$distro/pbis.fc" SOURCE="$distro/pbis.fc"
+        mk_stage MODE=644 \
+            DEST="${MK_DATADIR}/$distro/pbis.if" SOURCE="$distro/pbis.if"
+        mk_stage MODE=644 \
+            DEST="${MK_DATADIR}/$distro/pbis.pp" SOURCE="$distro/pbis.pp"
+    done
 }
