@@ -1190,82 +1190,11 @@ cleanup:
     CT_SAFE_FREE_STRING(finalName);
 }
 
-static DWORD UnsupportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
-{
-    BOOLEAN hasSeLinux;
-    DWORD ceError = ERROR_SUCCESS;
-    PSTR output = NULL;
-    LwDistroInfo distro;
-
-    *hasBadSeLinux = FALSE;
-    memset(&distro, 0, sizeof(distro));
-
-    GCE(ceError = CTCheckFileOrLinkExists("/usr/sbin/selinuxenabled", &hasSeLinux));
-    if(!hasSeLinux)
-        goto cleanup;
-
-    GCE(ceError = CTCheckFileOrLinkExists("/usr/sbin/getenforce", &hasSeLinux));
-    if(!hasSeLinux)
-        goto cleanup;
-
-    ceError = CTRunCommand("/usr/sbin/selinuxenabled >/dev/null 2>&1");
-    if(ceError == ERROR_BAD_COMMAND)
-    {
-        //selinux is not enabled
-        ceError = ERROR_SUCCESS;
-        goto cleanup;
-    }
-    GCE(ceError);
-
-    GCE(ceError = CTCaptureOutput("/usr/sbin/getenforce", &output));
-    CTStripWhitespace(output);
-    if(!strcmp(output, "Permissive"))
-    {
-        goto cleanup;
-    }
-
-    DJ_LOG_INFO("Selinux found to be present, enabled, and enforcing.");
-
-    GCE(ceError = DJGetDistroInfo("", &distro));
-
-    switch(distro.distro)
-    {
-        case DISTRO_CENTOS:
-        case DISTRO_RHEL:
-            if(distro.version[0] < '5')
-            {
-                DJ_LOG_INFO("Safe version of RHEL");
-                goto cleanup;
-            }
-            break;
-        case DISTRO_FEDORA:
-            if(atol(distro.version) < 6)
-            {
-                DJ_LOG_INFO("Safe version of Fedora");
-                goto cleanup;
-            }
-            break;
-        default:
-            goto cleanup;
-    }
-    *hasBadSeLinux = TRUE;
-
-cleanup:
-    if(ceError)
-        *hasBadSeLinux = TRUE;
-
-    CT_SAFE_FREE_STRING(output);
-    DJFreeDistroInfo(&distro);
-
-    return ceError;
-}
-
 static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException **exc)
 {
     QueryResult result = FullyConfigured;
     BOOLEAN configured;
     BOOLEAN exists;
-    BOOLEAN hasBadSeLinux;
     NsswitchConf conf;
     DWORD ceError = ERROR_SUCCESS;
     uid_t uid = 0;
@@ -1310,11 +1239,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
         LW_CLEANUP_CTERR(exc, UpdateNsswitchConf(&conf, TRUE));
         if(conf.modified)
         {
-            LW_CLEANUP_CTERR(exc, UnsupportedSeLinuxEnabled(&hasBadSeLinux));
-            if(hasBadSeLinux)
-                result = CannotConfigure;
-            else
-                result = NotConfigured;
+            result = NotConfigured;
             goto cleanup;
         }
         
@@ -1520,21 +1445,12 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
 {
     PSTR ret = NULL;
     PCSTR configureSteps;
-    BOOLEAN hasBadSeLinux;
     QueryResult compatResult = FullyConfigured;
     PSTR compatDescription = NULL;
     NsswitchConf conf;
     DWORD ceError = ERROR_SUCCESS;
 
     memset(&conf, 0, sizeof(conf));
-
-    LW_CLEANUP_CTERR(exc, UnsupportedSeLinuxEnabled(&hasBadSeLinux));
-    if(hasBadSeLinux)
-    {
-        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&ret,
-"Your machine is using an unsupported SeLinux policy. This must be disabled before nsswitch can be modified to allow active directory users. Please run '/usr/sbin/setenforce Permissive' and then re-run this program."));
-        goto cleanup;
-    }
 
     ceError = ReadNsswitchConf(&conf, "", TRUE);
     if(ceError == ERROR_FILE_NOT_FOUND)
