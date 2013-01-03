@@ -35,6 +35,7 @@ defaults()
 option()
 {
     default_samba_interop="yes"
+    default_selinux="no"
 
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
@@ -43,6 +44,10 @@ option()
             ;;
         linux-*)
             default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2"
+            if [ "$MK_PACKAGE_RPM" = "yes" ]
+            then
+                default_selinux="yes"
+            fi
             ;;
         darwin-*)
             default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
@@ -58,6 +63,13 @@ option()
         VAR="LW_SAMBA_INTEROP" \
         DEFAULT="$default_samba_interop" \
         HELP="Build samba interop libraries"
+
+    mk_option \
+        OPTION="selinux" \
+        PARAM="yes|no" \
+        VAR="LW_SELINUX" \
+        DEFAULT="$default_selinux" \
+        HELP="Attempt loading and using libselinux.so.1"
 
     mk_option \
         OPTION=lw-bundled-libs \
@@ -294,6 +306,8 @@ lw_print_features()
     fi
 
     lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"
+
+    lw_print_feature "SELinux support" "$LW_SELINUX"
 
     types=""
 
