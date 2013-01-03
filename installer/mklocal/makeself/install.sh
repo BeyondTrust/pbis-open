@@ -189,24 +189,6 @@ do_setup()
             exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
         fi
     done
-
-    if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
-        if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
-            if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
-                if [ -f /etc/selinux/config ]; then
-                    exit_on_error 1 "SELinux found to be present, enabled, and enforcing.
-SELinux must be disabled or set to permissive mode by editing the file
-/etc/selinux/config and rebooting.
-For instructions on how to edit the file to disable SELinux, see the SELinux man page."
-                else
-                    exit_on_error 1 "SELinux found to be present, enabled, and enforcing.
-SELinux must be disabled or set to permissive mode.
-Check your system's documentation for details."
-                fi
-            fi
-        fi
-    fi
-
 }
 
 check_specific_os_freebsd()
