@@ -297,6 +297,11 @@ LsaReadSystemGroupList(
     FILE* pLocalFile = NULL;
     PSTR pNameCopy = NULL;
 
+    dwError = LwAllocateMemory(
+                    bufferLen,
+                    (PVOID*)&pBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
     pLocalFile = fopen(pFileName? pFileName : "/etc/group", "r");
     // Ignore if the file cannot be opened
     if (pLocalFile)
