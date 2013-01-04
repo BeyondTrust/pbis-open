@@ -1,6 +1,7 @@
-SUBDIRS="gtk"
+SUBDIRS="gtk AppleScript"
 
 configure()
 {
     [ "$DJ_GUI_INTERFACE" = "gtk" ] || mk_skip_subdir "gtk"
+    [ "$DJ_GUI_INTERFACE" = "carbon" ] || mk_skip_subdir "AppleScript"
 }
