@@ -1255,11 +1255,12 @@ LsaUmpAddUser(
 
 cleanup:
 
+    AD_DereferenceProviderContext(pProviderContext);
+    pProviderContext = NULL;
+
     return dwError;
 
 error:
-
-    AD_DereferenceProviderContext(pProviderContext);
 
     if ( pRequest )
     {
