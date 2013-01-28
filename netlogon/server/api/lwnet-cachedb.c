@@ -737,6 +737,13 @@ LWNetCacheDbReadFromRegistry(
         RegCloseKey(hReg, pNetLogonKey);
         pNetLogonKey = NULL;
 
+        // Bug 14370, 14226, 14385 A blank Site name stops the LWNetCacheDbUpdate matching the previous entry when updating the cache
+        // When a NULL Site name is stored in the Registry it is stored as the empty string ""
+        if (cacheEntry.pszSiteName && LW_IS_EMPTY_STR(cacheEntry.pszSiteName))
+        {
+            cacheEntry.pszSiteName = NULL;
+        }
+
         dwError = LWNetCacheDbUpdate(
                       dbHandle,
                       cacheEntry.pszDnsDomainName,
@@ -1263,8 +1270,8 @@ LWNetCacheDbUpdate(
     BAIL_ON_LWNET_ERROR(dwError);
            
     dwError = LWNetAllocateString(
-	          pDcInfo->pszUserName ? pDcInfo->pszUserName : "",
-		  &pNewEntry->DcInfo.pszUserName);
+                  pDcInfo->pszUserName ? pDcInfo->pszUserName : "",
+                  &pNewEntry->DcInfo.pszUserName);
     BAIL_ON_LWNET_ERROR(dwError);
 
     RW_LOCK_ACQUIRE_WRITE(DbHandle->pLock);
