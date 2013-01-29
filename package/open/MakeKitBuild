@@ -246,9 +246,11 @@ package_lpp()
             # not have an SONAME mechanism, we need to keep
             # the plain .so symlinks in addition to the .so.*
             # files.
-            mk_package_patterns \
-                SUBDIRS="$OPEN_SUBDIRS" \
-                "${MK_LIBDIR}/*${MK_LIB_EXT}"
+            mk_multiarch_do
+                mk_package_patterns \
+                    SUBDIRS="$OPEN_SUBDIRS" \
+                    "${MK_LIBDIR}/*${MK_LIB_EXT}"
+            mk_multiarch_done
 
             # Indicate directories we own
             mk_package_dirs \
