@@ -179,14 +179,19 @@ setup_selinux_policy_module()
         return;
     fi
 
-    if [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
+    if [ "$DISTRO" = "rhel" -a "$VERSION" = "5.0" ]; then
+        log 'SELinux Policy Module not required.'
+    elif [ -f "@MK_DATADIR@/pbis.pp" ]; then
+        log 'Setting up SELinux Policy Module using @MK_DATADIR@/pbis.pp'
+        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
+        run_quiet /sbin/fixfiles -R pbis-open restore
+    elif [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module'
         run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
-    elif [ "$DISTRO" = "rhel" -a "$VERSION" = "5" ]; then
-        log 'Skipping SELinux for this system.'
     else
-      log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package."
+      log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package.
+You may provide a policy at @MK_DATADIR@/pbis.pp"
       if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
         logfile "/usr/sbin/selinuxenabled and /usr/sbin/getenforce are present"
         if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
@@ -194,11 +199,13 @@ setup_selinux_policy_module()
             if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
                 if [ -f /etc/selinux/config ]; then                 
                     log "SELinux found to be present, enabled, and enforcing.
+You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode by editing the file
 /etc/selinux/config and rebooting.
 For instructions on how to edit the file to disable SELinux, see the SELinux man page."
                 else
                     log "SELinux found to be present, enabled, and enforcing.
+You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode.
 Check your system's documentation for details."
                 fi
