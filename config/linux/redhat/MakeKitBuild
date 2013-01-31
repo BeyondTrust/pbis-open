@@ -25,10 +25,10 @@ make()
     # - Executing 'make -f /usr/share/selinux/devel/Makefile' in that directory.
 
     # SELinux policy for RedHat Enterprise/CentOS 6.x
-    for distro in 'rhel/6.0' 'fedora/17' 'fedora/16' 'fedora/15' 'fedora/14' 'fedora/13'
+    for distro in 'rhel/6.0' 'fedora/18' 'fedora/17' 'fedora/16' 'fedora/15' 'fedora/14' 'fedora/13'
     do
         mk_stage MODE=644 \
-            DEST="${MK_DATADIR}/$distro/pbis.$extte" SOURCE="$distro/pbis.te"
+            DEST="${MK_DATADIR}/$distro/pbis.te" SOURCE="$distro/pbis.te"
         mk_stage MODE=644 \
             DEST="${MK_DATADIR}/$distro/pbis.fc" SOURCE="$distro/pbis.fc"
         mk_stage MODE=644 \

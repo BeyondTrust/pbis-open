@@ -23,7 +23,6 @@ allow pbis_t pbis_exec_t:file execute_no_trans;
 allow pbis_t pbis_var_lib_t:file execute;
 
 
-consoletype_exec(pbis_t)
 allow pbis_t initrc_t:process { siginh rlimitinh noatsecure };
 
 allow pbis_t self:process { signal_perms getsched setsched setpgid setrlimit };
@@ -33,6 +32,7 @@ allow pbis_t self:unix_stream_socket { create_stream_socket_perms connectto };
 allow pbis_t self:tcp_socket create_stream_socket_perms;
 allow pbis_t self:udp_socket create_socket_perms;
 allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource};
+allow pbis_t self:capability2 block_suspend;
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
 admin_pattern(pbis_t, pbis_var_lib_t)
@@ -159,6 +159,8 @@ domain_read_all_domains_state(pbis_t)
 
 # Enterprise requires these
 init_read_utmp(pbis_t)
+## Fedora 16 requires this, doesn't exist on RHEL 6
+auth_read_passwd(pbis_t)
 manage_sock_files_pattern(pbis_t, tmp_t, tmp_t)
 
 files_rw_generic_tmp_dir(pbis_t)
@@ -238,7 +240,6 @@ require {
     type ipsec_t;
     type iptables_t;
     type iscsid_t;
-    type kerneloops_t;
     type kismet_t;
     type ktalkd_t;
     type local_login_t;
@@ -352,7 +353,6 @@ require {
     type xauth_t;
     type xdm_t;
     type xdm_dbusd_t;
-    type xfs_t;
     type xserver_t;
     type zos_remote_t;
 }
@@ -420,7 +420,6 @@ pbis_client(initrc_t)
 pbis_client(ipsec_t)
 pbis_client(iptables_t)
 pbis_client(iscsid_t)
-pbis_client(kerneloops_t)
 pbis_client(kismet_t)
 pbis_client(ktalkd_t)
 pbis_client(local_login_t)
@@ -537,6 +536,5 @@ pbis_client(winbind_t)
 pbis_client(xauth_t)
 pbis_client(xdm_t)
 pbis_client(xdm_dbusd_t)
-pbis_client(xfs_t)
 pbis_client(xserver_t)
 pbis_client(zos_remote_t)

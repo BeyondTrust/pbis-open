@@ -160,7 +160,7 @@ domain_read_all_domains_state(pbis_t)
 # Enterprise requires these
 init_read_utmp(pbis_t)
 ## Fedora 16 requires this, doesn't exist on RHEL 6
-# auth_read_passwd(pbis_t)
+auth_read_passwd(pbis_t)
 manage_sock_files_pattern(pbis_t, tmp_t, tmp_t)
 
 files_rw_generic_tmp_dir(pbis_t)
