@@ -135,7 +135,9 @@ determine_os_version()
         fi
     elif [ -f '/etc/fedora-release' ]; then
         PBIS_DISTRO=fedora
-        if [ -n "`grep '^Fedora release 17 ' '/etc/fedora-release'`" ]; then
+        if [ -n "`grep '^Fedora release 18 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=18
+        elif [ -n "`grep '^Fedora release 17 ' '/etc/fedora-release'`" ]; then
             PBIS_DISTRO_VERSION=17
         elif [ -n "`grep '^Fedora release 16 ' '/etc/fedora-release'`" ]; then
             PBIS_DISTRO_VERSION=16

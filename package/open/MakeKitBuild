@@ -395,6 +395,7 @@ open_files_prefix()
         "${MK_DATADIR}/rhel/*" \
         "${MK_DATADIR}/rhel/6.0/*" \
         "${MK_DATADIR}/fedora/*" \
+        "${MK_DATADIR}/fedora/18/*" \
         "${MK_DATADIR}/fedora/17/*" \
         "${MK_DATADIR}/fedora/16/*" \
         "${MK_DATADIR}/fedora/15/*" \
