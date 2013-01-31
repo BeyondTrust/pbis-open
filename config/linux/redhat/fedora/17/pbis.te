@@ -19,6 +19,13 @@ init_daemon_domain(pbis_t, pbis_exec_t)
 domain_use_interactive_fds(pbis_t)
 allow pbis_t pbis_exec_t:file execute_no_trans;
 
+# Group Policy may create script that we execute
+allow pbis_t pbis_var_lib_t:file execute;
+
+
+consoletype_exec(pbis_t)
+allow pbis_t initrc_t:process { siginh rlimitinh noatsecure };
+
 allow pbis_t self:process { signal_perms getsched setsched setpgid setrlimit };
 allow pbis_t self:fifo_file rw_fifo_file_perms;
 allow pbis_t self:unix_dgram_socket create_socket_perms;
@@ -37,24 +44,22 @@ dev_read_urand(pbis_t)
 files_read_etc_files(pbis_t)
 files_search_var_lib(pbis_t)
 
-
+logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
-# The syslog reaper needs unusual syslog access
-require {
-    type syslogd_t;
-    type syslogd_var_run_t;
-}
-allow pbis_t syslogd_var_run_t:file { open read getattr };
-allow pbis_t syslogd_t:process signal;
 
+cron_admin_role(system_r, pbis_t)
+require {
+    type system_cron_spool_t;
+}
+manage_files_pattern(pbis_t, system_cron_spool_t, system_cron_spool_t)
+mount_domtrans(pbis_t)
+systemd_exec_systemctl(pbis_t)
 
 ### Don't know about this one
 require {
     type admin_home_t;
 }
 allow pbis_t admin_home_t:dir search;
-
-allow pbis_t usr_t:file read;
 
 miscfiles_read_localization(pbis_t)
 
@@ -117,6 +122,9 @@ seutil_read_default_contexts(pbis_t)
 seutil_read_file_contexts(pbis_t)
 seutil_run_semanage(pbis_t, system_r)
 
+# Group Policy can affect SELinux
+seutil_manage_config(pbis_t)
+
 sysnet_use_ldap(pbis_t)
 sysnet_read_config(pbis_t)
 
@@ -137,16 +145,45 @@ sysnet_dns_name_resolve(pbis_t)
 allow pbis_t pbis_etc_t:dir search_dir_perms;
 
 allow pbis_t home_root_t:file getattr;
-allow pbis_t usr_t:file open;
+allow pbis_t usr_t:file { open read };
 
+# Enterprise licensing creates /var/lib/ts.tdb
+files_list_var_lib(pbis_t)
+files_rw_var_lib_dirs(pbis_t)
+allow pbis_t var_lib_t:file { write read create open };
+
+# Fedora 16 requires sysfs_t be readable -- may be needed in Fedora 17, doesn't exist on RHEL 6
+dev_read_sysfs(pbis_t)
 
 domain_read_all_domains_state(pbis_t)
 
+# Enterprise requires these
+init_read_utmp(pbis_t)
+## Fedora 16 requires this, doesn't exist on RHEL 6
+# auth_read_passwd(pbis_t)
+manage_sock_files_pattern(pbis_t, tmp_t, tmp_t)
+
+files_rw_generic_tmp_dir(pbis_t)
+files_delete_tmp_dir_entry(pbis_t)
+files_manage_generic_tmp_dirs(pbis_t)
+files_manage_generic_tmp_files(pbis_t)
+files_read_generic_tmp_symlinks(pbis_t)
+files_rw_generic_tmp_sockets(pbis_t)
+allow pbis_t tmp_t:lnk_file create;
+
 require {
+    type unconfined_t;
+}
+allow pbis_t unconfined_t:unix_stream_socket { read write getattr };
+
+require {
+    type abrt_t;
+    type accountsd_t;
     type alsa_t;
     type amanda_recover_t;
     type amanda_t;
     type arpwatch_t;
+    type audisp_t;
     type automount_t;
     type avahi_t;
     type bluetooth_t;
@@ -218,6 +255,7 @@ require {
     type nagios_t;
     type named_t;
     type netutils_t;
+    type NetworkManager_t;
     type newrole_t;
     type nmbd_t;
     type nscd_t;
@@ -231,6 +269,7 @@ require {
     type pam_console_t;
     type pam_t;
     type passwd_t;
+    type pcscd_t;
     type pegasus_t;
     type pingd_t;
     type ping_t;
@@ -238,7 +277,13 @@ require {
     type policykit_grant_t;
     type policykit_resolve_t;
     type policykit_t;
+    type postfix_cleanup_t;
+    type postfix_local_t;
     type postfix_map_t;
+    type postfix_master_t;
+    type postfix_pickup_t;
+    type postfix_postdrop_t;
+    type postfix_qmgr_t;
     type postgresql_t;
     type pppd_t;
     type pptp_t;
@@ -250,6 +295,7 @@ require {
     type pulseaudio_t;
     type pyzord_t;
     type pyzor_t;
+    type qpidd_t;
     type qmail_local_t;
     type racoon_t;
     type radiusd_t;
@@ -258,6 +304,7 @@ require {
     type remote_login_t;
     type restorecond_t;
     type rlogind_t;
+    type rpcbind_t;
     type rpm_script_t;
     type rpm_t;
     type rshd_t;
@@ -305,14 +352,18 @@ require {
     type winbind_t;
     type xauth_t;
     type xdm_t;
+    type xdm_dbusd_t;
     type xserver_t;
     type zos_remote_t;
 }
 
+pbis_client(accountsd_t)
+pbis_client(abrt_t)
 pbis_client(alsa_t)
 pbis_client(amanda_recover_t)
 pbis_client(amanda_t)
 pbis_client(arpwatch_t)
+pbis_client(audisp_t)
 pbis_client(automount_t)
 pbis_client(avahi_t)
 pbis_client(bluetooth_t)
@@ -384,6 +435,7 @@ pbis_client(mysqld_t)
 pbis_client(nagios_t)
 pbis_client(named_t)
 pbis_client(netutils_t)
+pbis_client(NetworkManager_t)
 pbis_client(newrole_t)
 pbis_client(nmbd_t)
 pbis_client(nscd_t)
@@ -397,6 +449,7 @@ pbis_client(openvpn_t)
 pbis_client(pam_console_t)
 pbis_client(pam_t)
 pbis_client(passwd_t)
+pbis_client(pcscd_t)
 pbis_client(pegasus_t)
 pbis_client(pingd_t)
 pbis_client(ping_t)
@@ -404,7 +457,13 @@ pbis_client(policykit_auth_t)
 pbis_client(policykit_grant_t)
 pbis_client(policykit_resolve_t)
 pbis_client(policykit_t)
+pbis_client(postfix_cleanup_t)
+pbis_client(postfix_local_t)
 pbis_client(postfix_map_t)
+pbis_client(postfix_master_t)
+pbis_client(postfix_pickup_t)
+pbis_client(postfix_postdrop_t)
+pbis_client(postfix_qmgr_t)
 pbis_client(postgresql_t)
 pbis_client(pppd_t)
 pbis_client(pptp_t)
@@ -416,6 +475,7 @@ pbis_client(psad_t)
 pbis_client(pulseaudio_t)
 pbis_client(pyzord_t)
 pbis_client(pyzor_t)
+pbis_client(qpidd_t)
 pbis_client(qmail_local_t)
 pbis_client(racoon_t)
 pbis_client(radiusd_t)
@@ -424,6 +484,7 @@ pbis_client(regex_milter_t)
 pbis_client(remote_login_t)
 pbis_client(restorecond_t)
 pbis_client(rlogind_t)
+pbis_client(rpcbind_t)
 pbis_client(rpm_script_t)
 pbis_client(rpm_t)
 pbis_client(rshd_t)
@@ -451,6 +512,9 @@ pbis_client(stunnel_t)
 pbis_client(swat_t)
 pbis_client(sysadm_passwd_t)
 pbis_client(syslogd_t)
+## We create named pipes for syslog to write to
+allow syslogd_t pbis_t:unix_stream_socket {read write};
+allow syslogd_t pbis_var_lib_t:fifo_file { ioctl open getattr append };
 pbis_client(system_cronjob_t)
 pbis_client(system_dbusd_t)
 pbis_client(telnetd_t)
@@ -471,5 +535,6 @@ pbis_client(winbind_helper_t)
 pbis_client(winbind_t)
 pbis_client(xauth_t)
 pbis_client(xdm_t)
+pbis_client(xdm_dbusd_t)
 pbis_client(xserver_t)
 pbis_client(zos_remote_t)
