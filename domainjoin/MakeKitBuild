@@ -25,13 +25,12 @@ configure()
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define DATADIR "\"$MK_DATADIR\""
 
-    if [ "$DJ_GUI" = yes ]
-    then
-        if mk_pkg_config \
+    if [ "$DJ_GUI" = yes ] && mk_pkg_config \
         VARPREFIX=GTK \
         glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
         then
-            DJ_GUI_INTERFACE="gtk"
+        DJ_GUI_INTERFACE="gtk"       
+
             mk_check_functions \
                 HEADERDEPS="gtk/gtk.h" \
                 CPPFLAGS="$GTK_CPPFLAGS" \
@@ -46,10 +45,6 @@ configure()
             DJ_GUI_INTERFACE="no"
             mk_skip_subdir domainjoin-gui
         fi
-    else
-        DJ_GUI_INTERFACE="no"
-        mk_skip_subdir domainjoin-gui
-    fi
 
     mk_msg "GUI interface: $DJ_GUI_INTERFACE"
     
