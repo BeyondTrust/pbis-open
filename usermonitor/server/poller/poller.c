@@ -297,37 +297,15 @@ UmnSrvPollerThreadRoutine(
     BAIL_ON_UMN_ERROR(dwError);
     bMutexLocked = TRUE;
 
+    dwError = gettimeofday(&now, NULL);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    UmnSrvTimevalToTimespec(
+        &periodStart,
+        &now);
+
     while (!gbPollerThreadShouldExit)
     {
-        dwError = gettimeofday(&now, NULL);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        UmnSrvTimevalToTimespec(
-            &periodStart,
-            &now);
-
-        dwError = gettimeofday(&now, NULL);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
-        if (dwError == ERROR_CANCELLED)
-        {
-            UMN_LOG_INFO("User poller cancelled iteration");
-            dwError = 0;
-            break;
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        // periodUsed = now - periodStart
-        UmnSrvTimevalToTimespec(
-            &periodUsed,
-            &now);
-
-        UmnSrvTimespecSubtract(
-            &periodUsed,
-            &periodUsed,
-            &periodStart);
-
         dwError = UmnSrvGetCheckInterval(&dwPeriodSecs);
         BAIL_ON_UMN_ERROR(dwError);
         pushWait.tv_sec = dwPeriodSecs;
@@ -380,6 +358,42 @@ UmnSrvPollerThreadRoutine(
             }
         }
         gbPollerRefresh = FALSE;
+
+        if (!gbPollerThreadShouldExit)
+        {
+            dwError = gettimeofday(&now, NULL);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            UmnSrvTimevalToTimespec(
+                &periodStart,
+                &now);
+
+            dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
+            if (dwError == ERROR_CANCELLED)
+            {
+                UMN_LOG_INFO("User poller canceled iteration");
+                dwError = 0;
+                break;
+            }
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = gettimeofday(&now, NULL);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            // periodUsed = now - periodStart
+            UmnSrvTimevalToTimespec(
+                &periodUsed,
+                &now);
+
+            UmnSrvTimespecSubtract(
+                &periodUsed,
+                &periodUsed,
+                &periodStart);
+
+            UMN_LOG_DEBUG("Account activity update took %f seconds",
+                    periodUsed.tv_sec + periodUsed.tv_nsec /
+                    (double)NANOSECS_PER_SECOND);
+        }
     }
 
     UMN_LOG_INFO("User poller thread stopped");
