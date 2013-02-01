@@ -769,14 +769,15 @@ UmnSrvUpdateUsers(
 
     while ((pUser = getpwent()) != NULL)
     {
-        if (skipNoLogin && (!strcmp(pUser->pw_shell, "/sbin/nologin") ||
+        if (skipNoLogin && pUser->pw_shell &&
+            (!strcmp(pUser->pw_shell, "/sbin/nologin") ||
             !strcmp(pUser->pw_shell, "/bin/nologin") ||
             !strcmp(pUser->pw_shell, "/usr/sbin/nologin") ||
             !strcmp(pUser->pw_shell, "/usr/bin/false") ||
             !strcmp(pUser->pw_shell, "/bin/false")))
         {
             UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because their shell prevents them from logging in.",
-                    pUser->pw_name, uid);
+                    LW_SAFE_LOG_STRING(pUser->pw_name), uid);
             continue;
         }
         uid = pUser->pw_uid;
@@ -790,14 +791,14 @@ UmnSrvUpdateUsers(
                     1,
                     list,
                     &ppObjects);
-        BAIL_ON_UMN_ERROR(dwError);
 
-        if (ppObjects[0] &&
-                ppObjects[0]->enabled &&
+        if (dwError == ERROR_SUCCESS &&
+                ppObjects && ppObjects[0] && ppObjects[0]->enabled &&
+                ppObjects[0]->userInfo.pszUnixName && pUser->pw_name &&
                 !strcmp(ppObjects[0]->userInfo.pszUnixName, pUser->pw_name))
         {
             UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because they came from lsass",
-                    pUser->pw_name, uid);
+                    LW_SAFE_LOG_STRING(pUser->pw_name), uid);
         }
         else
         {
@@ -811,8 +812,11 @@ UmnSrvUpdateUsers(
             BAIL_ON_UMN_ERROR(dwError);
         }
 
-        LsaFreeSecurityObjectList(1, ppObjects);
-        ppObjects = NULL;
+        if (ppObjects)
+        {
+            LsaFreeSecurityObjectList(1, ppObjects);
+            ppObjects = NULL;
+        }
     }
 
     dwError = UmnSrvFindDeletedUsers(
