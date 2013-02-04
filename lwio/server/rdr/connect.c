@@ -682,7 +682,6 @@ RdrSessionSetupComplete(
     case RDR_TREE_STATE_INITIALIZING:
         pContext->Continue = RdrTreeConnectComplete;
         LwListInsertTail(&pTree->StateWaiters, &pContext->Link);
-        bFreeContext = TRUE;
         status = STATUS_PENDING;
         break;
     case RDR_TREE_STATE_READY:
