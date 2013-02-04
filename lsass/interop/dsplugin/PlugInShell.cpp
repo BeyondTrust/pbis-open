@@ -1119,7 +1119,6 @@ long PlugInShell_PeriodicTask(void)
             NewFlags = NewFlags | LWE_DS_FLAG_USE_AD_UNC_FOR_HOME_LOCATION_SMB;
         }
     }
-
     /* See if Merge Admins feature is to be supported */
     if (bMergeAdmins)
     {

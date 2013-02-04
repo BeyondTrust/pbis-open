@@ -57,124 +57,87 @@ LsaAccessGetData(
     PVOID * ppAccessData
     )
 {
-    DWORD            dwError = 0;
+    DWORD dwError = 0;
     PLSA_ACCESS_DATA pAccessData = NULL;
-    DWORD            dwAllocUid = 0;
-    DWORD            dwAllocGid = 0;
-    DWORD            dwCount = 0;
-    HANDLE           hLsaConnection = (HANDLE)NULL;
-    DWORD            dwInfoLevel = 0;
-    PVOID            pUserInfo = NULL;
-    PVOID            pGroupInfo = NULL;
 
-    if ( pczConfigData == NULL )
+    //figure out how many strings were passed
+    unsigned int numberOfAccountsToResolve = 0;
+    for ( numberOfAccountsToResolve= 0 ; pczConfigData[numberOfAccountsToResolve] ; numberOfAccountsToResolve++ )
     {
-        *ppAccessData = NULL;
-        goto cleanup;
+        ;
     }
 
-    dwError = LwAllocateMemory(sizeof(LSA_ACCESS_DATA),
-                  (PVOID*)&pAccessData);
-    BAIL_ON_MAC_ERROR(dwError);
+    LSA_QUERY_LIST QueryList = {0};
+    LwAllocateMemory(numberOfAccountsToResolve, (PVOID*)&QueryList.ppszStrings);
 
-    dwAllocUid = 8;
-    dwError = LwAllocateMemory(sizeof(uid_t) * dwAllocUid,
-                  (PVOID*)&pAccessData->pUids);
-    BAIL_ON_MAC_ERROR(dwError);
+    int i;
+    for(i = 0; i < numberOfAccountsToResolve; i++)
+    {
+        QueryList.ppszStrings[i] = pczConfigData[i];
+    }
 
-    dwAllocGid = 16;
-    dwError = LwAllocateMemory(sizeof(uid_t) * dwAllocGid,
-                  (PVOID*)&pAccessData->pGids);
-    BAIL_ON_MAC_ERROR(dwError);
-
+    HANDLE hLsaConnection = NULL;
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_MAC_ERROR(dwError);
 
-    for ( dwCount = 0 ; pczConfigData[dwCount] ; dwCount++ )
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    dwError = LsaFindObjects( hLsaConnection, NULL, 0, LSA_OBJECT_TYPE_UNDEFINED, LSA_QUERY_TYPE_BY_NAME, numberOfAccountsToResolve, QueryList, &ppObjects);
+    BAIL_ON_MAC_ERROR(dwError);
+
+    if(ppObjects != NULL)
     {
-        dwError = LsaFindGroupByName(
-                      hLsaConnection,
-                      pczConfigData[dwCount],
-                      0,
-                      dwInfoLevel,
-                      &pGroupInfo);
-        if ( !dwError )
+        DWORD dwAllocUid = 8;
+        DWORD dwAllocGid = 16;
+
+        LwAllocateMemory(sizeof(LSA_ACCESS_DATA), (PVOID*)&pAccessData);
+
+        LwAllocateMemory(sizeof(uid_t) * dwAllocUid,
+        (PVOID*)&pAccessData->pUids);
+
+        LwAllocateMemory(sizeof(uid_t) * dwAllocGid, (PVOID*)&pAccessData->pGids);
+
+        for(i = 0; i < numberOfAccountsToResolve; i++)
         {
-            if ( pAccessData->dwGidCount == dwAllocGid )
+            if(ppObjects[i] != NULL)
             {
-                dwAllocGid *= 2;
-                dwError = LwReallocMemory(
-                              (PVOID)pAccessData->pGids,
-                              (PVOID *)&pAccessData->pGids,
-                              dwAllocGid * sizeof(gid_t) );
-                BAIL_ON_MAC_ERROR(dwError);
+                if(ppObjects[i]->type == LSA_OBJECT_TYPE_GROUP)
+                {
+                    if ( pAccessData->dwGidCount == dwAllocGid )
+                    {
+                        dwAllocGid *= 2;
+                        LwReallocMemory( (PVOID)pAccessData->pGids, (PVOID *)&pAccessData->pGids, dwAllocGid * sizeof(gid_t) );
+                    }
+
+                    pAccessData->pGids[pAccessData->dwGidCount++] = ppObjects[i]->groupInfo.gid;
+                }
+                else if(ppObjects[i]->type == LSA_OBJECT_TYPE_USER)
+                {
+                    if ( pAccessData->dwUidCount == dwAllocUid )
+                    {
+                        dwAllocUid *= 2;
+                        dwError = LwReallocMemory( (PVOID)pAccessData->pUids, (PVOID *)&pAccessData->pUids, dwAllocUid * sizeof(uid_t) );
+                    }
+                    pAccessData->pUids[pAccessData->dwUidCount++] = ppObjects[i]->userInfo.uid;
+                }
             }
-
-            pAccessData->pGids[pAccessData->dwGidCount++] =
-                ((PLSA_GROUP_INFO_0)pGroupInfo)->gid;
-
-            LsaFreeGroupInfo(
-                dwInfoLevel,
-                pGroupInfo);
-            pGroupInfo = NULL;
-        }
-        else
-        {
-            dwError = LsaFindUserByName(
-                          hLsaConnection,
-                          pczConfigData[dwCount],
-                          dwInfoLevel,
-                          &pUserInfo);
-            if ( dwError )
-            {
-                continue;
-            }
-            if ( pAccessData->dwUidCount == dwAllocUid )
-            {
-                dwAllocUid *= 2;
-                dwError = LwReallocMemory(
-                              (PVOID)pAccessData->pUids,
-                              (PVOID *)&pAccessData->pUids,
-                              dwAllocUid * sizeof(uid_t) );
-                BAIL_ON_MAC_ERROR(dwError);
-            }
-
-            pAccessData->pUids[pAccessData->dwUidCount++] =
-                ((PLSA_USER_INFO_0)pUserInfo)->uid;
-
-            LsaFreeUserInfo(
-                dwInfoLevel,
-                pUserInfo);
-            pUserInfo = NULL;
         }
     }
-
-    *ppAccessData = pAccessData;
 
 cleanup:
-    if ( pUserInfo )
-    {
-        LsaFreeUserInfo(
-            dwInfoLevel,
-            pUserInfo);
-    }
-    if ( pGroupInfo )
-    {
-        LsaFreeGroupInfo(
-            dwInfoLevel,
-            pGroupInfo);
-    }
-    if ( hLsaConnection != (HANDLE)NULL )
+    if(hLsaConnection != (HANDLE)NULL)
     {
         LsaCloseServer(hLsaConnection);
     }
 
+
+    *ppAccessData = pAccessData;
     return dwError;
 
 error:
-    if ( pAccessData )
-        LsaAccessFreeData( (PVOID)pAccessData );
-
+    if(pAccessData)
+    {
+        LsaAccessFreeData((PVOID)pAccessData);
+    }
     goto cleanup;
 }
 
