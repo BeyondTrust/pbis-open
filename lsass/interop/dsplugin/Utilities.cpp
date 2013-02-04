@@ -779,185 +779,9 @@ cleanup:
     return macError;
 }
 
-static
-void
-DoubleTheBufferSizeIfItsTooSmall(
-    long *              pMacError, 
-    tDirNodeReference   hDirRef, 
-    tDataBufferPtr *    ppBuffer
-)
-    // This routine is designed to handle the case where a 
-    // Open Directory routine returns eDSBufferTooSmall.  
-    // If so, it doubles the size of the buffer, allowing the 
-    // caller to retry the Open Directory routine with the 
-    // large buffer.
-    //
-    // errPtr is a pointer to a Open Directory error.  
-    // This routine does nothing unless that error is 
-    // eDSBufferTooSmall.  In that case it frees the buffer 
-    // referenced by *bufPtrPtr, replacing it with a buffer 
-    // of twice the size.  It then leaves *errPtr set to 
-    // eDSBufferTooSmall so that the caller retries the 
-    // call with the larger buffer.
-{
-    long            macError = eDSNoErr;
-    tDirStatus      junk;
-    tDataBufferPtr  pBuffer = NULL;
-    
-    if (*pMacError == eDSBufferTooSmall)
-    {
-        // If the buffer size is already bigger than 16 MB, don't try to 
-        // double it again; something has gone horribly wrong.
-        if ( (*ppBuffer)->fBufferSize >= (16 * 1024 * 1024) ) {
-            macError = eDSAllocationFailed;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        pBuffer = dsDataBufferAllocate(hDirRef, (*ppBuffer)->fBufferSize * 2);
-        if (!pBuffer) {
-            macError = eDSAllocationFailed;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        
-        junk = dsDataBufferDeAllocate(hDirRef, *ppBuffer);
-        *ppBuffer = pBuffer;
-    }
-    
-cleanup:
-
-    // If err is eDSNoErr, the buffer expansion was successful 
-    // so we leave *errPtr set to eDSBufferTooSmall.  If err 
-    // is any other value, the expansion failed and we set 
-    // *errPtr to that error.
-        
-    if (macError != eDSNoErr) {
-        *pMacError = macError;
-    }
-}
-
-static
-long
-dsFindDirNodes_Wrap(
-    tDirReference       hDirRef,
-    tDataBufferPtr *    ppDataBuffer,
-    tDataListPtr        pNodeName,
-    tDirPatternMatch    PatternMatchType,
-    UInt32              *pulNodeCount,
-    tContextData        *inOutContinueData
-    )
-    // A wrapper for dsFindDirNodes that handles two special cases:
-    //
-    // o If the routine returns eDSBufferTooSmall, it doubles the 
-    //   size of the buffer referenced by *inOutDataBufferPtrPtr 
-    //   and retries.
-    //
-    //   Note that this change requires a change of the function 
-    //   prototype; the second parameter is a pointer to a pointer 
-    //   to the buffer, rather than just a pointer to the buffer. 
-    //   This is so that I can modify the client's buffer pointer.
-    //
-    // o If the routine returns no nodes but there's valid continue data, 
-    //   it retries.
-    //
-    // In other respects this works just like dsFindDirNodes.
-{
-    long macError = eDSNoErr;
-    
-    do {
-        do {
-            macError = dsFindDirNodes(
-                hDirRef, 
-                *ppDataBuffer, 
-                pNodeName, 
-                PatternMatchType, 
-                pulNodeCount, 
-                inOutContinueData
-            );
-            DoubleTheBufferSizeIfItsTooSmall(&macError, hDirRef, ppDataBuffer);
-        } while (macError == eDSBufferTooSmall);
-    } while ( (macError == eDSNoErr) && (*pulNodeCount == 0) && (*inOutContinueData != 0) );
-
-    return macError;
-}
-
 enum {
     kDefaultDSBufferSize = 1024
 };
-
-static 
-long
-GetLocalNodePathList(
-    tDirReference  hDirRef,
-    tDataListPtr * localNodePathListPtr
-    )
-    // Returns the path to the Open Directory local node. (/NetInfo/root/ or Local/Default/)
-    // dirRef is the connection to Open Directory.
-    // On success, *searchNodePathListPtr is a data list that 
-    // contains the search node's path components.
-{
-    long                macError = eDSNoErr;
-    tDirStatus          junk;
-    tDataBufferPtr      pDataBuffer = NULL;
-    tDirPatternMatch    patternToFind = eDSLocalNodeNames;
-    UInt32              ulNodeCount = 0;
-    tContextData        context = NULL;
-    
-    // Allocate a buffer for the node find results.  We'll grow 
-    // this buffer if it proves to be to small.
-    
-    pDataBuffer = dsDataBufferAllocate(hDirRef, kDefaultDSBufferSize);
-    if (!pDataBuffer) {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    // Find the node.  Note that this is a degenerate case because 
-    // we're only looking for a single node, the local node, so 
-    // we don't need to loop calling dsFindDirNodes, which is the 
-    // standard way of using dsFindDirNodes.
-    
-    macError = dsFindDirNodes_Wrap(
-            hDirRef, 
-            &pDataBuffer,                       // place results here
-            NULL,                               // no pattern, rather...
-            patternToFind,                      // ... hardwired search type
-            &ulNodeCount, 
-            &context
-        );
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    // If we didn't find any nodes, that's bad.
-    
-    if (ulNodeCount < 1) {
-        macError = eDSNodeNotFound;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    // Grab the first node from the buffer.  Note that the inDirNodeIndex 
-    // parameter to dsGetDirNodeName is one-based, so we pass in the constant 
-    // 1.
-    // 
-    // Also, if we found more than one, that's unusual, but not enough to 
-    // cause us to error.
-    macError = dsGetDirNodeName(hDirRef, pDataBuffer, 1, localNodePathListPtr);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-cleanup:
-
-    // Clean up.
-    
-    if (context != 0)
-    {
-        junk = dsReleaseContinueData(hDirRef, context);
-    }
-    
-    if (pDataBuffer)
-    {
-        junk = dsDataBufferDeAllocate(hDirRef, pDataBuffer);
-    }
-    
-    return macError;
-}
 
 BOOLEAN
 LWIsUserInLocalGroup(
@@ -965,124 +789,46 @@ LWIsUserInLocalGroup(
     const char* pszGroupname
     )
 {
-    long                macError = eDSNoErr;
-    tDirStatus          junk;
-    tDirReference       hDirRef = NULL;
-    tDirNodeReference   hNodeRef = NULL;
-    tRecordReference    hRecordRef = NULL;
-    tDataNodePtr        pRecordName = NULL;
-    tDataNodePtr        pUsernameToFind = NULL;
-    tDataListPtr        pathListToLocalNode = NULL;
-    tDataNodePtr        pRecordTypeGroup = NULL;
-    tDataNodePtr        pAttrTypeGroupMemberList = NULL;
-    tAttributeValueEntryPtr pValueEntry = NULL;
-    BOOLEAN             bFound = FALSE;
+    FILE *fp;
+    char path[2048];
+    char command[2048];
+    sprintf(command, "dscl . -read /Groups/%s GroupMembership", pszGroupname);
 
-    macError = dsOpenDirService(&hDirRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    fp = popen(command, "r");
 
-    pRecordName = dsDataNodeAllocateString(hDirRef, pszGroupname);
-    if (!pRecordName)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    pUsernameToFind = dsDataNodeAllocateString(hDirRef, pszUsername);
-    if (!pUsernameToFind)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = GetLocalNodePathList(hDirRef, &pathListToLocalNode);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsOpenDirNode(hDirRef, pathListToLocalNode, &hNodeRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    pRecordTypeGroup = dsDataNodeAllocateString(hDirRef, kDSStdRecordTypeGroups);
-    if (!pRecordTypeGroup)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    pAttrTypeGroupMemberList = dsDataNodeAllocateString(hDirRef, kDSNAttrGroupMembership);
-    if (!pAttrTypeGroupMemberList)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = dsOpenRecord(hNodeRef,
-                            pRecordTypeGroup,
-                            pRecordName,
-                            &hRecordRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsGetRecordAttributeValueByValue(hRecordRef,
-                                                pAttrTypeGroupMemberList,
-                                                pUsernameToFind,
-                                                &pValueEntry);
-    if (macError)
-    {
-        goto cleanup;
-    }
-    
-    if (pValueEntry)
-    {
-        bFound = TRUE;
+    if(fp == NULL) {
+	LOG("Unable to find dscl command");
+        return FALSE;
     }
 
-cleanup:
+    while(fgets(path, sizeof(path), fp) != NULL) {
+    }
+    
+    pclose(fp);
 
-    if (pValueEntry)
-    {
-        junk = dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
-    }
-        
-    if (pRecordName)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pRecordName);
-    }
-    
-    if (pathListToLocalNode)
-    {
-        junk = dsDataListDeallocate(hDirRef, pathListToLocalNode);
-    }
-    
-	if (pRecordTypeGroup)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pRecordTypeGroup);
-    }
-    
-	if (pAttrTypeGroupMemberList)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pAttrTypeGroupMemberList);
-    }
+    char* account = strtok(path, " ");
+    account = strtok(NULL, " ");
 
-    if (pUsernameToFind)
+    while(account != NULL)
     {
-        junk = dsDataNodeDeAllocate(hDirRef, pUsernameToFind);
-    }
-    
-    if (hRecordRef)
-    {
-        dsCloseRecord(hRecordRef);
-    }
-    
-    if (hNodeRef)
-    {
-        dsCloseDirNode(hNodeRef);
+        for(unsigned int i = 0; i < strlen(account); i++)
+        {	
+            if(isspace(account[i]) )
+            {
+                account[i] = NULL;
+                break;
+            }
+        }
+
+        if(strcasecmp(pszUsername, account) == 0)
+        {
+            return TRUE;
+        }
+
+        account = strtok(NULL, " ");
     }
 
-    if (hDirRef)
-    {
-        dsCloseDirService(hDirRef);
-    }
-    
-    return bFound;
+    return FALSE;
 }
 
 long
@@ -1091,120 +837,33 @@ LWRemoveUserFromLocalGroup(
     const char* pszGroupname
     )
 {
-    long                macError = eDSNoErr;
-    tDirStatus          junk;
-    tDirReference       hDirRef = NULL;
-    tDirNodeReference   hNodeRef = NULL;
-    tRecordReference    hRecordRef = NULL;
-    tDataNodePtr        pRecordName = NULL;
-    tDataNodePtr        pUsernameToRemove = NULL;
-    tDataListPtr        pathListToLocalNode = NULL;
-    tDataNodePtr        pRecordTypeGroup = NULL;
-    tDataNodePtr        pAttrTypeGroupMemberList = NULL;
-    tAttributeValueEntryPtr pValueEntry = NULL;
+    char* pszEscapedUsername = NULL;
+    pszEscapedUsername = (char*)calloc(strlen(pszUsername) * 2 + 1, sizeof(char));
+    unsigned int i = 0;
+    for(i = 0; i < strlen(pszUsername);i++)
+    {
+        if(pszUsername[i] == '\\')
+        {
+            sprintf(pszEscapedUsername, "%s\\%c", pszEscapedUsername, pszUsername[i]);
+        }
+        else
+        {
+            sprintf(pszEscapedUsername, "%s\%c", pszEscapedUsername, pszUsername[i]);
+        }
+    } 
 
-    macError = dsOpenDirService(&hDirRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    const char* baseCommand = "dscl . -delete /Groups/";
+    char* command = NULL;
+    command = (char*)calloc(strlen(baseCommand) + strlen(pszEscapedUsername) + 1 + strlen(pszGroupname) + 1 + 15 + 1, sizeof(char));
+    sprintf(command, "%s%s GroupMembership %s", baseCommand, pszGroupname, pszEscapedUsername);
 
-    pRecordName = dsDataNodeAllocateString(hDirRef, pszGroupname);
-    if (!pRecordName)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    pUsernameToRemove = dsDataNodeAllocateString(hDirRef, pszUsername);
-    if (!pUsernameToRemove)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = GetLocalNodePathList(hDirRef, &pathListToLocalNode);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsOpenDirNode(hDirRef, pathListToLocalNode, &hNodeRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    free(pszEscapedUsername);
 
-    pRecordTypeGroup = dsDataNodeAllocateString(hDirRef, kDSStdRecordTypeGroups);
-    if (!pRecordTypeGroup)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-	pAttrTypeGroupMemberList = dsDataNodeAllocateString(hDirRef, kDSNAttrGroupMembership);
-    if (!pAttrTypeGroupMemberList)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = dsOpenRecord(hNodeRef,
-                            pRecordTypeGroup,
-                            pRecordName,
-                            &hRecordRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsGetRecordAttributeValueByValue(hRecordRef,
-                                                pAttrTypeGroupMemberList,
-                                                pUsernameToRemove,
-                                                &pValueEntry);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsRemoveAttributeValue(hRecordRef,
-                                      pAttrTypeGroupMemberList,
-                                      pValueEntry->fAttributeValueID);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-cleanup:
+    long result = system(command);
 
-    if (pValueEntry)
-    {
-        junk = dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
-    }
-        
-    if (pRecordName)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pRecordName);
-    }
-    
-    if (pathListToLocalNode)
-    {
-        junk = dsDataListDeallocate(hDirRef, pathListToLocalNode);
-    }
-    
-	if (pRecordTypeGroup)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pRecordTypeGroup);
-    }
-    
-	if (pAttrTypeGroupMemberList)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pAttrTypeGroupMemberList);
-    }
+    free(command);
 
-    if (pUsernameToRemove)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pUsernameToRemove);
-    }
-    
-    if (hRecordRef)
-    {
-        dsCloseRecord(hRecordRef);
-    }
-    
-    if (hNodeRef)
-    {
-        dsCloseDirNode(hNodeRef);
-    }
-
-    if (hDirRef)
-    {
-        dsCloseDirService(hDirRef);
-    }
-    
-    return macError;
+    return result; 
 }
 
 long
@@ -1213,109 +872,33 @@ LWAddUserToLocalGroup(
     const char* pszGroupname
     )
 {
-    long                macError = eDSNoErr;
-    tDirStatus          junk;
-	tDirReference       hDirRef = NULL;
-	tDirNodeReference   hNodeRef = NULL;
-    tRecordReference    hRecordRef = NULL;
-    tDataNodePtr        pRecordName = NULL;
-    tDataNodePtr        pUsernameToAdd = NULL;
-    tDataListPtr        pathListToLocalNode = NULL;
-	tDataNodePtr        pRecordTypeGroup = NULL;
-	tDataNodePtr        pAttrTypeGroupMemberList = NULL;
+    char* pszEscapedUsername = NULL;
+    pszEscapedUsername = (char*)calloc(strlen(pszUsername) * 2 + 1, sizeof(char));
+    unsigned int i = 0;
+    for(i = 0; i < strlen(pszUsername);i++)
+    {
+        if(pszUsername[i] == '\\')
+        {
+            sprintf(pszEscapedUsername, "%s\\%c", pszEscapedUsername, pszUsername[i]);
+        }
+        else
+        {
+            sprintf(pszEscapedUsername, "%s\%c", pszEscapedUsername, pszUsername[i]);
+        }
+    } 
 
-    macError = dsOpenDirService(&hDirRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    const char* baseCommand = "dscl . -append /Groups/";
+    char* command = NULL;
+    command = (char*)calloc(strlen(baseCommand) + strlen(pszEscapedUsername) + 1 + strlen(pszGroupname) + 1 + 15 + 1, sizeof(char));
+    sprintf(command, "%s%s GroupMembership %s", baseCommand, pszGroupname, pszEscapedUsername);
+    
+    free(pszEscapedUsername);
 
-    pRecordName = dsDataNodeAllocateString(hDirRef, pszGroupname);
-    if (!pRecordName)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    pUsernameToAdd = dsDataNodeAllocateString(hDirRef, pszUsername);
-    if (!pUsernameToAdd)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = GetLocalNodePathList(hDirRef, &pathListToLocalNode);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsOpenDirNode(hDirRef, pathListToLocalNode, &hNodeRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    long result = system(command);
 
-    pRecordTypeGroup = dsDataNodeAllocateString(hDirRef, kDSStdRecordTypeGroups);
-    if (!pRecordTypeGroup)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-	pAttrTypeGroupMemberList = dsDataNodeAllocateString(hDirRef, kDSNAttrGroupMembership);
-    if (!pAttrTypeGroupMemberList)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    macError = dsOpenRecord(hNodeRef,
-                            pRecordTypeGroup,
-                            pRecordName,
-                            &hRecordRef);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-    macError = dsAddAttributeValue(hRecordRef,
-                                   pAttrTypeGroupMemberList,
-                                   pUsernameToAdd);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-    
-cleanup:
-        
-    if (pRecordName)
-    {
-        junk = dsDataNodeDeAllocate
-        (hDirRef, pRecordName);
-    }
-    
-    if (pathListToLocalNode)
-    {
-        junk = dsDataListDeallocate(hDirRef, pathListToLocalNode);
-    }
-    
-	if (pRecordTypeGroup)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pRecordTypeGroup);
-    }
-    
-	if (pAttrTypeGroupMemberList)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pAttrTypeGroupMemberList);
-    }
+    free(command);
 
-    if (pUsernameToAdd)
-    {
-        junk = dsDataNodeDeAllocate(hDirRef, pUsernameToAdd);
-    }
-    
-    if (hRecordRef)
-    {
-        dsCloseRecord(hRecordRef);
-    }
-    
-    if (hNodeRef)
-    {
-        dsCloseDirNode(hNodeRef);
-    }
-
-    if (hDirRef)
-    {
-        dsCloseDirService(hDirRef);
-    }
-    
-    return macError;
+    return result; 
 }
 
 #ifdef __cplusplus
