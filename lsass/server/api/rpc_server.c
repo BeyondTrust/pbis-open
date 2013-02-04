@@ -500,7 +500,6 @@ LsaSrvFreeRpcServer(
     }
 
     LW_SAFE_FREE_STRING(pSrv->pszSrvLibPath);
-    LW_SAFE_FREE_STRING(pSrv->pszName);
     LW_SAFE_FREE_MEMORY(pSrv);
 }
 
