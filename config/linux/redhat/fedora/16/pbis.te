@@ -331,6 +331,7 @@ require {
     type swat_t;
     type sysadm_passwd_t;
     type syslogd_t;
+    type systemd_logind_t;
     type system_cronjob_t;
     type system_dbusd_t;
     type telnetd_t;
@@ -516,6 +517,7 @@ pbis_client(syslogd_t)
 ## We create named pipes for syslog to write to
 allow syslogd_t pbis_t:unix_stream_socket {read write};
 allow syslogd_t pbis_var_lib_t:fifo_file { ioctl open getattr append };
+pbis_client(systemd_logind_t)
 pbis_client(system_cronjob_t)
 pbis_client(system_dbusd_t)
 pbis_client(telnetd_t)

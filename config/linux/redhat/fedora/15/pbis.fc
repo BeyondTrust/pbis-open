@@ -5,3 +5,4 @@
 /opt/pbis/lib64		gen_context(system_u:object_r:lib_t,s0)
 /opt/pbis/lib64(/.*)?		gen_context(system_u:object_r:lib_t,s0)
 /var/lib/pbis(/.*)?		gen_context(system_u:object_r:pbis_var_lib_t,s0)
+/var/lib/ts.tdb                 gen_context(system_u:object_r:pbis_var_lib_t,s0)
