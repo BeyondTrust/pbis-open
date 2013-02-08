@@ -130,6 +130,8 @@ determine_os_version()
         PBIS_DISTRO=centos
         if [ -n "`grep '^CentOS release 6' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^CentOS Linux release 6' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=6.0
         elif [ -n "`grep '^CentOS release 5' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=5.0
         fi
@@ -609,7 +611,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -627,7 +629,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -644,7 +646,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -745,7 +747,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -763,7 +765,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -780,7 +782,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    tlog=$("$@")
+    tlog=$("$@" 2>&1)
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
