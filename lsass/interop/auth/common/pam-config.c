@@ -336,7 +336,8 @@ LsaReadSystemGroupList(
                             bufferLen);
             if (!pGroup)
             {
-                dwError = errno;
+                // NULL group entry and errno not set means EOF so set dwError to ENOENT
+                dwError = errno ? errno : ENOENT;
             }
 #endif
             if (!dwError)
@@ -446,7 +447,8 @@ LsaReadSystemUserList(
                             bufferLen);
             if (!pAccount)
             {
-                dwError = errno;
+                // NULL account entry and errno not set means EOF so set dwError to ENOENT
+                dwError = errno ? errno : ENOENT;
             }
 #endif
             if (!dwError)
