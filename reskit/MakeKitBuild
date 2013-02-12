@@ -9,7 +9,7 @@ configure()
 
 make()
 {
-    mk_stage DESTDIR="${MK_LIBEXECDIR}" SOURCE="likewise-support.pl"
+    mk_stage DESTDIR="${MK_LIBEXECDIR}" SOURCE="pbis-support.pl"
     mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-open-installation-and-administration-guide.pdf"
 
     if [ "$MK_HOST_OS" = "darwin" ]
