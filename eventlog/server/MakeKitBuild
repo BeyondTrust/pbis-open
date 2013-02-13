@@ -1,0 +1,26 @@
+make()
+{
+    EVENTLOGD_SOURCES="\
+	db.c             \
+	eventlog_sstub.c \
+	globals.c        \
+	main.c           \
+	listener-lwmsg.c   \
+	server-lwmsg.c   \
+	server.c"
+
+    lw_dceidl \
+	IDL="../idl/eventlog.idl" \
+	IDLFLAGS="-sstub_pref Srv" \
+        INCLUDEDIRS=". ../include" \
+	SSTUB="eventlog_sstub.c" \
+	HEADER="eventlog_h.h"
+
+    lw_service \
+        SERVICE="eventlog" \
+        SOURCES="$EVENTLOGD_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="gssapi.h dce/rpc.h sqlite3.h lwadvapi.h lw/base.h" \
+        LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils eventlog lwmsg lwmsg_nothr lwbase lwbase_nothr $LIB_PTHREAD $LIB_DL" \
+        DEPS="eventlog_h.h"
+}

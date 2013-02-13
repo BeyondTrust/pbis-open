@@ -1,0 +1,25 @@
+SUBDIRS=". test plugin"
+
+configure()
+{
+    [ "$PSTORE_BUILD_TEST_PLUGIN" = "yes" ] || mk_skip_subdir plugin
+}
+
+make()
+{
+    mk_library \
+        LIB=lsapstore \
+        SOURCES="\
+           lsapstore-backend-legacy.c \
+           lsapstore-backend-legacy-internal.c \
+           lsapstore-init.c \
+           lsapstore-main.c \
+           lsapstore-main-a.c \
+           lsapstore-plugin.c \
+           lsapstore-utils.c \
+           " \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="$LIB_DL $LIB_PTHREAD rsutils lsacommon lwbase_nothr" \
+        HEADERDEPS="reg/regutil.h lwadvapi.h" \
+        SYMFILE="lsapstore.sym"
+}

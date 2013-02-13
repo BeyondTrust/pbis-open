@@ -1,0 +1,530 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: String.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/String.h
+ * @brief OpenSOAP API 文字列処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPString OpenSOAPString
+     * @brief OpenSOAPString 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPString    *OpenSOAPStringPtr
+     * @brief OpenSOAPString ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPStringCreate(OpenSOAPStringPtr *str)
+      * @brief 長さ 0 の OpenSOAP 文字列の作成。
+      * @param
+      *    str OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCreateWithMB(const char *mb_str, OpenSOAPStringPtr *str)
+      * @brief マルチバイト文字列により初期化した OpenSOAP 文字列の作成。
+      * @param
+      *    mb_str const char * [in] ((|mb_str|)) 設定したいマルチバイト文字列。
+      * @param
+      *    str OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCreateWithWC(const wchar_t *wc_str, OpenSOAPStringPtr *str)
+      * @brief ワイドキャラクタ文字列により初期化した OpenSOAP 文字列の作成。
+      * @param
+      *    wc_str const wchar_t * [in] ((|wc_str|)) 設定したいワイドキャラクタ文字列。
+      * @param
+      *    str OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCreateWithCharEncodingString(const char *char_enc, OpenSOAPByteArrayPtr char_enc_str, OpenSOAPStringPtr *str)
+      * @brief Character-encoding 指定文字列により初期化した OpenSOAP 文字列の作成。
+      * @param
+      *    char_enc const char * [in] ((|char_enc|)) 指定 Character-encoding 。
+      * @param
+      *    char_enc_str OpenSOAPByteArrayPtr [in] ((|char_enc_str|)) 設定したい文字列データ。
+      * @param
+      *    str OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCreateWithUTF8(const char *utf8Str, OpenSOAPStringPtr *str)
+      * @brief 指定 UTF-8 文字列により初期化した OpenSOAP 文字列の作成。
+      * @param
+      *    utf8Str const char * [in] ((|utf8Str|)) 指定 UTF-8 文字列
+      * @param
+      *    str OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringRetain(OpenSOAPStringPtr str)
+      * @brief 参照の追加。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringRelease(OpenSOAPStringPtr str)
+      * @brief 参照の開放。参照先がなくなった場合、リソースの開放も行う。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetLengthMB(OpenSOAPStringPtr str, size_t *len)
+      * @brief 現在の locale におけるマルチバイト文字列のサイズを取得する。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    len size_t * [out] ((|len|)) 長さ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetLengthWC(OpenSOAPStringPtr str, size_t *len)
+      * @brief ワイドキャラクタ文字列における長さを取得する。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    len size_t * [out] ((|len|)) 長さ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringMBWithAllocator(OpenSOAPStringPtr str, char * (*memAllocator)(size_t), size_t *len, char **mbStr)
+      * @brief OpenSOAP String GetStringMB with memAllocator
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String
+      * @param
+      *    memAllocator() char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size).
+      * @param
+      *    len size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect.
+      * @param
+      *    mbStr char ** [out] ((|mbStr|)) MB string return buffer pointer. If NULL, then error.
+      * @note
+      *    After calling this function, the memory allocated to *mbStr should be released.
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringWCWithAllocator(OpenSOAPStringPtr str, wchar_t * (*memAllocator)(size_t), size_t *len, wchar_t **wcStr)
+      * @brief OpenSOAP String GetStringWC with memAllocator
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String
+      * @param
+      *    memAllocator() wchar_t * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size).
+      * @param
+      *    len size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect.
+      * @param
+      *    wcStr wchar_t ** [out] ((|wcStr|)) WC string return buffer pointer. If NULL, then error.
+      * @note
+      *    After calling this function, the memory allocated to *wcStr should be released.
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringUTF8WithAllocator(OpenSOAPStringPtr str, char * (*memAllocator)(size_t), size_t *len, char **utf8Str)
+      * @brief OpenSOAP String GetString as UTF-8 encoding with memAllocator
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String
+      * @param
+      *    memAllocator() char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size).
+      * @param
+      *    len size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect.
+      * @param
+      *    utf8Str char ** [out] ((|utf8Str|)) UTF8 string return buffer pointer. If NULL, then error.
+      * @note
+      *    After calling this function, the memory allocated to *utf8Str should be released.
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringMB(OpenSOAPStringPtr str, size_t *len, char *mb_Str)
+      * @brief 現在の locale におけるマルチバイト文字列を取得する。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    len size_t * [in, out] ((|len|)) サイズを格納するバッファへのポインタ。呼出前は ((|mb_str|)) のサイズを格納する。
+      * @param
+      *    mb_Str char * [out] ((|mb_str|)) 文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringWC(OpenSOAPStringPtr str, size_t *len, wchar_t *wc_str)
+      * @brief ワイドキャラクタ文字列を取得する。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    len size_t * [in, out] ((|len|)) サイズを格納するバッファへのポインタ。呼出前は ((|wc_str|)) のサイズを格納する。
+      * @param
+      *    wc_str char * [out] ((|wc_str|)) 文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetCharEncodingString(OpenSOAPStringPtr str, const char *char_enc, OpenSOAPByteArrayPtr char_enc_str)
+      * @brief Get character encoding string
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    char_enc const char * [in] ((|charEnc|)) character encoding
+      * @param
+      *    char_enc_str OpenSOAPByteArrayPtr [out] ((|charEncStr|)) 文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringSetStringMB(OpenSOAPStringPtr str, const char *mb_str)
+      * @brief 現在の locale におけるマルチバイト文字列を設定する。
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    mb_str char * [in] ((|mb_str|)) 設定したい文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringSetStringWC(OpenSOAPStringPtr str, const wchar_t *wc_str)
+      * @brief ワイドキャラクタ文字列を設定する。
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    wc_str const wchar_t * [in] ((|wc_str|)) 設定したい文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringSetCharEncodingString(OpenSOAPStringPtr str, const char *char_enc, OpenSOAPByteArrayPtr charEncStr)
+      * @brief 現在の locale におけるマルチバイト文字列を設定する。
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    char_enc const char * [in] ((|charEnc|)) 設定したい文字列の Character Encoding.
+      * @param
+      *    charEncStr OpenSOAPByteArrayPtr [in] ((|charEncStr|)) 設定したい文字列を格納するバッファへのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringSetStringUTF8(OpenSOAPStringPtr str, const char *utf8Str)
+      * @brief Set UTF-8 encoded string
+      * @param
+      *    str OpenSOAPStringPtr [out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    utf8Str const char * [in] ((|utf8Str|)) UTF-8 文字列
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFormatMB(OpenSOAPStringPtr str, const char *format, ...)
+      * @brief 書式整形(MB)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    format const char * [in] ((|format|)) フォーマット文字列。
+      * @param
+      *    ... Variable parameters
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFormatWC(OpenSOAPStringPtr str, const wchar_t *format, ...)
+      * @brief 書式整形(WC)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    format const wchar_t * [in] ((|format|)) フォーマット文字列。
+      * @param
+      *    ... Variable parameters
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringVFormatMB(OpenSOAPStringPtr str, const char *format, va_list ap)
+      * @brief va_list を用いた書式整形(MB)
+      * @param
+      *    str 		[out] OpenSOAP 文字列
+      * @param
+      *    format	[in]  フォーマット文字列
+      * @param
+      *    ap		[in]  可変引数
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPStringVFormatWC(OpenSOAPStringPtr str, const wchar_t *format, va_list ap)
+      * @brief va_list を用いた書式整形(WC)
+      * @param
+      *    str 		[out] OpenSOAP 文字列
+      * @param
+      *    format	[in]  フォーマット文字列
+      * @param
+      *    ap		[in]  可変引数
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPStringCompareMB(OpenSOAPStringPtr str, const char *cmp_str, int *cmp_rslt)
+      * @brief 文字列比較(MB)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    cmp_str const char * [in] ((|cmp_str|)) 比較文字列。
+      * @param
+      *    cmp_rslt int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCompareWC(OpenSOAPStringPtr str, const wchar_t *cmp_str, int *cmp_rslt)
+      * @brief 文字列比較(WC)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    cmp_str const wchar_t * [in] ((|cmp_str|)) 比較文字列。
+      * @param
+      *    cmp_rslt int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringCompare(OpenSOAPStringPtr str, OpenSOAPStringPtr cmp_str, int *cmp_rslt)
+      * @brief 文字列比較
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    cmp_str OpenSOAPStringPtr [in] ((|cmp_str|))  比較文字列。
+      * @param
+      *    cmp_rslt int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFindStringMB(OpenSOAPStringPtr str, const char *find_str, size_t *idx)
+      * @brief 文字列検索(MB)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str const char * [in] ((|find_str|)) 検索文字列。
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFindStringWC(OpenSOAPStringPtr str, const wchar_t *find_str, size_t *idx)
+      * @brief 文字列検索(WC)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str const wchar_t * [in] ((|find_str|)) 検索文字列。
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFindString(OpenSOAPStringPtr str, OpenSOAPStringPtr find_str, size_t *idx)
+      * @brief 文字列検索
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str OpenSOAPStringPtr [in] ((|find_str|)) 検索文字列。
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @typedef int (*OpenSOAPStringFindIfFunc)(/* [in, out] */ void *opt, wchar_t c, int *judge)
+      * @brief Find String Function Pointer Type Definition
+      * @param
+      *    opt void * [in] Find Function Option 
+      * @param
+      *    c wchar_t [in] 
+      * @param
+      *    judge int * [out] Result
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringFindIfStringIndex(OpenSOAPStringPtr str, OpenSOAPStringFindIfFunc find_func, void *find_func_opt, size_t *idx)
+      * @brief 文字列検索
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_func OpenSOAPStringFindIfFunc [in] ((|find_func|)) 検索条件関数
+      * @param
+      *    find_func_opt void * [in] ((|find_func_opt|)) 検索条件関数第一引数
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringReplaceStringMB(OpenSOAPStringPtr str, const char *find_str, const char *rplc_str, size_t *idx)
+      * @brief 文字列置換(MB)
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str const char * [in] ((|find_str|)) 検索文字列
+      * @param
+      *    rplc_str const char * [in] ((|rplc_str|)) 置換文字列
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringReplaceStringWC(OpenSOAPStringPtr str, const wchar_t *find_str, const wchar_t *rplc_str, size_t *idx)
+      * @brief 文字列置換(WC)
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str const wchar_t * [in] ((|find_str|)) 検索文字列
+      * @param
+      *    rplc_str const wchar_t * [in] ((|rplc_str|)) 置換文字列
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringReplaceString(OpenSOAPStringPtr str, OpenSOAPStringPtr find_str, OpenSOAPStringPtr rplc_str, size_t *idx)
+      * @brief 文字列置換
+      * @param
+      *    str OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    find_str OpenSOAPStringPtr [in] ((|find_str|)) 検索文字列
+      * @param
+      *    rplc_str OpenSOAPStringPtr [in] ((|rplc_str|)) 置換文字列
+      * @param
+      *    idx size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringClear(OpenSOAPStringPtr str)
+      * @brief OpenSOAP 文字列をクリアして、長さを 0 にする。
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringAppendMB(OpenSOAPStringPtr str, const char *mb_str, size_t mb_len)
+      * @brief 現在の locale におけるマルチバイト文字列を OpenSOAP 文字列に追加する(MB)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    mb_str char * [in] ((|mb_str|)) 追加したい文字列を格納するバッファへのポインタ。
+      * @param
+      *    mb_len size_t [in] ((|mb_len|)) 追加したい文字数。0 の場合は、mb_str 全てを追加する。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringAppendWC(OpenSOAPStringPtr str, const wchar_t *wc_str, size_t wc_len)
+      * @brief ワイドキャラクタ文字列を OpenSOAP 文字列に追加する(WC)
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    wc_str wchar_t * [in] ((|wc_str|)) 追加したい文字列を格納するバッファへのポインタ。
+      * @param
+      *    wc_len size_t [in] ((|wc_len|)) 追加したい文字数。0 の場合は、wc_str 全てを追加する。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringDuplicate(OpenSOAPStringPtr str, OpenSOAPStringPtr *dup_str)
+      * @brief Duplicate String
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    dup_str OpenSOAPStringPtr * [out] ((|dup_str|)) Duplicate string
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetSubstring(OpenSOAPStringPtr str, size_t beg, size_t len, OpenSOAPStringPtr *sub_str)
+      * @brief Get Sub-string of OpenSOAPString.
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列
+      * @param
+      *    beg size_t [in] ((|beg|)) Substring start index
+      * @param
+      *    len size_t [in] ((|len|)) Substring length. If len == -1 then copy to end of string.
+      * @param
+      *    sub_str OpenSOAPStringPtr * [out] ((|sub_str|)) Substring
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringConvertCharEncoding(const char *from_enc, OpenSOAPByteArrayPtr from_str, const char *to_enc, OpenSOAPByteArrayPtr to_str)
+      * @brief Convert character encoding. This function does not use the OpenSOAP member, but is used for string processing.
+      * @param
+      *    from_enc const char * [in] ((|fromEnc|)) Convert source character encoding. If NULL or "" then current locale encoding.
+      * @param
+      *    from_str OpenSOAPByteArrayPtr [in] ((|fromStr|)) Convert source string data.
+      * @param
+      *    to_enc const char * [in] ((|toEnc|)) Convert destination character encoding. If NULL or "" then current locale encoding.
+      * @param
+      *    to_str OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. If fromEnc equal to toEnc, then copy fromStr to toStr.
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringConvertXMLCharRefToUTF8(const unsigned char *utf8Beg, OpenSOAPByteArrayPtr utf8BAry)
+      * @brief Convert XML's CharRef to UTF-8 encoding. This function does not use the OpenSOAP member, but is used for string processing.
+      * @param
+      *    utf8Beg const unsigned char * [in] ((|utf8Beg|)) Convert source UTF-8 encode string data begin pointer.
+      * @param
+      *    utf8BAry OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. 
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringGetStringUSASCII(OpenSOAPStringPtr str, OpenSOAPByteArrayPtr charEncStr)
+      * @brief Get US-ASCII string
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String
+      * @param
+      *    charEncStr OpenSOAPByteArrayPtr [out] ((|charEncStr|)) output buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringIterateProc(OpenSOAPStringPtr str, int (*iterateProc)(unsigned long c, size_t idx, size_t len, void *opt), int (*beforeProc)(size_t len, void *opt), int (*afterProc)(size_t len, void *opt), void *opt)
+      * @brief Iterate procedure
+      * @param
+      *    str OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String
+      * @param
+      *    iterateProc() int [in] ( * ((|iterateProc|)) )(unsigned long, size_t, size_t, void *) iterate procedure
+      * @param
+      *    beforeProc() int [in] ( * ((|beforeProc|)) )(size_t, void *) Before iterate procedure. If NULL, then no effect
+      * @param
+      *    afterProc() int [in] ( * ((|afterProc|)) )(size_t, void *) After iterate procedure. If NULL, then no effect
+      * @param
+      *    opt void * [in, out] ((|opt|)) iterateProc, beforeProc, and afterProc's option parameters.
+      * @return
+      *    エラーコード
+      */

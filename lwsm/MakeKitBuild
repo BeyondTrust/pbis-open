@@ -1,0 +1,61 @@
+SUBDIRS="include common client server doc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CPPFLAGS="$MK_CPPFLAGS -DLWSM_DISABLE_DEPRECATED -DLWSM_BUILD"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes"
+
+    lw_define_feature_macros
+
+    mk_define SBINDIR "\"$MK_SBINDIR\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_define LOADERDIR "\"$MK_LIBDIR/lwsm-loader\""
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define TOP_SRCDIR "\"$MK_SOURCE_DIR\""
+    mk_define TOP_OBJDIR "\"$MK_OBJECT_DIR\""
+    
+    mk_declare -o MOD_EXT="$MK_DLO_EXT"
+
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_define EMBED_LWREG
+        mk_define EMBED_NETLOGON
+        mk_define EMBED_LWIO
+        mk_define EMBED_LSASS
+        mk_define SERVICE_DIRECT
+    fi
+
+    # Check endianness
+    mk_multiarch_do
+        mk_check_endian
+    mk_multiarch_done
+
+    # Required headers
+    mk_check_headers \
+        FAIL=yes \
+        lwmsg/lwmsg.h lwadvapi.h lw/base.h
+    
+    # Optional headers
+    mk_check_headers \
+        pthread.h strings.h
+
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        lwmsg lwadvapi lwbase regclient lwioclient
+
+    # Optional libraries
+    mk_check_libraries \
+        pthread dl
+
+    lw_check_pthread_once_init
+
+    mk_check_doxygen
+
+    mk_declare -o ENABLE_INTERNAL_DOCS=no
+
+    mk_output_file doc/Doxyfile
+}

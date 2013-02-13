@@ -1,0 +1,19 @@
+make()
+{
+    NSS_SOURCES="\
+	nss-group.c \
+	nss-user.c \
+	nss-main.c \
+	globals.c"
+
+    mk_multiarch_do
+        mk_dlo \
+	    DLO=nss_lsass \
+            EXT=".so.1" \
+	    SOURCES="$NSS_SOURCES" \
+	    GROUPS="../common/common" \
+	    INSTALLDIR="$NSSDIR" \
+	    INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
+	    HEADERDEPS="lwadvapi.h"
+    mk_multiarch_done
+}

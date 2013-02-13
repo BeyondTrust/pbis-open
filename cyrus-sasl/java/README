@@ -1,0 +1,37 @@
+4-Nov-2000
+
+after a "make install"
+class files are installed in
+
+$(prefix)/lib/java/classes/sasl
+
+to compile programs using it, do:
+
+javac -classpath /usr/java/lib/classes.zip:/usr/local/lib/java/classes/sasl <file>.java
+
+(make sure to substitute your JDK for /usr/java/lib/classes.zip)
+
+to run, do
+
+java -classpath <same path as above> <YourProgram>
+
+----------------------------
+This is a java version of the SASL libraries. It supports all the
+mechanisms in the C version and conforms to the internet draft in the
+doc/ directory. JNI is used.
+
+Sample applications exist in the Test/ directory.
+
+They generally can be run with something like:
+
+java -debug -classpath
+../:/usr/java/lib/classes.zip:/usr/obj/sasl/java/:. jimtest -p 2143 -m
+KERBEROS_V4 cyrus-dev
+
+and
+
+java -debug -classpath
+../:/usr/java/lib/classes.zip:/usr/obj/sasl/java/:. testserver
+
+
+Any feedback is welcome.

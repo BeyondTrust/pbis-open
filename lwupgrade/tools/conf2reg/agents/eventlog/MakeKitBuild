@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=confeventlog \
+        SOURCES="eventlog.c" \
+        INCLUDEDIRS="../../../../include" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
+        LIBDEPS=""
+}

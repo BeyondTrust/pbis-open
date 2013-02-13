@@ -1,0 +1,7 @@
+[HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters]
+"EnableMergeModeMCX"=dword:00000000
+"EnableForceHomedirOnStartupDisk"=dword:00000000
+"UseADUncForHomeLocation"=dword:00000000
+"EnableMergeAdmins"=dword:00000000
+"UncProtocolForHomeLocation"="smb"
+"AllowAdministrationBy"=""

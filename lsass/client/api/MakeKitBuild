@@ -1,0 +1,34 @@
+make()
+{
+    API_SOURCES="\
+	artefacts.c \
+	auth.c      \
+	clientipc.c \
+	config.c    \
+	groups.c    \
+	metrics.c   \
+	provider.c  \
+	session.c   \
+	status.c    \
+	tracing.c   \
+	users.c     \
+	marshal.c   \
+	api2.c"
+
+    mk_multiarch_do
+        mk_group \
+	    GROUP="api" \
+	    SOURCES="$API_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h lwhash.h" \
+	    LIBDEPS="lwmsg_nothr lwadvapi_nothr lsacommon"
+    mk_multiarch_done
+
+    mk_group \
+        GROUP="api_thr" \
+        SOURCES="clientipc_thr.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lw/base.h lwadvapi.h lwhash.h" \
+        LIBDEPS="lwmsg lwbase lwadvapi_nothr lsacommon"
+}
+

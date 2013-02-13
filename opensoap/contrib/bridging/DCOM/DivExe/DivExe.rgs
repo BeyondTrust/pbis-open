@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{987C8969-E429-4947-A18D-D27B9A5B19BA} = s 'DivExe'
+		'DivExe.EXE'
+		{
+			val AppID = s {987C8969-E429-4947-A18D-D27B9A5B19BA}
+		}
+	}
+}

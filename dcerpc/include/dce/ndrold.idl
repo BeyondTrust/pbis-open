@@ -1,0 +1,75 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      ndrold.idl
+**
+**  FACILITY:
+**
+**      Network Data Representation (NDR)
+**
+**  ABSTRACT:
+**
+**  !---------------------------------------!
+**  !-- THIS INTERFACE FOR IMPORTING ONLY --!
+**  !---- DO NOT COMPILE THIS INTERFACE ----!
+**  !---------------------------------------!
+**
+**  This local interface logically defines the data type "ndr_old_format_t"
+**  (called "rpc_$drep_t" prior to v2).  The actual representation of
+**  this data type is not expressible in NIDL since it is a struct that
+**  uses bit field descriptions.  For binary compatibility with old
+**  (pre-v2) stubs, we need to maintain the exact bit field representation.
+**  The problem with not defining this data type in NIDL is that the
+**  data type needs to be used in the definitions of other local
+**  interfaces.  (These local interfaces are part of v2.) Prior to v2,
+**  the way we solved this problem was to make the NIDL compiler treat
+**  "rpc_$drep_t" as a builtin type.  This less-than-ideal solution was
+**  not carried forward to v2.  Instead, we do something almost as ugly,
+**  but which requires no hacks to the NIDL compiler itself.  What we
+**  do is make local interfaces that need this data type import this
+**  interface.  This makes use of this data type valid.  However, we
+**  never actually run this interface itself through the NIDL compiler.
+**  Rather, we make the build process substitute a hand-crafted "ndrold.h"
+**  which contains the correct definition of "ndr_old_format_t".
+**
+**
+*/
+
+[local] interface ndrold
+{
+
+/* 
+ * Data representation descriptor type for NCS pre-v2.
+ */
+ 
+typedef struct {
+    unsigned long int_rep /* : 4 */;
+    unsigned long char_rep /* : 4 */;
+    unsigned long float_rep /* : 8 */;
+    unsigned long reserved /*: 16 */;
+} ndr_old_format_t;
+
+}

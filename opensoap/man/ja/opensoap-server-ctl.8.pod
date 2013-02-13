@@ -1,0 +1,105 @@
+=pod
+
+=head1 名前
+
+opensoap-server-ctl - OpenSOAP サーバの制御用インタフェイス
+
+idManager, msgDrvCreator, queueManager, spoolManager, srvConfAttrMgr,
+ssmlAttrMgr, ttlManager
+- opensoap-server-ctlから実行されるサーバコマンド
+
+=head1 書式
+
+B<opensoap-server-ctl> I<command>
+
+B<idManager>
+
+B<msgDrvCreator>
+
+B<queueManager> [ 1 ]
+
+B<spoolManager>
+
+B<srvConfAttrMgr>
+
+B<ssmlAttrMgr>
+
+B<ttlManager>
+
+=head1 説明
+
+B<opensoap-server-ctl> は大規模なWebサービスシステムの運用をサポートす
+るOpenSOAPサーバのフロントエンドです。
+サービスの非リアルタイム処理に対応する非同期クライアント接続機能、サービ
+スの探索やファイアウォール越えを実現するサーバ間メッセージ転送機能、メッ
+セージへの署名などを行うセキュリティ機能が含まれています。
+
+このコマンドを実行すると、次のプロセスが実行されます。
+
+B<srvConfAttrMgr> - Server Config Attributes Manager,
+
+B<ssmlAttrMgr> - SSML Attribute Manager,
+
+B<idManager> - SOAPMessageStoreFile ID Manager,
+
+B<msgDrvCreator> - Message Driver Creator,
+
+B<queueManager> - Queue Manager (twice for Request and Forward),
+
+B<spoolManager> - Response Spool Manager,
+
+B<ttlManager> - TTL Manager
+
+=head1 オプション
+
+B<opensoap-server-ctl> は I<command> として次のいずれかを取ります。
+
+=over 4
+
+=item B<start>
+
+OpenSOAPサーバのプロセスを開始します。
+すでに実行されていてもエラーになりません。(バグの項を参照)
+
+=item B<stop>
+
+OpenSOAPサーバのプロセスを終了します。
+
+=item B<restart>
+
+OpenSOAPサーバのプロセスを再起動します。
+
+=item B<reload>
+
+設定ファイルを再読み込みします。
+
+=item B<help>
+
+簡単なヘルプメッセージを表示します。
+
+=back
+
+B<queueManager> もまたオプションとして 1 を受けつけます。
+
+=over 4
+
+=item 1
+
+転送メッセージを扱います。
+この引数がないとリクエストメッセージを扱います。
+
+=head1 ファイル
+
+server.conf  - サーバの設定ファイル
+
+=head1 関連項目
+
+soaping(1)
+
+=head1 バグ
+
+B<opensoap-server-ctl> の実行時に、すでにサーバが動いている場合、新し
+いプロセスが立ち上がり古いプロセスはそのまま生き残ってしまいます。
+その古いプロセスは stop コマンドでは殺すことができません。
+
+=cut

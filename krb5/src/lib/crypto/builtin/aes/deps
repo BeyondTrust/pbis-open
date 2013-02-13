@@ -1,0 +1,10 @@
+# 
+# Generated makefile dependencies follow.
+#
+aescrypt.so aescrypt.po $(OUTPRE)aescrypt.$(OBJEXT): \
+  $(BUILDTOP)/include/autoconf.h aes.h aescrypt.c aesopt.h \
+  uitypes.h
+aestab.so aestab.po $(OUTPRE)aestab.$(OBJEXT): $(BUILDTOP)/include/autoconf.h \
+  aes.h aesopt.h aestab.c uitypes.h
+aeskey.so aeskey.po $(OUTPRE)aeskey.$(OBJEXT): $(BUILDTOP)/include/autoconf.h \
+  aes.h aeskey.c aesopt.h uitypes.h

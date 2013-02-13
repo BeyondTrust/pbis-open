@@ -1,0 +1,133 @@
+MODULES="docbook"
+
+configure()
+{
+    mk_check_docbook
+
+    if mk_have_docbook
+    then
+        mk_declare -o MK_DOCBOOK_XSL_DIR
+        mk_output_file html.xsl
+        mk_output_file man.xsl
+    fi
+}
+
+reference_begin()
+{
+    mk_add_configure_input "@${MK_HOME}/doc.awk"
+}
+
+reference_end()
+{
+    for i in ${DOC_FUNCS}
+    do
+        MANPAGES="$MANPAGES $i.3mk"
+    done
+}
+
+reference()
+{
+    mk_push_vars OUTPUT="mkdoc.xml"
+    mk_parse_params
+
+    funcs=`${MK_HOME}/makekit doc --index "$@"` || mk_fail "Could not index $*"
+    
+    DOC_FUNCS="$DOC_FUNCS $funcs"
+    DOC_OUTPUTS="$DOC_OUTPUTS $OUTPUT"
+    MODE="none"
+
+    for i in "$@"
+    do
+        case "$i" in
+            --file) MODE=file;;
+            --docbook) MODE=docbook;;
+            --module) MODE=module;;
+            *)
+                case "$MODE" in
+                    file)
+                        mk_add_configure_input "@$i"
+                        ;;
+                    module)
+                        DOC_MODULES="$DOC_MODULES $i"
+                        _mk_find_resource "module/$i.sh" || mk_fail "could not find module $i"
+                        mk_add_configure_input "@$result"
+                        ;;
+                esac
+                ;;
+        esac
+    done
+
+    mk_resolve_file "$OUTPUT"
+    _output="$result"
+    mk_add_configure_output "@$_output"
+    mk_mkdir "${_output%/*}"
+    
+    mk_resolve_file "mkdoc.xsl"
+
+    "${MK_HOME}/makekit" doc "$@" |
+    ${XSLTPROC} "$result" - >"$_output" || mk_fail "could not generate $OUTPUT"
+    
+    mk_pop_vars
+}
+
+make()
+{
+    if mk_have_docbook
+    then
+        reference_begin
+
+        reference \
+            OUTPUT="reference/utils.xml" -- \
+            --title "Utility Functions" \
+            --file "${MK_HOME}/mk.sh"
+
+        reference \
+            OUTPUT="reference/core.xml" -- \
+            --title "Core Functionality" \
+            --file "${MK_HOME}/command/configure.sh" \
+            --module core platform path program \
+            --docbook mk_target.3mk.xml mk_resolve_target.3mk.xml
+
+        reference \
+            OUTPUT="reference/compiler.xml" -- \
+            --title "Compiler Module" \
+            --docbook compiler.7mk.xml \
+            --module compiler
+
+        reference \
+            OUTPUT="reference/autotools.xml" -- \
+            --title "Autotools Module" \
+            --module autotools
+
+        reference \
+            OUTPUT="reference/docbook.xml" -- \
+            --title "DocBook Module" \
+            --module docbook
+
+        reference \
+            OUTPUT="reference/doxygen.xml" -- \
+            --title "Doxygen Module" \
+            --module doxygen
+
+        reference \
+            OUTPUT="reference/package.xml" -- \
+            --title "Package Modules" \
+            --module package package-rpm package-deb \
+            package-freebsd package-pkg package-lpp \
+            package-depot package-mac
+
+        reference_end
+
+        mk_docbook_html \
+            SOURCE="index.xml" \
+            STYLESHEET="html.xsl" \
+            CSS="docbook.css" \
+            INCLUDES="guide/*.xml reference/*.xml $DOC_OUTPUTS"
+        
+        mk_docbook_man \
+            SOURCE="index.xml" \
+            STYLESHEET="man.xsl" \
+            INCLUDES="guide/*.xml reference/*.xml $DOC_OUTPUTS" \
+            MANPAGES="$MANPAGES compiler.7mk mk_target.3mk mk_resolve_target.3mk"
+    fi
+}

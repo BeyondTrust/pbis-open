@@ -1,0 +1,468 @@
+# Bump version to 1.0.0 if ever included in SELinux template
+policy_module(pbis, 0.0.1)
+
+type pbis_etc_t;
+files_config_file(pbis_etc_t)
+
+type pbis_initrc_exec_t;
+init_script_file(pbis_initrc_exec_t)
+
+type pbis_var_lib_t;
+files_type(pbis_var_lib_t)
+
+type pbis_krb5_ad_t;
+files_type(pbis_krb5_ad_t)
+
+type pbis_t;
+type pbis_exec_t;
+init_daemon_domain(pbis_t, pbis_exec_t)
+domain_use_interactive_fds(pbis_t)
+allow pbis_t pbis_exec_t:file execute_no_trans;
+
+allow pbis_t self:process { signal_perms getsched setsched setpgid setrlimit };
+allow pbis_t self:fifo_file rw_fifo_file_perms;
+allow pbis_t self:unix_dgram_socket create_socket_perms;
+allow pbis_t self:unix_stream_socket { create_stream_socket_perms connectto };
+allow pbis_t self:tcp_socket create_stream_socket_perms;
+allow pbis_t self:udp_socket create_socket_perms;
+allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource};
+allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
+
+admin_pattern(pbis_t, pbis_var_lib_t)
+stream_connect_pattern(pbis_t, pbis_var_lib_t, pbis_var_lib_t, pbis_t)
+
+dev_read_rand(pbis_t)
+dev_read_urand(pbis_t)
+
+files_read_etc_files(pbis_t)
+files_search_var_lib(pbis_t)
+
+
+logging_send_syslog_msg(pbis_t)
+# The syslog reaper needs unusual syslog access
+require {
+    type syslogd_t;
+    type syslogd_var_run_t;
+}
+allow pbis_t syslogd_var_run_t:file { open read getattr };
+allow pbis_t syslogd_t:process signal;
+
+
+### Don't know about this one
+require {
+    type admin_home_t;
+}
+allow pbis_t admin_home_t:dir search;
+
+miscfiles_read_localization(pbis_t)
+
+type pbis_tmp_t;
+files_tmp_file(pbis_tmp_t)
+
+corenet_all_recvfrom_netlabel(pbis_t)
+corenet_all_recvfrom_unlabeled(pbis_t)
+corenet_sendrecv_generic_client_packets(pbis_t)
+corenet_sendrecv_generic_server_packets(pbis_t)
+
+corenet_tcp_sendrecv_generic_if(pbis_t)
+corenet_tcp_sendrecv_generic_node(pbis_t)
+corenet_tcp_sendrecv_generic_port(pbis_t)
+corenet_tcp_bind_generic_node(pbis_t)
+corenet_tcp_connect_generic_port(pbis_t)
+corenet_tcp_bind_epmap_port(pbis_t)
+corenet_tcp_connect_epmap_port(pbis_t)
+corenet_tcp_sendrecv_epmap_port(pbis_t)
+
+corenet_udp_sendrecv_generic_if(pbis_t)
+corenet_udp_sendrecv_generic_node(pbis_t)
+corenet_udp_sendrecv_generic_port(pbis_t)
+corenet_udp_bind_generic_node(pbis_t)
+corenet_udp_bind_epmap_port(pbis_t)
+
+corenet_sendrecv_smbd_server_packets(pbis_t)
+corenet_sendrecv_smbd_client_packets(pbis_t)
+corenet_tcp_bind_smbd_port(pbis_t)
+corenet_tcp_connect_smbd_port(pbis_t)
+
+allow pbis_t pbis_krb5_ad_t:file read_file_perms;
+
+manage_files_pattern(pbis_t, pbis_etc_t, pbis_etc_t)
+
+manage_files_pattern(pbis_t, pbis_tmp_t, pbis_tmp_t);
+files_tmp_filetrans(pbis_t, pbis_tmp_t, file)
+
+kernel_read_system_state(pbis_t)
+kernel_getattr_proc_files(pbis_t)
+kernel_list_all_proc(pbis_t)
+kernel_list_proc(pbis_t)
+
+corecmd_exec_bin(pbis_t)
+corecmd_exec_shell(pbis_t)
+
+domain_obj_id_change_exemption(pbis_t)
+
+files_manage_etc_files(pbis_t)
+files_manage_etc_symlinks(pbis_t)
+files_manage_etc_runtime_files(pbis_t)
+files_relabelto_home(pbis_t)
+
+selinux_get_fs_mount(pbis_t)
+selinux_validate_context(pbis_t)
+
+# We apply security contexts when needed.
+seutil_read_config(pbis_t)
+seutil_read_default_contexts(pbis_t)
+seutil_read_file_contexts(pbis_t)
+seutil_run_semanage(pbis_t, system_r)
+
+sysnet_use_ldap(pbis_t)
+sysnet_read_config(pbis_t)
+
+userdom_home_filetrans_user_home_dir(pbis_t)
+userdom_manage_home_role(system_r, pbis_t)
+
+optional_policy(`
+	kerberos_rw_keytab(pbis_t)
+	kerberos_rw_config(pbis_t)
+	kerberos_use(pbis_t)
+')
+
+allow pbis_t semanage_t:process { siginh rlimitinh noatsecure };
+
+sysnet_dns_name_resolve(pbis_t)
+## generate_resolve_rules
+
+allow pbis_t pbis_etc_t:dir search_dir_perms;
+
+allow pbis_t home_root_t:file getattr;
+allow pbis_t usr_t:file { open read };
+
+domain_read_all_domains_state(pbis_t)
+
+require {
+    type alsa_t;
+    type amanda_recover_t;
+    type amanda_t;
+    type arpwatch_t;
+    type automount_t;
+    type avahi_t;
+    type bluetooth_t;
+    type calamaris_t;
+    type cdcc_t;
+    type certmaster_t;
+    type chfn_t;
+    type chkpwd_t;
+    type chronyd_t;
+    type clamd_t;
+    type clvmd_t;
+    type comsat_t;
+    type consolekit_t;
+    type crond_t;
+    type cupsd_config_t;
+    type cupsd_lpd_t;
+    type cupsd_t;
+    type cups_pdf_t;
+    type cvs_t;
+    type cyrus_t;
+    type dbskkd_t;
+    type dcc_client_t;
+    type dcc_dbclean_t;
+    type dccd_t;
+    type dccifd_t;
+    type dccm_t;
+    type devicekit_disk_t;
+    type devicekit_power_t;
+    type dhcpd_t;
+    type dnsmasq_t;
+    type dovecot_auth_t;
+    type dovecot_deliver_t;
+    type dovecot_t;
+    type exim_t;
+    type fail2ban_t;
+    type fprintd_t;
+    type freshclam_t;
+    type ftpd_t;
+    type gnomeclock_t;
+    type gpg_helper_t;
+    type gpg_t;
+    type gpsd_t;
+    type greylist_milter_t;
+    type groupadd_t;
+    type gssd_t;
+    type httpd_php_t;
+    type httpd_prewikka_script_t;
+    type httpd_suexec_t;
+    type httpd_t;
+    type icecast_t;
+    type inetd_child_t;
+    type inetd_t;
+    type initrc_t;
+    type ipsec_t;
+    type iptables_t;
+    type iscsid_t;
+    type kismet_t;
+    type ktalkd_t;
+    type local_login_t;
+    type locate_t;
+    type logrotate_t;
+    type logwatch_t;
+    type lpr_t;
+    type memcached_t;
+    type mount_t;
+    type mrtg_t;
+    type munin_t;
+    type mysqld_t;
+    type nagios_t;
+    type named_t;
+    type netutils_t;
+    type newrole_t;
+    type nmbd_t;
+    type nscd_t;
+    type nslcd_t;
+    type ntpd_t;
+    type nut_upsdrvctl_t;
+    type nut_upsd_t;
+    type nut_upsmon_t;
+    type oddjob_mkhomedir_t;
+    type openvpn_t;
+    type pam_console_t;
+    type pam_t;
+    type passwd_t;
+    type pegasus_t;
+    type pingd_t;
+    type ping_t;
+    type policykit_auth_t;
+    type policykit_grant_t;
+    type policykit_resolve_t;
+    type policykit_t;
+    type postfix_map_t;
+    type postgresql_t;
+    type pppd_t;
+    type pptp_t;
+    type prelude_lml_t;
+    type prelude_t;
+    type privoxy_t;
+    type procmail_t;
+    type psad_t;
+    type pulseaudio_t;
+    type qmail_local_t;
+    type racoon_t;
+    type radiusd_t;
+    type radvd_t;
+    type regex_milter_t;
+    type remote_login_t;
+    type restorecond_t;
+    type rlogind_t;
+    type rpm_script_t;
+    type rpm_t;
+    type rshd_t;
+    type rsync_t;
+    type rtkit_daemon_t;
+    type run_init_t;
+    type samba_net_t;
+    type saslauthd_t;
+    type sectoolm_t;
+    type semanage_t;
+    type sendmail_t;
+    type setroubleshootd_t;
+    type slapd_t;
+    type smbd_t;
+    type smbmount_t;
+    type smokeping_t;
+    type smoltclient_t;
+    type snmpd_t;
+    type squid_t;
+    type ssh_keygen_t;
+    type ssh_t;
+    type sshd_t;
+    type sssd_t;
+    type stunnel_t;
+    type swat_t;
+    type sysadm_passwd_t;
+    type syslogd_t;
+    type system_cronjob_t;
+    type system_dbusd_t;
+    type telnetd_t;
+    type tftpd_t;
+    type tor_t;
+    type traceroute_t;
+    type udev_t;
+    type updpwd_t;
+    type usbmuxd_t;
+    type useradd_t;
+    type usernetctl_t;
+    type uucpd_t;
+    type varnishd_t;
+    type vhostmd_t;
+    type virtd_t;
+    type vpnc_t;
+    type winbind_helper_t;
+    type winbind_t;
+    type xauth_t;
+    type xdm_t;
+    type xserver_t;
+    type zos_remote_t;
+}
+
+pbis_client(alsa_t)
+pbis_client(amanda_recover_t)
+pbis_client(amanda_t)
+pbis_client(arpwatch_t)
+pbis_client(automount_t)
+pbis_client(avahi_t)
+pbis_client(bluetooth_t)
+pbis_client(calamaris_t)
+pbis_client(cdcc_t)
+pbis_client(certmaster_t)
+pbis_client(chfn_t)
+pbis_client(chkpwd_t)
+pbis_client(chronyd_t)
+pbis_client(clamd_t)
+pbis_client(clvmd_t)
+pbis_client(comsat_t)
+pbis_client(consolekit_t)
+pbis_client(crond_t)
+pbis_client(cupsd_config_t)
+pbis_client(cupsd_lpd_t)
+pbis_client(cupsd_t)
+pbis_client(cups_pdf_t)
+pbis_client(cvs_t)
+pbis_client(cyrus_t)
+pbis_client(dbskkd_t)
+pbis_client(dcc_client_t)
+pbis_client(dcc_dbclean_t)
+pbis_client(dccd_t)
+pbis_client(dccifd_t)
+pbis_client(dccm_t)
+pbis_client(devicekit_disk_t)
+pbis_client(devicekit_power_t)
+pbis_client(dhcpd_t)
+pbis_client(dnsmasq_t)
+pbis_client(dovecot_auth_t)
+pbis_client(dovecot_deliver_t)
+pbis_client(dovecot_t)
+pbis_client(exim_t)
+pbis_client(fail2ban_t)
+pbis_client(fprintd_t)
+pbis_client(freshclam_t)
+pbis_client(ftpd_t)
+pbis_client(gnomeclock_t)
+pbis_client(gpg_helper_t)
+pbis_client(gpg_t)
+pbis_client(gpsd_t)
+pbis_client(greylist_milter_t)
+pbis_client(groupadd_t)
+pbis_client(gssd_t)
+pbis_client(httpd_php_t)
+pbis_client(httpd_prewikka_script_t)
+pbis_client(httpd_suexec_t)
+pbis_client(httpd_t)
+pbis_client(icecast_t)
+pbis_client(inetd_child_t)
+pbis_client(inetd_t)
+pbis_client(initrc_t)
+pbis_client(ipsec_t)
+pbis_client(iptables_t)
+pbis_client(iscsid_t)
+pbis_client(kismet_t)
+pbis_client(ktalkd_t)
+pbis_client(local_login_t)
+pbis_client(locate_t)
+pbis_client(logrotate_t)
+pbis_client(logwatch_t)
+pbis_client(lpr_t)
+pbis_client(memcached_t)
+pbis_client(mount_t)
+pbis_client(mrtg_t)
+pbis_client(munin_t)
+pbis_client(mysqld_t)
+pbis_client(nagios_t)
+pbis_client(named_t)
+pbis_client(netutils_t)
+pbis_client(newrole_t)
+pbis_client(nmbd_t)
+pbis_client(nscd_t)
+pbis_client(nslcd_t)
+pbis_client(ntpd_t)
+pbis_client(nut_upsdrvctl_t)
+pbis_client(nut_upsd_t)
+pbis_client(nut_upsmon_t)
+pbis_client(oddjob_mkhomedir_t)
+pbis_client(openvpn_t)
+pbis_client(pam_console_t)
+pbis_client(pam_t)
+pbis_client(passwd_t)
+pbis_client(pegasus_t)
+pbis_client(pingd_t)
+pbis_client(ping_t)
+pbis_client(policykit_auth_t)
+pbis_client(policykit_grant_t)
+pbis_client(policykit_resolve_t)
+pbis_client(policykit_t)
+pbis_client(postfix_map_t)
+pbis_client(postgresql_t)
+pbis_client(pppd_t)
+pbis_client(pptp_t)
+pbis_client(prelude_lml_t)
+pbis_client(prelude_t)
+pbis_client(privoxy_t)
+pbis_client(procmail_t)
+pbis_client(psad_t)
+pbis_client(pulseaudio_t)
+pbis_client(qmail_local_t)
+pbis_client(racoon_t)
+pbis_client(radiusd_t)
+pbis_client(radvd_t)
+pbis_client(regex_milter_t)
+pbis_client(remote_login_t)
+pbis_client(restorecond_t)
+pbis_client(rlogind_t)
+pbis_client(rpm_script_t)
+pbis_client(rpm_t)
+pbis_client(rshd_t)
+pbis_client(rsync_t)
+pbis_client(rtkit_daemon_t)
+pbis_client(run_init_t)
+pbis_client(samba_net_t)
+pbis_client(saslauthd_t)
+pbis_client(sectoolm_t)
+pbis_client(semanage_t)
+pbis_client(sendmail_t)
+pbis_client(setroubleshootd_t)
+pbis_client(slapd_t)
+pbis_client(smbd_t)
+pbis_client(smbmount_t)
+pbis_client(smokeping_t)
+pbis_client(smoltclient_t)
+pbis_client(snmpd_t)
+pbis_client(squid_t)
+pbis_client(ssh_keygen_t)
+pbis_client(ssh_t)
+pbis_client(sshd_t)
+pbis_client(sssd_t)
+pbis_client(stunnel_t)
+pbis_client(swat_t)
+pbis_client(sysadm_passwd_t)
+pbis_client(syslogd_t)
+pbis_client(system_cronjob_t)
+pbis_client(system_dbusd_t)
+pbis_client(telnetd_t)
+pbis_client(tftpd_t)
+pbis_client(tor_t)
+pbis_client(traceroute_t)
+pbis_client(udev_t)
+pbis_client(updpwd_t)
+pbis_client(usbmuxd_t)
+pbis_client(useradd_t)
+pbis_client(usernetctl_t)
+pbis_client(uucpd_t)
+pbis_client(varnishd_t)
+pbis_client(vhostmd_t)
+pbis_client(virtd_t)
+pbis_client(vpnc_t)
+pbis_client(winbind_helper_t)
+pbis_client(winbind_t)
+pbis_client(xauth_t)
+pbis_client(xdm_t)
+pbis_client(xserver_t)
+pbis_client(zos_remote_t)

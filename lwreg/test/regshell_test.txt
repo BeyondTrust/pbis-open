@@ -1,0 +1,319 @@
+# echo Testing relative key paths ===================================
+
+add_key [HKEY_THIS_MACHINE\test_key\test_key_1]
+cd [HKEY_THIS_MACHINE\test_key\test_key_1]
+add_key [test_key_2\test_key_3]
+cd [test_key_2\test_key_3]
+add_key [..\..\test_key_a]
+ls  [HKEY_THIS_MACHINE\test_key\test_key_1\test_key_2\test_key_3]
+ls  [HKEY_THIS_MACHINE\test_key\test_key_1\test_key_a]
+add_value test_key_3-stringvalue1 reg_sz "key3 value1: Hello there"
+ls  [HKEY_THIS_MACHINE\test_key\test_key_1\test_key_2\test_key_3]
+list_values
+cd [..\..]
+list_values [test_key_2\test_key_3]
+list_keys [test_key_2\test_key_3]
+delete_value [test_key_2\test_key_3] test_key_3-stringvalue1
+cd [\]
+delete_tree [test_key]
+ls
+
+#echo test 1================================================
+add_key [HKEY_THIS_MACHINE\key1]
+cd [HKEY_THIS_MACHINE\key1]
+add_value value1     reg_sz     "key1-value1"
+add_value value2     reg_sz     "key1-value2"
+add_value value3     reg_sz     "key1-value3"
+add_value pi_decimal reg_dword  314159
+add_value pi_hex     reg_dword  0x314159
+add_value pi_binary1  reg_binary 31 41 59 26 53 58 97 93 23 84 62 64 33 83 27 95 02 88 41
+add_value pi_binary2  reg_binary 31, 41, 59, 26, 53, 58, 97, 93 23 84 62, 64, 33 83 27, 95 02 88 41
+add_value pi_binary3  reg_binary 31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421
+add_value multi_pi_binary  reg_multi_sz "3" "31" "314" "3141" "31415" "314159" "3141592" "31415926" "..."
+
+add_key [key2]
+ls
+#
+add_key [key2\key3]
+add_value [key2] value1 reg_sz "key2-value1"
+add_value [key2] value2 reg_sz "key2-value2"
+add_value [key2] value3 reg_sz "key2-value3"
+ls [key2]
+#
+add_value [key2\key3] value1 reg_sz "key3-value1"
+add_value [key2\key3] value2 reg_sz "key3-value2"
+add_value [key2\key3] value3 reg_sz "key3-value3"
+ls [key2]
+ls [key2\key3]
+#
+cd [key2\key3]
+add_key [key4]
+add_value [key4] value1 reg_sz "key4-value1"
+add_value [key4] value2 reg_sz "key4-value2"
+add_value [key4] value3 reg_sz "key4-value3"
+add_value [key4] value4 reg_sz "key4-value4"
+ls [key4]
+#
+cd [key4]
+delete_value [..\..\..] value2
+ls  [..\..\..]
+add_value [..\..\..] value5 reg_sz "key1-value5"
+ls [..\..\..]
+delete_value [..\..\..] pi_binary2
+ls [..\..\..]
+#
+delete_value [..\..\..\key2] value2
+ls [..\..\..\key2]
+add_value [..\..\..\key2] value5 reg_sz "key2-value5"
+ls [..\..\..\key2]
+#quit
+#
+cd [HKEY_THIS_MACHINE\key1\key2]
+pwd
+delete_key [key3\key4]
+ls [key3]
+#
+cd [HKEY_THIS_MACHINE\]
+delete_key [key1\key2\key3]
+ls [key1\key2]
+#
+cd [\]
+delete_tree [key1]
+#
+# Absolute path tests =====================================
+cd [\]
+cd [\]
+#quit
+
+
+add_key [HKEY_THIS_MACHINE\key1]
+ls [HKEY_THIS_MACHINE\]
+#echo test 1================================================
+
+add_key [HKEY_THIS_MACHINE\key1\key2]
+ls [HKEY_THIS_MACHINE\key1\]
+#echo test 2================================================
+
+add_key [HKEY_THIS_MACHINE\key1\key2\key3]
+ls [HKEY_THIS_MACHINE\key1\key2\]
+#echo ======================================================
+
+delete_key [HKEY_THIS_MACHINE\key1\key2\key3]
+ls [HKEY_THIS_MACHINE\key1\key2]
+#echo ======================================================
+
+delete_key [HKEY_THIS_MACHINE\key1\key2]
+ls [HKEY_THIS_MACHINE\key1]
+#echo ======================================================
+
+delete_key [HKEY_THIS_MACHINE\key1]
+ls [HKEY_THIS_MACHINE\]
+#echo ======================================================
+
+add_key [HKEY_THIS_MACHINE\key1\key2\key3]
+ls [HKEY_THIS_MACHINE\key1\key2]
+#echo ======================================================
+
+delete_tree [HKEY_THIS_MACHINE\key1]
+ls [HKEY_THIS_MACHINE\]
+#echo ======================================================
+
+list_keys [HKEY_THIS_MACHINE\]
+#echo ======================================================
+list_values [HKEY_THIS_MACHINE\]
+#echo ======================================================
+ls [HKEY_THIS_MACHINE\]
+#echo ======================================================
+add_value [HKEY_THIS_MACHINE\] string_value_1 REG_SZ "One: This is a string value: 1"
+add_value [HKEY_THIS_MACHINE\] dword_value_1 REG_DWORD 12345678
+add_value [HKEY_THIS_MACHINE\] binary_value_1 REG_BINARY 102993847566574839201
+add_value [HKEY_THIS_MACHINE\] multisz_value_1 REG_MULTI_SZ "One" "Hello world" "ABCDEFG" "!@#ASDFasdf$1234"
+add_value [HKEY_THIS_MACHINE\] an_empty_multisz REG_MULTI_SZ ""
+add_value [HKEY_THIS_MACHINE\] one_multi_sz REG_MULTI_SZ "one"
+add_value [HKEY_THIS_MACHINE\] two_multi_sz REG_MULTI_SZ "one" "two"
+ls [HKEY_THIS_MACHINE\]
+
+#echo ======================================================
+set_value [HKEY_THIS_MACHINE\] string_value_1 "ONE: This is a string value: 1"
+set_value [HKEY_THIS_MACHINE\] dword_value_1 11115678
+set_value [HKEY_THIS_MACHINE\] binary_value_1 111102993847566574839201
+set_value [HKEY_THIS_MACHINE\] multisz_value_1 "ONE" "HELLO world" "abcdefg1111" "4321!@#ASDFasdf$1234"
+set_value [HKEY_THIS_MACHINE\] an_empty_multisz "Not empty" "any more"
+set_value [HKEY_THIS_MACHINE\] two_multi_sz "Two" "One"
+ls [HKEY_THIS_MACHINE\]
+
+delete_value [HKEY_THIS_MACHINE\] string_value_1
+delete_value [HKEY_THIS_MACHINE\] dword_value_1
+delete_value [HKEY_THIS_MACHINE\] binary_value_1
+delete_value [HKEY_THIS_MACHINE\] multisz_value_1
+delete_value [HKEY_THIS_MACHINE\] an_empty_multisz 
+delete_value [HKEY_THIS_MACHINE\] one_multi_sz
+delete_value [HKEY_THIS_MACHINE\] two_multi_sz
+ls [HKEY_THIS_MACHINE\]
+#echo ======================================================
+
+# Add values at one subkey level
+#
+add_key [HKEY_THIS_MACHINE\test_keys_2]
+ls [HKEY_THIS_MACHINE\]
+#echo ======================================================
+add_value [HKEY_THIS_MACHINE\test_keys_2] string_value_2 REG_SZ "Two: This is a string value: 1"
+add_value [HKEY_THIS_MACHINE\test_keys_2] dword_value_2 REG_DWORD 23456782
+add_value [HKEY_THIS_MACHINE\test_keys_2] binary_value_2 REG_BINARY 202993847566574839201
+add_value [HKEY_THIS_MACHINE\test_keys_2] multisz_value_2 REG_MULTI_SZ "Two" "Hello world" "ABCDEFG" "!@#ASDFasdf$1234"
+add_value [HKEY_THIS_MACHINE\test_keys_2] an_empty_multisz REG_MULTI_SZ ""
+add_value [HKEY_THIS_MACHINE\test_keys_2] one_multi_sz REG_MULTI_SZ "test_keys_2" "one"
+add_value [HKEY_THIS_MACHINE\test_keys_2] two_multi_sz REG_MULTI_SZ "test_keys_2" "one" "two"
+add_value [HKEY_THIS_MACHINE\test_keys_2] delete_str_2 REG_SZ "Delete me 2!!!"
+ls [HKEY_THIS_MACHINE\test_keys_2]
+#echo ======================================================
+
+set_value [HKEY_THIS_MACHINE\test_keys_2] string_value_2 "TWO: tHIS is a string value: 1"
+set_value [HKEY_THIS_MACHINE\test_keys_2] dword_value_2 22226782
+set_value [HKEY_THIS_MACHINE\test_keys_2] binary_value_2 22222029938475665748392012222
+set_value [HKEY_THIS_MACHINE\test_keys_2] multisz_value_2 "test_keys_2" "TWO" "22 Hello world" " 22 ABCDEFG" "  22  !@#ASDFasdf$1234"
+set_value [HKEY_THIS_MACHINE\test_keys_2] an_empty_multisz "test_keys_2" "Not empty" "any more"
+set_value [HKEY_THIS_MACHINE\test_keys_2] two_multi_sz "test_keys_2" "Two" "One"
+delete_value [HKEY_THIS_MACHINE\test_keys_2] delete_str_2
+delete_value [HKEY_THIS_MACHINE\test_keys_2] two_multi_sz
+ls [HKEY_THIS_MACHINE\test_keys_2]
+#echo ======================================================
+
+# Add values at a secondary subkey level
+#
+add_key [HKEY_THIS_MACHINE\test_keys_2\test_keys_3]
+add_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] string_value_3 REG_SZ "Three: This is a string value: 1"
+add_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] dword_value_3 REG_DWORD 34567890
+add_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] binary_value_3 REG_BINARY 302993847566574839201
+add_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] multisz_value_3 REG_MULTI_SZ "Three" "Hello world" "ABCDEFG" "!@#ASDFasdf$1234"
+add_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] delete_str_3 REG_SZ "Delete me 3!!!"
+ls [HKEY_THIS_MACHINE\test_keys_2\test_keys_3]
+#echo ======================================================
+
+set_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] string_value_3 "333 Three: This is a string value: 1"
+set_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] dword_value_3 33337890
+set_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] binary_value_3 333302993847566574839201333
+set_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] multisz_value_3 "33 Three" "33 Hello world" "ABCDEFG33 " "3333!@#ASDFasdf$12343333"
+delete_value [HKEY_THIS_MACHINE\test_keys_2\test_keys_3] delete_str_3
+ls [HKEY_THIS_MACHINE\test_keys_2\test_keys_3]
+#echo ======================================================
+
+# Cleanup the testing mess...
+#
+delete_tree [HKEY_THIS_MACHINE\test_keys_2]
+
+# echo Testing whitespace between arguments keys============
+add_key     [HKEY_THIS_MACHINE\key1]
+add_key     [HKEY_THIS_MACHINE\key1  ]
+ls     [HKEY_THIS_MACHINE\]
+delete_key     [HKEY_THIS_MACHINE\key1]
+delete_key     [HKEY_THIS_MACHINE\key1  ]
+ls     [HKEY_THIS_MACHINE\]
+
+# echo Testing whitespace between arguments values============
+add_value   [HKEY_THIS_MACHINE\]   string_value_1    REG_SZ     "     S P A C E S ! ! !    "
+add_value   [HKEY_THIS_MACHINE\]   binary_value_1    REG_BINARY     10,  20,  30,  40,  50,  60,  70,  FF, EE,  D, C, A, AB, ABC, ABCD, ABCDE
+add_value   [HKEY_THIS_MACHINE\]   dword_value_1    REG_DWORD     1234
+add_value   [HKEY_THIS_MACHINE\]   multi_value_1    REG_MULTI_SZ     "  1  "  "  A   "  " S P A C E S "
+ls     [HKEY_THIS_MACHINE\]
+
+delete_value   [HKEY_THIS_MACHINE\]   string_value_1    
+delete_value   [HKEY_THIS_MACHINE\]   binary_value_1   
+delete_value   [HKEY_THIS_MACHINE\]   dword_value_1   
+delete_value   [HKEY_THIS_MACHINE\]   multi_value_1  
+ls     [HKEY_THIS_MACHINE\]
+
+# echo Testing whitespace between arguments values under a key============
+add_key   [HKEY_THIS_MACHINE\key1  ]
+add_value   [HKEY_THIS_MACHINE\key1  ]   string_value_key1    REG_SZ     "     1 1 1 S P A C E S ! ! !    "
+add_value   [HKEY_THIS_MACHINE\key1  ]   binary_value_key1    REG_BINARY     11,11,11, 10,  20,  30,  40,  50,  60,  70,  FF, EE,  D, C, A, AB, ABC, ABCD, ABCDE
+add_value   [HKEY_THIS_MACHINE\key1  ]   dword_value_key1    REG_DWORD     111234
+add_value   [HKEY_THIS_MACHINE\key1  ]   multi_value_key1    REG_MULTI_SZ     "11" "  1  "  "  A   "  " S P A C E S "
+ls     [HKEY_THIS_MACHINE\key1  ]
+
+add_key   [HKEY_THIS_MACHINE\key1  \key2]
+add_value   [HKEY_THIS_MACHINE\key1  \key2]   string_value_key2    REG_SZ     "     2 2 2  S P A C E S ! ! !    "
+add_value   [HKEY_THIS_MACHINE\key1  \key2]   binary_value_key2    REG_BINARY     22,22,  22,   22,  10,  20,  30,  40,  50,  60,  70,  FF, EE,  D, C, A, AB, ABC, ABCD, ABCDE
+add_value   [HKEY_THIS_MACHINE\key1  \key2]   dword_value_key2    REG_DWORD     1234
+add_value   [HKEY_THIS_MACHINE\key1  \key2]   multi_value_key2    REG_MULTI_SZ     "22" "  1  "  "  A   "  " S P A C E S "
+ls     [HKEY_THIS_MACHINE\key1  \key2]
+
+# ======= This delete key should fail...
+delete_key     [HKEY_THIS_MACHINE\key1  ]
+
+# ======= This delete key will work...
+delete_key     [HKEY_THIS_MACHINE\key1  \key2]
+delete_key     [HKEY_THIS_MACHINE\key1  ]
+ls     [HKEY_THIS_MACHINE\]
+
+# echo Testing whitespace in value names==================================
+add_value "  I am a value name  " reg_sz "I am the value"
+ls [HKEY_THIS_MACHINE\]
+delete_value [HKEY_THIS_MACHINE\] "  I am a value name  "
+add_key [HKEY_THIS_MACHINE\  key1  ]
+add_value [HKEY_THIS_MACHINE\  key1  ] "  string1 key1  "  reg_sz        "I am a string"
+add_value [HKEY_THIS_MACHINE\  key1  ] "  dword1 key1  "  reg_dword      1234
+add_value [HKEY_THIS_MACHINE\  key1  ] "  dword2 key1  "  reg_dword      0x1234
+add_value [HKEY_THIS_MACHINE\  key1  ] "  dword3 key1  "  reg_dword      0x1234abcd
+add_value [HKEY_THIS_MACHINE\  key1  ] "  binary1 key1  "  reg_binary    12 34 1 2 3 4 1234
+add_value [HKEY_THIS_MACHINE\  key1  ] "  multi1 key1  "  reg_multi_sz   "  abcd"  "efg  " "hijk"  "  lmnop  " "q r s" "  T U V" "W & X" "Y + Z" "Now you know your ABCs..."  "Won't you sing along with me?"
+list_values [HKEY_THIS_MACHINE\  key1  ] 
+delete_tree [HKEY_THIS_MACHINE\  key1  ] 
+ls [HKEY_THIS_MACHINE\]
+
+# echo Testing whitespace in value names
+add_key   [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ]
+add_value [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ]    "  string1 key2  "  reg_sz        "22 I am a string"
+add_value [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ]    "  dword1 key2  "  reg_dword      221234
+
+add_value [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ]    "  binary1 key2  "  reg_binary    22 22 22, 22, 12 34 1 2 3 4 1234
+add_value [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ]    "  multi1 key2  "  reg_multi_sz   "The          " " Quick       " "  Brown      " "   Fox       "  "    Jumped   "   "     Over    " "      The    "  "       Lazy  "    "        Dog's" "         Back"
+list_values [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ] 
+delete_key [HKEY_THIS_MACHINE\  key1  \    \  k  e  y  2  ] 
+ls [HKEY_THIS_MACHINE\  key1  ]
+delete_tree [HKEY_THIS_MACHINE\  key1  ]
+ls [HKEY_THIS_MACHINE\]
+
+# echo Testing list_keys===========================================
+list_keys [HKEY_THIS_MACHINE\]
+list_keys [HKEY_THIS_MACHINE\Services]
+list_keys [HKEY_THIS_MACHINE\Services\lsass]
+add_key [HKEY_THIS_MACHINE\test_key]
+add_key [HKEY_THIS_MACHINE\test_key_1]
+add_key [HKEY_THIS_MACHINE\test_key 1]
+add_key [HKEY_THIS_MACHINE\test key 1]
+add_key [HKEY_THIS_MACHINE\test key 22]
+add_key [HKEY_THIS_MACHINE\test key 333]
+add_key [HKEY_THIS_MACHINE\test key 4444]
+add_key [HKEY_THIS_MACHINE\test key 55555]
+add_key [HKEY_THIS_MACHINE\test_key\test_key_1]
+add_key [HKEY_THIS_MACHINE\test_key\test_key 1]
+add_key [HKEY_THIS_MACHINE\test_key\test key 1]
+add_key [HKEY_THIS_MACHINE\test_key\test key 22]
+add_key [HKEY_THIS_MACHINE\test_key\test key 333]
+add_key [HKEY_THIS_MACHINE\test_key\test key 4444]
+add_key [HKEY_THIS_MACHINE\test_key\test key 55555]
+#
+list_keys [HKEY_THIS_MACHINE\]
+#
+list_keys [HKEY_THIS_MACHINE\test_key]
+#
+delete_tree [HKEY_THIS_MACHINE\test_key]
+list_keys [HKEY_THIS_MACHINE\]
+#
+delete_key [HKEY_THIS_MACHINE\test_key_1]
+delete_key [HKEY_THIS_MACHINE\test_key 1]
+delete_key [HKEY_THIS_MACHINE\test key 1]
+delete_key [HKEY_THIS_MACHINE\test key 22]
+delete_tree [HKEY_THIS_MACHINE\test key 333]
+delete_tree [HKEY_THIS_MACHINE\test key 4444]
+delete_tree [HKEY_THIS_MACHINE\test key 55555]
+list_keys [HKEY_THIS_MACHINE\]
+
+# echo Testing list_values===========================================
+list_values [HKEY_THIS_MACHINE\]
+list_values [HKEY_THIS_MACHINE\Services]
+list_values [HKEY_THIS_MACHINE\Services\lsass]
+ls [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
+
+

@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="regipc" \
+        SOURCES="ipc_protocol.c ipcio.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="lwmsg"
+}

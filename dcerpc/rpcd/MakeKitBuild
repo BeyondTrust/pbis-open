@@ -1,0 +1,39 @@
+make()
+{
+    RPCD_CPPFLAGS="-Drpcd_c_database_name_prefix1=\"${LW_CACHEDIR}/db/\""
+    RPCD_INCLUDEDIRS=". ../include ../ncklib ../ncklib/include/${target_os}"
+    RPCD_IDLFLAGS="-no_mepv -cepv"
+    RPCD_HEADERDEPS="dce/rpc.h gssapi.h"
+
+    RPCD_SOURCES="\
+        dsm.c dsm_unix.c rpcd-svcm.c rpcddb.c rpcdep.c \
+        rpcdepdb.c rpcdsliv.c rpcdutil.c ep_sstub.c"
+
+    lw_dceidl \
+        IDL="../include/dce/ep.idl" \
+        HEADER="ep.h" \
+        SSTUB="ep_sstub.c" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        IDLFLAGS="$RPCD_IDLFLAGS"
+
+    lw_dceidl \
+        IDL="dsm.idl" \
+        HEADER="dsm.h" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        IDLFLAGS="$RPCD_IDLFLAGS"
+
+    lw_service \
+        SERVICE="dcerpc" \
+        PROGRAM="dcerpcd" \
+        SOURCES="$RPCD_SOURCES" \
+        CPPFLAGS="$RPCD_CPPFLAGS" \
+        CFLAGS="-Wall -Werror" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        DEPS="dsm.h ep.h" \
+        HEADERDEPS="$RPCD_HEADERDEPS" \
+        LIBDEPS="dcerpc $LIB_PTHREAD"
+
+    mk_stage \
+	SOURCE=dcerpcd.reg \
+	DESTDIR="${LW_CONFIGDIR}"
+}

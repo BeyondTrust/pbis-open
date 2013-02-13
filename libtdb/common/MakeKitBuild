@@ -1,0 +1,13 @@
+make()
+{
+    LIBTDB_SOURCES="\
+        tdb.c dump.c transaction.c error.c \
+        traverse.c freelist.c freelistcheck.c io.c \
+        lock.c open.c tdbback.c"
+
+    mk_library \
+        LIB=tdb \
+        SOURCES="$LIBTDB_SOURCES" \
+        INCLUDEDIRS=". ../include ../replace" \
+        CPPFLAGS="-DSTANDALONE=1"
+}

@@ -1,0 +1,14 @@
+/* pull in the header as determined for this platform at configure time */
+#ifdef __APPLE__
+#if defined(__i386__)
+#include <dce/i386/ndr_rep.h>
+#elif defined(__x86_64__)
+#include <dce/x86_64/ndr_rep.h>
+#elif defined(__ppc__)
+#include <dce/powerpc/ndr_rep.h>
+#elif defined(__ppc64__)
+#include <dce/powerpc64/ndr_rep.h>
+#endif
+#else
+#include <dce/@target_cpu@/ndr_rep.h>
+#endif

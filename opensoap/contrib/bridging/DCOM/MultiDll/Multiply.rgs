@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{8394891A-E3AA-4840-8125-DAA85FE9AAC6} = s 'MultiplyDll'
+		'MultiplyDll.Dll'
+		{
+			val AppID = s {8394891A-E3AA-4840-8125-DAA85FE9AAC6}
+		}
+	}
+}

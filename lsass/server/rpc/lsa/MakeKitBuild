@@ -1,0 +1,68 @@
+make()
+{
+    LSA_SOURCES="\
+        globals.c                          \
+	lsa.c                              \
+	lsa_cfg.c                          \
+	lsa_srv.c                          \
+	lsa_memory.c                       \
+        lsa_querysecurity.c                \
+        lsa_setsecurity.c                  \
+        lsa_enumprivileges.c               \
+	lsa_openpolicy2.c                  \
+	lsa_close.c                        \
+        lsa_createaccount.c                \
+        lsa_enumaccounts.c                 \
+	lsa_lookupnames.c                  \
+	lsa_lookupsids.c                   \
+        lsa_openaccount.c                  \
+        lsa_enumprivilegesaccount.c        \
+        lsa_addprivilegestoaccount.c       \
+        lsa_removeprivilegesfromaccount.c  \
+        lsa_getsystemaccessaccount.c       \
+        lsa_setsystemaccessaccount.c       \
+        lsa_lookupprivilegevalue.c         \
+        lsa_lookupprivilegename.c          \
+        lsa_lookupprivilegedispname.c      \
+        lsa_deleteobject.c                 \
+        lsa_enumaccountswithuserright.c    \
+        lsa_enumaccountrights.c            \
+        lsa_addaccountrights.c             \
+        lsa_removeaccountrights.c          \
+	lsa_lookupnames2.c                 \
+	lsa_lookupsids2.c                  \
+	lsa_lookupnames3.c                 \
+	lsa_queryinfopolicy.c              \
+	lsa_queryinfopolicy2.c             \
+	lsa_domaincache.c                  \
+	lsa_accounts.c                     \
+	lsa_accesstoken.c                  \
+	lsa_security.c                     \
+	lsa_contexthandle.c"
+    
+    lw_dceidl \
+	IDL=../../../idl/lsa.idl \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADER="lsa_h.h" \
+	SSTUB="lsa_sstub.c" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=lsa_stub \
+	SOURCES="lsa_sstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_dlo \
+	DLO=lsa \
+        INSTALLDIR="${rpcserverdir}" \
+	SOURCES="$LSA_SOURCES" \
+	GROUPS="lsa_stub" \
+	INCLUDEDIRS=". ../samr ../../include ../../api ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwnet.h lwio/lwio.h lwadvapi.h" \
+	LIBDEPS="lsaserverapi lwnetclientapi lwadvapi lwioclient" \
+	DEPS="lsa_h.h"
+}

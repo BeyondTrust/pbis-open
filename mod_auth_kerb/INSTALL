@@ -1,0 +1,205 @@
+1. Prerequisites
+----------------
+ - Development enviroment for Kerberos5 and/or Kerberos4 (i.e. libraries and
+   header files).  The module works with the MIT Kerberos implementation
+   (supporting both krb4 and krb5), the kth-krb Kerberos4 implementation,
+   and the Heimdal Kerberos5 implementation. Kerberos libraries come with
+   most Linux distributions but they may not be installed by default. 
+ - Apache server installed with SSL support.
+   Both 1.x and 2.x series of Apache are supported, provided they are
+   compiled to support DSO. SSL support (provided by either mod_ssl or
+   apache-ssl) is necessary for the module to work in a secure way. Most
+   Linux distributions contain suitable Apache packages. 
+ - The latest source of the module available from the main project site
+   (http://sourceforge.net/project/showfiles.php?group_id=51775). 
+ - Working C compiler, GNU make.
+
+2. Building and installing the module
+-------------------------------------
+Unpack the distribution tarball and run the configure script to set up the
+build enviroment. The script will try to find krb5 and/or krb4 libraries and
+headers and an Apache installation directory. You can use following flags to
+specify locations of these files:
+
+   --with-krb4=<dir>
+   --with-krb5=<dir>
+      these options are used to specify locations of the installation
+      directories for krb4 and krb5, respectively. If you don't want to
+      compile support for one of the method, use no as the appropriate
+      parameter or specify --without-krb5 or --without-krb4.
+   --with-apache=<dir>
+      use this parameter to specify location where the Apache installation
+      resides. 
+
+After the configuration script finishes run make followed by make install.
+In order to install the module you will have to have writing permission for
+the apache directory.
+
+An example of the building stage follows:
+   ./configure --with-krb5=/software/krb5-1.3.1		\
+               --with-krb4=no				\
+               --with-apache=/software/apache-2.0.47
+   make
+   su
+   make install
+
+3. Create the Kerberos principal for the server
+-----------------------------------------------
+A service principal for the web server must be registered with the KDC in
+order to let the module verify users properly. In general the principals for
+web servers have names with format HTTP/servername@REALM, where servername
+is the fully-qualified domain name of the server and REALM is your Kerberos
+realm.  If you have multiple virtual servers requiring authentication
+service principals have to be generated for each virtual servername.  After
+creating the service principal, corresponding Kerberos keys must be
+extracted to a keytab file stored on the server host.  Steps to create the
+principal and extracting the keys vary depending on the KDC server type
+used.
+
+Heimdal or MIT KDC
+------------------
+From the www machine start the kadmin command, connect to the KDC and create
+principal HTTP/servername@REALM with a random key(s).  Then extract the keys
+into a local keytab and change ownership and permissions  for the keytab
+file so that only the apache user can access it. Example using kadmin from
+Heimdal:
+  kadmin -p admin@REALM -r REALM ank -r HTTP/servername@REALM
+  kadmin -p admin@REALM -r REALM ext -k /etc/httpd/keytab HTTP/servername@REALM
+  chown nobody /etc/httpd/keytab
+  chmod 400 /etc/httpd/keytab
+  
+Windows 2000 Domain Controler
+-----------------------------
+The Kerberos realm in Active Directory is the same as the DNS domain
+name of the AD domain. For example, a Kerberos principal for host
+server.example.com might be "HTTP/server.example.com@EXAMPLE.COM".
+
+To install the principal in AD you first need to create a user account in the
+domain for the server. It makes sense to call this account something
+meaningful, maybe "httpd_servername" so that it is obvious what this account is
+used for. To create the account you can use standard AD tools.  Make sure that
+the user account has "Password never expires" set and write down the password
+you set for the account (you will need it later).
+
+When using ticket based authentication (KrbMethodNegotiate) and also wanting
+to save the ticket (KrbSaveCredentials), the user account for the Kerberos
+principal must have the option "Account is trusted for delegation" set. This
+enables to user account to delegate the tickets to the server for further
+authentication.
+
+If you want to kerberize additional hosts you need to create one user account
+per each kerberized host.
+
+The Kerberos principal is associated with a user account with the ktpass.exe
+tool that is part of the Microsoft Support Tools package. This tools needs to
+be run on a domain controller. To associate a Kerberos principal with a user
+account just run ktpass.exe in a command prompt with appropriate parameters to
+create a keytab file. Full description of the ktpass.exe command can be found
+at http://support.microsoft.com/default.aspx?scid=kb;en-us;324144.
+
+ktpass -out c:\apache.ktab -princ HTTP/server.name@REALM.NAME 
+       -pass account_password -mapuser httpd_servername -crypto DES-CBC-MD5
+
+In the above the c:\apache.ktab is the name of the created keytab file,
+account_passwored is the password you set for the user account and
+httpd_servername is the name of the user account. The DES-CBC-MD5 encryption
+is needed to get Heimdal to work with Microsoft KDC, MIT Kerberos does not
+seem to need it but it does not hurt either. In fact, RFC1510 discourages
+using DES-CBC-CRC (default in Win2k ktpass.exe) so it's probably better to
+use DES-CBC-MD5 in all cases.
+
+You need to copy the keytab file to your web server in a secure way to avoid
+revealing the server key(s). Note that the copy needs to be done in binary
+mode to avoid corrupting the file. Make sure that the keytab file is owned by
+the apache user and only readable to this user (i.e. the permissions are 400).
+After copying the keytab verify the content using the ktutil tool.
+
+See http://www.grolmsnet.de/kerbtut for more information about using
+mod_auth_kerb with Windows KDC.
+
+4. Verifying krb5 on the server host
+------------------------------------
+Before starting configuring the module make sure your Kerberos enviroment on
+the web host is properly configured. The easiest way to check is using the
+kinit command to get a ticket from the KDC.
+
+5. Configuring mod_auth_kerb
+----------------------------
+First make sure that Apache works as expected.
+
+You need to load the mod_auth_kerb module. To do this, add a LoadModule
+statement into the appropriate section of httpd.conf file.
+
+LoadModule auth_kerb_module modules/mod_auth_kerb.so
+
+The configuration of mod_auth_kerb can be done per directory. The
+configuration directives can be stored in either a <Directory> section of
+httpd.conf or in a .htaccess file in the coresponding directory. Example of a
+Directory section from httpd.conf:
+
+  <Directory /var/www/private>
+     AuthType Kerberos
+     AuthName "Kerberos Login"
+     Krb5Keytab  /etc/apache/apache.keytab
+     KrbAuthRealms EXAMPLE.COM
+     Require valid-user
+  </Directory>
+
+The Krb5Keytab file is the one created as described above in section 3.
+
+Summary of all configuration directives supported by the module can be found in
+README.
+
+6. Configuring the browsers
+---------------------------
+For password based authentication any browser supporting the Basic HTTP
+authentication method can be used without any changes. In order to use
+ticket based authentication (Negotiate) you will need either MS Internet
+Explorer 5.0+ running on Win2000 SP2 (or later) or Mozilla with the
+Negotiateauth extension (available in 1.7beta and later).
+
+Internet Explorer
+-----------------
+To make the Negotiate authentication work the web server hostname  must be
+in Internet Explorer "Local Intranet" security zone and the "Windows
+Integrated Authentication" must be enabled in the IE advanced options.
+
+See also a guide from Microsoft describing how to configure Windows Machine to
+use Unix KDC available at
+http://www.microsoft.com/windows2000/techinfo/planning/security/kerbsteps.asp
+
+Mozilla
+-------
+First make sure your Mozilla distribution contains the Negotiateauth component
+(libnegotiateauth.so on Unix, negotiateauth.dll on Windows). Generally this is
+included in versions 1.7beta and later on Unix platforms including Mac OSX,
+maybe 1.8 and later on Windows.)
+
+Next, you have to specify URL's for which it is allowed to use the Negotiate
+authentication method. It's done by setting the
+network.negotiate-auth.trusted-uris preference. In order to set it, just type
+"about:config" in the URL bar and then set the value of
+"network.negotiate-auth.trusted-uris" to "https://secured.webserver.name".
+
+If you want to find out what happens in the Negotiateauth component use
+following environment variables:
+  NSPR_LOG_MODULES=negotiateauth:5
+  NSPR_LOG_FILE=/tmp/negotiateauth.log
+before starting Mozilla. You will see debugging messages logged in the file
+specified by NSPR_LOG_FILE (/tmp/negotiateauth.log)
+
+KDE Konqueror
+-------------
+http://www.grolmsnet.de/kerbtut/konqueror.html
+
+6. Access control
+-----------------
+If you want only particular users to be able to access the secured area, you
+can list their principal names in the appropriate Require directive. They must
+be full Kerberos names, including the REALM part. For example:
+  Require user kouril@REALM.COM
+
+The user's name is put by Apache in the REMOTE_USER environment variable so
+that it could be used by cgi-bin scripts.
+
+$Id: INSTALL,v 1.9 2005/06/03 16:58:24 kouril Exp $

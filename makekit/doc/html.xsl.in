@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+		xmlns:html="http://www.w3.org/1999/xhtml"
+		xmlns:db="http://docbook.org/ns/docbook"
+		version="1.0">
+  <xsl:import href="@MK_DOCBOOK_XSL_DIR@/xhtml/profile-chunk.xsl"/>
+  <xsl:param name="citerefentry.link">1</xsl:param>
+  <xsl:param name="use.id.as.filename">1</xsl:param>
+  <xsl:param name="html.stylesheet" select="'docbook.css'"/>
+  <xsl:param name="css.decoration" select="0"/>
+  <xsl:param name="chunk.section.depth" select="0"/>
+  <xsl:param name="callout.graphics" select="1"/>
+  <xsl:param name="callout.graphics.extension" select="'.png'"/>
+  <xsl:param name="generate.toc">
+    book toc
+  </xsl:param>
+  <xsl:param name="toc.section.depth" select="2"/>
+  <xsl:param name="reference.autolabel">loweralpha</xsl:param>
+  <xsl:param name="refentry.xref.manvolnum" select="0"></xsl:param>
+  <xsl:template name="generate.citerefentry.link">
+    <xsl:value-of select="db:refentrytitle"/><xsl:text>.html</xsl:text>
+  </xsl:template>
+</xsl:stylesheet>

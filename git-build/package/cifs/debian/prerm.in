@@ -1,0 +1,26 @@
+#!/bin/sh -e
+
+export PATH=$PATH:@MK_BINDIR@
+
+case "$1" in
+    remove)
+        ## Be paranoid about cleaning up
+        if [ "@IS_EMBEDDED@" = "no" ]
+        then
+	    domainjoin-cli configure --disable pam
+	    domainjoin-cli configure --disable nsswitch
+        fi
+	
+	/etc/init.d/lwsmd stop
+	;;
+    
+    failed-upgrade)
+    # The prerm script of a previous version failed for upgrade.
+	;;
+    
+    upgrade)
+    # A newer version is about to be installed; do nothing and let it handle it.
+	;;
+esac
+
+#DEBHELPER#

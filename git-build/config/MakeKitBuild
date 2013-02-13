@@ -1,0 +1,42 @@
+configure()
+{
+    mk_output_file VERSION
+}
+
+make()
+{
+    mk_install_files \
+	FILES="init-base.sh init-lwsm.sh init-likewise.sh" \
+	INSTALLDIR="${MK_LIBEXECDIR}"
+
+    mk_install_file \
+        FILE="krb5.conf.default" \
+        INSTALLDIR="/etc"
+
+    mk_install_file \
+        FILE="likewise-krb5-ad.conf" \
+        INSTALLDIR="${MK_SYSCONFDIR}"
+
+    mk_install_file \
+        FILE="VERSION" \
+        INSTALLDIR="${MK_PREFIX}/data"
+
+    for i in lwsmd likewise
+    do
+	lw_init_script "$i"
+    done
+}
+
+lw_init_script()
+{
+    mk_target \
+	TARGET="/etc/init.d/$1" \
+	DEPS="$1" \
+	mk_mkdir "&/etc/init.d" '%;' \
+	sed \
+	    -e "s:LIBEXECDIR:${MK_LIBEXECDIR}:g" \
+	    -e "s:EXECDIR:${MK_BINDIR}:g" \
+	    -e "s:PREFIX_DIR:${MK_PREFIX}:g" \
+	    '%<' "&$1" '%>' '$@' '%;' \
+	chmod +x '$@'
+}

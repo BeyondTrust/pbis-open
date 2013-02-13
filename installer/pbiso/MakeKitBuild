@@ -1,0 +1,92 @@
+MODULES="sfx dmg"
+
+make()
+{
+    case "$MK_HOST_OS" in
+        linux)
+            for fmt in deb rpm
+            do
+                mk_${fmt}_enabled && sfx_generic "$fmt"
+            done
+            ;;
+        freebsd)
+            mk_freebsd_enabled && sfx_generic "freebsd"
+            ;;
+        solaris)
+            mk_pkg_enabled && sfx_solaris "pkg" "response"
+            ;;
+        aix)
+            mk_lpp_enabled && sfx_generic "lpp"
+            ;;
+        hpux)
+            mk_depot_enabled && sfx_generic "depot"
+            ;;
+        darwin)
+            mk_macpkg_enabled && lw_dmg \
+                DMG="pbis-open-${LW_VERSION}" \
+                VOLNAME="pbis-open" \
+                TEMPLATE="dmg-template.tar.bz2" \
+                PACKAGES="pbis-open pbis-open-legacy"
+            ;;
+    esac
+}
+
+sfx_solaris()
+{
+    lw_sfx \
+        SFX="pbis-open-${LW_VERSION}" \
+        FILES="COPYING README LICENSES $2" \
+        FORMAT="$1" \
+        PACKAGES="PBISopen PBISopeng PBISopenl" \
+        UPGRADE="PBISopeng" \
+        LEGACY="PBISopenl" \
+        OBSOLETE="LikewiseBase LikewiseDomainjoin \
+LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 \
+LikewiseLac LikewiseLibxml2 LikewiseLsass \
+LikewiseLwadutil LikewiseLwconfig LikewiseLwio LikewiseLwmgmt \
+LikewiseLwnetapi LikewiseLwreg \
+LikewiseLwtools LikewiseLwupgrade LikewiseModAuthKerb \
+LikewiseNetlogon LikewiseOpenldap LikewisePasswd \
+LikewisePasswordPolicy \
+LikewisePstore LikewiseReskit LikewiseRpc LikewiseSmbclient LikewiseSqlite \
+LikewiseSrvsvc LikewiseSambaInterop \
+LikewiseOpenUpgrade LikewiseOpen LikewiseOpenu LikewiseOpenr \
+PBISopen PBISopenr PBISopenu PBISopeng PBISopenl" \
+        BASE="PBISopen" \
+        GUI="$GUI_PACKAGE"
+}
+
+sfx_generic()
+{
+    # $1 = package format
+    # $2 = extra files to include
+
+    GUI_PACKAGE=""
+    if [ "$DJ_GUI_INTERFACE" = "gtk" ]
+    then
+        GUI_PACKAGE="pbis-open-gui"
+    fi
+
+    lw_sfx \
+        SFX="pbis-open-${LW_VERSION}" \
+        FILES="COPYING README LICENSES $2" \
+        FORMAT="$1" \
+        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE pbis-open-legacy" \
+        UPGRADE="pbis-open-upgrade" \
+        LEGACY="pbis-open-legacy" \
+        OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin \
+                  likewise-domainjoin-gui likewise-eventlog likewise-krb5 \
+                  likewise-lac likewise-libxml2 likewise-lsass likewise-lsass-32bit \
+                  likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt \
+                  likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit \
+                  likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb \
+                  likewise-netlogon likewise-openldap likewise-passwd \
+                  likewise-password-policy \
+                  likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
+                  likewise-srvsvc likewise-reapsysl likewise-samba-interop \
+                  likewise-smbclient \
+                  likewise-open-upgrade likewise-open-gui likewise-open \
+                  pbis-open-legacy pbis-open-upgrade pbis-open-gui pbis-open" \
+        BASE="pbis-open" \
+        GUI="$GUI_PACKAGE"
+}

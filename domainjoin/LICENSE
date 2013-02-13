@@ -1,0 +1,8 @@
+Code residing in the domainjoin-cli and domainjoin-gui directories
+is licensed under the GNU General Public License version 2.  See 
+domainjoin-cli/COPYING for details.
+
+Code residing in the libdomainjoin directory is licensed under 
+the GNU Lesser General Public License version 2.1.  See 
+libdomainjoin/COPYING for details.
+

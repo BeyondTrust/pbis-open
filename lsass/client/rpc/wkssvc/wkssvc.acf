@@ -1,0 +1,11 @@
+[
+	explicit_handle
+]
+interface wkssvc
+{
+	[enable_allocate] NetrWkstaGetInfo();
+	[enable_allocate] NetrJoinDomain();
+	[enable_allocate] NetrUnjoinDomain();
+	[enable_allocate] NetrJoinDomain2();
+	[enable_allocate] NetrUnjoinDomain2();
+}
