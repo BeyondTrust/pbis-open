@@ -68,7 +68,7 @@ LwSmStubStop(
     if (*pState != LW_SERVICE_STATE_STOPPED)
     {
         *pState = LW_SERVICE_STATE_STOPPED;
-        LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_RUNNING);
+        LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_STOPPED);
     }
 
     return dwError;
@@ -116,6 +116,7 @@ LwSmStubConstruct(
     dwError = LwAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
     BAIL_ON_ERROR(dwError);
 
+    *pState = LW_SERVICE_STATE_STOPPED;
     *ppData = pState;
 
 error:
