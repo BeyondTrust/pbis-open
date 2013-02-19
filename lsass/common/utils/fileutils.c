@@ -806,6 +806,9 @@ LsaCopyFileWithPerms(
     dwError = LsaChangePermissions(pszDstPath, dwPerms);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LsaCopyExtendedAttributes(pszSrcPath, pszDstPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
 error:
 
     if (iFd >= 0)
@@ -822,6 +825,79 @@ error:
     LW_SAFE_FREE_STRING (pszTmpPath);
 
     return dwError;
+}
+
+ssize_t _listxattr(const char* path, char* namebuf, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return listxattr(path, namebuf, size, XATTR_NOFOLLOW);
+#else
+	return listxattr(path, namebuf, size);
+#endif
+}
+
+ssize_t _getxattr(const char* path, const char* name, void* value, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return getxattr(path, name, value, size, 0, XATTR_NOFOLLOW);
+#else
+	return getxattr(path, name, value, size);
+#endif
+}
+
+int _setxattr(const char* path, const char* name, void* value, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return setxattr(path, name, value, size, 0, XATTR_NOFOLLOW);
+#else
+	return setxattr(path, name, value, size, 0);
+#endif
+}
+
+DWORD LsaCopyExtendedAttributes(PCSTR pszSrcPath, PCSTR pszDstPath)
+{
+	DWORD dwError;
+	char* list = NULL;
+
+	ssize_t listLen = _listxattr(pszSrcPath, NULL, 0);
+	list = malloc(listLen);
+	listLen = _listxattr(pszSrcPath, list, listLen);
+
+	int ns = 0;
+	char* value = NULL;
+
+	for (ns = 0; ns < listLen; ns += strlen(&list[ns]) + 1) {
+		ssize_t valueLen;
+
+		valueLen = _getxattr(pszSrcPath, &list[ns], NULL, 0);
+		if (valueLen != -1) {
+
+			value = malloc(valueLen);
+
+			_getxattr(pszSrcPath, &list[ns], value, valueLen);
+			dwError = LwMapErrnoToLwError(_setxattr(pszDstPath, &list[ns], value, valueLen));
+			BAIL_ON_LSA_ERROR(dwError);
+
+			free(value);
+			value = NULL;
+		}
+	}
+
+cleanup:
+	if(list)
+	{
+		free(list);
+	}
+
+	if(value)
+	{
+		free(value);
+	}
+
+	return dwError;
+
+error:
+	goto cleanup;
 }
 
 

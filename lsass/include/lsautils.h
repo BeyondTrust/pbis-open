@@ -579,6 +579,12 @@ LsaGetOwnerAndPermissions(
     );
 
 DWORD
+LsaCopyExtendedAttributes(
+	PCSTR pszSrcPath,
+	PCSTR pszDstPath
+	);
+
+DWORD
 LsaCopyFileWithOriginalPerms(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
