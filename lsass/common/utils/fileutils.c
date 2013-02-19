@@ -856,7 +856,7 @@ int _setxattr(const char* path, const char* name, void* value, size_t size)
 
 DWORD LsaCopyExtendedAttributes(PCSTR pszSrcPath, PCSTR pszDstPath)
 {
-	DWORD dwError;
+	DWORD dwError=0;
 	char* list = NULL;
 
 	ssize_t listLen = _listxattr(pszSrcPath, NULL, 0);
