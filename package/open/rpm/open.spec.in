@@ -554,12 +554,20 @@ postinstall()
         run '@LW_INITDIR@/lwsmd' start
     fi
 
-    if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
-        LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
-        if [ -n "${LOAD_ORDER}" ]; then
-
+    determine_join_status
+    if [ -n "$result" ]; then
+        if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
             run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
             run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+        fi
+    else
+        if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
+            LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
+            if [ -n "${LOAD_ORDER}" ]; then
+
+                run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+                run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+            fi
         fi
     fi
 
