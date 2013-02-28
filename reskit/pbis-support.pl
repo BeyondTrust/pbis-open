@@ -56,7 +56,7 @@ use FindBin;
 use Config;
 
 # Define global variables
-my $gVer = "2.0.2b";
+my $gVer = "2.5.0";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -176,7 +176,6 @@ Options:
         restarting daemons (exclusive of -r)
     -V --loglevel {error,warning,info,verbose,debug}
         Changes the logging level. (default = $opt->{loglevel} )
-        Can be set with multiple '-v' options, a'la ssh.
     -l --log --logfile <path> (default = $opt->{logfile} )
         Choose the logfile to write data to.
     -t --tarballdir <path> (default = $opt->{tarballdir} )
@@ -888,7 +887,7 @@ sub System($;$$)
             if ($@) {
                 if ($@ =~ /ALARM: process timeout/) {
                     logError("\n*** PROCESS TIMED OUT ***\n");
-                    killProc2(15, $pid);
+                    killProc2(9, $pid);
                     $rc = 1;
                 } else {
                     confess;
@@ -986,7 +985,7 @@ sub changeLogging($$$) {
             $gRetval |= ERR_SYSTEM_CALL;
             return;
         }
-        if ($info->{lwsm}->{type} == "container") {
+        if ($info->{lwsm}->{type} eq "container") {
             logVerbose("Setting up tap-log log captures.");
             changeLoggingByTap($info, $opt, $state);
             return;
@@ -1254,7 +1253,7 @@ sub determineOS($) {
             $file=findInPath($i, ["/sbin", "/usr/sbin", "/usr/bin", "/bin", "/usr/local/bin", "/usr/local/sbin"]);
             if ((defined($file->{path}))) { # && $file->{perm} eq "x") {
                 $info->{OStype} = "linux-$i";
-                logDebug("System is $info->{OStype}");
+                logVerbose("System is $info->{OStype}");
             } 
         }
         $info->{timezonefile} = "/etc/sysconfig/clock";
@@ -1266,7 +1265,7 @@ sub determineOS($) {
             $info->{OStype} = "linux-deb";
             $info->{timezonefile} = "/etc/timezone";
         }
-        logDebug("Setting Linux paths");
+        logVerbose("Setting Linux paths");
         $info->{svcctl}->{start1} = "/etc/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
         $info->{svcctl}->{start3} = " start";
@@ -1278,6 +1277,7 @@ sub determineOS($) {
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
+        $info->{sshd}->{opts} = "-ddd -p 22226";
         $info->{pampath} = "/etc/pam.d";
         foreach my $i (("syslog", "system.log", "messages")) {
             $file = findInPath($i, ["/var/log"]);
@@ -1289,7 +1289,7 @@ sub determineOS($) {
         $info->{nsfile} = "/etc/nsswitch.conf";
     } elsif ($^O eq "hpux") {
         $info->{OStype} = "hpux";
-        logDebug("Setting HP-UX paths");
+        logVerbose("Setting HP-UX paths");
         $info->{release} = `swlist -l bundle`;
         $info->{svcctl}->{start1} = "/sbin/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
@@ -1301,6 +1301,7 @@ sub determineOS($) {
         $info->{tcpdump}->{startcmd} = "nettl -start; nettl";
         $info->{tcpdump}->{args} = "-traceon pduin pduout -e ns_ls_driver -file";
         $info->{tcpdump}->{stopcmd} = "nettl -traceoff\; nettl -stop";
+        $info->{sshd}->{opts} = "-ddd -p 22226 ";
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "messages";
@@ -1308,7 +1309,7 @@ sub determineOS($) {
         $info->{timezonefile} = "/etc/TIMEZONE";
     } elsif ($^O eq "solaris") {
         $info->{OStype} = "solaris";
-        logDebug("Setting Solaris paths");
+        logVerbose("Setting Solaris paths");
         $file = findInPath("svcadm", ["/usr/sbin", "/sbin"]);
         if ((defined($file->{path})) && $file->{type} eq "f") {
             $info->{svcctl}->{start1} = "$file->{path} ";
@@ -1340,6 +1341,7 @@ sub determineOS($) {
         $info->{tcpdump}->{args} = "-s0 -o";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
+        $info->{sshd}->{opts} = "-ddd -p 22226 ";
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "messages";
@@ -1349,7 +1351,7 @@ sub determineOS($) {
         $info->{OStype} = "aix";
         logData("System release is:");
         logData(`oslevel -r`);
-        logDebug("Setting AIX paths");
+        logVerbose("Setting AIX paths");
         $info->{svcctl}->{start1} = "/etc/rc.d/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
         $info->{svcctl}->{start3} = " start";
@@ -1360,6 +1362,7 @@ sub determineOS($) {
         $info->{tcpdump}->{startcmd} = "/usr/sbin/iptrace";
         $info->{tcpdump}->{args} = "-a";
         $info->{tcpdump}->{stopcmd} = "kill";
+        $info->{sshd}->{opts} = "-ddd -p 22226 ";
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "syslog/syslog.log";
@@ -1367,7 +1370,7 @@ sub determineOS($) {
         $info->{timezonefile} = "/etc/environment";
     } elsif ($^O eq "MacOS" or $^O eq "darwin") {
         $info->{OStype} = "darwin";
-        logDebug("Setting darwin paths");
+        logVerbose("Setting darwin paths");
         $info->{svcctl}->{start1} = "launchctl";
         $info->{svcctl}->{start2} = " start";
         $info->{svcctl}->{start3} = ' com.likewisesoftware.daemonname';
@@ -1379,6 +1382,7 @@ sub determineOS($) {
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
+        $info->{sshd}->{opts} = "-ddd -p 22226 ";
         $info->{pampath} = "/etc/pam.d";
         $info->{logpath} = "/var/log";
         $info->{logfile} = "system.log";
@@ -1400,6 +1404,7 @@ sub determineOS($) {
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
+        $info->{sshd}->{opts} = "-ddd -p 22226 ";
         $info->{pampath} = "/etc/pam.d";
         $info->{logpath} = "/var/log";
         $info->{logfile} = "messages";
@@ -1914,6 +1919,7 @@ sub outputReport($$) {
         logInfo("Adding sshd_config");
         tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
         logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
+        tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
     }
     if ($opt->{authtest}) {
         logInfo("Adding pam files");
@@ -2040,7 +2046,7 @@ sub runTests($$) {
         if ($opt->{sshuser}) {
             $user = $opt->{sshuser};
         } else {
-            logError("Testing SSH as an AD user - please enter a username here:");
+            logData("Testing SSH as an AD user - please enter a username here:");
             $user = <STDIN>;
             chomp $user;
             $opt->{sshuser} = $user;
@@ -2049,21 +2055,22 @@ sub runTests($$) {
         logVerbose("Looking up $user prior to test");
         getUserInfo($info, $opt, $user);
         my $sshcommand = "ssh -vvv -p 22226 -l $user localhost '$opt->{sshcommand}' 2>&1";
-        my $sshdcommand = "$info->{sshd}->{cmd} -DDD -p 22226";
+        my $sshdcommand = $info->{sshd}->{cmd}." -ddd -p 22226 > $info->{logpath}/sshd-pbis.log 2>&1";
+        #$sshdcommand.=$info->{sshd}->{opts}.' 2>&1';
 
-        logInfo("Running sshd as $sshdcommand");
-        logInfo("Running ssh as: $sshcommand");
-        my $data1 = System($sshdcommand,1 ,30);
+        logData("Running sshd as $sshdcommand");
+        my $data1 = System($sshdcommand." & ",1 ,30);
         if ($?) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Error launching sshd!");
         } 
+        logData("Running ssh as: $sshcommand");
         $data = `$sshcommand`;
         if ($?) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Error running ssh as $user!");
         }
-        logData($data1);
+        
         logData($data);
     } elsif ($opt->{sshuser} || $info->{uid} ne "0") {
         my $user = $opt->{sshuser};
@@ -2174,14 +2181,14 @@ sub main() {
         gpagentd => 1,
         messages => 1,
         syslog => 1,
-        capturefile => "/tmp/lw-cap",
+        capturefile => "/tmp/pbis-cap",
         loglevel => "info",
         logfile => "/tmp/pbis-support.log",
         tarballdir => "/tmp",
-        tarballfile => "lw-support-$datestring",
+        tarballfile => "pbis-support-$datestring",
         tarballext => ".tar.gz",
         sshcommand => "exit",
-        sudocmd => "ls /var/lib/pbis",
+        sudocmd => "ls -l /var/lib/pbis/db",
         delaytime => 180,
         gatherdb => 1,
         psoutput => 1,
@@ -2445,7 +2452,6 @@ usage: pbis-support.pl [tests] [log choices] [options]
     restarting daemons (exclusive of -r)
     -V --loglevel {error,warning,info,verbose,debug}
     Changes the logging level. (default = info )
-    Can be set with multiple '-v' options, a'la ssh.
     -l --log --logfile <path> (default = /tmp/pbis-support.log )
     Choose the logfile to write data to.
     -t --tarballdir <path> (default = /tmp )
