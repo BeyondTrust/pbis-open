@@ -198,7 +198,7 @@ determine_upgrade_type()
             log "Preserving PowerBroker Identity Services Open 7.0 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=7.1' $VERSIONFILE`" ]; then
             UPGRADING_FROM_7_1=1
-            log "Preserving PowerBroker Identity Services Open 7.0 configuration in ${UPGRADEDIR}."
+            log "Preserving PowerBroker Identity Services Open 7.1 configuration in ${UPGRADEDIR}."
         fi
     fi
 }
