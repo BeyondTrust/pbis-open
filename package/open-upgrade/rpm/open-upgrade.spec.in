@@ -145,6 +145,8 @@ determine_upgrade_type()
         run_or_fail mkdir -p "${UPGRADEDIR}"
         run_or_fail cp "$VERSIONFILE" "${UPGRADEDIR}"
 
+        UPGRADING_PBIS=1
+
         run_or_fail cat "$VERSIONFILE"
         if [ -n "`grep '^VERSION=6.5' $VERSIONFILE`" ]; then
             UPGRADING_FROM_6_5=1
@@ -171,7 +173,7 @@ determine_join_status()
         else
             logfile "System does not appear to be joined according to lw-lsa ad-get-machine account"
         fi
-    elif [ -n "$UPGRADING_FROM_6_5" ]; then
+    elif [ -n "$UPGRADING_PBIS" ]; then
         domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
         if [ -n "$domain" ]; then
             logfile "System is joined to $domain according to lsa ad-get-machine account"
