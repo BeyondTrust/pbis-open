@@ -46,6 +46,16 @@
 
 #include "includes.h"
 
+#if HAVE_ATTR_XATTR_H
+#include <attr/xattr.h>
+#define HAVE_XATTR 1
+#elif HAVE_SYS_XATTR_H
+#include <sys/xattr.h>
+#define HAVE_XATTR 1
+#else
+#define HAVE_XATTR 0
+#endif
+
 DWORD
 LsaRemoveFile(
     PCSTR pszPath
@@ -827,6 +837,8 @@ error:
     return dwError;
 }
 
+#if HAVE_XATTR
+static
 ssize_t _listxattr(const char* path, char* namebuf, size_t size)
 {
 #if defined(__LWI_DARWIN__)
@@ -836,6 +848,7 @@ ssize_t _listxattr(const char* path, char* namebuf, size_t size)
 #endif
 }
 
+static
 ssize_t _getxattr(const char* path, const char* name, void* value, size_t size)
 {
 #if defined(__LWI_DARWIN__)
@@ -845,6 +858,7 @@ ssize_t _getxattr(const char* path, const char* name, void* value, size_t size)
 #endif
 }
 
+static
 int _setxattr(const char* path, const char* name, void* value, size_t size)
 {
 #if defined(__LWI_DARWIN__)
@@ -899,6 +913,15 @@ cleanup:
 error:
 	goto cleanup;
 }
+
+#else
+
+DWORD LsaCopyExtendedAttributes(PCSTR pszSrcPath, PCSTR pszDstPath)
+{
+	return 0;
+}
+
+#endif
 
 
 DWORD

@@ -224,7 +224,7 @@ configure()
         kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
         sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
         nss_common.h nss_dbdefs.h nss.h \
-        sys/mount.h
+        sys/mount.h sys/xattr.h attr/xattr.h
 
     mk_check_headers \
         HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \

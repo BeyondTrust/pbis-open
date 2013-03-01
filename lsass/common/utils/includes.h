@@ -64,4 +64,3 @@
 #include "lsasecurityidentifier_p.h"
 #include "lsaartefactinfo_p.h"
 #include "externs.h"
-#include <sys/xattr.h>
