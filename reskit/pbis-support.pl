@@ -1037,7 +1037,12 @@ sub changeLoggingBySyslog($$$) {
         $info->{logedit}->{line} = "*.*\t\t\t\t$info->{logpath}/$info->{logfile}";
         $info->{logedit}->{line} = "*.debug\t\t\t\t$info->{logpath}/$info->{logfile}" if ($info->{OStype} eq "solaris");
         $info->{logedit}->{file} = findInPath("syslog.conf", ["/etc", "/etc/syslog", "/opt/etc/", "/usr/local/etc/"]);
-    }
+        if (not defined($info->{logedit}->{file}->{path})) {
+            $info->{logedit}->{file} = findInPath("rsyslog.conf", ["/etc", "/etc/syslog", "/opt/etc/", "/usr/local/etc/", "/etc/rsyslog/"]);
+        }
+        if (not defined($info->{logedit}->{file}->{path})) {
+            logError("Couldn't find syslog.conf or rsyslog.conf, and we don't support syslog-ng. Choose a different logging option!");
+        }
     if ($info->{logedit}->{file}->{type} eq "f") {
         if ($state eq "normal") {
             if (not defined($info->{logedit}->{line})) {
