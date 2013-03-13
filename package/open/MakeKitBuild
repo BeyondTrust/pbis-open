@@ -413,7 +413,8 @@ open_files_usr()
 
      mk_package_patterns \
         SUBDIRS="$OPEN_SUBDIRS" \
-        "@${MK_STAGE_DIR}/usr/bin/domainjoin-cli"
+        "@${MK_STAGE_DIR}/usr/bin/domainjoin-cli" \
+        "@${MK_STAGE_DIR}/usr/bin/pbis"
 
     mk_package_patterns SUBDIRS="@docs" "*"
 }

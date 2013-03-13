@@ -79,4 +79,8 @@ make()
                 TARGET="lsa"
         done
     fi
+
+    mk_symlink \
+        LINK="/usr/bin/pbis" \
+        TARGET="${MK_BINDIR}/lsa"
 }

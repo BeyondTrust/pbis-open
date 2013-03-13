@@ -16,6 +16,7 @@ find_entry(
 static main_entry entry_list[] =
 {
     {"lsa", lsa_main},
+    {"pbis", lsa_main},
     {"ad-cache", ad_cache_main},
     {"ad-get-machine", ad_get_machine_main},
     {"add-group", add_group_main},
@@ -96,7 +97,10 @@ lsa_main(
         
         for (i = 0; entry_list[i].name; i++)
         {
-            fprintf(stderr, "    %s\n", entry_list[i].name);
+            if (entry_list[i].func != lsa_main) 
+            {
+                fprintf(stderr, "    %s\n", entry_list[i].name);
+            }
         }
 
         return -1;
