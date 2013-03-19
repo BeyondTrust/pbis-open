@@ -1043,6 +1043,7 @@ sub changeLoggingBySyslog($$$) {
         if (not defined($info->{logedit}->{file}->{path})) {
             logError("Couldn't find syslog.conf or rsyslog.conf, and we don't support syslog-ng. Choose a different logging option!");
         }
+    }
     if ($info->{logedit}->{file}->{type} eq "f") {
         if ($state eq "normal") {
             if (not defined($info->{logedit}->{line})) {
