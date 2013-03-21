@@ -298,6 +298,10 @@ postinstall()
     if [ -x @MK_BINDIR@/domainjoin-cli ]; then
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+    elif [ -x /opt/likewise/bin/domainjoin-cli ]; then
+        run_quiet /opt/likewise/bin/domainjoin-cli configure --disable pam
+        run_quiet /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
     fi
 
     if [ -x @MK_BINDIR@/lwsm ]; then

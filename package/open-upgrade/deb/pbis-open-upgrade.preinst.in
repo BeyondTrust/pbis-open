@@ -298,7 +298,12 @@ preinstall()
     if [ -x @MK_BINDIR@/domainjoin-cli ]; then
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+    elif [ -x /opt/likewise/bin/domainjoin-cli ]; then
+        run_quiet /opt/likewise/bin/domainjoin-cli configure --disable pam
+        run_quiet /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
     fi
+
 
     if [ -x /etc/init.d/likewise ]; then
         run_quiet /etc/init.d/likewise stop
