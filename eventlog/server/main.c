@@ -1170,6 +1170,8 @@ EVTSvcmStart(
     dwError = LwEvtDbInitEventDatabase();
     BAIL_ON_EVT_ERROR(dwError);
 
+    EvtSnmpSetup();
+
     dwError = LwmEvtSrvStartListenThread();
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -1214,6 +1216,8 @@ EVTSvcmStop(
         dwError = EVTStopListen();
         BAIL_ON_EVT_ERROR(dwError);
     }
+
+    EvtSnmpTearDown();
 
     dwError = LwmEvtSrvStopListenThread();
     BAIL_ON_EVT_ERROR(dwError);

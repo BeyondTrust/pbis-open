@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright BeyondTrust 2013
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,47 +25,25 @@
  * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
  * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * license@beyondtrust.com
  */
 
 /*
- * Copyright (C) Centeris Corporation 2004-2007
- * Copyright (C) Likewise Software 2007
+ * Copyright (C) BeyondTrust 2013
  * All rights reserved.
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *
- * Eventlog Server
+ * SNMP Trap Forwarding Implementation
  *
  */
-#include "config.h"
-#include "eventsys.h"
-#include "eventlog.h"
-#include "eventdefs.h"
-#include "sendtrap_stub.h"
-#include "eventutils.h"
-#include "eventlog-ipc.h"
+#ifndef __EVTSENDTRAP_STUB_H__
+#define __EVTSENDTRAP_STUB_H__
 
-#include "sqlite3.h"
+#include "includes.h"
 
-#include <lwmsg/lwmsg.h>
+VOID EvtSnmpSetup();
 
-#include <lw/types.h>
-#include <lwerror.h>
-#include <lwstr.h>
-#include <lwmem.h>
-#include <lwsid.h>
-#include <lwfile.h>
-#include <lw/mapsecurity.h>
-#include <lwdef.h>
-#include <reg/lwreg.h>
-#include <assert.h>
+VOID  EvtSnmpTearDown();
 
-#include "eventlog_h.h"
-#include "main_p.h"
-#include "server_p.h"
-#include "server-lwmsg.h"
-#include "listener-lwmsg.h"
-#include "db_p.h"
-#include "externs.h"
+VOID EvtSnmpProcessEvents(DWORD Count, const LW_EVENTLOG_RECORD *pRecords);
+
+#endif /* __EVTSENDTRAP_STUB_H__ */

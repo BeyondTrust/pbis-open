@@ -402,6 +402,9 @@ LwmEvtSrvWriteRecords(
     }
     if (!dwError)
     {
+        // Process SNMP Traps.
+        EvtSnmpProcessEvents(pReq->Count, pReq->pRecords); 
+
         pOut->tag = EVT_R_GENERIC_SUCCESS;
         pOut->data = NULL;
     }
