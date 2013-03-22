@@ -318,6 +318,13 @@ remove_npfs_dependencies()
     run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
+remove_dcerpc_dependencies()
+{
+   run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\eventlog]' 'Dependencies' ''
+   run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\dcerpc]'  'Autostart'
+   run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\dcerpc]'  'Arguments' ''
+}
+
 fix_60_registry()
 {
     REGSHELL='@MK_BINDIR@/regshell'
@@ -384,6 +391,8 @@ postinstall()
     cleanup_registry
 
     remove_npfs_dependencies
+
+    remove_dcerpc_dependencies
 
     switch_to_open_provider
 
