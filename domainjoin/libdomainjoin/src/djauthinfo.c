@@ -1431,7 +1431,7 @@ DJLogInformationEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise DomainJoin";
+    event.pszEventSource = "PBIS DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     if (pszUser == NULL)
@@ -1472,7 +1472,7 @@ DJLogWarningEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise DomainJoin";
+    event.pszEventSource = "PBIS DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     if (pszUser == NULL)
@@ -1513,7 +1513,7 @@ DJLogErrorEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise DomainJoin";
+    event.pszEventSource = "PBIS DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     if (pszUser == NULL)
