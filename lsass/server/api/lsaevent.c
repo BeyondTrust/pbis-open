@@ -64,7 +64,7 @@ LsaSrvLogInformationEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise LSASS";
+    event.pszEventSource = "PBIS LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -94,7 +94,7 @@ LsaSrvLogWarningEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise LSASS";
+    event.pszEventSource = "PBIS LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -124,7 +124,7 @@ LsaSrvLogErrorEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise LSASS";
+    event.pszEventSource = "PBIS LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -154,7 +154,7 @@ LsaSrvLogSuccessAuditEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = SUCCESS_AUDIT_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise LSASS";
+    event.pszEventSource = "PBIS LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -184,7 +184,7 @@ LsaSrvLogFailureAuditEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = FAILURE_AUDIT_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "Likewise LSASS";
+    event.pszEventSource = "PBIS LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
