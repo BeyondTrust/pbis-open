@@ -169,27 +169,37 @@ determine_upgrade_type()
 determine_join_status()
 {
     STATUSFILE="${UPGRADEDIR}/status.txt"
+	echo "StatusFile=$STATUSFILE"
 
     if [ -f "${UPGRADEDIR}/status.txt" ]; then
         run_or_fail cat "$STATUSFILE"
+		
 
         domain=`cat $STATUSFILE 2>/dev/null | grep '^STATUS_JOINED=' | sed -e 's/STATUS_JOINED=//'`
+		echo "Found Domain from StatusFile $domain"
 
         if [ -n "$domain" ]; then
             logfile "Found domain $domain in status file."
+            echo "Found domain $domain in status file."
             result=$domain
         else
+			echo "domain no found $domain"
             result=""
+            echo "result is  $result from  status file."
         fi
     fi
+	echo "result from status file $result"
 
     if [ -z "$result" ]; then
         domain=`@MK_BINDIR@/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+		echo "domain from lsa $domain"
         if [ -n "$domain" ]; then
             logfile "Found domain $domain using ad-get-machine account"
+            echo "Found domain $domain using ad-get-machine account"
             result=$domain
         else
             result=""
+            echo "result is  $result from ad-get-machine"
         fi
     fi
 }
@@ -437,19 +447,32 @@ postinstall()
     enable_service_configurations_or_init_d_symlinks
 
     determine_join_status
+	echo "after determining join status $result"
     if [ -n "$result" ]; then
         if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
+			echo "before enabling PAM"
             run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+			echo "before enabling nsswitch"
             run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+			echo "After enabling nsswitch"
+		else
+			echo "$MK_BINDIR is not there"
         fi
     else
         if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
             LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
             if [ -n "${LOAD_ORDER}" ]; then
-
+				echo "Load order is in place $LOAD_ORDER"
+				echo "before enabling PAM"
                 run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+				echo "before enabling nsswitch"
                 run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+				echo "After enabling nsswitch"
+			else
+				echo "Load Order is either empty or wrong"
             fi
+		else
+			echo "domainjoin-cli is not THERE"	
         fi
     fi
 
