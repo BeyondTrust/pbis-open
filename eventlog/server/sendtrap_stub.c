@@ -41,11 +41,13 @@
 
 typedef VOID (*PFN_SendTrapSetup) (void);
 typedef VOID (*PFN_SendTrapTearDown) ();
+typedef VOID (*PFN_SendTrapReadConfiguration) ();
 typedef VOID (*PFN_SendTrapProcessEvents) (DWORD Count, const LW_EVENTLOG_RECORD *pRecords);
 
-static PFN_SendTrapSetup          gpfnSendTrapSetup = NULL;
-static PFN_SendTrapTearDown       gpfnSendTrapTearDown = NULL;
-static PFN_SendTrapProcessEvents  gpfnSendTrapProcessEvents = NULL;
+static PFN_SendTrapSetup             gpfnSendTrapSetup = NULL;
+static PFN_SendTrapTearDown          gpfnSendTrapTearDown = NULL;
+static PFN_SendTrapReadConfiguration gpfnSendTrapReadConfiguration = NULL;
+static PFN_SendTrapProcessEvents     gpfnSendTrapProcessEvents = NULL;
 
 static void *                    gpSendTrapLibHandle = (void*) NULL;
 static BOOLEAN                   gbSendTrapLibInitialized = FALSE;
@@ -54,9 +56,9 @@ static BOOLEAN                   gbSendTrapLibInitialized = FALSE;
 //***************************************************************************
 //
 //***************************************************************************
-VOID EvtSnmpSetup()
+DWORD EvtSnmpSetup()
 {
-  DWORD dwError = 0;
+  DWORD dwError = ERROR_SUCCESS;
 
   if (gbSendTrapLibInitialized == TRUE)
      goto cleanup;
@@ -85,6 +87,13 @@ VOID EvtSnmpSetup()
       BAIL_ON_EVT_ERROR(dwError);
   }
 
+  gpfnSendTrapReadConfiguration = (PFN_SendTrapReadConfiguration) dlsym(gpSendTrapLibHandle, "SendTrapSnmpReadConfiguration");
+  if (gpfnSendTrapReadConfiguration == NULL)
+  {
+      dwError = LW_ERROR_LOOKUP_SYMBOL_FAILED;
+      BAIL_ON_EVT_ERROR(dwError);
+  }
+
   gpfnSendTrapProcessEvents = (PFN_SendTrapProcessEvents) dlsym(gpSendTrapLibHandle, "SendTrapProcessEvents");
   if (gpfnSendTrapProcessEvents == NULL)
   {
@@ -97,9 +106,11 @@ VOID EvtSnmpSetup()
      gpfnSendTrapSetup();
   }
 
+  dwError = EvtSnmpReadConfiguration();
+  BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-    return;
+    return dwError;
    
 error:
     goto cleanup;
@@ -136,6 +147,20 @@ error:
     goto cleanup;
 
 }
+
+//***************************************************************************
+//
+//***************************************************************************
+DWORD  EvtSnmpReadConfiguration()
+{
+   DWORD dwError = ERROR_SUCCESS;
+
+  if (gpSendTrapLibHandle && gpfnSendTrapReadConfiguration)
+     gpfnSendTrapReadConfiguration();
+
+  return dwError;
+}
+
 
 //****************************************************************************
 //

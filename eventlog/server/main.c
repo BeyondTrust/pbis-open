@@ -1248,13 +1248,40 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+EVTSvcmRefresh(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+   DWORD dwError = ERROR_SUCCESS;
+
+   EVT_LOG_INFO("Refreshing configuration");
+
+    dwError = EVTReadEventLogConfigSettings();
+    if (dwError != 0)
+    {
+        EVT_LOG_ERROR("Refresh. Failed to read eventlog configuration.  Error code: [%u]\n", dwError);
+        dwError = 0;
+    }
+
+    dwError = EvtSnmpReadConfiguration();
+    if (dwError != ERROR_SUCCESS)
+    {
+        EVT_LOG_ERROR("Refresh. Failed to read eventlog snmp configuration.  Error code: [%u]\n", dwError);
+        dwError = 0;
+    }
+
+   return dwError;
+}
+
 static LW_SVCM_MODULE gService =
 {
     .Size = sizeof(gService),
     .Init = EVTSvcmInit,
     .Destroy = EVTSvcmDestroy,
     .Start = EVTSvcmStart,
-    .Stop = EVTSvcmStop
+    .Stop = EVTSvcmStop,
+    .Refresh = EVTSvcmRefresh
 };
 
 #define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(eventlog)

@@ -40,9 +40,11 @@
 
 #include "includes.h"
 
-VOID EvtSnmpSetup();
+DWORD EvtSnmpSetup();
 
 VOID  EvtSnmpTearDown();
+
+DWORD EvtSnmpReadConfiguration();
 
 VOID EvtSnmpProcessEvents(DWORD Count, const LW_EVENTLOG_RECORD *pRecords);
 
