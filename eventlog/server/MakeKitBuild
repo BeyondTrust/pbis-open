@@ -22,6 +22,6 @@ make()
         SOURCES="$EVENTLOGD_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="gssapi.h dce/rpc.h sqlite3.h lwadvapi.h lw/base.h" \
-        LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils eventlog lwmsg lwmsg_nothr lwbase lwbase_nothr dl $LIB_PTHREAD $LIB_DL" \
+        LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils eventlog lwmsg lwmsg_nothr lwbase lwbase_nothr $LIB_PTHREAD $LIB_DL" \
         DEPS="eventlog_h.h"
 }
