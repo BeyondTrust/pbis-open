@@ -998,7 +998,7 @@ static
 DWORD
 EVTReadEventLogConfigSettings()
 {
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
     BOOLEAN bLocked = FALSE;
 
     EVT_LOG_INFO("Read Eventlog configuration settings");
@@ -1028,6 +1028,15 @@ EVTReadEventLogConfigSettings()
     EVTFreeSecurityDescriptor(gServerInfo.pAccess);
     gServerInfo.pAccess = NULL;
 
+    if (dwError == ERROR_SUCCESS)
+    {
+       dwError = EvtSnmpReadConfiguration();
+       if (dwError != ERROR_SUCCESS)
+       {
+           EVT_LOG_ERROR("Refresh. Failed to read eventlog snmp configuration.  Error code: [%u]\n", dwError);
+       }
+    }
+  
     EVT_UNLOCK_SERVERINFO;
     bLocked = FALSE;
 
@@ -1157,6 +1166,8 @@ EVTSvcmStart(
         goto cleanup;
     }
 
+    EvtSnmpSetup();
+
     dwError = EVTReadEventLogConfigSettings();
     if (dwError != 0)
     {
@@ -1169,8 +1180,6 @@ EVTSvcmStart(
 
     dwError = LwEvtDbInitEventDatabase();
     BAIL_ON_EVT_ERROR(dwError);
-
-    EvtSnmpSetup();
 
     dwError = LwmEvtSrvStartListenThread();
     BAIL_ON_EVT_ERROR(dwError);
@@ -1261,13 +1270,6 @@ EVTSvcmRefresh(
     if (dwError != 0)
     {
         EVT_LOG_ERROR("Refresh. Failed to read eventlog configuration.  Error code: [%u]\n", dwError);
-        dwError = 0;
-    }
-
-    dwError = EvtSnmpReadConfiguration();
-    if (dwError != ERROR_SUCCESS)
-    {
-        EVT_LOG_ERROR("Refresh. Failed to read eventlog snmp configuration.  Error code: [%u]\n", dwError);
         dwError = 0;
     }
 
