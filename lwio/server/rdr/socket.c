@@ -1512,13 +1512,16 @@ RdrSocketDispatchPacket1(
          pContext->Packet.sequence + 1,
          pSocket->pSessionKey,
          pSocket->dwSessionKeyLength);
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (ntStatus == STATUS_PENDING)
+      BAIL_ON_NT_STATUS(ntStatus);
 
     LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
-    bKeep = RdrContinueContext(pContext, STATUS_SUCCESS, pPacket);
+    bKeep = RdrContinueContext(pContext, ntStatus, pPacket);
     /* Ownership of packet was transferred to continuation */
     pPacket = NULL;
     LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
+
+    BAIL_ON_NT_STATUS(ntStatus);
 
     if (bKeep)
     {
