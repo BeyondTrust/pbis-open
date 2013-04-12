@@ -140,6 +140,11 @@ allow pbis_t usr_t:file { open read };
 domain_read_all_domains_state(pbis_t)
 
 require {
+    type unconfined_t;
+}
+allow pbis_t unconfined_t:unix_stream_socket { read write getattr };
+
+require {
     type alsa_t;
     type amanda_recover_t;
     type amanda_t;

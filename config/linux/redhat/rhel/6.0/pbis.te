@@ -150,6 +150,11 @@ init_read_utmp(pbis_t)
 manage_sock_files_pattern(pbis_t, tmp_t, tmp_t)
 
 require {
+    type unconfined_t;
+}
+allow pbis_t unconfined_t:unix_stream_socket { read write getattr };
+
+require {
     type abrt_t;
     type accountsd_t;
     type alsa_t;

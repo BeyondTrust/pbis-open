@@ -195,6 +195,7 @@ require {
     type chronyd_t;
     type clamd_t;
     type clvmd_t;
+    type colord_t;
     type comsat_t;
     type consolekit_t;
     type crond_t;
@@ -334,6 +335,7 @@ require {
     type syslogd_t;
     type system_cronjob_t;
     type system_dbusd_t;
+    type systemd_logind_t;
     type telnetd_t;
     type tftpd_t;
     type tor_t;
@@ -376,6 +378,7 @@ pbis_client(chronyd_t)
 pbis_client(clamd_t)
 pbis_client(clvmd_t)
 pbis_client(comsat_t)
+pbis_client(colord_t)
 pbis_client(consolekit_t)
 pbis_client(crond_t)
 pbis_client(cupsd_config_t)
@@ -517,6 +520,7 @@ allow syslogd_t pbis_t:unix_stream_socket {read write};
 allow syslogd_t pbis_var_lib_t:fifo_file { ioctl open getattr append };
 pbis_client(system_cronjob_t)
 pbis_client(system_dbusd_t)
+pbis_client(systemd_logind_t)
 pbis_client(telnetd_t)
 pbis_client(tftpd_t)
 pbis_client(tor_t)
