@@ -763,3 +763,45 @@
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
+  <section section="SNMP">
+    <capability>
+        <name>SNMPEnabled</name>
+        <description>True to send SNMP traps.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Enabled" >
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPCommunity</name>
+        <description>SNMP Community.</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Community" >
+            <default>
+                <value>public</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPPort</name>
+        <description>The port to send SNMP traps to.</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Port" >
+            <default>
+                <value>1162</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPTarget</name>
+        <description>The IP address or machine name to send SNMP traps to.</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Target" >
+            <default>
+                <value>localhost</value>
+            </default>
+        </registry>
+    </capability>
+  </section>
