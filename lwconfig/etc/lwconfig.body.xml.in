@@ -775,12 +775,12 @@
         </registry>
     </capability>
     <capability>
-        <name>SNMPCommunity</name>
-        <description>SNMP Community.</description>
+        <name>SNMPTarget</name>
+        <description>The IP address or machine name to send SNMP traps to.</description>
         <registry type="string"
-            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Community" >
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Target" >
             <default>
-                <value>public</value>
+                <value>localhost</value>
             </default>
         </registry>
     </capability>
@@ -795,12 +795,62 @@
         </registry>
     </capability>
     <capability>
-        <name>SNMPTarget</name>
-        <description>The IP address or machine name to send SNMP traps to.</description>
+        <name>SNMPCommunity</name>
+        <description>SNMP Community.</description>
         <registry type="string"
-            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Target" >
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Community" >
             <default>
-                <value>localhost</value>
+                <value>public</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPLogonAuthenticationGroup</name>
+        <description>Enable all traps in the Logon/Authentication group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\Enabled" >
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPAccountGroup</name>
+        <description>Enable all traps in the Account group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\Enabled" >
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPSystemServicesGroup</name>
+        <description>Enable all traps in the System/Services group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\Enabled" >
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPDomainGroup</name>
+        <description>Enable all traps in the Domain group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\Enabled" >
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>SNMPSudoGroup</name>
+        <description>Enable all traps in the Sudo group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\Enabled" >
+            <default>
+                <value>false</value>
             </default>
         </registry>
     </capability>
