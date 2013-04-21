@@ -100,6 +100,7 @@ domain_obj_id_change_exemption(pbis_t)
 files_manage_etc_files(pbis_t)
 files_manage_etc_symlinks(pbis_t)
 files_manage_etc_runtime_files(pbis_t)
+files_relabel_etc_files(pbis_t)
 files_relabelto_home(pbis_t)
 
 selinux_get_fs_mount(pbis_t)
@@ -153,6 +154,16 @@ require {
     type unconfined_t;
 }
 allow pbis_t unconfined_t:unix_stream_socket { read write getattr };
+
+require {
+    type crontab_exec_t;
+    type selinux_config_t;
+    type system_cron_spool_t;
+}
+allow pbis_t crontab_exec_t:file getattr;
+allow pbis_t selinux_config_t:dir { write remove_name add_name };
+allow pbis_t selinux_config_t:file { write rename create unlink setattr };
+allow pbis_t system_cron_spool_t:dir getattr;
 
 require {
     type abrt_t;
