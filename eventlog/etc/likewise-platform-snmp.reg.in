@@ -1,17 +1,58 @@
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps]
-"DisableAllTraps" = {
-    default = dword:00000001
+"Enabled" = {
+    default = dword:00000000
     doc = ""
     range = boolean
 }
-"TargetAddressPort" = {
-    default = sza:"localhost:162"
+"Target" = {
+    default = "localhost"
     doc = "Array of address:port numbers to send trap to"
 }
 "Community" = {
     default = "public"
     doc = ""
 }
+
+"Port" = { 
+    default = dword:0000048A
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication]
+"Enabled" = {
+    default = dword:00000000
+    doc = ""
+    range = boolean
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account]
+"Enabled" = {
+    default = dword:00000000
+    doc = ""
+    range = boolean
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices]
+"Enabled" = {
+    default = dword:00000000
+    doc = ""
+    range = boolean
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain]
+"Enabled" = {
+    default = dword:00000000
+    doc = ""
+    range = boolean
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo]
+"Enabled" = {
+    default = dword:00000000
+    doc = ""
+    range = boolean
+}
+---TODO: RKS Apr, 2013 Review from here forward
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass]
 "OID-Base" = {
