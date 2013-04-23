@@ -52,7 +52,6 @@
     doc = ""
     range = boolean
 }
----TODO: RKS Apr, 2013 Review from here forward
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass]
 "OID-Base" = {
