@@ -45,6 +45,10 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
+#include <lwmsg/type.h>
+#include <lwmsg/data.h>
+#include "../../lwmsg/include/type-private.h" // this is wrong
+
 typedef struct _NT_IPC_TRANSMIT_UNICODE_STRING {
     // Not NULL-terminated
     PWCHAR Characters;
@@ -111,13 +115,29 @@ NtIpcpUnmarshalUnicodeString(
     return LWMSG_STATUS_SUCCESS;
 }
 
+static
+VOID
+nj_destroy_presented(
+	IN LWMsgDataContext* context,
+    IN LWMsgTypeAttrs* attrs,
+    IN PVOID object,
+    IN PVOID data
+    )
+{
+    PVOID *p = (PVOID*)(object + 4);
+    free(*p);
+    *p = NULL;
+}
+
+
+
 LWMsgTypeClass gNtIpcTypeClassUnicodeString =
 {
     .is_pointer = LWMSG_FALSE,
     .transmit_type = gNtIpcTypeSpecTransmitUnicodeString,
     .marshal = NtIpcpMarshalUnicodeString,
     .unmarshal = NtIpcpUnmarshalUnicodeString,
-    .destroy_presented = NULL, // No custom free needed for unmarshalled type
+    .destroy_presented = nj_destroy_presented, // No custom free needed for unmarshalled type
     .destroy_transmitted = NULL, // No custom free neded for marshalled type
     .print = NULL // Use standard print based on transmit type spec
 };
