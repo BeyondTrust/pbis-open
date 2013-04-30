@@ -563,6 +563,9 @@ RdrNegotiateGssContextWorkItem(
     {
         pContext->Continue = RdrProcessSessionSetupResponse;
 
+        RdrFreePacket(pContext->State.TreeConnect.pPacket);
+        pContext->State.TreeConnect.pPacket = NULL;
+
         status = RdrTransceiveSessionSetup(
             pContext,
             pSession,
