@@ -117,7 +117,7 @@ NtIpcpUnmarshalUnicodeString(
 
 static
 VOID
-nj_destroy_presented(
+NtIpcDestroyPresented(
 	IN LWMsgDataContext* context,
     IN LWMsgTypeAttrs* attrs,
     IN PVOID object,
@@ -137,7 +137,7 @@ LWMsgTypeClass gNtIpcTypeClassUnicodeString =
     .transmit_type = gNtIpcTypeSpecTransmitUnicodeString,
     .marshal = NtIpcpMarshalUnicodeString,
     .unmarshal = NtIpcpUnmarshalUnicodeString,
-    .destroy_presented = nj_destroy_presented, // No custom free needed for unmarshalled type
+    .destroy_presented = NtIpcDestroyPresented, // No custom free needed for unmarshalled type
     .destroy_transmitted = NULL, // No custom free neded for marshalled type
     .print = NULL // Use standard print based on transmit type spec
 };
