@@ -12,60 +12,6 @@ configure()
         MK_SYSCONFDIR \
         MK_LOCALSTATEDIR
 
-    if mk_deb_enabled
-    then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade-debug"
-        else
-            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade"
-        fi
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_DEB_DATE="`date -R`"
-    fi
-
-    if mk_rpm_enabled
-    then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade-debug"
-        else
-            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade"
-        fi
-        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
-    fi
-
-    if mk_freebsd_enabled
-    then
-        mk_declare -o PKG_OPEN_UPGRADE_FREEBSD_NAME="${LW_VENDOR}-open-upgrade"
-        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
-    fi
-
-    if mk_pkg_enabled
-    then
-        mk_declare -o PKG_OPEN_UPGRADE_PKG_NAME="PBISopeng"
-        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
-        case "$MK_HOST_ARCH" in
-            x86)
-                PKG_PKG_ARCH="i386"
-                ;;
-            *)
-                PKG_PKG_ARCH="$MK_HOST_ARCH"
-                ;;
-        esac
-        mk_declare -o PKG_PKG_ARCH
-    fi
-
-    if mk_depot_enabled
-    then
-        mk_declare -o PKG_OPEN_UPGRADE_DEPOT_NAME="${LW_VENDOR}-open-upgrade"
-        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
-    fi
-
-    if mk_lpp_enabled
-    then
-        mk_declare -o PKG_OPEN_UPGRADE_LPP_NAME="${LW_VENDOR}-open-upgrade"
-        mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
-    fi
 }
 
 package_rpm()

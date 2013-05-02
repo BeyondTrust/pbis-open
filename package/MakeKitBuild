@@ -4,7 +4,105 @@ configure()
 {
     [ "$DJ_GUI_INTERFACE" = "gtk" ] || mk_skip_subdir open-gui
 
-    [ "$LW_APPLICATION_INTEGRATION" = "yes" ] || mk_skip_subdir application-integration
+    if [ "$LW_APPLICATION_INTEGRATION" = "yes" ]
+    then
+        if mk_deb_enabled
+        then
+            mk_declare -o PKG_OPEN_APP_INT_DEB_NAME="${LW_VENDOR}-application-integration"
+        fi
+
+        if mk_rpm_enabled
+        then
+            mk_declare -o PKG_OPEN_APP_INT_RPM_NAME="${LW_VENDOR}-application-integration"
+        fi
+    else
+        mk_skip_subdir application-integration
+    fi
+
+   if mk_deb_enabled
+    then
+        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
+            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open-debug"
+            mk_declare -o PKG_OPEN_GUI_DEB_NAME="${LW_VENDOR}-open-gui-debug"
+            mk_declare -o PKG_OPEN_LEGACY_DEB_NAME="${LW_VENDOR}-open-legacy-debug"
+            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade-debug"
+        else
+            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open"
+            mk_declare -o PKG_OPEN_GUI_DEB_NAME="${LW_VENDOR}-open-gui"
+            mk_declare -o PKG_OPEN_LEGACY_DEB_NAME="${LW_VENDOR}-open-legacy"
+            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade"
+        fi
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
+            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open-debug"
+            mk_declare -o PKG_OPEN_GUI_RPM_NAME="${LW_VENDOR}-open-gui-debug"
+            mk_declare -o PKG_OPEN_LEGACY_RPM_NAME="${LW_VENDOR}-open-legacy-debug"
+            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade-debug"
+        else
+            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open"
+            mk_declare -o PKG_OPEN_GUI_RPM_NAME="${LW_VENDOR}-open-gui"
+            mk_declare -o PKG_OPEN_LEGACY_RPM_NAME="${LW_VENDOR}-open-legacy"
+            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade"
+        fi
+        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
+    fi
+
+    if mk_freebsd_enabled
+    then
+        mk_declare -o PKG_OPEN_FREEBSD_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_GUI_FREEBSD_NAME="${LW_VENDOR}-open-gui"
+        mk_declare -o PKG_OPEN_LEGACY_FREEBSD_NAME="${LW_VENDOR}-open-legacy"
+        mk_declare -o PKG_OPEN_UPGRADE_FREEBSD_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
+    fi
+
+    if mk_pkg_enabled
+    then
+        mk_declare -o PKG_OPEN_PKG_NAME="PBISopen"
+        mk_declare -o PKG_OPEN_LEGACY_PKG_NAME="PBISopenl"
+        mk_declare -o PKG_OPEN_UPGRADE_PKG_NAME="PBISopeng"
+        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
+        case "$MK_HOST_ARCH" in
+            x86)
+                PKG_PKG_ARCH="i386"
+                ;;
+            *)
+                PKG_PKG_ARCH="$MK_HOST_ARCH"
+                ;;
+        esac
+        mk_declare -o PKG_PKG_ARCH
+    fi
+
+    if mk_depot_enabled
+    then
+        mk_declare -o PKG_OPEN_DEPOT_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_LEGACY_DEPOT_NAME="${LW_VENDOR}-open-legacy"
+        mk_declare -o PKG_OPEN_UPGRADE_DEPOT_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
+    fi
+
+    if mk_macpkg_enabled
+    then
+        mk_declare -o PKG_OPEN_MACPKG_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_LEGACY_MACPKG_NAME="${LW_VENDOR}-open-legacy"
+        mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}"
+    fi
+
+    if mk_lpp_enabled
+    then
+        mk_declare -o PKG_OPEN_LPP_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_LEGACY_LPP_NAME="${LW_VENDOR}-open-legacy"
+        mk_declare -o PKG_OPEN_UPGRADE_LPP_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
+    fi
+
+        
 }
 
 make()

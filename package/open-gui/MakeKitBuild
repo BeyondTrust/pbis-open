@@ -7,27 +7,8 @@ configure()
         MK_ROOT_DIR \
         MK_STAGE_DIR
 
-    if mk_deb_enabled
-    then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_GUI_DEB_NAME="${LW_VENDOR}-open-gui-debug"
-        else
-            mk_declare -o PKG_OPEN_GUI_DEB_NAME="${LW_VENDOR}-open-gui"
-        fi
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_DEB_DATE="`date -R`"
-    fi
-
     if mk_rpm_enabled
     then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_GUI_RPM_NAME="${LW_VENDOR}-open-gui-debug"
-        else
-            mk_declare -o PKG_OPEN_GUI_RPM_NAME="${LW_VENDOR}-open-gui"
-        fi
-        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_PATCH}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
-
         PKG_RPM_COMPAT="0"
 
         mk_compat_do
@@ -37,11 +18,6 @@ configure()
         mk_declare -o PKG_RPM_COMPAT
     fi
 
-    if mk_freebsd_enabled
-    then
-        mk_declare -o PKG_OPEN_GUI_FREEBSD_NAME="${LW_VENDOR}-open-gui"
-        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
-    fi
 }
 
 package_rpm()
