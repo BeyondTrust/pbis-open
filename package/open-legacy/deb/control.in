@@ -8,9 +8,9 @@ Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open
 
 Package: @PKG_OPEN_LEGACY_DEB_NAME@
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Provides: pbis-open-legacy
-Conflicts: pbis-open-legacy
-Replaces: pbis-open-legacy
+Depends: ${shlibs:Depends}, ${misc:Depends}, @PKG_OPEN_DEB_NAME@
+Provides: @PKG_OPEN_LEGACY_DEB_NAME@
+Conflicts: @PKG_OPEN_LEGACY_DEB_NAME@
+Replaces: @PKG_OPEN_LEGACY_DEB_NAME@
 Description: Provides symbolic links from the older command names and paths in Likewise Open to the new names and paths in PowerBroker Identity Services Open.
 

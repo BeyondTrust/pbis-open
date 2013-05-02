@@ -5,6 +5,7 @@ Release:        @PKG_RPM_RELEASE@
 License: 	Likewise Proprietary
 URL: 		http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 Group: 		System Environment/Daemons
+Obsoletes: likewise-open-upgrade, likewise-open, likewise-srvsvc, likewise-base, likewise-base-32bit, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventfwd, likewise-eventlog, likewise-grouppolicy, likewise-grouppolicy-32bit, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lsass-32bit, likewise-lsass-enterprise, likewise-lwadtool, likewise-lwadutil, likewise-lwconfig, likewise-lwio, likewise-lwnetapi, likewise-lwreskit, likewise-lwtools, likewise-lwreg, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-reapsysl, likewise-reskit, likewise-rpc, likewise-samba-interop, likewise-smartcard, likewise-smartcard-32bit, likewise-sqlite
 Prereq: grep, sh-utils
 AutoReq: no
 
@@ -105,16 +106,16 @@ determine_upgrade_type()
 
     if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
         log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
-        exit 1
+#        exit 1
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
         log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
-        exit 1
+#        exit 1
     elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
         log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
-        exit 1
+#        exit 1
     elif [ -f "/opt/likewise/sbin/gpagentd" ]; then
         log "/opt/likewise/sbin/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
-        exit 1
+#        exit 1
     fi
 
     if [ -f "$LW_VERSIONFILE" ]; then

@@ -8,6 +8,12 @@ Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open
 
 Package: @PKG_OPEN_GUI_DEB_NAME@
 Architecture: any
-Depends: pbis-open, ${shlibs:Depends}, ${misc:Depends}
+Depends: @PKG_OPEN_DEB_NAME@, ${shlibs:Depends}, ${misc:Depends}
 Description: Desktop utility for joining Active Directory domains
 
+Package: likewise-open-gui
+Depends: @PKG_OPEN_DEB_NAME@, ${misc:Depends}
+Architecture: all
+Section: oldlibs
+Description: transitional dummy package
+  This is a transitional dummy package. It can safely be removed.

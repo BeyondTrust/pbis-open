@@ -8,7 +8,7 @@ Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open
 
 Package: @PKG_OPEN_APP_INT_DEB_NAME@
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, @PKG_OPEN_DEB_NAME@
 Provides: @PKG_OPEN_APP_INT_DEB_NAME@
 Conflicts: @PKG_OPEN_APP_INT_DEB_NAME@,
 Replaces: @PKG_OPEN_APP_INT_DEB_NAME@

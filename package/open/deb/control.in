@@ -8,10 +8,11 @@ Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open
 
 Package: @PKG_OPEN_DEB_NAME@
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Provides: @PKG_OPEN_DEB_NAME@
+Depends: ${shlibs:Depends}, ${misc:Depends}, @PKG_OPEN_UPGRADE_DEB_NAME@
+Provides: @PKG_OPEN_DEB_NAME@, likewise-open
 Conflicts: @PKG_OPEN_DEB_NAME@,
  winbind,
+ likewise-open,
  likewise-base (<< 6.2),
  likewise-domainjoin (<< 6.2),
  likewise-domainjoin-gui (<< 6.2),
@@ -33,7 +34,30 @@ Conflicts: @PKG_OPEN_DEB_NAME@,
  likewise-rpc (<< 6.2),
  likewise-sqlite (<< 6.2),
  likewise-srvsvc (<< 6.2),
-Replaces: @PKG_OPEN_DEB_NAME@
+Replaces: @PKG_OPEN_DEB_NAME@,
+ likewise-open,
+ likewise-open-upgrade,
+ likewise-base (<< 6.2),
+ likewise-domainjoin (<< 6.2),
+ likewise-domainjoin-gui (<< 6.2),
+ likewise-eventlog (<< 6.2),
+ likewise-krb5 (<< 6.2),
+ likewise-libxml2 (<< 6.2),
+ likewise-lsass (<< 6.2),
+ likewise-lwconfig (<< 6.2),
+ likewise-lwio (<< 6.2),
+ likewise-lwreg (<< 6.2),
+ likewise-lwreskit (<< 6.2),
+ likewise-lwtools (<< 6.2),
+ likewise-lwupgrade (<< 6.2),
+ likewise-mod-auth-kerb (<< 6.2),
+ likewise-netlogon (<< 6.2),
+ likewise-openldap (<< 6.2),
+ likewise-passwd (<< 6.2),
+ likewise-pstore (<< 6.2),
+ likewise-rpc (<< 6.2),
+ likewise-sqlite (<< 6.2),
+ likewise-srvsvc (<< 6.2),
 Description: Authentication services for Active Directory domains
  PowerBroker Identity Services integrates Unix desktops and servers into
  an Active Directory environment by joining hosts to the domain and lets Unix

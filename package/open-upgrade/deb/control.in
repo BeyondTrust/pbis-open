@@ -9,9 +9,15 @@ Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open
 Package: @PKG_OPEN_UPGRADE_DEB_NAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Provides: pbis-open-upgrade
-Conflicts: pbis-open-upgrade
-Replaces: pbis-open-upgrade
+Provides: @PKG_OPEN_UPGRADE_DEB_NAME@
+Conflicts: @PKG_OPEN_UPGRADE_DEB_NAME@
+Replaces: @PKG_OPEN_UPGRADE_DEB_NAME@, likewise-open-upgrade, likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
 Description: Helper package for upgrading systems with versions preceding
  PowerBroker Identity Services Open 7.0.
 
+Package: likewise-open
+Depends: @PKG_OPEN_UPGRADE_DEB_NAME@, ${misc:Depends}
+Architecture: all
+Section: oldlibs
+Description: transitional dummy package
+  This is a transitional dummy package. It can safely be removed.
