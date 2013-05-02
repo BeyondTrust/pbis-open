@@ -19,19 +19,6 @@ configure()
         LW_INITDIR \
         PRIMARY_LIBDIR="$MK_LIBDIR"
 
-    if mk_deb_enabled
-    then
-        mk_declare -o PKG_OPEN_APP_INT_DEB_NAME="${LW_VENDOR}-application-integration"
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_DEB_DATE="`date -R`"
-    fi
-
-    if mk_rpm_enabled
-    then
-        mk_declare -o PKG_OPEN_APP_INT_RPM_NAME="${LW_VENDOR}-application-integration"
-        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
-    fi
 }
 
 package_deb()

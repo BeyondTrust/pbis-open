@@ -19,65 +19,6 @@ configure()
         LW_INITDIR \
         PRIMARY_LIBDIR="$MK_LIBDIR"
 
-    if mk_deb_enabled
-    then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open-debug"
-        else
-            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open"
-        fi
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_DEB_DATE="`date -R`"
-    fi
-
-    if mk_rpm_enabled
-    then
-        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open-debug"
-        else
-            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open"
-        fi
-        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
-    fi
-
-    if mk_freebsd_enabled
-    then
-        mk_declare -o PKG_OPEN_FREEBSD_NAME="${LW_VENDOR}-open"
-    fi
-
-    if mk_pkg_enabled
-    then
-        mk_declare -o PKG_OPEN_PKG_NAME="PBISopen"
-        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
-        case "$MK_HOST_ARCH" in
-            x86)
-                PKG_PKG_ARCH="i386"
-                ;;
-            *)
-                PKG_PKG_ARCH="$MK_HOST_ARCH"
-                ;;
-        esac
-        mk_declare -o PKG_PKG_ARCH
-    fi
-
-    if mk_depot_enabled
-    then
-        mk_declare -o PKG_OPEN_DEPOT_NAME="${LW_VENDOR}-open"
-        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
-    fi
-
-    if mk_macpkg_enabled
-    then
-        mk_declare -o PKG_OPEN_MACPKG_NAME="${LW_VENDOR}-open"
-        mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}"
-    fi
-
-    if mk_lpp_enabled
-    then
-        mk_declare -o PKG_OPEN_LPP_NAME="${LW_VENDOR}-open"
-        mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
-    fi
 }
 
 package_deb()
