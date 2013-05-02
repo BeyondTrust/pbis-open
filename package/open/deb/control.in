@@ -1,4 +1,4 @@
-Source: @PKG_DEB_NAME@
+Source: @PKG_OPEN_DEB_NAME@
 Section: net
 Priority: optional
 Maintainer: PBIS Support <pbis-support@beyondtrust.com>
@@ -6,11 +6,11 @@ Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
 Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 
-Package: @PKG_DEB_NAME@
+Package: @PKG_OPEN_DEB_NAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Provides: @PKG_DEB_NAME@
-Conflicts: @PKG_DEB_NAME@,
+Provides: @PKG_OPEN_DEB_NAME@
+Conflicts: @PKG_OPEN_DEB_NAME@,
  winbind,
  likewise-base (<< 6.2),
  likewise-domainjoin (<< 6.2),
@@ -33,14 +33,14 @@ Conflicts: @PKG_DEB_NAME@,
  likewise-rpc (<< 6.2),
  likewise-sqlite (<< 6.2),
  likewise-srvsvc (<< 6.2),
-Replaces: @PKG_DEB_NAME@
+Replaces: @PKG_OPEN_DEB_NAME@
 Description: Authentication services for Active Directory domains
  PowerBroker Identity Services integrates Unix desktops and servers into
  an Active Directory environment by joining hosts to the domain and lets Unix
  applications and services authenticate Windows users and groups via the PAM
  and Name Service Switch libraries.
 
-Package: @PKG_DEB_NAME@-dev
+Package: @PKG_OPEN_DEB_NAME@-dev
 Section: libdevel
 Architecture: any
 #Depends: likewise_open (= ${binary:Version})

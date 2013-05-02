@@ -1,4 +1,4 @@
-Name: 		@PKG_RPM_NAME@
+Name: 		@PKG_OPEN_GUI_RPM_NAME@
 Summary: 	PowerBroker Identity Services Graphical Interface
 Version:        @PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@

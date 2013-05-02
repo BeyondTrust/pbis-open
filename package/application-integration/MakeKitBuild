@@ -21,14 +21,14 @@ configure()
 
     if mk_deb_enabled
     then
-        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-application-integration"
+        mk_declare -o PKG_OPEN_APP_INT_DEB_NAME="${LW_VENDOR}-application-integration"
         mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
     if mk_rpm_enabled
     then
-        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-application-integration"
+        mk_declare -o PKG_OPEN_APP_INT_RPM_NAME="${LW_VENDOR}-application-integration"
         mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
     fi
@@ -37,7 +37,7 @@ configure()
 package_deb()
 {
     mk_deb_do \
-        PACKAGE="$PKG_DEB_NAME" \
+        PACKAGE="$PKG_OPEN_APP_INT_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
         DEBIANFILES="deb/changelog.in deb/control.in \
                      deb/compat.in \
@@ -51,7 +51,7 @@ package_deb()
 package_rpm()
 {
     mk_rpm_do \
-        PACKAGE="$PKG_RPM_NAME" \
+        PACKAGE="$PKG_OPEN_APP_INT_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/application-integration.spec.in"
 

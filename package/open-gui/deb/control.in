@@ -1,4 +1,4 @@
-Source: @PKG_DEB_NAME@
+Source: @PKG_OPEN_GUI_DEB_NAME@
 Section: net
 Priority: optional
 Maintainer: PBIS Support <pbis-support@beyondtrust.com>
@@ -6,7 +6,7 @@ Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
 Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 
-Package: @PKG_DEB_NAME@
+Package: @PKG_OPEN_GUI_DEB_NAME@
 Architecture: any
 Depends: pbis-open, ${shlibs:Depends}, ${misc:Depends}
 Description: Desktop utility for joining Active Directory domains

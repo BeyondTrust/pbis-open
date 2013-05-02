@@ -20,7 +20,7 @@ pyversio := $(shell pyversions -vd)
 #include /usr/share/quilt/quilt.make
 
 DESTDIR=`pwd`/debian/tmp
-PKGNAME=@PKG_DEB_NAME@
+PKGNAME=@PKG_OPEN_UPGRADE_DEB_NAME@
 PREFIX=@MK_PREFIX@
 
 
