@@ -7,7 +7,10 @@ Release: 	@PKG_RPM_RELEASE@
 License: 	Likewise Proprietary
 URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 Group: 		System Environment/Daemons
-Prereq: grep, sh-utils
+Prereq: grep, sh-utils, @PKG_OPEN_UPGRADE_RPM_NAME@
+Conflicts:  winbind 
+Obsoletes: likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
+Provides: @PKG_OPEN_RPM_NAME@ , likewise-open
 AutoReq: no
 AutoProv: no
 
