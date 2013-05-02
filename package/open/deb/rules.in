@@ -19,7 +19,7 @@ pyversio := $(shell pyversions -vd)
 
 #include /usr/share/quilt/quilt.make
 
-PKGNAME=@PKG_DEB_NAME@
+PKGNAME=@PKG_OPEN_DEB_NAME@
 PREFIX=@MK_PREFIX@
 
 configure: configure-stamp

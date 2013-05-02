@@ -8,4 +8,4 @@ DESC=Adds symbolic links in /opt/likewise/bin for legacy scripts.
 HOTLINE=1-800-234-9072,1-818-575-4040
 EMAIL=pbis-support@beyondtrust.com
 CLASSES=none
-VSTOCK=@PKG_PKG_NAME@
+VSTOCK=@PKG_OPEN_LEGACY_PKG_NAME@

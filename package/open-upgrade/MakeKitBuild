@@ -15,9 +15,9 @@ configure()
     if mk_deb_enabled
     then
         if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-upgrade-debug"
+            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade-debug"
         else
-            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-upgrade"
+            mk_declare -o PKG_OPEN_UPGRADE_DEB_NAME="${LW_VENDOR}-open-upgrade"
         fi
         mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
@@ -26,9 +26,9 @@ configure()
     if mk_rpm_enabled
     then
         if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-upgrade-debug"
+            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade-debug"
         else
-            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-upgrade"
+            mk_declare -o PKG_OPEN_UPGRADE_RPM_NAME="${LW_VENDOR}-open-upgrade"
         fi
         mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
@@ -36,13 +36,13 @@ configure()
 
     if mk_freebsd_enabled
     then
-        mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_OPEN_UPGRADE_FREEBSD_NAME="${LW_VENDOR}-open-upgrade"
         mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
     fi
 
     if mk_pkg_enabled
     then
-        mk_declare -o PKG_PKG_NAME="PBISopeng"
+        mk_declare -o PKG_OPEN_UPGRADE_PKG_NAME="PBISopeng"
         mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
         case "$MK_HOST_ARCH" in
             x86)
@@ -57,13 +57,13 @@ configure()
 
     if mk_depot_enabled
     then
-        mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_OPEN_UPGRADE_DEPOT_NAME="${LW_VENDOR}-open-upgrade"
         mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
     fi
 
     if mk_lpp_enabled
     then
-        mk_declare -o PKG_LPP_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_OPEN_UPGRADE_LPP_NAME="${LW_VENDOR}-open-upgrade"
         mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
     fi
 }
@@ -71,7 +71,7 @@ configure()
 package_rpm()
 {
     mk_rpm_do \
-        PACKAGE="$PKG_RPM_NAME" \
+        PACKAGE="$PKG_OPEN_UPGRADE_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/open-upgrade.spec.in"
 
@@ -81,7 +81,7 @@ package_rpm()
 package_deb()
 {
     mk_deb_do \
-        PACKAGE="$PKG_DEB_NAME" \
+        PACKAGE="$PKG_OPEN_UPGRADE_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
         DEBIANFILES="deb/pbis-open-upgrade.preinst.in deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
 
@@ -91,7 +91,7 @@ package_deb()
 package_freebsd()
 {
     mk_freebsd_do \
-        PACKAGE="$PKG_FREEBSD_NAME" \
+        PACKAGE="$PKG_OPEN_UPGRADE_FREEBSD_NAME" \
         VERSION="$PKG_FREEBSD_VERSION" \
         SHORT="-PowerBroker Identity Services Open Upgrade Helper" \
         LONG="-Aids in upgrading between versions of PowerBroker Identity Services Open" \
@@ -104,7 +104,7 @@ package_freebsd()
 package_pkg()
 {
     mk_pkg_do \
-        PACKAGE="$PKG_PKG_NAME" \
+        PACKAGE="$PKG_OPEN_UPGRADE_PKG_NAME" \
         VERSION="$PKG_PKG_VERSION"
 
         mk_pkg_sub_do \
@@ -118,7 +118,7 @@ package_pkg()
 package_lpp()
 {
     mk_lpp_do \
-        PACKAGE="${PKG_LPP_NAME}" \
+        PACKAGE="${PKG_OPEN_UPGRADE_LPP_NAME}" \
         VERSION="${PKG_LPP_VERSION}"
 
         mk_lpp_sub_do \
@@ -134,7 +134,7 @@ package_lpp()
 package_depot()
 {
     mk_depot_do \
-        PACKAGE="$PKG_DEPOT_NAME" \
+        PACKAGE="$PKG_OPEN_UPGRADE_DEPOT_NAME" \
         VERSION="$PKG_DEPOT_VERSION" \
         PSF="depot/open-upgrade.psf.in" \
         CONTROLFILES="depot/copyright.in depot/postinstall.in depot/depend.in"

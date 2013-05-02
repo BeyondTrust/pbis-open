@@ -22,9 +22,9 @@ configure()
     if mk_deb_enabled
     then
         if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-debug"
+            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open-debug"
         else
-            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open"
+            mk_declare -o PKG_OPEN_DEB_NAME="${LW_VENDOR}-open"
         fi
         mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
@@ -33,9 +33,9 @@ configure()
     if mk_rpm_enabled
     then
         if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
-            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-debug"
+            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open-debug"
         else
-            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open"
+            mk_declare -o PKG_OPEN_RPM_NAME="${LW_VENDOR}-open"
         fi
         mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
@@ -43,12 +43,12 @@ configure()
 
     if mk_freebsd_enabled
     then
-        mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_FREEBSD_NAME="${LW_VENDOR}-open"
     fi
 
     if mk_pkg_enabled
     then
-        mk_declare -o PKG_PKG_NAME="PBISopen"
+        mk_declare -o PKG_OPEN_PKG_NAME="PBISopen"
         mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
         case "$MK_HOST_ARCH" in
             x86)
@@ -63,19 +63,19 @@ configure()
 
     if mk_depot_enabled
     then
-        mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_DEPOT_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
     fi
 
     if mk_macpkg_enabled
     then
-        mk_declare -o PKG_MACPKG_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_MACPKG_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}"
     fi
 
     if mk_lpp_enabled
     then
-        mk_declare -o PKG_LPP_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_OPEN_LPP_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
     fi
 }
@@ -83,7 +83,7 @@ configure()
 package_deb()
 {
     mk_deb_do \
-        PACKAGE="$PKG_DEB_NAME" \
+        PACKAGE="$PKG_OPEN_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
         DEBIANFILES="deb/changelog.in deb/control.in \
                      deb/pbis-open.postinst.in deb/pbis-open.postrm.in deb/compat.in \
@@ -101,7 +101,7 @@ package_deb()
 package_rpm()
 {
     mk_rpm_do \
-        PACKAGE="$PKG_RPM_NAME" \
+        PACKAGE="$PKG_OPEN_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/open.spec.in"
 
@@ -117,7 +117,7 @@ package_rpm()
 package_freebsd()
 {
     mk_freebsd_do \
-        PACKAGE="$PKG_FREEBSD_NAME" \
+        PACKAGE="$PKG_OPEN_FREEBSD_NAME" \
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}" \
         SHORT="-PowerBroker Identity Services Open ${LW_VERSION}" \
         LONG="-PowerBroker Identity Services Open joins your machine into Active Directory" \
@@ -139,7 +139,7 @@ package_freebsd()
 package_pkg()
 {
     mk_pkg_do \
-        PACKAGE="$PKG_PKG_NAME" \
+        PACKAGE="$PKG_OPEN_PKG_NAME" \
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
 
         mk_pkg_sub_do \
@@ -227,7 +227,7 @@ package_pkg()
 package_lpp()
 {
     mk_lpp_do \
-        PACKAGE="${PKG_LPP_NAME}" \
+        PACKAGE="${PKG_OPEN_LPP_NAME}" \
         VERSION="${PKG_LPP_VERSION}"
     
         mk_lpp_sub_do \
@@ -283,7 +283,7 @@ package_lpp()
 package_depot()
 {
     mk_depot_do \
-        PACKAGE="${PKG_DEPOT_NAME}" \
+        PACKAGE="${PKG_OPEN_DEPOT_NAME}" \
         VERSION="${PKG_DEPOT_VERSION}" \
         PSF="depot/open.psf.in" \
         CONTROLFILES="depot/copyright.in depot/depend.in depot/postinstall.in \
@@ -321,7 +321,7 @@ package_depot()
 package_mac()
 {
     mk_macpkg_do \
-        PACKAGE="${PKG_MACPKG_NAME}" \
+        PACKAGE="${PKG_OPEN_MACPKG_NAME}" \
         VERSION="${PKG_MACPKG_VERSION}" \
         PMDOC="mac/likewise-open.pmdoc" \
         RESOURCES="mac/Resources/postflight mac/Resources/preflight \

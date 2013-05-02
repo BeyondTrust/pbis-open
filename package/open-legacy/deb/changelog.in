@@ -1,4 +1,4 @@
-@PKG_DEB_NAME@ (@PKG_DEB_VERSION@) gutsy; urgency=low
+@PKG_OPEN_LEGACY_DEB_NAME@ (@PKG_DEB_VERSION@) gutsy; urgency=low
 
   * New PowerBroker Identity Services Open release
 

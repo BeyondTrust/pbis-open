@@ -1,6 +1,6 @@
 # ex: set tabstop=4 expandtab shiftwidth=4:
 
-Name: 		@PKG_RPM_NAME@
+Name: 		@PKG_OPEN_RPM_NAME@
 Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
@@ -17,11 +17,11 @@ PowerBroker Identity Services Open integrates Unix desktops and servers into an 
 %package devel
 Summary: PowerBroker Identity Services Open (development)
 Group: Development/Libraries
-Requires: @PKG_RPM_NAME@
+Requires: @PKG_OPEN_RPM_NAME@
 
 
 %description devel
-The @PKG_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
+The @PKG_OPEN_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
 
 %define AdProviderPath @PRIMARY_LIBDIR@/lsa-provider/ad_open.so
 %post

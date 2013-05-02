@@ -8,4 +8,4 @@ DESC=Authentication services for Active Directory
 HOTLINE=1-800-234-9072,1-818-575-4040
 EMAIL=pbis-support@beyondtrust.com
 CLASSES=none
-VSTOCK=@PKG_PKG_NAME@
+VSTOCK=@PKG_OPEN_PKG_NAME@

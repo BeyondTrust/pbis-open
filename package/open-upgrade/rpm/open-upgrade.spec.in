@@ -1,4 +1,4 @@
-Name: 		@PKG_RPM_NAME@
+Name: 		@PKG_OPEN_UPGRADE_RPM_NAME@
 Summary: 	Upgrade helper package for PowerBroker Identity Services Open
 Version: 	@PKG_RPM_VERSION@
 Release:        @PKG_RPM_RELEASE@
