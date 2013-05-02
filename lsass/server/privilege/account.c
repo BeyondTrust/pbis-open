@@ -713,6 +713,8 @@ LsaSrvPrivsOpenAccount(
     accountContext->releaseAccessToken = releaseAccessToken;
     accountContext->grantedAccess = grantedAccess;
 
+    releaseAccessToken = FALSE;
+
     *pAccountContext = accountContext;
 
 error:
@@ -721,6 +723,11 @@ error:
         LsaSrvPrivsCloseAccount(&accountContext);
 
         *pAccountContext = NULL;
+    }
+
+    if (releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accessToken);
     }
 
     if (err == ERROR_SUCCESS &&
