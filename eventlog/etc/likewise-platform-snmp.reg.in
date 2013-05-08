@@ -27,299 +27,299 @@
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedADUserSSHLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedADUserTextConsoleLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationConsole]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationFTP]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationGraphical]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationOther]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationPasswd]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationScreenSaver]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationSmartcard]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationSSH]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationSU]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedAuthenticationTelnet]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLocalUserSSHLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLocalUserTextConsoleLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonAccountDisabled]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonAccountExpired]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonAccountLocked]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonAccountRestricted]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonMachineRestrictionViolation]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonNetLogonError]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonPasswordExpired]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonTimeRestrictionViolation]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonTypeOfLogonNotGranted]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonUnexpectedError]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLogonUnknownUserOrBadPassword]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulADUserSSHLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulADUserTextConsoleLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationConsole]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationFTP]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationGraphical]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationOther]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationPasswd]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationScreenSaver]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationSmartcard]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationSSH]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationSU]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulAuthenticationTelnet]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\failedLocalUserSSHLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulLocalUserTextConsoleLogon]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulLogoff]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulLogonAuthenticate]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulLogonCheckUser]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\LogonAuthentication\successfulLogonCreateSession]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
@@ -334,91 +334,91 @@
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\addGroup]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\addUserAccount]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\deleteGroup]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\deleteUserAccount]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\failedMachineAccountPasswordUpdate]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\failedMachineAccountTGTRefresh]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\failedUserAccountKerbRefresh]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\failedUserAccountPasswordChange]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\requireMembershipOfUpdated]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\successfulMachineAccountPasswordUpdate]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\successfulMachineAccountTGTRefresh]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\successfulUserAccountKerbRefresh]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Account\successfulUserAccountPasswordChange]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
@@ -431,182 +431,182 @@
 }
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\auditingConfigurationDisabled]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\auditingConfigurationEnabled]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\detectedAliasConflict]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\detectedIdConflict]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\failedPolicyUpdate]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\failedProviderInitialization]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\gpagentServiceConfigurationChanged]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\gpagentServiceFailed]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\gpagentServiceStarted]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\gpagentServiceStartFailure]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\gpagentServiceStopped]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceConfigurationChanged]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceFailed]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceFailed]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceStarted]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceStartFailure]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\lsassServiceStopped]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\netlogonServiceConfigurationChanged]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\netlogonServiceFailed]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\netlogonServiceStarted]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\netlogonServiceStartFailure]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\netlogonServiceStopped]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\processingIssueEncountered]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\processingIssueResolved]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\successfulPolicyUpdate]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\SystemServices\successfulProviderInitialization]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
@@ -620,42 +620,42 @@
 }
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\failedDomainJoin]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\failedDomainLeave]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\networkDomainOffline]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\networkDomainOnline]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\successfulDomainJoin]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Domain\successfulDomainLeave]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
@@ -669,49 +669,49 @@
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\failedAuthenticationSudo]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\successfulAuthenticationSudo]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\sudoAccessDenied]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\sudoBadPAssword]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\sudoersFileChangedByPolicy]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\sudoersFileChangedLocally]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\Sudo\sudoSuccess]
 "Enabled" = {
-    default = dword:00000001
+    value = dword:00000001
     doc = ""
     range = boolean
 }
