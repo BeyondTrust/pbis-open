@@ -46,7 +46,6 @@ configure()
     lw_check_pthread_once_init
 
     mk_output_file etc/eventlogd.reg
-    mk_output_file etc/likewise-platform-snmp.reg
     mk_output_file etc/lwreport.xml
 
     MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
