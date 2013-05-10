@@ -497,6 +497,21 @@ is_package_installed_linux_deb()
     return 1
 }
 
+is_package_uninstalled_linux_deb()
+{
+    _status="`dpkg -s $1 2>/dev/null | grep Status: 2>/dev/null`"
+    if [ $? -eq 0 ]
+    then
+        if echo "$_status" | grep ' deinstall' >/dev/null 2>&1
+        then
+            echo $1
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 package_install_linux_deb()
 {
     eval "dpkg ${DPKG_INSTALL_OPTIONS} '$@'"
@@ -631,6 +646,12 @@ remove_extra_files()
 is_package_installed()
 {
     is_package_installed_${PKGTYPE} "$@"
+    return $?
+}
+
+is_package_uninstalled()
+{
+    is_package_uninstalled_linux_deb "$@"
     return $?
 }
 
@@ -910,6 +931,11 @@ do_purge()
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
             pkgList="$pkgList $pkgName"
+        else
+            pkgName=`is_package_uninstalled $pkg`
+            if [ $? -eq 0 ];then
+                pkgList="$pkgList $pkgName"
+            fi
         fi
     done
 
