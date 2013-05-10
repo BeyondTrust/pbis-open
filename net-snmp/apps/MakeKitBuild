@@ -1,8 +1,0 @@
-make()
-{
-    mk_program \
-        PROGRAM=snmptrap \
-        SOURCES=snmptrap.c \
-        INCLUDEDIRS=". ../include" \
-        LIBDEPS="netsnmp"
-}

@@ -1,1 +1,0 @@
-shutdown_usm();

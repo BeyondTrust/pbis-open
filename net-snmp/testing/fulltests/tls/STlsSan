@@ -1,6 +1,0 @@
-#!/bin/sh
-
-checknametype="--san"
-checknameprefix="DNS:"
-
-. STlsServer
