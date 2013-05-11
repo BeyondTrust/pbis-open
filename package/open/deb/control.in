@@ -11,7 +11,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, @PKG_OPEN_UPGRADE_DEB_NAME@
 Provides: @PKG_OPEN_DEB_NAME@, likewise-open
 Conflicts: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@), 
- @PKG_ENTERPRISE_DEB_NAME@,
+ pbis-enterprise,
  likewise-open (<< 6.2),
  likewise-base (<< 6.2),
  likewise-domainjoin (<< 6.2),
@@ -35,7 +35,6 @@ Conflicts: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-samba-interop (<< 6.2),
  likewise-sqlite (<< 6.2),
  likewise-enterprise (<< 6.2),
- pbis-open (<< @PKG_DEB_VERSION@),
 Replaces: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@), 
  likewise-open (<< 6.2),
  likewise-base (<< 6.2),

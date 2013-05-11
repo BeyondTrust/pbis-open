@@ -10,7 +10,7 @@ Package: @PKG_OPEN_UPGRADE_DEB_NAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Provides: @PKG_OPEN_UPGRADE_DEB_NAME@
-Conflicts: @PKG_OPEN_UPGRADE_DEB_NAME@, (<< @PKG_DEB_VERSION@),
+Conflicts: @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-open-upgrade (<< 6.2),
  likewise-lwupgrade (<< 6.2),
  likewise-lwreskit (<< 6.2),
@@ -23,7 +23,6 @@ Conflicts: @PKG_OPEN_UPGRADE_DEB_NAME@, (<< @PKG_DEB_VERSION@),
 Replaces: @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-open-upgrade (<< 6.2),
  likewise-lwupgrade (<< 6.2),
- @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-lwreskit (<< 6.2),
  likewise-mod-auth-kerb (<< 6.2),
  likewise-reskit (<< 6.2),
