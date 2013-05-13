@@ -129,9 +129,6 @@ int MAIN(int argc, char **argv)
 	char	*infile = NULL, *outfile = NULL, *prog;
 	BIO 	*in = NULL, *out = NULL;
 	int 	informat, outformat, noout = 0, C = 0, ret = 1;
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE	*e = NULL;
-#endif
 	char	*engine = NULL;
 
 	BIGNUM	*ec_p = NULL, *ec_a = NULL, *ec_b = NULL,
@@ -340,7 +337,7 @@ bad:
 		}
 
 #ifndef OPENSSL_NO_ENGINE
-	e = setup_engine(bio_err, engine, 0);
+	setup_engine(bio_err, engine, 0);
 #endif
 
 	if (list_curves)
@@ -725,4 +722,10 @@ static int ecparam_print_var(BIO *out, BIGNUM *in, const char *var,
 	BIO_printf(out, "\n\t};\n\n");
 	return 1;
 	}
+#else /* !OPENSSL_NO_EC */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

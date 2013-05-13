@@ -63,9 +63,10 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
+#include <openssl/crypto.h>
 #include "des_locl.h"
 
-OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key);	/* defaults to false */
+OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key,0)	/* defaults to false */
 
 static const unsigned char odd_parity[256]={
   1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,
@@ -335,8 +336,15 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 	}
 
 void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
+#ifdef OPENSSL_FIPS
 	{
-	static int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
+	fips_cipher_abort(DES);
+	private_DES_set_key_unchecked(key, schedule);
+	}
+void private_DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
+#endif
+	{
+	static const int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 	register DES_LONG c,d,t,s,t2;
 	register const unsigned char *in;
 	register DES_LONG *k;

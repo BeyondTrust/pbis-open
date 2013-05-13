@@ -291,7 +291,7 @@ make()
         @eventlog @lsass @reapsysl @lwdns @lwnetapi \
         @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
         @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
-        @reskit @usermonitor @mod_auth_kerb"
+        @reskit @usermonitor @mod_auth_kerb @krb5_plugins"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm

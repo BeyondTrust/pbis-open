@@ -1,8 +1,9 @@
 make()
 {
     KRB5_HEADERS="\
-        krb5/krb5.h
-        krb5/locate_plugin.h
+        krb5/krb5.h \
+        krb5/locate_plugin.h \
+        krb5/preauth_plugin.h \
         kdb.h \
         krb5.h \
         gssapi/gssapi_err_generic.h \
@@ -49,6 +50,8 @@ make()
         HEADERS="$KRB5_HEADERS" \
         LIBS="$KRB5_LIBS" \
         TARGETS="$KRB5_EXTRA_TARGETS" \
+        -- \
+        --with-crypto-impl=openssl \
         --enable-shared \
         --enable-pkinit \
         --without-tcl

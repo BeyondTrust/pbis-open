@@ -69,6 +69,8 @@
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
      defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 #  define md5_block_data_order md5_block_asm_data_order
+# elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#  define md5_block_data_order md5_block_asm_data_order
 # endif
 #endif
 
@@ -84,10 +86,10 @@ void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
 #define HASH_FINAL		MD5_Final
 #define	HASH_MAKE_STRING(c,s)	do {	\
 	unsigned long ll;		\
-	ll=(c)->A; HOST_l2c(ll,(s));	\
-	ll=(c)->B; HOST_l2c(ll,(s));	\
-	ll=(c)->C; HOST_l2c(ll,(s));	\
-	ll=(c)->D; HOST_l2c(ll,(s));	\
+	ll=(c)->A; (void)HOST_l2c(ll,(s));	\
+	ll=(c)->B; (void)HOST_l2c(ll,(s));	\
+	ll=(c)->C; (void)HOST_l2c(ll,(s));	\
+	ll=(c)->D; (void)HOST_l2c(ll,(s));	\
 	} while (0)
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
 

@@ -68,6 +68,8 @@
 #include <lwio/lwio.h>
 #include <lwnet.h>
 #include <wc16printf.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 #ifdef HAVE_STRINGS_H
    #include <strings.h>
 #endif

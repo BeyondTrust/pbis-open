@@ -1,5 +1,5 @@
 /* pcy_cache.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
 /* ====================================================================
@@ -139,7 +139,6 @@ static int policy_cache_new(X509 *x)
 		return 0;
 	cache->anyPolicy = NULL;
 	cache->data = NULL;
-	cache->maps = NULL;
 	cache->any_skip = -1;
 	cache->explicit_skip = -1;
 	cache->map_skip = -1;

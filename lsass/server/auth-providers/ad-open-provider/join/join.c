@@ -1701,6 +1701,13 @@ LsaEncryptPasswordBufferEx(
     BAIL_ON_INVALID_POINTER(pwszPassword);
     BAIL_ON_INVALID_POINTER(pSessionKey);
 
+    // We require the first 16 bytes of the sesion key for the MD5 hash
+    if (dwSessionKeyLen < 16)
+    {
+        dwError = ERROR_INSUFFICIENT_BUFFER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     if (dwPasswordBufferSize < sizeof(PasswordBuffer))
     {
         dwError = ERROR_INSUFFICIENT_BUFFER;
@@ -1720,7 +1727,7 @@ LsaEncryptPasswordBufferEx(
 
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    MD5_Update(&ctx, pSessionKey, dwSessionKeyLen);
+    MD5_Update(&ctx, pSessionKey, 16);
     MD5_Final(DigestedSessKey, &ctx);
 
     RC4_set_key(&rc4_key, 16, (unsigned char*)DigestedSessKey);

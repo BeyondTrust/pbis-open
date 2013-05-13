@@ -1,5 +1,5 @@
 /* conf_mall.c */
-/* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
 /* ====================================================================
@@ -76,5 +76,6 @@ void OPENSSL_load_builtin_modules(void)
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_add_conf_module();
 #endif
+	EVP_add_alg_module();
 	}
 

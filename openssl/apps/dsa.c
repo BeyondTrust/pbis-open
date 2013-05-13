@@ -96,9 +96,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
-#endif
 	int ret=1;
 	DSA *dsa=NULL;
 	int i,badops=0;
@@ -113,6 +111,8 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
+
+	int pvk_encr = 2;
 
 	apps_startup();
 
@@ -173,6 +173,12 @@ int MAIN(int argc, char **argv)
 			engine= *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-pvk-strong") == 0)
+			pvk_encr=2;
+		else if (strcmp(*argv,"-pvk-weak") == 0)
+			pvk_encr=1;
+		else if (strcmp(*argv,"-pvk-none") == 0)
+			pvk_encr=0;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -260,16 +266,22 @@ bad:
 		}
 
 	BIO_printf(bio_err,"read DSA key\n");
-	if	(informat == FORMAT_ASN1) {
-		if(pubin) dsa=d2i_DSA_PUBKEY_bio(in,NULL);
-		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
-	} else if (informat == FORMAT_PEM) {
-		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
-		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,passin);
-	} else
+
 		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
+		EVP_PKEY	*pkey;
+
+		if (pubin)
+			pkey = load_pubkey(bio_err, infile, informat, 1,
+				passin, e, "Public Key");
+		else
+			pkey = load_key(bio_err, infile, informat, 1,
+				passin, e, "Private Key");
+
+		if (pkey)
+			{
+			dsa = EVP_PKEY_get1_DSA(pkey);
+			EVP_PKEY_free(pkey);
+			}
 		}
 	if (dsa == NULL)
 		{
@@ -322,11 +334,24 @@ bad:
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,NULL, passout);
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
+	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
+		EVP_PKEY *pk;
+		pk = EVP_PKEY_new();
+		EVP_PKEY_set1_DSA(pk, dsa);
+		if (outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+		else if (pubin || pubout)
+			i = i2b_PublicKey_bio(out, pk);
+		else
+			i = i2b_PrivateKey_bio(out, pk);
+		EVP_PKEY_free(pk);
+#endif
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
 		}
-	if (!i)
+	if (i <= 0)
 		{
 		BIO_printf(bio_err,"unable to write private key\n");
 		ERR_print_errors(bio_err);
@@ -342,4 +367,10 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#else /* !OPENSSL_NO_DSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

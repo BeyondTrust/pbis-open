@@ -5,8 +5,182 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1d and OpenSSL 1.0.1e:
+
+      o Corrected fix for CVE-2013-0169
+
+  Major changes between OpenSSL 1.0.1c and OpenSSL 1.0.1d:
+
+      o Fix renegotiation in TLS 1.1, 1.2 by using the correct TLS version.
+      o Include the fips configuration module.
+      o Fix OCSP bad key DoS attack CVE-2013-0166
+      o Fix for SSL/TLS/DTLS CBC plaintext recovery attack CVE-2013-0169
+      o Fix for TLS AESNI record handling flaw CVE-2012-2686
+
+  Major changes between OpenSSL 1.0.1b and OpenSSL 1.0.1c:
+
+      o Fix TLS/DTLS record length checking bug CVE-2012-2333
+      o Don't attempt to use non-FIPS composite ciphers in FIPS mode.
+
+  Major changes between OpenSSL 1.0.1a and OpenSSL 1.0.1b:
+
+      o Fix compilation error on non-x86 platforms.
+      o Make FIPS capable OpenSSL ciphers work in non-FIPS mode.
+      o Fix SSL_OP_NO_TLSv1_1 clash with SSL_OP_ALL in OpenSSL 1.0.0
+
+  Major changes between OpenSSL 1.0.1 and OpenSSL 1.0.1a:
+
+      o Fix for ASN1 overflow bug CVE-2012-2110
+      o Workarounds for some servers that hang on long client hellos.
+      o Fix SEGV in AES code.
+
+  Major changes between OpenSSL 1.0.0h and OpenSSL 1.0.1:
+
+      o TLS/DTLS heartbeat support.
+      o SCTP support.
+      o RFC 5705 TLS key material exporter.
+      o RFC 5764 DTLS-SRTP negotiation.
+      o Next Protocol Negotiation.
+      o PSS signatures in certificates, requests and CRLs.
+      o Support for password based recipient info for CMS.
+      o Support TLS v1.2 and TLS v1.1.
+      o Preliminary FIPS capability for unvalidated 2.0 FIPS module.
+      o SRP support.
+
+  Major changes between OpenSSL 1.0.0g and OpenSSL 1.0.0h:
+
+      o Fix for CMS/PKCS#7 MMA CVE-2012-0884
+      o Corrected fix for CVE-2011-4619
+      o Various DTLS fixes.
+
+  Major changes between OpenSSL 1.0.0f and OpenSSL 1.0.0g:
+
+      o Fix for DTLS DoS issue CVE-2012-0050
+
+  Major changes between OpenSSL 1.0.0e and OpenSSL 1.0.0f:
+
+      o Fix for DTLS plaintext recovery attack CVE-2011-4108
+      o Clear block padding bytes of SSL 3.0 records CVE-2011-4576
+      o Only allow one SGC handshake restart for SSL/TLS CVE-2011-4619
+      o Check parameters are not NULL in GOST ENGINE CVE-2012-0027
+      o Check for malformed RFC3779 data CVE-2011-4577
+
+  Major changes between OpenSSL 1.0.0d and OpenSSL 1.0.0e:
+
+      o Fix for CRL vulnerability issue CVE-2011-3207
+      o Fix for ECDH crashes CVE-2011-3210
+      o Protection against EC timing attacks.
+      o Support ECDH ciphersuites for certificates using SHA2 algorithms.
+      o Various DTLS fixes.
+
+  Major changes between OpenSSL 1.0.0c and OpenSSL 1.0.0d:
+
+      o Fix for security issue CVE-2011-0014
+
+  Major changes between OpenSSL 1.0.0b and OpenSSL 1.0.0c:
+
+      o Fix for security issue CVE-2010-4180
+      o Fix for CVE-2010-4252
+      o Fix mishandling of absent EC point format extension.
+      o Fix various platform compilation issues.
+      o Corrected fix for security issue CVE-2010-3864.
+
+  Major changes between OpenSSL 1.0.0a and OpenSSL 1.0.0b:
+
+      o Fix for security issue CVE-2010-3864.
+      o Fix for CVE-2010-2939
+      o Fix WIN32 build system for GOST ENGINE.
+
+  Major changes between OpenSSL 1.0.0 and OpenSSL 1.0.0a:
+
+      o Fix for security issue CVE-2010-1633.
+      o GOST MAC and CFB fixes.
+
+  Major changes between OpenSSL 0.9.8n and OpenSSL 1.0.0:
+
+      o RFC3280 path validation: sufficient to process PKITS tests.
+      o Integrated support for PVK files and keyblobs.
+      o Change default private key format to PKCS#8.
+      o CMS support: able to process all examples in RFC4134
+      o Streaming ASN1 encode support for PKCS#7 and CMS.
+      o Multiple signer and signer add support for PKCS#7 and CMS.
+      o ASN1 printing support.
+      o Whirlpool hash algorithm added.
+      o RFC3161 time stamp support.
+      o New generalised public key API supporting ENGINE based algorithms.
+      o New generalised public key API utilities.
+      o New ENGINE supporting GOST algorithms.
+      o SSL/TLS GOST ciphersuite support.
+      o PKCS#7 and CMS GOST support.
+      o RFC4279 PSK ciphersuite support.
+      o Supported points format extension for ECC ciphersuites.
+      o ecdsa-with-SHA224/256/384/512 signature types.
+      o dsa-with-SHA224 and dsa-with-SHA256 signature types.
+      o Opaque PRF Input TLS extension support.
+      o Updated time routines to avoid OS limitations.
+
+  Major changes between OpenSSL 0.9.8q and OpenSSL 0.9.8r:
+
+      o Fix for security issue CVE-2011-0014
+
+  Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q:
+
+      o Fix for security issue CVE-2010-4180
+      o Fix for CVE-2010-4252
+
+  Major changes between OpenSSL 0.9.8o and OpenSSL 0.9.8p:
+
+      o Fix for security issue CVE-2010-3864.
+
+  Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
+
+      o Fix for security issue CVE-2010-0742.
+      o Various DTLS fixes.
+      o Recognise SHA2 certificates if only SSL algorithms added.
+      o Fix for no-rc4 compilation.
+      o Chil ENGINE unload workaround.
+
+  Major changes between OpenSSL 0.9.8m and OpenSSL 0.9.8n:
+
+      o CFB cipher definition fixes.
+      o Fix security issues CVE-2010-0740 and CVE-2010-0433.
+
+  Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m:
+
+      o Cipher definition fixes.
+      o Workaround for slow RAND_poll() on some WIN32 versions.
+      o Remove MD2 from algorithm tables.
+      o SPKAC handling fixes.
+      o Support for RFC5746 TLS renegotiation extension.
+      o Compression memory leak fixed.
+      o Compression session resumption fixed.
+      o Ticket and SNI coexistence fixes.
+      o Many fixes to DTLS handling. 
+
+  Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l:
+
+      o Temporary work around for CVE-2009-3555: disable renegotiation.
+
+  Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
+
+      o Fix various build issues.
+      o Fix security issues (CVE-2009-0590, CVE-2009-0591, CVE-2009-0789)
+
+  Major changes between OpenSSL 0.9.8i and OpenSSL 0.9.8j:
+
+      o Fix security issue (CVE-2008-5077)
+      o Merge FIPS 140-2 branch code.
+
+  Major changes between OpenSSL 0.9.8g and OpenSSL 0.9.8h:
+
+      o CryptoAPI ENGINE support.
+      o Various precautionary measures.
+      o Fix for bugs affecting certificate request creation.
+      o Support for local machine keyset attribute in PKCS#12 files.
+
   Major changes between OpenSSL 0.9.8f and OpenSSL 0.9.8g:
 
+      o Backport of CMS functionality to 0.9.8.
       o Fixes for bugs introduced with 0.9.8f.
 
   Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f:
@@ -124,6 +298,11 @@
       o Added support for files larger than 2GB.
       o Added initial support for Win64.
       o Added alternate pkg-config files.
+
+  Major changes between OpenSSL 0.9.7l and OpenSSL 0.9.7m:
+
+      o FIPS 1.1.1 module linking.
+      o Various ciphersuite selection fixes.
 
   Major changes between OpenSSL 0.9.7k and OpenSSL 0.9.7l:
 

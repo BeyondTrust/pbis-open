@@ -1,5 +1,5 @@
 /* ocsp_ht.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
 /* ====================================================================
@@ -56,11 +56,12 @@
  *
  */
 
-#include <openssl/asn1.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "e_os.h"
+#include <openssl/asn1.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
@@ -117,39 +118,65 @@ void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 	OPENSSL_free(rctx);
 	}
 
+int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req)
+	{
+	static const char req_hdr[] =
+	"Content-Type: application/ocsp-request\r\n"
+	"Content-Length: %d\r\n\r\n";
+        if (BIO_printf(rctx->mem, req_hdr, i2d_OCSP_REQUEST(req, NULL)) <= 0)
+		return 0;
+        if (i2d_OCSP_REQUEST_bio(rctx->mem, req) <= 0)
+		return 0;
+	rctx->state = OHS_ASN1_WRITE;
+	rctx->asn1_len = BIO_get_mem_data(rctx->mem, NULL);
+	return 1;
+	}
+
+int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
+		const char *name, const char *value)
+	{
+	if (!name)
+		return 0;
+	if (BIO_puts(rctx->mem, name) <= 0)
+		return 0;
+	if (value)
+		{
+		if (BIO_write(rctx->mem, ": ", 2) != 2)
+			return 0;
+		if (BIO_puts(rctx->mem, value) <= 0)
+			return 0;
+		}
+	if (BIO_write(rctx->mem, "\r\n", 2) != 2)
+		return 0;
+	return 1;
+	}
+
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 								int maxline)
 	{
-	static char post_hdr[] = "POST %s HTTP/1.0\r\n"
-	"Content-Type: application/ocsp-request\r\n"
-	"Content-Length: %d\r\n\r\n";
+	static const char post_hdr[] = "POST %s HTTP/1.0\r\n";
 
 	OCSP_REQ_CTX *rctx;
 	rctx = OPENSSL_malloc(sizeof(OCSP_REQ_CTX));
-	rctx->state = OHS_FIRSTLINE;
+	rctx->state = OHS_ERROR;
 	rctx->mem = BIO_new(BIO_s_mem());
 	rctx->io = io;
+	rctx->asn1_len = 0;
 	if (maxline > 0)
 		rctx->iobuflen = maxline;
 	else
 		rctx->iobuflen = OCSP_MAX_LINE_LEN;
 	rctx->iobuf = OPENSSL_malloc(rctx->iobuflen);
+	if (!rctx->iobuf)
+		return 0;
 	if (!path)
 		path = "/";
 
-        if (BIO_printf(rctx->mem, post_hdr, path,
-				i2d_OCSP_REQUEST(req, NULL)) <= 0)
-		{
-		rctx->state = OHS_ERROR;
+        if (BIO_printf(rctx->mem, post_hdr, path) <= 0)
 		return 0;
-		}
-        if (i2d_OCSP_REQUEST_bio(rctx->mem, req) <= 0)
-		{
-		rctx->state = OHS_ERROR;
+
+	if (req && !OCSP_REQ_CTX_set1_req(rctx, req))
 		return 0;
-		}
-	rctx->state = OHS_ASN1_WRITE;
-	rctx->asn1_len = BIO_get_mem_data(rctx->mem, NULL);
 
 	return rctx;
 	}
@@ -370,11 +397,12 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 
 
 		case OHS_ASN1_HEADER:
-		/* Now reading ASN1 header: can read at least 6 bytes which
-		 * is more than enough for any valid ASN1 SEQUENCE header
+		/* Now reading ASN1 header: can read at least 2 bytes which
+		 * is enough for ASN1 SEQUENCE header and either length field
+		 * or at least the length of the length field.
 		 */
 		n = BIO_get_mem_data(rctx->mem, &p);
-		if (n < 6)
+		if (n < 2)
 			goto next_io;
 
 		/* Check it is an ASN1 SEQUENCE */
@@ -387,6 +415,11 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 		/* Check out length field */
 		if (*p & 0x80)
 			{
+			/* If MSB set on initial length octet we can now
+			 * always read 6 octets: make sure we have them.
+			 */
+			if (n < 6)
+				goto next_io;
 			n = *p & 0x7F;
 			/* Not NDEF or excessive length */
 			if (!n || (n > 4))

@@ -85,14 +85,28 @@ LwKrb5GetTgt(
     PDWORD pdwGoodUntilTime
     )
 {
-    // Always try sending PA-ENC-TIMESTAMP. This saves a round trip because
-    // otherwise Windows will return a KRB5KDC_ERR_PREAUTH_REQUIRED reply.
+    // When we always send the PA-ENC-TIMESTAMP we are unable to correctly
+    // specify the Salt value to construct the password key for algorithms
+    // other than RC4. The Salt value is a case sensitive concatenation of 
+    // Realm and Principal names for DES and AES algorithms.
     //
-    // Worse still, if the user is marked as preauth not required, and no
-    // preauth is given, the TGT will not contain a PAC. If the TGT is used
-    // without a PAC, it will not have the same permissions since Windows uses
-    // the PAC for group membership checks.
-    krb5_preauthtype pPreauthTypes[] = { KRB5_PADATA_ENC_TIMESTAMP };
+    // Although we now get an extra round trip for each request, we can now
+    // support other encryption algorithms more easily.
+    //
+    // To avoid the issues discussed in the previous comment (see below)
+    // we are now passing the PA-PAC-REQUEST to ensure we are always
+    // requesting a PAC.
+    // 
+    // Previous Comment:
+    //   Always try sending PA-ENC-TIMESTAMP. This saves a round trip because
+    //   otherwise Windows will return a KRB5KDC_ERR_PREAUTH_REQUIRED reply.
+    //
+    //   Worse still, if the user is marked as preauth not required, and no
+    //   preauth is given, the TGT will not contain a PAC. If the TGT is used
+    //   without a PAC, it will not have the same permissions since Windows uses
+    //   the PAC for group membership checks.
+    // 
+    krb5_preauthtype pPreauthTypes[] = { KRB5_PADATA_PAC_REQUEST };
 
     return LwKrb5GetTgtImpl(
                 pszUserPrincipal,

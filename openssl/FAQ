@@ -10,6 +10,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why aren't tools like 'autoconf' and 'libtool' used?
 * What is an 'engine' version?
 * How do I check the authenticity of the OpenSSL distribution?
+* How does the versioning scheme work?
 
 [LEGAL] Legal questions
 
@@ -32,6 +33,7 @@ OpenSSL  -  Frequently Asked Questions
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
+* Why does OpenSSL set the authority key identifier extension incorrectly?
 * How can I set up a bundle of commercial root CA certificates?
 
 [BUILD] Questions about building and testing OpenSSL
@@ -51,6 +53,9 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail in sha512t on x86 CPU?
 * Why does compiler fail to compile sha512.c?
 * Test suite still fails, what to do?
+* I think I've found a bug, what should I do?
+* I'm SURE I've found a bug, how do I report it?
+* I've found a security issue, how do I report it?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -68,6 +73,8 @@ OpenSSL  -  Frequently Asked Questions
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
 * I think I've detected a memory leak, is this a bug?
 * Why does Valgrind complain about the use of uninitialized data?
+* Why doesn't a memory BIO work when a file does?
+* Where are the declarations and implementations of d2i_X509() etc?
 
 ===============================================================================
 
@@ -76,11 +83,11 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.8h was released on May 28th, 2008.
+OpenSSL 1.0.1e was released on Feb 11th, 2013.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
-ftp://ftp.openssl.org/snapshot/>, or get it by anonymous CVS access.
+ftp://ftp.openssl.org/snapshot/>, or get it by anonymous Git access.
 
 
 * Where is the documentation?
@@ -92,14 +99,19 @@ explains how to install this library.
 
 OpenSSL includes a command line utility that can be used to perform a
 variety of cryptographic functions.  It is described in the openssl(1)
-manpage.  Documentation for developers is currently being written.  A
-few manual pages already are available; overviews over libcrypto and
+manpage.  Documentation for developers is currently being written. Many
+manual pages are available; overviews over libcrypto and
 libssl are given in the crypto(3) and ssl(3) manpages.
 
 The OpenSSL manpages are installed in /usr/local/ssl/man/ (or a
 different directory if you specified one as described in INSTALL).
 In addition, you can read the most current versions at
-<URL: http://www.openssl.org/docs/>.
+<URL: http://www.openssl.org/docs/>. Note that the online documents refer
+to the very latest development versions of OpenSSL and may include features
+not present in released versions. If in doubt refer to the documentation
+that came with the version of OpenSSL you are using. The pod format
+documentation is included in each OpenSSL distribution under the docs
+directory.
 
 For information on parts of libcrypto that are not yet documented, you
 might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
@@ -125,7 +137,7 @@ OpenSSL.  Information on the OpenSSL mailing lists is available from
 * Where can I get a compiled version of OpenSSL?
 
 You can finder pointers to binary distributions in
-http://www.openssl.org/related/binaries.html .
+<URL: http://www.openssl.org/related/binaries.html> .
 
 Some applications that use OpenSSL are distributed in binary form.
 When using such an application, you don't need to install OpenSSL
@@ -163,6 +175,19 @@ list of keys at <URL: http://www.openssl.org/about/>). Then
 just do:
 
    pgp TARBALL.asc
+
+* How does the versioning scheme work?
+
+After the release of OpenSSL 1.0.0 the versioning scheme changed. Letter 
+releases (e.g. 1.0.1a) can only contain bug and security fixes and no
+new features. Minor releases change the last number (e.g. 1.0.2) and 
+can contain new features that retain binary compatibility. Changes to
+the middle number are considered major releases and neither source nor
+binary compatibility is guaranteed.
+
+Therefore the answer to the common question "when will feature X be
+backported to OpenSSL 1.0.0/0.9.8?" is "never" but it could appear
+in the next minor release.
 
 [LEGAL] =======================================================================
 
@@ -275,7 +300,7 @@ current directory in this case, but this has changed with 0.9.6a.)
 Check out the CA.pl(1) manual page. This provides a simple wrapper round
 the 'req', 'verify', 'ca' and 'pkcs12' utilities. For finer control check
 out the manual pages for the individual utilities and the certificate
-extensions documentation (currently in doc/openssl.txt).
+extensions documentation (in ca(1), req(1), x509v3_config(5) )
 
 
 * Why can't I create certificate requests?
@@ -403,10 +428,10 @@ You can't generally create such a certificate using OpenSSL but there is no
 need to any more. Nowadays web browsers using unrestricted strong encryption
 are generally available.
 
-When there were tight export restrictions on the export of strong encryption
+When there were tight restrictions on the export of strong encryption
 software from the US only weak encryption algorithms could be freely exported
 (initially 40 bit and then 56 bit). It was widely recognised that this was
-inadequate. A relaxation the rules allowed the use of strong encryption but
+inadequate. A relaxation of the rules allowed the use of strong encryption but
 only to an authorised server.
 
 Two slighly different techniques were developed to support this, one used by
@@ -427,6 +452,25 @@ The export laws were later changed to allow almost unrestricted use of strong
 encryption so these certificates are now obsolete.
 
 
+* Why does OpenSSL set the authority key identifier (AKID) extension incorrectly?
+
+It doesn't: this extension is often the cause of confusion.
+
+Consider a certificate chain A->B->C so that A signs B and B signs C. Suppose
+certificate C contains AKID.
+
+The purpose of this extension is to identify the authority certificate B. This
+can be done either by including the subject key identifier of B or its issuer
+name and serial number.
+
+In this latter case because it is identifying certifcate B it must contain the
+issuer name and serial number of B.
+
+It is often wrongly assumed that it should contain the subject name of B. If it
+did this would be redundant information because it would duplicate the issuer
+name of C.
+
+
 * How can I set up a bundle of commercial root CA certificates?
 
 The OpenSSL software is shipped without any root CA certificate as the
@@ -438,7 +482,7 @@ administrators.
 Other projects do have other policies so you can for example extract the CA
 bundle used by Mozilla and/or modssl as described in this article:
 
-  http://www.mail-archive.com/modssl-users@modssl.org/msg16980.html
+  <URL: http://www.mail-archive.com/modssl-users@modssl.org/msg16980.html>
 
 
 [BUILD] =======================================================================
@@ -480,7 +524,7 @@ when you run the test suite (using "make test").  The message returned is
 "bc: 1 not implemented".
 
 The best way to deal with this is to find another implementation of bc
-and compile/install it.  GNU bc (see http://www.gnu.org/software/software.html
+and compile/install it.  GNU bc (see <URL: http://www.gnu.org/software/software.html>
 for download instructions) can be safely used, for example.
 
 
@@ -491,7 +535,7 @@ that the OpenSSL bntest throws at it.  This gets triggered when you run the
 test suite (using "make test").  The message returned is "bc: stack empty".
 
 The best way to deal with this is to find another implementation of bc
-and compile/install it.  GNU bc (see http://www.gnu.org/software/software.html
+and compile/install it.  GNU bc (see <URL: http://www.gnu.org/software/software.html>
 for download instructions) can be safely used, for example.
 
 
@@ -684,6 +728,46 @@ never make sense, and tend to emerge when you least expect them. In order
 to identify one, drop optimization level, e.g. by editing CFLAG line in
 top-level Makefile, recompile and re-run the test.
 
+* I think I've found a bug, what should I do?
+
+If you are a new user then it is quite likely you haven't found a bug and
+something is happening you aren't familiar with. Check this FAQ, the associated
+documentation and the mailing lists for similar queries. If you are still
+unsure whether it is a bug or not submit a query to the openssl-users mailing
+list.
+
+
+* I'm SURE I've found a bug, how do I report it?
+
+Bug reports with no security implications should be sent to the request
+tracker. This can be done by mailing the report to <rt@openssl.org> (or its
+alias <openssl-bugs@openssl.org>), please note that messages sent to the
+request tracker also appear in the public openssl-dev mailing list.
+
+The report should be in plain text. Any patches should be sent as
+plain text attachments because some mailers corrupt patches sent inline.
+If your issue affects multiple versions of OpenSSL check any patches apply
+cleanly and, if possible include patches to each affected version.
+
+The report should be given a meaningful subject line briefly summarising the
+issue. Just "bug in OpenSSL" or "bug in OpenSSL 0.9.8n" is not very helpful.
+
+By sending reports to the request tracker the bug can then be given a priority
+and assigned to the appropriate maintainer. The history of discussions can be
+accessed and if the issue has been addressed or a reason why not. If patches
+are only sent to openssl-dev they can be mislaid if a team member has to
+wade through months of old messages to review the discussion.
+
+See also <URL: http://www.openssl.org/support/rt.html>
+
+
+* I've found a security issue, how do I report it?
+
+If you think your bug has security implications then please send it to
+openssl-security@openssl.org if you don't get a prompt reply at least 
+acknowledging receipt then resend or mail it directly to one of the
+more active team members (e.g. Steve).
+
 [PROG] ========================================================================
 
 * Is OpenSSL thread-safe?
@@ -696,8 +780,10 @@ file.
 
 Multi-threaded applications must provide two callback functions to
 OpenSSL by calling CRYPTO_set_locking_callback() and
-CRYPTO_set_id_callback().  This is described in the threads(3)
-manpage.
+CRYPTO_set_id_callback(), for all versions of OpenSSL up to and
+including 0.9.8[abc...]. As of version 1.0.0, CRYPTO_set_id_callback()
+and associated APIs are deprecated by CRYPTO_THREADID_set_callback()
+and friends. This is described in the threads(3) manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 
@@ -920,5 +1006,36 @@ OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
 to get rid of these warnings.
 
 
-===============================================================================
+* Why doesn't a memory BIO work when a file does?
 
+This can occur in several cases for example reading an S/MIME email message.
+The reason is that a memory BIO can do one of two things when all the data
+has been read from it.
+
+The default behaviour is to indicate that no more data is available and that
+the call should be retried, this is to allow the application to fill up the BIO
+again if necessary.
+
+Alternatively it can indicate that no more data is available and that EOF has
+been reached.
+
+If a memory BIO is to behave in the same way as a file this second behaviour
+is needed. This must be done by calling:
+
+   BIO_set_mem_eof_return(bio, 0);
+
+See the manual pages for more details.
+
+
+* Where are the declarations and implementations of d2i_X509() etc?
+
+These are defined and implemented by macros of the form:
+
+
+ DECLARE_ASN1_FUNCTIONS(X509) and IMPLEMENT_ASN1_FUNCTIONS(X509)
+
+The implementation passes an ASN1 "template" defining the structure into an
+ASN1 interpreter using generalised functions such as ASN1_item_d2i().
+
+
+===============================================================================

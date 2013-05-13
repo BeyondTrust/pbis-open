@@ -1,5 +1,5 @@
 /* crypto/x509/x509cset.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
 /* ====================================================================
@@ -81,7 +81,7 @@ int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
 	}
 
 
-int X509_CRL_set_lastUpdate(X509_CRL *x, ASN1_TIME *tm)
+int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 	{
 	ASN1_TIME *in;
 
@@ -99,7 +99,7 @@ int X509_CRL_set_lastUpdate(X509_CRL *x, ASN1_TIME *tm)
 	return(in != NULL);
 	}
 
-int X509_CRL_set_nextUpdate(X509_CRL *x, ASN1_TIME *tm)
+int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 	{
 	ASN1_TIME *in;
 

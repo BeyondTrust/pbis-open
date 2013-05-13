@@ -1,5 +1,5 @@
 /* p12_utl.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
@@ -62,7 +62,7 @@
 
 /* Cheap and nasty Unicode stuff */
 
-unsigned char *asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
+unsigned char *OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 {
 	int ulen, i;
 	unsigned char *unitmp;
@@ -81,7 +81,7 @@ unsigned char *asc2uni(const char *asc, int asclen, unsigned char **uni, int *un
 	return unitmp;
 }
 
-char *uni2asc(unsigned char *uni, int unilen)
+char *OPENSSL_uni2asc(unsigned char *uni, int unilen)
 {
 	int asclen, i;
 	char *asctmp;

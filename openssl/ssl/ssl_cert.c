@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,6 +160,21 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	return ssl_x509_store_ctx_idx;
 	}
 
+static void ssl_cert_set_default_md(CERT *cert)
+	{
+	/* Set digest values to defaults */
+#ifndef OPENSSL_NO_DSA
+	cert->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_RSA
+	cert->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
+	cert->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	cert->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+#endif
+	}
+
 CERT *ssl_cert_new(void)
 	{
 	CERT *ret;
@@ -174,7 +189,7 @@ CERT *ssl_cert_new(void)
 
 	ret->key= &(ret->pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references=1;
-
+	ssl_cert_set_default_md(ret);
 	return(ret);
 	}
 
@@ -197,8 +212,10 @@ CERT *ssl_cert_dup(CERT *cert)
 	 * if you find that more readable */
 
 	ret->valid = cert->valid;
-	ret->mask = cert->mask;
-	ret->export_mask = cert->export_mask;
+	ret->mask_k = cert->mask_k;
+	ret->mask_a = cert->mask_a;
+	ret->export_mask_k = cert->export_mask_k;
+	ret->export_mask_a = cert->export_mask_a;
 
 #ifndef OPENSSL_NO_RSA
 	if (cert->rsa_tmp != NULL)
@@ -305,6 +322,10 @@ CERT *ssl_cert_dup(CERT *cert)
 	 * chain is held inside SSL_CTX */
 
 	ret->references=1;
+	/* Set digests to defaults. NB: we don't copy existing values as they
+	 * will be set during handshake.
+	 */
+	ssl_cert_set_default_md(ret);
 
 	return(ret);
 	
@@ -500,9 +521,6 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,ERR_R_X509_LIB);
 		return(0);
 		}
-	if (s->param)
-		X509_VERIFY_PARAM_inherit(X509_STORE_CTX_get0_param(&ctx),
-						s->param);
 #if 0
 	if (SSL_get_verify_depth(s) >= 0)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
@@ -516,6 +534,10 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 
 	X509_STORE_CTX_set_default(&ctx,
 				s->server ? "ssl_client" : "ssl_server");
+	/* Anything non-default in "param" should overwrite anything in the
+	 * ctx.
+	 */
+	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
@@ -751,6 +773,8 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		else
 			sk_X509_NAME_push(stack,xn);
 		}
+
+	ERR_clear_error();
 
 	if (0)
 		{

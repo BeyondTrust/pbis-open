@@ -118,10 +118,53 @@ static BIO_METHOD methods_filep=
 
 BIO *BIO_new_file(const char *filename, const char *mode)
 	{
-	BIO *ret;
-	FILE *file;
+	BIO  *ret;
+	FILE *file=NULL;
 
-	if ((file=fopen(filename,mode)) == NULL)
+#if defined(_WIN32) && defined(CP_UTF8)
+	int sz, len_0 = (int)strlen(filename)+1;
+	DWORD flags;
+
+	/*
+	 * Basically there are three cases to cover: a) filename is
+	 * pure ASCII string; b) actual UTF-8 encoded string and
+	 * c) locale-ized string, i.e. one containing 8-bit
+	 * characters that are meaningful in current system locale.
+	 * If filename is pure ASCII or real UTF-8 encoded string,
+	 * MultiByteToWideChar succeeds and _wfopen works. If
+	 * filename is locale-ized string, chances are that
+	 * MultiByteToWideChar fails reporting
+	 * ERROR_NO_UNICODE_TRANSLATION, in which case we fall
+	 * back to fopen...
+	 */
+	if ((sz=MultiByteToWideChar(CP_UTF8,(flags=MB_ERR_INVALID_CHARS),
+					filename,len_0,NULL,0))>0 ||
+	    (GetLastError()==ERROR_INVALID_FLAGS &&
+	     (sz=MultiByteToWideChar(CP_UTF8,(flags=0),
+					filename,len_0,NULL,0))>0)
+	   )
+		{
+		WCHAR  wmode[8];
+		WCHAR *wfilename = _alloca(sz*sizeof(WCHAR));
+
+		if (MultiByteToWideChar(CP_UTF8,flags,
+					filename,len_0,wfilename,sz) &&
+		    MultiByteToWideChar(CP_UTF8,0,mode,strlen(mode)+1,
+			    		wmode,sizeof(wmode)/sizeof(wmode[0])) &&
+		    (file=_wfopen(wfilename,wmode))==NULL &&
+		    (errno==ENOENT || errno==EBADF)
+		   )	/* UTF-8 decode succeeded, but no file, filename
+			 * could still have been locale-ized... */
+			file = fopen(filename,mode);
+		}
+	else if (GetLastError()==ERROR_NO_UNICODE_TRANSLATION)
+		{
+		file = fopen(filename,mode);
+		}
+#else
+	file=fopen(filename,mode);	
+#endif
+	if (file == NULL)
 		{
 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
@@ -131,7 +174,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
 		return(NULL);
 		}
-	if ((ret=BIO_new(BIO_s_file_internal())) == NULL)
+	if ((ret=BIO_new(BIO_s_file())) == NULL)
 		{
 		fclose(file);
 		return(NULL);
@@ -272,22 +315,21 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			BIO_clear_flags(b,BIO_FLAGS_UPLINK);
 #endif
 #endif
-#ifdef UP_fsetmode
+#ifdef UP_fsetmod
 		if (b->flags&BIO_FLAGS_UPLINK)
-			UP_fsetmode(b->ptr,num&BIO_FP_TEXT?'t':'b');
+			UP_fsetmod(b->ptr,(char)((num&BIO_FP_TEXT)?'t':'b'));
 		else
 #endif
 		{
 #if defined(OPENSSL_SYS_WINDOWS)
-		int fd = fileno((FILE*)ptr);
+		int fd = _fileno((FILE*)ptr);
 		if (num & BIO_FP_TEXT)
 			_setmode(fd,_O_TEXT);
 		else
 			_setmode(fd,_O_BINARY);
 #elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
 		int fd = fileno((FILE*)ptr);
-         /* Under CLib there are differences in file modes
-         */
+		/* Under CLib there are differences in file modes */
 		if (num & BIO_FP_TEXT)
 			setmode(fd,O_TEXT);
 		else
@@ -308,7 +350,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			else
 				_setmode(fd,_O_BINARY);
 			}
-#elif defined(OPENSSL_SYS_OS2)
+#elif defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_WIN32_CYGWIN)
 		int fd = fileno((FILE*)ptr);
 		if (num & BIO_FP_TEXT)
 			setmode(fd, O_TEXT);
@@ -404,11 +446,18 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 
 	buf[0]='\0';
 	if (bp->flags&BIO_FLAGS_UPLINK)
-		UP_fgets(buf,size,bp->ptr);
+		{
+		if (!UP_fgets(buf,size,bp->ptr))
+			goto err;
+		}
 	else
-		fgets(buf,size,(FILE *)bp->ptr);
+		{
+		if (!fgets(buf,size,(FILE *)bp->ptr))
+			goto err;
+		}
 	if (buf[0] != '\0')
 		ret=strlen(buf);
+	err:
 	return(ret);
 	}
 

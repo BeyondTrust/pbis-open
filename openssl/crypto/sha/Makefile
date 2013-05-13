@@ -42,33 +42,54 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-# COFF
-sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
-# a.out
-sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha1-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+sha1-586.s:	asm/sha1-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+sha256-586.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+sha512-586.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 sha1-ia64.s:   asm/sha1-ia64.pl
-	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
+	(cd asm; $(PERL) sha1-ia64.pl ../$@ $(CFLAGS))
 sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 sha512-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 
+sha256-armv4.S: asm/sha256-armv4.pl
+	$(PERL) $< $(PERLASM_SCHEME) $@
+
+sha1-alpha.s:	asm/sha1-alpha.pl
+	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+
 # Solaris make has to be explicitly told
-sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $@
-sha256-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
-sha512-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
+sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $(PERLASM_SCHEME) > $@
+sha256-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
+sha512-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
+sha1-sparcv9.s:	asm/sha1-sparcv9.pl;	$(PERL) asm/sha1-sparcv9.pl $@ $(CFLAGS)
+sha256-sparcv9.s:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
+sha512-sparcv9.s:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
+
+sha1-ppc.s:	asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $(PERLASM_SCHEME) $@
+sha256-ppc.s:	asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
+sha512-ppc.s:	asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
+
+sha1-parisc.s:	asm/sha1-parisc.pl;	$(PERL) asm/sha1-parisc.pl $(PERLASM_SCHEME) $@
+sha256-parisc.s:asm/sha512-parisc.pl;	$(PERL) asm/sha512-parisc.pl $(PERLASM_SCHEME) $@
+sha512-parisc.s:asm/sha512-parisc.pl;	$(PERL) asm/sha512-parisc.pl $(PERLASM_SCHEME) $@
+
+sha1-mips.S:	asm/sha1-mips.pl;	$(PERL) asm/sha1-mips.pl $(PERLASM_SCHEME) $@
+sha256-mips.S:	asm/sha512-mips.pl;	$(PERL) asm/sha512-mips.pl $(PERLASM_SCHEME) $@
+sha512-mips.S:	asm/sha512-mips.pl;	$(PERL) asm/sha512-mips.pl $(PERLASM_SCHEME) $@
+
+# GNU make "catch all"
+sha1-%.S:	asm/sha1-%.pl;		$(PERL) $< $(PERLASM_SCHEME) $@
+sha256-%.S:	asm/sha512-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+sha512-%.S:	asm/sha512-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
+sha1-armv4-large.o:	sha1-armv4-large.S
+sha256-armv4.o:		sha256-armv4.S
+sha512-armv4.o:		sha512-armv4.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -113,8 +134,11 @@ sha1_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha1_one.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha1_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha1_one.o: sha1_one.c
-sha1dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha1dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha1dgst.o: ../../include/openssl/opensslconf.h
+sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha1dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha1dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha1dgst.o: ../md32_common.h sha1dgst.c sha_locl.h
 sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha256.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -129,8 +153,11 @@ sha512.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha512.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha512.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha512.o: ../cryptlib.h sha512.c
-sha_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/sha.h
+sha_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+sha_dgst.o: ../../include/openssl/opensslconf.h
+sha_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+sha_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+sha_dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 sha_dgst.o: ../md32_common.h sha_dgst.c sha_locl.h
 sha_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h

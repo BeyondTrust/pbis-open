@@ -324,7 +324,9 @@ KtKrb5AddKeyA(
 {
     const krb5_enctype enc[] = { ENCTYPE_DES_CBC_CRC,
                                  ENCTYPE_DES_CBC_MD5,
-                                 ENCTYPE_ARCFOUR_HMAC };
+                                 ENCTYPE_ARCFOUR_HMAC,
+                                 ENCTYPE_AES128_CTS_HMAC_SHA1_96,
+                                 ENCTYPE_AES256_CTS_HMAC_SHA1_96 };
     DWORD dwError = ERROR_SUCCESS;
     PSTR pszBaseDn = NULL;
     krb5_error_code ret = 0;
@@ -950,10 +952,13 @@ KtKrb5GetSaltingPrincipalA(
     LwStrToUpper(pszRealm);
 
     /* Ensure host name lowercased */
-    dwError = LwAllocateString(pszMachineName, &pszMachine);
+    dwError = LwAllocateString(pszMachAcctName, &pszMachine);
     BAIL_ON_LSA_ERROR(dwError);
 
     LwStrToLower(pszMachine);
+    
+    if (pszMachine[strlen(pszMachine)-1] == '$')
+        pszMachine[strlen(pszMachine)-1] = '\0';
 
     dwError = LwAllocateStringPrintf(&pszSaltOut,
                                      "host/%s.%s@%s",

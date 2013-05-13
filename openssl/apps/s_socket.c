@@ -62,6 +62,12 @@
 #include <errno.h>
 #include <signal.h>
 
+#ifdef FLAT_INC
+#include "e_os2.h"
+#else
+#include "../e_os2.h"
+#endif
+
 /* With IPv6, it looks like Digital has mixed up the proper order of
    recursive header file inclusion, resulting in the compiler complaining
    that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
@@ -231,14 +237,11 @@ static int ssl_sock_init(void)
 int init_client(int *sock, char *host, int port, int type)
 	{
 	unsigned char ip[4];
-	short p=0;
 
+	memset(ip, '\0', sizeof ip);
 	if (!host_ip(host,&(ip[0])))
-		{
-		return(0);
-		}
-	if (p != 0) port=p;
-	return(init_client_ip(sock,ip,port,type));
+		return 0;
+	return init_client_ip(sock,ip,port,type);
 	}
 
 static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
@@ -266,7 +269,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
 			
 	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
 
-#ifndef OPENSSL_SYS_MPE
+#if defined(SO_KEEPALIVE) && !defined(OPENSSL_SYS_MPE)
 	if (type == SOCK_STREAM)
 		{
 		i=0;
@@ -276,7 +279,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
 #endif
 
 	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
-		{ close(s); perror("connect"); return(0); }
+		{ closesocket(s); perror("connect"); return(0); }
 	*sock=s;
 	return(1);
 	}
@@ -285,7 +288,7 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 	{
 	int sock;
 	char *name = NULL;
-	int accept_socket;
+	int accept_socket = 0;
 	int i;
 
 	if (!init_server(&accept_socket,port,type)) return(0);
@@ -323,7 +326,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 	{
 	int ret=0;
 	struct sockaddr_in server;
-	int s= -1,i;
+	int s= -1;
 
 	if (!ssl_sock_init()) return(0);
 
@@ -362,7 +365,6 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 		}
 	/* Make it 128 for linux */
 	if (type==SOCK_STREAM && listen(s,128) == -1) goto err;
-	i=0;
 	*sock=s;
 	ret=1;
 err:
@@ -380,7 +382,7 @@ static int init_server(int *sock, int port, int type)
 
 static int do_accept(int acc_sock, int *sock, char **host)
 	{
-	int ret,i;
+	int ret;
 	struct hostent *h1,*h2;
 	static struct sockaddr_in from;
 	int len;
@@ -403,6 +405,7 @@ redoit:
 	if (ret == INVALID_SOCKET)
 		{
 #if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
+		int i;
 		i=WSAGetLastError();
 		BIO_printf(bio_err,"accept error %d\n",i);
 #else
@@ -457,7 +460,6 @@ redoit:
 			BIO_printf(bio_err,"gethostbyname failure\n");
 			return(0);
 			}
-		i=0;
 		if (h2->h_addrtype != AF_INET)
 			{
 			BIO_printf(bio_err,"gethostbyname addr is not AF_INET\n");

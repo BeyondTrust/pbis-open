@@ -1,5 +1,5 @@
 /* ocsp_vfy.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
 /* ====================================================================
@@ -91,9 +91,12 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		{
 		EVP_PKEY *skey;
 		skey = X509_get_pubkey(signer);
-		ret = OCSP_BASICRESP_verify(bs, skey, 0);
-		EVP_PKEY_free(skey);
-		if(ret <= 0)
+		if (skey)
+			{
+			ret = OCSP_BASICRESP_verify(bs, skey, 0);
+			EVP_PKEY_free(skey);
+			}
+		if(!skey || ret <= 0)
 			{
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNATURE_FAILURE);
 			goto end;
@@ -108,6 +111,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 			init_res = X509_STORE_CTX_init(&ctx, st, signer, bs->certs);
 		if(!init_res)
 			{
+			ret = -1;
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,ERR_R_X509_LIB);
 			goto end;
 			}
@@ -308,6 +312,8 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 			}
 
 		mdlen = EVP_MD_size(dgst);
+		if (mdlen < 0)
+		    return -1;
 		if ((cid->issuerNameHash->length != mdlen) ||
 		   (cid->issuerKeyHash->length != mdlen))
 			return 0;
@@ -316,7 +322,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 			return -1;
 		if (memcmp(md, cid->issuerNameHash->data, mdlen))
 			return 0;
-		X509_pubkey_digest(cert, EVP_sha1(), md, NULL);
+		X509_pubkey_digest(cert, dgst, md, NULL);
 		if (memcmp(md, cid->issuerKeyHash->data, mdlen))
 			return 0;
 

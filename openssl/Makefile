@@ -4,16 +4,16 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION=0.9.8h
-MAJOR=0
-MINOR=9.8
-SHLIB_VERSION_NUMBER=0.9.8
+VERSION=1.0.1e
+MAJOR=1
+MINOR=0.1
+SHLIB_VERSION_NUMBER=1.0.0
 SHLIB_VERSION_HISTORY=
-SHLIB_MAJOR=0
-SHLIB_MINOR=9.8
+SHLIB_MAJOR=1
+SHLIB_MINOR=0.0
 SHLIB_EXT=
 PLATFORM=dist
-OPTIONS= no-camellia no-cms no-gmp no-krb5 no-mdc2 no-montasm no-rc5 no-rfc3779 no-seed no-shared no-tlsext no-zlib no-zlib-dynamic
+OPTIONS= no-ec_nistp_64_gcc_128 no-gmp no-jpake no-krb5 no-md2 no-rc5 no-rfc3779 no-sctp no-shared no-store no-zlib no-zlib-dynamic static-engine
 CONFIGURE_ARGS=dist
 SHLIB_TARGET=
 
@@ -61,17 +61,19 @@ OPENSSLDIR=/usr/local/ssl
 
 CC= cc
 CFLAG= -O
-DEPFLAG= -DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_CMS -DOPENSSL_NO_GMP -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SEED -DOPENSSL_NO_TLSEXT 
+DEPFLAG= -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SCTP -DOPENSSL_NO_STORE
 PEX_LIBS= 
 EX_LIBS= 
 EXE_EXT= 
 ARFLAGS= 
-AR=ar $(ARFLAGS) r
+AR= ar $(ARFLAGS) r
 RANLIB= /usr/bin/ranlib
+NM= nm
 PERL= /usr/bin/perl
 TAR= tar
-TARFLAGS= --no-recursion
+TARFLAGS= --no-recursion --record-size=10240
 MAKEDEPPROG=makedepend
+LIBDIR=lib
 
 # We let the C compiler driver to take care of .s files. This is done in
 # order to be excused from maintaining a separate set of architecture
@@ -86,10 +88,10 @@ ASFLAG=$(CFLAG)
 PROCESSOR= 
 
 # CPUID module collects small commonly used assembler snippets
-CPUID_OBJ= 
+CPUID_OBJ= mem_clr.o
 BN_ASM= bn_asm.o
 DES_ENC= des_enc.o fcrypt_b.o
-AES_ASM_OBJ= aes_core.o aes_cbc.o
+AES_ENC= aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
 CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o rc4_skey.o
@@ -97,6 +99,11 @@ RC5_ENC= rc5_enc.o
 MD5_ASM_OBJ= 
 SHA1_ASM_OBJ= 
 RMD160_ASM_OBJ= 
+WP_ASM_OBJ= wp_block.o
+CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
+MODES_ASM_OBJ= 
+ENGINES_ASM_OBJ= 
+PERLASM_SCHEME= 
 
 # KRB5 stuff
 KRB5_INCLUDES=
@@ -106,18 +113,43 @@ LIBKRB5=
 ZLIB_INCLUDE=
 LIBZLIB=
 
+# TOP level FIPS install directory.
+FIPSDIR=/usr/local/ssl/fips-2.0
+
+# This is the location of fipscanister.o and friends.
+# The FIPS module build will place it $(INSTALLTOP)/lib
+# but since $(INSTALLTOP) can only take the default value
+# when the module is built it will be in /usr/local/ssl/lib
+# $(INSTALLTOP) for this build may be different so hard
+# code the path.
+
+FIPSLIBDIR=
+
+# The location of the library which contains fipscanister.o
+# normally it will be libcrypto unless fipsdso is set in which
+# case it will be libfips. If not compiling in FIPS mode at all
+# this is empty making it a useful test for a FIPS compile.
+
+FIPSCANLIB=
+
+# Shared library base address. Currently only used on Windows.
+#
+
+BASEADDR=0xFB00000
+
 DIRS=   crypto ssl engines apps test tools
+ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
 SDIRS=  \
 	objects \
-	md2 md4 md5 sha hmac ripemd \
-	des aes rc2 rc4 idea bf cast \
+	md4 md5 sha mdc2 hmac ripemd whrlpool \
+	des aes rc2 rc4 idea bf cast camellia seed modes \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store pqueue
+	cms pqueue ts srp cmac
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -131,6 +163,8 @@ MANDIR=$(OPENSSLDIR)/man
 MAN1=1
 MAN3=3
 MANSUFFIX=
+HTMLSUFFIX=html
+HTMLDIR=$(OPENSSLDIR)/html
 SHELL=/bin/sh
 
 TOP=    .
@@ -166,33 +200,44 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${EXHEADER+EXHEADER} $${HEADER+HEADER}		\
 		$${GENERAL+GENERAL} $${CFLAGS+CFLAGS}		\
 		$${ASFLAGS+ASFLAGS} $${AFLAGS+AFLAGS}		\
-		$${LDCMD+LDCMD} $${LDFLAGS+LDFLAGS}		\
+		$${LDCMD+LDCMD} $${LDFLAGS+LDFLAGS} $${SCRIPTS+SCRIPTS}	\
 		$${SHAREDCMD+SHAREDCMD} $${SHAREDFLAGS+SHAREDFLAGS}	\
 		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}
 
-BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
-		CC='${CC}' CFLAG='${CFLAG}' 			\
-		AS='${CC}' ASFLAG='${CFLAG} -c'			\
-		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
-		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
-		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
-		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD ${MAKEDEPPROG}' \
-		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
-		MAKEDEPPROG='${MAKEDEPPROG}'			\
-		SHARED_LDFLAGS='${SHARED_LDFLAGS}'		\
-		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
-		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
-		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
-		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
-		CPUID_OBJ='${CPUID_OBJ}'			\
-		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
-		AES_ASM_OBJ='${AES_ASM_OBJ}'			\
-		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
-		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
-		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
-		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
-		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
+BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
+		CC='$(CC)' CFLAG='$(CFLAG)' 			\
+		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
+		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
+		CROSS_COMPILE='$(CROSS_COMPILE)'	\
+		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
+		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
+		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
+		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
+		LIBDIR='$(LIBDIR)'				\
+		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD $(MAKEDEPPROG)' \
+		DEPFLAG='-DOPENSSL_NO_DEPRECATED $(DEPFLAG)'	\
+		MAKEDEPPROG='$(MAKEDEPPROG)'			\
+		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
+		KRB5_INCLUDES='$(KRB5_INCLUDES)' LIBKRB5='$(LIBKRB5)'	\
+		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
+		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
+		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
+		PEX_LIBS='$(PEX_LIBS)' EX_LIBS='$(EX_LIBS)'	\
+		CPUID_OBJ='$(CPUID_OBJ)'			\
+		BN_ASM='$(BN_ASM)' DES_ENC='$(DES_ENC)' 	\
+		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
+		BF_ENC='$(BF_ENC)' CAST_ENC='$(CAST_ENC)'	\
+		RC4_ENC='$(RC4_ENC)' RC5_ENC='$(RC5_ENC)'	\
+		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
+		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
+		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
+		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
+		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
+		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
+		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
+		FIPSLIBDIR='${FIPSLIBDIR}'			\
+		FIPSDIR='${FIPSDIR}'				\
+		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
@@ -217,7 +262,7 @@ BUILD_CMD=  if [ -d "$$dir" ]; then \
 	    fi
 RECURSIVE_BUILD_CMD=for dir in $(DIRS); do $(BUILD_CMD); done
 BUILD_ONE_CMD=\
-	if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
+	if expr " $(DIRS) " : ".* $$dir " >/dev/null 2>&1; then \
 		$(BUILD_CMD); \
 	fi
 
@@ -246,9 +291,20 @@ all_testapps: build_libs build_testapps
 build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
-libcrypto$(SHLIB_EXT): libcrypto.a
+fips_premain_dso$(EXE_EXT): libcrypto.a
+	[ -z "$(FIPSCANLIB)" ] || $(CC) $(CFLAG) -Iinclude \
+		-DFINGERPRINT_PREMAIN_DSO_LOAD -o $@  \
+		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fipscanister.o \
+		libcrypto.a $(EX_LIBS)
+
+libcrypto$(SHLIB_EXT): libcrypto.a fips_premain_dso$(EXE_EXT)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=crypto build-shared; \
+		if [ "$(FIPSCANLIB)" = "libcrypto" ]; then \
+			FIPSLD_LIBCRYPTO=libcrypto.a ; \
+			FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)/bin/fipsld; \
+			export CC FIPSLD_CC FIPSLD_LIBCRYPTO; \
+		fi; \
+		$(MAKE) -e SHLIBDIRS=crypto build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
@@ -277,10 +333,10 @@ clean-shared:
 	done
 
 link-shared:
-	@ set -e; for i in ${SHLIBDIRS}; do \
+	@ set -e; for i in $(SHLIBDIRS); do \
 		$(MAKE) -f $(HERE)/Makefile.shared -e $(BUILDENV) \
-			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			symlink.$(SHLIB_TARGET); \
 		libs="$$libs -l$$i"; \
 	done
@@ -288,13 +344,13 @@ link-shared:
 build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
-	@ set -e; libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+	@ set -e; libs='-L. $(SHLIBDEPS)'; for i in $(SHLIBDIRS); do \
+		if [ "$$i" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
 		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
-			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
 			link_a.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
@@ -303,40 +359,43 @@ do_$(SHLIB_TARGET):
 libcrypto.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
 
 libssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
 
 openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
 Makefile: Makefile.org Configure config
@@ -345,7 +404,7 @@ Makefile: Makefile.org Configure config
 	@false
 
 libclean:
-	rm -f *.map *.so *.so.* *.dll engines/*.so engines/*.dll *.a engines/*.a */lib */*/lib
+	rm -f *.map *.so *.so.* *.dylib *.dll engines/*.so engines/*.dll engines/*.dylib *.a engines/*.a */lib */*/lib
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
@@ -374,26 +433,29 @@ links:
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
-	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
-	rm -f *.bak
+	rm -rf *.bak include/openssl certs/.0
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time
-rehash.time: certs
-	@(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-	  OPENSSL_DEBUG_MEMORY=on; \
-	  export OPENSSL OPENSSL_DEBUG_MEMORY; \
-	  $(PERL) tools/c_rehash certs)
-	touch rehash.time
+rehash.time: certs apps
+	@if [ -z "$(CROSS_COMPILE)" ]; then \
+		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
+		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
+		OPENSSL_DEBUG_MEMORY=on; \
+		export OPENSSL OPENSSL_DEBUG_MEMORY; \
+		$(PERL) tools/c_rehash certs/demo) && \
+		touch rehash.time; \
+	else :; fi
 
 test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
-	util/opensslwrap.sh version -a
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
+	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl
@@ -409,9 +471,9 @@ tags:
 	find . -name '[^.]*.[ch]' | xargs etags -a
 
 errors:
+	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
-	$(PERL) util/ck_errf.pl */*.c */*/*.c
 
 stacks:
 	$(PERL) util/mkstack.pl -write
@@ -426,6 +488,8 @@ crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
 	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
 crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
 	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+crypto/objects/obj_xref.h: crypto/objects/objxref.pl crypto/objects/obj_xref.txt crypto/objects/obj_mac.num
+	$(PERL) crypto/objects/objxref.pl crypto/objects/obj_mac.num crypto/objects/obj_xref.txt >crypto/objects/obj_xref.h
 
 apps/openssl-vms.cnf: apps/openssl.cnf
 	$(PERL) VMS/VMSify-conf.pl < apps/openssl.cnf > apps/openssl-vms.cnf
@@ -438,7 +502,7 @@ TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 
-update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
+update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
@@ -469,8 +533,8 @@ tar-snap:
 dist:   
 	$(PERL) Configure dist
 	@$(MAKE) dist_pem_h
-	@$(MAKE) SDIRS='${SDIRS}' clean
-	@$(MAKE) TAR='${TAR}' TARFLAGS='${TARFLAGS}' tar
+	@$(MAKE) SDIRS='$(SDIRS)' clean
+	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' tar
 
 dist_pem_h:
 	(cd crypto/pem; $(MAKE) -e $(BUILDENV) pem.h; $(MAKE) clean)
@@ -479,9 +543,9 @@ install: all install_docs install_sw
 
 install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR) \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
@@ -492,14 +556,14 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
-	@set -e; for i in $(LIBS) ;\
+	@set -e; liblist="$(LIBS)"; for i in $$liblist ;\
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
-			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i ); \
 		fi; \
 	done;
 	@set -e; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -509,22 +573,32 @@ install_sw:
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				else \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				fi ); \
+				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
+				(	case $$i in \
+						*crypto*) i=libeay32.dll;; \
+						*ssl*)    i=ssleay32.dll;; \
+					esac; \
+					echo installing $$i; \
+	 				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+				fi; \
 			fi; \
 		done; \
 		(	here="`pwd`"; \
-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+			cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
 			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
@@ -533,12 +607,33 @@ install_sw:
 			sed -e '1,/^$$/d' doc/openssl-shared.txt; \
 		fi; \
 	fi
-	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libcrypto.pc
-	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
+	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+
+install_html_docs:
+	here="`pwd`"; \
+	for subdir in apps crypto ssl; do \
+		mkdir -p $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+		for i in doc/$$subdir/*.pod; do \
+			fn=`basename $$i .pod`; \
+			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
+			cat $$i \
+			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
+			| pod2html --podroot=doc --htmlroot=.. --podpath=apps:crypto:ssl \
+			| sed -r 's/<!DOCTYPE.*//g' \
+			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
+			$(PERL) util/extract-names.pl < $$i | \
+				grep -v $$filecase "^$$fn\$$" | \
+				(cd $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+				 while read n; do \
+					PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
+				 done); \
+		done; \
+	done
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
@@ -546,7 +641,7 @@ install_docs:
 		$(INSTALL_PREFIX)$(MANDIR)/man3 \
 		$(INSTALL_PREFIX)$(MANDIR)/man5 \
 		$(INSTALL_PREFIX)$(MANDIR)/man7
-	@pod2man="`cd util; ./pod2mantest $(PERL)`"; \
+	@pod2man="`cd ./util; ./pod2mantest $(PERL)`"; \
 	here="`pwd`"; \
 	filecase=; \
 	if [ "$(PLATFORM)" = "DJGPP" -o "$(PLATFORM)" = "Cygwin" -o "$(PLATFORM)" = "mingw" ]; then \
@@ -566,7 +661,7 @@ install_docs:
 			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
+				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done; \
 	set -e; for i in doc/crypto/*.pod doc/ssl/*.pod; do \
@@ -583,7 +678,7 @@ install_docs:
 			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
+				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done
 

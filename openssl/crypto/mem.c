@@ -121,10 +121,11 @@ static void (*set_debug_options_func)(long) = NULL;
 static long (*get_debug_options_func)(void) = NULL;
 #endif
 
-
 int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	void (*f)(void *))
 	{
+	/* Dummy call just to ensure OPENSSL_init() gets linked in */
+	OPENSSL_init();
 	if (!allow_customize)
 		return 0;
 	if ((m == 0) || (r == 0) || (f == 0))
@@ -186,6 +187,7 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 	{
 	if (!allow_customize_debug)
 		return 0;
+	OPENSSL_init();
 	malloc_debug_func=m;
 	realloc_debug_func=r;
 	free_debug_func=f;
@@ -250,7 +252,6 @@ void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
 void *CRYPTO_malloc_locked(int num, const char *file, int line)
 	{
 	void *ret = NULL;
-	extern unsigned char cleanse_ctr;
 
 	if (num <= 0) return NULL;
 
@@ -267,11 +268,15 @@ void *CRYPTO_malloc_locked(int num, const char *file, int line)
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
 
+#ifndef OPENSSL_CPUID_OBJ
         /* Create a dependency on the value of 'cleanse_ctr' so our memory
          * sanitisation function can't be optimised out. NB: We only do
          * this for >2Kb so the overhead doesn't bother us. */
         if(ret && (num > 2048))
+	{	extern unsigned char cleanse_ctr;
 		((unsigned char *)ret)[0] = cleanse_ctr;
+	}
+#endif
 
 	return ret;
 	}
@@ -291,7 +296,6 @@ void CRYPTO_free_locked(void *str)
 void *CRYPTO_malloc(int num, const char *file, int line)
 	{
 	void *ret = NULL;
-	extern unsigned char cleanse_ctr;
 
 	if (num <= 0) return NULL;
 
@@ -308,12 +312,23 @@ void *CRYPTO_malloc(int num, const char *file, int line)
 	if (malloc_debug_func != NULL)
 		malloc_debug_func(ret, num, file, line, 1);
 
+#ifndef OPENSSL_CPUID_OBJ
         /* Create a dependency on the value of 'cleanse_ctr' so our memory
          * sanitisation function can't be optimised out. NB: We only do
          * this for >2Kb so the overhead doesn't bother us. */
         if(ret && (num > 2048))
+	{	extern unsigned char cleanse_ctr;
                 ((unsigned char *)ret)[0] = cleanse_ctr;
+	}
+#endif
 
+	return ret;
+	}
+char *CRYPTO_strdup(const char *str, const char *file, int line)
+	{
+	char *ret = CRYPTO_malloc(strlen(str)+1, file, line);
+
+	strcpy(ret, str);
 	return ret;
 	}
 
@@ -347,6 +362,10 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
 		return CRYPTO_malloc(num, file, line);
 
 	if (num <= 0) return NULL;
+
+	/* We don't support shrinking the buffer. Note the memcpy that copies
+	 * |old_len| bytes to the new buffer, below. */
+	if (num < old_len) return NULL;
 
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);

@@ -59,14 +59,17 @@
 #include <stdio.h>
 #include "cryptlib.h"
 
+#ifndef OPENSSL_FIPS
+
 #ifndef OPENSSL_NO_SHA
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <openssl/sha.h>
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
 
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }
@@ -82,7 +85,7 @@ static const EVP_MD sha1_md=
 	NID_sha1,
 	NID_sha1WithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
 	init,
 	update,
 	final,
@@ -119,7 +122,7 @@ static const EVP_MD sha224_md=
 	NID_sha224,
 	NID_sha224WithRSAEncryption,
 	SHA224_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
 	init224,
 	update256,
 	final256,
@@ -138,7 +141,7 @@ static const EVP_MD sha256_md=
 	NID_sha256,
 	NID_sha256WithRSAEncryption,
 	SHA256_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
 	init256,
 	update256,
 	final256,
@@ -169,7 +172,7 @@ static const EVP_MD sha384_md=
 	NID_sha384,
 	NID_sha384WithRSAEncryption,
 	SHA384_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
 	init384,
 	update512,
 	final512,
@@ -188,7 +191,7 @@ static const EVP_MD sha512_md=
 	NID_sha512,
 	NID_sha512WithRSAEncryption,
 	SHA512_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
 	init512,
 	update512,
 	final512,
@@ -202,3 +205,5 @@ static const EVP_MD sha512_md=
 const EVP_MD *EVP_sha512(void)
 	{ return(&sha512_md); }
 #endif	/* ifndef OPENSSL_NO_SHA512 */
+
+#endif

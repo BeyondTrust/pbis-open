@@ -38,6 +38,8 @@
 
 #include "includes.h"
 
+#define LWSM_FIPS_MODE_PATH CONFIGDIR "/fipsmode"
+     
 PLW_THREAD_POOL gpPool;
 
 SM_GLOBAL_STATE gState =
@@ -122,6 +124,12 @@ LwSmControlLock(
     VOID
     );
 
+static
+int
+LwSmFIPsMode(
+    VOID
+    );        
+
 int
 main(
     int argc,
@@ -129,10 +137,19 @@ main(
     )
 {
     DWORD dwError = 0;
+    int fips_mode = 0;
 
     /* Parse command line */
     dwError = LwSmParseArguments(argc, ppszArgv);
     BAIL_ON_ERROR(dwError);
+
+    fips_mode = LwSmFIPsMode();
+
+    if (fips_mode && !FIPS_mode_set(fips_mode)) {
+        ERR_load_crypto_strings();
+        ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+        exit(1);
+    }
 
     /* Block all signals */
     dwError = LwNtStatusToWin32Error(LwRtlBlockSignals());
@@ -168,10 +185,15 @@ main(
 
     /* Initialize logging subsystem */
     LwSmLogInit();
-
+    
     /* Set up logging */
     dwError = LwSmConfigureLogging(gState.pName);
     BAIL_ON_ERROR(dwError);
+
+    if (fips_mode) 
+    {
+        SM_LOG_ALWAYS("***** running with FIPs mode enabled *****");
+    }
 
     /* Initialize the container subsystem */
     dwError = LwSmContainerInit();
@@ -1183,3 +1205,24 @@ error:
 
     goto cleanup;
 }
+
+static
+int
+LwSmFIPsMode(
+    VOID
+    )
+{
+    FILE *fp;
+    int fips_mode = 0;
+
+    fp = fopen(LWSM_FIPS_MODE_PATH, "r");
+    
+    if (fp) {
+        fscanf(fp, "%d", &fips_mode);
+
+        fclose(fp);
+    }
+
+    return fips_mode;
+}
+

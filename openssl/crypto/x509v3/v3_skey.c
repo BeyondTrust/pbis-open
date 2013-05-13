@@ -1,5 +1,5 @@
 /* v3_skey.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
@@ -129,7 +129,8 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
 		goto err;
 	}
 
-	EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1(), NULL);
+	if (!EVP_Digest(pk->data, pk->length, pkey_dig, &diglen, EVP_sha1(), NULL))
+		goto err;
 
 	if(!M_ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
 		X509V3err(X509V3_F_S2I_SKEY_ID,ERR_R_MALLOC_FAILURE);

@@ -85,7 +85,9 @@
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/engine.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -451,9 +453,13 @@ static int e_gmp_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	}
 #endif
 
+#endif /* !OPENSSL_NO_GMP */
+
 /* This stuff is needed if this ENGINE is being compiled into a self-contained
  * shared-library. */	   
-#ifndef ENGINE_NO_DYNAMIC_SUPPORT
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+IMPLEMENT_DYNAMIC_CHECK_FN()
+#ifndef OPENSSL_NO_GMP
 static int bind_fn(ENGINE *e, const char *id)
 	{
 	if(id && (strcmp(id, engine_e_gmp_id) != 0))
@@ -462,10 +468,13 @@ static int bind_fn(ENGINE *e, const char *id)
 		return 0;
 	return 1;
 	}       
-IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
-#endif /* ENGINE_DYNAMIC_SUPPORT */
+#else
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
+#endif
+#endif /* !OPENSSL_NO_DYNAMIC_ENGINE */
 
-#endif /* !OPENSSL_NO_GMP */
 #endif /* !OPENSSL_NO_HW */
-

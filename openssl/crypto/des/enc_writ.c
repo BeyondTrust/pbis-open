@@ -80,6 +80,9 @@
 int DES_enc_write(int fd, const void *_buf, int len,
 		  DES_key_schedule *sched, DES_cblock *iv)
 	{
+#if defined(OPENSSL_NO_POSIX_IO)
+	return (-1);
+#else
 #ifdef _LIBC
 	extern unsigned long time();
 	extern int write();
@@ -153,7 +156,11 @@ int DES_enc_write(int fd, const void *_buf, int len,
 		{
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got up to. */
+#ifndef _WIN32
 		i=write(fd,(void *)&(outbuf[j]),outnum-j);
+#else
+		i=_write(fd,(void *)&(outbuf[j]),outnum-j);
+#endif
 		if (i == -1)
 			{
 #ifdef EINTR
@@ -168,4 +175,5 @@ int DES_enc_write(int fd, const void *_buf, int len,
 		}
 
 	return(len);
+#endif /* OPENSSL_NO_POSIX_IO */
 	}

@@ -67,6 +67,8 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (c->cipher->set_asn1_parameters != NULL)
 		ret=c->cipher->set_asn1_parameters(c,type);
+	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret=EVP_CIPHER_set_asn1_iv(c, type);
 	else
 		ret=-1;
 	return(ret);
@@ -78,6 +80,8 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (c->cipher->get_asn1_parameters != NULL)
 		ret=c->cipher->get_asn1_parameters(c,type);
+	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret=EVP_CIPHER_get_asn1_iv(c, type);
 	else
 		ret=-1;
 	return(ret);
@@ -156,6 +160,12 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 		case NID_des_cfb64:
 		case NID_des_cfb8:
 		case NID_des_cfb1:
+
+		return NID_des_cfb64;
+
+		case NID_des_ede3_cfb64:
+		case NID_des_ede3_cfb8:
+		case NID_des_ede3_cfb1:
 
 		return NID_des_cfb64;
 
@@ -255,11 +265,23 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 
 int EVP_MD_size(const EVP_MD *md)
 	{
+	if (!md)
+		{
+		EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
+		return -1;
+		}
 	return md->md_size;
 	}
 
-const EVP_MD * EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
+unsigned long EVP_MD_flags(const EVP_MD *md)
 	{
+	return md->flags;
+	}
+
+const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
+	{
+	if (!ctx)
+		return NULL;
 	return ctx->digest;
 	}
 
@@ -274,6 +296,21 @@ void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
 	}
 
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
+	{
+	return (ctx->flags & flags);
+	}
+
+void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags |= flags;
+	}
+
+void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags &= ~flags;
+	}
+
+int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 	{
 	return (ctx->flags & flags);
 	}

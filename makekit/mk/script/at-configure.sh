@@ -139,6 +139,11 @@ case "$MK_OS" in
             export SHLIB_PATH
         fi
         ;;
+    darwin)
+        DYLD_LIBRARY_PATH="$_lib_dir:$DYLD_LIBRARY_PATH"
+        export DYLD_LIBRARY_PATH
+        _ldflags="-L${_lib_dir}"
+        ;;
     *)
         _ldflags="-L${_lib_dir}"
         ;;

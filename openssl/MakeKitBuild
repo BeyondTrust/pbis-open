@@ -1,75 +1,81 @@
 make()
 {
     OPENSSL_HEADERS="\
-        openssl/tmdiff.h \
-        openssl/ripemd.h \
-        openssl/md2.h \
-        openssl/hmac.h \
-        openssl/blowfish.h \
-        openssl/e_os2.h \
-        openssl/rc2.h \
-        openssl/kssl.h \
-        openssl/ssl23.h \
-        openssl/ssl.h \
-        openssl/pem2.h \
-        openssl/ui_compat.h \
-        openssl/krb5_asn.h \
-        openssl/opensslconf.h \
-        openssl/x509.h \
-        openssl/stack.h \
-        openssl/dsa.h \
-        openssl/pqueue.h \
-        openssl/rc4.h \
         openssl/aes.h \
-        openssl/ecdsa.h \
-        openssl/md5.h \
-        openssl/comp.h \
-        openssl/pem.h \
-        openssl/sha.h \
-        openssl/des.h \
-        openssl/conf.h \
-        openssl/opensslv.h \
-        openssl/bn.h \
-        openssl/x509_vfy.h \
-        openssl/pkcs7.h \
-        openssl/lhash.h \
-        openssl/ebcdic.h \
-        openssl/ec.h \
-        openssl/ocsp.h \
+        openssl/asn1.h \
         openssl/asn1_mac.h \
-        openssl/pq_compat.h \
         openssl/asn1t.h \
-        openssl/ui.h \
-        openssl/store.h \
-        openssl/ssl2.h \
-        openssl/objects.h \
-        openssl/buffer.h \
-        openssl/x509v3.h \
         openssl/bio.h \
-        openssl/symhacks.h \
-        openssl/idea.h \
-        openssl/ecdh.h \
-        openssl/txt_db.h \
-        openssl/dso.h \
-        openssl/safestack.h \
-        openssl/pkcs12.h \
-        openssl/evp.h \
-        openssl/rsa.h \
+        openssl/blowfish.h \
+        openssl/bn.h \
+        openssl/buffer.h \
+        openssl/camellia.h \
+        openssl/cast.h \
+        openssl/cmac.h \
+        openssl/cms.h \
+        openssl/comp.h \
+        openssl/conf.h \
         openssl/conf_api.h \
         openssl/crypto.h \
+        openssl/des.h \
         openssl/des_old.h \
-        openssl/md4.h \
-        openssl/dtls1.h \
-        openssl/asn1.h \
-        openssl/tls1.h \
-        openssl/ssl3.h \
         openssl/dh.h \
-        openssl/obj_mac.h \
-        openssl/err.h \
-        openssl/ossl_typ.h \
+        openssl/dsa.h \
+        openssl/dso.h \
+        openssl/dtls1.h \
+        openssl/e_os2.h \
+        openssl/ebcdic.h \
+        openssl/ec.h \
+        openssl/ecdh.h \
+        openssl/ecdsa.h \
         openssl/engine.h \
-        openssl/cast.h \
-        openssl/rand.h"
+        openssl/err.h \
+        openssl/evp.h \
+        openssl/hmac.h \
+        openssl/idea.h \
+        openssl/krb5_asn.h \
+        openssl/kssl.h \
+        openssl/lhash.h \
+        openssl/md4.h \
+        openssl/md5.h \
+        openssl/mdc2.h \
+        openssl/modes.h \
+        openssl/obj_mac.h \
+        openssl/objects.h \
+        openssl/ocsp.h \
+        openssl/opensslconf.h \
+        openssl/opensslv.h \
+        openssl/ossl_typ.h \
+        openssl/pem.h \
+        openssl/pem2.h \
+        openssl/pkcs12.h \
+        openssl/pkcs7.h \
+        openssl/pqueue.h \
+        openssl/rand.h \
+        openssl/rc2.h \
+        openssl/rc4.h \
+        openssl/ripemd.h \
+        openssl/rsa.h \
+        openssl/safestack.h \
+        openssl/seed.h \
+        openssl/sha.h \
+        openssl/srp.h \
+        openssl/srtp.h \
+        openssl/ssl.h \
+        openssl/ssl2.h \
+        openssl/ssl23.h \
+        openssl/ssl3.h \
+        openssl/stack.h \
+        openssl/symhacks.h \
+        openssl/tls1.h \
+        openssl/ts.h \
+        openssl/txt_db.h \
+        openssl/ui.h \
+        openssl/ui_compat.h \
+        openssl/whrlpool.h \
+        openssl/x509.h \
+        openssl/x509_vfy.h \
+        openssl/x509v3.h" 
 
     OPENSSL_MISC="\
         ${MK_PREFIX}/ssl/openssl.cnf \
@@ -83,7 +89,7 @@ make()
     lw_openssl \
         HEADERS="$OPENSSL_HEADERS" \
         TARGETS="$OPENSSL_MISC" \
-        VERSION="0.9.8" \
+        VERSION="1.0.0" \
         LIBS="ssl crypto"
 }
 
@@ -257,6 +263,7 @@ configure_openssl()
     copy_openssl "$2" "$3"
 
     MK_MSG_DOMAIN="configure"
+    extra_args=""
 
     case "${MK_OS}-${MK_ISA}" in
         darwin-x86_64)
@@ -273,12 +280,15 @@ configure_openssl()
             ;;
         solaris-sparc_32)
             host_string="solaris-sparcv9-gcc"
+            extra_args="-static-libgcc"
             ;;
         solaris-x86_32)
             host_string="solaris-x86-gcc"
+            extra_args="-static-libgcc"
             ;;
         aix-ppc32)
             host_string="aix-gcc"
+            extra_args="-static-libgcc"
             ;;
         hpux-ia64_32)
             host_string="hpux-ia64-gcc"
@@ -286,14 +296,20 @@ configure_openssl()
         hpux-ia64_64)
             host_string="hpux64-ia64-gcc"
             ;;
+        hpux-hppa32)
+            host_string="hpux-parisc2-gcc"
+            extra_args="-DOPENSSL_USE_IPV6=0"
+            ;;
         linux-ppc32)
             host_string="linux-ppc"
             ;;
         linux-x86_32)
             host_string="linux-elf"
+            extra_args="-Wa,--noexecstack"
             ;;
         linux-x86_64)
             host_string="linux-x86_64"
+            extra_args="-Wa,--noexecstack"
             ;;
         linux-arm*)
             host_string="linux-generic32"
@@ -314,13 +330,23 @@ configure_openssl()
         mk_run_quiet_or_fail \
             ./Configure \
             --prefix="${MK_PREFIX}" \
-            shared "$host_string"
+            shared "$host_string" $extra_args
     else
         mk_run_quiet_or_fail \
             ./config \
             --prefix="${MK_PREFIX}" \
-            -d \
             shared
+    fi
+    
+    # There is an issue building OpenSSL on HUX 11 HPPA resulting from the 
+    # conversion of the libcrypto.a to libcrypto.sl losing all the symbols.
+    # The previous 0.9.8 version of Makefile.shared had been locally modified
+    # to avoid this issue. Below we copy over this modified version to enable us
+    # to continue building OpenSSL on HPUX 11 HPPA
+    if [ "${MK_OS}-${MK_ISA}" = "hpux-hppa32" ]
+    then
+        mk_run_or_fail mv -f "Makefile.shared" "Makefile.shared.1.0.1"
+        mk_run_or_fail mv -f "Makefile.shared.hppa" "Makefile.shared"
     fi
 
     mk_cd_or_fail "${old_pwd}"
@@ -352,7 +378,7 @@ build_openssl()
     case "$MK_OS" in
         linux)
             # Ensure executable stack bit is not set in resulting library
-            CC="$MK_CC -Wa,--noexecstack"
+            CC="$MK_CC"
             SHARED_LDFLAGS="-shared"
             ;;
         aix)
@@ -385,7 +411,8 @@ build_openssl()
     esac
 
     # Build it
-    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC} ${MK_ISA_CFLAGS}" SHARED_LDFLAGS="$SHARED_LDFLAGS"
+    # For FIPs capable build we cannot pass CC="${CC} ${MK_ISA_CFLAGS}" we now set the extra CC options during the configure step
+    mk_run_quiet_or_fail ${3} MAKE="$3" SHARED_LDFLAGS="$SHARED_LDFLAGS"
 
     # Touch stamp file
     mk_cd_or_fail "$old_pwd"
@@ -425,7 +452,16 @@ stage_openssl()
 
     # Move bits we want into staging area
     mk_mkdir "${2}${MK_LIBDIR}"
-    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib/"*"${MK_LIB_EXT}"* "${2}${MK_LIBDIR}"
+
+    if [ -d "${3}/.install${MK_PREFIX}/lib" ]
+    then
+        mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib/"*"${MK_LIB_EXT}"* "${2}${MK_LIBDIR}"
+    elif [ -d "${3}/.install${MK_PREFIX}/lib64" ]
+    then
+        mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib64/"*"${MK_LIB_EXT}"* "${2}${MK_LIBDIR}"
+    else
+        mk_fail "No library folder for OpenSSL build"
+    fi
 
     mk_mkdir "${2}${MK_INCLUDEDIR}/openssl"
     mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/include/openssl/"* "${2}${MK_INCLUDEDIR}/openssl"

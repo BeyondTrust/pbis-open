@@ -99,11 +99,10 @@ extern "C" {
 #define HEX_SIZE(type)		(sizeof(type)*2)
 
 void OPENSSL_cpuid_setup(void);
-extern unsigned long OPENSSL_ia32cap_P;
-void OPENSSL_showfatal(const char *,...);
+extern unsigned int OPENSSL_ia32cap_P[];
+void OPENSSL_showfatal(const char *fmta,...);
 void *OPENSSL_stderr(void);
 extern int OPENSSL_NONPIC_relocated;
-int OPENSSL_isservice(void);
 
 #ifdef  __cplusplus
 }

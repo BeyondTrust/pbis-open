@@ -1,5 +1,5 @@
 /* p12_attr.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
@@ -139,7 +139,7 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
 	ASN1_TYPE *atype;
 	if (!(atype = PKCS12_get_attr(bag, NID_friendlyName))) return NULL;
 	if (atype->type != V_ASN1_BMPSTRING) return NULL;
-	return uni2asc(atype->value.bmpstring->data,
+	return OPENSSL_uni2asc(atype->value.bmpstring->data,
 				 atype->value.bmpstring->length);
 }
 

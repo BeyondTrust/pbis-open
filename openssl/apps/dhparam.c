@@ -149,9 +149,6 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE *e = NULL;
-#endif
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 #ifndef OPENSSL_NO_DSA
@@ -270,7 +267,7 @@ bad:
 	ERR_load_crypto_strings();
 
 #ifndef OPENSSL_NO_ENGINE
-        e = setup_engine(bio_err, engine, 0);
+        setup_engine(bio_err, engine, 0);
 #endif
 
 	if (g && !num)
@@ -335,7 +332,6 @@ bad:
 			BIO_printf(bio_err,"This is going to take a long time\n");
 			if(!dh || !DH_generate_parameters_ex(dh, num, g, &cb))
 				{
-				if(dh) DH_free(dh);
 				ERR_print_errors(bio_err);
 				goto end;
 				}
@@ -553,5 +549,11 @@ static int MS_CALLBACK dh_cb(int p, int n, BN_GENCB *cb)
 #endif
 	return 1;
 	}
+
+#else /* !OPENSSL_NO_DH */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
 
 #endif

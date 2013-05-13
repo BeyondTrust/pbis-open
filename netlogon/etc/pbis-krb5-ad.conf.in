@@ -1,7 +1,7 @@
 [libdefaults]
-    default_tgs_enctypes = RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
-    default_tkt_enctypes = RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
-    preferred_enctypes = RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
+    default_tgs_enctypes = AES256-CTS AES128-CTS RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
+    default_tkt_enctypes = AES256-CTS AES128-CTS RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
+    preferred_enctypes = AES256-CTS AES128-CTS RC4-HMAC DES-CBC-MD5 DES-CBC-CRC
     dns_lookup_kdc = true
     pkinit_kdc_hostname = <DNS>
     pkinit_anchors = DIR:/var/lib/pbis/trusted_certs

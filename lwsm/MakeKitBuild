@@ -11,6 +11,7 @@ configure()
 
     mk_define SBINDIR "\"$MK_SBINDIR\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
     mk_define LIBDIR "\"$MK_LIBDIR\""
     mk_define LOADERDIR "\"$MK_LIBDIR/lwsm-loader\""
     mk_define MOD_EXT "\"$MK_DLO_EXT\""

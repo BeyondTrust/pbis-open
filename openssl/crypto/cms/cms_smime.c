@@ -68,7 +68,10 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 	if (out == NULL)
 		tmpout = BIO_new(BIO_s_null());
 	else if (flags & CMS_TEXT)
+		{
 		tmpout = BIO_new(BIO_s_mem());
+		BIO_set_mem_eof_return(tmpout, 0);
+		}
 	else
 		tmpout = out;
 
@@ -89,11 +92,13 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 				if (!BIO_get_cipher_status(in))
 					goto err;
 				}
+			if (i < 0)
+				goto err;
 			break;
 			}
 				
-		if (tmpout)
-			BIO_write(tmpout, buf, i);
+		if (tmpout && (BIO_write(tmpout, buf, i) != i))
+			goto err;
 	}
 
 	if(flags & CMS_TEXT)
@@ -166,7 +171,7 @@ CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags)
 	if (!cms)
 		return NULL;
 
-	if (CMS_final(cms, in, NULL, flags))
+	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
 		return cms;
 
 	CMS_ContentInfo_free(cms);
@@ -209,10 +214,7 @@ CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
 		return NULL;
 
 	if(!(flags & CMS_DETACHED))
-		{
-		flags &= ~CMS_STREAM;
 		CMS_set_detached(cms, 0);
-		}
 
 	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
 		return cms;
@@ -264,10 +266,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 		return NULL;
 
 	if(!(flags & CMS_DETACHED))
-		{
-		flags &= ~CMS_STREAM;
 		CMS_set_detached(cms, 0);
-		}
 
 	if ((flags & (CMS_STREAM|CMS_PARTIAL))
 		|| CMS_final(cms, in, NULL, flags))
@@ -293,7 +292,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 						CMS_R_STORE_INIT_ERROR);
 		goto err;
 		}
-	X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_SMIME_SIGN);
+	X509_STORE_CTX_set_default(&ctx, "smime_sign");
 	if (crls)
 		X509_STORE_CTX_set0_crls(&ctx, crls);
 
@@ -420,7 +419,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 		for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
 			{
 			si = sk_CMS_SignerInfo_value(sinfos, i);
-			if (!CMS_SignerInfo_verify_content(si, cmsbio))
+			if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0)
 				{
 				CMSerr(CMS_F_CMS_VERIFY,
 					CMS_R_CONTENT_VERIFY_ERROR);
@@ -451,6 +450,7 @@ int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
 			X509_STORE *store, unsigned int flags)
 	{
 	int r;
+	flags &= ~(CMS_DETACHED|CMS_TEXT);
 	r = CMS_verify(rcms, certs, store, NULL, NULL, flags);
 	if (r <= 0)
 		return r;
@@ -481,10 +481,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		}
 
 	if(!(flags & CMS_DETACHED))
-		{
-		flags &= ~CMS_STREAM;
 		CMS_set_detached(cms, 0);
-		}
 
 	if ((flags & (CMS_STREAM|CMS_PARTIAL))
 		|| CMS_final(cms, data, NULL, flags))
@@ -512,7 +509,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 	BIO *rct_cont = NULL;
 	int r = 0;
 
-	flags &= ~CMS_STREAM;
+	flags &= ~(CMS_STREAM|CMS_TEXT);
 	/* Not really detached but avoids content being allocated */
 	flags |= CMS_PARTIAL|CMS_BINARY|CMS_DETACHED;
 	if (!pkey || !signcert)
@@ -593,10 +590,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
 		}
 
 	if(!(flags & CMS_DETACHED))
-		{
-		flags &= ~CMS_STREAM;
 		CMS_set_detached(cms, 0);
-		}
 
 	if ((flags & (CMS_STREAM|CMS_PARTIAL))
 		|| CMS_final(cms, data, NULL, flags))
@@ -617,7 +611,10 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 	STACK_OF(CMS_RecipientInfo) *ris;
 	CMS_RecipientInfo *ri;
 	int i, r;
+	int debug = 0;
 	ris = CMS_get0_RecipientInfos(cms);
+	if (ris)
+		debug = cms->d.envelopedData->encryptedContentInfo->debug;
 	for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++)
 		{
 		ri = sk_CMS_RecipientInfo_value(ris, i);
@@ -631,16 +628,37 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 			CMS_RecipientInfo_set0_pkey(ri, pk);
 			r = CMS_RecipientInfo_decrypt(cms, ri);
 			CMS_RecipientInfo_set0_pkey(ri, NULL);
-			if (r > 0)
-				return 1;
 			if (cert)
 				{
+				/* If not debugging clear any error and
+				 * return success to avoid leaking of
+				 * information useful to MMA
+				 */
+				if (!debug)
+					{
+					ERR_clear_error();
+					return 1;
+					}
+				if (r > 0)
+					return 1;
 				CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY,
 						CMS_R_DECRYPT_ERROR);
 				return 0;
 				}
-			ERR_clear_error();
+			/* If no cert and not debugging don't leave loop
+			 * after first successful decrypt. Always attempt
+			 * to decrypt all recipients to avoid leaking timing
+			 * of a successful decrypt.
+			 */
+			else if (r > 0 && debug)
+				return 1;
 			}
+		}
+	/* If no cert and not debugging always return success */
+	if (!cert && !debug)
+		{
+		ERR_clear_error();
+		return 1;
 		}
 
 	CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY, CMS_R_NO_MATCHING_RECIPIENT);
@@ -686,6 +704,30 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 	return 0;
 
 	}
+
+int CMS_decrypt_set1_password(CMS_ContentInfo *cms, 
+				unsigned char *pass, ossl_ssize_t passlen)
+	{
+	STACK_OF(CMS_RecipientInfo) *ris;
+	CMS_RecipientInfo *ri;
+	int i, r;
+	ris = CMS_get0_RecipientInfos(cms);
+	for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++)
+		{
+		ri = sk_CMS_RecipientInfo_value(ris, i);
+		if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_PASS)
+				continue;
+		CMS_RecipientInfo_set0_password(ri, pass, passlen);
+		r = CMS_RecipientInfo_decrypt(cms, ri);
+		CMS_RecipientInfo_set0_password(ri, NULL, 0);
+		if (r > 0)
+			return 1;
+		}
+
+	CMSerr(CMS_F_CMS_DECRYPT_SET1_PASSWORD, CMS_R_NO_MATCHING_RECIPIENT);
+	return 0;
+
+	}
 	
 int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 				BIO *dcont, BIO *out,
@@ -700,9 +742,14 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 		}
 	if (!dcont && !check_content(cms))
 		return 0;
+	if (flags & CMS_DEBUG_DECRYPT)
+		cms->d.envelopedData->encryptedContentInfo->debug = 1;
+	else
+		cms->d.envelopedData->encryptedContentInfo->debug = 0;
+	if (!pk && !cert && !dcont && !out)
+		return 1;
 	if (pk && !CMS_decrypt_set1_pkey(cms, pk, cert))
 		return 0;
-
 	cont = CMS_dataInit(cms, dcont);
 	if (!cont)
 		return 0;
@@ -776,12 +823,9 @@ CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 		return NULL;
 
 	if(!(flags & CMS_DETACHED))
-		{
-		flags &= ~CMS_STREAM;
 		CMS_set_detached(cms, 0);
-		}
 
-	if (CMS_final(cms, in, NULL, flags))
+	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
 		return cms;
 
 	CMS_ContentInfo_free(cms);

@@ -1,5 +1,5 @@
 /* v3_prn.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
 /* ====================================================================
@@ -110,7 +110,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int inde
 	void *ext_str = NULL;
 	char *value = NULL;
 	const unsigned char *p;
-	X509V3_EXT_METHOD *method;	
+	const X509V3_EXT_METHOD *method;	
 	STACK_OF(CONF_VALUE) *nval = NULL;
 	int ok = 1;
 
