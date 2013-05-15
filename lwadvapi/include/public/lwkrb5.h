@@ -80,6 +80,20 @@ LwKrb5GetUserCachePath(
     PSTR*         ppszCachePath
     );
 
+#define LW_MSDS_DES_CBC_CRC             0x00000001
+#define LW_MSDS_DES_CBC_MD5             0x00000002
+#define LW_MSDS_RC4_HMAC                0x00000004
+#define LW_MSDS_AES128_CTS_HMAC_SHA1_96 0x00000008
+#define LW_MSDS_AES256_CTS_HMAC_SHA1_96 0x00000010
+
+#define LW_MSDS_AES128_CTS  LW_MSDS_AES128_CTS_HMAC_SHA1_96
+#define LW_MSDS_AES256_CTS  LW_MSDS_AES256_CTS_HMAC_SHA1_96
+
+DWORD
+LwKrb5GetSupportedEncryptionTypes(
+    OUT PDWORD pdwSupportedEncryptionTypes
+);
+		
 DWORD
 LwKrb5SetThreadDefaultCachePath(
     IN PCSTR pszCachePath,

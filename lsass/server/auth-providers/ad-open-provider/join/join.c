@@ -505,6 +505,9 @@ LsaJoinDomainInternal(
     PWSTR pwszOSServicePackAttrVal[2] = {0};
     PWSTR pwszUserAccountControlName = NULL;
     PWSTR pwszUserAccountControlVal[2] = {0};
+    PWSTR pwszSupportedEncryptionTypesName = NULL;
+    PWSTR pwszSupportedEncryptionTypesVal[2] = {0};
+    DWORD dwSupportedEncryptionTypes = 0;
     PWSTR pwszSidStr = NULL;
     WCHAR wszUacVal[11] = {0};
     LW_PIO_CREDS pCreds = NULL;
@@ -831,6 +834,38 @@ LsaJoinDomainInternal(
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
+
+		LwKrb5GetSupportedEncryptionTypes(&dwSupportedEncryptionTypes);
+
+        if (dwSupportedEncryptionTypes)
+        {
+            dwError = LwMbsToWc16s("msDS-SupportedEncryptionTypes",
+                                   &pwszSupportedEncryptionTypesName);
+            BAIL_ON_LSA_ERROR(dwError);
+
+           sw16printfw(
+                wszUacVal,
+                sizeof(wszUacVal)/sizeof(wszUacVal[0]),
+                L"%u",
+                dwSupportedEncryptionTypes);
+
+            dwError = LwAllocateWc16String(&pwszSupportedEncryptionTypesVal[0],
+                                           wszUacVal);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaMachAcctSetAttribute(pLdap, pwszDn,
+                                       pwszSupportedEncryptionTypesName,
+                                       (const wchar16_t**)pwszSupportedEncryptionTypesVal,
+                                       0);
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
+            {
+                dwError = ERROR_SUCCESS;
+            }
+            else
+            {
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
     }
 
 cleanup:
@@ -880,6 +915,8 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszOSServicePackAttrName);
     LW_SAFE_FREE_MEMORY(pwszOSServicePackAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszDCName);
+    LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesName);
+    LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesVal[0]);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)

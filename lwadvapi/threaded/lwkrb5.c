@@ -335,6 +335,69 @@ error:
 
 
 DWORD
+LwKrb5GetSupportedEncryptionTypes(
+    OUT PDWORD pdwSupportedEncryptionTypes
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwEncTypes = 0;
+    krb5_context ctx = NULL;
+    krb5_enctype *list = NULL;
+	krb5_enctype *ptr;
+    krb5_error_code ret = 0;
+    
+    ret = krb5_init_context(&ctx);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_get_permitted_enctypes(ctx, &list);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    for (ptr = list; *ptr; ptr++)
+    {
+        switch (*ptr) 
+        {
+            case ENCTYPE_DES_CBC_CRC:
+                dwEncTypes |= LW_MSDS_DES_CBC_CRC;
+                break;
+            case ENCTYPE_DES_CBC_MD5:
+                dwEncTypes |= LW_MSDS_DES_CBC_MD5;
+                break;
+            case ENCTYPE_ARCFOUR_HMAC:
+                dwEncTypes |= LW_MSDS_RC4_HMAC;
+                break;
+            case ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+                dwEncTypes |= LW_MSDS_AES128_CTS;
+                break;
+            case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+                dwEncTypes |= LW_MSDS_AES256_CTS;
+                break;
+        }
+    }
+
+    *pdwSupportedEncryptionTypes = dwEncTypes;
+    
+cleanup:
+    if (ctx)
+    {
+        krb5_free_context(ctx);
+    }
+
+    if (list)
+    {
+        free(list);
+	}
+
+    return dwError;
+    
+error:
+
+    *pdwSupportedEncryptionTypes = 0;
+    
+    goto cleanup;
+}
+
+
+DWORD
 LwKrb5GetUserCachePath(
     uid_t         uid,
     Krb5CacheType cacheType,
