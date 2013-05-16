@@ -455,7 +455,7 @@ package_install_linux_rpm()
 
 package_uninstall_linux_rpm()
 {
-    eval "rpm -e $@"
+    eval "rpm -e --nodeps $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -523,7 +523,7 @@ package_install_linux_deb()
 
 package_uninstall_linux_deb()
 {
-    eval "dpkg -r $@"
+    eval "dpkg -r --force-depends $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
