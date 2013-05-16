@@ -1,5 +1,12 @@
 make()
 {
+    if [ "$LW_DEVICE_PROFILE" != "embedded" ] ; 
+    then
+        mk_stage \
+            DESTDIR="${LW_CONFIGDIR}" \
+            eventlogd.reg
+    fi
+
     mk_stage \
         DESTDIR="${LW_CACHEDIR}" \
         lwreport.xml
