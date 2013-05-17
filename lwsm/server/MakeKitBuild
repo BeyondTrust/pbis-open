@@ -31,7 +31,7 @@ make()
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="\
-            lwsmcommon lwmsg lwmsg_nothr lwioclient lwnetclientapi \
+            crypto lwsmcommon lwmsg lwmsg_nothr lwioclient lwnetclientapi \
             regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr dcerpc $LIB_PTHREAD" \
         INSTALLDIR="${MK_SBINDIR}"
 }
