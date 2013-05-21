@@ -1420,13 +1420,8 @@ LwKrb5InitializeUserLoginCredentials(
      * directly, but it's safer to unparse pTgsCreds->server, because the KDC
      * sent that to us.
      */
-    salt.magic = KV5M_DATA;
-    ret = krb5_unparse_name(
-            ctx,
-            pTgsCreds->server,
-            &salt.data);
+    ret = krb5_principal2salt(ctx, pTgsCreds->server, &salt);
     BAIL_ON_KRB_ERROR(ctx, ret);
-    salt.length = strlen(salt.data);
 
     machinePassword.magic = KV5M_DATA;
     machinePassword.data = (PSTR)pszServicePassword,
