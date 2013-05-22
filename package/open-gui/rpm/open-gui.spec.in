@@ -5,7 +5,7 @@ Release: 	@PKG_RPM_RELEASE@
 License: 	Likewise Proprietary
 URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 Group: 		System Environment/Daemons
-Prereq: grep, sh-utils, @PKG_OPEN_RPM_NAME@
+Prereq: grep, sh-utils
 
 AutoReq: no
 
