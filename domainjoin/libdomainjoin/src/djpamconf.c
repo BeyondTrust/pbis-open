@@ -3016,6 +3016,10 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             }
             if(!strcmp(normalizedService, "gdm-autologin"))
                 goto cleanup;
+            if(!strcmp(normalizedService, "gdm-smartcard"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "gdm-launch-environment"))
+                goto cleanup;
             // Equivalent to gdm-autologin
             if(!strcmp(normalizedService, "gdm-welcome"))
                 goto cleanup;
