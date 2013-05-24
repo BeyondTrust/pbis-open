@@ -857,8 +857,9 @@ LsaJoinDomainInternal(
                                        pwszSupportedEncryptionTypesName,
                                        (const wchar16_t**)pwszSupportedEncryptionTypesVal,
                                        0);
-            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS || dwError == LW_ERROR_LDAP_NO_SUCH_ATTRIBUTE)
             {
+                // Ignore if we don't have access or are talking to an old domain that does not have this attribute
                 dwError = ERROR_SUCCESS;
             }
             else
