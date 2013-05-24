@@ -26,14 +26,15 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h sys/xattr.h attr/xattr.h
+        uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h
     
     mk_check_libraries \
         FAIL=yes \
         uuid krb5 k5crypto gssapi_krb5 lwbase ldap_r
     
     mk_check_headers \
-        string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h DirectoryService/DirServices.h
+        string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h \
+        DirectoryService/DirServices.h sys/xattr.h attr/xattr.h
 
     mk_check_types \
         HEADERDEPS="sys/types.h sys/socket.h" \
