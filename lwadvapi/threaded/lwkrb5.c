@@ -1307,6 +1307,7 @@ LwKrb5InitializeUserLoginCredentials(
     IN gid_t gid,
     IN LW_KRB5_LOGIN_FLAGS Flags,
     IN PCSTR pszServicePrincipal,
+    IN PCSTR pszSaltPrincipal,
     IN PCSTR pszServiceRealm,
     IN PCSTR pszServicePassword,
     OUT PVOID* ppNdrPacInfo,
@@ -1326,6 +1327,7 @@ LwKrb5InitializeUserLoginCredentials(
     krb5_auth_context authContext = NULL;
     krb5_data apReqPacket = {0};
     krb5_keyblock serviceKey = {0};
+    krb5_principal saltPrincipal = NULL;
     krb5_data salt = {0};
     // Do not free
     krb5_data machinePassword = {0};
@@ -1415,12 +1417,10 @@ LwKrb5InitializeUserLoginCredentials(
      * which encryption type was used in it. */
     ret = krb5_decode_ticket(&pTgsCreds->ticket, &pTgsTicket);
 
-    /* The TGS ticket is encrypted with the machine password and salted with
-     * the service principal. pszServicePrincipal could probably be used
-     * directly, but it's safer to unparse pTgsCreds->server, because the KDC
-     * sent that to us.
-     */
-    ret = krb5_principal2salt(ctx, pTgsCreds->server, &salt);
+    ret = krb5_parse_name(ctx, pszSaltPrincipal, &saltPrincipal);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_principal2salt(ctx, saltPrincipal, &salt);
     BAIL_ON_KRB_ERROR(ctx, ret);
 
     machinePassword.magic = KV5M_DATA;
@@ -1586,6 +1586,11 @@ error:
         krb5_free_data_contents(ctx, &apReqPacket);
         krb5_free_data_contents(ctx, &salt);
         krb5_free_keyblock_contents(ctx, &serviceKey);
+
+        if (saltPrincipal)
+        {
+            krb5_free_principal(ctx, saltPrincipal);
+        }
 
         if (cc != NULL)
         {

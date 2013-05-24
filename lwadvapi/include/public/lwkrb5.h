@@ -166,6 +166,7 @@ LwKrb5InitializeUserLoginCredentials(
     IN gid_t gid,
     IN LW_KRB5_LOGIN_FLAGS Flags,
     IN PCSTR pszServicePrincipal,
+    IN PCSTR pszSaltPrincipal,
     IN PCSTR pszServiceRealm,
     IN PCSTR pszServicePassword,
     OUT PVOID* ppNdrPacInfo,

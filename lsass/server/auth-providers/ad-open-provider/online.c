@@ -1676,6 +1676,9 @@ AD_OnlineCheckUserPassword(
     PSTR pszUserDnsDomainName = NULL;
     PSTR pszFreeUpn = NULL;
     PSTR pszUserRealm = NULL;
+    PSTR pszSaltPrincipal = NULL;
+    PSTR pszMachine = NULL;
+    PSTR pszDnsDomainName = NULL;
     PVOID pNdrEncodedPac = NULL;
     size_t sNdrEncodedPac = 0;
     PAC_LOGON_INFO *pPac = NULL;
@@ -1703,6 +1706,28 @@ AD_OnlineCheckUserPassword(
                   pContext->pState->pPcache,
                   &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
+
+    /* Ensure host name lowercased */
+    dwError = LwAllocateString(pPasswordInfo->Account.SamAccountName, &pszMachine);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToLower(pszMachine);
+
+    /* Ensure domain name lowercased */
+    dwError = LwAllocateString(pPasswordInfo->Account.DnsDomainName, &pszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToLower(pszDnsDomainName);
+
+    /* Strip the trailing $ for a Salt */
+    if (pszMachine[strlen(pszMachine)-1] == '$')
+        pszMachine[strlen(pszMachine)-1] = '\0';
+
+    dwError = LwAllocateStringPrintf(&pszSaltPrincipal,
+                                     "host/%s.%s@%s",
+                                     pszMachine,
+                                     pszDnsDomainName,
+                                     pPasswordInfo->Account.DnsDomainName);
 
     // Leave the realm empty so that kerberos referrals are turned on.
     dwError = LwAllocateStringPrintf(
@@ -1763,6 +1788,7 @@ AD_OnlineCheckUserPassword(
                     pUserInfo->userInfo.gid,
                     LW_KRB5_LOGIN_FLAG_UPDATE_CACHE,
                     pszServicePrincipal,
+                    pszSaltPrincipal,
                     pPasswordInfo->Account.DnsDomainName,
                     pPasswordInfo->Password,
                     &pNdrEncodedPac,
@@ -1789,6 +1815,7 @@ AD_OnlineCheckUserPassword(
                         pUserInfo->userInfo.gid,
                         LW_KRB5_LOGIN_FLAG_UPDATE_CACHE,
                         pszServicePrincipal,
+                        pszSaltPrincipal,
                         pPasswordInfo->Account.DnsDomainName,
                         pPasswordInfo->Password,
                         &pNdrEncodedPac,
@@ -1881,7 +1908,9 @@ cleanup:
     }
     LW_SAFE_FREE_STRING(pszServicePrincipal);
     LW_SAFE_FREE_STRING(pszUserDnsDomainName);
-    LW_SAFE_FREE_STRING(pszFreeUpn);
+    LW_SAFE_FREE_STRING(pszDnsDomainName);
+    LW_SAFE_FREE_STRING(pszMachine);
+    LW_SAFE_FREE_STRING(pszSaltPrincipal);
     LW_SAFE_FREE_MEMORY(pNdrEncodedPac);
 
     LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
