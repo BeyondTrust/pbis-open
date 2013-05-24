@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <dlfcn.h>
 
 #include "lwdef.h"
 #include "lwerror.h"

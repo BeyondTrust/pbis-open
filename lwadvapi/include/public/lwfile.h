@@ -111,11 +111,20 @@ LwFindFilesInPaths(
     );
 
 DWORD
+LwCheckFileExists(
+    PCSTR pszPath,
+    PBOOLEAN pbExists
+    );
+
+DWORD
 LwCheckFileTypeExists(
     PCSTR pszPath,
     LWFILE_TYPE type,
     PBOOLEAN pbExists
     );
+
+#define LwCheckDirectoryExists(pszPath, pbExists) LwCheckFileTypeExists(pszPath, LWFILE_DIRECTORY, pbExists)
+#define LwCheckLinkExists(pszPath, pbExists) LwCheckFileTypeExists(pszPath, LWFILE_SYMLINK, pbExists)
 
 DWORD
 LwCreateDirectory(

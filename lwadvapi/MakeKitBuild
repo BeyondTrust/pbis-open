@@ -26,7 +26,7 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h
+        uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h sys/xattr.h attr/xattr.h
     
     mk_check_libraries \
         FAIL=yes \
@@ -100,6 +100,13 @@ if (clock_settime(CLOCK_PROCESS_CPUTIME_ID, &timevar) < 0)
         mk_define HAVE_DECL_ISBLANK 1
     else
         mk_define HAVE_DECL_ISBLANK 0
+    fi
+
+    if [ "$LW_SELINUX" = "yes" ]
+    then
+        mk_declare -s -o LIBSELINUX
+        mk_define ENABLE_SELINUX 1
+        mk_define LIBSELINUX "\"/${MK_LIBDIR##*/}/libselinux.so.1\""
     fi
 }
 

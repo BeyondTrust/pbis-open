@@ -45,6 +45,51 @@
 
 #include "includes.h"
 
+#if HAVE_ATTR_XATTR_H
+#include <attr/xattr.h>
+#define HAVE_XATTR 1
+#elif HAVE_SYS_XATTR_H
+#include <sys/xattr.h>
+#define HAVE_XATTR 1
+#else
+#define HAVE_XATTR 0
+#endif
+
+#if HAVE_XATTR
+static
+DWORD
+LwCopyExtendedAttributes(
+	PCSTR pszSrcPath,
+	PCSTR pszDstPath
+	);
+#endif
+
+struct __LW_SELINUX;
+typedef struct __LW_SELINUX* PLW_SELINUX;
+
+#if ENABLE_SELINUX
+static
+DWORD
+LwSELinuxCreate(
+    PLW_SELINUX *ppSELinux
+    );
+
+static
+VOID
+LwSELinuxFree(
+    PLW_SELINUX pSELinux
+    );
+
+static
+DWORD
+LwSELinuxSetContext(
+    PCSTR pszPath,
+    mode_t mode,
+    PLW_SELINUX pSELinux
+    );
+
+#endif
+
 DWORD
 LwRemoveFile(
     PCSTR pszPath
@@ -52,10 +97,16 @@ LwRemoveFile(
 {
     DWORD dwError = 0;
 
-    // POSIX says it will not return EINTR
-    if (unlink(pszPath) < 0) {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LW_ERROR(dwError);
+    while (1) {
+        if (unlink(pszPath) < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LW_ERROR(dwError);
+        } else {
+            break;
+        }
     }
 
 error:
@@ -79,23 +130,46 @@ LwMoveFile(
     return dwError;
 }
 
+static
+DWORD
+_LwChangePermissions(
+    PCSTR pszPath,
+    mode_t dwFileMode,
+    PLW_SELINUX pSELinux
+    )
+{
+    DWORD dwError = 0;
+
+    while (1) {
+        if (chmod(pszPath, dwFileMode) < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LW_ERROR(dwError);
+        } else {
+
+#if ENABLE_SELINUX
+            // Attempt to set the file context but don't treat
+            // a failure as critical
+            LwSELinuxSetContext(pszPath, dwFileMode, pSELinux);
+#endif
+
+            break;
+        }
+    }
+error:
+
+    return dwError;
+}
+
 DWORD
 LwChangePermissions(
     PCSTR pszPath,
     mode_t dwFileMode
     )
 {
-    DWORD dwError = 0;
-
-    // POSIX says it will not return EINTR
-    if (chmod(pszPath, dwFileMode) < 0) {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LW_ERROR(dwError);
-    }
-
-error:
-
-    return dwError;
+    return _LwChangePermissions(pszPath, dwFileMode, NULL);
 }
 
 DWORD
@@ -273,6 +347,39 @@ error:
 }
 
 DWORD
+LwCheckFileExists(
+    PCSTR pszPath,
+    PBOOLEAN pbExists
+    )
+{
+    DWORD dwError = 0;
+
+    struct stat statbuf;
+
+    memset(&statbuf, 0, sizeof(struct stat));
+
+    while (1) {
+        if (stat(pszPath, &statbuf) < 0) {
+           if (errno == EINTR) {
+              continue;
+           } else if (errno == ENOENT) {
+             *pbExists = 0;
+             break;
+           }
+           dwError = LwMapErrnoToLwError(errno);
+           BAIL_ON_LW_ERROR(dwError);
+        } else {
+          *pbExists = 1;
+          break;
+        }
+    }
+
+error:
+
+    return dwError;
+}
+
+DWORD
 LwCheckFileTypeExists(
     PCSTR pszPath,
     LWFILE_TYPE type,
@@ -336,10 +443,12 @@ error:
     return dwError;
 }
 
+static
 DWORD
-LwCreateDirectory(
+_LwCreateDirectory(
     PCSTR pszPath,
-    mode_t dwFileMode
+    mode_t dwFileMode,
+    PLW_SELINUX pSELinux
     )
 {
     DWORD dwError = 0;
@@ -390,6 +499,11 @@ LwCreateDirectory(
                     BAIL_ON_LW_ERROR(dwError);
                 }
 
+#if ENABLE_SELINUX
+                // Ignore errors changing context as many files do don have a
+                // context defined
+                LwSELinuxSetContext(pszCopy, dwFileMode, pSELinux);
+#endif
                 // Find the next path component, or exit the loop if there are
                 // no more.
                 if (pszSlashPos == pszCopyEnd)
@@ -419,6 +533,38 @@ LwCreateDirectory(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszCopy);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+LwCreateDirectory(
+    PCSTR pszPath,
+    mode_t dwFileMode
+    )
+{
+    DWORD dwError = 0;
+    PLW_SELINUX pSELinuxLocal = NULL;
+
+#if ENABLE_SELINUX
+    dwError = LwSELinuxCreate(&pSELinuxLocal);
+    BAIL_ON_LW_ERROR(dwError);
+#endif
+
+    dwError = _LwCreateDirectory(pszPath, dwFileMode, pSELinuxLocal);
+    BAIL_ON_LW_ERROR(dwError);
+
+cleanup:
+#if ENABLE_SELINUX
+    if (pSELinuxLocal)
+    {
+        LwSELinuxFree(pSELinuxLocal);
+        pSELinuxLocal = NULL;
+    }
+#endif
+
     return dwError;
 
 error:
@@ -502,3 +648,343 @@ cleanup:
 error:
     goto cleanup;
 }
+
+DWORD
+LwCopyFileWithPerms(
+    PCSTR pszSrcPath,
+    PCSTR pszDstPath,
+    mode_t dwPerms
+    )
+{
+    DWORD dwError = 0;
+    PCSTR pszTmpSuffix = ".tmp_pbis";
+    PSTR pszTmpPath = NULL;
+    BOOLEAN bRemoveFile = FALSE;
+    CHAR szBuf[1024+1];
+    int  iFd = -1;
+    int  oFd = -1;
+    DWORD dwBytesRead = 0;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pszSrcPath) ||
+        LW_IS_NULL_OR_EMPTY_STR(pszDstPath)) {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    dwError = LwAllocateMemory(strlen(pszDstPath)+strlen(pszTmpSuffix)+2,
+                               (PVOID*)&pszTmpPath);
+    BAIL_ON_LW_ERROR(dwError);
+
+    strcpy(pszTmpPath, pszDstPath);
+    strcat(pszTmpPath, pszTmpSuffix);
+
+    if ((iFd = open(pszSrcPath, O_RDONLY, S_IRUSR)) < 0) {
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    if ((oFd = open(pszTmpPath, O_WRONLY|O_TRUNC|O_CREAT, S_IRUSR|S_IWUSR)) < 0) {
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    bRemoveFile = TRUE;
+
+    while (1) {
+        if ((dwBytesRead = read(iFd, szBuf, 1024)) < 0) {
+
+            if (errno == EINTR)
+                continue;
+
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LW_ERROR(dwError);
+        }
+
+        if (dwBytesRead == 0)
+            break;
+
+        if (write(oFd, szBuf, dwBytesRead) != dwBytesRead) {
+
+            if (errno == EINTR)
+                continue;
+
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LW_ERROR(dwError);
+
+        }
+
+    }
+
+    close(iFd); iFd = -1;
+    close(oFd); oFd = -1;
+
+    dwError = LwMoveFile(pszTmpPath, pszDstPath);
+    BAIL_ON_LW_ERROR(dwError);
+
+    bRemoveFile = FALSE;
+
+    dwError = LwChangePermissions(pszDstPath, dwPerms);
+    BAIL_ON_LW_ERROR(dwError);
+
+#if HAVE_XATTR
+    dwError = LwCopyExtendedAttributes(pszSrcPath, pszDstPath);
+    BAIL_ON_LW_ERROR(dwError);
+#endif
+
+error:
+
+    if (iFd >= 0)
+        close(iFd);
+
+    if (oFd >= 0)
+        close(oFd);
+
+
+    if (bRemoveFile) {
+        LwRemoveFile(pszTmpPath);
+    }
+
+    LW_SAFE_FREE_STRING (pszTmpPath);
+
+    return dwError;
+}
+
+#if HAVE_XATTR
+static
+ssize_t _listxattr(const char* path, char* namebuf, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return listxattr(path, namebuf, size, XATTR_NOFOLLOW);
+#else
+	return listxattr(path, namebuf, size);
+#endif
+}
+
+static
+ssize_t _getxattr(const char* path, const char* name, void* value, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return getxattr(path, name, value, size, 0, XATTR_NOFOLLOW);
+#else
+	return getxattr(path, name, value, size);
+#endif
+}
+
+static
+int _setxattr(const char* path, const char* name, void* value, size_t size)
+{
+#if defined(__LWI_DARWIN__)
+	return setxattr(path, name, value, size, 0, XATTR_NOFOLLOW);
+#else
+	return setxattr(path, name, value, size, 0);
+#endif
+}
+
+static
+DWORD
+LwCopyExtendedAttributes(
+    PCSTR pszSrcPath,
+    PCSTR pszDstPath
+)
+{
+	DWORD dwError=0;
+	char* list = NULL;
+
+	ssize_t listLen = _listxattr(pszSrcPath, NULL, 0);
+	list = malloc(listLen);
+	listLen = _listxattr(pszSrcPath, list, listLen);
+
+	int ns = 0;
+	char* value = NULL;
+
+	for (ns = 0; ns < listLen; ns += strlen(&list[ns]) + 1) {
+		ssize_t valueLen;
+
+		valueLen = _getxattr(pszSrcPath, &list[ns], NULL, 0);
+		if (valueLen != -1) {
+
+			value = malloc(valueLen);
+
+			_getxattr(pszSrcPath, &list[ns], value, valueLen);
+			dwError = LwMapErrnoToLwError(_setxattr(pszDstPath, &list[ns], value, valueLen));
+			BAIL_ON_LW_ERROR(dwError);
+
+			free(value);
+			value = NULL;
+		}
+	}
+
+cleanup:
+	if(list)
+	{
+		free(list);
+	}
+
+	if(value)
+	{
+		free(value);
+	}
+
+	return dwError;
+
+error:
+	goto cleanup;
+}
+
+#endif
+
+
+#if ENABLE_SELINUX
+
+typedef char* security_context_t;
+typedef struct __LW_SELINUX
+{
+    void *dlhandle;
+    int (*is_selinux_enabled)();
+    int (*matchpathcon_init)(const char *path);
+    void (*matchpathcon_fini)(void);
+    int (*matchpathcon)(const char *path, mode_t mode, security_context_t *con);
+    int (*setfilecon)(const char *path, security_context_t con);
+    void (*freecon)(security_context_t con);
+
+    BOOLEAN bEnabled;
+} LW_SELINUX;
+
+static
+DWORD
+LwSELinuxCreate(
+    PLW_SELINUX *ppSELinux
+    )
+{
+    DWORD dwError = 0;
+    PLW_SELINUX pSELinux = NULL;
+
+    dwError = LwAllocateMemory(sizeof(LW_SELINUX), (PVOID*)&pSELinux);
+    BAIL_ON_LW_ERROR(dwError);
+
+    pSELinux->bEnabled = FALSE;
+
+    pSELinux->dlhandle = dlopen(LIBSELINUX, RTLD_LAZY | RTLD_LOCAL);
+    if (pSELinux->dlhandle == NULL)
+    {
+        LW_RTL_LOG_ERROR("Could not load " LIBSELINUX ": %s", dlerror());
+        goto cleanup;
+    }
+    else
+    {
+        pSELinux->is_selinux_enabled = dlsym(pSELinux->dlhandle, "is_selinux_enabled");
+        pSELinux->matchpathcon_init = dlsym(pSELinux->dlhandle, "matchpathcon_init");
+        pSELinux->matchpathcon_fini = dlsym(pSELinux->dlhandle, "matchpathcon_fini");
+        pSELinux->matchpathcon = dlsym(pSELinux->dlhandle, "matchpathcon");
+        pSELinux->setfilecon= dlsym(pSELinux->dlhandle, "setfilecon");
+        pSELinux->freecon = dlsym(pSELinux->dlhandle, "freecon");
+        if (!pSELinux->is_selinux_enabled ||
+            !pSELinux->matchpathcon_init ||
+            !pSELinux->matchpathcon_fini ||
+            !pSELinux->matchpathcon ||
+            !pSELinux->setfilecon ||
+            !pSELinux->freecon)
+        {
+            LW_RTL_LOG_ERROR("Could not find symbol in " LIBSELINUX);
+            dwError = LW_ERROR_LOOKUP_SYMBOL_FAILED;
+            BAIL_ON_LW_ERROR(dwError);
+        }
+
+        if (pSELinux->is_selinux_enabled() == 1)
+        {
+            LW_RTL_LOG_DEBUG("SELinux is enabled.");
+            pSELinux->matchpathcon_init(NULL);
+            pSELinux->bEnabled = TRUE;
+        }
+    }
+
+    *ppSELinux = pSELinux;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pSELinux);
+    goto cleanup;
+}
+
+static
+VOID
+LwSELinuxFree(
+    PLW_SELINUX pSELinux
+    )
+{
+    if (pSELinux)
+    {
+        if (pSELinux->bEnabled)
+        {
+            pSELinux->matchpathcon_fini();
+        }
+
+        if (pSELinux->dlhandle)
+            dlclose(pSELinux->dlhandle);
+
+        LW_SAFE_FREE_MEMORY(pSELinux);
+    }
+}
+
+static
+DWORD
+LwSELinuxSetContext(
+    PCSTR pszPath,
+    mode_t mode,
+    PLW_SELINUX pSELinux
+    )
+{
+    DWORD dwError = 0;
+    security_context_t context = NULL;
+    PLW_SELINUX pSELinuxLocal = NULL;
+
+    if (pSELinux == NULL)
+    {
+        dwError = LwSELinuxCreate(&pSELinuxLocal);
+        BAIL_ON_LW_ERROR(dwError);
+
+        pSELinux = pSELinuxLocal;
+    }
+
+    if ((pSELinux && pSELinux->bEnabled))
+    {
+        if (pSELinux->matchpathcon(pszPath, mode, &context))
+        {
+            if (errno != ENOENT) {
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_LW_ERROR(dwError);
+            }
+        }
+        else
+        {
+            if (pSELinux->setfilecon(pszPath, context) == -1)
+            {
+
+               dwError = LwMapErrnoToLwError(errno);
+            }
+            BAIL_ON_LW_ERROR(dwError);
+        }
+    }
+
+cleanup:
+    if (context)
+    {
+        pSELinux->freecon(context);
+        context = NULL;
+    }
+
+    if (pSELinuxLocal)
+    {
+        LwSELinuxFree(pSELinuxLocal);
+        pSELinuxLocal = NULL;
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+#endif
