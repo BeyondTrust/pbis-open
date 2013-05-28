@@ -107,6 +107,12 @@ files_manage_etc_runtime_files(pbis_t)
 files_relabel_etc_files(pbis_t)
 files_relabelto_home(pbis_t)
 
+# Group Policy Agent can rewrite Network Configuration Files
+sysnet_setattr_config(pbis_t)
+sysnet_write_config(pbis_t)
+sysnet_relabelfrom_net_conf(pbis_t)
+sysnet_relabelto_net_conf(pbis_t)
+
 selinux_get_fs_mount(pbis_t)
 selinux_validate_context(pbis_t)
 
