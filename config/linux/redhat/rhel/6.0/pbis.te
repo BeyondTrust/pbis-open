@@ -42,7 +42,9 @@ files_search_var_lib(pbis_t)
 
 logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
-
+allow pbis_t syslog_conf_t:file relabelfrom;
+allow pbis_t etc_runtime_t:file relabelfrom;
+allow pbis_t etc_runtime_t:file relabelto;
 
 ### Don't know about this one
 require {
