@@ -403,7 +403,7 @@ LWNetSrvLogInformationEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "PBIS NETLOGON";
+    event.pszEventSource = "NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = "SYSTEM";
@@ -428,7 +428,7 @@ LWNetSrvLogWarningEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "PBIS NETLOGON";
+    event.pszEventSource = "NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = "SYSTEM";
@@ -453,7 +453,7 @@ LWNetSrvLogErrorEvent(
     event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = "PBIS NETLOGON";
+    event.pszEventSource = "NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = "SYSTEM";
