@@ -28,7 +28,7 @@ allow pbis_t self:unix_dgram_socket create_socket_perms;
 allow pbis_t self:unix_stream_socket { create_stream_socket_perms connectto };
 allow pbis_t self:tcp_socket create_stream_socket_perms;
 allow pbis_t self:udp_socket create_socket_perms;
-allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource};
+allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource setuid setgid };
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
 admin_pattern(pbis_t, pbis_var_lib_t)
@@ -42,9 +42,6 @@ files_search_var_lib(pbis_t)
 
 logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
-allow pbis_t syslog_conf_t:file relabelfrom;
-allow pbis_t etc_runtime_t:file relabelfrom;
-allow pbis_t etc_runtime_t:file relabelto;
 
 ### Don't know about this one
 require {
@@ -105,11 +102,30 @@ files_manage_etc_runtime_files(pbis_t)
 files_relabel_etc_files(pbis_t)
 files_relabelto_home(pbis_t)
 
-# Group Policy Agent can rewrite Network Configuration Files
+# Group Policy Agent can rewrite various Configuration Files
 sysnet_setattr_config(pbis_t)
 sysnet_write_config(pbis_t)
 sysnet_relabelfrom_net_conf(pbis_t)
 sysnet_relabelto_net_conf(pbis_t)
+require {
+    type syslog_conf_t;
+    type selinux_config_t;
+    type etc_runtime_t;
+    type mnt_t;
+    type mount_exec_t;
+}
+
+allow pbis_t syslog_conf_t:file { relabelfrom relabelto };
+allow pbis_t selinux_config_t:file { relabelfrom relabelto };
+allow pbis_t etc_runtime_t:file { relabelfrom relabelto };
+allow pbis_t net_conf_t:file { unlink rename };
+
+allow pbis_t mnt_t:dir { read write create add_name relabelfrom mounton };
+
+domtrans_pattern(pbis_t, mount_exec_t, mount_t);
+
+allow pbis_t var_t:dir { read write remove_name add_name };
+allow pbis_t var_t:file { open create read getattr append rename unlink };
 
 selinux_get_fs_mount(pbis_t)
 selinux_validate_context(pbis_t)
