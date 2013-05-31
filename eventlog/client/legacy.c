@@ -258,10 +258,13 @@ LWIWriteEventLogRecords(
                         &pNewRecords[index].pUser);
         BAIL_ON_EVT_ERROR(dwError);
 
-        dwError = LwMbsToWc16s(
-                        pEventRecords[index].pszComputer,
-                        &pNewRecords[index].pComputer);
-        BAIL_ON_EVT_ERROR(dwError);
+        if (pEventRecords[index].pszComputer)
+        {
+           dwError = LwMbsToWc16s(
+                           pEventRecords[index].pszComputer,
+                           &pNewRecords[index].pComputer);
+           BAIL_ON_EVT_ERROR(dwError);
+        }
 
         dwError = LwMbsToWc16s(
                         pEventRecords[index].pszDescription,
