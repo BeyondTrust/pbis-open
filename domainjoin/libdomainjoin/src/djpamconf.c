@@ -2996,6 +2996,8 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
              * gdm-autologin.
              * - useradd on Suse 10.2 has sufficient pam_rootok followed by
              *   required pam_permit.so. The program is not setuid root though
+             * - groupadd, groupdel, groupmod, usermod, userdel now follow the
+             *   useradd pattern on Suse 12.3
              *
              * - gnome-screensaver-smartcard on Suse 10.3 includes
              *   common-auth-smartcard. If that file does not exist on the
@@ -3052,6 +3054,16 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             if(!strcmp(normalizedService, "xdm-np"))
                 goto cleanup;
             if(!strcmp(normalizedService, "useradd"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "userdel"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "usermod"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "groupadd"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "groupdel"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "groupmod"))
                 goto cleanup;
             if(!strcmp(normalizedService, "gnome-screensaver-smartcard"))
                 goto cleanup;
