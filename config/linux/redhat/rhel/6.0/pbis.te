@@ -34,6 +34,8 @@ allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 admin_pattern(pbis_t, pbis_var_lib_t)
 stream_connect_pattern(pbis_t, pbis_var_lib_t, pbis_var_lib_t, pbis_t)
 
+allow pbis_t pbis_var_lib_t:file { execute execute_no_trans };
+
 dev_read_rand(pbis_t)
 dev_read_urand(pbis_t)
 
@@ -113,6 +115,7 @@ require {
     type etc_runtime_t;
     type mnt_t;
     type mount_exec_t;
+    type crontab_exec_t;
 }
 
 allow pbis_t syslog_conf_t:file { relabelfrom relabelto };
@@ -123,6 +126,12 @@ allow pbis_t net_conf_t:file { unlink rename };
 allow pbis_t mnt_t:dir { read write create add_name relabelfrom mounton };
 
 domtrans_pattern(pbis_t, mount_exec_t, mount_t);
+
+domtrans_pattern(pbis_t, crontab_exec_t, crontab_t);
+allow pbis_t system_cron_spool_t:dir { open read search };
+allow pbis_t system_cron_spool_t:file { relabelfrom relabelto setattr };
+allow pbis_t crond_t:process signal;
+role system_r types crontab_t;
 
 allow pbis_t var_t:dir { read write remove_name add_name };
 allow pbis_t var_t:file { open create read getattr append rename unlink };
@@ -211,6 +220,7 @@ require {
     type comsat_t;
     type consolekit_t;
     type crond_t;
+    type crontab_t;
     type cupsd_config_t;
     type cupsd_lpd_t;
     type cupsd_t;
@@ -396,6 +406,7 @@ pbis_client(clvmd_t)
 pbis_client(comsat_t)
 pbis_client(consolekit_t)
 pbis_client(crond_t)
+pbis_client(crontab_t)
 pbis_client(cupsd_config_t)
 pbis_client(cupsd_lpd_t)
 pbis_client(cupsd_t)
