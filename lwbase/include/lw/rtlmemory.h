@@ -129,6 +129,12 @@ LwRtlMemoryFree(
 #define RTL_ALLOCATE(ppMemory, Type, Size) \
     LW_RTL_ALLOCATE(ppMemory, Type, Size)
 
+#define LW_RTL_REALLOC(ppMemory, Type, Size) \
+    ( (*(ppMemory)) = (Type*) LwRtlMemoryRealloc(*ppMemory, Size) , (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
+
+#define RTL_REALLOC(ppMemory, Type, Size) \
+    LW_RTL_REALLOC(ppMemory, Type, Size)
+
 #define RTL_FREE(ppMemory) \
     LW_RTL_FREE(ppMemory)
 
