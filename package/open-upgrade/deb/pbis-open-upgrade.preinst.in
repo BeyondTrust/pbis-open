@@ -110,6 +110,22 @@ determine_upgrade_type()
         exit 1
     fi
 
+    if [ -f "/usr/share/likewise-open/VERSION" ]; then
+	     run_or_fail mkdir -p "${UPGRADEDIR}"
+
+    	 if [ -n "`dpkg-query --show --showformat='${Version}' likewise-open | grep '^6.0'`" ]; then
+	         UPGRADING_FROM_6_0=1
+	         echo "VERSION=6.0" >> /usr/share/likewise-open/VERSION
+             log "Preserving Likewise ${OpenOrEnt} 6.0 configuration in ${UPGRADEDIR}."
+    	 elif [ -n "`dpkg-query --show --showformat='${Version}' likewise-open | grep '^6.1'`" ]; then
+               UPGRADING_FROM_6_1=1
+	           echo "VERSION=6.1" >> /usr/share/likewise-open/VERSION
+               log "Preserving Likewise ${OpenOrEnt} 6.1 configuration in ${UPGRADEDIR}."
+         fi
+	     LWO_VERSIONFILE=/usr/share/likewise-open/VERSION
+         run_or_fail cp "$LWO_VERSIONFILE" "${UPGRADEDIR}"
+    fi
+
     if [ -f "$LW_VERSIONFILE" ]; then
         run_or_fail mkdir -p "${UPGRADEDIR}"
         run_or_fail cp "$LW_VERSIONFILE" "${UPGRADEDIR}"
@@ -163,6 +179,22 @@ determine_join_status()
         if [ -n "$domain" ]; then
             logfile "System is joined to $domain according to lw-lsa ad-get-machine account"
             STATUS_JOINED=$domain
+        elif [ -x "/usr/bin/lw-get-current-domain" ]; then 
+	        domain=`/usr/bin/lw-get-current-domain 2>/dev/null | sed -e 's/Current Domain = //'`
+            if [ -n "$domain" ]; then
+            	logfile "System is joined to $domain according to lw-get-current-domain"
+            	STATUS_JOINED=$domain
+	        else
+                logfile "System does not appear to be joined according to lw-get-current-domain"
+	        fi
+        elif [ -x "/usr/bin/lw-lsa" ]; then
+            domain=`/usr/bin/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+            if [ -n "$domain" ]; then
+                logfile "System is joined to $domain according to lw-lsa ad-get-machine account"
+                STATUS_JOINED=$domain
+            else
+                logfile "System does not appear to be joined according to lw-lsa ad-get-machine account"
+            fi
         else
             logfile "System does not appear to be joined according to lw-lsa ad-get-machine account"
         fi
@@ -213,25 +245,45 @@ preserve_6_0_configuration()
         if [ -f "/var/lib/likewise/db/registry.db" ]; then
             run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
+
+        elif [ -f "/var/lib/likewise-open/db/registry.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
         fi
 
         if [ -f "/var/lib/likewise/db/sam.db" ]; then
             run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
+
+        elif [ -f "/var/lib/likewise-open/db/sam.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/sam.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
             run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
+
+        elif [ -f "/var/lib/likewise-open/db/lwi_events.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
             run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
+
+        elif [ -f "/var/lib/likewise-open/db/lsass-adcache.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.filedb" ]; then
             run_or_fail cp /var/lib/likewise/db/lsass-adcache.filedb "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
+
+        elif [ -f "/var/lib/likewise-open/db/lsass-adcache.filedb" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/lsass-adcache.filedb "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
         fi
     fi
@@ -243,24 +295,48 @@ preserve_6_1_configuration()
         if [ -f "/var/lib/likewise/db/registry.db" ]; then
             run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
+
+        elif [ -f "/var/lib/likewise-open/db/registry.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
         fi
 
         if [ -f "/var/lib/likewise/db/sam.db" ]; then
             run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
+
+        elif [ -f "/var/lib/likewise-open/db/sam.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/sam.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
             run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
+
+        elif [ -f "/var/lib/likewise-open/db/lwi_events.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
             run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
+
+        elif [ -f "/var/lib/likewise-open/db/lsass-adcache.db" ]; then
+            run_or_fail cp /var/lib/likewise-open/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
         fi
 
         for cache in /var/lib/likewise/db/lsass-adcache.filedb.* ; do
+            if [ -f "$cache" ]; then
+                cachefile=`basename $cache`
+                run_or_fail cp "${cache}" "${UPGRADEDIR}"
+                run_or_fail chmod 700 "${UPGRADEDIR}/${cachefile}"
+            fi
+        done
+
+        for cache in /var/lib/likewise-open/db/lsass-adcache.filedb.* ; do
             if [ -f "$cache" ]; then
                 cachefile=`basename $cache`
                 run_or_fail cp "${cache}" "${UPGRADEDIR}"
@@ -337,6 +413,10 @@ preinstall()
 #   preserve_6_5_configuration is not needed
 
     preserve_join_status
+
+    if [ -d /etc/likewise-open  ]; then
+        run_quiet rm -r /etc/likewise-open
+    fi
 
     logfile "Package: PowerBroker Identity Services Open Upgrade finished"
     exit 0
