@@ -922,7 +922,7 @@ RSysSrvOpenPipes(
 
     if (!bPipeDirExists)
     {
-        if (mkdir(RSYS_PIPE_DIR, S_IRWXU) < 0)
+        if (mkdir(RSYS_PIPE_DIR, S_IRWXU | S_IRWXG) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_RSYS_ERROR(dwError);
@@ -934,7 +934,16 @@ RSysSrvOpenPipes(
         for (dwAttempt = 0; ; dwAttempt++)
         {
             // Try to create the fifo, but do not bail out if it already exists.
-            if (mkfifo(pPipes[dwIndex].pszPipePath, S_IRWXU) < 0)
+            struct passwd* g;
+            g = getpwnam("syslog");
+	    mode_t pipePermissions = S_IRWXU;
+
+            if(g != NULL)
+            {
+                pipePermissions |= S_IRWXG;
+            }
+
+            if (mkfifo(pPipes[dwIndex].pszPipePath, pipePermissions) < 0)
             {
                 if (errno == EEXIST)
                 {
@@ -955,6 +964,11 @@ RSysSrvOpenPipes(
             if (S_ISFIFO(statBuf.st_mode))
             {
                 // We're good
+                if(g != NULL)
+                {
+		    dwError = LwChangeOwner(pPipes[dwIndex].pszPipePath, g->pw_uid, 0);
+                    BAIL_ON_RSYS_ERROR(dwError);
+                }
                 break;
             }
             if (dwSyslogPid == -1)
