@@ -271,6 +271,7 @@ configure_openssl()
             ;;
         darwin-x86_32)
             host_string="darwin-i386-cc"
+            extra_args="no-asm"
             ;;
         darwin-ppc32)
             host_string="darwin-ppc-cc"
