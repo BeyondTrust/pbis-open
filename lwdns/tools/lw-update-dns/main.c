@@ -29,6 +29,7 @@
  */
 
 #include "includes.h"
+#include "../../lwdns/includes.h"
 #include <lsa/ad.h>
 
 typedef struct _ARGS {
@@ -37,7 +38,9 @@ typedef struct _ARGS {
     PSTR pszHostname;
     PSTR pszHostDnsSuffix;
     PSOCKADDR_IN pAddressArray;
-    DWORD dwAddressCount;
+    PSOCKADDR_IN6 pAddress6Array;
+    DWORD dwIPV4Count;
+    DWORD dwIPV6Count;
     LWDNSLogLevel LogLevel;
     PFN_LWDNS_LOG_MESSAGE pfnLogger;
 } ARGS, *PARGS;
@@ -70,7 +73,9 @@ static
 DWORD
 GetAllInterfaceAddresses(
     OUT PSOCKADDR_IN* ppAddressArray,
-    OUT PDWORD pdwAddressCount
+    OUT PSOCKADDR_IN6* ppAddress6Array,
+    OUT PDWORD pdwIPV4Count,
+    OUT PDWORD pdwIPV6Count
     );
 
 static
@@ -128,6 +133,7 @@ main(
     BOOLEAN bDNSUpdated = FALSE;
     BOOLEAN bReachedNameServer = FALSE;
     DWORD iAddr = 0;
+    CHAR szIPv6[INET6_ADDRSTRLEN];
 
     dwError = ParseArgs(
                     argc,
@@ -200,10 +206,15 @@ main(
     if (args.bShowArguments)
     {
         printf("Using FQDN %s with the following addresses:\n", pszHostFQDN);
-        for (iAddr = 0; iAddr < args.dwAddressCount; iAddr++)
+        for (iAddr = 0; iAddr < args.dwIPV4Count; iAddr++)
         {
             PSOCKADDR_IN pSockAddr = &args.pAddressArray[iAddr];
             printf("  %s\n", inet_ntoa(pSockAddr->sin_addr));
+        }
+        for (iAddr = 0; iAddr < args.dwIPV6Count; iAddr++)
+        {
+            PSOCKADDR_IN6 pSock6Addr = &args.pAddress6Array[iAddr];
+            printf("  %s\n", inet_ntop(AF_INET6,&(pSock6Addr->sin6_addr),szIPv6,sizeof(szIPv6)));
         }
     }
 
@@ -257,8 +268,10 @@ main(
                         pszNameServer,
                         pszZone,
                         pszHostFQDN,
-                        args.dwAddressCount,
-                        args.pAddressArray);
+                        args.dwIPV4Count,
+                        args.dwIPV6Count,
+                        args.pAddressArray,
+                        args.pAddress6Array);
         if (dwError)
         {
             if (dwError == DNS_ERROR_RCODE_REFUSED)
@@ -293,7 +306,7 @@ main(
 
     bDNSUpdated = FALSE;
 
-    for (iAddr = 0; iAddr < args.dwAddressCount; iAddr++)
+    for (iAddr = 0; iAddr < args.dwIPV4Count; iAddr++)
     {
         PSOCKADDR_IN pSockAddr = &args.pAddressArray[iAddr];
 
@@ -309,6 +322,33 @@ main(
         else
         {
             bDNSUpdated = TRUE;
+        }
+    }
+
+    for (iAddr = 0; iAddr < args.dwIPV6Count; iAddr++)
+    {
+        PSOCKADDR_IN6 pSock6Addr = &args.pAddress6Array[iAddr];
+        CHAR szIPv6[INET6_ADDRSTRLEN];
+
+        if(inet_ntop(AF_INET6,&(pSock6Addr->sin6_addr),szIPv6,sizeof(szIPv6)) != NULL)
+        {
+            if(!IS_ADDR_LINKLOCAL(szIPv6))
+            {
+                dwError = DNSUpdatePtrV6Secure(
+                            pSock6Addr,
+                            pszHostFQDN);
+
+                if (dwError)
+                {  
+                    printf("Unable to register reverse PTR record address %s with hostname %s\n",
+                               szIPv6, pszHostFQDN);
+                    dwError = 0;
+                }
+                else
+                {
+                    bDNSUpdated = TRUE;
+                }
+            }
         }
     }
     
@@ -339,6 +379,7 @@ cleanup:
     LWDNS_SAFE_FREE_STRING(args.pszHostname);
     LWDNS_SAFE_FREE_STRING(args.pszHostDnsSuffix);
     LWDNS_SAFE_FREE_MEMORY(args.pAddressArray);
+    LWDNS_SAFE_FREE_MEMORY(args.pAddress6Array);
 
     DNSShutdown();
 
@@ -368,7 +409,9 @@ ParseArgs(
     BOOLEAN bShowArguments = FALSE;
     BOOLEAN bUseMachineCredentials = TRUE;
     PSOCKADDR_IN pAddressArray = NULL;
-    DWORD dwAddressCount = 0;
+    PSOCKADDR_IN6 pAddress6Array = NULL;
+    DWORD dwIPV4Count = 0;
+    DWORD dwIPV6Count = 0;
     LWDNSLogLevel LogLevel = LWDNS_LOG_LEVEL_ERROR;
     PFN_LWDNS_LOG_MESSAGE pfnLogger = NULL;
     PCSTR pszProgramName = "update-dns";
@@ -444,10 +487,10 @@ ParseArgs(
             dwError = DNSReallocMemory(
                             pAddressArray,
                             OUT_PPVOID(&pAddressArray),
-                            sizeof(pAddressArray[0]) * (dwAddressCount + 1));
+                            sizeof(pAddressArray[0]) * (dwIPV4Count + 1));
             BAIL_ON_LWDNS_ERROR(dwError);
 
-            pSockAddr = &pAddressArray[dwAddressCount];
+            pSockAddr = &pAddressArray[dwIPV4Count];
             pSockAddr->sin_family = AF_INET;
             if (!inet_aton(pszArg, &pSockAddr->sin_addr))
             {
@@ -455,7 +498,39 @@ ParseArgs(
                 exit(1);
             }
 
-            dwAddressCount++;
+            dwIPV4Count++;
+        }
+        else if (!strcasecmp(pszArg, "--ipv6address"))
+        {
+            PSOCKADDR_IN6 pSock6Addr = NULL;
+
+            if (!HAVE_MORE_ARGS(argc, iArg, 1))
+            {
+                fprintf(stderr, "Missing argument for %s option.\n", pszArg);
+                ShowUsage(pszProgramName);
+                exit(1);
+            }
+
+            pszArg = argv[iArg + 1];
+            iArg++;
+
+            dwError = DNSReallocMemory(
+                            pAddress6Array,
+                            OUT_PPVOID(&pAddress6Array),
+                            sizeof(pAddress6Array[0]) * (dwIPV6Count + 1));
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            pSock6Addr = &pAddress6Array[dwIPV6Count];
+
+            pSock6Addr->sin6_family = AF_INET6;
+
+            inet_pton(AF_INET6, pszArg, &(pSock6Addr->sin6_addr));
+           
+            //validate the IPV6 address
+            dwError = DNSInet6ValidateAddress(pszArg);
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            dwIPV6Count++;
         }
         else if (!strcasecmp(pszArg, "--fqdn"))
         {
@@ -515,9 +590,9 @@ ParseArgs(
         }
     }
 
-    if (!pAddressArray)
+    if (!dwIPV4Count && !dwIPV6Count)
     {
-        dwError = GetAllInterfaceAddresses(&pAddressArray, &dwAddressCount);
+        dwError = GetAllInterfaceAddresses(&pAddressArray, &pAddress6Array, &dwIPV4Count, &dwIPV6Count);
         if (dwError)
         {
             fprintf(stderr, "Failed to get interface addresses.\n");
@@ -534,7 +609,9 @@ cleanup:
     pArgs->pszHostname = pszHostname;
     pArgs->pszHostDnsSuffix = pszHostDnsSuffix;
     pArgs->pAddressArray = pAddressArray;
-    pArgs->dwAddressCount = dwAddressCount;
+    pArgs->pAddress6Array = pAddress6Array;
+    pArgs->dwIPV4Count = dwIPV4Count;
+    pArgs->dwIPV6Count = dwIPV6Count;
     pArgs->LogLevel = LogLevel;
     pArgs->pfnLogger = pfnLogger;
     
@@ -547,7 +624,9 @@ error:
     LWDNS_SAFE_FREE_STRING(pszHostname);
     LWDNS_SAFE_FREE_STRING(pszHostDnsSuffix);
     LWDNS_SAFE_FREE_MEMORY(pAddressArray);
-    dwAddressCount = 0;
+    LWDNS_SAFE_FREE_MEMORY(pAddress6Array);
+    dwIPV4Count = 0;
+    dwIPV6Count = 0;
     LogLevel = LWDNS_LOG_LEVEL_ERROR;
     pfnLogger = NULL;
 
@@ -681,11 +760,16 @@ static
 DWORD
 GetAllInterfaceAddresses(
     OUT PSOCKADDR_IN* ppAddressArray,
-    OUT PDWORD pdwAddressCount
+    OUT PSOCKADDR_IN6* ppAddress6Array,
+    OUT PDWORD pdwIPV4Count,
+    OUT PDWORD pdwIPV6Count
     )
 {
     DWORD dwError = 0;
     PSOCKADDR_IN pAddressArray = NULL;
+    PSOCKADDR_IN6 pAddress6Array = NULL;
+    DWORD dwipv4Count = 0;
+    DWORD dwipv6Count = 0;
     DWORD dwAddressCount = 0;
     PLW_INTERFACE_INFO pInterfaceArray = NULL;
     DWORD dwInterfaceCount = 0;
@@ -707,15 +791,30 @@ GetAllInterfaceAddresses(
                     (PVOID*)&pAddressArray);
     BAIL_ON_LWDNS_ERROR(dwError);
 
+    dwError = DNSAllocateMemory(
+                    sizeof(SOCKADDR_IN6) * dwInterfaceCount,
+                    (PVOID*)&pAddress6Array);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
     dwAddressCount = dwInterfaceCount;
 
     for (iAddr = 0; iAddr < dwAddressCount; iAddr++)
     {
-        PSOCKADDR_IN pSockAddr = &pAddressArray[iAddr];
         PLW_INTERFACE_INFO pInterfaceInfo = &pInterfaceArray[iAddr];
-
-        pSockAddr->sin_family = pInterfaceInfo->ipAddr.sa_family;
-        pSockAddr->sin_addr = ((PSOCKADDR_IN)&pInterfaceInfo->ipAddr)->sin_addr;
+        if(pInterfaceInfo->bIPV6Enabled)
+        {
+            PSOCKADDR_IN6 pSock6Addr = &pAddress6Array[dwipv6Count];
+            pSock6Addr->sin6_family = pInterfaceInfo->ipv6Addr.sin6_family;
+            pSock6Addr->sin6_addr = ((PSOCKADDR_IN6)&pInterfaceInfo->ipv6Addr)->sin6_addr;
+            dwipv6Count++;
+        }
+        else
+        {
+            PSOCKADDR_IN pSockAddr = &pAddressArray[dwipv4Count];
+            pSockAddr->sin_family = pInterfaceInfo->ipAddr.sa_family;
+            pSockAddr->sin_addr = ((PSOCKADDR_IN)&pInterfaceInfo->ipAddr)->sin_addr;
+            dwipv4Count++;
+        }
     }
 
 cleanup:
@@ -727,12 +826,15 @@ cleanup:
     }
 
     *ppAddressArray = pAddressArray;
-    *pdwAddressCount = dwAddressCount;
+    *ppAddress6Array = pAddress6Array;
+    *pdwIPV4Count = dwipv4Count;
+    *pdwIPV6Count = dwipv6Count;
 
     return dwError;
 
 error:
     LWDNS_SAFE_FREE_MEMORY(pAddressArray);
+    LWDNS_SAFE_FREE_MEMORY(pAddress6Array);
     dwAddressCount = 0;
 
     goto cleanup;
@@ -911,6 +1013,10 @@ ShowUsage(
             "\t\t\tSets IP address to register for this computer.\n"
             "\t\t\tThis can be specified multiple times.\n"
             "\n"
+            "\t--ipv6address IPV6_Address\n"
+            "\t\t\tSets IPV6 address to register for this computer.\n"
+            "\t\t\tThis can be specified multiple times.\n"
+            "\n"
             "\t--fqdn FQDN\n"
             "\t\t\tFQDN to register.\n"
             "\n"
@@ -924,7 +1030,8 @@ ShowUsage(
             "\n"
             "\t%s --ipaddress 192.168.186.129\n"
             "\t%s --ipaddress 192.168.186.129 --fqdn joe.example.com\n\n"
-            "", pszProgramName, pszProgramName, pszProgramName);
+            "\t%s --ipv6address fd50:973:3783:49d:250:56ff:febd:46c5 --fqdn joe.example.com\n\n"
+            "", pszProgramName, pszProgramName, pszProgramName, pszProgramName);
 }
 
 static

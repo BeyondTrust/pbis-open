@@ -182,10 +182,10 @@ DNSGetInfoUsingGetIfAddrs(
 
         LWDNS_LOG_VERBOSE("Considering network interface [%s]",
                           pIter->ifa_name);
-        
-        if (pIter->ifa_addr->sa_family != AF_INET)
+
+        if (pIter->ifa_addr->sa_family == AF_PACKET)
         { 
-            LWDNS_LOG_VERBOSE("Skipping network interface [%s] because it is not AF_INET family", pIter->ifa_name);
+            LWDNS_LOG_VERBOSE("Skipping network interface [%s] because it is not AF_INET/6 family", pIter->ifa_name);
             continue;
         }
         
@@ -224,9 +224,19 @@ DNSGetInfoUsingGetIfAddrs(
         
         if (pIter->ifa_addr)
         {
-            memcpy(&pInterfaceInfo->ipAddr,
-                   pIter->ifa_addr,
-                   sizeof(*pIter->ifa_addr));
+            if (pIter->ifa_addr->sa_family == AF_INET)
+            {
+                 memcpy(&pInterfaceInfo->ipAddr,
+                 pIter->ifa_addr,
+                 sizeof(*pIter->ifa_addr));
+            }
+            else if (pIter->ifa_addr->sa_family == AF_INET6)
+            {
+                pInterfaceInfo->bIPV6Enabled = TRUE;
+                memcpy(&pInterfaceInfo->ipv6Addr,
+                pIter->ifa_addr,
+                sizeof(struct sockaddr_in6));
+            }
         }
         
         pInterfaceInfo->dwFlags = pIter->ifa_flags;

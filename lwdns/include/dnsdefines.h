@@ -237,6 +237,8 @@ extern PFN_LWDNS_LOG_MESSAGE gpfnLWDNSLogger;
 
 #define QTYPE_A               1// 1 a host address
 
+#define QTYPE_AAAA            28// Query type value for IPv6 Address Record
+
 #define QTYPE_NS              2 // 2 an authoritative name server
 
 #define QTYPE_MD              3 // a mail destination (Obsolete - use MX)

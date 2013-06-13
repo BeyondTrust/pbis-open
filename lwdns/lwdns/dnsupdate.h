@@ -70,8 +70,10 @@ DNSUpdateCreateARUpdateRequest(
     PDNS_UPDATE_REQUEST* ppDNSUpdateRequest,
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
-    DWORD  dwNumAddrs,
-    PSOCKADDR_IN pAddrArray
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
+    PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array
     );
 
 DWORD
@@ -90,8 +92,10 @@ DNSSendUpdate(
     HANDLE hDNSServer,
     PCSTR  pszZoneName,
     PCSTR  pszHost,
-    DWORD  dwNumAddrs,
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array,
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     );
 
@@ -102,8 +106,10 @@ DNSSendSecureUpdate(
     PCSTR pszKeyName,
     PCSTR pszZoneName,
     PCSTR pszHost,
-    DWORD  dwNumAddrs,
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array,
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     );
 

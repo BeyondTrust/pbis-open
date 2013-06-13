@@ -541,8 +541,10 @@ DNSUpdateSecure(
     PCSTR  pszServerName,
     PCSTR  pszDomainName,
     PCSTR  pszHostNameFQDN,
-    DWORD  dwNumAddrs,
-    PSOCKADDR_IN pAddrArray
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
+    PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array
     )
 {
     DWORD dwError = 0;
@@ -561,8 +563,10 @@ DNSUpdateSecure(
                     hDNSServer,
                     pszDomainName,
                     pszHostNameFQDN,
-                    dwNumAddrs,
+                    dwIPV4Count,
+                    dwIPV6Count,
                     pAddrArray,
+                    pAddr6Array,
                     &pDNSUpdateResponse);
     BAIL_ON_LWDNS_ERROR(dwError);
 
@@ -591,8 +595,10 @@ DNSUpdateSecure(
                         pszKeyName,
                         pszDomainName,
                         pszHostNameFQDN,
-                        dwNumAddrs,
+                        dwIPV4Count,
+                        dwIPV6Count,
                         pAddrArray,
+                        pAddr6Array,
                         &pDNSSecureUpdateResponse);
         BAIL_ON_LWDNS_ERROR(dwError);
 
@@ -646,8 +652,10 @@ DNSUpdateCreateARUpdateRequest(
     PDNS_UPDATE_REQUEST* ppDNSUpdateRequest,
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
-    DWORD  dwNumAddrs,
-    PSOCKADDR_IN pAddrArray
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
+    PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array
     )
 {
     DWORD dwError = 0;
@@ -690,27 +698,69 @@ DNSUpdateCreateARUpdateRequest(
     BAIL_ON_LWDNS_ERROR(dwError);
 
     pDNSPRRecord = NULL;
+    if (dwIPV6Count)
+    {
+        // Delete all AAAA records associated with the fqdn.
+        // This deletes IP addresses that do not belong to the computer.
+        dwError = DNSCreateDeleteRecord(
+                   pszHostnameFQDN,
+                   DNS_CLASS_ANY,
+                   QTYPE_AAAA,
+                   &pDNSARecord);
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+    else
+    {
+        // Delete all A records associated with the fqdn.
+        // This deletes IP addresses that do not belong to the computer.
+        dwError = DNSCreateDeleteRecord(
+                        pszHostnameFQDN,
+                        DNS_CLASS_ANY,
+                        QTYPE_A,
+                        &pDNSARecord);
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
 
-    // Delete all A records associated with the fqdn.
-    // This deletes IP addresses that do not belong to the computer.
-    dwError = DNSCreateDeleteRecord(
-                    pszHostnameFQDN,
-                    DNS_CLASS_ANY,
-                    QTYPE_A,
-                    &pDNSARecord);
-    BAIL_ON_LWDNS_ERROR(dwError);
-
-    dwError = DNSUpdateAddUpdateSection(
-                    pDNSUpdateRequest,
-                    pDNSARecord);
-    BAIL_ON_LWDNS_ERROR(dwError);
+        dwError = DNSUpdateAddUpdateSection(
+                        pDNSUpdateRequest,
+                        pDNSARecord);
+        BAIL_ON_LWDNS_ERROR(dwError);
 
     pDNSARecord = NULL;
 
     // Add an A record for every IP address that belongs to the computer. If
     // the delete operation above deleted IP addresses that actually belong to
     // the computer, this will recreate them.
-    for (; iAddr < dwNumAddrs; iAddr++)
+    for (; iAddr < dwIPV6Count; iAddr++)
+    {       
+        PSOCKADDR_IN6 pSock6Addr = NULL;
+        CHAR szIPStr[INET6_ADDRSTRLEN] = {};
+        pSock6Addr = &pAddr6Array[iAddr];
+
+        if(inet_ntop(pSock6Addr->sin6_family, &(pSock6Addr->sin6_addr),szIPStr,sizeof(szIPStr)) != NULL)
+        {
+            if(!IS_ADDR_LINKLOCAL(szIPStr))
+            {
+                LWDNS_LOG_INFO("Adding IPV6 Address [%s] to DNS Update request", szIPStr);
+ 
+                dwError = DNSCreateAAAARecord( pszHostnameFQDN,
+                                DNS_CLASS_IN,
+                                QTYPE_AAAA,
+                                (PSTR)&szIPStr,
+                                &pDNSARecord);
+                BAIL_ON_LWDNS_ERROR(dwError);
+
+                dwError = DNSUpdateAddUpdateSection(
+                                pDNSUpdateRequest,
+                                pDNSARecord);
+                BAIL_ON_LWDNS_ERROR(dwError);
+
+                pDNSARecord = NULL;
+            }
+        }
+    }
+
+    for (iAddr = 0; iAddr < dwIPV4Count; iAddr++)
     {
         PSOCKADDR_IN pSockAddr = NULL;
         PCSTR pszAddress = NULL;
@@ -773,8 +823,10 @@ DNSSendUpdate(
     HANDLE hDNSServer,
     PCSTR  pszZoneName,
     PCSTR  pszHostnameFQDN,
-    DWORD  dwNumAddrs,
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array,
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     )
 {
@@ -788,8 +840,10 @@ DNSSendUpdate(
                     &pDNSUpdateRequest,
                     pszZoneName,
                     pszHostnameFQDN,
-                    dwNumAddrs,
-                    pAddrArray);
+                    dwIPV4Count,
+                    dwIPV6Count,
+                    pAddrArray,
+                    pAddr6Array);
     BAIL_ON_LWDNS_ERROR(dwError);
 
     dwError = DNSUpdateSendUpdateRequest2(
@@ -841,8 +895,10 @@ DNSSendSecureUpdate(
     PCSTR pszKeyName,
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
-    DWORD  dwNumAddrs,
+    DWORD  dwIPV4Count,
+    DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
+    PSOCKADDR_IN6 pAddr6Array,
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     )
 {
@@ -856,8 +912,10 @@ DNSSendSecureUpdate(
                     &pDNSUpdateRequest,
                     pszZoneName,
                     pszHostnameFQDN,
-                    dwNumAddrs,
-                    pAddrArray);
+                    dwIPV4Count,
+                    dwIPV6Count,
+                    pAddrArray,
+                    pAddr6Array);
     BAIL_ON_LWDNS_ERROR(dwError);
 
     //
@@ -1135,3 +1193,182 @@ error:
     goto cleanup;
 }
 
+DWORD
+DNSGetPtrNameForV6Addr(
+    PSTR* ppszZoneName,
+    PSOCKADDR_IN6 pAddr
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszZoneName = NULL;
+    //DWORD dwIPV6Addr = ntohl(pAddr->sin_addr.s_addr);
+    CHAR szIPV6[INET6_ADDRSTRLEN];
+
+    if (pAddr->sin6_family != AF_INET6)
+    {
+        dwError = DNS_ERROR_INVALID_IP_ADDRESS;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    if(inet_ntop(AF_INET6,&(pAddr->sin6_addr),szIPV6,sizeof(szIPV6)) != NULL)
+    {
+        dwError = DNSInet6GetPtrAddress(szIPV6,&pszZoneName);
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    *ppszZoneName = pszZoneName;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppszZoneName = NULL;
+    LwRtlCStringFree(&pszZoneName);
+
+    goto cleanup;
+}
+
+DWORD
+DNSGetPtrZoneForV6Addr(
+    PSTR* ppszZoneName,
+    PSOCKADDR_IN6 pAddr
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszZoneName = NULL;
+    //DWORD dwIPV6Addr = ntohl(pAddr->sin_addr.s_addr);
+    CHAR szIPv6[INET6_ADDRSTRLEN];
+
+    if (pAddr->sin6_family != AF_INET6)
+    {
+        dwError = DNS_ERROR_INVALID_IP_ADDRESS;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    if(inet_ntop(AF_INET6,&(pAddr->sin6_addr),szIPv6,sizeof(szIPv6)) != NULL)
+    {
+        dwError = DNSInet6GetPtrZoneAddress(szIPv6,&pszZoneName);
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    *ppszZoneName = pszZoneName;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppszZoneName = NULL;
+    LwRtlCStringFree(&pszZoneName);
+
+    goto cleanup;
+}
+
+DWORD
+DNSUpdatePtrV6Secure(
+    PSOCKADDR_IN6 pAddr,
+    PCSTR  pszHostnameFQDN
+    )
+{
+    DWORD dwError = 0;
+    PSTR   pszZone = NULL;
+    PLW_NS_INFO pNameServerInfos = NULL;
+    DWORD   dwNumNSInfos = 0;
+    BOOLEAN bDNSUpdated = FALSE;
+    PSTR pszRecordName = NULL;
+    PSTR pszPtrZone = NULL;
+    DWORD   iNS = 0;
+    HANDLE hDNSServer = (HANDLE)NULL;
+
+    dwError = DNSGetPtrZoneForV6Addr(&pszPtrZone, pAddr);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    dwError = DNSGetPtrNameForV6Addr(&pszRecordName, pAddr);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    dwError = DNSGetNameServers(
+                    pszPtrZone,
+                    &pszZone,
+                    &pNameServerInfos,
+                    &dwNumNSInfos);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    for (; !bDNSUpdated && (iNS < dwNumNSInfos); iNS++)
+    {
+        PSTR   pszNameServer = NULL;
+        CHAR szIPv6[INET6_ADDRSTRLEN];
+        PLW_NS_INFO pNSInfo = NULL;
+
+        pNSInfo = &pNameServerInfos[iNS];
+        pszNameServer = pNSInfo->pszNSHostName;
+
+        if (hDNSServer != (HANDLE)NULL)
+        {
+            DNSClose(hDNSServer);
+        }
+
+        if(inet_ntop(AF_INET6,&(pAddr->sin6_addr),szIPv6,sizeof(szIPv6)) != NULL)
+            LWDNS_LOG_INFO("Attempting to update PTR record for %s to %s on name server [%s]", 
+                        szIPv6,
+                        pszHostnameFQDN, 
+                        pszNameServer);
+
+        dwError = DNSOpen(
+                        pszNameServer,
+                        DNS_TCP,
+                        &hDNSServer);
+        if (dwError)
+        {
+            LWDNS_LOG_ERROR(
+                    "Failed to open connection to Name Server [%s]. [Error code:%d]",
+                    pszNameServer,
+                    dwError);
+            dwError = 0;
+
+            continue;
+        }
+        dwError = DNSUpdatePtrSecureOnServer(
+                        hDNSServer,
+                        pszNameServer,
+                        pszZone,
+                        pszRecordName,
+                        pszHostnameFQDN);
+        if (dwError)
+        {
+            LWDNS_LOG_ERROR(
+                    "Failed to update Name Server [%s]. [Error code:%d]",
+                    pszNameServer,
+                    dwError);
+            dwError = 0;
+
+            continue;
+        }
+
+        bDNSUpdated = TRUE;
+    }
+
+    if (!bDNSUpdated)
+    {
+        dwError = LW_ERROR_DNS_UPDATE_FAILED;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+cleanup:
+    LWDNS_SAFE_FREE_STRING(pszZone);
+    LWDNS_SAFE_FREE_STRING(pszPtrZone);
+    if (pNameServerInfos)
+    {
+        DNSFreeNameServerInfoArray(
+                pNameServerInfos,
+                dwNumNSInfos);
+    }
+    LWDNS_SAFE_FREE_STRING(pszRecordName);
+    if (hDNSServer)
+    {
+        DNSClose(hDNSServer);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}

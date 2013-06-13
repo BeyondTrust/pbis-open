@@ -46,6 +46,11 @@
 #ifndef __DNSUTILS_H__
 #define __DNSUTILS_H__
 
+#define INET6_ADDRSTRLEN 46 
+#define CANONICAL_INET6_ADDRSTRLEN 72
+#define SUBNET_MASK 64
+#define HEXADECIMAL_BASE 16
+
 DWORD
 DNSGenerateIdentifier(
 	 WORD * pwIdentifer
@@ -102,4 +107,43 @@ DNSFreeLabel(
     PDNS_DOMAIN_LABEL pLabel
     );
 
+DWORD
+DNSInet6ValidateAddress(
+    PCSTR pszInet6InputAddr
+    );
+
+VOID
+DNSInet6AddressReverse(
+    PSTR pszInet6Addr
+    );
+
+VOID
+DNSInet6Canonicalize(
+    PSTR pszInet6InputAddr,
+    PSTR pszInet6OutputAddr
+    );
+
+VOID
+DNSInet6FillUpZeros(
+    PSTR pszInet6InputAddr,
+    PSTR pszInet6OutputAddr
+    );
+
+VOID
+DNSInet6ExpandAddress(
+    PSTR pszInet6InputAddr
+    );
+
+
+DWORD
+DNSInet6GetPtrAddress(
+    PSTR pszInet6InputAddr,
+    PSTR *ppszInet6OutputAddr
+    );
+
+DWORD
+DNSInet6GetPtrZoneAddress(
+    PSTR pszInet6InputAddr,
+    PSTR *ppszInet6OutputAddr
+    );
 #endif /* __DNSUTILS_H__ */

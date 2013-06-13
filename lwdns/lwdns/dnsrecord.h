@@ -170,4 +170,13 @@ DNSFreeRecord(
     PDNS_RR_RECORD pRecord
     );
 
+DWORD
+DNSCreateAAAARecord(
+    PCSTR pszHost,
+    WORD  wClass,
+    WORD  wType,
+    PSTR  pszIPV6,
+    PDNS_RR_RECORD * ppDNSRecord
+    );
+
 #endif /* __DNSRECORD_H__ */

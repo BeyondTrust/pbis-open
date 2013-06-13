@@ -107,8 +107,6 @@ DNSTCPOpen(
     )
 {
     DWORD dwError = 0;
-    unsigned long ulAddress = 0;
-    struct hostent * pHost = NULL;
     PDNS_CONNECTION_CONTEXT pDNSContext = NULL;
     int err = 0;
     int connErr = 0;
@@ -116,49 +114,73 @@ DNSTCPOpen(
     fd_set wmask;
     struct timeval timeOut;
 
+    struct addrinfo hostInfo, *pResult = NULL, *pTmp = NULL;
+    CHAR szIPAddr[INET6_ADDRSTRLEN];
+
     dwError = DNSAllocateMemory(
                     sizeof(DNS_CONNECTION_CONTEXT),
                     (PVOID *)&pDNSContext);
     BAIL_ON_LWDNS_ERROR(dwError);
-    
+
     pDNSContext->s = -1;
-
     pDNSContext->hType = DNS_TCP;
+    memset(&hostInfo,0,sizeof(hostInfo));
+    hostInfo.ai_family = AF_UNSPEC;
+    hostInfo.ai_socktype = SOCK_STREAM;
 
-    ulAddress = inet_addr (pszNameServer);
-    
-    if (INADDR_NONE == ulAddress)
+    //DNS TCP PORT is 53
+    dwError = getaddrinfo(pszNameServer,"53",&hostInfo,&pResult);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    for (pTmp = pResult; pTmp != NULL; pTmp = pTmp->ai_next)
     {
-         pHost = gethostbyname (pszNameServer);
-         if (!pHost)
-         {
-            dwError = h_errno;
-            BAIL_ON_HERRNO_ERROR(dwError);
-         }
-         memcpy((char *)&ulAddress, pHost->h_addr, pHost->h_length);
+        void *pAddr = NULL;
+        if (pTmp->ai_family == AF_INET)
+        {
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)pTmp->ai_addr;
+            pAddr = &(ipv4->sin_addr.s_addr);
+
+            //For debugging purpose
+            if(inet_ntop(pTmp->ai_family, pAddr, szIPAddr, sizeof(szIPAddr)) != NULL)
+
+            {
+                LWDNS_LOG_DEBUG("Hostname:%s", pszNameServer);
+
+                LWDNS_LOG_DEBUG("IPV4 Address:%s", szIPAddr);
+            }
+            break;
+        }
+        else if (pTmp->ai_family == AF_INET6)
+        {
+            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)pTmp->ai_addr;
+            pAddr = &(ipv6->sin6_addr);
+
+            //For debugging purpose
+            if(inet_ntop(pTmp->ai_family, pAddr, szIPAddr, sizeof(szIPAddr)) != NULL)
+            {
+                LWDNS_LOG_DEBUG("IPV6 Hostname:%s", pszNameServer);
+                LWDNS_LOG_DEBUG("IPV6 Address:%s", szIPAddr);
+            }
+            break;
+        }
     }
 
-    // create the socket
-    //
-    pDNSContext->s = socket (PF_INET, SOCK_STREAM, 0);
-    if (INVALID_SOCKET == pDNSContext->s) {
+    // Create the socket
+    pDNSContext->s = socket (pTmp->ai_family, pTmp->ai_socktype, pTmp->ai_protocol);
+    if (INVALID_SOCKET == pDNSContext->s)
+    {
         dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
-    pDNSContext->RecvAddr.sin_family = AF_INET;
-    pDNSContext->RecvAddr.sin_addr.s_addr = ulAddress;
-    pDNSContext->RecvAddr.sin_port = htons (DNS_TCP_PORT);
-
-    /* Enable nonblock on this socket for the duration of the connect */
+    // Enable nonblock on this socket for the duration of the connect
     err = fcntl(pDNSContext->s, F_GETFL, 0);
     if (err == -1)
     {
         dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
-
-    /* enable nonblock on this socket. Either err is status or current flags */
+    // Enable nonblock on this socket. Either err is status or current flags
     err = fcntl(pDNSContext->s, F_SETFL, err | O_NONBLOCK);
     if (err == -1)
     {
@@ -166,11 +188,8 @@ DNSTCPOpen(
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
-    // connect to remote endpoint
-    //
-    err = connect(pDNSContext->s,
-                  (PSOCKADDR) &pDNSContext->RecvAddr,
-                  sizeof(pDNSContext->RecvAddr));
+    // Connect to remote endpoint
+    err = connect(pDNSContext->s, pTmp->ai_addr, pTmp->ai_addrlen);
     if (err == -1 && errno == EINPROGRESS)
     {
         dwError = 0;
@@ -234,7 +253,6 @@ DNSTCPOpen(
         dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
-
     err = fcntl(pDNSContext->s, F_SETFL, err & ~O_NONBLOCK);
     if (err == -1)
     {
@@ -251,7 +269,7 @@ cleanup:
 error:
 
     *phDNSServer = (HANDLE)NULL;
-    
+
     if (pDNSContext)
     {
         DNSClose((HANDLE)pDNSContext);

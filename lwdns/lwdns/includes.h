@@ -45,6 +45,14 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#define IS_ADDR_LINKLOCAL(a)    \
+        ((a[0] == 'f') && (a[1] == 'e') && (a[2] == '8') && (a[3] == '0'))   
+
 #if defined(__LWI_NETBSD__)
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>

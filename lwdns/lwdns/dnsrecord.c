@@ -928,3 +928,68 @@ DNSFreeRecord(
     
     DNSFreeMemory(pRecord);
 }
+
+DWORD
+DNSCreateAAAARecord(
+    PCSTR pszHost,
+    WORD  wClass,
+    WORD  wType,
+    PSTR  pszIPV6,
+    PDNS_RR_RECORD * ppDNSRecord
+    )
+{
+    DWORD dwError = 0;
+    PDNS_RR_RECORD pDNSRRRecord = NULL;
+    PDNS_DOMAIN_NAME pDomainName = NULL;
+    SOCKADDR_IN6 Sock6Addr;
+    PBYTE pRData = NULL;
+
+    dwError = DNSDomainNameFromString(
+                    pszHost,
+                    &pDomainName);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    dwError = DNSAllocateMemory(
+                    sizeof(DNS_RR_RECORD),
+                    (PVOID *)&pDNSRRRecord);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    pDNSRRRecord->RRHeader.dwTTL = DNS_ONE_HOUR_IN_SECS;
+    pDNSRRRecord->RRHeader.wClass = wClass;
+    pDNSRRRecord->RRHeader.wType = wType;
+    pDNSRRRecord->RRHeader.pDomainName = pDomainName;
+    pDNSRRRecord->RRHeader.wRDataSize = 16;
+    pDomainName = NULL;
+
+    dwError = DNSAllocateMemory(
+		    INET6_ADDRSTRLEN,
+		    (PVOID *)&pRData);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    if(inet_pton(AF_INET6, (const char*)pszIPV6, &(Sock6Addr.sin6_addr)))
+    {
+        memcpy(pRData, &(Sock6Addr.sin6_addr), INET6_ADDRSTRLEN);
+        pDNSRRRecord->pRData = pRData;
+        pRData = NULL;
+        *ppDNSRecord = pDNSRRRecord;
+    }
+    
+cleanup:
+
+    return dwError;
+
+error:
+
+    if (pDomainName) {
+        DNSFreeDomainName(pDomainName);
+    }
+    if (pDNSRRRecord) {
+        DNSFreeRecord(pDNSRRRecord);
+    }
+    if (pRData) {
+        DNSFreeMemory(pRData);
+    }    
+    *ppDNSRecord = NULL;    
+    goto cleanup;
+}
+
