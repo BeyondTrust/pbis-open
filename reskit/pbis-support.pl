@@ -35,16 +35,18 @@
 # v2.0.1b 2011-04-11 RCA - PID matching and process shutdown improvements
 # v2.0.2b 2011-04-13 RCA - Mac restart issue fixes
 # v2.5.0  2013-02-11 RCA PBIS 7.0 (container) support
+# v2.5.1  2013-06-13 RCA config dump, code cleanup, logfile locations.
 #
 # Data structures explained at bottom of file
 #
-# TODO:
-# syslog-ng editing to allow non-restarts
-# gpo testing
-# do smbclient tests
-# edit lwiauthd and smb.conf for log level = 10 in [global] section properly
-# samba test / review
+# TODO (some order of importance):
+# Do pre-script cleanup (duplicate daemons, running tap-log, etc.)
 # gather nscd information?
+# gpo testing
+# samba test / review
+# edit lwiauthd and smb.conf for log level = 10 in [global] section properly
+# do smbclient tests
+# syslog-ng editing to allow non-restarts
 
 use strict;
 #use warnings;
@@ -56,7 +58,7 @@ use FindBin;
 use Config;
 
 # Define global variables
-my $gVer = "2.5.0";
+my $gVer = "2.5.1";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -90,9 +92,10 @@ sub main();
 main();
 exit $gRetval;
 
-sub usage($)
+sub usage($$)
 {
     my $opt = shift || confess "no options hash passed to usage!\n";
+    my $info = shift || confess "no info hash passed to usage!\n";
     my $scriptName = fileparse($0);
 
     my $helplines = "
@@ -104,7 +107,7 @@ usage: $scriptName [tests] [log choices] [options]
     This is the PBIS support tool.  It creates a log as specified by
     the options, and creates a gzipped tarball in:
     $opt->{tarballdir}/$opt->{tarballfile}$opt->{tarballext}, for emailing to 
-    support\@beyondtrust.com
+    $info->{emailaddress} 
 
 Tests to be performed:
 
@@ -444,6 +447,7 @@ sub findProcess($$) {
                 if ($proc->{cmd} =~ /(lw-container|lwsm)/) {
                     $proc->{cmd} = join(" ", $els[7],$els[8],$els[9]);
                 }
+                logDebug("Checking '$proc->{cmd}' for /$process/.");
                 unless ($proc->{cmd} =~ /$process/) {
                     undef $catch;
                     $proc={};
@@ -741,7 +745,7 @@ sub killProc($$$) {
                 return 0;
             }
         } else {
-            logInfo("Successfully terminated PID $process");
+            logVerbose("Successfully terminated PID $process");
             return 0;
         }
     } else {
@@ -779,7 +783,7 @@ sub killProc2($$) {
         logError("Could not kill PID $process with signal $signal - $!");
         return $gRetval;
     } else {
-        logInfo("successfully killed $error processes");
+        logVerbose("successfully killed $error processes");
         return 0;
     }
 }
@@ -1003,6 +1007,7 @@ sub changeLoggingByTap($$$) {
     my $info = shift || confess "no info hash passed to log starter!\n";
     my $opt = shift || confess "no options hash passed to log starter!\n";
     my $state = shift || confess "no start/stop state passed to log start!\n";
+    $opt->{paclog} = "$info->{logpath}/lsass.log" if ($opt->{lsassd});
     foreach my $daemonname (keys(%{$info->{lw}->{daemons}})) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
         if ($state eq "normal" and exists($info->{logging}->{$daemon}->{proc})) {
@@ -1021,6 +1026,8 @@ sub changeLoggingByTap($$$) {
             $tapscript = $tapscript.$info->{logpath}."/".$daemon.".log";
             logDebug("Running: $tapscript");
             my $result = System($tapscript." & ", 0, $opt->{delaytime});
+            sleep 2;
+            #Sleep required for background process startup on slower systems.
             $info->{logging}->{$daemon}->{proc}=findProcess("tap-log $daemon", $info);
         }
     };
@@ -1030,6 +1037,7 @@ sub changeLoggingBySyslog($$$) {
     my $info = shift || confess "no info hash passed to log starter!\n";
     my $opt = shift || confess "no options hash passed to log starter!\n";
     my $state = shift || confess "no start/stop state passed to log start!\n";
+    $opt->{paclog} = "$info->{logpath}/$info->{logfile}";
 
     my ($error);
     if (not(defined($info->{logedit}->{file}))) {
@@ -1094,6 +1102,7 @@ sub changeLoggingStandalone($$$) {
     my $opt = shift || confess "no opt hash passed to standalone log starter!\n";
     my $options = shift || confess "no options hash passed to standalone log starter!\n";
     my ($startscript, $logopts, $result);
+    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
 
     if ($opt->{lwsmd} && defined($info->{lw}->{daemons}->{lwsm})) {
         logVerbose("Attempting restart of service controller");
@@ -1189,6 +1198,7 @@ sub changeLoggingWithContainer($$$) {
     my $opt = shift;
     my $options = shift;
     my ($startscript, $logopts, $result);
+    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
     
     foreach my $daemonname (keys(%{$info->{lw}->{daemons}})) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
@@ -1213,6 +1223,7 @@ sub changeLoggingWithLwSm($$$) {
     my $opt = shift;
     my $options=shift;
     my ($startscript, $logopts, $result);
+    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
     foreach my $daemonname (sort(keys(%{$info->{lw}->{daemons}}))) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
         next unless(defined($opt->{$daemon}) and $opt->{$daemon});
@@ -1545,6 +1556,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupsforuser} = "list-groups-for-user --show-sid";
         $info->{lw}->{tools}->{groupsforuid} = "list-groups-for-user --show-sid --uid";
         $info->{lw}->{tools}->{dctime} = "get-dc-time";
+        $info->{lw}->{tools}->{config} = "config --dump";
         $info->{lw}->{tools}->{status} = "get-status";
         $info->{lw}->{tools}->{regshell} = "regshell";
         logData("PBIS Version $info->{lw}->{version} installed");
@@ -1580,6 +1592,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupsforuser} = "list-groups-for-user --show-sid";
         $info->{lw}->{tools}->{groupsforuid} = "list-groups-for-user --show-sid --uid";
         $info->{lw}->{tools}->{dctime} = "get-dc-time";
+        $info->{lw}->{tools}->{config} = "config --dump";
         $info->{lw}->{tools}->{status} = "get-status";
         $info->{lw}->{tools}->{regshell} = "regshell";
         logData("PBIS Version 6.5 installed");
@@ -1618,6 +1631,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupsforuid} = "lw-list-groups-for-user --show-sid --uid";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{config} = "lwconfig --dump";
         $info->{lw}->{tools}->{regshell} = "lwregshell";
         logData("Likewise Version 6.0 installed");
     } elsif ($info->{lw}->{version} == "5.4.0") {
@@ -1653,6 +1667,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupsforuser} = "lw-list-groups-for-user --show-sid";
         $info->{lw}->{tools}->{groupsforuid} = "lw-list-groups-for-user --show-sid --uid";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
+        $info->{lw}->{tools}->{config} = "lwconfig --dump";
         $info->{lw}->{tools}->{status} = "lw-get-status";
         logData("Likewise Version 5.4 installed");
     } elsif ($info->{lw}->{version} == "5.3.0") {
@@ -1699,6 +1714,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupsforuser} = "lw-list-groups-for-user --show-sid";
         $info->{lw}->{tools}->{groupsforuid} = "lw-list-groups-for-user --show-sid --uid";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
+        $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
         logData("Likewise Version 5.3 installed");
     } elsif ($info->{lw}->{version} == "5.2.0") {
@@ -1725,6 +1741,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupbyid} = "lw-find-group-by-id --level 1";
         $info->{lw}->{tools}->{groupsforuser} = "lw-list-groups";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
+        $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
         logData("Likewise Version 5.2 installed");
     } elsif ($info->{lw}->{version} == "5.1.0") {
@@ -1749,6 +1766,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupbyid} = "lw-find-group-by-id --level 1";
         $info->{lw}->{tools}->{groupsforuser} = "lw-list-groups";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
+        $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
         logData("Likewise Version 5.1 installed");
     } elsif ($info->{lw}->{version} == "5.0.0") {
@@ -1772,6 +1790,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupbyid} = "lw-find-group-by-id --level 1";
         $info->{lw}->{tools}->{groupsforuser} = "lw-list-groups";
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
+        $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
         logData("Likewise Version 5.0 installed");
     } elsif ($info->{lw}->{version} == "4.1") {
@@ -1796,6 +1815,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupbyname} = "lwiinfo -g";
         $info->{lw}->{tools}->{groupbyid} = "lwiinfo --gid-info";
         $info->{lw}->{tools}->{status} = "lwiinfo -pmt";
+        $info->{lw}->{tools}->{config} = "cat /etc/centeris/lwiauthd.conf";
         logData("Likewise Version 4.1 installed");
     }
     readFile($info, $versionFile->{path});
@@ -1804,6 +1824,7 @@ sub getLikewiseVersion($) {
         my $platformFile=$versionFile->{path};
         $platformFile=~s/ENTERPRISE_//g;
         readFile($info, $platformFile);
+        $info->{emailaddress} = 'pbis-support@beyondtrust.com';
     }
 
     if (not defined($gporefresh->{path})) {
@@ -1811,9 +1832,10 @@ sub getLikewiseVersion($) {
 # This way, we won't attempt to restart them later, or do anything with them.
 # Reduces errors printed to screen.
         undef $info->{lw}->{daemons}->{gpdaemon};
-        undef $info->{lw}->{daemons}->{eventlogd};
         undef $info->{lw}->{daemons}->{eventfwd};
         undef $info->{lw}->{daemons}->{syslogreaper};
+        undef $info->{lw}->{daemons}->{usermonitor};
+        $info->{emailaddress} = 'pbis-support@beyondtrust.com';
     }
 }
 
@@ -1927,13 +1949,11 @@ sub outputReport($$) {
         logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
         tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
     }
-    if ($opt->{authtest}) {
-        logInfo("Adding pam files");
-        tarFiles($info, $opt, $tarballfile, $info->{pampath});
-        logInfo("Adding krb5.conf");
-        tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
-        logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
-    }
+    logInfo("Adding pam files");
+    tarFiles($info, $opt, $tarballfile, $info->{pampath});
+    logInfo("Adding krb5.conf");
+    tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
+    logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
     if ($opt->{sudo}) {
         logInfo("Adding sudoers");
         tarFiles($info, $opt, $tarballfile, $info->{sudoers}->{path}) if ($info->{sudoers}->{path});
@@ -1984,7 +2004,7 @@ sub outputReport($$) {
         }
     }
     logData("All data gathered successfully in $tarballfile.");
-    logData("Please email $tarballfile to pbis-support\@beyondtrust.com to help diagnose your problem");
+    logData("Please email $tarballfile to $info->{emailaddress} to help diagnose your problem");
 }
 
 sub runTests($$) {
@@ -1997,14 +2017,18 @@ sub runTests($$) {
     $data = runTool($info, $opt, "$info->{lw}->{tools}->{status}");
     logData($data);
 
+    sectionBreak("configuration");
+    $data = runTool($info, $opt, "$info->{lw}->{tools}->{config}");
+    logData($data);
+
     sectionBreak("Running User");
     getUserInfo($info, $opt, $info->{logon});
 
     sectionBreak("DC Times");
     my $status = runTool($info, $opt, "$info->{lw}->{tools}->{status}");
     my @domains;
-    $status =~ /DNS Domain:\s+(.*)$/;
-    foreach my $domain (1..$#-) {
+    while ($status =~ /DNS Domain:\s+(.*)/g) {
+        my $domain=$1;
         sectionBreak("Current DC Time for $domain.");
         $domain=~/[^\s]+$/;
         $data = runTool($info, $opt, "$info->{lw}->{tools}->{dctime} $domain");
@@ -2069,12 +2093,14 @@ sub runTests($$) {
         if ($?) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Error launching sshd!");
-        } 
-        logData("Running ssh as: $sshcommand");
-        $data = `$sshcommand`;
-        if ($?) {
-            $gRetval |= ERR_SYSTEM_CALL;
-            logError("Error running ssh as $user!");
+        } else {
+            sleep 1;
+            logData("Running ssh as: $sshcommand");
+            $data = `$sshcommand`;
+            if ($?) {
+                $gRetval |= ERR_SYSTEM_CALL;
+                logError("Error running ssh as $user!");
+            }
         }
         
         logData($data);
@@ -2134,8 +2160,9 @@ sub runTests($$) {
         sectionBreak("PAC info");
         my ($logfile, $error);
         $data = "";
-        $logfile = "$info->{logpath}/$info->{logfile}" if ($opt->{syslog});
-        $logfile = "$info->{logpath}/lsassd.log" if ($opt->{restart} and $opt->{lsassd});
+        $logfile = $opt->{paclog};
+        #$logfile = "$info->{logpath}/$info->{logfile}" if ($opt->{syslog});
+        #$logfile = "$info->{logpath}/lsassd.log" if ($opt->{restart} and $opt->{lsassd});
         logWarning("No logfile to read!") unless ($logfile);
         my %sids;
         open(LF, "<$logfile") || logError("Can't open $logfile - $!");
@@ -2177,6 +2204,8 @@ sub main() {
     my @time = localtime();
     $time[5]+=1900;
     my $datestring = $time[5].sprintf("%02d", $time[4]+1).sprintf("%02d", $time[3]).sprintf("%02d", $time[2]).sprintf("%02d", $time[1]);
+    my $info = {};
+    $info->{emailaddress} = 'openproject@beyondtrust.com';
 
     my $opt = { netlogond => 1,
         users => 1,
@@ -2255,7 +2284,7 @@ sub main() {
 
     if ($opt->{help} or not $ok) {
         $gRetval |= ERR_OPTIONS;
-        print usage($opt);
+        print usage($opt, $info);
     }
 
     if ($opt->{sudo} or $opt->{ssh} or $opt->{other}) {
@@ -2273,7 +2302,7 @@ sub main() {
     }
     if ($errors) {
         $gRetval |= ERR_OPTIONS;
-        print $errors.usage($opt);
+        print $errors.usage($opt, $info);
     }
 
     exit $gRetval if $gRetval;
@@ -2281,89 +2310,88 @@ sub main() {
     if (defined($opt->{logfile}) && $opt->{logfile} ne "-") {
         open(OUTPUT, ">$opt->{logfile}") || die "can't open logfile $opt->{logfile}\n";
         $gOutput = \*OUTPUT;
-    logInfo("Initializing logfile $opt->{logfile}.");
-} else { 
-    $gOutput = \*STDOUT;
-logInfo("Logging to STDOUT.");
-logError("Will not be able to capture the output log! You should cancel and restart with a different logfile.");
-sleep 5;
-}
-
-if (defined($opt->{gpagentd} and $opt->{gpagentd} == 1)) {
-    $opt->{gpo} = 1;  #turn on GPO testing since we're doing gpagentd logging.
-}
-
-if (defined($opt->{verbose})) {
-    $gDebug = $opt->{verbose};
-    logData("Logging at level $gDebug");
-}
-
-if ($gDebug<1 or $gDebug > 5) {
-    $gDebug = 1 if ($gDebug < 1);
-    $gDebug = 5 if ($gDebug > 5);
-    logWarning("Log Level not specified.");
-}
-
-if (defined($opt->{loglevel}) && not defined($opt->{verbose})) {
-    $gDebug = 5 if ($opt->{loglevel}=~/^debug$/i);
-    $gDebug = 4 if ($opt->{loglevel}=~/^verbose$/i);
-    $gDebug = 3 if ($opt->{loglevel}=~/^info$/i);
-    $gDebug = 2 if ($opt->{loglevel}=~/^warning$/i);
-    $gDebug = 1 if ($opt->{loglevel}=~/^error$/i);
-    $gDebug = $opt->{loglevel} if ($opt->{loglevel}=~/^\d+$/);
-    logWarning("Logging at $opt->{loglevel} level.");
-}
-
-$opt->{tarballdir}=~s/\/$//;
-
-unless (-d $opt->{tarballdir}) {
-    $gRetval |= ERR_OPTIONS;
-    $gRetval |= ERR_FILE_ACCESS;
-    logError("$opt->{tarballdir} is not a directory!");
-}
-
-exit $gRetval if $gRetval;
-
-my $info = {};
-
-sectionBreak("OS Information");
-logDebug("Determining OS info");
-determineOS($info);
-
-sectionBreak("PBIS Version");
-logDebug("Determining PBIS version");
-getLikewiseVersion($info);
-
-sectionBreak("Options Passed");
-logData(fileparse($0)." version $gVer");
-foreach my $el (keys(%{$opt})) {
-    logData("$el = ".&getOnOff($opt->{$el}));
-}
-
-if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
-    sectionBreak("Starting tcpdump");
-    tcpdumpStart($info, $opt);
-}
-
-sectionBreak("Daemon restarts");
-logDebug("Turning up logging levels");
-changeLogging($info, $opt, "debug");
-logWarning("Sleeping for 60 seconds to let Domains be found");
-waitForDomain($info, $opt);
-
-runTests($info, $opt);
-
-sectionBreak("Daemon restarts");
-logDebug("Turning logging levels back to normal");
-changeLogging($info, $opt, "normal");
-
-if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
-    sectionBreak("Stopping tcpdump");
-    tcpdumpStop($info, $opt);
-}
-
-outputReport($info, $opt);
+        logInfo("Initializing logfile $opt->{logfile}.");
+    } else { 
+        $gOutput = \*STDOUT;
+        logInfo("Logging to STDOUT.");
+        logError("Will not be able to capture the output log! You should cancel and restart with a different logfile.");
+        sleep 5;
     }
+
+    if (defined($opt->{gpagentd} and $opt->{gpagentd} == 1)) {
+        $opt->{gpo} = 1;  #turn on GPO testing since we're doing gpagentd logging.
+    }
+
+    if (defined($opt->{verbose})) {
+        $gDebug = $opt->{verbose};
+        logData("Logging at level $gDebug");
+    }
+
+    if ($gDebug<1 or $gDebug > 5) {
+        $gDebug = 1 if ($gDebug < 1);
+        $gDebug = 5 if ($gDebug > 5);
+        logWarning("Log Level not specified.");
+    }
+
+    if (defined($opt->{loglevel}) && not defined($opt->{verbose})) {
+        $gDebug = 5 if ($opt->{loglevel}=~/^debug$/i);
+        $gDebug = 4 if ($opt->{loglevel}=~/^verbose$/i);
+        $gDebug = 3 if ($opt->{loglevel}=~/^info$/i);
+        $gDebug = 2 if ($opt->{loglevel}=~/^warning$/i);
+        $gDebug = 1 if ($opt->{loglevel}=~/^error$/i);
+        $gDebug = $opt->{loglevel} if ($opt->{loglevel}=~/^\d+$/);
+        logWarning("Logging at $opt->{loglevel} level.");
+    }
+
+    $opt->{tarballdir}=~s/\/$//;
+
+    unless (-d $opt->{tarballdir}) {
+        $gRetval |= ERR_OPTIONS;
+        $gRetval |= ERR_FILE_ACCESS;
+        logError("$opt->{tarballdir} is not a directory!");
+    }
+
+    exit $gRetval if $gRetval;
+
+
+    sectionBreak("OS Information");
+    logDebug("Determining OS info");
+    determineOS($info);
+    
+    sectionBreak("PBIS Version");
+    logDebug("Determining PBIS version");
+    getLikewiseVersion($info);
+
+    sectionBreak("Options Passed");
+    logData(fileparse($0)." version $gVer");
+    foreach my $el (keys(%{$opt})) {
+        logData("$el = ".&getOnOff($opt->{$el}));
+    }
+
+    if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
+        sectionBreak("Starting tcpdump");
+        tcpdumpStart($info, $opt);
+    }
+
+    sectionBreak("Daemon restarts");
+    logDebug("Turning up logging levels");
+    changeLogging($info, $opt, "debug");
+    logWarning("Sleeping for 60 seconds to let Domains be found");
+    waitForDomain($info, $opt);
+
+    runTests($info, $opt);
+
+    sectionBreak("Daemon restarts");
+    logDebug("Turning logging levels back to normal");
+    changeLogging($info, $opt, "normal");
+    
+    if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
+        sectionBreak("Stopping tcpdump");
+        tcpdumpStop($info, $opt);
+    }
+
+    outputReport($info, $opt);
+}
 
 =head1 (C) BeyondTrust Software
 
@@ -2373,7 +2401,7 @@ usage: pbis-support.pl [tests] [log choices] [options]
 
   This is the BeyondTrust Software PBIS (Open/Enterprise) support tool.
   It creates a log as specified by the options, and creates 
-  a gzipped tarball in for emailing to pbis-support@beyondtrust.com
+  a gzipped tarball in for emailing to the PBIS support team.
 
   The options are broken into three (3) groups: Tests, Logs,
   and Options.  Any "on/off" flag has a "--no" option available,
@@ -2484,7 +2512,7 @@ current max (debug).
 
 =head3 Defined subroutines are:
 
-usage($opt) - outputs help status with intelligent on/off values based on defaults and flags passed.
+usage($opt, $info) - outputs help status with intelligent on/off values based on defaults and flags passed.
 
 changeLogging($info, $opt, $state) - changes logging for all daemons in $opt to $state
 
