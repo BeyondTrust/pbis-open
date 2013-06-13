@@ -46,6 +46,7 @@
  */
 
 #include "config.h"
+#include "common.h"
 #include "lsasystem.h"
 #include "lsadef.h"
 #include "lsa/lsa.h"
@@ -63,6 +64,8 @@
 #define LSA_MODE_STRING_LOCAL            "Local system"
 
 #define LSA_SUBMODE_STRING_UNKNOWN       "Unknown"
+#define PBIS_SUBMODE_STRING_SCHEMA       "Directory Integrated"
+#define PBIS_SUBMODE_STRING_NON_SCHEMA   "Schemaless"
 #define LSA_SUBMODE_STRING_SCHEMA        "Schema"
 #define LSA_SUBMODE_STRING_NON_SCHEMA    "Non-schema"
 
@@ -77,6 +80,8 @@
 #define LSA_TRUST_TYPE_STRING_DCE        "DCE"
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
+
+extern int pb_mode;
 
 static
 VOID
@@ -663,13 +668,13 @@ GetSubmodeString(
     {
         case LSA_AUTH_PROVIDER_SUBMODE_SCHEMA:
             
-            pszSubmodeString = LSA_SUBMODE_STRING_SCHEMA;
+            pszSubmodeString = (pb_mode & PB_MODE_PBIS) ? PBIS_SUBMODE_STRING_SCHEMA : LSA_SUBMODE_STRING_SCHEMA;
             
             break;
             
         case LSA_AUTH_PROVIDER_SUBMODE_NONSCHEMA:
             
-            pszSubmodeString = LSA_SUBMODE_STRING_NON_SCHEMA;
+            pszSubmodeString = (pb_mode & PB_MODE_PBIS) ? PBIS_SUBMODE_STRING_NON_SCHEMA : LSA_SUBMODE_STRING_NON_SCHEMA;
             
             break;
             

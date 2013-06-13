@@ -15,6 +15,7 @@ make()
 	find-user-by-name \
 	get-metrics \
 	get-status \
+	pbis-status \
 	list-groups-for-user \
 	ypcat \
 	ypmatch \

@@ -1,4 +1,5 @@
 #include "config.h"
+#include "common.h"
 #include "lsasystem.h"
 
 
@@ -8,6 +9,7 @@ typedef struct
 {
     const char* name;
     main_function func;
+    int mode;
 } main_entry;
 
 int

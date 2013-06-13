@@ -46,6 +46,9 @@
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
 
+#define PB_MODE_LSA  0x00001
+#define PB_MODE_PBIS 0x00002
+
 VOID
 PrintSecurityObject(
     PLSA_SECURITY_OBJECT pObject,
