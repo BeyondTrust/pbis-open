@@ -183,10 +183,13 @@ DNSGetInfoUsingGetIfAddrs(
         LWDNS_LOG_VERBOSE("Considering network interface [%s]",
                           pIter->ifa_name);
 
-        if (pIter->ifa_addr->sa_family == AF_PACKET)
-        { 
-            LWDNS_LOG_VERBOSE("Skipping network interface [%s] because it is not AF_INET/6 family", pIter->ifa_name);
-            continue;
+        if (pIter->ifa_addr->sa_family != AF_INET)
+        {
+            if (pIter->ifa_addr->sa_family != AF_INET6)
+            {
+                LWDNS_LOG_VERBOSE("Skipping network interface [%s] because it is not AF_INET/AF_INET6 family", pIter->ifa_name);
+                continue;
+            }
         }
         
         if (!(pIter->ifa_flags & IFF_UP))
