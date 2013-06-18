@@ -31,7 +31,7 @@ defaults()
     # Fail on warnings
     MK_FAIL_ON_WARN=yes
 }
-
+ 
 option()
 {
     default_samba_interop="yes"
