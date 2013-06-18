@@ -1,0 +1,12 @@
+make()
+{
+    mk_program \
+    	PROGRAM=lsapstore-test \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="lsapstore-test.c" \
+	INCLUDEDIRS=". ../../include ../../tools/lw-lsa" \
+        HEADERDEPS="lwadvapi.h" \
+        LIBDEPS="lsapstore lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+
+    lw_add_tool_target "$result"
+}

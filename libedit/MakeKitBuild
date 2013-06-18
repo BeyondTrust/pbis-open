@@ -1,0 +1,10 @@
+make()
+{
+    mk_autotools \
+        LIBS="edit:0:33:0" \
+        HEADERS="editline/readline.h histedit.h" \
+        HEADERDEPS="ncurses/ncurses.h" \
+        LIBDEPS="ncurses" \
+        CFLAGS="-Wno-error" \
+        CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE"
+}

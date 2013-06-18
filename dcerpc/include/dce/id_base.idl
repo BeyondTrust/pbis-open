@@ -1,0 +1,107 @@
+/*
+**
+**  NAME:
+**
+**      id_base.idl
+**
+**  FACILITY:
+**
+**      DCE identity base type definitions
+**
+**  ABSTRACT:
+**
+**      Contains identity base type definitions for interoperability
+**      with Windows NT servers and other DCE RPC servers. Loosely
+**      based on OSF DCE IDL but with extensions for NT interoperability.
+**
+*/
+
+[
+ uuid(47EAABA3-3000-0000-0D00-01DC6C000000),
+ pointer_default(ptr)
+]
+interface sec_id_base
+{
+import "dce/nbase.idl";
+
+typedef struct sec_id_t {
+	dce_uuid_t uuid;
+	[string] char *name;
+} sec_id_t;
+
+typedef struct sec_id_foreign_t {
+	sec_id_t id;
+	sec_id_t realm;
+} sec_id_foreign_t;
+
+typedef struct sec_id_foreign_groupset_t {
+	sec_id_t realm;
+	unsigned16 num_groups;
+	[size_is(num_groups)] sec_id_t *groups;
+} sec_id_foreign_groupset_t;
+
+typedef enum {
+	/* DCE PAC */
+	sec_id_pac_format_v1,
+	sec_id_pac_format_raw
+} sec_id_pac_format_t;
+
+const long sec_id_authz_data_dce = 64;
+const long sec_id_authz_data_sesame = 65;
+const long sec_id_authz_data_mspac = 128;
+
+typedef struct sec_id_pac_format_v1_t {
+	sec_id_t realm;
+	sec_id_t principal;
+	sec_id_t group;
+	unsigned16 num_groups;
+	unsigned16 num_foreign_groups;
+	[size_is(num_groups)] sec_id_t *groups;
+	[size_is(num_foreign_groups)] sec_id_t *foreign_groups;
+} sec_id_pac_format_v1_t;
+
+typedef struct sec_id_pac_format_raw_t {
+	unsigned32 type;
+	unsigned32 length;
+	[size_is(length)] byte *value;
+} sec_id_pac_format_raw_t;
+
+/*
+ * I had to change these structures a little from DCE
+ * to accommodate the Windows 2000 PAC, but we should
+ * be binary compatible with the existing DCE interface.
+ * Unfortunately we're not source compatible with 
+ * implementations that expect sec_id_pac_format_v1_t to
+ * be the same layout as sec_id_pac_t.
+ */
+typedef [switch_type(sec_id_pac_format_t)] union sec_id_pac_rep_t {
+	[case(sec_id_pac_format_v1)] sec_id_pac_format_v1_t v1_pac;
+	[case(sec_id_pac_format_raw)] sec_id_pac_format_raw_t raw_pac;
+} sec_id_pac_rep_t;
+
+typedef struct sec_id_pac_t {
+	sec_id_pac_format_t pac_type;
+	boolean32 authenticated;
+	[switch_is(pac_type)] sec_id_pac_rep_t pac;
+} sec_id_pac_t;
+
+typedef struct sec_id_pickled_pac_t {
+	ndr_format_t format_label;
+	unsigned32 num_bytes;
+	[size_is(num_bytes)] byte pickled_data[];
+} sec_id_pickled_pac_t;
+
+typedef struct rpc_np_sec_context_t {
+	unsigned32 Length;
+	unsigned32 Version;
+	unsigned32 UserNameLength;
+	[size_is(UserNameLength)] char *UserName;
+	unsigned32 DomainNameLength;
+	[size_is(DomainNameLength)] char *DomainName;
+	unsigned32 WorkstationLength;
+	[size_is(WorkstationLength)] char *Workstation;
+	unsigned32 SessionKeyLength;
+	[size_is(SessionKeyLength)] char *SessionKey;
+} rpc_np_sec_context_t, *rpc_np_sec_context_p_t;
+
+}

@@ -1,0 +1,32 @@
+make()
+{
+    mk_program \
+        PROGRAM=gssproxy-client \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="gss-client.c gss-misc.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
+
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=gssproxy-server \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="gss-server.c gss-misc.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
+
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=gssproxy-proxy \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="gss-proxy.c gss-misc.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
+
+    lw_add_tool_target "$result"
+}

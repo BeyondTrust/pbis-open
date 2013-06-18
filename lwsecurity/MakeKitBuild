@@ -1,0 +1,84 @@
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_LIBDIR \
+        MK_DOCDIR \
+        MK_OBJECT_DIR \
+        LW_CONFIGDIR \
+        MK_SOURCE_DIR \
+        MK_HOST_OS \
+        MK_HOST_ARCH
+
+    STAGE_PREFIX=""
+    ANT_STAGING_ROOT=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_PREFIX}
+    ANT_STAGING_LIB=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_LIBDIR}
+    ANT_STAGING_DOCS=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_DOCDIR}
+    ANT_STAGING_CONF=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${LW_CONFIGDIR}
+    ANT_BUILD_DIR=${MK_ROOT_DIR}/object/lwsecurity
+
+    PBIS_SOURCE=`cd "${MK_SOURCE_DIR}" && pwd`
+
+    mk_declare -o \
+        ANT_STAGING_ROOT \
+        ANT_STAGING_LIB \
+        ANT_STAGING_DOCS \
+        ANT_STAGING_CONF \
+        ANT_BUILD_DIR \
+        PBIS_SOURCE
+
+}
+
+make()
+{
+    mk_resolve_file "build.xml"
+    mk_declare -e  BUILDXML="$result"
+
+    mk_output_file INPUT="@${MK_SOURCE_DIR}/lwsecurity/properties.in" OUTPUT=".properties"
+    PROPERTIES=$result
+
+    mk_target \
+        TARGET=".build_stamp" \
+        DEPS="$PROPERTIES" \
+        antscript "$PROPERTIES" "$BUILDXML" build
+
+    mk_target \
+        TARGET=".stage_stamp" \
+        DEPS="$result $PROPERTIES" \
+        antscript "$PROPERTIES" "$BUILDXML" stage
+
+    stage_result=$result
+    for f in ${MK_LIBDIR}/commons-codec-1.4.jar \
+              ${MK_LIBDIR}/commons-logging-1.1.1.jar \
+              ${MK_LIBDIR}/commons-net-2.2.jar \
+              ${MK_LIBDIR}/jna.jar \
+              ${MK_LIBDIR}/log4j-1.2.16.jar \
+              ${MK_LIBDIR}/lwjplatform.jar \
+              ${MK_LIBDIR}/lwservlets.jar \
+              ${MK_LIBDIR}/lwtomcat.jar \
+              ${MK_DOCDIR}/Likewise-Apache-SSO-Guide.pdf \
+              ${MK_DOCDIR}/lwjplatform-javadoc.jar \
+              ${MK_DOCDIR}/lwservlets-javadoc.jar \
+              ${MK_DOCDIR}/lwtomcat-javadoc.jar \
+              ${LW_CONFIGDIR}/jaas.policy \
+              ${LW_CONFIGDIR}/login.conf;
+    do
+        mk_target \
+            TARGET="$f" \
+            DEPS="$stage_result"
+        lwsecurity_deps="$lwsecurity_deps $result"
+    done
+
+    mk_target \
+        TARGET="@lwsecurity" \
+        DEPS="$lwsecurity_deps"
+}
+
+antscript()
+{
+    echo ant -propertyfile "$1" -buildfile "$2" $3
+    echo "PATH=$PATH"
+    ant -propertyfile "$1" -buildfile "$2" $3
+}

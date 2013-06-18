@@ -1,0 +1,20 @@
+SUBDIRS="include api ntlm store auth-providers rpc privilege lsassd"
+
+configure()
+{
+    want_local=false
+
+    for _prov in ${LSA_PROVIDERS}
+    do
+        case "$_prov" in
+            "local") want_local=true;;
+        esac
+    done
+
+    [ "$LSA_RPC_SERVERS" = "no" ] && mk_skip_subdir rpc
+
+    if ! $want_local && [ "$LSA_RPC_SERVERS" = "no" ]
+    then
+        mk_skip_subdir store
+    fi
+}

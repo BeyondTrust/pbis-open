@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="ipc" \
+        SOURCES="ipc_protocol.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
+        LIBDEPS="lwmsg"
+}

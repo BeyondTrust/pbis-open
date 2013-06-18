@@ -1,0 +1,22 @@
+
+########################################
+## <summary>
+##	Connect to pbis services.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`pbis_client',`
+	gen_require(`
+		type pbis_t, pbis_etc_t, pbis_var_lib_t;
+	')
+
+        # Client may need to read configuration before talking to service.
+	allow $1 pbis_etc_t:file read_file_perms; 
+
+	# Client should be allowed to talk to services.
+	stream_connect_pattern($1, pbis_var_lib_t, pbis_var_lib_t, pbis_t)
+')

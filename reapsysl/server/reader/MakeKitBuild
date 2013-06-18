@@ -1,0 +1,13 @@
+make()
+{
+    API_SOURCES="\
+	reader.c    \
+	globals.c"
+
+    mk_group \
+        GROUP=reader \
+        SOURCES="$API_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h dce/rpcsts.h lsa/lsa.h eventlog.h" \
+        LIBDEPS="eventlog lsaclient regclient rsutils lwmsg lwadvapi lsaclient lsacommon $LIB_PTHREAD $LIB_DL"
+}

@@ -1,0 +1,39 @@
+SUBDIRS="include"
+
+make()
+{
+    DJ_SOURCES="\
+       src/djparsehosts.c \
+       src/djhostinfo.c   \
+       src/djauthinfo.c   \
+       src/djkrb5conf.c   \
+       src/djauditing.c   \
+       src/djlogger.c     \
+       src/djdistroinfo.c \
+       src/djstr.c    \
+       src/djroutines.c   \
+       src/djregistry.c   \
+       src/djservicemgr.c \
+       src/djprocutils.c  \
+       src/djmodule.c \
+       src/djapi.c \
+       src/djsystemscripts.c \
+       src/aix/djsecuser.c    \
+       src/djnsswitch.c    \
+       src/djpamconf.c    \
+       src/aix/djlogincfg.c   \
+       src/aix/djmethodcfg.c  \
+       src/aix/djaixparser.c \
+       src/mac/djconfig_mac.c \
+       src/djsshconf.c    \
+       src/djddns.c \
+       src/djdaemonmgr.c \
+       src/djdaemonmgr_nonmac.c"
+
+    mk_library \
+	LIB=domainjoin \
+	SOURCES="$DJ_SOURCES" \
+	INCLUDEDIRS="include ../include" \
+	HEADERDEPS="lsa/lsa.h lsa/ad.h ctbase.h eventlog.h lwsm/lwsm.h" \
+	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm rsutils"
+}

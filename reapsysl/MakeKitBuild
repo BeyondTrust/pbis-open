@@ -1,0 +1,48 @@
+SUBDIRS="include utils server"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define RSYS_CACHE_DIR "\"$LW_CACHEDIR\""
+    mk_define RSYS_CONFIG_DIR "\"$MK_SYSCONFDIR\""
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+   
+    mk_output_file "server/etc/reapsysl.reg"
+
+    mk_check_headers \
+        FAIL=yes \
+        reg/lwreg.h lwadvapi.h reg/regutil.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        rsutils regclient lwadvapi eventlog lsaclient
+
+    mk_check_headers \
+        inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h synch.h pthread.h wc16str.h wc16printf.h dlfcn.h
+
+    mk_check_libraries \
+        rt pthread resolv dl
+
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    lw_check_strerror_r
+
+    lw_check_pthread_once_init
+}

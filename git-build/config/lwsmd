@@ -1,0 +1,64 @@
+#! /bin/sh
+# ex: set tabstop=4 expandtab shiftwidth=4:
+#
+# Copyright (c) Likewise Software.  All rights reserved.
+#
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT# chkconfig: 35 17 9
+#LWI_STARTUP_TYPE_REDHAT# description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT#
+#LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_SUSE# Provides: lwsmd
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $syslog
+#LWI_STARTUP_TYPE_SUSE# Required-Stop:
+#LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
+#LWI_STARTUP_TYPE_SUSE# Default-Stop: 0 1 2 6
+#LWI_STARTUP_TYPE_SUSE# Description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_SUSE### END INIT INFO
+#LWI_STARTUP_TYPE_DEBIAN### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_DEBIAN# Provides: lwsmd
+#LWI_STARTUP_TYPE_DEBIAN# Required-Start:
+#LWI_STARTUP_TYPE_DEBIAN# Required-Stop:
+#LWI_STARTUP_TYPE_DEBIAN# Default-Start: 2 3 4 5
+#LWI_STARTUP_TYPE_DEBIAN# Default-Stop: 0 1 6
+#LWI_STARTUP_TYPE_DEBIAN# Description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_DEBIAN### END INIT INFO
+#LWI_STARTUP_TYPE_FREEBSD# PROVIDE: lwsmd
+#LWI_STARTUP_TYPE_FREEBSD# REQUIRE: NETWORKING
+#LWI_STARTUP_TYPE_FREEBSD# BEFORE: LOGIN
+
+PROG_DESC="Likewise Service Manager"
+PROG_BIN=PREFIX_DIR/sbin/lwsmd
+PROG_ARGS="--start-as-daemon"
+PIDFILE=
+SCRIPTNAME="lwsmd"
+STARTHOOK="fix_locale"
+
+lookup_user_locale()
+{
+    . /etc/sysconfig/language
+    printf 'LANG=%q; export LANG\n' "$RC_LANG"
+    printf 'LC_ALL=%q; export LC_ALL\n' "$RC_LC_ALL"
+    printf 'LC_CTYPE=%q; export LC_CTYPE\n' "$RC_LC_CTYPE"
+}
+
+fix_locale()
+{
+    if [ "$LC_ALL" = "POSIX" ]
+    then
+        unset LC_ALL
+        export LC_ALL
+    fi
+    if type locale >/dev/null &&
+        locale | grep LC_CTYPE | grep POSIX >/dev/null; then
+        if [ -f /etc/sysconfig/language ]; then
+            eval "`lookup_user_locale`"
+        elif [ -f /etc/default/locale ]; then
+            . /etc/default/locale
+            export LANG
+        fi
+    fi
+}
+
+. LIBEXECDIR/init-base.sh

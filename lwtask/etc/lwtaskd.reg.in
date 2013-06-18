@@ -1,0 +1,10 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwtask]
+"Description"="Likewise Task System"
+"Path"="@SBINDIR@/lwtaskd"
+"Arguments"="@SBINDIR@/lwtaskd --syslog"
+"Environment"=""
+"Dependencies"="netlogon lwio lwreg rdr npfs srv srvsvc"
+"Type"=dword:00000001
+

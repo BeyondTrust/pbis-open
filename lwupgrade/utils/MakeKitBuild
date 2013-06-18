@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=upgradeutils \
+        SOURCES="convert.c format.c machine_account.c parser.c print.c time.c" \
+        INCLUDEDIRS="../include" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h lw/base.h" \
+        LIBDEPS="lwbase_nothr lwadvapi_nothr"
+}

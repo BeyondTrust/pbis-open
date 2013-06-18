@@ -1,0 +1,5 @@
+SUBDIRS = \
+    taskrepository \
+    lwmigrate      \
+    lwtaskd
+

@@ -1,0 +1,6 @@
+make()
+{
+    mk_headers \
+        HEADERS='rsys-system.h \
+		 rsys-def.h     rsys-logging.h  rsys-utils.h'
+}

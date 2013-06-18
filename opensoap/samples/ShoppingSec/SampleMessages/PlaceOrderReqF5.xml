@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <m:PlaceOrder xmlns:m="http://services.opensoap.jp/samples/Shopping/">
+            <code>SZ01</code>
+            <qty>20</qty>
+        </m:PlaceOrder>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

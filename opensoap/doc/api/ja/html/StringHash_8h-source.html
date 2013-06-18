@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: StringHash.h Source File</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>StringHash.h</h1><a href="StringHash_8h.html">説明を見る。</a><div class="fragment"><pre>00001 <span class="comment">/* -*- mode: c++; -*-</span>
+00002 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00003 <span class="comment"> * $RCSfile: StringHash.h,v $</span>
+00004 <span class="comment"> *</span>
+00005 <span class="comment"> * See Copyright for the status of this software.</span>
+00006 <span class="comment"> *</span>
+00007 <span class="comment"> * The OpenSOAP Project</span>
+00008 <span class="comment"> * http://opensoap.jp/</span>
+00009 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00010 <span class="comment"> */</span>
+00201 <span class="preprocessor">#ifndef OpenSOAP_StringHash_H</span>
+00202 <span class="preprocessor"></span><span class="preprocessor">#define OpenSOAP_StringHash_H</span>
+00203 <span class="preprocessor"></span>
+00204 <span class="preprocessor">#include &lt;<a class="code" href="String_8h.html">OpenSOAP/String.h</a>&gt;</span>
+00205 
+00206 <span class="preprocessor">#ifdef __cplusplus</span>
+00207 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">"C"</span> {
+00208 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00209 
+<a name="l00210"></a><a class="code" href="StringHash_8h.html#a0">00210</a>     <span class="keyword">typedef</span> <span class="keyword">struct </span>tagOpenSOAPStringHash <a class="code" href="StringHash_8h.html#a0">OpenSOAPStringHash</a>;
+00211 
+<a name="l00212"></a><a class="code" href="StringHash_8h.html#a1">00212</a>     <span class="keyword">typedef</span> <a class="code" href="StringHash_8h.html#a0">OpenSOAPStringHash</a>    *<a class="code" href="StringHash_8h.html#a1">OpenSOAPStringHashPtr</a>;
+00213 
+00214     <span class="keywordtype">int</span>
+00215     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00216     <a class="code" href="StringHash_8h.html#a2">OpenSOAPStringHashCreate</a>(OpenSOAPStringHashPtr * <span class="comment">/* [out] */</span> strh);
+00217 
+00218     <span class="keywordtype">int</span>
+00219     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00220     <a class="code" href="StringHash_8h.html#a3">OpenSOAPStringHashRelease</a>(OpenSOAPStringHashPtr  <span class="comment">/* [in] */</span> strh);
+00221 
+00222     <span class="keywordtype">int</span>
+00223     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00224     <a class="code" href="StringHash_8h.html#a4">OpenSOAPStringHashClear</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh);
+00225 
+00226     <span class="keywordtype">int</span>
+00227     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00228     <a class="code" href="StringHash_8h.html#a5">OpenSOAPStringHashRemoveKey</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh,
+00229                                 <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> <span class="comment">/* [in] */</span> key,
+00230                                 <span class="keywordtype">void</span> ** <span class="comment">/* [out] */</span> val);
+00231     
+00232     <span class="keywordtype">int</span>
+00233     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00234     <a class="code" href="StringHash_8h.html#a6">OpenSOAPStringHashSetValue</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh,
+00235                                <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> <span class="comment">/* [in] */</span> key,
+00236                                <span class="keywordtype">void</span> * <span class="comment">/* [in] */</span> val);
+00237     
+00238     <span class="keywordtype">int</span>
+00239     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00240     <a class="code" href="StringHash_8h.html#a7">OpenSOAPStringHashSetValueMB</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh,
+00241                                  <span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="comment">/* [in] */</span> key,
+00242                                  <span class="keywordtype">void</span> * <span class="comment">/* [in] */</span> val);
+00243 
+00244     <span class="keywordtype">int</span>
+00245     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00246     <a class="code" href="StringHash_8h.html#a8">OpenSOAPStringHashSetValueWC</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh,
+00247                                  <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> * <span class="comment">/* [in] */</span> key,
+00248                                  <span class="keywordtype">void</span> * <span class="comment">/* [in] */</span> val);
+00249     
+00250     <span class="keywordtype">int</span>
+00251     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00252     <a class="code" href="StringHash_8h.html#a9">OpenSOAPStringHashGetValue</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00253                                <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> <span class="comment">/* [in] */</span> key,
+00254                                <span class="keywordtype">void</span> ** <span class="comment">/* [out] */</span> val);
+00255 
+00256     <span class="keywordtype">int</span>
+00257     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00258     <a class="code" href="StringHash_8h.html#a10">OpenSOAPStringHashGetValueMB</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00259                                  <span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="comment">/* [in] */</span> key,
+00260                                  <span class="keywordtype">void</span> ** <span class="comment">/* [out] */</span> val);
+00261 
+00262     <span class="keywordtype">int</span>
+00263     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00264     <a class="code" href="StringHash_8h.html#a11">OpenSOAPStringHashGetValueWC</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00265                                  <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> * <span class="comment">/* [in] */</span> key,
+00266                                  <span class="keywordtype">void</span> ** <span class="comment">/* [out] */</span> val);
+00267 
+00268     <span class="keywordtype">int</span>
+00269     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00270     <a class="code" href="StringHash_8h.html#a12">OpenSOAPStringHashGetSize</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00271                               size_t * <span class="comment">/* [out] */</span> sz);
+00272 
+00273     <span class="keywordtype">int</span>
+00274     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00275     <a class="code" href="StringHash_8h.html#a13">OpenSOAPStringHashGetKeys</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00276                               size_t * <span class="comment">/* [in, out] */</span> sz,
+00277                               <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> * <span class="comment">/* [out] */</span> keys);
+00278     <span class="keywordtype">int</span>
+00279     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00280     <a class="code" href="StringHash_8h.html#a14">OpenSOAPStringHashGetValues</a>(OpenSOAPStringHashPtr <span class="comment">/* [in] */</span> strh,
+00281                                 size_t * <span class="comment">/* [in, out] */</span> sz,
+00282                                 <span class="keywordtype">void</span> ** <span class="comment">/* [out] */</span> vals);
+00283 
+00284     <span class="keywordtype">int</span>
+00285     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00286     <a class="code" href="StringHash_8h.html#a15">OpenSOAPStringHashApplyToValues</a>(OpenSOAPStringHashPtr <span class="comment">/* [in, out] */</span> strh,
+00287                                     <span class="keywordtype">int</span>  <span class="comment">/* [in] */</span> (*aply)(<span class="keywordtype">void</span> *, <span class="keywordtype">void</span> *),
+00288                                     <span class="keywordtype">void</span> * <span class="comment">/* [in] */</span> opt);
+00289 
+00290 <span class="preprocessor">#ifdef __cplusplus</span>
+00291 <span class="preprocessor"></span>}
+00292 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00293 
+00294 <span class="preprocessor">#endif </span><span class="comment">/* OpenSOAP_StringHash_H */</span>
+</pre></div><hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

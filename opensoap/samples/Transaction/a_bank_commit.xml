@@ -1,0 +1,5 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<t:TransactionAction xmlns:t="http://services.opensoap.jp/transaction/" TransactionID="abank13386751012108245">COMMIT</t:TransactionAction>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

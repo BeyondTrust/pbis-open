@@ -1,0 +1,15 @@
+make()
+{
+    mk_headers \
+        MASTER=lw/lm.h    \
+        lw/lmaccess.h     \
+        lw/lmcreds.h      \
+        lw/lmcrypt.h      \
+        lw/lmdebug.h      \
+        lw/lmerr.h        \
+        lw/lmjoin.h       \
+        lw/lmmem.h        \
+        lw/lmshare.h      \
+        lw/lmwksta.h      \
+        lw/lmserver.h
+}

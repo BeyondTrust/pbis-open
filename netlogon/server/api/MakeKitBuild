@@ -1,0 +1,21 @@
+make()
+{
+    API_SOURCES="\
+       globals.c          \
+       lwnet-server-cfg.c \
+       lwnet-krb5.c       \
+       lwnet-cachedb.c    \
+       lwnet-netbios.c    \
+       lwnet-plugin.c     \
+       dcinfo.c           \
+       event.c            \
+       lwnet.c            \
+       state.c"
+
+    mk_group \
+        GROUP=api \
+        SOURCES="$API_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h ldap.h" \
+        LIBDEPS="regclient rsutils lwmsg lwadvapi ldap_r $LIB_PTHREAD $LIB_DL"
+}

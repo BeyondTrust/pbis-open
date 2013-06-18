@@ -1,0 +1,13 @@
+make()
+{
+    RSUTILS_SOURCES="\
+        regutilwrap.c \
+        rsutils.c"
+
+    mk_library \
+        LIB=rsutils \
+        SOURCES="$RSUTILS_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="regclient regcommon lwbase_nothr" \
+        HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+}

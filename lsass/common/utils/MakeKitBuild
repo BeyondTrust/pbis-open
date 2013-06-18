@@ -1,0 +1,44 @@
+make()
+{
+    LSAUTILS_SOURCES="\
+       dcinfo.c                \
+       domaininfo.c            \
+       fileutils.c             \
+       globals.c               \
+       lsacache.c              \
+       lsadns.c                \
+       lsaerror.c              \
+       lsagroupinfo.c          \
+       lsaartefactinfo.c       \
+       lsabitvector.c          \
+       lsamem.c                \
+       lsapam.c                \
+       lsapaths.c              \
+       lsastack.c              \
+       lsaprincipal.c          \
+       lsastatus.c             \
+       lsastrerror.c           \
+       lsasecurityidentifier.c \
+       lsauserinfo.c           \
+       selinux.c               \
+       machinepwdinfo-impl.c   \
+       nisnicknames.c          \
+       sidinfo.c               \
+       sysfuncs.c              \
+       datablob.c              \
+       lsaxnet.c               \
+       lsaauthex.c             \
+       lsalist.c               \
+       sid.c                   \
+       lsasecobj.c"
+
+    mk_multiarch_do
+        mk_group \
+	    GROUP=utils \
+	    SOURCES="$LSAUTILS_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwadvapi.h lw/base.h" \
+	    LIBDEPS="lwbase_nothr lwadvapi_nothr"
+    mk_multiarch_done
+}
+

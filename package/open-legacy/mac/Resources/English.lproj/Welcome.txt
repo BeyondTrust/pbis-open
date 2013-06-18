@@ -1,0 +1,3 @@
+PowerBroker Identity Services - Open Legacy
+
+This legacy package creates symbolic links from old names to new names to permit scripts written for Likewise Open to function.

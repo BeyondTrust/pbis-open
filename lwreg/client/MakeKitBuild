@@ -1,0 +1,16 @@
+make()
+{
+    CLIENT_SOURCES="\
+        clientipc.c \
+        regclient.c \
+        regntclient.c\
+        config_api.c \
+	"
+
+    mk_library \
+        LIB=regclient \
+        SOURCES="$CLIENT_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="regcommon lwmsg lwmsg_nothr" \
+        HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+}

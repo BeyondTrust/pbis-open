@@ -1,0 +1,10 @@
+SUBDIRS="utils ipc"
+
+make()
+{
+    mk_multiarch_do
+        mk_library \
+	    LIB=lsacommon \
+	    GROUPS="utils/utils ipc/ipc"
+    mk_multiarch_done
+}

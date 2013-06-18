@@ -1,0 +1,138 @@
+Phase 1 - Unprov plugin interfaces specification:
+At this stage, we finish implementing the following generic ID mapping interfaces, which are called by LSASS batching machinery. We have our alias mechanism when we enable defining "ENABLE_ALIAS_TO_BE_SAMACCOUNT_NAME" (by default, it is NOTenabled). The alias mechanism in unprovisioned mode uses object's samAccountName as aiase.
+
+#if 0
+#define ENABLE_ALIAS_TO_BE_SAMACCOUNT_NAME
+#endif
+
+DWORD
+ADUnprovPlugin_Initialize(
+    VOID
+    );
+
+VOID
+ADUnprovPlugin_Cleanup(
+    VOID
+    );
+
+BOOLEAN
+ADUnprovPlugin_SupportsAliases(
+    VOID
+    );
+
+DWORD
+ADUnprovPlugin_QueryByReal(
+    IN BOOLEAN bIsUser,
+    IN PCSTR pszNT4Name,
+    IN PCSTR pszSID,
+    OUT OPTIONAL PSTR* ppszAlias,
+    OUT PDWORD pdwId
+    );
+
+DWORD
+ADUnprovPlugin_QueryByAlias(
+    IN BOOLEAN bIsUser,
+    IN PCSTR pszAlias,
+    OUT PSTR* ppszSid,
+    OUT PDWORD pdwId
+    );
+
+DWORD
+ADUnprovPlugin_QueryById(
+    IN BOOLEAN bIsUser,
+    IN DWORD dwId,
+    OUT PSTR* ppszSid,
+    OUT PSTR* ppszAlias
+    );
+
+Phase 2 - LSASS will be modified to support a plugable unprovisioned mode plugin
+architecture which allows the task of mapping SIDs to uids and gids to be
+delegated to a third-party plugin.  The plugin will be configured in
+lsass.conf in a manner similar to existing providers:
+
+[unprovisioned-mode-plugin:NAME]
+    path = /path/to/plugin/file.so
+    option1 = value1
+    option2 = value2
+    ...
+
+The main entry module entry point will mirror that of LSASS provider
+plugins:
+
+DWORD
+LsaInitializeUnprovisionedModePlugin(
+    IN PCSTR pszName,
+    IN PCSTR pszConfigFilePath,
+    OUT PLSA_UNPROVISIONED_MODE_PLUGIN_FUNCTION_TABLE* ppFunctionTable
+    );
+
+This function will return a function table of the following type: 
+
+typedef struct _LSA_UNPROVISIONED_MODE_PLUGIN_FUNCTION_TABLE {
+    DWORD (*pfnQueryNameSidToAliasId) (
+        IN BOOLEAN bIsUser,
+        IN PCSTR pszNT4Name,
+        IN PCSTR pszSid,
+        OUT OPTIONAL PSTR* ppszAlias,
+        OUT PDWORD* pdwId
+        );
+
+    DWORD (*pfnQueryAliasToSidId) (
+        IN BOOLEAN bIsUser,
+        IN PCSTR pszAias,
+        OUT PSTR* ppszSid,
+        OUT PDWORD* pdwId
+        );
+
+     DWORD (*pfnQueryIdToSidAlias) (
+        IN BOOLEAN bIsUser,
+        IN DWORD dwId,
+        OUT PSTR* ppszSid,
+        OUT PSTR* ppszAlias
+        );
+
+    
+#if 0
+    /* Map a sid representing a user to a uid */
+    DWORD (*pfnQuerySidtoUid) (
+        IN PCSTR pszNT4Name,
+        IN PCSTR pSid,
+        OUT gid_t* pUid
+        );
+    /* Map a sid representing a group to a gid */
+    DWORD (*pfnQuerySidtoGid) (
+        IN PCSTR pszNT4Name,
+        IN PCSTR pSid,
+        OUT gid_t* pGid
+        );
+    /* Create a sid to uid mapping */
+    DWORD (*pfnCreateSidToUidMap) (
+        IN PCSTR pszNT4Name,
+        IN PCSTR pSid,
+        OUT uid_t* pUid
+        );
+    /* Create a sid to gid mapping */
+    DWORD (*pfnCreateSidtoGidMap) (
+        IN PCSTR pszNT4Name,
+        IN PCSTR pSid,
+        OUT gid_t* pGid
+        );
+
+    /* Map a uid to back to a sid */
+    DWORD (*pfnQueryUidToSid) (
+        IN uid_t uid,
+        OUT PSTR pSid /* Buffer large enough to hold any valid sid */
+        );
+
+    /* Map a gid to back to a sid */
+    DWORD (*pfnQueryGidToSid) (
+        IN gid_t gid,
+        OUT PSTR pSid /* Buffer large enough to hold any valid sid */
+        );
+#endif
+} LSA_UNPROVISIONED_MODE_PLUGIN_FUNCTION_TABLE, *PLSA_UNPROVISIONED_MODE_PLUGIN_FUNCTION_TABLE;
+
+We will provide headers for several functions so that mappers can call into
+the LSASS utility library to read configuration settings.
+
+

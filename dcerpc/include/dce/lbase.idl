@@ -1,0 +1,77 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      lbase.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  Common data types.  Note that this file is explicitly declared "local"
+**  so non-network-expressible data types that are used across multiple
+**  local interfaces can be grouped together.  Common NON-local data
+**  types should be declared in "nbase.idl".
+**
+**
+*/
+
+[local] interface lbase
+{
+
+/*
+ * Misc commonly used standard types.
+ */
+
+typedef unsigned char   unsigned_char_t;
+
+typedef float           *short_float_p_t;
+typedef double          *long_float_p_t;
+typedef char            *char_p_t;
+typedef unsigned char   *unsigned_char_p_t;
+typedef byte            *byte_p_t;
+
+
+/*
+ * S O C K A D D R _ T
+ *
+ * The generic sockaddr data structure.  This contains an open array
+ * whose contents are naf specific. 
+ */
+
+typedef struct
+{
+#ifdef _SOCKADDR_LEN
+    unsigned8           length;
+    unsigned8           family;
+#else
+    unsigned16          family;
+#endif
+    unsigned8           data[1];
+} sockaddr_t, *sockaddr_p_t;
+
+}

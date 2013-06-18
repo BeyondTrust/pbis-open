@@ -1,0 +1,9 @@
+make()
+{
+    mk_have_moonunit && mk_moonunit \
+        DLO=centutils_mu \
+        SOURCES="*.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwadvapi.h" \
+        LIBDEPS="centutils"
+}

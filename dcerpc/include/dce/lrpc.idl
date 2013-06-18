@@ -1,0 +1,61 @@
+/*
+ *
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ *
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      lrpc.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  Local procedure calls (ncalrpc) transport-specific functions
+**
+**
+*/
+
+[local] interface lrpc
+{
+
+    import "dce/lbase.idl";
+    import "dce/rpcbase.idl";
+
+    void rpc_lrpc_transport_info_free(
+        [in] rpc_transport_info_handle_t info
+        );
+
+    void rpc_lrpc_transport_info_inq_peer_eid(
+        [in] rpc_transport_info_handle_t info,
+        [out] unsigned32* uid,
+        [out] unsigned32* gid
+        );
+
+    void rpc_lrpc_transport_info_inq_session_key(
+        [in] rpc_transport_info_handle_t info,
+        [out] unsigned char** sess_key,
+        [out] unsigned16* sess_key_len
+        );
+}

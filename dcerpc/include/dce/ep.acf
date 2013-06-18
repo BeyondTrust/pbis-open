@@ -1,0 +1,54 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      ept.acf
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Endpoint Mapper Attribute Configuration File (ACF)
+**
+**  This configuration file causes communications errors that occur during
+**  the execution of remote endpoint mapper operations to be returned in the
+**  status value for the routine.  
+**  
+**
+*/
+
+interface ept
+{
+
+ept_insert ([comm_status,fault_status] status);
+ept_delete ([comm_status, fault_status] status);
+ept_lookup ([comm_status, fault_status] status);
+ept_lookup_handle_free ([comm_status, fault_status] status);
+ept_inq_object ([comm_status, fault_status] status);
+ept_mgmt_delete ([comm_status, fault_status] status);
+
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo " "
+echo "This command has been deprecated in favor of makekit."
+echo "Please see the top level NEWS and README files for"
+echo "more details."
+echo " "

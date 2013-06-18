@@ -1,0 +1,985 @@
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                        --
+-- iso.org.dod.internet.private.enterprise.likewise (1.3.6.1.4.1.37364)                                   --
+--                                                                                                        --
+-- Likewise Software IANA number: 37364                                                                   --
+--                                                                                                        --
+-- Likewise product area identifier numbers:                                                              --
+--                                                                                                        --
+--     Likewise Platform:                  1                                                              --
+--     Likewise Enterprise:                2                                                              --
+--                                                                                                        --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+
+LIKEWISE-PLATFORM-MIB DEFINITIONS ::= BEGIN
+IMPORTS
+        enterprises
+                FROM RFC1155-SMI
+
+        MODULE-IDENTITY,
+        OBJECT-IDENTITY,
+        OBJECT-TYPE,
+        NOTIFICATION-TYPE,
+        IpAddress,
+        Integer32
+                FROM SNMPv2-SMI
+
+        DisplayString
+                FROM SNMPv2-TC;
+
+likewise MODULE-IDENTITY
+  LAST-UPDATED "201105200000Z"
+  ORGANIZATION "Likewise Software"
+  CONTACT-INFO "support@likewise.com"
+  DESCRIPTION "MIB for Likewise component event traps"
+  REVISION "201105200000Z"
+  DESCRIPTION "Likewise MIB Support"
+  ::= { enterprises 37364 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                        --
+-- Likewise Software OBJECT-TYPE definitions used by MIB                                                  --
+--                                                                                                        --
+-- iso.org.dod.internet.private.enterprise.likewise.types (1.3.6.1.4.1.37364.99)                          --
+--                                                                                                        --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+types OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Subtree with object-types for Likewise MIB"
+        ::= { likewise 99 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventTableCategory (1.3.6.1.4.1.37364.99.1)
+eventTableCategory OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record table category."
+  ::= { types 1 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventType (1.3.6.1.4.1.37364.99.2)
+eventType OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record type."
+  ::= { types 2 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventDate (1.3.6.1.4.1.37364.99.3)
+eventDate OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record log date."
+  ::= { types 3 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventTime (1.3.6.1.4.1.37364.99.4)
+eventTime OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record log time."
+  ::= { types 4 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventSource (1.3.6.1.4.1.37364.99.5)
+eventSource OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record source."
+  ::= { types 5 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventCategory (1.3.6.1.4.1.37364.99.6)
+eventCategory OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record category."
+  ::= { types 6 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventSourceId (1.3.6.1.4.1.37364.99.7)
+eventSourceId OBJECT-TYPE
+  SYNTAX Integer32
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event source ID."
+  ::= { types 7 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventUser (1.3.6.1.4.1.37364.99.8)
+eventUser OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record user."
+  ::= { types 8 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventComputer (1.3.6.1.4.1.37364.99.9)
+eventComputer OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record computer."
+  ::= { types 9 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventDescription (1.3.6.1.4.1.37364.99.10)
+eventDescription OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record description."
+  ::= { types 10 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.types.eventData (1.3.6.1.4.1.37364.99.11)
+eventData OBJECT-TYPE
+  SYNTAX DisplayString
+  MAX-ACCESS read-only
+  STATUS current
+  DESCRIPTION
+    "Event record data."
+  ::= { types 11 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                        --
+-- Likewise Software Platform Component Service MIB                                                       --
+--                                                                                                        --
+-- iso.org.dod.internet.private.enterprise.likewise.platform (1.3.6.1.4.1.37364.1)                        --
+--                                                                                                        --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+platform OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Likewise Platform component services"
+        ::= { likewise 1 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps (1.3.6.1.4.1.37364.1.1)
+platformTraps OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Subtree with notifications (traps) for Likewise Platform component services"
+        ::= { platform 1 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                        --
+-- Security Subsystem Event traps (LSASS)                                                                 --
+--                                                                                                        --
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass (1.3.6.1.4.1.37364.1.1.1)        --
+--                                                                                                        --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+lsass OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Security Subsystem Event traps (LSASS)"
+        ::= { platformTraps 1 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.lsassServiceStarted (1.3.6.1.4.1.37364.1.1.1.1000)
+lsassServiceStarted NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS service started trap."
+        ::= { lsass 1000 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.lsassServiceStartFailure (1.3.6.1.4.1.37364.1.1.1.1001)
+lsassServiceStartFailure NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS service start failure trap."
+        ::= { lsass 1001 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.lsassServiceStopped (1.3.6.1.4.1.37364.1.1.1.1002)
+lsassServiceStopped NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS service stopped trap."
+        ::= { lsass 1002 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.lsassServiceFailed (1.3.6.1.4.1.37364.1.1.1.1003)
+lsassServiceFailed NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS service failed trap."
+        ::= { lsass 1003 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.lsassServiceConfigurationChanged (1.3.6.1.4.1.37364.1.1.1.1004)
+lsassServiceConfigurationChanged NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS service configuration changed trap."
+        ::= { lsass 1004 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulLogonAuthenticate (1.3.6.1.4.1.37364.1.1.1.1200)
+successfulLogonAuthenticate NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful logon authentication trap."
+        ::= { lsass 1200 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulLogonCreateSession (1.3.6.1.4.1.37364.1.1.1.1201)
+successfulLogonCreateSession NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful logon create session trap."
+        ::= { lsass 1201 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulLogonCheckUser (1.3.6.1.4.1.37364.1.1.1.1203)
+successfulLogonCheckUser NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful logon check user trap."
+        ::= { lsass 1203 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonUnknownUserOrBadPassword (1.3.6.1.4.1.37364.1.1.1.1205)
+failedLogonUnknownUserOrBadPassword NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to invalid account or bad password entry trap."
+        ::= { lsass 1205 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonTimeRestrictionViolation (1.3.6.1.4.1.37364.1.1.1.1206)
+failedLogonTimeRestrictionViolation NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to time restriction violation trap."
+        ::= { lsass 1206 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonAccountDisabled (1.3.6.1.4.1.37364.1.1.1.1207)
+failedLogonAccountDisabled NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to account disabled trap."
+        ::= { lsass 1207 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonAccountExpired (1.3.6.1.4.1.37364.1.1.1.1208)
+failedLogonAccountExpired NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to account expired trap."
+        ::= { lsass 1208 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonMachineRestrictionViolation (1.3.6.1.4.1.37364.1.1.1.1209)
+failedLogonMachineRestrictionViolation NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to machine restriction violation trap."
+        ::= { lsass 1209 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonTypeOfLogonNotGranted (1.3.6.1.4.1.37364.1.1.1.1210)
+failedLogonTypeOfLogonNotGranted NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to type of logon not granted trap."
+        ::= { lsass 1210 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonPasswordExpired (1.3.6.1.4.1.37364.1.1.1.1211)
+failedLogonPasswordExpired NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to password expiration trap."
+        ::= { lsass 1211 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonNetlogonError (1.3.6.1.4.1.37364.1.1.1.1212)
+failedLogonNetLogonError NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to failed call to NetLogon service trap."
+        ::= { lsass 1212 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonUnexpectedError (1.3.6.1.4.1.37364.1.1.1.1213)
+failedLogonUnexpectedError NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to an unexpected error trap."
+        ::= { lsass 1213 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonAccountLocked (1.3.6.1.4.1.37364.1.1.1.1214)
+failedLogonAccountLocked NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to account locked out trap."
+        ::= { lsass 1214 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedLogonAccountRestricted (1.3.6.1.4.1.37364.1.1.1.1215)
+failedLogonAccountRestricted NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed logon due to account restriction trap."
+        ::= { lsass 1215 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulLogoff (1.3.6.1.4.1.37364.1.1.1.1220)
+successfulLogoff NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful logoff trap."
+        ::= { lsass 1220 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationSSH (1.3.6.1.4.1.37364.1.1.1.1230)
+successfulAuthenticationSSH NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful SSH authentication trap."
+        ::= { lsass 1230 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationGraphical (1.3.6.1.4.1.37364.1.1.1.1231)
+successfulAuthenticationGraphical NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful graphical interactive authentication trap."
+        ::= { lsass 1231 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationConsole (1.3.6.1.4.1.37364.1.1.1.1232)
+successfulAuthenticationConsole NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful console authentication trap."
+        ::= { lsass 1232 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationFTP (1.3.6.1.4.1.37364.1.1.1.1233)
+successfulAuthenticationFTP NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful FTP authentication trap."
+        ::= { lsass 1233 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationTelnet (1.3.6.1.4.1.37364.1.1.1.1234)
+successfulAuthenticationTelnet NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful telnet authentication trap."
+        ::= { lsass 1234 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationScreenSaver (1.3.6.1.4.1.37364.1.1.1.1235)
+successfulAuthenticationScreenSaver NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful screen-saver authentication trap."
+        ::= { lsass 1235 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationSudo (1.3.6.1.4.1.37364.1.1.1.1236)
+successfulAuthenticationSudo NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful sudo command authentication trap."
+        ::= { lsass 1236 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationPasswd (1.3.6.1.4.1.37364.1.1.1.1237)
+successfulAuthenticationPasswd NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful passwd command authentication trap."
+        ::= { lsass 1237 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationSU (1.3.6.1.4.1.37364.1.1.1.1238)
+successfulAuthenticationSU NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful su command authentication trap."
+        ::= { lsass 1238 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationOther (1.3.6.1.4.1.37364.1.1.1.1249)
+successfulAuthenticationOther NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful authentication by unrecognized program trap."
+        ::= { lsass 1249 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationSSH (1.3.6.1.4.1.37364.1.1.1.1250)
+failedAuthenticationSSH NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed SSH authentication trap."
+        ::= { lsass 1250 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationGraphical (1.3.6.1.4.1.37364.1.1.1.1251)
+failedAuthenticationGraphical NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed graphical interactive authentication trap."
+        ::= { lsass 1251 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationConsole (1.3.6.1.4.1.37364.1.1.1.1252)
+failedAuthenticationConsole NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed console authentication trap."
+        ::= { lsass 1252 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationFTP (1.3.6.1.4.1.37364.1.1.1.1253)
+failedAuthenticationFTP NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed FTP authentication trap."
+        ::= { lsass 1253 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationTelnet (1.3.6.1.4.1.37364.1.1.1.1254)
+failedAuthenticationTelnet NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed telnet authentication trap."
+        ::= { lsass 1254 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationScreenSaver (1.3.6.1.4.1.37364.1.1.1.1255)
+failedAuthenticationScreenSaver NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed screen-saver authentication trap."
+        ::= { lsass 1255 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationSudo (1.3.6.1.4.1.37364.1.1.1.1256)
+failedAuthenticationSudo NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed sudo command authentication trap."
+        ::= { lsass 1256 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationPasswd (1.3.6.1.4.1.37364.1.1.1.1257)
+failedAuthenticationPasswd NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed passwd command authentication trap."
+        ::= { lsass 1257 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationSU (1.3.6.1.4.1.37364.1.1.1.1258)
+failedAuthenticationSU NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed su command authentication trap."
+        ::= { lsass 1258 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationOther (1.3.6.1.4.1.37364.1.1.1.1269)
+failedAuthenticationOther NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed authentication by unrecognized program trap."
+        ::= { lsass 1269 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulAuthenticationSmartcard (1.3.6.1.4.1.37364.1.1.1.1270)
+successfulAuthenticationSmartcard NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful smartcard authentication trap."
+        ::= { lsass 1270 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedAuthenticationSmartcard (1.3.6.1.4.1.37364.1.1.1.1271)
+failedAuthenticationSmartcard NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed smartcard authentication trap."
+        ::= { lsass 1271 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulUserAccountPasswordChange (1.3.6.1.4.1.37364.1.1.1.1300)
+successfulUserAccountPasswordChange NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful user account password change trap."
+        ::= { lsass 1300 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedUserAccountPasswordChange (1.3.6.1.4.1.37364.1.1.1.1301)
+failedUserAccountPasswordChange NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed user account password change trap."
+        ::= { lsass 1301 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulUserAccountKerbRefresh (1.3.6.1.4.1.37364.1.1.1.1302)
+successfulUserAccountKerbRefresh NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful user account Kerberos credentials refresh trap."
+        ::= { lsass 1302 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedUserAccountKerbRefresh (1.3.6.1.4.1.37364.1.1.1.1303)
+failedUserAccountKerbRefresh NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed user account Kerberos credentials refresh change trap."
+        ::= { lsass 1303 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulMachineAccountPasswordUpdate (1.3.6.1.4.1.37364.1.1.1.1320)
+successfulMachineAccountPasswordUpdate NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful machine account password update trap."
+        ::= { lsass 1320 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedMachineAccountPasswordUpdate (1.3.6.1.4.1.37364.1.1.1.1321)
+failedMachineAccountPasswordUpdate NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed machine account password update trap."
+        ::= { lsass 1321 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulMachineAccountTGTRefresh (1.3.6.1.4.1.37364.1.1.1.1322)
+successfulMachineAccountTGTRefresh NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS successful machine account Kerberos TGT refresh trap."
+        ::= { lsass 1322 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedMachineAccountTGTRefresh (1.3.6.1.4.1.37364.1.1.1.1323)
+failedMachineAccountTGTRefresh NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS failed machine account Kerberos TGT refresh trap."
+        ::= { lsass 1323 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.addUserAccount (1.3.6.1.4.1.37364.1.1.1.1400)
+addUserAccount NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS add user account to local provider trap."
+        ::= { lsass 1400 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.deleteUserAccount (1.3.6.1.4.1.37364.1.1.1.1401)
+deleteUserAccount NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS delete user account from local provider trap."
+        ::= { lsass 1401 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.addGroup (1.3.6.1.4.1.37364.1.1.1.1402)
+addGroup NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS add group to local provider trap."
+        ::= { lsass 1402 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.deleteGroup (1.3.6.1.4.1.37364.1.1.1.1403)
+deleteGroup NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS delete group from local provider trap."
+        ::= { lsass 1403 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.successfulProviderInitialization (1.3.6.1.4.1.37364.1.1.1.1500)
+successfulProviderInitialization NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS provider initialization succeeded trap."
+        ::= { lsass 1500 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.failedProviderInitialization (1.3.6.1.4.1.37364.1.1.1.1501)
+failedProviderInitialization NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS provider initialization failed trap."
+        ::= { lsass 1501 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.requireMembershipOfUpdated (1.3.6.1.4.1.37364.1.1.1.1502)
+requireMembershipOfUpdated NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS logon restriction configuration setting changed trap."
+        ::= { lsass 1502 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.auditingConfigurationEnabled (1.3.6.1.4.1.37364.1.1.1.1503)
+auditingConfigurationEnabled NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS auditing configuration enabled trap."
+        ::= { lsass 1503 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.auditingConfigurationDisabled (1.3.6.1.4.1.37364.1.1.1.1504)
+auditingConfigurationDisabled NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS auditing configuration disabled trap."
+        ::= { lsass 1504 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.detectedIdConflict (1.3.6.1.4.1.37364.1.1.1.1601)
+detectedIdConflict NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS warning of account configuration with ID conflict trap."
+        ::= { lsass 1601 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.detectedAliasConflict (1.3.6.1.4.1.37364.1.1.1.1602)
+detectedAliasConflict NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS warning of account configuration with alias conflict trap."
+        ::= { lsass 1602 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.networkDomainOnline (1.3.6.1.4.1.37364.1.1.1.1700)
+networkDomainOnline NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS authentication provider has transitioned to online mode trap."
+        ::= { lsass 1700 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lsass.networkDomainOffline (1.3.6.1.4.1.37364.1.1.1.1701)
+networkDomainOffline NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "LSASS authentication provider has transitioned to offline mode trap."
+        ::= { lsass 1701 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                                --
+-- IO Subsystem Event traps (LWIO)                                                                                --
+--                                                                                                                --
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.lwio (1.3.6.1.4.1.37364.1.1.2)         --
+--                                                                                                                --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+lwio OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "IO Subsystem Event traps (LWIO)"
+        ::= { platformTraps 2 }
+
+-- TBD --
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                                --
+-- Site Service Event traps (NetLogon)                                                                            --
+--                                                                                                                --
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon (1.3.6.1.4.1.37364.1.1.3)     --
+--                                                                                                                --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+netlogon OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Site Service Event traps (NetLogon)"
+        ::= { platformTraps 3 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon.netlogonServiceStarted (1.3.6.1.4.1.37364.1.1.3.1000)
+netlogonServiceStarted NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "NetLogon service started trap."
+        ::= { netlogon 1000 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon.netlogonServiceStartFailure (1.3.6.1.4.1.37364.1.1.3.1001)
+netlogonServiceStartFailure NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "NetLogon service start failure trap."
+        ::= { netlogon 1001 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon.netlogonServiceStopped (1.3.6.1.4.1.37364.1.1.3.1002)
+netlogonServiceStopped NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "NetLogon service stopped trap."
+        ::= { netlogon 1002 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon.netlogonServiceFailed (1.3.6.1.4.1.37364.1.1.3.1003)
+netlogonServiceFailed NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "NetLogon service failed trap."
+        ::= { netlogon 1003 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.netlogon.netlogonServiceConfigurationChanged (1.3.6.1.4.1.37364.1.1.3.1004)
+netlogonServiceConfigurationChanged NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "NetLogon service configuration changed trap."
+        ::= { netlogon 1004 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                                --
+-- Domain Join Event traps                                                                                        --
+--                                                                                                                --
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.domainjoin (1.3.6.1.4.1.37364.1.1.4)   --
+--                                                                                                                --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+domainjoin OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "Domain Join Event traps"
+        ::= { platformTraps 4 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.domainjoin.successfulDomainJoin (1.3.6.1.4.1.37364.1.1.4.1000)
+successfulDomainJoin NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Computer successfully joined Active Directory domain trap."
+        ::= { domainjoin 1000 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.domainjoin.failedDomainJoin (1.3.6.1.4.1.37364.1.1.4.1001)
+failedDomainJoin NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Computer failed to join Active Directory domain trap."
+        ::= { domainjoin 1001 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.domainjoin.successfulDomainLeave (1.3.6.1.4.1.37364.1.1.4.1002)
+successfulDomainLeave NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Computer successfully left (unjoined) Active Directory domain trap."
+        ::= { domainjoin 1002 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.domainjoin.failedDomainLeave (1.3.6.1.4.1.37364.1.1.4.1003)
+failedDomainLeave NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Computer failed to leave (unjoin) Active Directory domain trap."
+        ::= { domainjoin 1003 }
+
+
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+--                                                                                                                --
+-- System Log Reaped Event traps                                                                                  --
+--                                                                                                                --
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl (1.3.6.1.4.1.37364.1.1.5)     --
+--                                                                                                                --
+--XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--
+reapsysl OBJECT-IDENTITY
+        STATUS current
+        DESCRIPTION "System Log Reaped Event traps"
+        ::= { platformTraps 5 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.failedLocalUserTextConsoleLogon (1.3.6.1.4.1.37364.1.1.5.1)
+failedLocalUserTextConsoleLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Failed local user account text console logon trap."
+        ::= { reapsysl 1 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.successfulLocalUserTextConsoleLogon (1.3.6.1.4.1.37364.1.1.5.2)
+successfulLocalUserTextConsoleLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Successful local user account text console logon trap."
+        ::= { reapsysl 2 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.failedLocalUserSSHLogon (1.3.6.1.4.1.37364.1.1.5.3)
+failedLocalUserSSHLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Failed local user account SSH logon trap."
+        ::= { reapsysl 3 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.successfulLocalUserSSHLogon (1.3.6.1.4.1.37364.1.1.5.4)
+successfulLocalUserSSHLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Successful local user account SSH logon trap."
+        ::= { reapsysl 4 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.sudoBadPassword (1.3.6.1.4.1.37364.1.1.5.5)
+sudoBadPAssword NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Sudo command failed with bad password trap."
+        ::= { reapsysl 5 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.sudoAccessDenied (1.3.6.1.4.1.37364.1.1.5.6)
+sudoAccessDenied NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Sudo command failed with access denied trap."
+        ::= { reapsysl 6 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.sudoSuccess (1.3.6.1.4.1.37364.1.1.5.7)
+sudoSuccess NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Sudo command succeeded trap."
+        ::= { reapsysl 7 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.failedADUserSSHLogon (1.3.6.1.4.1.37364.1.1.5.8)
+failedADUserSSHLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Failed AD user account SSH logon trap."
+        ::= { reapsysl 8 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.successfulADUserSSHLogon (1.3.6.1.4.1.37364.1.1.5.9)
+successfulADUserSSHLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Successful AD user account SSH logon trap."
+        ::= { reapsysl 9 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.failedADUserTextConsoleLogon (1.3.6.1.4.1.37364.1.1.5.10)
+failedADUserTextConsoleLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Failed AD user account text console logon trap."
+        ::= { reapsysl 10 }
+
+-- iso.org.dod.internet.private.enterprise.likewise.platform.platformTraps.reapsysl.successfulADUserTextConsoleLogon (1.3.6.1.4.1.37364.1.1.5.11)
+successfulADUserTextConsoleLogon NOTIFICATION-TYPE
+        OBJECTS { eventTableCategory, eventType, eventDate, eventTime,
+                  eventSource, eventCategory, eventSourceId, eventUser,
+                  eventComputer, eventDescription, eventData }
+        STATUS current
+        DESCRIPTION "Successful AD user account text console logon trap."
+        ::= { reapsysl 11 }
+
+
+END

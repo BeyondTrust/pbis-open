@@ -1,0 +1,126 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Serializer.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Serializer.h
+ * @brief OpenSOAP API シリアライザ処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+      * @typedef int (*OpenSOAPSerializerFunc)( void *from_value, OpenSOAPStringPtr to)
+      * @brief OpenSOAP シリアライザ関数定義
+      * @param
+      *    from_value void * [in] ((|from_value|)) シリアライザオブジェクトポインタ
+      * @param
+      *    to OpenSOAPStringPtr [out] ((|to|)) 返す値ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @typedef int (*OpenSOAPDeserializerFunc)(OpenSOAPStringPtr from,void *to_value)
+      * @brief OpenSOAP 非シリアライザ関数定義
+      * @param
+      *    from OpenSOAPStringPtr [in] ((|from|)) 非シリアライザオブジェクトポインタ
+      * @param
+      *    to_value void * [out] ((|to_value|)) 返す値ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPSerializerRegisterMB(const char *soap_typename, OpenSOAPSerializerFunc serializer, OpenSOAPDeserializerFunc deserializer)
+      * @brief シリアライザ・非シリアライザ関数登録(MB)
+      * @param
+      *    soap_typename  const char * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    serializer OpenSOAPSerializerFunc [in] ((|serializer|)) シリアライザ関数
+      * @param
+      *    deserializer OpenSOAPDeserializerFunc [in] ((|deserializer|)) 非シリアライザ関数
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPSerializerRegisterWC(const wchar_t *soap_typename, OpenSOAPSerializerFunc serializer, OpenSOAPDeserializerFunc deserializer)
+      * @brief シリアライザ・非シリアライザ関数登録(WC)
+      * @param
+      *    soap_typename const wchar_t * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    serializer OpenSOAPSerializerFunc [in] ((|serializer|)) シリアライザ関数
+      * @param
+      *    deserializer OpenSOAPDeserializerFunc [in] ((|deserializer|)) 非シリアライザ関数
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetSerializer(OpenSOAPStringPtr soap_typename, OpenSOAPSerializerFunc *serializer)
+      * @brief シリアライザ関数を取得(OpenSOAPString)
+      * @param
+      *    soap_typename OpenSOAPStringPtr [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    serializer OpenSOAPSerializerFunc * [out] ((|serializer|)) シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetSerializerMB(const char *soap_typename, OpenSOAPSerializerFunc *serializer)
+      * @brief シリアライザ関数を取得(MB)
+      * @param
+      *    soap_typename const char * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    serializer OpenSOAPSerializerFunc * [out] ((|serializer|)) シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetSerializerWC(const wchar_t *soap_typename, OpenSOAPSerializerFunc *serializer)
+      * @brief シリアライザ関数を取得(WC)
+      * @param
+      *    soap_typename const wchar_t * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    serializer OpenSOAPSerializerFunc * [out] ((|serializer|)) シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetDeserializer(OpenSOAPStringPtr soap_typename, OpenSOAPDeserializerFunc *deserializer)
+      * @brief 非シリアライザ関数を取得(OpenSOAPString)
+      * @param
+      *    soap_typename OpenSOAPStringPtr [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    deserializer OpenSOAPDeserializerFunc * [out] ((|deserializer|)) 非シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetDeserializerMB(const char *soap_typename, OpenSOAPDeserializerFunc *deserializer)
+      * @brief 非シリアライザ関数を取得(MB)
+      * @param
+      *    soap_typename const char * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    deserializer OpenSOAPDeserializerFunc * [out] ((|deserializer|)) 非シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPGetDeserializerWC(const wchar_t *soap_typename, OpenSOAPDeserializerFunc *deserializer)
+      * @brief 非シリアライザ関数を取得(WC)
+      * @param
+      *    soap_typename const wchar_t * [in] ((|soap_typename|)) SOAP タイプ名
+      * @param
+      *    deserializer OpenSOAPDeserializerFunc * [out] ((|deserializer|)) 非シリアライザ関数ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPSerializerRegistDefaults(void)
+      * @brief OpenSOAP 標準シリアライザ関数・非シリアライザ関数登録
+      * @return
+      *    エラーコード
+      */

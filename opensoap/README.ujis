@@ -1,0 +1,42 @@
+OpenSOAP へようこそ！
+
+OpenSOAP プロジェクトはWebサービスのためのオープンソースのミドルウェア
+を開発するために2001年に開始されました。
+
+以下のようなサーバを用意してあります。
+
+公式ホームページ:
+(英語,日本語)   http://www.opensoap.jp/
+
+バグ追跡システム(Bugzilla使用):
+(英語)   http://bugzilla.opensoap.jp/en/
+(日本語) http://bugzilla.opensoap.jp/
+
+メーリングリスト:
+(日本語) http://ml.opensoap.jp/
+
+
+パッケージ内の一部のファイルとディレクトリ構成の説明：
+
+INSTALL          - パッケージのインストールの方法。
+LICENSE          - OpenSOAPソフトウェアのライセンス。(BSDベース)
+
+src/             - コンパイルされるソースファイル。
+src/api/           - OpenSOAP API、OpenSOAPを実行するために必要です。
+src/security/      - OpenSOAP セキュリティ API。
+src/server/        - OpenSOAP サーバ。サーバを使わないなら必要ありませ
+                     ん。サービスだけでしたら、httpdのCGIやinetdを使う
+                     ことで提供することができます。
+src/tools/         - 基本サービスツール。
+
+doc/             - ドキュメント。
+include/         - OpenSOAP APIを使ってプログラム開発するためのヘッダ
+                   ファイル。
+samples/         - OpenSOAPのサンプルプログラム。
+etc/server/      - OpenSOAPサーバ用の設定ファイル。
+win32/           - Microsoft Windows で OpenSOAPをビルドするための
+                   READMEとプロジェクトファイル。 
+
+contrib/bridging/  - CORBA 及び DCOM 用のブリッジ・インターフェイス。
+contrib/java/      - JavaでOpenSOAPを使うためのクラス・ライブラリ。
+contrib/cpplib/    - OpenSOAP APIの C++クラスラッパ。

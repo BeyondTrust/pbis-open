@@ -1,0 +1,12 @@
+make()
+{
+
+    mk_dlo \
+        DLO="ticketcopy" \
+        INSTALLDIR="${AUTH_MECHANISM_DIR}" \
+        SOURCES="ticketcopy.c" \
+        INCLUDEDIRS="../../../include" \
+        HEADERDEPS="lw/types.h lwerror.h lwkrb5.h" \
+        LIBDEPS="authplugin lwadvapi lsaclient" \
+        LDFLAGS="-framework CoreFoundation -framework Kerberos"
+}

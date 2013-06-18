@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='Hello'
+	 nsuri='http://services.opensoap.jp/samples/Hello/'>
+	    <connection name='HelloStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/Hello/HelloService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='HelloStdio'>Hello</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

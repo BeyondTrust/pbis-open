@@ -1,0 +1,15 @@
+make()
+{
+    GSSWRAP_SOURCES="\
+       globals.c  \
+       gssapi.c   \
+       libmain.c"
+
+    mk_library \
+    LIB=lsagsswrap \
+    SOURCES="$GSSWRAP_SOURCES" \
+    CPPFLAGS="-DLW_ENABLE_THREADS" \
+    INCLUDEDIRS=". ../include ../../include" \
+    HEADERDEPS="lwadvapi.h gssapi.h krb5.h lw/base.h" \
+    LIBDEPS="lsaclient krb5 gssapi_krb5 lwbase $LIB_PTHREAD $LIB_RT"
+}

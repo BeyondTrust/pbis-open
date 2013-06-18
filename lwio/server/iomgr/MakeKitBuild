@@ -1,0 +1,24 @@
+make()
+{
+    IOMGR_SOURCES="\
+        ioinit.c \
+        ioroot.c \
+        iodriver.c \
+        iodevice.c \
+        ioirp.c \
+        iofile.c \
+        iomem.c \
+        ioapi.c \
+        ioipc.c \
+        iosecurity.c \
+        lwthreads.c \
+        iolog.c \
+        lwzct.c"
+
+    mk_library \
+        LIB=iomgr \
+        SOURCES="$IOMGR_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="lw/base.h reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h" \
+        LIBDEPS="lwbase lwmsg regclient lwiocommon $LIB_DL $LIB_PTHREAD"
+}
