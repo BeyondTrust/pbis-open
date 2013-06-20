@@ -285,7 +285,7 @@ configure_openssl()
             ;;
         solaris-x86_32)
             host_string="solaris-x86-gcc"
-            extra_args="-static-libgcc"
+            extra_args="no-asm -static-libgcc"
             ;;
         aix-ppc32)
             host_string="aix-gcc"
