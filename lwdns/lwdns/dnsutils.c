@@ -659,16 +659,16 @@ DNSInet6ValidateAddress(
     PCSTR pszInet6InputAddr
     )
 {
-    CHAR szTempBuffer[INET6_ADDRSTRLEN];
+    CHAR szTempBuffer[INETV6_ADDRSTRLEN] = {0};
     DWORD dwTempIndex = 0,dwPairCount = 0;
     PSTR pTemp = NULL;
     DWORD dwInputIndex = 0;
     DWORD dwNumbercount = 0;
     BOOLEAN bIsInValid = FALSE;
-    CHAR szQuadCountString[INET6_ADDRSTRLEN];
+    CHAR szQuadCountString[INETV6_ADDRSTRLEN] = {0};
     DWORD dwColonCount = 0, dwQuadCount = 0, dwInputStringLength = strlen(pszInet6InputAddr);
 
-    if(dwInputStringLength > INET6_ADDRSTRLEN)
+    if(dwInputStringLength > INETV6_ADDRSTRLEN)
     {
         bIsInValid = TRUE;
         goto cleanup;
@@ -856,7 +856,8 @@ DNSInet6FillUpZeros(
 {
     DWORD dwInputIndex = 0;
     DWORD dwOutputIndex = 0;
-    CHAR strInput[INET6_ADDRSTRLEN], strOutput[INET6_ADDRSTRLEN];
+    CHAR strInput[INETV6_ADDRSTRLEN] = {0};
+    CHAR strOutput[INETV6_ADDRSTRLEN] = {0};
 
     //copy the input string to strInput to ensure any changes
     strcpy(strInput,pszInet6InputAddr);
@@ -892,8 +893,9 @@ DNSInet6ExpandAddress(
     PSTR pszInet6InputAddr
     )
 {
-    CHAR szTempInputSring[INET6_ADDRSTRLEN];
-    CHAR szTempStringMid[INET6_ADDRSTRLEN];
+    CHAR szTempInputSring[INETV6_ADDRSTRLEN] = {0};
+    CHAR szTempStringMid[INETV6_ADDRSTRLEN] = {0};
+    CHAR szOutput[INETV6_ADDRSTRLEN] = {0};
     DWORD dwTempStringIndex = 0; 
     PSTR pStartOfColon = NULL;
     DWORD dwInputIndex = 0;
@@ -914,7 +916,7 @@ DNSInet6ExpandAddress(
     {
         DWORD dwQuadCount = 0;
         PSTR pTempQuadString = NULL;
-        CHAR szQuadString[INET6_ADDRSTRLEN];
+        CHAR szQuadString[INETV6_ADDRSTRLEN] = {0};
         DWORD dwZeroNumberOfQuads = 0;
 
         strcpy(szQuadString, pszInet6InputAddr);
@@ -956,12 +958,14 @@ DNSInet6ExpandAddress(
             strcat(pStartOfColon, szTempStringMid);
             strcpy(szTempInputSring, pszInet6InputAddr);            
         }
-        DNSInet6FillUpZeros(szTempInputSring, pszInet6InputAddr);
+        DNSInet6FillUpZeros(szTempInputSring, szOutput);
     }
     else
     {
-        DNSInet6FillUpZeros(pszInet6InputAddr, pszInet6InputAddr);
+        DNSInet6FillUpZeros(pszInet6InputAddr, szOutput);
     }
+
+    strcpy(pszInet6InputAddr,szOutput);
 }
 
 DWORD
@@ -970,8 +974,8 @@ DNSInet6GetPtrAddress(
     PSTR *ppSzInet6OutputAddr
     )
 {
-    CHAR szInput[INET6_ADDRSTRLEN] = {'\0'};
-    CHAR szOutput[CANONICAL_INET6_ADDRSTRLEN] = {'\0'};
+    CHAR szInput[INETV6_ADDRSTRLEN] = {0};
+    CHAR szOutput[CANONICAL_INET6_ADDRSTRLEN] = {0};
     PSTR pSzOutputAddr = NULL;
 
     strcpy(szInput,pszInet6InputAddr);
@@ -994,8 +998,8 @@ DNSInet6GetPtrZoneAddress(
     PSTR *ppSzInet6OutputAddr
     )
 {
-    CHAR szInput[INET6_ADDRSTRLEN] = {'\0'};
-    CHAR szOutput[CANONICAL_INET6_ADDRSTRLEN] = {'\0'};
+    CHAR szInput[INETV6_ADDRSTRLEN] = {0};
+    CHAR szOutput[CANONICAL_INET6_ADDRSTRLEN] = {0};
     PSTR pSzOutputAddr = NULL;
     DWORD dwSubNetMask = SUBNET_MASK;
     DWORD dwIpaddressToChop = dwSubNetMask / HEXADECIMAL_BASE;

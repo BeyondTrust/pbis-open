@@ -1201,7 +1201,6 @@ DNSGetPtrNameForV6Addr(
 {
     DWORD dwError = 0;
     PSTR pszZoneName = NULL;
-    //DWORD dwIPV6Addr = ntohl(pAddr->sin_addr.s_addr);
     CHAR szIPV6[INET6_ADDRSTRLEN];
 
     if (pAddr->sin6_family != AF_INET6)
@@ -1236,8 +1235,7 @@ DNSGetPtrZoneForV6Addr(
 {
     DWORD dwError = 0;
     PSTR pszZoneName = NULL;
-    //DWORD dwIPV6Addr = ntohl(pAddr->sin_addr.s_addr);
-    CHAR szIPv6[INET6_ADDRSTRLEN];
+    CHAR szIPv6[INET6_ADDRSTRLEN] = {0};
 
     if (pAddr->sin6_family != AF_INET6)
     {

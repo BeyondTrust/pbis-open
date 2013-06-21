@@ -133,7 +133,7 @@ main(
     BOOLEAN bDNSUpdated = FALSE;
     BOOLEAN bReachedNameServer = FALSE;
     DWORD iAddr = 0;
-    CHAR szIPv6[INET6_ADDRSTRLEN];
+    CHAR szIPv6[INET6_ADDRSTRLEN] ={0};
 
     dwError = ParseArgs(
                     argc,
@@ -325,6 +325,12 @@ main(
         }
     }
 
+    if (bDNSUpdated)
+    {
+        printf("IPV4 PTR records successfully updated in DNS\n");
+        bDNSUpdated = FALSE;
+    }
+
     for (iAddr = 0; iAddr < args.dwIPV6Count; iAddr++)
     {
         PSOCKADDR_IN6 pSock6Addr = &args.pAddress6Array[iAddr];
@@ -354,7 +360,8 @@ main(
     
     if (bDNSUpdated)
     {
-        printf("PTR records successfully updated in DNS\n");
+        printf("IPV6 PTR records successfully updated in DNS\n");
+        bDNSUpdated = FALSE;
     }
 
 cleanup:
