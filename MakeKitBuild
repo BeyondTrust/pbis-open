@@ -132,10 +132,10 @@ configure()
 {
     LW_VENDOR="pbis"
     LW_PRODUCT="platform"
-    LW_PRODUCT_VERSION=7.5
+    LW_PRODUCT_VERSION=8.0
 #   Update LW_PRODUCT_QFE with each release, resetting to zero when the
 #   LW_PRODUCT_VERSION changes.
-    LW_PRODUCT_QFE=1
+    LW_PRODUCT_QFE=0
     LW_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}.${LW_BUILD_ID:-0}"
 
     case "$LW_OEM_PROFILE" in
