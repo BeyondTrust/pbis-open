@@ -13,6 +13,11 @@ configure()
         mk_check_endian
      mk_multiarch_done
 
+    if [ "$MK_OS" = "hpux" ]
+    then
+       mk_define HAVE_HPUX_OS
+    fi
+
     mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
 
     mk_declare -o MOD_EXT="${MK_DLO_EXT}"
