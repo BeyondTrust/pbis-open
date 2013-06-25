@@ -113,9 +113,7 @@ DNSTCPOpen(
     socklen_t connErrLen = 0;
     fd_set wmask;
     struct timeval timeOut;
-
     struct addrinfo hostInfo, *pResult = NULL, *pTmp = NULL;
-    CHAR szIPAddr[INET6_ADDRSTRLEN];
 
     dwError = DNSAllocateMemory(
                     sizeof(DNS_CONNECTION_CONTEXT),
@@ -139,6 +137,7 @@ DNSTCPOpen(
         {
             struct sockaddr_in *ipv4 = (struct sockaddr_in *)pTmp->ai_addr;
             pAddr = &(ipv4->sin_addr.s_addr);
+            CHAR szIPAddr[128]= {0};
 
             //For debugging purpose
             if(inet_ntop(pTmp->ai_family, pAddr, szIPAddr, sizeof(szIPAddr)) != NULL)
@@ -150,9 +149,11 @@ DNSTCPOpen(
             }
             break;
         }
+#ifndef HAVE_HPUX_OS
         else if (pTmp->ai_family == AF_INET6)
         {
             struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)pTmp->ai_addr;
+            CHAR szIPAddr[INET6_ADDRSTRLEN]= {0};
             pAddr = &(ipv6->sin6_addr);
 
             //For debugging purpose
@@ -163,6 +164,7 @@ DNSTCPOpen(
             }
             break;
         }
+#endif
     }
 
     // Create the socket

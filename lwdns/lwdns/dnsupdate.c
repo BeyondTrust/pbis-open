@@ -542,10 +542,13 @@ DNSUpdateSecure(
     PCSTR  pszDomainName,
     PCSTR  pszHostNameFQDN,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
-    PSOCKADDR_IN6 pAddr6Array
-    )
+    PSOCKADDR_IN6 pAddr6Array)
+#else
+    PSOCKADDR_IN pAddrArray)
+#endif
 {
     DWORD dwError = 0;
     DWORD dwResponseCode = 0;
@@ -564,9 +567,13 @@ DNSUpdateSecure(
                     pszDomainName,
                     pszHostNameFQDN,
                     dwIPV4Count,
+              #ifndef HAVE_HPUX_OS
                     dwIPV6Count,
+              #endif
                     pAddrArray,
+              #ifndef HAVE_HPUX_OS
                     pAddr6Array,
+              #endif
                     &pDNSUpdateResponse);
     BAIL_ON_LWDNS_ERROR(dwError);
 
@@ -596,9 +603,13 @@ DNSUpdateSecure(
                         pszDomainName,
                         pszHostNameFQDN,
                         dwIPV4Count,
+              #ifndef HAVE_HPUX_OS
                         dwIPV6Count,
+              #endif
                         pAddrArray,
+              #ifndef HAVE_HPUX_OS
                         pAddr6Array,
+              #endif
                         &pDNSSecureUpdateResponse);
         BAIL_ON_LWDNS_ERROR(dwError);
 
@@ -653,10 +664,13 @@ DNSUpdateCreateARUpdateRequest(
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
-    PSOCKADDR_IN6 pAddr6Array
-    )
+    PSOCKADDR_IN6 pAddr6Array)
+#else
+    PSOCKADDR_IN pAddrArray)
+#endif
 {
     DWORD dwError = 0;
     PDNS_UPDATE_REQUEST pDNSUpdateRequest = NULL;
@@ -698,6 +712,8 @@ DNSUpdateCreateARUpdateRequest(
     BAIL_ON_LWDNS_ERROR(dwError);
 
     pDNSPRRecord = NULL;
+
+#ifndef HAVE_HPUX_OS
     if (dwIPV6Count)
     {
         // Delete all AAAA records associated with the fqdn.
@@ -711,6 +727,7 @@ DNSUpdateCreateARUpdateRequest(
     }
     else
     {
+#endif
         // Delete all A records associated with the fqdn.
         // This deletes IP addresses that do not belong to the computer.
         dwError = DNSCreateDeleteRecord(
@@ -719,18 +736,21 @@ DNSUpdateCreateARUpdateRequest(
                         QTYPE_A,
                         &pDNSARecord);
         BAIL_ON_LWDNS_ERROR(dwError);
+#ifndef HAVE_HPUX_OS
     }
+#endif
 
-        dwError = DNSUpdateAddUpdateSection(
-                        pDNSUpdateRequest,
-                        pDNSARecord);
-        BAIL_ON_LWDNS_ERROR(dwError);
+	dwError = DNSUpdateAddUpdateSection(
+					pDNSUpdateRequest,
+					pDNSARecord);
+	BAIL_ON_LWDNS_ERROR(dwError);
 
     pDNSARecord = NULL;
 
     // Add an A record for every IP address that belongs to the computer. If
     // the delete operation above deleted IP addresses that actually belong to
     // the computer, this will recreate them.
+#ifndef HAVE_HPUX_OS
     for (; iAddr < dwIPV6Count; iAddr++)
     {       
         PSOCKADDR_IN6 pSock6Addr = NULL;
@@ -759,6 +779,7 @@ DNSUpdateCreateARUpdateRequest(
             }
         }
     }
+#endif
 
     for (iAddr = 0; iAddr < dwIPV4Count; iAddr++)
     {
@@ -824,9 +845,13 @@ DNSSendUpdate(
     PCSTR  pszZoneName,
     PCSTR  pszHostnameFQDN,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
+#endif
     PSOCKADDR_IN pAddrArray,
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddr6Array,
+#endif
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     )
 {
@@ -841,9 +866,14 @@ DNSSendUpdate(
                     pszZoneName,
                     pszHostnameFQDN,
                     dwIPV4Count,
+#ifndef HAVE_HPUX_OS
                     dwIPV6Count,
                     pAddrArray,
                     pAddr6Array);
+#else
+                    pAddrArray);
+#endif
+
     BAIL_ON_LWDNS_ERROR(dwError);
 
     dwError = DNSUpdateSendUpdateRequest2(
@@ -896,9 +926,13 @@ DNSSendSecureUpdate(
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
+#endif
     PSOCKADDR_IN pAddrArray,
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddr6Array,
+#endif
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     )
 {
@@ -913,9 +947,14 @@ DNSSendSecureUpdate(
                     pszZoneName,
                     pszHostnameFQDN,
                     dwIPV4Count,
+#ifndef HAVE_HPUX_OS
                     dwIPV6Count,
                     pAddrArray,
                     pAddr6Array);
+#else
+                    pAddrArray);
+#endif
+
     BAIL_ON_LWDNS_ERROR(dwError);
 
     //
@@ -1042,7 +1081,7 @@ cleanup:
 
 error:
 
-    goto cleanup;
+    goto cleanup;
 }
 
 DWORD
@@ -1193,6 +1232,8 @@ error:
     goto cleanup;
 }
 
+#ifndef HAVE_HPUX_OS
+
 DWORD
 DNSGetPtrNameForV6Addr(
     PSTR* ppszZoneName,
@@ -1201,7 +1242,7 @@ DNSGetPtrNameForV6Addr(
 {
     DWORD dwError = 0;
     PSTR pszZoneName = NULL;
-    CHAR szIPV6[INET6_ADDRSTRLEN];
+    CHAR szIPV6[INETV6_ADDRSTRLEN] = {0};
 
     if (pAddr->sin6_family != AF_INET6)
     {
@@ -1235,7 +1276,7 @@ DNSGetPtrZoneForV6Addr(
 {
     DWORD dwError = 0;
     PSTR pszZoneName = NULL;
-    CHAR szIPv6[INET6_ADDRSTRLEN] = {0};
+    CHAR szIPv6[INETV6_ADDRSTRLEN] = {0};
 
     if (pAddr->sin6_family != AF_INET6)
     {
@@ -1293,7 +1334,7 @@ DNSUpdatePtrV6Secure(
     for (; !bDNSUpdated && (iNS < dwNumNSInfos); iNS++)
     {
         PSTR   pszNameServer = NULL;
-        CHAR szIPv6[INET6_ADDRSTRLEN];
+        CHAR szIPv6[INETV6_ADDRSTRLEN] = {0};
         PLW_NS_INFO pNSInfo = NULL;
 
         pNSInfo = &pNameServerInfos[iNS];
@@ -1341,6 +1382,10 @@ DNSUpdatePtrV6Secure(
             continue;
         }
 
+		LWDNS_LOG_INFO("Succesfully updated PTR record for %s as Ptr Zone=%s and ptr record = %s", 
+					szIPv6,
+	                pszPtrZone, 
+			        pszRecordName);
         bDNSUpdated = TRUE;
     }
 
@@ -1370,3 +1415,4 @@ cleanup:
 error:
     goto cleanup;
 }
+#endif

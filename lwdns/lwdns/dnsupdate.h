@@ -71,10 +71,13 @@ DNSUpdateCreateARUpdateRequest(
     PCSTR pszZoneName,
     PCSTR pszHostnameFQDN,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
-    PSOCKADDR_IN6 pAddr6Array
-    );
+    PSOCKADDR_IN6 pAddr6Array);
+#else
+    PSOCKADDR_IN pAddrArray);
+#endif
 
 DWORD
 DNSNegotiateContextAndSecureUpdate(
@@ -93,9 +96,13 @@ DNSSendUpdate(
     PCSTR  pszZoneName,
     PCSTR  pszHost,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
+#endif
     PSOCKADDR_IN pAddrArray,
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddr6Array,
+#endif
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     );
 
@@ -107,9 +114,13 @@ DNSSendSecureUpdate(
     PCSTR pszZoneName,
     PCSTR pszHost,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
+#endif
     PSOCKADDR_IN pAddrArray,
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddr6Array,
+#endif
     PDNS_UPDATE_RESPONSE * ppDNSUpdateResponse
     );
 

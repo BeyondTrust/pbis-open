@@ -654,6 +654,7 @@ DNSFreeLabel(
     return;
 }
 
+#ifndef HAVE_HPUX_OS
 DWORD
 DNSInet6ValidateAddress(
     PCSTR pszInet6InputAddr
@@ -845,7 +846,7 @@ DNSInet6Canonicalize(
         }
     }
     //append end of string to output string
-    *(pszInet6OutputAddr+(dwOutputIndex++)) = '\0';
+    *(pszInet6OutputAddr+(dwOutputIndex)) = '\0';
 }
 
 VOID
@@ -893,13 +894,13 @@ DNSInet6ExpandAddress(
     PSTR pszInet6InputAddr
     )
 {
-    CHAR szTempInputSring[INETV6_ADDRSTRLEN] = {0};
-    CHAR szTempStringMid[INETV6_ADDRSTRLEN] = {0};
-    CHAR szOutput[INETV6_ADDRSTRLEN] = {0};
     DWORD dwTempStringIndex = 0; 
     PSTR pStartOfColon = NULL;
     DWORD dwInputIndex = 0;
     DWORD dwTotalInputLength = strlen(pszInet6InputAddr);
+    CHAR szTempInputSring[INETV6_ADDRSTRLEN] = {0};
+    CHAR szTempStringMid[INETV6_ADDRSTRLEN] = {0};
+    CHAR szOutput[INETV6_ADDRSTRLEN] = {0};
 
     while(*(pszInet6InputAddr+dwInputIndex) != '\0')
     {
@@ -1003,18 +1004,23 @@ DNSInet6GetPtrZoneAddress(
     PSTR pSzOutputAddr = NULL;
     DWORD dwSubNetMask = SUBNET_MASK;
     DWORD dwIpaddressToChop = dwSubNetMask / HEXADECIMAL_BASE;
-
+ 
     strcpy(szInput,pszInet6InputAddr);
+
     if(DNSInet6ValidateAddress(szInput)){
         return DNS_ERROR_INVALID_IP_ADDRESS;
     }
 
     pSzOutputAddr = (PSTR) malloc(sizeof(CHAR) * CANONICAL_INET6_ADDRSTRLEN);
+
     DNSInet6ExpandAddress(szInput);
+
     DNSInet6Canonicalize(szInput,szOutput);
+
     strcpy(pSzOutputAddr,szOutput+(dwIpaddressToChop * 8));
     strncat(pSzOutputAddr,"ip6.arpa",8);
 
     *ppSzInet6OutputAddr = pSzOutputAddr;
     return 0;
 }
+#endif
