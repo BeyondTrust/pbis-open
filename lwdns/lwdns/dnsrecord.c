@@ -929,6 +929,7 @@ DNSFreeRecord(
     DNSFreeMemory(pRecord);
 }
 
+#ifndef HAVE_HPUX_OS
 DWORD
 DNSCreateAAAARecord(
     PCSTR pszHost,
@@ -992,4 +993,5 @@ error:
     *ppDNSRecord = NULL;    
     goto cleanup;
 }
+#endif
 

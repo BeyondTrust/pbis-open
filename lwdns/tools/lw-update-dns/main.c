@@ -38,9 +38,13 @@ typedef struct _ARGS {
     PSTR pszHostname;
     PSTR pszHostDnsSuffix;
     PSOCKADDR_IN pAddressArray;
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddress6Array;
+#endif
     DWORD dwIPV4Count;
+#ifndef HAVE_HPUX_OS
     DWORD dwIPV6Count;
+#endif
     LWDNSLogLevel LogLevel;
     PFN_LWDNS_LOG_MESSAGE pfnLogger;
 } ARGS, *PARGS;
@@ -73,10 +77,13 @@ static
 DWORD
 GetAllInterfaceAddresses(
     OUT PSOCKADDR_IN* ppAddressArray,
+#ifndef HAVE_HPUX_OS
     OUT PSOCKADDR_IN6* ppAddress6Array,
     OUT PDWORD pdwIPV4Count,
-    OUT PDWORD pdwIPV6Count
-    );
+    OUT PDWORD pdwIPV6Count);
+#else
+    OUT PDWORD pdwIPV4Count);
+#endif
 
 static
 DWORD
@@ -133,7 +140,9 @@ main(
     BOOLEAN bDNSUpdated = FALSE;
     BOOLEAN bReachedNameServer = FALSE;
     DWORD iAddr = 0;
-    CHAR szIPv6[INET6_ADDRSTRLEN] ={0};
+#ifndef HAVE_HPUX_OS
+    CHAR szIPv6[INET6_ADDRSTRLEN] = {0};
+#endif
 
     dwError = ParseArgs(
                     argc,
@@ -211,11 +220,13 @@ main(
             PSOCKADDR_IN pSockAddr = &args.pAddressArray[iAddr];
             printf("  %s\n", inet_ntoa(pSockAddr->sin_addr));
         }
+#ifndef HAVE_HPUX_OS
         for (iAddr = 0; iAddr < args.dwIPV6Count; iAddr++)
         {
             PSOCKADDR_IN6 pSock6Addr = &args.pAddress6Array[iAddr];
             printf("  %s\n", inet_ntop(AF_INET6,&(pSock6Addr->sin6_addr),szIPv6,sizeof(szIPv6)));
         }
+#endif
     }
 
     dwError = DNSGetNameServers(
@@ -269,9 +280,13 @@ main(
                         pszZone,
                         pszHostFQDN,
                         args.dwIPV4Count,
+#ifndef HAVE_HPUX_OS
                         args.dwIPV6Count,
                         args.pAddressArray,
                         args.pAddress6Array);
+#else
+                        args.pAddressArray);
+#endif
         if (dwError)
         {
             if (dwError == DNS_ERROR_RCODE_REFUSED)
@@ -324,17 +339,17 @@ main(
             bDNSUpdated = TRUE;
         }
     }
-
     if (bDNSUpdated)
     {
         printf("IPV4 PTR records successfully updated in DNS\n");
         bDNSUpdated = FALSE;
     }
 
+#ifndef HAVE_HPUX_OS
     for (iAddr = 0; iAddr < args.dwIPV6Count; iAddr++)
     {
         PSOCKADDR_IN6 pSock6Addr = &args.pAddress6Array[iAddr];
-        CHAR szIPv6[INET6_ADDRSTRLEN];
+        CHAR szIPv6[INET6_ADDRSTRLEN] = {0};
 
         if(inet_ntop(AF_INET6,&(pSock6Addr->sin6_addr),szIPv6,sizeof(szIPv6)) != NULL)
         {
@@ -363,6 +378,7 @@ main(
         printf("IPV6 PTR records successfully updated in DNS\n");
         bDNSUpdated = FALSE;
     }
+#endif
 
 cleanup:
     if (hDNSServer)
@@ -386,7 +402,9 @@ cleanup:
     LWDNS_SAFE_FREE_STRING(args.pszHostname);
     LWDNS_SAFE_FREE_STRING(args.pszHostDnsSuffix);
     LWDNS_SAFE_FREE_MEMORY(args.pAddressArray);
+#ifndef HAVE_HPUX_OS
     LWDNS_SAFE_FREE_MEMORY(args.pAddress6Array);
+#endif
 
     DNSShutdown();
 
@@ -416,9 +434,11 @@ ParseArgs(
     BOOLEAN bShowArguments = FALSE;
     BOOLEAN bUseMachineCredentials = TRUE;
     PSOCKADDR_IN pAddressArray = NULL;
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddress6Array = NULL;
-    DWORD dwIPV4Count = 0;
     DWORD dwIPV6Count = 0;
+#endif
+    DWORD dwIPV4Count = 0;
     LWDNSLogLevel LogLevel = LWDNS_LOG_LEVEL_ERROR;
     PFN_LWDNS_LOG_MESSAGE pfnLogger = NULL;
     PCSTR pszProgramName = "update-dns";
@@ -507,6 +527,7 @@ ParseArgs(
 
             dwIPV4Count++;
         }
+#ifndef HAVE_HPUX_OS
         else if (!strcasecmp(pszArg, "--ipv6address"))
         {
             PSOCKADDR_IN6 pSock6Addr = NULL;
@@ -539,6 +560,7 @@ ParseArgs(
 
             dwIPV6Count++;
         }
+#endif
         else if (!strcasecmp(pszArg, "--fqdn"))
         {
             PCSTR pszDot = NULL;
@@ -597,9 +619,20 @@ ParseArgs(
         }
     }
 
+#ifndef HAVE_HPUX_OS
     if (!dwIPV4Count && !dwIPV6Count)
+#else
+    if (!dwIPV4Count)
+#endif
     {
-        dwError = GetAllInterfaceAddresses(&pAddressArray, &pAddress6Array, &dwIPV4Count, &dwIPV6Count);
+        dwError = GetAllInterfaceAddresses(&pAddressArray, 
+                                  #ifndef HAVE_HPUX_OS
+                                           &pAddress6Array, 
+                                           &dwIPV4Count, 
+                                           &dwIPV6Count);
+                                  #else
+                                           &dwIPV4Count); 
+                                  #endif
         if (dwError)
         {
             fprintf(stderr, "Failed to get interface addresses.\n");
@@ -616,9 +649,11 @@ cleanup:
     pArgs->pszHostname = pszHostname;
     pArgs->pszHostDnsSuffix = pszHostDnsSuffix;
     pArgs->pAddressArray = pAddressArray;
-    pArgs->pAddress6Array = pAddress6Array;
     pArgs->dwIPV4Count = dwIPV4Count;
+#ifndef HAVE_HPUX_OS
+    pArgs->pAddress6Array = pAddress6Array;
     pArgs->dwIPV6Count = dwIPV6Count;
+#endif
     pArgs->LogLevel = LogLevel;
     pArgs->pfnLogger = pfnLogger;
     
@@ -631,9 +666,11 @@ error:
     LWDNS_SAFE_FREE_STRING(pszHostname);
     LWDNS_SAFE_FREE_STRING(pszHostDnsSuffix);
     LWDNS_SAFE_FREE_MEMORY(pAddressArray);
+#ifndef HAVE_HPUX_OS
     LWDNS_SAFE_FREE_MEMORY(pAddress6Array);
-    dwIPV4Count = 0;
     dwIPV6Count = 0;
+#endif
+    dwIPV4Count = 0;
     LogLevel = LWDNS_LOG_LEVEL_ERROR;
     pfnLogger = NULL;
 
@@ -767,16 +804,23 @@ static
 DWORD
 GetAllInterfaceAddresses(
     OUT PSOCKADDR_IN* ppAddressArray,
+#ifndef HAVE_HPUX_OS
     OUT PSOCKADDR_IN6* ppAddress6Array,
     OUT PDWORD pdwIPV4Count,
     OUT PDWORD pdwIPV6Count
     )
+#else
+    OUT PDWORD pdwIPV4Count
+    )
+#endif
 {
     DWORD dwError = 0;
     PSOCKADDR_IN pAddressArray = NULL;
+#ifndef HAVE_HPUX_OS
     PSOCKADDR_IN6 pAddress6Array = NULL;
-    DWORD dwipv4Count = 0;
     DWORD dwipv6Count = 0;
+#endif
+    DWORD dwipv4Count = 0;
     DWORD dwAddressCount = 0;
     PLW_INTERFACE_INFO pInterfaceArray = NULL;
     DWORD dwInterfaceCount = 0;
@@ -798,16 +842,19 @@ GetAllInterfaceAddresses(
                     (PVOID*)&pAddressArray);
     BAIL_ON_LWDNS_ERROR(dwError);
 
+#ifndef HAVE_HPUX_OS
     dwError = DNSAllocateMemory(
                     sizeof(SOCKADDR_IN6) * dwInterfaceCount,
                     (PVOID*)&pAddress6Array);
     BAIL_ON_LWDNS_ERROR(dwError);
+#endif
 
     dwAddressCount = dwInterfaceCount;
 
     for (iAddr = 0; iAddr < dwAddressCount; iAddr++)
     {
         PLW_INTERFACE_INFO pInterfaceInfo = &pInterfaceArray[iAddr];
+#ifndef HAVE_HPUX_OS
         if(pInterfaceInfo->bIPV6Enabled)
         {
             PSOCKADDR_IN6 pSock6Addr = &pAddress6Array[dwipv6Count];
@@ -817,11 +864,14 @@ GetAllInterfaceAddresses(
         }
         else
         {
+#endif
             PSOCKADDR_IN pSockAddr = &pAddressArray[dwipv4Count];
             pSockAddr->sin_family = pInterfaceInfo->ipAddr.sa_family;
             pSockAddr->sin_addr = ((PSOCKADDR_IN)&pInterfaceInfo->ipAddr)->sin_addr;
             dwipv4Count++;
+#ifndef HAVE_HPUX_OS
         }
+#endif
     }
 
 cleanup:
@@ -833,15 +883,19 @@ cleanup:
     }
 
     *ppAddressArray = pAddressArray;
+#ifndef HAVE_HPUX_OS
     *ppAddress6Array = pAddress6Array;
-    *pdwIPV4Count = dwipv4Count;
     *pdwIPV6Count = dwipv6Count;
+#endif
+    *pdwIPV4Count = dwipv4Count;
 
     return dwError;
 
 error:
     LWDNS_SAFE_FREE_MEMORY(pAddressArray);
+#ifndef HAVE_HPUX_OS
     LWDNS_SAFE_FREE_MEMORY(pAddress6Array);
+#endif
     dwAddressCount = 0;
 
     goto cleanup;

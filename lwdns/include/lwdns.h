@@ -54,7 +54,10 @@
 #include <sys/socket.h>
 
 typedef struct sockaddr_in SOCKADDR_IN, *PSOCKADDR_IN;
+#ifndef HAVE_HPUX_OS
 typedef struct sockaddr_in6 SOCKADDR_IN6, *PSOCKADDR_IN6;
+#endif
+
 #endif
 
 
@@ -95,8 +98,10 @@ typedef struct __LW_NS_INFO
 
 typedef struct __LW_INTERFACE_INFO
 {
+#ifndef HAVE_HPUX_OS
     BOOLEAN         bIPV6Enabled;
     struct sockaddr_in6 ipv6Addr;
+#endif
     PSTR            pszName;
     struct sockaddr ipAddr;
     DWORD           dwFlags;
@@ -219,11 +224,13 @@ DNSUpdatePtrSecure(
     PCSTR  pszHostNameFQDN
     );
 
+#ifndef HAVE_HPUX_OS
 DWORD
 DNSUpdatePtrV6Secure(
     PSOCKADDR_IN6 pAddr,
     PCSTR  pszHostNameFQDN
     );
+#endif
 
 DWORD
 DNSUpdateSecure(
@@ -232,10 +239,13 @@ DNSUpdateSecure(
     PCSTR  pszDomainName,
     PCSTR  pszHostname,
     DWORD  dwIPV4Count,
+#ifndef HAVE_HPUX_OS
     DWORD  dwIPV6Count,
     PSOCKADDR_IN pAddrArray,
-    PSOCKADDR_IN6 pAddr6Array
-    );
+    PSOCKADDR_IN6 pAddr6Array);
+#else
+    PSOCKADDR_IN pAddrArray);
+#endif
 
 DWORD
 DNSClose(

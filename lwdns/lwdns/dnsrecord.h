@@ -170,6 +170,7 @@ DNSFreeRecord(
     PDNS_RR_RECORD pRecord
     );
 
+#ifndef HAVE_HPUX_OS
 DWORD
 DNSCreateAAAARecord(
     PCSTR pszHost,
@@ -178,5 +179,6 @@ DNSCreateAAAARecord(
     PSTR  pszIPV6,
     PDNS_RR_RECORD * ppDNSRecord
     );
+#endif
 
 #endif /* __DNSRECORD_H__ */

@@ -45,6 +45,7 @@
 
 #include "config.h"
 
+#ifndef HAVE_HPUX_OS
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -52,6 +53,7 @@
 
 #define IS_ADDR_LINKLOCAL(a)    \
         ((a[0] == 'f') && (a[1] == 'e') && (a[2] == '8') && (a[3] == '0'))   
+#endif
 
 #if defined(__LWI_NETBSD__)
 #ifdef HAVE_NETINET_IN_H

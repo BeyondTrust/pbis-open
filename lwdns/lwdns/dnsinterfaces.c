@@ -233,6 +233,7 @@ DNSGetInfoUsingGetIfAddrs(
                  pIter->ifa_addr,
                  sizeof(*pIter->ifa_addr));
             }
+#ifndef HAVE_HPUX_OS
             else if (pIter->ifa_addr->sa_family == AF_INET6)
             {
                 pInterfaceInfo->bIPV6Enabled = TRUE;
@@ -240,6 +241,7 @@ DNSGetInfoUsingGetIfAddrs(
                 pIter->ifa_addr,
                 sizeof(struct sockaddr_in6));
             }
+#endif
         }
         
         pInterfaceInfo->dwFlags = pIter->ifa_flags;

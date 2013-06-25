@@ -46,8 +46,11 @@
 #ifndef __DNSUTILS_H__
 #define __DNSUTILS_H__
 
-#define INETV6_ADDRSTRLEN 256 
+#ifndef HAVE_HPUX_OS
+#define INETV6_ADDRSTRLEN 256
 #define CANONICAL_INET6_ADDRSTRLEN 256
+#endif
+
 #define SUBNET_MASK 64
 #define HEXADECIMAL_BASE 16
 
@@ -106,7 +109,7 @@ VOID
 DNSFreeLabel(
     PDNS_DOMAIN_LABEL pLabel
     );
-
+#ifndef HAVE_HPUX_OS
 DWORD
 DNSInet6ValidateAddress(
     PCSTR pszInet6InputAddr
@@ -146,4 +149,5 @@ DNSInet6GetPtrZoneAddress(
     PSTR pszInet6InputAddr,
     PSTR *ppszInet6OutputAddr
     );
+#endif
 #endif /* __DNSUTILS_H__ */
