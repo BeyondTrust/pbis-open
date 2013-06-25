@@ -56,8 +56,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <fcntl.h>
+#ifndef SOLARIS_11
 #if HAVE_SYS_VARARGS_H
 #include <sys/varargs.h>
+#endif
 #endif
 #include <iconv.h>
 #include <errno.h>

@@ -49,8 +49,10 @@
 #include <wc16printf.h>
 #include <limits.h>
 
+#ifndef SOLARIS_11
 #ifdef HAVE_SYS_VARARGS_H
 #include <sys/varargs.h>
+#endif
 #endif
 
 #ifdef _WIN32

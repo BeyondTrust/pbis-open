@@ -151,6 +151,11 @@ configure()
 
     mk_msg "threadpool backend: $LWBASE_THREADPOOL_BACKEND"
 
+    if [ "$MK_HOST_OS" = "solaris" -a $MK_HOST_DISTRO_VERSION = "11" ]
+    then
+        mk_define SOLARIS_11 1
+    fi
+
     mk_check_moonunit
     mk_check_doxygen
     

@@ -138,6 +138,10 @@ configure()
             ;;
     esac
 
+    if [ "$target_os" = "solaris2.11" ]
+    then
+       mk_define SOLARIS_11 1
+    fi
 
     if [ "$MK_HOST_MULTIARCH" = "combine" ]
     then

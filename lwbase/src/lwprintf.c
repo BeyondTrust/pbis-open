@@ -54,8 +54,10 @@
 #include <iconv.h>
 #include <inttypes.h> // for PRIxPTR format string
 
+#ifndef SOLARIS_11
 #ifdef HAVE_SYS_VARARGS_H
 #include <sys/varargs.h>
+#endif
 #endif
 
 // % <flag>* <field width>? <precision>? <length modifier>? <conversion specifier>

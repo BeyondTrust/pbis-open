@@ -128,7 +128,7 @@ void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
 		}
 #endif /* AF_LINK */
 
-#if defined(SIOCGIFHWADDR)
+#if defined(SIOCGIFHWADDR) && !defined(SOLARIS_11)
 		memcpy(&ifreq, ifr, sizeof(ifreq));
 		if (ioctl(s, SIOCGIFHWADDR, &ifreq) == 0) {
 			memcpy(addr->eaddr, &ifreq.ifr_hwaddr.sa_data, 6);
@@ -136,7 +136,7 @@ void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
 			close(s);
 			return;
 		}
-#elif defined(SIOCGARP)
+#elif defined(SIOCGARP) && !defined(SOLARIS_11)
 		memset(&u.arpreq, 0, sizeof(u.arpreq));
 		u.arpreq.arp_pa = ifr->ifr_dstaddr;
 		u.arpreq.arp_flags = 0;			
