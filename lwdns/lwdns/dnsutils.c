@@ -675,6 +675,13 @@ DNSInet6ValidateAddress(
         goto cleanup;
     }
 
+    //check for the link local address in arguments only
+    if(IS_ADDR_LINKLOCAL(pszInet6InputAddr))
+    {
+        bIsInValid = TRUE;
+        goto cleanup;
+    }
+
     //check each charecter for hexadecimal number in range of 0 to 9; a to f 
     //and for colon(:)
     strcpy(szTempBuffer,pszInet6InputAddr);
