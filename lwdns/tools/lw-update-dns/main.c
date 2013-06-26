@@ -542,6 +542,14 @@ ParseArgs(
             pszArg = argv[iArg + 1];
             iArg++;
 
+            //validate the IPV6 address
+            dwError = DNSInet6ValidateAddress(pszArg);
+            if(dwError)
+            {
+                 fprintf(stderr, "Invalid IPV6 address: %s\n", pszArg);
+                 exit(1);
+            }
+
             dwError = DNSReallocMemory(
                             pAddress6Array,
                             OUT_PPVOID(&pAddress6Array),
@@ -549,15 +557,10 @@ ParseArgs(
             BAIL_ON_LWDNS_ERROR(dwError);
 
             pSock6Addr = &pAddress6Array[dwIPV6Count];
-
             pSock6Addr->sin6_family = AF_INET6;
 
             inet_pton(AF_INET6, pszArg, &(pSock6Addr->sin6_addr));
-           
-            //validate the IPV6 address
-            dwError = DNSInet6ValidateAddress(pszArg);
-            BAIL_ON_LWDNS_ERROR(dwError);
-
+	   
             dwIPV6Count++;
         }
 #endif
