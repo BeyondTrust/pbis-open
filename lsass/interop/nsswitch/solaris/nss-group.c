@@ -121,7 +121,15 @@ LsaNssSolarisGroupGetgrent(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -181,7 +189,15 @@ LsaNssSolarisGroupGetgrgid(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -233,7 +249,15 @@ LsaNssSolarisGroupGetgrnam(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {

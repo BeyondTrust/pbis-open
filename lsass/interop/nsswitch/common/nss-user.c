@@ -109,6 +109,9 @@ LsaNssComputeUserStringLength(
     return dwLength;
 }
 
+#define PASSWD_SAFE_STRING(x, y) \
+    ( (x) ? (x) : (y) )
+
 DWORD
 LsaNssWriteUserInfo(
     DWORD        dwUserInfoLevel,
@@ -142,63 +145,93 @@ LsaNssWriteUserInfo(
        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    memset(pResultUser , 0, sizeof(struct passwd));
-    pResultUser->pw_uid = pUserInfo_0->uid;
-    pResultUser->pw_gid = pUserInfo_0->gid;
-
     memset(pszMarker, 0, bufLen);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszName)) {
-       dwLen = strlen(pUserInfo_0->pszName);
-       memcpy(pszMarker, pUserInfo_0->pszName, dwLen);
-       pResultUser->pw_name = pszMarker;
-       pszMarker += dwLen + 1;
-    }
+    /* Solaris NSS2 passes a NULL result to indicate it requires an etc files formatted result for NSCD */
+    if (pResultUser)
+    {
+        memset(pResultUser , 0, sizeof(struct passwd));
+        pResultUser->pw_uid = pUserInfo_0->uid;
+        pResultUser->pw_gid = pUserInfo_0->gid;
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszPasswd)) {
-       dwLen = strlen(pUserInfo_0->pszPasswd);
-       memcpy(pszMarker, pUserInfo_0->pszPasswd, dwLen);
-       pResultUser->pw_passwd = pszMarker;
-       pszMarker += dwLen + 1;
-    }
-    else {
-        dwLen = sizeof("x") - 1;
-        *pszMarker = 'x';
-        pResultUser->pw_passwd = pszMarker;
-        pszMarker += dwLen + 1;
-    }
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszName)) {
+           dwLen = strlen(pUserInfo_0->pszName);
+           memcpy(pszMarker, pUserInfo_0->pszName, dwLen);
+           pResultUser->pw_name = pszMarker;
+           pszMarker += dwLen + 1;
+        }
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszGecos)) {
-       dwLen = strlen(pUserInfo_0->pszGecos);
-       memcpy(pszMarker, pUserInfo_0->pszGecos, dwLen);
-       pResultUser->pw_gecos = pszMarker;
-       pszMarker += dwLen + 1;
-    }
-    else {
-        *pszMarker = '\0';
-        pResultUser->pw_gecos = pszMarker;
-        pszMarker++;
-    }
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszPasswd)) {
+           dwLen = strlen(pUserInfo_0->pszPasswd);
+           memcpy(pszMarker, pUserInfo_0->pszPasswd, dwLen);
+           pResultUser->pw_passwd = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+        else {
+            dwLen = sizeof("x") - 1;
+            *pszMarker = 'x';
+            pResultUser->pw_passwd = pszMarker;
+            pszMarker += dwLen + 1;
+        }
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszShell)) {
-       dwLen = strlen(pUserInfo_0->pszShell);
-       memcpy(pszMarker, pUserInfo_0->pszShell, dwLen);
-       pResultUser->pw_shell = pszMarker;
-       pszMarker += dwLen + 1;
-    }
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszGecos)) {
+           dwLen = strlen(pUserInfo_0->pszGecos);
+           memcpy(pszMarker, pUserInfo_0->pszGecos, dwLen);
+           pResultUser->pw_gecos = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+        else {
+            *pszMarker = '\0';
+            pResultUser->pw_gecos = pszMarker;
+            pszMarker++;
+        }
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszHomedir)) {
-       dwLen = strlen(pUserInfo_0->pszHomedir);
-       memcpy(pszMarker, pUserInfo_0->pszHomedir, dwLen);
-       pResultUser->pw_dir = pszMarker;
-       pszMarker += dwLen + 1;
-    }
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszShell)) {
+           dwLen = strlen(pUserInfo_0->pszShell);
+           memcpy(pszMarker, pUserInfo_0->pszShell, dwLen);
+           pResultUser->pw_shell = pszMarker;
+           pszMarker += dwLen + 1;
+        }
 
-#ifdef HAVE_STRUCT_PASSWD_PW_CLASS
-    *pszMarker = 0;
-    pResultUser->pw_class = pszMarker;
-    pszMarker ++;
-#endif
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszHomedir)) {
+           dwLen = strlen(pUserInfo_0->pszHomedir);
+           memcpy(pszMarker, pUserInfo_0->pszHomedir, dwLen);
+           pResultUser->pw_dir = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+
+    #ifdef HAVE_STRUCT_PASSWD_PW_CLASS
+        *pszMarker = 0;
+        pResultUser->pw_class = pszMarker;
+        pszMarker ++;
+    #endif
+    }
+    else
+    {
+        int len;
+
+        // etc passwd format expects: "pw_name:pw_passwd:pw_uid:pw_gid:pw_gecos:pw_dir:pw_shell"
+        len = snprintf(pszMarker, bufLen, "%s:%s:%lu:%lu:%s:%s:%s",
+                PASSWD_SAFE_STRING(pUserInfo_0->pszName, ""),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, "x"),
+                (unsigned long)pUserInfo_0->uid,
+                (unsigned long)pUserInfo_0->gid,
+                PASSWD_SAFE_STRING(pUserInfo_0->pszGecos, ""),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszHomedir, ""),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszShell, "")
+        );
+
+        if (len < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else if (len >= bufLen)
+        {
+            dwError = LW_ERROR_NULL_BUFFER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
 
 cleanup:
 

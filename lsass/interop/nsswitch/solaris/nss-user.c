@@ -120,7 +120,15 @@ LsaNssSolarisPasswdGetpwent(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultUser)
+        {
+            pXbyYArgs->returnval = pResultUser;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -178,7 +186,15 @@ LsaNssSolarisPasswdGetpwnam(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultUser)
+        {
+            pXbyYArgs->returnval = pResultUser;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -230,7 +246,15 @@ LsaNssSolarisPasswdGetpwuid(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultUser)
+        {
+            pXbyYArgs->returnval = pResultUser;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+            pXbyYArgs->returnlen = strlen(pszBuf);
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
