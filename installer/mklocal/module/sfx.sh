@@ -14,8 +14,15 @@ lw_sfx()
         PKGDIRS="$PKGDIRS $result"
     done
 
+    if [ "$MK_HOST_OS" = "solaris" -a $MK_HOST_DISTRO_VERSION = "11" ]
+    then
+        TMP_TARGET="@sfx/$SFX.$MK_HOST_OS$MK_HOST_DISTRO_VERSION.$MK_HOST_ARCH.$FORMAT.sh"
+    else
+        TMP_TARGET="@sfx/$SFX.$MK_HOST_OS.$MK_HOST_ARCH.$FORMAT.sh"
+    fi
+
     mk_target \
-        TARGET="@sfx/$SFX.$MK_HOST_OS.$MK_HOST_ARCH.$FORMAT.sh" \
+        TARGET="$TMP_TARGET" \
         DEPS="$PKGDIRS $FILES" \
         _lw_sfx %FILES %FORMAT %BASE %UPGRADE %LEGACY %OBSOLETE %GUI \
         '$@' "*$PKGDIRS"
