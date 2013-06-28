@@ -64,16 +64,27 @@ typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
  * we need to define a NSS2 compatible nss_XbyY_args struct
  */
 typedef struct nss_XbyY_nss2_args {
-	nss_XbyY_buf_t      buf;
-	int                 stayopen;
-	nss_str2ent_t       str2ent;
-	union nss_XbyY_key  key;
-	void *              returnval;
-	int                 erange;
-	int                 h_errno;
-	nss_status_t        status;
-	nss_key2str_t       key2str;
-	size_t              returnlen;
+    nss_XbyY_buf_t  buf;
+    int             stayopen;
+#if defined(__STDC__)
+    int             (*str2ent)      (const char             *instr,
+                                    int                     instr_len,
+                                    void *ent, char *buffer, int buflen);
+#else
+    int             (*str2ent)();
+#endif
+    union nss_XbyY_key key;
+    void            *returnval;
+    int             erange;
+    int             h_errno;
+    nss_status_t    status;
+#if defined(__STDC__)
+    int             (*key2str)  (void *buffer, size_t buflen,
+                                nss_XbyY_key_t *key, size_t *len);
+#else
+    int             (*key2str)();
+#endif
+	size_t          returnlen;
 } nss_XbyY_nss2_args_t;
 #endif
 
