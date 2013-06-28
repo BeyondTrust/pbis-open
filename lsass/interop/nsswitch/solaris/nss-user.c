@@ -79,7 +79,7 @@ typedef struct nss_XbyY_nss2_args {
     nss_status_t    status;
 #if defined(__STDC__)
     int             (*key2str)  (void *buffer, size_t buflen,
-                                nss_XbyY_key_t *key, size_t *len);
+                                void *key, size_t *len);
 #else
     int             (*key2str)();
 #endif
