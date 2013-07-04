@@ -45,7 +45,7 @@
 #define LSA_UNPROV_MODE "Un-Provisioned"
 #define LSA_UNKNOWN_MODE "Unknown"
 #define LSA_DEFAULT_MODE "Default Cell"
-#define LSA_DEFAULT_NONCELL_MODE "Default Non-Cell"
+#define LSA_DEFAULT_NONCELL_MODE "Named Cell"
 #define LSA_LOCAL_SYSTEM_MODE "Local System"
 
 

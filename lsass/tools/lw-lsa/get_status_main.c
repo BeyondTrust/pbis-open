@@ -60,7 +60,7 @@
 #define LSA_MODE_STRING_UNKNOWN          "Unknown"
 #define LSA_MODE_STRING_UNPROVISIONED    "Un-provisioned"
 #define LSA_MODE_STRING_DEFAULT_CELL     "Default Cell"
-#define LSA_MODE_STRING_NON_DEFAULT_CELL "Non-default Cell"
+#define LSA_MODE_STRING_NON_DEFAULT_CELL "Named Cell"
 #define LSA_MODE_STRING_LOCAL            "Local system"
 
 #define LSA_SUBMODE_STRING_UNKNOWN       "Unknown"
