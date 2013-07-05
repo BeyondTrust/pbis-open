@@ -149,6 +149,9 @@ PrintRegFile(
     dwError = UpAdPrintConfig(fp, &pConfig->ADConfig);
     BAIL_ON_UP_ERROR(dwError);
 
+    dwError = UpLocalPrintConfig(fp, &pConfig->LocalConfig);
+    BAIL_ON_UP_ERROR(dwError);
+
 error:
     return dwError;
 }
