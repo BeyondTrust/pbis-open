@@ -168,7 +168,9 @@ UpLocalCfgInitialize(
     BAIL_ON_UP_ERROR(dwError);
 
     pConfig->bCreateHomedir = LOCAL_CFG_DEFAULT_CREATE_HOMEDIR;
-    pConfig->pszUmask = LOCAL_CFG_DEFAULT_HOMEDIR_UMASK;
+
+    dwError = LwAllocateString(LOCAL_CFG_DEFAULT_HOMEDIR_UMASK, &pConfig->pszUmask);
+    BAIL_ON_UP_ERROR(dwError);
 
     dwError = LwAllocateString(
                     pszDefaultSkelDirs,
@@ -188,6 +190,7 @@ UpLocalCfgFreeContents(
     LW_SAFE_FREE_STRING(pConfig->pszLoginShell);
     LW_SAFE_FREE_STRING(pConfig->pszHomedirPrefix);
     LW_SAFE_FREE_STRING(pConfig->pszHomedirTemplate);
+    LW_SAFE_FREE_STRING(pConfig->pszUmask);
     LW_SAFE_FREE_STRING(pConfig->pszSkelDirs);
 }
 
