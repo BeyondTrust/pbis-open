@@ -3,14 +3,14 @@
 
   Version:      Directory Services 1.0
 
-  Copyright:    ¬© 1999-2001 by Apple Computer, Inc., all rights reserved.
+  Copyright:    ¬¨¬© 1999-2001 by Apple Computer, Inc., all rights reserved.
 
-  *****************************
+ *****************************
 
   Add plug-in functionality to this file.
 
-  *****************************
-  */
+ *****************************
+ */
 
 #include "includes.h"
 #include "LWIPlugIn.h"
@@ -25,6 +25,7 @@
 #define MAC_OS_X_VERSION_NAME_10_6 "Snow Leopard"
 #define MAC_OS_X_VERSION_NAME_10_7 "Lion"
 #define MAC_OS_X_VERSION_NAME_10_8 "Mountain Lion"
+#define MAC_OS_X_VERSION_NAME_10_9 "Mavericks"
 
 // Local helper functions
 //
@@ -33,23 +34,24 @@ static long Activate(void);
 static long Deactivate(void);
 
 static long GetDomainJoinState(
-    PSTR* ppszDomain
-    );
+        PSTR* ppszDomain
+        );
 
 static long GetGPONodes(
-    PCSTR pszDomain,
-    PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-    PBOOLEAN pbOffline
-    );
+        PCSTR pszDomain,
+        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
+        PBOOLEAN pbOffline
+        );
 
 static long UpdateGPONodes(
-    PCSTR pszDomain,
-    const PGROUP_POLICY_OBJECT pCurrentGPOs
-    );
+        PCSTR pszDomain,
+        const PGROUP_POLICY_OBJECT pCurrentGPOs
+        );
 
 // ----------------------------------------------------------------------------
 // * Private Globals
 // ----------------------------------------------------------------------------
+
 typedef struct _PLUGIN_STATE {
     unsigned long PluginState;
     unsigned long Signature;
@@ -106,38 +108,38 @@ static PLUGIN_STATE GlobalState = { 0 };
 
 static
 long RegisterGPONode(
-    PCSTR pszDomain,
-    PCSTR pszGPOName
+        PCSTR pszDomain,
+        PCSTR pszGPOName
 	)
 {
     long macError = eDSNoErr;
     tDataListPtr nodeNameList = NULL;
     char szChildNodeName[1024];
-	
+
 	if (!pszDomain)
 	{
-	    macError = eDSEmptyParameter;
+        macError = eDSEmptyParameter;
 		GOTO_CLEANUP_ON_MACERROR( macError );
-	}
-	
-	/* Build up node names for each child node found */
+    }
+
+    /* Build up node names for each child node found */
     nodeNameList = dsDataListAllocate(0);
     if ( !nodeNameList )
     {
         macError = eDSAllocationFailed;
         GOTO_CLEANUP_ON_MACERROR( macError );
     }
-        
+
     memset(szChildNodeName, 0, sizeof(szChildNodeName));
     strcpy(szChildNodeName, PLUGIN_ROOT_PATH);
     strcat(szChildNodeName, "/");
     strcat(szChildNodeName, pszDomain);
     strcat(szChildNodeName, "/");
     strcat(szChildNodeName, pszGPOName);
-                    
+
     macError = dsBuildListFromPathAlloc(0, nodeNameList, szChildNodeName, "/");
     GOTO_CLEANUP_ON_MACERROR( macError );
-        
+
     macError = DSRegisterNode(GlobalState.Signature, nodeNameList, kDirNodeType);
 
 cleanup:
@@ -147,15 +149,15 @@ cleanup:
         dsDataListDeallocate(0, nodeNameList);
         free(nodeNameList);
     }
-    
+
     return macError;
 }
 
 
 static
 long UnregisterGPONode(
-    PCSTR pszDomain,
-    PCSTR pszGPOName
+        PCSTR pszDomain,
+        PCSTR pszGPOName
 	)
 {
     long macError = eDSNoErr;
@@ -164,28 +166,28 @@ long UnregisterGPONode(
 
 	if (!pszDomain)
 	{
-	    macError = eDSEmptyParameter;
+        macError = eDSEmptyParameter;
 		GOTO_CLEANUP_ON_MACERROR( macError );
-	}
-	
-	/* Build up node names for each child node found */
+    }
+
+    /* Build up node names for each child node found */
     nodeNameList = dsDataListAllocate(0);
     if ( !nodeNameList )
     {
         macError = eDSAllocationFailed;
         GOTO_CLEANUP_ON_MACERROR( macError );
     }
-        
+
     memset(szChildNodeName, 0, sizeof(szChildNodeName));
     strcpy(szChildNodeName, PLUGIN_ROOT_PATH);
     strcat(szChildNodeName, "/");
     strcat(szChildNodeName, pszDomain);
     strcat(szChildNodeName, "/");
     strcat(szChildNodeName, pszGPOName);
-                    
+
     macError = dsBuildListFromPathAlloc(0, nodeNameList, szChildNodeName, "/");
     GOTO_CLEANUP_ON_MACERROR( macError );
-        
+
     macError = DSUnregisterNode(GlobalState.Signature, nodeNameList);
 
 cleanup:
@@ -195,7 +197,7 @@ cleanup:
         dsDataListDeallocate(0, nodeNameList);
         free(nodeNameList);
     }
-    
+
     return macError;
 }
 
@@ -210,8 +212,8 @@ cleanup:
 // -------------------------------------------------------------------------
 long
 PlugInShell_Validate (
-    const char *inVersionStr,
-    unsigned long inSignature
+        const char *inVersionStr,
+        unsigned long inSignature
     )
 {
     long macError = eDSNoErr;
@@ -287,7 +289,7 @@ long PlugInShell_Initialize(void)
 
         macError = LWCaptureOutput((char*)"sw_vers -productVersion", &pszVersion);
         GOTO_CLEANUP_ON_MACERROR(macError);
-        
+
         if (strstr(pszVersion, "10.4.") == pszVersion)
         {
             GlobalState.Flags = GlobalState.Flags & (~LWE_DS_FLAG_IS_LEOPARD);
@@ -344,16 +346,17 @@ long PlugInShell_Initialize(void)
         }
         else if (strstr(pszVersion, "11.") == pszVersion)
         {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LION;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
         }
         else if (strstr(pszVersion, "12.") == pszVersion)
         {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MOUNTAIN_LION;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
-        }
-        else
-        {
+        } else if (strstr(pszVersion, "13.") == pszVersion) {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
+        } else {
             isUnsupported = true;
         }
     }
@@ -362,7 +365,7 @@ long PlugInShell_Initialize(void)
         pszVersionName = "unsupported";
     }
     LOG("Starting up Likewise - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
-        pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
+            pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
     if (isUnsupported)
     {
         macError = ePlugInFailedToInitialize;
@@ -389,14 +392,14 @@ long PlugInShell_Initialize(void)
         LOG("  Running: %s", pTempNetInfo->IsRunning ? "yes" : "no");
         pTempNetInfo = pTempNetInfo->pNext;
     }
-    
+
     macError = GetConfigurationSettings(&bMergeModeMCX,
-                                        &bEnableForceHomedirOnStartupDisk,
-                                        &bUseADUNCForHomeLocation,
-                                        &pszUNCProtocolForHomeLocation,
-                                        &pszAllowAdministrationBy,
-                                        &bMergeAdmins,
-                                        &dwCacheLifeTime);
+            &bEnableForceHomedirOnStartupDisk,
+            &bUseADUNCForHomeLocation,
+            &pszUNCProtocolForHomeLocation,
+            &pszAllowAdministrationBy,
+            &bMergeAdmins,
+            &dwCacheLifeTime);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     /* See if MCX setting aggregation feature is to be supported */
@@ -558,7 +561,7 @@ cleanup:
 long
 PlugInShell_ProcessRequest(void *inData)
 {
-    long macError = eDSNoErr;
+    long macError = eDSNoErr;    
     bool isAcquired = false;
     sHeader * pMsgHdr = (sHeader *)inData;
     unsigned long msgType = pMsgHdr ? pMsgHdr->fType : 0;
@@ -573,7 +576,7 @@ PlugInShell_ProcessRequest(void *inData)
 
     GS_ACQUIRE_SHARED();
     isAcquired = true;
-
+    
     GS_VERIFY_INITIALIZED(macError);
 
     //
@@ -584,13 +587,13 @@ PlugInShell_ProcessRequest(void *inData)
         macError = ePlugInNotActive;
         GOTO_CLEANUP();
     }
-
+    
     //
     // We also do not handle anything while not "startup complete".
     //
-    if (GlobalState.IsStartupComplete == false && 
-        msgType != kDoPlugInCustomCall &&
-        msgType != kServerRunLoop &&
+    if (GlobalState.IsStartupComplete == false &&
+            msgType != kDoPlugInCustomCall &&
+            msgType != kServerRunLoop &&
         msgType != kKerberosMutex)
     {
         GS_RELEASE();
@@ -639,149 +642,149 @@ PlugInShell_ProcessRequest(void *inData)
     {
         switch ( msgType )
         {
-        case kHandleNetworkTransition:
-            LOG("Got Network Transition change notice");
-            macError = eDSNoErr;
-            break;
-    
-        case kHandleSystemWillSleep:
-            LOG("Got Handle System Will Sleep notice");
-            macError = eDSNoErr;
-            break;
-    
-        case kHandleSystemWillPowerOn:
-            LOG("Got Handle System Will Power On notice");
-            macError = eDSNoErr;
-            break;
-    
-        case kOpenDirNode:
-            LOG("Start of directory node query");
-            macError = LWIDirNodeQuery::Open((sOpenDirNode *)inData);
-            break;
+            case kHandleNetworkTransition:
+                LOG("Got Network Transition change notice");
+                macError = eDSNoErr;
+                break;
 
-        case kDoDirNodeAuth:
+            case kHandleSystemWillSleep:
+                LOG("Got Handle System Will Sleep notice");
+                macError = eDSNoErr;
+                break;
+
+            case kHandleSystemWillPowerOn:
+                LOG("Got Handle System Will Power On notice");
+                macError = eDSNoErr;
+                break;
+
+            case kOpenDirNode:
+                LOG("Start of directory node query");
+            macError = LWIDirNodeQuery::Open((sOpenDirNode *)inData);
+                break;
+
+            case kDoDirNodeAuth:
             macError = LWIDirNodeQuery::DoDirNodeAuth((sDoDirNodeAuth *)inData,
                                                        GlobalState.IsJoinedToAD,
                                                        GlobalState.pAllowAdminCheckData,
                                                        GlobalState.Flags);
-            break;
-            
-        case kCloseDirNode:
-            macError = LWIDirNodeQuery::Close((sCloseDirNode *)inData);
-            break;
+                break;
 
-        case kGetDirNodeInfo:
+            case kCloseDirNode:
+            macError = LWIDirNodeQuery::Close((sCloseDirNode *)inData);
+                break;
+
+            case kGetDirNodeInfo:
             macError = LWIDirNodeQuery::GetInfo((sGetDirNodeInfo *)inData,
                                                 GlobalState.Flags,
                                                 GlobalState.pNetAdapterList);
-            break;
+                break;
 
-        case kGetAttributeEntry:
+            case kGetAttributeEntry:
             macError = LWIDirNodeQuery::GetAttributeEntry((sGetAttributeEntry *)inData);
-            break;
+                break;
 
-        case kGetRecordEntry:
+            case kGetRecordEntry:
             macError = LWIDirNodeQuery::GetAttributeEntry((sGetAttributeEntry *)inData);
-            break;
+                break;
 
-        case kGetAttributeValue:
+            case kGetAttributeValue:
             macError = LWIDirNodeQuery::GetAttributeValue((sGetAttributeValue *)inData);
-            break;
+                break;
 
-        case kCloseAttributeValueList:
+            case kCloseAttributeValueList:
             macError = LWIDirNodeQuery::CloseValueList((sCloseAttributeValueList *)inData);
-            break;
+                break;
 
-         case kCloseAttributeList:
+            case kCloseAttributeList:
             macError = LWIDirNodeQuery::CloseAttributeList((sCloseAttributeList *)inData);
-            break;
+                break;
 
-        case kGetRecordList:
+            case kGetRecordList:
             macError = LWIRecordListQuery::Run((sGetRecordList *)inData, GlobalState.Flags, GlobalState.pNetAdapterList);
-            break;
+                break;
 
-        case kReleaseContinueData:
+            case kReleaseContinueData:
             macError = LWIRecordListQuery::ReleaseContinueData((sReleaseContinueData *)inData);
-            break;
+                break;
 
-        case kDoAttributeValueSearch:
-        case kDoAttributeValueSearchWithData:
+            case kDoAttributeValueSearch:
+            case kDoAttributeValueSearchWithData:
             macError = LWIAttrValDataQuery::Run((sDoAttrValueSearchWithData *)inData, GlobalState.Flags, GlobalState.pNetAdapterList);
-            break;
-        
-        case kDoMultipleAttributeValueSearch:
-        case kDoMultipleAttributeValueSearchWithData:
+                break;
+
+            case kDoMultipleAttributeValueSearch:
+            case kDoMultipleAttributeValueSearchWithData:
             macError = LWIAttrValDataQuery::Run((sDoMultiAttrValueSearchWithData *)inData, GlobalState.Flags, GlobalState.pNetAdapterList);
-            break;
+                break;
 
-        case kOpenRecord:
-            LOG("Start of record query");
+            case kOpenRecord:
+                LOG("Start of record query");
             macError = LWIRecordQuery::Open((sOpenRecord*)inData, GlobalState.Flags, GlobalState.pNetAdapterList);
-            break;
+                break;
 
-        case kGetRecordReferenceInfo:
+            case kGetRecordReferenceInfo:
             macError = LWIRecordQuery::GetReferenceInfo((sGetRecRefInfo*)inData);
-            break;
+                break;
 
-        case kCloseRecord:
+            case kCloseRecord:
             macError = LWIRecordQuery::Close((sCloseRecord*)inData);
-            break;
+                break;
 
-        case kGetRecordAttributeInfo:
+            case kGetRecordAttributeInfo:
             macError = LWIRecordQuery::GetAttributeInfo((sGetRecAttribInfo*)inData);
-            break;
+                break;
 
-        case kGetRecordAttributeValueByID:
+            case kGetRecordAttributeValueByID:
             macError = LWIRecordQuery::GetAttributeValueByID((sGetRecordAttributeValueByID*)inData);
-            break;
+                break;
 
-        case kGetRecordAttributeValueByIndex:
+            case kGetRecordAttributeValueByIndex:
             macError = LWIRecordQuery::GetAttributeValueByIndex((sGetRecordAttributeValueByIndex*)inData);
-            break;
-			
-        /* Supported update operations */
-        case kAddAttribute:
+                break;
+
+                /* Supported update operations */
+            case kAddAttribute:
             macError = LWIRecordQuery::AddAttribute((sAddAttribute*)inData);
-	    break;
+                break;
 
-        case kAddAttributeValue:
+            case kAddAttributeValue:
             macError = LWIRecordQuery::AddAttributeValue((sAddAttributeValue*)inData);
-            break;
+                break;
 
-        case kRemoveAttribute:
+            case kRemoveAttribute:
             macError = LWIRecordQuery::RemoveAttribute((sRemoveAttribute*)inData);
-            break;
+                break;
 
-        case kFlushRecord:
+            case kFlushRecord:
             macError = LWIRecordQuery::FlushRecord((sFlushRecord*)inData);
-            break;
-            
-        case kSetAttributeValues:
-            macError = LWIRecordQuery::SetAttributeValues((sSetAttributeValues*)inData);
-            break;
-            
-        case kSetAttributeValue:
-            macError = LWIRecordQuery::SetAttributeValue((sSetAttributeValue*)inData);
-            break;
+                break;
 
-        case kSetRecordName:
-        case kSetRecordType:
-        case kDeleteRecord:
-        case kCreateRecord:
-        case kCreateRecordAndOpen: /* sCreateRecord */
-        case kRemoveAttributeValue:
-        case kDoPlugInCustomCall:
-        default:
+            case kSetAttributeValues:
+            macError = LWIRecordQuery::SetAttributeValues((sSetAttributeValues*)inData);
+                break;
+
+            case kSetAttributeValue:
+            macError = LWIRecordQuery::SetAttributeValue((sSetAttributeValue*)inData);
+                break;
+
+            case kSetRecordName:
+            case kSetRecordType:
+            case kDeleteRecord:
+            case kCreateRecord:
+            case kCreateRecordAndOpen: /* sCreateRecord */
+            case kRemoveAttributeValue:
+            case kDoPlugInCustomCall:
+            default:
             if ((msgType < kDSPlugInCallsBegin) || (msgType > kDSPlugInCallsEnd))
             {
-                LOG("Unsupported request type: %lu (%s)", msgType, TypeToString(msgType));
+                    LOG("Unsupported request type: %lu (%s)", msgType, TypeToString(msgType));
             }
             else
             {
-                LOG("Unknown request type: %lu", msgType);
-            }
-            macError = eNotHandledByThisNode;
-            break;
+                    LOG("Unknown request type: %lu", msgType);
+                }
+                macError = eNotHandledByThisNode;
+                break;
         }
     }
     catch (LWIException& lwi)
@@ -929,12 +932,12 @@ long PlugInShell_PeriodicTask(void)
     // Get some information that might take a while before locking
     // GlobalState.
     macError = GetConfigurationSettings(&bMergeModeMCX,
-                                        &bEnableForceHomedirOnStartupDisk,
-                                        &bUseADUNCForHomeLocation,
-                                        &pszUNCProtocolForHomeLocation,
-                                        &pszAllowAdministrationBy,
-                                        &bMergeAdmins,
-                                        &dwCacheLifeTime);
+            &bEnableForceHomedirOnStartupDisk,
+            &bUseADUNCForHomeLocation,
+            &pszUNCProtocolForHomeLocation,
+            &pszAllowAdministrationBy,
+            &bMergeAdmins,
+            &dwCacheLifeTime);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     macError = GetDomainJoinState(&pszDomain);
@@ -1032,7 +1035,7 @@ long PlugInShell_PeriodicTask(void)
         strcmp(pszDomain, GlobalState.pszRealm))
     {
         LOG("Unexpected domain name change: '%s' -> '%s'",
-            pszDomain, GlobalState.pszRealm);
+                pszDomain, GlobalState.pszRealm);
         // ISSUE-2008/10/07-dalmeida -- To support this, we would
         // need to unregister all nodes.
         macError = eDSOperationFailed;
@@ -1180,7 +1183,7 @@ cleanup:
     {
         FreeAccessCheckData(pAllowAdminCheckData);
     }
-    
+
     LW_SAFE_FREE_STRING(pszUNCProtocolForHomeLocation);
     LW_SAFE_FREE_STRING(pszAllowAdministrationBy);
     LW_SAFE_FREE_STRING(pszDomain);
@@ -1266,7 +1269,7 @@ static long Activate(void)
     long macError = eDSNoErr;
     tDataListPtr nodeNameList = NULL;
     BOOLEAN bIsStarted = FALSE;
-    
+
     LOG_ENTER("");
 
     LOG("Verify that LSASS service is operational");
@@ -1308,8 +1311,8 @@ static long Activate(void)
     if ( !GlobalState.NodeDictionary )
     {
         GlobalState.NodeDictionary = CFDictionaryCreateMutable(NULL, 0,
-                                                               &kCFCopyStringDictionaryKeyCallBacks,
-                                                               &kCFTypeDictionaryValueCallBacks);
+                &kCFCopyStringDictionaryKeyCallBacks,
+                &kCFTypeDictionaryValueCallBacks);
     }
 
 cleanup:
@@ -1318,7 +1321,7 @@ cleanup:
         dsDataListDeallocate(0, nodeNameList);
         free(nodeNameList);
     }
-    
+
     if (macError)
     {
         long localMacError = Deactivate();
@@ -1327,7 +1330,7 @@ cleanup:
             LOG_ERROR("Unexpected error: %d", localMacError);
         }
     }
-    
+
     LOG_LEAVE("--> %d", macError);
     return macError;
 }
@@ -1371,7 +1374,7 @@ static long Deactivate(void)
 
         GPA_SAFE_FREE_GPO_LIST(pTemp);
     }
-    
+
     if ( GlobalState.pszRealm )
     {
         LW_SAFE_FREE_STRING(GlobalState.pszRealm);
@@ -1432,9 +1435,9 @@ cleanup:
 }
 
 static long GetGPONodes(
-    PCSTR pszDomain,
-    PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-    PBOOLEAN pbOffline
+        PCSTR pszDomain,
+        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
+        PBOOLEAN pbOffline
     )
 {
     long macError = eDSNoErr;
@@ -1445,8 +1448,8 @@ static long GetGPONodes(
     {
         macError = EnumWorkgroupManagerEnabledGPOs(pszDomain, &pCurrentGPOs);
         if (macError == eDSReceiveFailed ||
-            macError == eDSBogusServer ||
-            macError == eDSSendFailed ||
+                macError == eDSBogusServer ||
+                macError == eDSSendFailed ||
             macError == eDSAuthMasterUnreachable)
         {
             LOG("EnumWorkgroupManagerEnableGPOs failed %d, treating as okay", macError);
@@ -1472,8 +1475,8 @@ cleanup:
 }
 
 static long UpdateGPONodes(
-    PCSTR pszDomain,
-    const PGROUP_POLICY_OBJECT pCurrentGPOs
+        PCSTR pszDomain,
+        const PGROUP_POLICY_OBJECT pCurrentGPOs
     )
 {
     long macError = eDSNoErr;
@@ -1482,15 +1485,15 @@ static long UpdateGPONodes(
     PGROUP_POLICY_OBJECT pTemp = NULL;
 
     macError = GPAComputeDeletedList(
-                pCurrentGPOs,
-                GlobalState.pGPOs,
-                &pDeletedGPOs);
+            pCurrentGPOs,
+            GlobalState.pGPOs,
+            &pDeletedGPOs);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     macError = GPAComputeDeletedList(
-                GlobalState.pGPOs,
-                pCurrentGPOs,
-                &pNewGPOs);
+            GlobalState.pGPOs,
+            pCurrentGPOs,
+            &pNewGPOs);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     pTemp = pDeletedGPOs;
