@@ -210,6 +210,9 @@ typedef long MACERROR;
 #define LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK   0x00000010
 #define LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS                     0x00000020
 #define LWE_DS_FLAG_IS_SNOW_LEOPARD                              0x00000040
+#define LWE_DS_FLAG_IS_LION                                 0x00000080
+#define LWE_DS_FLAG_IS_MOUNTAIN_LION                        0x00000100
+#define LWE_DS_FLAG_IS_MAVERICKS                            0x00000200
 typedef DWORD LWE_DS_FLAGS;
 
 
