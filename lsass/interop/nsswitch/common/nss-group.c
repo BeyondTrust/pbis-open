@@ -128,6 +128,10 @@ LsaNssComputeGroupStringLength(
     return dwLength;
 }
 
+#define GROUP_SAFE_STRING(x, y) \
+    ( (x) ? (x) : (y) )
+
+
 DWORD
 LsaNssWriteGroupInfo(
     DWORD       dwGroupInfoLevel,
@@ -142,8 +146,6 @@ LsaNssWriteGroupInfo(
     DWORD dwLen = 0;
     DWORD dwAlignBytes = 0;
     DWORD dwNumMembers = 0;
-
-    memset(pResultGroup, 0, sizeof(struct group));
 
     if ((dwGroupInfoLevel != 0) && (dwGroupInfoLevel != 1)) {
         dwError = LW_ERROR_UNSUPPORTED_GROUP_LEVEL;
@@ -161,60 +163,129 @@ LsaNssWriteGroupInfo(
        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    pResultGroup->gr_gid = pGroupInfo_1->gid;
-
     memset(pszMarker, 0, bufLen);
 
-    pszMarker += dwAlignBytes;
-    pResultGroup->gr_mem = (PSTR*)pszMarker;
+    /* Solaris NSS2 passes a NULL result to indicate it requires an etc files formatted result for NSCD */
+    if (pResultGroup)
+    {
+        memset(pResultGroup, 0, sizeof(struct group));
 
-    //
-    // Handle Group Members first, because we computed the
-    // alignment adjustment based on the first pointer position
-    //
-    if (!dwNumMembers) {
-       *(pResultGroup->gr_mem) = NULL;
-       pszMarker += sizeof(PSTR);
+        pResultGroup->gr_gid = pGroupInfo_1->gid;
 
-    } else {
-        PSTR pszMemberMarker = NULL;
+        pszMarker += dwAlignBytes;
+        pResultGroup->gr_mem = (PSTR*)pszMarker;
+
+        //
+        // Handle Group Members first, because we computed the
+        // alignment adjustment based on the first pointer position
+        //
+        if (!dwNumMembers) {
+           *(pResultGroup->gr_mem) = NULL;
+           pszMarker += sizeof(PSTR);
+
+        } else {
+            PSTR pszMemberMarker = NULL;
+            DWORD iMember = 0;
+
+            // This is where we start writing the members
+            pszMemberMarker = pszMarker + (sizeof(PSTR) * (dwNumMembers + 1));
+
+            for (iMember = 0; iMember < dwNumMembers; iMember++)
+            {
+                *(pResultGroup->gr_mem+iMember) = pszMemberMarker;
+                pszMarker += sizeof(PSTR);
+
+                dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember));
+                memcpy(pszMemberMarker, *(pGroupInfo_1->ppszMembers + iMember), dwLen);
+                pszMemberMarker += dwLen + 1;
+            }
+            // Handle the terminating NULL
+            *(pResultGroup->gr_mem+iMember) = NULL;
+            pszMarker = ++pszMemberMarker; // skip NULL
+        }
+
+        if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszName)) {
+           dwLen = strlen(pGroupInfo_1->pszName);
+           memcpy(pszMarker, pGroupInfo_1->pszName, dwLen);
+           pResultGroup->gr_name = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+
+        if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszPasswd)) {
+           dwLen = strlen(pGroupInfo_1->pszPasswd);
+           memcpy(pszMarker, pGroupInfo_1->pszPasswd, dwLen);
+           pResultGroup->gr_passwd = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+        else{
+            dwLen = sizeof("x") - 1;
+            *pszMarker = 'x';
+            pResultGroup->gr_passwd = pszMarker;
+            pszMarker += dwLen + 1;
+        }
+    }
+    else
+    {
+        int len;
+        int outLen = 0;
         DWORD iMember = 0;
+        PSTR pszMember;
 
-        // This is where we start writing the members
-        pszMemberMarker = pszMarker + (sizeof(PSTR) * (dwNumMembers + 1));
+        // etc group format expects: "gr_name:gr_passwd:gr_gid:members"
+        len = snprintf(pszMarker, bufLen - outLen, "%s:%s:%lu:",
+                GROUP_SAFE_STRING(pGroupInfo_1->pszName, ""),
+                GROUP_SAFE_STRING(pGroupInfo_1->pszPasswd, "x"),
+                (unsigned long)pGroupInfo_1->gid
+                );
+
+        if (len < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else 
+        {
+            outLen += len;
+            pszMarker += len;
+            
+            if (outLen >= bufLen)
+            {
+                dwError = LW_ERROR_NULL_BUFFER;
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+
 
         for (iMember = 0; iMember < dwNumMembers; iMember++)
         {
-            *(pResultGroup->gr_mem+iMember) = pszMemberMarker;
-            pszMarker += sizeof(PSTR);
+            pszMember = pGroupInfo_1->ppszMembers[iMember];
 
-            dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember));
-            memcpy(pszMemberMarker, *(pGroupInfo_1->ppszMembers + iMember), dwLen);
-            pszMemberMarker += dwLen + 1;
+            if (iMember)
+            {
+                len = snprintf(pszMarker, bufLen-outLen, ",%s", pszMember);
+            }
+            else
+            {
+                len = snprintf(pszMarker, bufLen-outLen, "%s", pszMember);
+            }
+
+            if (len < 0)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else
+            {
+                outLen += len;
+                pszMarker += len;
+
+                if (outLen >= bufLen)
+                {
+                    dwError = LW_ERROR_NULL_BUFFER;
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+            }
         }
-        // Handle the terminating NULL
-        *(pResultGroup->gr_mem+iMember) = NULL;
-        pszMarker = ++pszMemberMarker; // skip NULL
-    }
-
-    if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszName)) {
-       dwLen = strlen(pGroupInfo_1->pszName);
-       memcpy(pszMarker, pGroupInfo_1->pszName, dwLen);
-       pResultGroup->gr_name = pszMarker;
-       pszMarker += dwLen + 1;
-    }
-
-    if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszPasswd)) {
-       dwLen = strlen(pGroupInfo_1->pszPasswd);
-       memcpy(pszMarker, pGroupInfo_1->pszPasswd, dwLen);
-       pResultGroup->gr_passwd = pszMarker;
-       pszMarker += dwLen + 1;
-    }
-    else{
-        dwLen = sizeof("x") - 1;
-        *pszMarker = 'x';
-        pResultGroup->gr_passwd = pszMarker;
-        pszMarker += dwLen + 1;
     }
 
 cleanup:

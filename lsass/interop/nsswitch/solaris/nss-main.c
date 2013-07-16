@@ -51,6 +51,12 @@
 #include "nss-group.h"
 #include "nss-netgrp.h"
 
+/* The addition of this symbol indicates to NSCD that we are NSS2 compatible 
+ * To support this the various user and group routines have been modified to return
+ * the etc files format for the passwd/group entities when being called by NSCD
+ */
+void *_nss_lsass_version = 0;
+
 nss_backend_t*
 _nss_lsass_passwd_constr(
     const char* pszDbName,

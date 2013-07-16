@@ -59,6 +59,35 @@ typedef struct
 
 typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
 
+#ifndef HAVE_STRUCT_NSS_XBYY_ARGS_RETURNLEN
+/* In order to support NSS2 using a Sol 8 build
+ * we need to define a NSS2 compatible nss_XbyY_args struct
+ */
+typedef struct nss_XbyY_nss2_args {
+    nss_XbyY_buf_t  buf;
+    int             stayopen;
+#if defined(__STDC__)
+    int             (*str2ent)      (const char             *instr,
+                                    int                     instr_len,
+                                    void *ent, char *buffer, int buflen);
+#else
+    int             (*str2ent)();
+#endif
+    union nss_XbyY_key key;
+    void            *returnval;
+    int             erange;
+    int             h_errno;
+    nss_status_t    status;
+#if defined(__STDC__)
+    int             (*key2str)  (void *buffer, size_t buflen,
+                                void *key, size_t *len);
+#else
+    int             (*key2str)();
+#endif
+	size_t          returnlen;
+} nss_XbyY_nss2_args_t;
+#endif
+
 static
 NSS_STATUS
 LsaNssSolarisGroupDestructor(
@@ -121,7 +150,23 @@ LsaNssSolarisGroupGetgrent(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+#ifdef HAVE_STRUCT_NSS_XBYY_ARGS_RETURNLEN
+            pXbyYArgs->returnlen = strlen(pszBuf);
+#else
+            /* The pXbyYArgs->buf.result was NULL indicating this is NSS2/NSCD
+             * Cast the nss_XbyY_args_t to a NSS2 compatible version.
+             * NOTE: This is only required if we build on Solaris 8
+             */
+            ((nss_XbyY_nss2_args_t *)pXbyYArgs)->returnlen = strlen(pszBuf);
+#endif
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -181,7 +226,23 @@ LsaNssSolarisGroupGetgrgid(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+#ifdef HAVE_STRUCT_NSS_XBYY_ARGS_RETURNLEN
+            pXbyYArgs->returnlen = strlen(pszBuf);
+#else
+            /* The pXbyYArgs->buf.result was NULL indicating this is NSS2/NSCD
+             * Cast the nss_XbyY_args_t to a NSS2 compatible version.
+             * NOTE: This is only required if we build on Solaris 8
+             */
+            ((nss_XbyY_nss2_args_t *)pXbyYArgs)->returnlen = strlen(pszBuf);
+#endif
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
@@ -233,7 +294,23 @@ LsaNssSolarisGroupGetgrnam(
 
     if (ret == NSS_STATUS_SUCCESS)
     {
-        pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        if (pResultGroup)
+        {
+            pXbyYArgs->returnval = pXbyYArgs->buf.result;
+        }
+        else
+        {
+            pXbyYArgs->returnval = pszBuf;
+#ifdef HAVE_STRUCT_NSS_XBYY_ARGS_RETURNLEN
+            pXbyYArgs->returnlen = strlen(pszBuf);
+#else
+            /* The pXbyYArgs->buf.result was NULL indicating this is NSS2/NSCD
+             * Cast the nss_XbyY_args_t to a NSS2 compatible version.
+             * NOTE: This is only required if we build on Solaris 8
+             */
+            ((nss_XbyY_nss2_args_t *)pXbyYArgs)->returnlen = strlen(pszBuf);
+#endif
+        }
     }
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {

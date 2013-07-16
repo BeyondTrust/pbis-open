@@ -1,3 +1,19 @@
+configure()
+{
+    mk_config_header "include/config.h"
+
+    mk_msg_checking "returnlen is a member of nss_XbyY_args_t"
+    if mk_check_type \
+        HEADERDEPS="nss_dbdefs.h" \
+        "((nss_XbyY_args_t*)0)->returnlen"
+    then
+        mk_msg_result "yes"
+        mk_define HAVE_STRUCT_NSS_XBYY_ARGS_RETURNLEN 1
+    else
+        mk_msg_result "no"
+    fi
+}
+
 make()
 {
     NSS_SOURCES="\
