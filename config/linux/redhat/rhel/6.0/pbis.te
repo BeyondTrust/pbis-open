@@ -100,13 +100,10 @@ domain_obj_id_change_exemption(pbis_t)
 files_manage_etc_files(pbis_t)
 files_manage_etc_symlinks(pbis_t)
 files_manage_etc_runtime_files(pbis_t)
-files_relabel_etc_files(pbis_t)
 files_relabelto_home(pbis_t)
 
 selinux_get_fs_mount(pbis_t)
 selinux_validate_context(pbis_t)
-allow pbis_t selinux_config_t:dir { write remove_name add_name };
-allow pbis_t selinux_config_t:file { write rename create unlink setattr };
 
 # We apply security contexts when needed.
 seutil_read_config(pbis_t)
@@ -506,8 +503,6 @@ pbis_client(syslogd_t)
 allow syslogd_t pbis_t:unix_stream_socket {read write};
 allow syslogd_t pbis_var_lib_t:fifo_file { ioctl open getattr append };
 pbis_client(system_cronjob_t)
-allow pbis_t crontab_exec_t:file getattr;
-allow pbis_t system_cron_spool_t:dir getattr;
 pbis_client(system_dbusd_t)
 pbis_client(telnetd_t)
 pbis_client(tftpd_t)
