@@ -188,7 +188,7 @@ cleanup:
 
     if (dwError)
     {
-        if (!GetErrorMessage(dwError, &pszErrMsg))
+        if (!GetErrorMessage(dwError, &pszErrMsg) && pszErrMsg)
         {
             fputs(pszErrMsg, stderr);
             fputs("\n", stderr);
