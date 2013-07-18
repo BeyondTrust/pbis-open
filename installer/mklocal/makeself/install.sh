@@ -621,7 +621,7 @@ package_purge_solaris()
 
 remove_extra_files()
 {
-    for file in /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
+    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
         if [ -d "$file" ]; then
             echo "Removing directory $file"
             /bin/rm -rf "$file"
@@ -897,7 +897,7 @@ do_uninstall()
     fi
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
+    for pkg in $INSTALL_OBSOLETE_PACKAGES $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -907,6 +907,10 @@ do_uninstall()
 
     if [ -n "$pkgList" ]; then
         package_uninstall $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error uninstalling packages $pkgList"
+        fi
     fi
 
     scrub_prefix
@@ -916,9 +920,14 @@ do_purge()
 {
     log_info "Uninstalling packages and purging data files"
 
-    domainjoin_cli=/opt/pbis/bin/domainjoin-cli
+    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
+    else
+        domainjoin_cli=/opt/pbis/bin/domainjoin-cli
+        if [ -x "$domainjoin_cli" ]; then
+            $domainjoin_cli leave > /dev/null 2>&1
+        fi
     fi
 
     if [ "$OS_TYPE" = 'solaris' ]; then
@@ -926,7 +935,7 @@ do_purge()
     fi
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
+    for pkg in $INSTALL_OBSOLETE_PACKAGES $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -941,6 +950,10 @@ do_purge()
 
     if [ -n "$pkgList" ]; then
         package_purge $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error uninstalling packages $pkgList"
+        fi
     fi
 
     remove_extra_files
