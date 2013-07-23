@@ -153,6 +153,9 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=7.0' $VERSIONFILE`" ]; then
             UPGRADING_FROM_7_0=1
             log "Upgrading PowerBroker Identity Services Open 7.0."
+        elif [ -n "`grep '^VERSION=7.1' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_7_1=1
+            log "Upgrading PowerBroker Identity Services Open 7.1."
         fi
     fi
 }
@@ -175,7 +178,7 @@ determine_join_status()
         else
             logfile "System does not appear to be joined according to lw-lsa ad-get-machine account"
         fi
-    elif [ -n "$UPGRADING_FROM_6_5" -o -n "$UPGRADING_FROM_7_0" ]; then
+    elif [ -n "$UPGRADING_FROM_6_5" -o -n "$UPGRADING_FROM_7_0" -o -n "$UPGRADING_FROM_7_1" ]; then
         domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
         if [ -n "$domain" ]; then
             logfile "System is joined to $domain according to lsa ad-get-machine account"
