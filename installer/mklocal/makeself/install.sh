@@ -10,6 +10,104 @@ ERR_PACKAGE_COULD_NOT_INSTALL=2
 ERR_PACKAGE_NOT_INSTALLED=3
 ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
+OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd" 
+DAEMONS="lwsmd"
+INIT_SCRIPT_PREFIX_DIR="/etc/init.d"
+likewise_bindir="/opt/likewise/bin"
+
+solaris_zones()
+{
+    if [ "${OS_TYPE}" != "solaris" ]; then
+        return 0
+    fi
+
+    if [ ! -x /usr/sbin/zoneadm ]; then
+        return 0;
+    fi
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        return 0
+    fi
+
+    for zone in `/usr/sbin/zoneadm list`; do
+        if [ $zone = "global" ]; then
+            continue
+        fi
+
+        zlogin $zone "$@" > /dev/null 2>&1
+
+    done
+}
+
+stop_daemon()
+{
+    if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
+        $INIT_SCRIPT_PREFIX_DIR/$1 status > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            if [ -n "$2" ]; then
+                log_info "Stopping $1 daemon"
+            fi
+            $INIT_SCRIPT_PREFIX_DIR/$1 stop
+            solaris_zones $INIT_SCRIPT_PREFIX_DIR/$1 stop
+        fi
+    fi
+}
+
+stop_daemons()
+{
+    for daemon in ${OBSOLETE_DAEMONS} ${DAEMONS}
+    do
+        stop_daemon $daemon
+    done
+
+    if type svccfg >/dev/null 2>&1; then
+        for daemon in ${OBSOLETE_DAEMONS} ${DAEMONS}; do
+            if svccfg select $daemon 2>/dev/null; then
+                svcadm disable $daemon
+                solaris_zones svcadm disable $daemon
+            fi
+        done
+    fi
+}
+stop_daemons_on_reboot()
+{
+    for daemon in ${DAEMONS} ${OBSOLETE_DAEMONS}; do
+
+        # Ubuntu, Debian, Solaris, and Redhat
+        rm -f /etc/rc?.d/S??${daemon} /etc/rc?.d/K??${daemon}
+
+        # AIX, and Redhat
+        rm -f /etc/rc.d/rc?.d/S??${daemon} /etc/rc.d/rc?.d/K??${daemon}
+
+        # HP-UX, old likewise install
+        rm -f /sbin/rc?.d/S??${daemon} /sbin/rc?.d/K??${daemon}
+        # HP-UX, new likewise install
+        rm -f /sbin/rc?.d/S???${daemon} /sbin/rc?.d/K???${daemon}
+
+        # Solaris 10 and newer
+        if type svccfg >/dev/null 2>&1 && svccfg select $daemon 2>/dev/null; then
+            svcadm disable $daemon > /dev/null 2>&1
+            svccfg delete $daemon > /dev/null 2>&1
+
+            solaris_zones svcadm disable $daemon
+            solaris_zones svccfg delete $daemon
+        fi
+
+        # Simply deleting the init scripts in /etc/rc.d (already happened
+        # through package uninstall) is all that is necessary for FreeBSD.
+
+        # OS X
+        if [ -x /bin/launchctl ] ; then
+            for file in /Library/LaunchDaemons/*${daemon}.plist /System/Library/LaunchDaemons/*${daemon}.plist; do
+                if [ -f $file ]; then
+                    /bin/launchctl unload $file
+                    rm -f $file
+                fi
+            done
+        fi
+    done
+}
+
 log_info()
 {
     echo "$@" 1>&2
@@ -896,6 +994,11 @@ do_uninstall()
         UNINSTALL_EXTRA_PACKAGES="PBISopenu PBISopenr"
     fi
 
+    if [ -d "${likewise_bindir}" ]; then 
+       stop_daemons
+       stop_daemons_on_reboot
+    fi
+
     pkgList=""
     for pkg in $INSTALL_OBSOLETE_PACKAGES $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
@@ -912,7 +1015,6 @@ do_uninstall()
             log_info "Error uninstalling packages $pkgList"
         fi
     fi
-
     scrub_prefix
 }
 
@@ -932,6 +1034,11 @@ do_purge()
 
     if [ "$OS_TYPE" = 'solaris' ]; then
         UNINSTALL_EXTRA_PACKAGES="PBISopenu PBISopenr"
+    fi
+
+    if [ -d "${likewise_bindir}" ]; then
+       stop_daemons
+       stop_daemons_on_reboot
     fi
 
     pkgList=""
