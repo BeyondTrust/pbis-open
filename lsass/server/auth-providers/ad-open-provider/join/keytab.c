@@ -917,6 +917,7 @@ KtKrb5GetSaltingPrincipalA(
     PSTR pszSaltOut = NULL;
     PSTR pszRealm = NULL;
     PSTR pszMachine = NULL;
+    PSTR pszDnsRealm = NULL;
     krb5_context ctx = NULL;
 
     /* Try to query for userPrincipalName attribute first */
@@ -956,6 +957,12 @@ KtKrb5GetSaltingPrincipalA(
     BAIL_ON_LSA_ERROR(dwError);
 
     LwStrToLower(pszMachine);
+
+    /* DNS name of the Realm and lowercased */
+    dwError = LwAllocateString(pszRealm, &pszDnsRealm);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToLower(pszDnsRealm);
     
     if (pszMachine[strlen(pszMachine)-1] == '$')
         pszMachine[strlen(pszMachine)-1] = '\0';
@@ -963,7 +970,7 @@ KtKrb5GetSaltingPrincipalA(
     dwError = LwAllocateStringPrintf(&pszSaltOut,
                                      "host/%s.%s@%s",
                                      pszMachine,
-                                     pszDnsDomainName,
+                                     pszDnsRealm,
                                      pszRealm);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -977,6 +984,7 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pszRealm);
     LW_SAFE_FREE_MEMORY(pszMachine);
+    LW_SAFE_FREE_MEMORY(pszDnsRealm);
 
     return dwError;
 
