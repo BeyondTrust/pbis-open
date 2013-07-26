@@ -96,6 +96,7 @@ DWORD
 LsaPamGetCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
+    PCSTR pcszPasswordPrompt,
     PSTR*         ppszPassword 
     );
 

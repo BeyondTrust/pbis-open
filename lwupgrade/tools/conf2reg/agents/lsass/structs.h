@@ -38,6 +38,8 @@ typedef struct _LSA_PAM_CONFIG
     PSTR pszLogLevel; // DWORD dwLogLevel;
     BOOLEAN bLsaPamDisplayMOTD;
     PSTR pszAccessDeniedMessage;
+    PSTR pszActiveDirectoryPasswordPrompt;
+    PSTR pszLocalPasswordPrompt;
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 typedef struct _LSA_AD_CONFIG {

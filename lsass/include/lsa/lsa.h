@@ -739,6 +739,8 @@ typedef struct _LSA_PAM_CONFIG
     LW_PSTR *ppszSmartCardServices;
     LW_DWORD dwNumSmartCardPromptGecos;
     LW_PSTR *ppszSmartCardPromptGecos;
+    LW_PSTR pszActiveDirectoryPasswordPrompt;
+    LW_PSTR pszLocalPasswordPrompt;
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 /**

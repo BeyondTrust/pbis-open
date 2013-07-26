@@ -111,6 +111,14 @@
     default = sza:"gdm"
     doc = ""
 }
+"ActiveDirectoryPasswordPrompt" = {
+    default = "Password: "
+    doc = "Password prompt for ActiveDirectory users"
+}
+"LocalPasswordPrompt" = {
+    default = "Password: "
+    doc = "Password prompt for local users"
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
 "LoadOrder" = {

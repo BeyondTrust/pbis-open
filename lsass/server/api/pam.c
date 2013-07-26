@@ -103,6 +103,28 @@ LsaSrvGetPamConfig(
             &pszSmartCardPromptGecos,
             &dwSmartCardPromptGecosSize
         },
+        {
+            "ActiveDirectoryPasswordPrompt",
+            TRUE,
+            LwRegTypeString,
+            0,
+            0,
+            NULL,
+            &PamConfig.pszActiveDirectoryPasswordPrompt,
+            NULL
+        },
+        {
+            
+            "LocalPasswordPrompt",
+            TRUE,
+            LwRegTypeString,
+            0,
+            0,
+            NULL,
+            &PamConfig.pszLocalPasswordPrompt,
+            NULL                                                            
+        },
+        
     };
 
     dwError = LwAllocateMemory(

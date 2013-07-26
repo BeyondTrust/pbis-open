@@ -452,6 +452,7 @@ DWORD
 LsaPamGetCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
+    PCSTR pcszPasswordPrompt,
     PSTR*         ppszPassword
     )
 {
@@ -508,7 +509,7 @@ LsaPamGetCurrentPassword(
 
        dwError = LsaPamConverse(
                         pamh,
-                        "Password: ",
+                        pcszPasswordPrompt,
                         PAM_PROMPT_ECHO_OFF,
                         &pszPassword);
        BAIL_ON_LSA_ERROR(dwError);

@@ -172,6 +172,8 @@ LsaFreePamConfig(
     if (pConfig)
     {
         LW_SAFE_FREE_STRING(pConfig->pszAccessDeniedMessage);
+        LW_SAFE_FREE_STRING(pConfig->pszActiveDirectoryPasswordPrompt);
+        LW_SAFE_FREE_STRING(pConfig->pszLocalPasswordPrompt);
         LW_SAFE_FREE_MEMORY(pConfig);
     }
 }

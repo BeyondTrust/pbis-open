@@ -776,6 +776,8 @@ static LWMsgTypeSpec gLsaIPCGetPamConfigSpec[] =
     LWMSG_MEMBER_UINT32(LSA_PAM_CONFIG, dwNumSmartCardPromptGecos),
     LWMSG_MEMBER_POINTER(LSA_PAM_CONFIG, ppszSmartCardPromptGecos, LWMSG_PSTR),
     LWMSG_ATTR_LENGTH_MEMBER(LSA_PAM_CONFIG, dwNumSmartCardPromptGecos),
+    LWMSG_MEMBER_PSTR(LSA_PAM_CONFIG, pszActiveDirectoryPasswordPrompt),
+    LWMSG_MEMBER_PSTR(LSA_PAM_CONFIG, pszLocalPasswordPrompt),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };

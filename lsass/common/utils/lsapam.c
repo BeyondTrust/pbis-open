@@ -26,6 +26,8 @@
 #include "includes.h"
 
 #define LSA_PAM_LOGON_RIGHTS_DENIED_MESSAGE "Access denied"
+#define LSA_PAM_ACTIVE_DIRECTORY_PASSWORD_PROMPT "Active Directory Password: "
+#define LSA_PAM_LOCAL_PASSWORD_PROMPT "Password: "
 
 DWORD
 LsaUtilAllocatePamConfig(
@@ -74,6 +76,16 @@ LsaUtilInitializePamConfig(
                     LSA_PAM_LOGON_RIGHTS_DENIED_MESSAGE,
                     &pConfig->pszAccessDeniedMessage);
     BAIL_ON_LSA_ERROR(dwError);
+    
+    dwError = LwAllocateString(
+                    LSA_PAM_ACTIVE_DIRECTORY_PASSWORD_PROMPT,
+                    &pConfig->pszActiveDirectoryPasswordPrompt);
+    BAIL_ON_LSA_ERROR(dwError);
+    
+    dwError = LwAllocateString(
+                    LSA_PAM_LOCAL_PASSWORD_PROMPT,
+                    &pConfig->pszLocalPasswordPrompt);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
@@ -105,6 +117,8 @@ LsaUtilFreePamConfigContents(
         DWORD i;
 
         LW_SAFE_FREE_STRING(pConfig->pszAccessDeniedMessage);
+        LW_SAFE_FREE_STRING(pConfig->pszActiveDirectoryPasswordPrompt);
+        LW_SAFE_FREE_STRING(pConfig->pszLocalPasswordPrompt);
 
         for (i = 0; i < pConfig->dwNumSmartCardServices; ++i)
         {

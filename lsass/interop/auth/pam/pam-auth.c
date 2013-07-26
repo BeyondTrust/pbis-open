@@ -374,11 +374,32 @@ pam_sm_authenticate(
                 &pszLoginId,
                 TRUE);
             BAIL_ON_LSA_ERROR(dwError);
-
-            dwError = LsaPamGetCurrentPassword(
+            dwError = LsaOpenServer(&hLsaConnection);
+            BAIL_ON_LSA_ERROR(dwError);
+        
+            dwError = LsaFindUserByName(
+                        hLsaConnection,
+                        pszLoginId,
+                        dwUserInfoLevel,
+                        (PVOID*)&pUserInfo);     
+            if(dwError == 0)
+            {
+                dwError = LsaPamGetCurrentPassword(
                 pamh,
                 pPamContext,
+                pConfig->pszActiveDirectoryPasswordPrompt,
                 &pszPassword);
+            }
+            else
+            {
+                dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                pConfig->pszLocalPasswordPrompt,
+                &pszPassword);
+            }
+
+            
             BAIL_ON_LSA_ERROR(dwError);
 
 #if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
@@ -402,23 +423,42 @@ pam_sm_authenticate(
             &pszLoginId,
             TRUE);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            &pszPassword);
+        
+        dwError = LsaOpenServer(&hLsaConnection);
         BAIL_ON_LSA_ERROR(dwError);
-
+        
         if (LsaShouldIgnoreUser(pszLoginId))
         {
             LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
             dwError = LW_ERROR_NOT_HANDLED;
             BAIL_ON_LSA_ERROR(dwError);
         }
-
-        dwError = LsaOpenServer(&hLsaConnection);
+        
+        dwError = LsaFindUserByName(
+                        hLsaConnection,
+                        pszLoginId,
+                        dwUserInfoLevel,
+                        (PVOID*)&pUserInfo);
+                              
+        if(dwError == 0)
+        {
+            dwError = LsaPamGetCurrentPassword(
+            pamh,
+            pPamContext,
+            pConfig->pszActiveDirectoryPasswordPrompt,
+            &pszPassword);
+        }
+        else
+        {
+            dwError = LsaPamGetCurrentPassword(
+            pamh,
+            pPamContext,
+            pConfig->pszLocalPasswordPrompt,
+            &pszPassword);
+        }
+        
         BAIL_ON_LSA_ERROR(dwError);
-
+                
         iPamError = pam_get_item(
                         pamh,
                         PAM_SERVICE,
@@ -517,15 +557,7 @@ pam_sm_authenticate(
          * We know that the username can be found in AD, and that
          * their password matches the AD user's password. At this point, it
          * is very unlikely that we will mangle a local username. 
-         */
-
-        dwError = LsaFindUserByName(
-                        hLsaConnection,
-                        pszLoginId,
-                        dwUserInfoLevel,
-                        (PVOID*)&pUserInfo);
-        BAIL_ON_LSA_ERROR(dwError);
-
+         */       
         if (strcmp(pszLoginId, pUserInfo->pszName))
         {
             LSA_LOG_PAM_INFO("Canonicalizing pam username from '%s' to '%s'\n",

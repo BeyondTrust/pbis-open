@@ -27,6 +27,8 @@
 
 #define LSA_PAM_CONFIG_FILE_PATH CONFIGDIR "/lsassd.conf"
 #define LSA_PAM_LOGON_RIGHTS_DENIED_MESSAGE "Access denied"
+#define LSA_PAM_ACTIVE_DIRECTORY_PASSWORD_PROMPT "Active Directory Password: "
+#define LSA_PAM_LOCAL_PASSWORD_PROMPT "Password: "
 
 typedef struct _LSA_CONFIG_READER_CONTEXT
 {
@@ -70,12 +72,30 @@ LsaPam_SetConfig_UserNotAllowedError(
     PCSTR           pszValue
     );
 
+static
+DWORD
+LsaPam_SetConfig_ActiveDirectoryPasswordPrompt(
+    PLSA_PAM_CONFIG pConfig,
+    PCSTR           pszName,
+    PCSTR           pszValue
+    );
+
+static
+DWORD
+LsaPam_SetConfig_LocalPasswordPrompt(
+    PLSA_PAM_CONFIG pConfig,
+    PCSTR           pszName,
+    PCSTR           pszValue
+    );
+
 
 static PAM_CONFIG_HANDLER gConfigHandlers[] =
 {
     { "log-level",              &LsaPam_SetConfig_LogLevel },
     { "display-motd",           &LsaPam_SetConfig_DisplayMOTD },
-    { "user-not-allowed-error", &LsaPam_SetConfig_UserNotAllowedError }
+    { "user-not-allowed-error", &LsaPam_SetConfig_UserNotAllowedError },
+    { "ActiveDirectory-Password-Prompt", &LsaPam_SetConfig_ActiveDirectoryPasswordPrompt },
+    { "Local-Password-Prompt", &LsaPam_SetConfig_LocalPasswordPrompt },
 };
 
 DWORD
@@ -84,7 +104,9 @@ LsaPamInitializeConfig(
     )
 {
     DWORD dwError = 0;
-    PSTR  pszMessage = NULL;
+    PSTR  pszAccessDeniedMessage = NULL;
+    PSTR  pszActiveDirectoryPasswordPrompt = NULL;
+    PSTR  pszLocalPasswordPrompt = NULL;
 
     memset(pConfig, 0, sizeof(LSA_PAM_CONFIG));
 
@@ -97,11 +119,27 @@ LsaPamInitializeConfig(
 
     dwError = LwAllocateString(
                     LSA_PAM_LOGON_RIGHTS_DENIED_MESSAGE,
-                    &pszMessage);
+                    &pszAccessDeniedMessage);
     BAIL_ON_UP_ERROR(dwError);
-
+       
     LW_SAFE_FREE_STRING(pConfig->pszAccessDeniedMessage);
-    pConfig->pszAccessDeniedMessage = pszMessage;
+    pConfig->pszAccessDeniedMessage = pszAccessDeniedMessage;        
+    
+    dwError = LwAllocateString(
+                    LSA_PAM_ACTIVE_DIRECTORY_PASSWORD_PROMPT,
+                    &pszActiveDirectoryPasswordPrompt);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    LW_SAFE_FREE_STRING(pConfig->pszActiveDirectoryPasswordPrompt);
+    pConfig->pszActiveDirectoryPasswordPrompt = pszActiveDirectoryPasswordPrompt;
+    
+    dwError = LwAllocateString(
+                    LSA_PAM_LOCAL_PASSWORD_PROMPT,
+                    &pszActiveDirectoryPasswordPrompt);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    LW_SAFE_FREE_STRING(pConfig->pszLocalPasswordPrompt);
+    pConfig->pszLocalPasswordPrompt = pszLocalPasswordPrompt;
 
 error:
 
@@ -257,6 +295,72 @@ error:
     goto cleanup;
 }
 
+static
+DWORD
+LsaPam_SetConfig_ActiveDirectoryPasswordPrompt(
+        PLSA_PAM_CONFIG pConfig,
+        PCSTR           pszName,
+        PCSTR           pszValue)
+{
+    DWORD dwError = 0;
+    PSTR pszMessage = NULL;
+    
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszValue))
+    {
+        dwError = LwAllocateString(
+                        pszValue,
+                        &pszMessage);
+        BAIL_ON_UP_ERROR(dwError);
+
+        LW_SAFE_FREE_STRING(pConfig->pszActiveDirectoryPasswordPrompt);
+        pConfig->pszActiveDirectoryPasswordPrompt = pszMessage;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pszMessage);
+
+    goto cleanup;
+    
+}
+
+static
+DWORD
+LsaPam_SetConfig_LocalPasswordPrompt(
+        PLSA_PAM_CONFIG pConfig,
+        PCSTR           pszName,
+        PCSTR           pszValue)
+{
+    DWORD dwError = 0;
+    PSTR pszMessage = NULL;
+    
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszValue))
+    {
+        dwError = LwAllocateString(
+                        pszValue,
+                        &pszMessage);
+        BAIL_ON_UP_ERROR(dwError);
+
+        LW_SAFE_FREE_STRING(pConfig->pszLocalPasswordPrompt);
+        pConfig->pszLocalPasswordPrompt = pszMessage;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pszMessage);
+
+    goto cleanup;
+    
+}
+
 DWORD
 PrintPamConfig(
     FILE *fp,
@@ -280,6 +384,12 @@ PrintPamConfig(
     BAIL_ON_UP_ERROR(dwError);
 
     dwError = UpPrintString(fp, "UserNotAllowedError", pConfig->pszAccessDeniedMessage);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    dwError = UpPrintString(fp, "ActiveDirectoryPasswordPrompt", pConfig->pszActiveDirectoryPasswordPrompt);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    dwError = UpPrintString(fp, "LocalPasswordPrompt", pConfig->pszLocalPasswordPrompt);
     BAIL_ON_UP_ERROR(dwError);
 
     if (fputs("\n", fp) < 0)
