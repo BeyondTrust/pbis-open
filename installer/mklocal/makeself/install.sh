@@ -12,7 +12,6 @@ ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
 OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd" 
 DAEMONS="lwsmd"
-INIT_SCRIPT_PREFIX_DIR="/etc/init.d"
 likewise_bindir="/opt/likewise/bin"
 
 solaris_zones()
@@ -38,6 +37,28 @@ solaris_zones()
 
     done
 }
+
+setup_initdir_likewise()
+{
+    OS_TYPE=`uname`
+    exit_on_error $? "Could not determine OS type"
+    INIT_SCRIPT_PREFIX_DIR="/etc/init.d"
+
+    case "${OS_TYPE}" in
+        AIX)
+            INIT_SCRIPT_PREFIX_DIR="/etc/rc.d/init.d"
+            ;;
+        FreeBSD|"Isilon OneFS")
+            INIT_SCRIPT_PREFIX_DIR="/etc/rc.d"
+            ;;
+        HP-UX)
+            INIT_SCRIPT_PREFIX_DIR="/sbin/init.d"
+            ;;
+        *)
+            ;;
+    esac
+}
+
 
 stop_daemon()
 {
@@ -994,7 +1015,8 @@ do_uninstall()
         UNINSTALL_EXTRA_PACKAGES="PBISopenu PBISopenr"
     fi
 
-    if [ -d "${likewise_bindir}" ]; then 
+    if [ -d "${likewise_bindir}" ]; then
+       setup_initdir_likewise 
        stop_daemons
        stop_daemons_on_reboot
     fi
@@ -1037,6 +1059,7 @@ do_purge()
     fi
 
     if [ -d "${likewise_bindir}" ]; then
+       setup_initdir_likewise
        stop_daemons
        stop_daemons_on_reboot
     fi
