@@ -377,11 +377,21 @@ pam_sm_authenticate(
             dwError = LsaOpenServer(&hLsaConnection);
             BAIL_ON_LSA_ERROR(dwError);
         
-            dwError = LsaFindUserByName(
+            /* avoid the extra Lsa call if all the prompts are the same, just choose
+            the first one
+             */
+            if(!(strcmp(pConfig->pszActiveDirectoryPasswordPrompt, 
+                    pConfig->pszLocalPasswordPrompt) == 0 && 
+                strcmp(pConfig->pszLocalPasswordPrompt, 
+                    pConfig->pszOtherPasswordPrompt) == 0))
+            {
+                dwError = LsaFindUserByName(
                         hLsaConnection,
                         pszLoginId,
                         dwUserInfoLevel,
                         (PVOID*)&pUserInfo);     
+            }
+            
             if(dwError == 0)
             {
                 dwError = LsaPamGetCurrentPassword(
@@ -390,12 +400,20 @@ pam_sm_authenticate(
                 pConfig->pszActiveDirectoryPasswordPrompt,
                 &pszPassword);
             }
-            else
+            else if(getpwnam(pszLoginId) != NULL)
             {
                 dwError = LsaPamGetCurrentPassword(
                 pamh,
                 pPamContext,
                 pConfig->pszLocalPasswordPrompt,
+                &pszPassword);
+            }
+            else
+            {
+                dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                pConfig->pszOtherPasswordPrompt,
                 &pszPassword);
             }
 
@@ -448,12 +466,20 @@ pam_sm_authenticate(
             pConfig->pszActiveDirectoryPasswordPrompt,
             &pszPassword);
         }
-        else
+        else if(getpwnam(pszLoginId) != NULL)
         {
             dwError = LsaPamGetCurrentPassword(
             pamh,
             pPamContext,
             pConfig->pszLocalPasswordPrompt,
+            &pszPassword);
+        }
+        else
+        {
+            dwError = LsaPamGetCurrentPassword(
+            pamh,
+            pPamContext,
+            pConfig->pszOtherPasswordPrompt,
             &pszPassword);
         }
         

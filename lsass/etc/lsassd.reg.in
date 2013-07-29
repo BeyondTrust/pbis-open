@@ -119,6 +119,10 @@
     default = "Password: "
     doc = "Password prompt for local users"
 }
+"OtherPasswordPrompt" = {
+    default = "Password: "
+    doc = "Password prompt for non-local, non-ActiveDirectory users"
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
 "LoadOrder" = {

@@ -40,6 +40,7 @@ typedef struct _LSA_PAM_CONFIG
     PSTR pszAccessDeniedMessage;
     PSTR pszActiveDirectoryPasswordPrompt;
     PSTR pszLocalPasswordPrompt;
+    PSTR pszOtherPasswordPrompt;
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 typedef struct _LSA_AD_CONFIG {

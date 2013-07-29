@@ -88,6 +88,14 @@ LsaPam_SetConfig_LocalPasswordPrompt(
     PCSTR           pszValue
     );
 
+static
+DWORD
+LsaPam_SetConfig_OtherPasswordPrompt(
+    PLSA_PAM_CONFIG pConfig,
+    PCSTR           pszName,
+    PCSTR           pszValue
+    );
+
 
 static PAM_CONFIG_HANDLER gConfigHandlers[] =
 {
@@ -96,6 +104,7 @@ static PAM_CONFIG_HANDLER gConfigHandlers[] =
     { "user-not-allowed-error", &LsaPam_SetConfig_UserNotAllowedError },
     { "ActiveDirectory-Password-Prompt", &LsaPam_SetConfig_ActiveDirectoryPasswordPrompt },
     { "Local-Password-Prompt", &LsaPam_SetConfig_LocalPasswordPrompt },
+    { "Other-Password-Prompt", &LsaPam_SetConfig_OtherPasswordPrompt },
 };
 
 DWORD
@@ -107,6 +116,7 @@ LsaPamInitializeConfig(
     PSTR  pszAccessDeniedMessage = NULL;
     PSTR  pszActiveDirectoryPasswordPrompt = NULL;
     PSTR  pszLocalPasswordPrompt = NULL;
+    PSTR  pszOtherPasswordPrompt = NULL;
 
     memset(pConfig, 0, sizeof(LSA_PAM_CONFIG));
 
@@ -135,11 +145,19 @@ LsaPamInitializeConfig(
     
     dwError = LwAllocateString(
                     LSA_PAM_LOCAL_PASSWORD_PROMPT,
-                    &pszActiveDirectoryPasswordPrompt);
+                    &pszLocalPasswordPrompt);
     BAIL_ON_UP_ERROR(dwError);
     
     LW_SAFE_FREE_STRING(pConfig->pszLocalPasswordPrompt);
     pConfig->pszLocalPasswordPrompt = pszLocalPasswordPrompt;
+    
+    dwError = LwAllocateString(
+                    LSA_PAM_LOCAL_PASSWORD_PROMPT,
+                    &pszOtherPasswordPrompt);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    LW_SAFE_FREE_STRING(pConfig->pszOtherPasswordPrompt);
+    pConfig->pszOtherPasswordPrompt = pszOtherPasswordPrompt;
 
 error:
 
@@ -361,6 +379,39 @@ error:
     
 }
 
+static
+DWORD
+LsaPam_SetConfig_OtherPasswordPrompt(
+        PLSA_PAM_CONFIG pConfig,
+        PCSTR           pszName,
+        PCSTR           pszValue)
+{
+    DWORD dwError = 0;
+    PSTR pszMessage = NULL;
+    
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszValue))
+    {
+        dwError = LwAllocateString(
+                        pszValue,
+                        &pszMessage);
+        BAIL_ON_UP_ERROR(dwError);
+
+        LW_SAFE_FREE_STRING(pConfig->pszOtherPasswordPrompt);
+        pConfig->pszOtherPasswordPrompt = pszMessage;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pszMessage);
+
+    goto cleanup;
+    
+}
+
 DWORD
 PrintPamConfig(
     FILE *fp,
@@ -390,6 +441,9 @@ PrintPamConfig(
     BAIL_ON_UP_ERROR(dwError);
     
     dwError = UpPrintString(fp, "LocalPasswordPrompt", pConfig->pszLocalPasswordPrompt);
+    BAIL_ON_UP_ERROR(dwError);
+    
+    dwError = UpPrintString(fp, "OtherPasswordPrompt", pConfig->pszOtherPasswordPrompt);
     BAIL_ON_UP_ERROR(dwError);
 
     if (fputs("\n", fp) < 0)

@@ -124,6 +124,17 @@ LsaSrvGetPamConfig(
             &PamConfig.pszLocalPasswordPrompt,
             NULL                                                            
         },
+          {
+            
+            "OtherPasswordPrompt",
+            TRUE,
+            LwRegTypeString,
+            0,
+            0,
+            NULL,
+            &PamConfig.pszOtherPasswordPrompt,
+            NULL                                                            
+        },
         
     };
 
