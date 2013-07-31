@@ -495,8 +495,6 @@ LsaJoinDomainInternal(
     PWSTR pwszDnsAttrVal[2] = {0};
     PWSTR pwszSpnAttrName = NULL;
     PWSTR pwszSpnAttrVal[3] = {0};
-    PWSTR pwszDescAttrName = NULL;
-    PWSTR pwszDescAttrVal[2] = {0};
     PWSTR pwszOSNameAttrName = NULL;
     PWSTR pwszOSNameAttrVal[2] = {0};
     PWSTR pwszOSVersionAttrName = NULL;
@@ -702,27 +700,6 @@ LsaJoinDomainInternal(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        if (wc16scmp(pwszMachineName, pwszMachineAcctName))
-        {
-            dwError = LwMbsToWc16s("description",
-                                   &pwszDescAttrName);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            pwszDescAttrVal[0] = LdapAttrValDnsHostName(
-                                     pwszMachineNameLc,
-                                     pwszDnsDomain ?
-                                     pwszDnsDomain :
-                                     pwszDnsDomainName);
-
-            dwError = LsaMachAcctSetAttribute(
-                      pLdap,
-                      pwszDn,
-                      pwszDescAttrName,
-                      (const wchar16_t**)pwszDescAttrVal,
-                      0);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-
         /*
          * Set operating system name and version attributes if specified
          */
@@ -907,8 +884,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszSpnAttrName);
     LW_SAFE_FREE_MEMORY(pwszSpnAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszSpnAttrVal[1]);
-    LW_SAFE_FREE_MEMORY(pwszDescAttrName);
-    LW_SAFE_FREE_MEMORY(pwszDescAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszOSNameAttrName);
     LW_SAFE_FREE_MEMORY(pwszOSNameAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszOSVersionAttrName);
