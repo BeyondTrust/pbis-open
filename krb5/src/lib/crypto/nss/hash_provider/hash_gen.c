@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/hash_provider/hash_gen.c
- *
+/* lib/crypto/nss/hash_provider/hash_gen.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,10 +33,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "k5-int.h"
+#include "crypto_int.h"
 #include "sechash.h"
 #include "nss_gen.h"
-#include "aead.h"
 
 krb5_error_code
 k5_nss_gen_hash(HASH_HashType hashType, const krb5_crypto_iov *data,
@@ -73,4 +72,3 @@ k5_nss_gen_hash(HASH_HashType hashType, const krb5_crypto_iov *data,
 
     return 0;
 }
-

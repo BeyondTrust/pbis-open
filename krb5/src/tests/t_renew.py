@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from k5test import *
 
-realm = K5Realm(create_host=False, start_kadmind=False, get_creds=False)
+realm = K5Realm(create_host=False, get_creds=False)
 
 # Configure the realm to allow renewable tickets and acquire some.
 realm.run_kadminl('modprinc -maxrenewlife "2 days" user')
@@ -13,4 +13,4 @@ realm.kinit(realm.user_princ, flags=['-R'])
 realm.kinit(realm.user_princ, flags=['-R'])
 realm.klist(realm.user_princ)
 
-success('Renewing credentials.')
+success('Renewing credentials')

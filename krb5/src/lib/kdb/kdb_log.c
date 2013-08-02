@@ -19,6 +19,10 @@
 #include "kdb_log.h"
 #include "kdb5int.h"
 
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
+#endif
+
 /*
  * This modules includes all the necessary functions that create and
  * modify the Kerberos principal update and header logs.
@@ -85,7 +89,7 @@ ulog_sync_update(kdb_hlog_t *ulog, kdb_ent_header_t *upd)
 /*
  * Sync memory to disk for the update log header.
  */
-static void
+void
 ulog_sync_header(kdb_hlog_t *ulog)
 {
 
@@ -96,7 +100,7 @@ ulog_sync_header(kdb_hlog_t *ulog)
         /*
          * Couldn't sync to disk, let's panic
          */
-        syslog(LOG_ERR, "ulog_sync_header: could not sync to disk");
+        syslog(LOG_ERR, _("ulog_sync_header: could not sync to disk"));
         abort();
     }
 }
@@ -200,7 +204,7 @@ ulog_add_update(krb5_context context, kdb_incr_update_t *upd)
      * We need to overflow our sno, replicas will do full
      * resyncs once they see their sno > than the masters.
      */
-    if (cur_sno == ULONG_MAX)
+    if (cur_sno == (kdb_sno_t)-1)
         cur_sno = 1;
     else
         cur_sno++;
@@ -532,12 +536,50 @@ error:
     return (retval);
 }
 
+static void
+ulog_reset(kdb_hlog_t *ulog)
+{
+    (void) memset(ulog, 0, sizeof (*ulog));
+    ulog->kdb_hmagic = KDB_ULOG_HDR_MAGIC;
+    ulog->db_version_num = KDB_VERSION;
+    ulog->kdb_state = KDB_STABLE;
+    ulog->kdb_block = ULOG_BLOCK;
+}
+
 /*
  * Map the log file to memory for performance and simplicity.
  *
  * Called by: if iprop_enabled then ulog_map();
  * Assumes that the caller will terminate on ulog_map, hence munmap and
  * closing of the fd are implicitly performed by the caller.
+ *
+ * Semantics for various values of caller:
+ *
+ *  - FKPROPLOG
+ *
+ *    Don't create if it doesn't exist, map as MAP_PRIVATE.
+ *
+ *  - FKPROPD
+ *
+ *    Create and initialize if need be, map as MAP_SHARED.
+ *
+ *  - FKLOAD
+ *
+ *    Create if need be, initialize (even if the ulog was already present), map
+ *    as MAP_SHARED.  (Intended for kdb5_util load of iprop dump.)
+ *
+ *  - FKCOMMAND
+ *
+ *    Create and [re-]initialize if need be, size appropriately, map as
+ *    MAP_SHARED.  (Intended for kdb5_util create and kdb5_util load of
+ *    non-iprop dump.)
+ *
+ *  - FKADMIN
+ *
+ *    Create and [re-]initialize if need be, size appropriately, map as
+ *    MAP_SHARED, and check consistency and recover as necessary.  (Intended
+ *    for kadmind and kadmin.local.)
+ *
  * Returns 0 on success else failure.
  */
 krb5_error_code
@@ -562,7 +604,8 @@ ulog_map(krb5_context context, const char *logname, uint32_t ulogentries,
             return (errno);
         }
 
-        if ((ulogfd = open(logname, O_RDWR+O_CREAT, 0600)) == -1) {
+        ulogfd = open(logname, O_RDWR | O_CREAT, 0600);
+        if (ulogfd == -1) {
             return (errno);
         }
 
@@ -602,7 +645,7 @@ ulog_map(krb5_context context, const char *logname, uint32_t ulogentries,
                                   PROT_READ+PROT_WRITE, MAP_SHARED, ulogfd, 0);
     }
 
-    if ((int)(ulog) == -1) {
+    if (ulog == MAP_FAILED) {
         /*
          * Can't map update log file to memory
          */
@@ -621,28 +664,30 @@ ulog_map(krb5_context context, const char *logname, uint32_t ulogentries,
     log_ctx->ulogentries = ulogentries;
     log_ctx->ulogfd = ulogfd;
 
-    if (ulog->kdb_hmagic != KDB_ULOG_HDR_MAGIC) {
-        if (ulog->kdb_hmagic == 0) {
-            /*
-             * New update log
-             */
-            (void) memset(ulog, 0, sizeof (kdb_hlog_t));
+    retval = ulog_lock(context, KRB5_LOCKMODE_EXCLUSIVE);
+    if (retval)
+        return retval;
 
-            ulog->kdb_hmagic = KDB_ULOG_HDR_MAGIC;
-            ulog->db_version_num = KDB_VERSION;
-            ulog->kdb_state = KDB_STABLE;
-            ulog->kdb_block = ULOG_BLOCK;
-            if (!(caller == FKPROPLOG))
-                ulog_sync_header(ulog);
-        } else {
-            return (KRB5_LOG_CORRUPT);
-        }
+    if (ulog->kdb_hmagic != KDB_ULOG_HDR_MAGIC && ulog->kdb_hmagic != 0) {
+        ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
+        return (KRB5_LOG_CORRUPT);
+    }
+
+    if (ulog->kdb_hmagic != KDB_ULOG_HDR_MAGIC || caller == FKLOAD) {
+        ulog_reset(ulog);
+        if (caller != FKPROPLOG)
+            ulog_sync_header(ulog);
+        ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
+        return (0);
+    }
+
+    if ((caller == FKPROPLOG) || (caller == FKPROPD)) {
+        /* kproplog and kpropd don't need to do anything else. */
+        ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
+        return (0);
     }
 
     if (caller == FKADMIND) {
-        retval = ulog_lock(context, KRB5_LOCKMODE_EXCLUSIVE);
-        if (retval)
-            return retval;
         switch (ulog->kdb_state) {
         case KDB_STABLE:
         case KDB_UNSTABLE:
@@ -651,9 +696,8 @@ ulog_map(krb5_context context, const char *logname, uint32_t ulogentries,
              */
             retval = ulog_check(context, ulog, db_args);
             ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
-            if (retval == KRB5_LOG_CORRUPT) {
+            if (retval)
                 return (retval);
-            }
             break;
         case KDB_CORRUPT:
             ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
@@ -665,32 +709,19 @@ ulog_map(krb5_context context, const char *logname, uint32_t ulogentries,
             ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
             return (KRB5_LOG_ERROR);
         }
-    } else if ((caller == FKPROPLOG) || (caller == FKPROPD)) {
-        /*
-         * kproplog and kpropd don't need to do anything else
-         */
-        return (0);
     }
+    assert(caller == FKADMIND || caller == FKCOMMAND);
 
     /*
      * Reinit ulog if the log is being truncated or expanded after
      * we have circled.
      */
-    retval = ulog_lock(context, KRB5_LOCKMODE_EXCLUSIVE);
-    if (retval)
-        return retval;
     if (ulog->kdb_num != ulogentries) {
         if ((ulog->kdb_num != 0) &&
             ((ulog->kdb_last_sno > ulog->kdb_num) ||
              (ulog->kdb_num > ulogentries))) {
 
-            (void) memset(ulog, 0, sizeof (kdb_hlog_t));
-
-            ulog->kdb_hmagic = KDB_ULOG_HDR_MAGIC;
-            ulog->db_version_num = KDB_VERSION;
-            ulog->kdb_state = KDB_STABLE;
-            ulog->kdb_block = ULOG_BLOCK;
-
+            ulog_reset(ulog);
             ulog_sync_header(ulog);
         }
 
@@ -722,10 +753,9 @@ ulog_get_entries(krb5_context context,          /* input - krb5 lib config */
     XDR                 xdrs;
     kdb_ent_header_t    *indx_log;
     kdb_incr_update_t   *upd;
-    uint_t              indx, count, tdiff;
+    uint_t              indx, count;
     uint32_t            sno;
     krb5_error_code     retval;
-    struct timeval      timestamp;
     kdb_log_context     *log_ctx;
     kdb_hlog_t          *ulog = NULL;
     uint32_t            ulogentries;
@@ -744,15 +774,6 @@ ulog_get_entries(krb5_context context,          /* input - krb5 lib config */
         ulog_handle->ret = UPDATE_ERROR;
         (void) ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
         return (KRB5_LOG_CORRUPT);
-    }
-
-    gettimeofday(&timestamp, NULL);
-
-    tdiff = timestamp.tv_sec - ulog->kdb_last_time.seconds;
-    if (tdiff <= ULOG_IDLE_TIME) {
-        ulog_handle->ret = UPDATE_BUSY;
-        (void) ulog_lock(context, KRB5_LOCKMODE_UNLOCK);
-        return (0);
     }
 
     /*
@@ -901,7 +922,7 @@ ulog_set_role(krb5_context ctx, iprop_role role)
  */
 static int extend_file_to(int fd, uint_t new_size)
 {
-    int current_offset;
+    off_t current_offset;
     static const char zero[512] = { 0, };
 
     current_offset = lseek(fd, 0, SEEK_END);
@@ -911,7 +932,7 @@ static int extend_file_to(int fd, uint_t new_size)
         errno = EINVAL;
         return -1;
     }
-    while (current_offset < new_size) {
+    while (current_offset < (off_t)new_size) {
         int write_size, wrote_size;
         write_size = new_size - current_offset;
         if (write_size > 512)

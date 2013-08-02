@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* tests/verify/kdb5_verify.c */
 /*
- * tests/verify/kdb5_verify.c
- *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Edit a KDC database.
  */
 
 #include "k5-int.h"
@@ -97,7 +93,7 @@ main(argc, argv)
     int num_to_check;
     char principal_string[BUFSIZ];
     char *suffix = 0;
-    size_t suffix_size;
+    size_t suffix_size = 0;
     int depth, errors;
 
     krb5_init_context(&context);
@@ -357,7 +353,6 @@ set_dbname_help(context, pname, dbname)
     krb5_error_code retval;
     krb5_data pwd, scratch;
     char *args[2];
-    krb5_keylist_node *mkeys;
     krb5_db_entry *master_entry;
 
     /* assemble & parse the master key name */
@@ -411,13 +406,11 @@ set_dbname_help(context, pname, dbname)
         return(1);
     }
     if ((retval = krb5_db_fetch_mkey_list(context, master_princ,
-                                          &master_keyblock, IGNORE_VNO,
-                                          &mkeys))) {
+                                          &master_keyblock))) {
         com_err(pname, retval, "while verifying master key");
         (void) krb5_db_fini(context);
         return(1);
     }
-    krb5_db_free_mkey_list(context, mkeys);
     if ((retval = krb5_db_get_principal(context, master_princ, 0,
                                         &master_entry))) {
         com_err(pname, retval, "while retrieving master entry");

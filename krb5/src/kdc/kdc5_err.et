@@ -27,7 +27,7 @@
 
 error_table	kdc5
 
-error_code KDC5_RCSID,		"$Id: kdc5_err.et 11853 1999-09-24 21:20:59Z raeburn $"
+error_code KDC5_RCSID,		"$Id$"
 error_code KDC5_NOPORT,		"No server port found"
 error_code KDC5_NONET,		"Network not initialized"
 error_code KDC5_IO_RESPONSE,	"Short write while sending response"

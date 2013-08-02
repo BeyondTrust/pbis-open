@@ -1,3 +1,4 @@
+#        gssapi/gssapi_err_generic.h \
 make()
 {
     KRB5_HEADERS="\
@@ -6,7 +7,6 @@ make()
         krb5/preauth_plugin.h \
         kdb.h \
         krb5.h \
-        gssapi/gssapi_err_generic.h \
         gssapi/mechglue.h \
         gssapi/gssapi_ext.h \
         gssapi/gssapi_krb5.h \
@@ -31,7 +31,7 @@ make()
         gssapi_krb5:2.2 \
         krb5:3.3 \
         kadm5srv_mit:8.0 \
-        kdb5:5.0 \
+        kdb5:7.0 \
         gssrpc:4.1 \
         krb5support:${SUPPORT_MAJOR}.1"
 
@@ -45,16 +45,15 @@ make()
 
     mk_autotools \
         SOURCEDIR=src \
+        TARGETS="$KRB5_EXTRA_TARGETS"  \
         HEADERDEPS="openssl/opensslv.h" \
         LIBDEPS="ssl crypto" \
         HEADERS="$KRB5_HEADERS" \
-        LIBS="$KRB5_LIBS" \
-        TARGETS="$KRB5_EXTRA_TARGETS" \
+        LIBS="$KRB5_LIBS"
         -- \
         --with-crypto-impl=openssl \
         --enable-shared \
-        --enable-pkinit \
-        --without-tcl
+        --enable-pkinit
 
     unset KRB5_HEADERS KRB5_LIBS KRB5_EXTRA_TARGETS
 }

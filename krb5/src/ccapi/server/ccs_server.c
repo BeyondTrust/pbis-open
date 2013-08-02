@@ -1,6 +1,5 @@
+/* ccapi/server/ccs_server.c */
 /*
- * $Header$
- *
  * Copyright 2006, 2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -399,4 +398,11 @@ cc_int32 ccs_server_send_reply (ccs_pipe_t     in_reply_pipe,
     krb5int_ipc_stream_release (reply);
 
     return cci_check_error (err);
+}
+
+/* ------------------------------------------------------------------------ */
+
+cc_uint64 ccs_server_client_count ()
+{
+    return ccs_client_array_count (g_client_array);
 }

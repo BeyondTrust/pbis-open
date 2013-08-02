@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/locate/python/py-locate.c */
 /*
- * plugins/locate/python/py-locate.c
- *
  * Copyright 2006, 2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -303,6 +302,7 @@ lookup(void *blob, enum locate_service_type svc, const char *realm,
             return -1;
         }
         aihints.ai_socktype = thissocktype;
+        aihints.ai_flags = AI_ADDRCONFIG;
         x = getaddrinfo (hoststr, portstr, &aihints, &airesult);
         if (x != 0)
             continue;

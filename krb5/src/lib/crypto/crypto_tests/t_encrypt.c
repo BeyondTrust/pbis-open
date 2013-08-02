@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/crypto/crypto_tests/t_encrypt.c */
 /*
- * lib/crypto/t_encrypt.c
- *
  * Copyright 2001, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
+ */
+
+/*
  *
  * <<< Description >>>
  */
@@ -31,8 +32,7 @@
  * Some black-box tests of crypto systems.  Make sure that we can decrypt things we encrypt, etc.
  */
 
-#include "k5-int.h"
-#include "etypes.h"
+#include "crypto_int.h"
 #include <stdio.h>
 
 /* What enctypes should we test?*/
@@ -45,10 +45,8 @@ krb5_enctype interesting_enctypes[] = {
     ENCTYPE_ARCFOUR_HMAC_EXP,
     ENCTYPE_AES256_CTS_HMAC_SHA1_96,
     ENCTYPE_AES128_CTS_HMAC_SHA1_96,
-#ifdef CAMELLIA
     ENCTYPE_CAMELLIA128_CTS_CMAC,
     ENCTYPE_CAMELLIA256_CTS_CMAC,
-#endif
     0
 };
 

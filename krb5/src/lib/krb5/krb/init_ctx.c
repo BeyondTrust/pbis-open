@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/init_ctx.c */
 /*
- * lib/krb5/krb/init_ctx.c
- *
  * Copyright 1994,1999,2000, 2002, 2003, 2007, 2008, 2009  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,10 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- * krb5_init_contex()
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -57,10 +53,7 @@
 #include "int-proto.h"
 #include <ctype.h>
 #include "brand.c"
-/* There has to be a better way for windows... */
-#if defined(unix) || defined(__unix) || defined(_XOPEN_UNIX) || TARGET_OS_MAC
 #include "../krb5_libinit.h"
-#endif
 
 /* The des-mdX entries are last for now, because it's easy to
    configure KDCs to issue TGTs with des-mdX keys and then not accept
@@ -70,6 +63,7 @@ static krb5_enctype default_enctype_list[] = {
     ENCTYPE_AES256_CTS_HMAC_SHA1_96, ENCTYPE_AES128_CTS_HMAC_SHA1_96,
     ENCTYPE_DES3_CBC_SHA1,
     ENCTYPE_ARCFOUR_HMAC,
+    ENCTYPE_CAMELLIA128_CTS_CMAC, ENCTYPE_CAMELLIA256_CTS_CMAC,
     ENCTYPE_DES_CBC_CRC, ENCTYPE_DES_CBC_MD5, ENCTYPE_DES_CBC_MD4,
     0
 };
@@ -79,32 +73,66 @@ extern krb5_error_code krb5_vercheck();
 extern void krb5_win_ccdll_load(krb5_context context);
 #endif
 
-static krb5_error_code init_common (krb5_context *, krb5_boolean, krb5_boolean);
+#define DEFAULT_CLOCKSKEW  300 /* 5 min */
+
+static krb5_error_code
+get_integer(krb5_context ctx, const char *name, int def_val, int *int_out)
+{
+    krb5_error_code retval;
+
+    retval = profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
+                                 name, NULL, def_val, int_out);
+    if (retval)
+        TRACE_PROFILE_ERR(ctx, name, KRB5_CONF_LIBDEFAULTS, retval);
+    return retval;
+}
+
+static krb5_error_code
+get_boolean(krb5_context ctx, const char *name, int def_val, int *boolean_out)
+{
+    krb5_error_code retval;
+
+    retval = profile_get_boolean(ctx->profile, KRB5_CONF_LIBDEFAULTS,
+                                 name, NULL, def_val, boolean_out);
+    if (retval)
+        TRACE_PROFILE_ERR(ctx, name, KRB5_CONF_LIBDEFAULTS, retval);
+    return retval;
+}
 
 krb5_error_code KRB5_CALLCONV
 krb5_init_context(krb5_context *context)
 {
+    /*
+     * This is rather silly, but should improve our chances of
+     * retaining the krb5_brand array in the final linked library,
+     * better than a static variable that's unreferenced after
+     * optimization, or even a non-static symbol that's not exported
+     * from the library nor referenced from anywhere else in the
+     * library.
+     *
+     * If someday we grow an API to actually return the string, we can
+     * get rid of this silliness.
+     */
+    int my_zero = (krb5_brand[0] == 0);
 
-    return init_common (context, FALSE, FALSE);
+    return krb5_init_context_profile(NULL, my_zero, context);
 }
 
 krb5_error_code KRB5_CALLCONV
 krb5_init_secure_context(krb5_context *context)
 {
-
-    /* This is to make gcc -Wall happy */
-    if(0) krb5_brand[0] = krb5_brand[0];
-    return init_common (context, TRUE, FALSE);
+    return krb5_init_context_profile(NULL, KRB5_INIT_CONTEXT_SECURE, context);
 }
 
 krb5_error_code
 krb5int_init_context_kdc(krb5_context *context)
 {
-    return init_common (context, FALSE, TRUE);
+    return krb5_init_context_profile(NULL, KRB5_INIT_CONTEXT_KDC, context);
 }
 
-static krb5_error_code
-init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
+krb5_error_code KRB5_CALLCONV
+krb5_init_context_profile(profile_t profile, krb5_flags flags,
+                          krb5_context *context_out)
 {
     krb5_context ctx = 0;
     krb5_error_code retval;
@@ -152,23 +180,33 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
         return retval;
 #endif
 
-    *context = 0;
+    *context_out = NULL;
 
     ctx = calloc(1, sizeof(struct _krb5_context));
     if (!ctx)
         return ENOMEM;
     ctx->magic = KV5M_CONTEXT;
 
-    ctx->profile_secure = secure;
+    ctx->profile_secure = (flags & KRB5_INIT_CONTEXT_SECURE) != 0;
 
-    if ((retval = krb5_os_init_context(ctx, kdc)))
+    if ((retval = krb5_os_init_context(ctx, profile, flags)) != 0)
         goto cleanup;
 
-    retval = profile_get_boolean(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                                 KRB5_CONF_ALLOW_WEAK_CRYPTO, NULL, 0, &tmp);
+    ctx->trace_callback = NULL;
+#ifndef DISABLE_TRACING
+    if (!ctx->profile_secure)
+        krb5int_init_trace(ctx);
+#endif
+
+    retval = get_boolean(ctx, KRB5_CONF_ALLOW_WEAK_CRYPTO, 0, &tmp);
     if (retval)
         goto cleanup;
     ctx->allow_weak_crypto = tmp;
+
+    retval = get_boolean(ctx, KRB5_CONF_IGNORE_ACCEPTOR_HOSTNAME, 0, &tmp);
+    if (retval)
+        goto cleanup;
+    ctx->ignore_acceptor_hostname = tmp;
 
     /* initialize the prng (not well, but passable) */
     if ((retval = krb5_c_random_os_entropy( ctx, 0, NULL)) !=0)
@@ -182,8 +220,7 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
         goto cleanup;
 
     ctx->default_realm = 0;
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS, KRB5_CONF_CLOCKSKEW,
-                        0, 5 * 60, &tmp);
+    get_integer(ctx, KRB5_CONF_CLOCKSKEW, DEFAULT_CLOCKSKEW, &tmp);
     ctx->clockskew = tmp;
 
 #if 0
@@ -195,30 +232,33 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
 
     /* DCE 1.1 and below only support CKSUMTYPE_RSA_MD4 (2)  */
     /* DCE add kdc_req_checksum_type = 2 to krb5.conf */
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                        KRB5_CONF_KDC_REQ_CHECKSUM_TYPE, 0, CKSUMTYPE_RSA_MD5,
-                        &tmp);
+    get_integer(ctx, KRB5_CONF_KDC_REQ_CHECKSUM_TYPE, CKSUMTYPE_RSA_MD5,
+                &tmp);
     ctx->kdc_req_sumtype = tmp;
 
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                        KRB5_CONF_AP_REQ_CHECKSUM_TYPE, 0, 0,
-                        &tmp);
+    get_integer(ctx, KRB5_CONF_AP_REQ_CHECKSUM_TYPE, 0, &tmp);
     ctx->default_ap_req_sumtype = tmp;
 
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                        KRB5_CONF_SAFE_CHECKSUM_TYPE, 0,
-                        CKSUMTYPE_RSA_MD5_DES, &tmp);
+    get_integer(ctx, KRB5_CONF_SAFE_CHECKSUM_TYPE, CKSUMTYPE_RSA_MD5_DES,
+                &tmp);
     ctx->default_safe_sumtype = tmp;
 
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                        KRB5_CONF_KDC_DEFAULT_OPTIONS, 0,
-                        KDC_OPT_RENEWABLE_OK, &tmp);
+    get_integer(ctx, KRB5_CONF_KDC_DEFAULT_OPTIONS, KDC_OPT_RENEWABLE_OK,
+                &tmp);
     ctx->kdc_default_options = tmp;
 #define DEFAULT_KDC_TIMESYNC 1
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS,
-                        KRB5_CONF_KDC_TIMESYNC, 0, DEFAULT_KDC_TIMESYNC,
-                        &tmp);
+    get_integer(ctx, KRB5_CONF_KDC_TIMESYNC, DEFAULT_KDC_TIMESYNC, &tmp);
     ctx->library_options = tmp ? KRB5_LIBOPT_SYNC_KDCTIME : 0;
+
+    retval = profile_get_string(ctx->profile, KRB5_CONF_LIBDEFAULTS,
+                                KRB5_CONF_PLUGIN_BASE_DIR, 0,
+                                DEFAULT_PLUGIN_BASE_DIR,
+                                &ctx->plugin_base_dir);
+    if (retval) {
+        TRACE_PROFILE_ERR(ctx, KRB5_CONF_PLUGIN_BASE_DIR,
+                          KRB5_CONF_LIBDEFAULTS, retval);
+        goto cleanup;
+    }
 
     /*
      * We use a default file credentials cache of 3.  See
@@ -229,18 +269,12 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
      *      DCE 1.1 supports a cache type of 2.
      */
 #define DEFAULT_CCACHE_TYPE 4
-    profile_get_integer(ctx->profile, KRB5_CONF_LIBDEFAULTS, KRB5_CONF_CCACHE_TYPE,
-                        0, DEFAULT_CCACHE_TYPE, &tmp);
+    get_integer(ctx, KRB5_CONF_CCACHE_TYPE, DEFAULT_CCACHE_TYPE, &tmp);
     ctx->fcc_default_format = tmp + 0x0500;
     ctx->prompt_types = 0;
     ctx->use_conf_ktypes = 0;
     ctx->udp_pref_limit = -1;
-    ctx->trace_callback = NULL;
-#ifndef DISABLE_TRACING
-    if (!secure)
-        krb5int_init_trace(ctx);
-#endif
-    *context = ctx;
+    *context_out = ctx;
     return 0;
 
 cleanup:
@@ -273,7 +307,9 @@ krb5_free_context(krb5_context ctx)
         ctx->trace_callback(ctx, NULL, ctx->trace_callback_data);
 #endif
 
+    k5_ccselect_free_context(ctx);
     k5_plugin_free_context(ctx);
+    free(ctx->plugin_base_dir);
 
     ctx->magic = 0;
     free(ctx);
@@ -294,7 +330,7 @@ set_default_etype_var(krb5_context context, const krb5_enctype *etypes,
         /* Empty list passed in. */
         if (etypes[0] == 0)
             return EINVAL;
-        code = krb5int_copy_etypes(etypes, &list);
+        code = k5_copy_etypes(etypes, &list);
         if (code)
             return code;
 
@@ -394,8 +430,9 @@ mod_list(krb5_enctype etype, krb5_boolean add, krb5_boolean allow_weak,
  * parsing profstr.  profstr may be modified during parsing.
  */
 krb5_error_code
-krb5int_parse_enctype_list(krb5_context context, char *profstr,
-                           krb5_enctype *default_list, krb5_enctype **result)
+krb5int_parse_enctype_list(krb5_context context, const char *profkey,
+                           char *profstr, krb5_enctype *default_list,
+                           krb5_enctype **result)
 {
     char *token, *delim = " \t\r\n,", *save = NULL;
     krb5_boolean sel, weak = context->allow_weak_crypto;
@@ -432,14 +469,14 @@ krb5int_parse_enctype_list(krb5_context context, char *profstr,
             mod_list(ENCTYPE_AES128_CTS_HMAC_SHA1_96, sel, weak, &list);
         } else if (strcasecmp(token, "rc4") == 0) {
             mod_list(ENCTYPE_ARCFOUR_HMAC, sel, weak, &list);
-#ifdef CAMELLIA
         } else if (strcasecmp(token, "camellia") == 0) {
             mod_list(ENCTYPE_CAMELLIA256_CTS_CMAC, sel, weak, &list);
             mod_list(ENCTYPE_CAMELLIA128_CTS_CMAC, sel, weak, &list);
-#endif
         } else if (krb5_string_to_enctype(token, &etype) == 0) {
             /* Set a specific enctype. */
             mod_list(etype, sel, weak, &list);
+        } else {
+            TRACE_ENCTYPE_LIST_UNKNOWN(context, profkey, token);
         }
     }
 
@@ -470,7 +507,7 @@ get_profile_etype_list(krb5_context context, krb5_enctype **etypes_ptr,
 
     if (ctx_list) {
         /* Use application defaults. */
-        code = krb5int_copy_etypes(ctx_list, &etypes);
+        code = k5_copy_etypes(ctx_list, &etypes);
         if (code)
             return code;
     } else {
@@ -479,8 +516,8 @@ get_profile_etype_list(krb5_context context, krb5_enctype **etypes_ptr,
                                   profkey, NULL, "DEFAULT", &profstr);
         if (code)
             return code;
-        code = krb5int_parse_enctype_list(context, profstr, default_list,
-                                          &etypes);
+        code = krb5int_parse_enctype_list(context, profkey, profstr,
+                                          default_list, &etypes);
         profile_release_string(profstr);
         if (code)
             return code;
@@ -519,7 +556,7 @@ krb5_get_tgs_ktypes(krb5_context context, krb5_const_principal princ, krb5_encty
         /* This one is set *only* by reading the config file; it's not
            set by the application.  */
         return get_profile_etype_list(context, ktypes,
-                                      KRB5_CONF_DEFAULT_TKT_ENCTYPES, NULL,
+                                      KRB5_CONF_DEFAULT_TGS_ENCTYPES, NULL,
                                       default_enctype_list);
     else
         return get_profile_etype_list(context, ktypes,
@@ -539,52 +576,12 @@ krb5_get_permitted_enctypes(krb5_context context, krb5_enctype **ktypes)
 krb5_boolean
 krb5_is_permitted_enctype(krb5_context context, krb5_enctype etype)
 {
-    krb5_enctype *list, *ptr;
+    krb5_enctype *list;
     krb5_boolean ret;
 
     if (krb5_get_permitted_enctypes(context, &list))
-        return(0);
-
-
-    ret = 0;
-
-    for (ptr = list; *ptr; ptr++)
-        if (*ptr == etype)
-            ret = 1;
-
-    krb5_free_ktypes (context, list);
-
-    return(ret);
-}
-
-/* The same as krb5_is_permitted_enctype, but verifies multiple etype's
- * Returns 0 is either the list of the permitted enc types is not available
- * or all requested etypes are not permitted. Otherwise returns 1.
- */
-
-krb5_boolean
-krb5_is_permitted_enctype_ext ( krb5_context context,
-                                krb5_etypes_permitted *etypes)
-{
-    krb5_enctype *list, *ptr;
-    krb5_boolean ret = 0;
-    int i = 0;
-
-    if (krb5_get_permitted_enctypes(context, &list))
-        return(0);
-
-    for ( i=0; i< etypes->etype_count; i++ )
-    {
-        for (ptr = list; *ptr; ptr++)
-        {
-            if (*ptr == etypes->etype[i])
-            {
-                etypes->etype_ok[i] =  TRUE;
-                ret = 1;
-            }
-        }
-    }
-    krb5_free_ktypes (context, list);
-
-    return(ret);
+        return FALSE;
+    ret = k5_etypes_contains(list, etype);
+    krb5_free_ktypes(context, list);
+    return ret;
 }

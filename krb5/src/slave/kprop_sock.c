@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* slave/kprop_sock.c */
 /*
- * slave/kprop_sock.c
- *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -23,10 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * sockaddr2krbaddr() utility function used by kprop and kpropd.
  */
+
+/* sockaddr2krbaddr() utility function used by kprop and kpropd */
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -42,29 +40,29 @@
  */
 krb5_error_code
 sockaddr2krbaddr(krb5_context context, int family, struct sockaddr *sa,
-		 krb5_address **dest)
+                 krb5_address **dest)
 {
     krb5_address addr;
 
     addr.magic = KV5M_ADDRESS;
     if (family == AF_INET) {
-	struct sockaddr_in *sa4 = (struct sockaddr_in *) sa;
-	addr.addrtype = ADDRTYPE_INET;
-	addr.length = sizeof(sa4->sin_addr);
-	addr.contents = (krb5_octet *) &sa4->sin_addr;
+        struct sockaddr_in *sa4 = (struct sockaddr_in *) sa;
+        addr.addrtype = ADDRTYPE_INET;
+        addr.length = sizeof(sa4->sin_addr);
+        addr.contents = (krb5_octet *) &sa4->sin_addr;
     } else if (family == AF_INET6) {
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *) sa;
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *) sa;
         if (IN6_IS_ADDR_V4MAPPED(&sa6->sin6_addr)) {
             addr.addrtype = ADDRTYPE_INET;
             addr.contents = (krb5_octet *) &sa6->sin6_addr + 12;
             addr.length = 4;
         } else {
-	    addr.addrtype = ADDRTYPE_INET6;
-	    addr.length = sizeof(sa6->sin6_addr);
-	    addr.contents = (krb5_octet *) &sa6->sin6_addr;
-	}
+            addr.addrtype = ADDRTYPE_INET6;
+            addr.length = sizeof(sa6->sin6_addr);
+            addr.contents = (krb5_octet *) &sa6->sin6_addr;
+        }
     } else
-	return KRB5_PROG_ATYPE_NOSUPP;
+        return KRB5_PROG_ATYPE_NOSUPP;
 
     return krb5_copy_addr(context, &addr, dest);
 }

@@ -27,7 +27,7 @@ SOFTWARE.
  *
  * Declarations for Kerberos for Windows MSI setup tools
  *
- * rcsid : $Id: custom.h 20119 2007-10-12 23:08:30Z jaltman $
+ * rcsid : $Id$
  */
 
 #pragma once

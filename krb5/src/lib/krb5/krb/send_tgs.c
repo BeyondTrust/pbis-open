@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/send_tgs.c */
 /*
- * lib/krb5/krb/send_tgs.c
- *
  * Copyright 1990,1991,2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,13 +22,11 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * krb5_send_tgs()
  */
 
 #include "k5-int.h"
 #include "int-proto.h"
+#include "fast.h"
 
 /*
   Constructs a TGS request
@@ -151,6 +148,7 @@ cleanup:
 
 krb5_error_code
 krb5int_make_tgs_request_ext(krb5_context context,
+                             struct krb5int_fast_request_state *fast_state,
                              krb5_flags kdcoptions,
                              const krb5_ticket_times *timestruct,
                              const krb5_enctype *ktypes,
@@ -172,12 +170,11 @@ krb5int_make_tgs_request_ext(krb5_context context,
 {
     krb5_error_code retval;
     krb5_kdc_req tgsreq;
-    krb5_data *scratch, scratch2;
+    krb5_data *scratch, scratch2 = empty_data();
     krb5_ticket *sec_ticket = NULL;
     krb5_ticket *sec_ticket_arr[2];
     krb5_timestamp time_now;
     krb5_pa_data **combined_padata = NULL;
-    krb5_pa_data ap_req_padata;
     krb5_keyblock *local_subkey = NULL;
 
     assert (subkey != NULL);
@@ -213,6 +210,10 @@ krb5int_make_tgs_request_ext(krb5_context context,
         return retval;
     TRACE_SEND_TGS_SUBKEY(context, local_subkey);
 
+    retval = krb5int_fast_tgs_armor(context, fast_state, local_subkey,
+                                    &in_cred->keyblock, NULL, NULL);
+    if (retval)
+        goto cleanup;
     if (authorization_data) {
         /* need to encrypt it in the request */
 
@@ -253,10 +254,10 @@ krb5int_make_tgs_request_ext(krb5_context context,
     } else
         tgsreq.second_ticket = 0;
 
-    ap_req_padata.contents = NULL;
-
     /* encode the body; then checksum it */
-    if ((retval = encode_krb5_kdc_req_body(&tgsreq, &scratch)))
+    retval = krb5int_fast_prep_req_body(context, fast_state, &tgsreq,
+                                        &scratch);
+    if (retval)
         goto cleanup;
 
     /*
@@ -327,7 +328,9 @@ krb5int_make_tgs_request_ext(krb5_context context,
             goto cleanup;
     }
     /* the TGS_REQ is assembled in tgsreq, so encode it */
-    if ((retval = encode_krb5_tgs_req(&tgsreq, &scratch)))
+    retval = krb5int_fast_prep_req(context, fast_state, &tgsreq, &scratch2,
+                                   encode_krb5_tgs_req, &scratch);
+    if (retval)
         goto cleanup;
 
     *request_data = *scratch;

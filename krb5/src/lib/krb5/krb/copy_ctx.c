@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/copy_ctx.c */
 /*
- * lib/krb5/krb/copy_ctx.c
- *
  * Copyright 1994,1999,2000, 2002, 2003, 2007, 2008, 2009  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,10 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- * krb5_copy_contex()
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -83,19 +79,16 @@ krb5_copy_context(krb5_context ctx, krb5_context *nctx_out)
     nctx->prompt_types = NULL;
     nctx->os_context.default_ccname = NULL;
 
-    memset(&nctx->preauth_plugins, 0, sizeof(nctx->preauth_plugins));
-    nctx->preauth_context = NULL;
-
     memset(&nctx->libkrb5_plugins, 0, sizeof(nctx->libkrb5_plugins));
     nctx->vtbl = NULL;
     nctx->locate_fptrs = NULL;
 
     memset(&nctx->err, 0, sizeof(nctx->err));
 
-    ret = krb5int_copy_etypes(ctx->in_tkt_etypes, &nctx->in_tkt_etypes);
+    ret = k5_copy_etypes(ctx->in_tkt_etypes, &nctx->in_tkt_etypes);
     if (ret)
         goto errout;
-    ret = krb5int_copy_etypes(ctx->tgs_etypes, &nctx->tgs_etypes);
+    ret = k5_copy_etypes(ctx->tgs_etypes, &nctx->tgs_etypes);
     if (ret)
         goto errout;
 

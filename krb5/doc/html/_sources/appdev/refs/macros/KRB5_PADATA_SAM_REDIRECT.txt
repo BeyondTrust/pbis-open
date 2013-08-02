@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-SAM-REDIRECT-data:
+
+KRB5_PADATA_SAM_REDIRECT
+========================
+
+..
+.. data:: KRB5_PADATA_SAM_REDIRECT
+..
+
+
+
+
+=============================== ======================
+``KRB5_PADATA_SAM_REDIRECT``       ``21``
+=============================== ======================

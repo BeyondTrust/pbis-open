@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/kadm5/srv/pwqual_hesiod.c */
 /*
- * lib/kadm5/srv/pwqual_hesiod.c
- *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * Password quality module to check passwords against GECOS fields of Hesiod
  * passwd information, if the tree is compiled with Hesiod support.
  */
@@ -111,7 +111,8 @@ hesiod_check(krb5_context context, krb5_pwqual_moddata data,
         ent = hes_getpwnam(cp);
         if (ent && ent->pw_gecos && str_check_gecos(ent->pw_gecos, password)) {
             krb5_set_error_message(context, KADM5_PASS_Q_DICT,
-                                   "Password maynot match user information.");
+                                   _("Password may not match user "
+                                     "information."));
             return KADM5_PASS_Q_DICT;
         }
     }

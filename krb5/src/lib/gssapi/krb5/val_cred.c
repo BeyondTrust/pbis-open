@@ -21,15 +21,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
 #include "gssapiP_krb5.h"
 
-/*
- * Check to see whether or not a GSSAPI krb5 credential is valid.  If
- * it is not, return an error.
- */
+/* Check to see whether or not a GSSAPI krb5 credential is valid.  If
+ * it is not, return an error. */
 
 OM_uint32
 krb5_gss_validate_cred_1(OM_uint32 *minor_status, gss_cred_id_t cred_handle,
@@ -39,11 +36,6 @@ krb5_gss_validate_cred_1(OM_uint32 *minor_status, gss_cred_id_t cred_handle,
     krb5_error_code code;
     krb5_principal princ;
 
-    if (!kg_validate_cred_id(cred_handle)) {
-        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
-        return(GSS_S_CALL_BAD_STRUCTURE|GSS_S_DEFECTIVE_CREDENTIAL);
-    }
-
     cred = (krb5_gss_cred_id_t) cred_handle;
 
     code = k5_mutex_lock(&cred->lock);
@@ -52,14 +44,13 @@ krb5_gss_validate_cred_1(OM_uint32 *minor_status, gss_cred_id_t cred_handle,
         return GSS_S_FAILURE;
     }
 
-    if (cred->ccache) {
+    if (cred->ccache && cred->expire != 0) {
         if ((code = krb5_cc_get_principal(context, cred->ccache, &princ))) {
             k5_mutex_unlock(&cred->lock);
             *minor_status = code;
             return(GSS_S_DEFECTIVE_CREDENTIAL);
         }
-        if (!cred->proxy_cred &&
-            !krb5_principal_compare(context, princ, cred->name->princ)) {
+        if (!krb5_principal_compare(context, princ, cred->name->princ)) {
             k5_mutex_unlock(&cred->lock);
             *minor_status = KG_CCACHE_NOMATCH;
             return(GSS_S_DEFECTIVE_CREDENTIAL);

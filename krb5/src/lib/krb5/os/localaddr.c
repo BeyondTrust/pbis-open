@@ -1,9 +1,8 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/localaddr.c */
 /*
- * lib/krb5/os/localaddr.c
- *
- * Copyright 1990,1991,2000,2001,2002,2004,2007,2008 by the Massachusetts Institute of Technology.
- * All Rights Reserved.
+ * Copyright 1990,1991,2000,2001,2002,2004,2007,2008 by the Massachusetts
+ * Institute of Technology.  All Rights Reserved.
  *
  * Export of this software from the United States of America may
  *   require a specific license from the United States Government.
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * Return the protocol addresses supported by this host.
  * Exports from this file:
  *   krb5int_foreach_localaddr (does callbacks)
@@ -114,7 +114,7 @@
  */
 
 
-#if defined(__linux__) && defined(KRB5_USE_INET6) && !defined(HAVE_IFADDRS_H)
+#if defined(__linux__) && !defined(HAVE_IFADDRS_H)
 #define LINUX_IPV6_HACK
 #endif
 
@@ -183,12 +183,10 @@ is_loopback_address(struct sockaddr *sa)
         struct sockaddr_in *s4 = (struct sockaddr_in *)sa;
         return s4->sin_addr.s_addr == htonl(INADDR_LOOPBACK);
     }
-#ifdef KRB5_USE_INET6
     case AF_INET6: {
         struct sockaddr_in6 *s6 = (struct sockaddr_in6 *)sa;
         return IN6_IS_ADDR_LOOPBACK(&s6->sin6_addr);
     }
-#endif
     default:
         return 0;
     }
@@ -1123,9 +1121,7 @@ count_addrs (void *P_data, struct sockaddr *a)
     struct localaddr_data *data = P_data;
     switch (a->sa_family) {
     case AF_INET:
-#ifdef KRB5_USE_INET6
     case AF_INET6:
-#endif
 #ifdef KRB5_USE_NS
     case AF_XNS:
 #endif
@@ -1197,7 +1193,6 @@ add_addr (void *P_data, struct sockaddr *a)
             data->mem_err++;
         break;
 
-#ifdef KRB5_USE_INET6
     case AF_INET6:
     {
         const struct sockaddr_in6 *in = (const struct sockaddr_in6 *) a;
@@ -1211,7 +1206,6 @@ add_addr (void *P_data, struct sockaddr *a)
             data->mem_err++;
         break;
     }
-#endif /* KRB5_USE_INET6 */
 #endif /* netinet/in.h */
 
 #ifdef KRB5_USE_NS
@@ -1414,7 +1408,6 @@ get_localaddrs (krb5_context context, krb5_address ***addr, int use_profile)
 #endif
                 break;
             }
-#ifdef KRB5_USE_INET6
             case ADDRTYPE_INET6:
             {
                 struct sockaddr_in6 *sin6p = ss2sin6 (&ss);
@@ -1425,7 +1418,6 @@ get_localaddrs (krb5_context context, krb5_address ***addr, int use_profile)
 #endif
                 break;
             }
-#endif
             default:
                 ss2sa(&ss)->sa_family = 0;
                 break;

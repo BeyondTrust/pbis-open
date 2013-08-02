@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/str_conv.c - Convert between strings and krb5 data types */
 /*
- * lib/kadm/str_conv.c
- *
  * Copyright 1995, 1999, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- */
-
-/*
- * str_conv.c - Convert between strings and Kerberos internal data.
  */
 
 /*
@@ -75,9 +69,6 @@ static const struct salttype_lookup_entry salttype_table[] = {
     { KRB5_KDB_SALTTYPE_ONLYREALM,  "onlyrealm",    "Version 5 - Realm Only" },
     { KRB5_KDB_SALTTYPE_SPECIAL,    "special",      "Special" },
     { KRB5_KDB_SALTTYPE_AFS3,       "afs3",         "AFS version 3"    },
-#if PKINIT_APPLE
-    { KRB5_KDB_SALTTYPE_CERTHASH,   "certhash",     "PKINIT Cert Hash"  }
-#endif /* PKINIT_APPLE */
 };
 static const int salttype_table_nents = sizeof(salttype_table)/
     sizeof(salttype_table[0]);
@@ -248,7 +239,12 @@ krb5_timestamp_to_sfstring(krb5_timestamp timestamp, char *buffer, size_t buflen
         "%c",                   /* Default locale-dependent date and time */
         "%d %b %Y %T",          /* dd mon yyyy hh:mm:ss                 */
         "%x %X",                /* locale-dependent short format        */
-        "%d/%m/%Y %R"           /* dd/mm/yyyy hh:mm                     */
+        "%x %T",                /* locale-dependent date + hh:mm:ss     */
+        "%x %R",                /* locale-dependent date + hh:mm        */
+        "%Y-%m-%dT%H:%M:%S",    /* ISO 8601 date + time                 */
+        "%Y-%m-%dT%H:%M",       /* ISO 8601 date + hh:mm                */
+        "%Y%m%d%H%M%S",         /* ISO 8601 date + time, basic          */
+        "%Y%m%d%H%M"            /* ISO 8601 date + hh:mm, basic         */
     };
     static const unsigned int sftime_format_table_nents =
         sizeof(sftime_format_table)/sizeof(sftime_format_table[0]);
@@ -289,17 +285,6 @@ krb5_deltat_to_string(krb5_deltat deltat, char *buffer, size_t buflen)
 {
     int                 days, hours, minutes, seconds;
     krb5_deltat         dt;
-
-    /*
-     * We want something like ceil(log10(2**(nbits-1))) + 1.  That log
-     * value is log10(2)*(nbits-1) or log10(2**8)*(nbits-1)/8.  So,
-     * 2.4... is log10(256), rounded up.  Add one to handle leading
-     * minus, and one more to force int cast to round the value up.
-     * This doesn't include room for a trailing nul.
-     *
-     * This will break if bytes are more than 8 bits.
-     */
-#define MAX_CHARS_FOR_INT_TYPE(TYPE)    ((int) (2 + 2.408241 * sizeof (TYPE)))
 
     days = (int) (deltat / (24*3600L));
     dt = deltat % (24*3600L);

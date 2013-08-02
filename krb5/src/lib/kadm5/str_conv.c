@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/kadm5/str_conv.c */
 /*
- * lib/kadm/str_conv.c
- *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,12 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
-/*
- * str_conv.c - Convert between strings and Kerberos internal data.
- */
+/* Convert between strings and Kerberos internal data. */
 
 /*
  * Table of contents:
@@ -81,22 +77,22 @@ static const char flags_pwsvc_in[]      = "pwservice";
 static const char flags_md5_in[]        = "md5";
 static const char flags_ok_to_auth_as_delegate_in[] = "ok-to-auth-as-delegate";
 static const char flags_no_auth_data_required_in[] = "no-auth-data-required";
-static const char flags_pdate_out[]     = "Not Postdateable";
-static const char flags_fwd_out[]       = "Not Forwardable";
-static const char flags_tgtbased_out[]  = "No TGT-based requests";
-static const char flags_renew_out[]     = "Not renewable";
-static const char flags_proxy_out[]     = "Not proxiable";
-static const char flags_dup_skey_out[]  = "No DUP_SKEY requests";
-static const char flags_tickets_out[]   = "All Tickets Disallowed";
-static const char flags_preauth_out[]   = "Preauthentication required";
-static const char flags_hwauth_out[]    = "HW authentication required";
-static const char flags_ok_as_delegate_out[]    = "OK as Delegate";
-static const char flags_pwchange_out[]  = "Password Change required";
-static const char flags_service_out[]   = "Service Disabled";
-static const char flags_pwsvc_out[]     = "Password Changing Service";
-static const char flags_md5_out[]       = "RSA-MD5 supported";
-static const char flags_ok_to_auth_as_delegate_out[] = "Protocol transition with delegation allowed";
-static const char flags_no_auth_data_required_out[] = "No authorization data required";
+static const char flags_pdate_out[]     = N_("Not Postdateable");
+static const char flags_fwd_out[]       = N_("Not Forwardable");
+static const char flags_tgtbased_out[]  = N_("No TGT-based requests");
+static const char flags_renew_out[]     = N_("Not renewable");
+static const char flags_proxy_out[]     = N_("Not proxiable");
+static const char flags_dup_skey_out[]  = N_("No DUP_SKEY requests");
+static const char flags_tickets_out[]   = N_("All Tickets Disallowed");
+static const char flags_preauth_out[]   = N_("Preauthentication required");
+static const char flags_hwauth_out[]    = N_("HW authentication required");
+static const char flags_ok_as_delegate_out[]    = N_("OK as Delegate");
+static const char flags_pwchange_out[]  = N_("Password Change required");
+static const char flags_service_out[]   = N_("Service Disabled");
+static const char flags_pwsvc_out[]     = N_("Password Changing Service");
+static const char flags_md5_out[]       = N_("RSA-MD5 supported");
+static const char flags_ok_to_auth_as_delegate_out[] = N_("Protocol transition with delegation allowed");
+static const char flags_no_auth_data_required_out[] = N_("No authorization data required");
 static const char flags_default_neg[]   = "-";
 static const char flags_default_sep[]   = " ";
 
@@ -193,7 +189,7 @@ krb5_flags_to_string(flags, sep, buffer, buflen)
         if (flags & flags_table[i].fl_flags) {
             if (krb5int_buf_len(&buf) > 0)
                 krb5int_buf_add(&buf, sepstring);
-            krb5int_buf_add(&buf, flags_table[i].fl_output);
+            krb5int_buf_add(&buf, _(flags_table[i].fl_output));
             /* Keep track of what we matched */
             pflags |= flags_table[i].fl_flags;
         }
@@ -255,17 +251,13 @@ krb5_keysalt_is_present(ksaltlist, nksalts, enctype, salttype)
  *                                of key/salt tuples.
  */
 krb5_error_code
-krb5_string_to_keysalts(string, tupleseps, ksaltseps, dups, ksaltp, nksaltp)
-    char                *string;
-    const char          *tupleseps;
-    const char          *ksaltseps;
-    krb5_boolean        dups;
-    krb5_key_salt_tuple **ksaltp;
-    krb5_int32          *nksaltp;
+krb5_string_to_keysalts(const char *string, const char *tupleseps,
+                        const char *ksaltseps, krb5_boolean dups,
+                        krb5_key_salt_tuple **ksaltp, krb5_int32 *nksaltp)
 {
     krb5_error_code     kret;
-    char                *kp, *sp, *ep;
-    char                sepchar, trailchar;
+    char                *dup_string, *kp, *sp, *ep;
+    char                sepchar = 0, trailchar = 0;
     krb5_enctype        ktype;
     krb5_int32          stype;
     krb5_key_salt_tuple *savep;
@@ -275,7 +267,10 @@ krb5_string_to_keysalts(string, tupleseps, ksaltseps, dups, ksaltp, nksaltp)
     size_t              len;
 
     kret = 0;
-    kp = string;
+    dup_string = strdup(string);
+    if (dup_string == NULL)
+        return ENOMEM;
+    kp = dup_string;
     tseplist = (tupleseps) ? tupleseps : default_tupleseps;
     ksseplist = (ksaltseps) ? ksaltseps : default_ksaltseps;
     while (kp) {
@@ -350,8 +345,10 @@ krb5_string_to_keysalts(string, tupleseps, ksaltseps, dups, ksaltp, nksaltp)
                 break;
             }
         }
-        if (kret)
+        if (kret) {
+            free(dup_string);
             return kret;
+        }
         if (sp)
             sp[-1] = sepchar;
         if (ep)
@@ -373,6 +370,7 @@ krb5_string_to_keysalts(string, tupleseps, ksaltseps, dups, ksaltp, nksaltp)
             if (!*kp) kp = NULL;
         }
     } /* while kp */
+    free(dup_string);
     return(kret);
 }
 

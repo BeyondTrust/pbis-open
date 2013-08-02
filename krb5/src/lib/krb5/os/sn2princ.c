@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/sn2princ.c */
 /*
- * lib/krb5/os/sn2princ.c
- *
  * Copyright 1991,2002 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Convert a hostname and service name to a principal in the "standard"
- * form.
  */
+
+/* Convert a hostname and service name to a principal in the "standard"
+ * form. */
 
 #include "k5-int.h"
 #include "os-proto.h"
@@ -70,10 +68,7 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
     register char *cp;
     char localname[MAXHOSTNAMELEN];
 
-#ifdef DEBUG_REFERRALS
-    printf("krb5_sname_to_principal(host=%s, sname=%s, type=%d)\n",hostname,sname,type);
-    printf("      name types: 0=unknown, 3=srv_host\n");
-#endif
+    TRACE_SNAME_TO_PRINCIPAL(context, hostname, sname, type);
 
     if ((type == KRB5_NT_UNKNOWN) ||
         (type == KRB5_NT_SRV_HST)) {
@@ -92,7 +87,7 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
         /* copy the hostname into non-volatile storage */
 
         if (type == KRB5_NT_SRV_HST) {
-            struct addrinfo *ai, hints;
+            struct addrinfo *ai = NULL, hints;
             int err;
             char hnamebuf[NI_MAXHOST];
 
@@ -107,28 +102,19 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
                hostnames associated.  */
 
             memset(&hints, 0, sizeof(hints));
-            hints.ai_family = AF_INET;
             hints.ai_flags = AI_CANONNAME;
-        try_getaddrinfo_again:
             err = getaddrinfo(hostname, 0, &hints, &ai);
             if (err) {
-#ifdef DEBUG_REFERRALS
-                printf("sname_to_princ: probably punting due to bad hostname of %s\n",hostname);
-#endif
-                if (hints.ai_family == AF_INET) {
-                    /* Just in case it's an IPv6-only name.  */
-                    hints.ai_family = 0;
-                    goto try_getaddrinfo_again;
-                }
-                return KRB5_ERR_BAD_HOSTNAME;
+                TRACE_SNAME_TO_PRINCIPAL_NOCANON(context, hostname);
             }
-            remote_host = strdup(ai->ai_canonname ? ai->ai_canonname : hostname);
+            remote_host = strdup((ai && ai->ai_canonname) ? ai->ai_canonname : hostname);
             if (!remote_host) {
-                freeaddrinfo(ai);
+                if(ai)
+                    freeaddrinfo(ai);
                 return ENOMEM;
             }
-
-            if (maybe_use_reverse_dns(context, DEFAULT_RDNS_LOOKUP)) {
+            TRACE_SNAME_TO_PRINCIPAL_CANON(context, remote_host);
+            if ((!err) && maybe_use_reverse_dns(context, DEFAULT_RDNS_LOOKUP)) {
                 /*
                  * Do a reverse resolution to get the full name, just in
                  * case there's some funny business going on.  If there
@@ -156,9 +142,7 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
         }
         if (!remote_host)
             return ENOMEM;
-#ifdef DEBUG_REFERRALS
-        printf("sname_to_princ: hostname <%s> after rdns processing\n",remote_host);
-#endif
+        TRACE_SNAME_TO_PRINCIPAL_RDNS(context, remote_host);
 
         if (type == KRB5_NT_SRV_HST)
             for (cp = remote_host; *cp; cp++)
@@ -182,10 +166,6 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
             return retval;
         }
 
-#ifdef DEBUG_REFERRALS
-        printf("sname_to_princ:  realm <%s> after krb5_get_host_realm\n",hrealms[0]);
-#endif
-
         if (!hrealms[0]) {
             free(remote_host);
             free(hrealms);
@@ -199,12 +179,7 @@ krb5_sname_to_principal(krb5_context context, const char *hostname, const char *
         if (retval == 0)
             krb5_princ_type(context, *ret_princ) = type;
 
-#ifdef DEBUG_REFERRALS
-        printf("krb5_sname_to_principal returning\n");
-        printf("realm: <%s>, sname: <%s>, remote_host: <%s>\n",
-               realm,sname,remote_host);
-        krb5int_dbgref_dump_principal("krb5_sname_to_principal",*ret_princ);
-#endif
+        TRACE_SNAME_TO_PRINCIPAL_RETURN(context, *ret_princ);
 
         free(remote_host);
 

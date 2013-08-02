@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/authdata/greet_client/greet.c - Sample authorization data plugin */
 /*
- * plugins/authdata/greet_client/
- *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  *
  * Export of this software from the United States of America may
@@ -22,9 +21,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Sample authorization data plugin
  */
 
 #include <string.h>
@@ -226,6 +222,9 @@ greet_set_attribute(krb5_context kcontext,
     struct greet_context *greet = (struct greet_context *)request_context;
     krb5_data data;
     krb5_error_code code;
+
+    if (!data_eq(*attribute, greet_attr))
+        return ENOENT;
 
     if (greet->greeting.data != NULL)
         return EEXIST;

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* kdc/kdc_authdata.c - Authorization data routines for the KDC */
 /*
- * kdc/kdc_authdata.c
- *
  * Copyright (C) 2007 Apple Inc.  All Rights Reserved.
  * Copyright (C) 2008, 2009 by the Massachusetts Institute of Technology.
  *
@@ -23,8 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- * AuthorizationData routines for the KDC.
  */
 
 #include "k5-int.h"
@@ -250,9 +247,6 @@ load_authdata_plugins(krb5_context context)
     module_count += sizeof(static_authdata_systems)
         / sizeof(static_authdata_systems[0]);
 
-    module_count += sizeof(static_authdata_systems)
-	/ sizeof(static_authdata_systems[0]);
-
     /* Build the complete list of supported authdata options, and
      * leave room for a terminator entry.
      */
@@ -294,12 +288,10 @@ load_authdata_plugins(krb5_context context)
                 ((initerr = (*server_init_proc)(context, &pctx)) != 0)) {
                 const char *emsg;
                 emsg = krb5_get_error_message(context, initerr);
-                if (emsg) {
-                    krb5_klog_syslog(LOG_ERR,
-                                     "authdata %s failed to initialize: %s",
-                                     ftable->name, emsg);
-                    krb5_free_error_message(context, emsg);
-                }
+                krb5_klog_syslog(LOG_ERR,
+                                 _("authdata %s failed to initialize: %s"),
+                                 ftable->name, emsg);
+                krb5_free_error_message(context, emsg);
                 memset(&authdata_systems[k], 0, sizeof(authdata_systems[k]));
 
                 continue;
@@ -332,12 +324,10 @@ load_authdata_plugins(krb5_context context)
                 ((initerr = (*server_init_proc)(context, &pctx)) != 0)) {
                 const char *emsg;
                 emsg = krb5_get_error_message(context, initerr);
-                if (emsg) {
-                    krb5_klog_syslog(LOG_ERR,
-                                     "authdata %s failed to initialize: %s",
-                                     ftable->name, emsg);
-                    krb5_free_error_message(context, emsg);
-                }
+                krb5_klog_syslog(LOG_ERR,
+                                 _("authdata %s failed to initialize: %s"),
+                                 ftable->name, emsg);
+                krb5_free_error_message(context, emsg);
                 memset(&authdata_systems[k], 0, sizeof(authdata_systems[k]));
 
                 continue;
@@ -360,22 +350,6 @@ load_authdata_plugins(krb5_context context)
             continue;
         assert(static_authdata_systems[i].init == NULL);
         authdata_systems[k++] = static_authdata_systems[i];
-    }
-
-    /* Add the locally-supplied mechanisms to the dynamic list first. */
-    for (i = 0;
-	 i < sizeof(static_authdata_systems) / sizeof(static_authdata_systems[0]);
-	 i++) {
-	authdata_systems[k] = static_authdata_systems[i];
-	/* Try to initialize the authdata system.  If it fails, we'll remove it
-	 * from the list of systems we'll be using. */
-	server_init_proc = static_authdata_systems[i].init;
-	if ((server_init_proc != NULL) &&
-	    ((*server_init_proc)(context, &authdata_systems[k].plugin_context) != 0)) {
-	    memset(&authdata_systems[k], 0, sizeof(authdata_systems[k]));
-	    continue;
-	}
-	k++;
     }
 
     n_authdata_systems = k;
@@ -808,9 +782,8 @@ handle_authdata (krb5_context context,
             const char *emsg;
 
             emsg = krb5_get_error_message (context, code);
-            krb5_klog_syslog (LOG_INFO,
-                              "authdata (%s) handling failure: %s",
-                              asys->name, emsg);
+            krb5_klog_syslog(LOG_INFO, _("authdata (%s) handling failure: %s"),
+                             asys->name, emsg);
             krb5_free_error_message (context, emsg);
 
             if (asys->flags & AUTHDATA_FLAG_CRITICAL)
@@ -929,11 +902,8 @@ verify_ad_signedpath(krb5_context context,
     *pdelegated = NULL;
     *path_is_signed = FALSE;
 
-    code = krb5int_find_authdata(context,
-                                 enc_tkt_part->authorization_data,
-                                 NULL,
-                                 KRB5_AUTHDATA_SIGNTICKET,
-                                 &sp_authdata);
+    code = krb5_find_authdata(context, enc_tkt_part->authorization_data, NULL,
+                              KRB5_AUTHDATA_SIGNTICKET, &sp_authdata);
     if (code != 0)
         goto cleanup;
 

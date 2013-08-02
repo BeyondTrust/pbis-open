@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/accessor.c */
 /*
- * lib/krb5/os/accessor.c
- *
  * Copyright 1990, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
 #include "k5-int.h"
@@ -52,24 +50,10 @@ krb5int_accessor(krb5int_access *internals, krb5_int32 version)
 #define S(FIELD, VAL)   internals_temp.FIELD = VAL
             krb5int_access internals_temp;
 #endif
-            S (arcfour_gsscrypt, krb5int_arcfour_gsscrypt),
-            S (free_addrlist, krb5int_free_addrlist),
             S (auth_con_get_subkey_enctype, krb5_auth_con_get_subkey_enctype),
-            S (sendto_udp, &krb5int_sendto),
-            S (add_host_to_list, krb5int_add_host_to_list),
 
-#ifdef KRB5_DNS_LOOKUP
-#define SC(FIELD, VAL)  S(FIELD, VAL)
-#else /* disable */
-#define SC(FIELD, VAL)  S(FIELD, 0)
-#endif
-            SC (make_srv_query_realm, krb5int_make_srv_query_realm),
-            SC (free_srv_dns_data, krb5int_free_srv_dns_data),
-            SC (use_dns_kdc, _krb5_use_dns_kdc),
-#undef SC
             S (clean_hostname, krb5int_clean_hostname),
 
-            S (mandatory_cksumtype, krb5int_c_mandatory_cksumtype),
 #ifndef LEAN_CLIENT
 #define SC(FIELD, VAL)  S(FIELD, VAL)
 #else /* disable */
@@ -102,38 +86,23 @@ krb5int_accessor(krb5int_access *internals, krb5_int32 version)
             SC (encode_krb5_kdc_dh_key_info, encode_krb5_kdc_dh_key_info),
             SC (encode_krb5_reply_key_pack, encode_krb5_reply_key_pack),
             SC (encode_krb5_reply_key_pack_draft9, encode_krb5_reply_key_pack_draft9),
-            SC (encode_krb5_typed_data, encode_krb5_typed_data),
             SC (encode_krb5_td_trusted_certifiers, encode_krb5_td_trusted_certifiers),
             SC (encode_krb5_td_dh_parameters, encode_krb5_td_dh_parameters),
             SC (decode_krb5_pa_pk_as_req, decode_krb5_pa_pk_as_req),
             SC (decode_krb5_pa_pk_as_req_draft9, decode_krb5_pa_pk_as_req_draft9),
             SC (decode_krb5_pa_pk_as_rep, decode_krb5_pa_pk_as_rep),
-            SC (decode_krb5_pa_pk_as_rep_draft9, decode_krb5_pa_pk_as_rep_draft9),
             SC (decode_krb5_auth_pack, decode_krb5_auth_pack),
             SC (decode_krb5_auth_pack_draft9, decode_krb5_auth_pack_draft9),
             SC (decode_krb5_kdc_dh_key_info, decode_krb5_kdc_dh_key_info),
             SC (decode_krb5_principal_name, decode_krb5_principal_name),
             SC (decode_krb5_reply_key_pack, decode_krb5_reply_key_pack),
             SC (decode_krb5_reply_key_pack_draft9, decode_krb5_reply_key_pack_draft9),
-            SC (decode_krb5_typed_data, decode_krb5_typed_data),
             SC (decode_krb5_td_trusted_certifiers, decode_krb5_td_trusted_certifiers),
             SC (decode_krb5_td_dh_parameters, decode_krb5_td_dh_parameters),
-            SC (decode_krb5_as_req, decode_krb5_as_req),
             SC (encode_krb5_kdc_req_body, encode_krb5_kdc_req_body),
             SC (free_kdc_req, krb5_free_kdc_req),
             SC (set_prompt_types, krb5int_set_prompt_types),
-            SC (encode_krb5_authdata_elt, encode_krb5_authdata_elt),
 #undef SC
-
-            S (encode_krb5_sam_response_2, encode_krb5_sam_response_2),
-            S (encode_krb5_enc_sam_response_enc_2, encode_krb5_enc_sam_response_enc_2),
-            S (encode_enc_ts, encode_krb5_pa_enc_ts),
-            S (decode_enc_ts, decode_krb5_pa_enc_ts),
-            S (encode_enc_data, encode_krb5_enc_data),
-            S(decode_enc_data, decode_krb5_enc_data),
-            S(free_enc_ts, krb5_free_pa_enc_ts),
-            S(free_enc_data, krb5_free_enc_data),
-            S(encrypt_helper, krb5_encrypt_helper),
 
 #if DESIGNATED_INITIALIZERS
         };

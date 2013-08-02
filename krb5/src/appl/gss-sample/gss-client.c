@@ -49,7 +49,7 @@
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
-#include <winsock.h>
+#include <winsock2.h>
 #else
 #include <assert.h>
 #include <unistd.h>
@@ -67,11 +67,12 @@
 #include <gssapi/gssapi_krb5.h>
 #include <gssapi/gssapi_ext.h>
 #include "gss-misc.h"
+#include "port-sockets.h"
 
 static int verbose = 1;
 static int spnego = 0;
 static gss_OID_desc gss_spnego_mechanism_oid_desc =
-        {6, (void *)"\x2b\x06\x01\x05\x05\x02"};
+{6, (void *)"\x2b\x06\x01\x05\x05\x02"};
 
 static void
 usage()
@@ -114,6 +115,15 @@ connect_to_server(char *host, u_short port)
     struct hostent *hp;
     int     s;
 
+#ifdef _WIN32
+    WSADATA wsadata;
+    int wsastartuperror = WSAStartup(0x202, &wsadata);
+    if (wsastartuperror) {
+        fprintf(stderr, "WSAStartup error: %x\n", wsastartuperror);
+        return -1;
+    }
+#endif
+
     if ((hp = gethostbyname(host)) == NULL) {
         fprintf(stderr, "Unknown host: %s\n", host);
         return -1;
@@ -129,7 +139,7 @@ connect_to_server(char *host, u_short port)
     }
     if (connect(s, (struct sockaddr *) &saddr, sizeof(saddr)) < 0) {
         perror("connecting to server");
-        (void) close(s);
+        (void) closesocket(s);
         return -1;
     }
     return s;
@@ -385,7 +395,7 @@ read_file(file_name, in_buf)
         perror("read");
         exit(1);
     }
-    if (count < in_buf->length)
+    if (count < (int)in_buf->length)
         fprintf(stderr, "Warning, only read in %d bytes, expected %d\n",
                 count, (int) in_buf->length);
 }
@@ -462,7 +472,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
     if (client_establish_context(s, service_name, gss_flags, auth_flag,
                                  v1_format, oid, username, password,
                                  &context, &ret_flags) < 0) {
-        (void) close(s);
+        (void) closesocket(s);
         return -1;
     }
 
@@ -553,14 +563,14 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
         in_buf.length = strlen((char *)in_buf.value);
     }
 
-    for (i = 0; i < mcount; i++) {
+    for (i = 0; i < (size_t)mcount; i++) {
         if (wrap_flag) {
             maj_stat =
                 gss_wrap(&min_stat, context, encrypt_flag, GSS_C_QOP_DEFAULT,
                          &in_buf, &state, &out_buf);
             if (maj_stat != GSS_S_COMPLETE) {
                 display_status("wrapping message", maj_stat, min_stat);
-                (void) close(s);
+                (void) closesocket(s);
                 (void) gss_delete_sec_context(&min_stat, &context,
                                               GSS_C_NO_BUFFER);
                 return -1;
@@ -578,7 +588,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
                               (encrypt_flag ? TOKEN_ENCRYPTED : 0) |
                               (mic_flag ? TOKEN_SEND_MIC : 0))),
                        &out_buf) < 0) {
-            (void) close(s);
+            (void) closesocket(s);
             (void) gss_delete_sec_context(&min_stat, &context,
                                           GSS_C_NO_BUFFER);
             return -1;
@@ -588,7 +598,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
 
         /* Read signature block into out_buf */
         if (recv_token(s, &token_flags, &out_buf) < 0) {
-            (void) close(s);
+            (void) closesocket(s);
             (void) gss_delete_sec_context(&min_stat, &context,
                                           GSS_C_NO_BUFFER);
             return -1;
@@ -600,7 +610,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
                                       &out_buf, &qop_state);
             if (maj_stat != GSS_S_COMPLETE) {
                 display_status("verifying signature", maj_stat, min_stat);
-                (void) close(s);
+                (void) closesocket(s);
                 (void) gss_delete_sec_context(&min_stat, &context,
                                               GSS_C_NO_BUFFER);
                 return -1;
@@ -628,7 +638,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
         maj_stat = gss_delete_sec_context(&min_stat, &context, &out_buf);
         if (maj_stat != GSS_S_COMPLETE) {
             display_status("deleting context", maj_stat, min_stat);
-            (void) close(s);
+            (void) closesocket(s);
             (void) gss_delete_sec_context(&min_stat, &context,
                                           GSS_C_NO_BUFFER);
             return -1;
@@ -637,7 +647,7 @@ call_server(host, port, oid, service_name, gss_flags, auth_flag,
         (void) gss_release_buffer(&min_stat, &out_buf);
     }
 
-    (void) close(s);
+    (void) closesocket(s);
 
     return 0;
 }
@@ -815,6 +825,8 @@ main(argc, argv)
                 usage();
             max_threads = atoi(*argv);
 #endif
+        } else if (strcmp(*argv, "-dce") == 0) {
+            gss_flags |= GSS_C_DCE_STYLE;
         } else if (strcmp(*argv, "-d") == 0) {
             gss_flags |= GSS_C_DELEG_FLAG;
         } else if (strcmp(*argv, "-seq") == 0) {

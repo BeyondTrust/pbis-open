@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/gssapi/krb5/import_sec_context.c - Internalize the security context */
 /*
- * lib/gssapi/krb5/import_sec_context.c
- *
  * Copyright 1995,2004,2007,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,12 +22,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
-/*
- * import_sec_context.c - Internalize the security context.
- */
 #include "gssapiP_krb5.h"
 /* for serialization initialization functions */
 #include "k5-int.h"
@@ -69,7 +64,7 @@ krb5_gss_ser_init (krb5_context context)
     return 0;
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_import_sec_context(minor_status, interprocess_token, context_handle)
     OM_uint32           *minor_status;
     gss_buffer_t        interprocess_token;
@@ -114,13 +109,6 @@ krb5_gss_import_sec_context(minor_status, interprocess_token, context_handle)
     }
     krb5_free_context(context);
 
-    /* intern the context handle */
-    if (! kg_save_ctx_id((gss_ctx_id_t) ctx)) {
-        (void)krb5_gss_delete_sec_context(minor_status,
-                                          (gss_ctx_id_t *) &ctx, NULL);
-        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
-        return(GSS_S_FAILURE);
-    }
     ctx->mech_used = krb5_gss_convert_static_mech_oid(ctx->mech_used);
 
     *context_handle = (gss_ctx_id_t) ctx;

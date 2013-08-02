@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* kadmin/dbutil/kdb5_stash.c - Store the master database key in a file */
 /*
- * admin/stash/kdb5_stash.c
- *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Store the master database key in a file.
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -61,7 +56,6 @@
 #include "kdb5_util.h"
 
 extern krb5_keyblock master_keyblock;
-extern krb5_keylist_node *master_keylist;
 extern krb5_principal master_princ;
 extern kadm5_config_params global_params;
 
@@ -100,7 +94,7 @@ kdb5_stash(argc, argv)
         if (krb5_enctype_to_name(master_keyblock.enctype, FALSE,
                                  tmp, sizeof(tmp)))
             com_err(progname, KRB5_PROG_KEYTYPE_NOSUPP,
-                    "while setting up enctype %d", master_keyblock.enctype);
+                    _("while setting up enctype %d"), master_keyblock.enctype);
         else
             com_err(progname, KRB5_PROG_KEYTYPE_NOSUPP, "%s", tmp);
         exit_status++; return;
@@ -119,25 +113,24 @@ kdb5_stash(argc, argv)
                                     &mkey_kvno,
                                     NULL, &master_keyblock);
         if (retval) {
-            com_err(progname, retval, "while reading master key");
+            com_err(progname, retval, _("while reading master key"));
             exit_status++; return;
         }
 
         retval = krb5_db_fetch_mkey_list(util_context, master_princ,
-                                         &master_keyblock, mkey_kvno,
-                                         &master_keylist);
+                                         &master_keyblock);
         if (retval) {
-            com_err(progname, retval, "while getting master key list");
+            com_err(progname, retval, _("while getting master key list"));
             exit_status++; return;
         }
     } else {
-        printf("Using existing stashed keys to update stash file.\n");
+        printf(_("Using existing stashed keys to update stash file.\n"));
     }
 
     retval = krb5_db_store_master_key_list(util_context, keyfile, master_princ,
-                                           master_keylist, NULL);
+                                           NULL);
     if (retval) {
-        com_err(progname, errno, "while storing key");
+        com_err(progname, errno, _("while storing key"));
         exit_status++; return;
     }
 

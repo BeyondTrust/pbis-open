@@ -1,6 +1,5 @@
+/* ccapi/common/win/OldCC/name.h */
 /*
- * $Header$
- *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -32,7 +31,4 @@
 #define CCAPI_MODULE "krbcc32"
 #endif
 #define CCAPI_DLL CCAPI_MODULE ".dll"
-#define CCAPI_EXE CCAPI_MODULE "s.exe"
-
-#define CCAPI_DLL   "ccapi.dll"
 #define CCAPI_EXE   "ccapiserver.exe"

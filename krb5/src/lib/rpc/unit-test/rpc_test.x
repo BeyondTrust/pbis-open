@@ -1,7 +1,7 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: rpc_test.x 8774 1996-07-22 20:49:46Z marc $
+ * $Id$
  * $Source$
  * 
  * $Log$

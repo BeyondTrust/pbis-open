@@ -21,15 +21,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * ss wrapper for kadmin
  */
 
 #include <krb5.h>
+#include <k5-platform.h>
+#include <locale.h>
 #include <ss/ss.h>
-#include <stdio.h>
-#include <string.h>
 #include "kadmin.h"
 
 extern ss_request_table kadmin_cmds;
@@ -43,12 +40,13 @@ main(int argc, char *argv[])
     krb5_error_code retval;
     int sci_idx, code = 0;
 
+    setlocale(LC_ALL, "");
     whoami = ((whoami = strrchr(argv[0], '/')) ? whoami+1 : argv[0]);
 
     request = kadmin_startup(argc, argv);
     sci_idx = ss_create_invocation(whoami, "5.0", NULL, &kadmin_cmds, &retval);
     if (retval) {
-        ss_perror(sci_idx, retval, "creating invocation");
+        ss_perror(sci_idx, retval, _("creating invocation"));
         exit(1);
     }
     if (request) {

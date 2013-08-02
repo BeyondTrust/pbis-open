@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/ser_actx.c - Serialize krb5_auth_context structure */
 /*
- * lib/krb5/krb/ser_actx.c
- *
  * Copyright 1995, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,12 +22,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
-/*
- * ser_actx.c - Serialize krb5_auth_context structure.
- */
 #include "k5-int.h"
 #include "int-proto.h"
 #include "auth_con.h"
@@ -235,7 +230,7 @@ krb5_auth_context_externalize(krb5_context kcontext, krb5_pointer arg, krb5_octe
 
             /* Convert to signed 32 bit integer */
             obuf32 = obuf;
-            if (kret == 0 && obuf != obuf32)
+            if (kret == 0 && obuf > KRB5_INT32_MAX)
                 kret = EINVAL;
             if (!kret)
                 (void) krb5_ser_pack_int32(obuf32, &bp, &remain);

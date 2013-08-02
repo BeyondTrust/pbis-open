@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/enc_provider/enc_gen.c
- *
+/* lib/crypto/nss/enc_provider/enc_gen.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,11 +33,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "k5-int.h"
+#include "crypto_int.h"
 #include "nss_gen.h"
-#include "enc_provider.h"
-#include "rand2key.h"
-#include "aead.h"
 #include "seccomon.h"
 #include "secmod.h"
 #include "pk11pub.h"
@@ -272,7 +269,7 @@ k5_nss_stream_init_state(krb5_data *new_state)
     return 0;
 }
 
-krb5_error_code
+void
 k5_nss_stream_free_state(krb5_data *state)
 {
     struct stream_state *sstate = (struct stream_state *) state->data;
@@ -283,7 +280,6 @@ k5_nss_stream_free_state(krb5_data *state)
         PK11_DestroyContext(sstate->ctx, PR_TRUE);
     }
     free(sstate);
-    return 0;
 }
 
 krb5_error_code
@@ -519,7 +515,7 @@ k5_nss_gen_cts_iov(krb5_key krb_key, CK_MECHANISM_TYPE mech,
         if (operation == CKA_DECRYPT) {
             /* block1 now has p'n xor cn-1 */
             xor(block1, recover1, blocksize);
-           /* block 1 now has pn-1 */
+            /* block 1 now has pn-1 */
         } else {
             if (ivec && ivec->data) {
                 memcpy(ivec->data, block1, blocksize);
@@ -549,9 +545,8 @@ k5_nss_gen_cbcmac_iov(krb5_key krb_key, CK_MECHANISM_TYPE mech,
     SECStatus rv;
     SECItem *param = NULL;
     struct iov_block_state input_pos, output_pos;
-    unsigned char storage[MAX_BLOCK_SIZE];
+    unsigned char block[MAX_BLOCK_SIZE], *lastblock;
     unsigned char iv0[MAX_BLOCK_SIZE];
-    unsigned char *ptr = NULL, *lastptr = NULL;
     SECItem iv;
     size_t blocksize;
     int length = 0;
@@ -561,7 +556,7 @@ k5_nss_gen_cbcmac_iov(krb5_key krb_key, CK_MECHANISM_TYPE mech,
     IOV_BLOCK_STATE_INIT(&output_pos);
 
     blocksize = PK11_GetBlockSize(mech, NULL);
-    assert(blocksize <= sizeof(storage));
+    assert(blocksize <= sizeof(block));
     if (output->length < blocksize)
         return KRB5_BAD_MSIZE;
 
@@ -581,23 +576,19 @@ k5_nss_gen_cbcmac_iov(krb5_key krb_key, CK_MECHANISM_TYPE mech,
         goto done;
     }
 
-    lastptr = iv.data;
+    lastblock = iv.data;
     for (currentblock = 0;;currentblock++) {
-        if (!krb5int_c_iov_get_block_nocopy(storage, blocksize, data, num_data,
-                                            &input_pos, &ptr))
+        if (!krb5int_c_iov_get_block(block, blocksize, data, num_data,
+                                     &input_pos))
             break;
-
-        lastptr = NULL;
-
-        rv = PK11_CipherOp(ctx, ptr, &length, blocksize, ptr, blocksize);
+        rv = PK11_CipherOp(ctx, block, &length, blocksize, block, blocksize);
         if (rv != SECSuccess) {
             ret = k5_nss_map_last_error();
             goto done;
         }
-
-        lastptr = ptr;
+        lastblock = block;
     }
-    memcpy(output->data, lastptr, blocksize);
+    memcpy(output->data, lastblock, blocksize);
 
 done:
     if (ctx) {

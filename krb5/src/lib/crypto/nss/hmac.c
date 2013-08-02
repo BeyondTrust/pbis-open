@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/hmac.c
- *
+/* lib/crypto/nss/hmac.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,8 +33,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "k5-int.h"
-#include "aead.h"
+#include "crypto_int.h"
 #include "nss_gen.h"
 #include "pk11pub.h"
 

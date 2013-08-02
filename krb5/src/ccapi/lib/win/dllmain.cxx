@@ -32,9 +32,10 @@ extern "C" {
 #include "tls.h"
 #include "cci_debugging.h"
 #include "ccapi_context.h"
+#include "ccapi_ipc.h"
 #include "client.h"
 
-void cci_thread_init__auxinit();
+void cci_process_init__auxinit();
     }
 
 
@@ -91,34 +92,34 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,     // DLL module handle
 
             // Allocate a TLS index:
             if ((dwTlsIndex = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE; 
- 
-            // Initialize CCAPI once per DLL load:
-            firstThreadID = GetCurrentThreadId();
 
+            cci_process_init__auxinit();
             // Don't break; fallthrough: Initialize the TLS index for first thread.
  
         // The attached process creates a new thread:
         case DLL_THREAD_ATTACH:
-            // Initialize the TLS index for this thread:
-            ptspdata    = (struct tspdata*) LocalAlloc(LPTR, sizeof(struct tspdata)); 
-            cci_debug_printf("%s DLL_THREAD_ATTACH; tsp*:0x%X", __FUNCTION__, ptspdata);
-            if (ptspdata == NULL) return FALSE;
-            fIgnore     = TlsSetValue(dwTlsIndex, ptspdata); 
+            cci_debug_printf("%s DLL_THREAD_ATTACH", __FUNCTION__);
+            // Don't actually rely on this case for allocation of resources.
+            // Applications (like SecureCRT) may have threads already
+            // created (say 'A' and 'B') before the dll is loaded. If the dll
+            // is loaded in thread 'A' but then used in thread 'B', thread 'B'
+            // will never execute this code.
+            fIgnore     = TlsSetValue(dwTlsIndex, NULL);
 
-            memset(ptspdata, 0, sizeof(struct tspdata));
-
-            // Initialize CCAPI once per DLL load:
-            if (GetCurrentThreadId() == firstThreadID) cci_thread_init__auxinit();
-
-            break; 
+            // Do not call cci_ipc_thread_init() yet; defer until we actually
+            // need it.  On XP, cci_ipc_thread_init() will cause additional
+            // threads to be immediately spawned, which will bring us right
+            // back here again ad infinitum, until windows
+            // resources are exhausted.
+            break;
  
         // The thread of the attached process terminates:
         case DLL_THREAD_DETACH: 
             cci_debug_printf("%s DLL_THREAD_DETACH", __FUNCTION__);
-            // Release the allocated memory for this thread:
+            // Release the allocated memory for this thread
             ptspdata = (struct tspdata*)TlsGetValue(dwTlsIndex); 
             if (ptspdata != NULL) {
-                LocalFree((HLOCAL) ptspdata); 
+                free(ptspdata);
                 TlsSetValue(dwTlsIndex, NULL); 
                 }
             break; 
@@ -182,11 +183,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,     // DLL module handle
 
             // Release the allocated memory for this thread:
             ptspdata = (struct tspdata*)TlsGetValue(dwTlsIndex); 
-            if (ptspdata != NULL) LocalFree((HLOCAL) ptspdata);
+            if (ptspdata != NULL)
+                free(ptspdata);
             TlsFree(dwTlsIndex);    // Release the TLS index.
+            // Ideally, we would enumerate all other threads here and
+            // release their thread local storage as well.
             break; 
  
-        default: break; 
+        default:
+            cci_debug_printf("%s unexpected reason %d", __FUNCTION__, fdwReason);
+            break;
         } 
  
     UNREFERENCED_PARAMETER(hinstDLL);       // no whining!

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/crypto/crypto_tests/t_cts.c */
 /*
- * lib/crypto/vectors.c
- *
  * Copyright 2001, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
+ */
+
+/*
  *
  * Test vectors for crypto code, matching data submitted for inclusion
  * with RFC1510bis.
@@ -37,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "hash_provider.h"
+#include "crypto_int.h"
 
 #define ASIZE(ARRAY) (sizeof(ARRAY)/sizeof(ARRAY[0]))
 
@@ -75,7 +76,7 @@ check_error (int r, int line) {
 #endif
 
 static void printd (const char *descr, krb5_data *d) {
-    int i, j;
+    unsigned int i, j;
     const int r = 16;
 
     printf("%s:", descr);
@@ -98,7 +99,7 @@ static void printd (const char *descr, krb5_data *d) {
 }
 static void printk(const char *descr, krb5_keyblock *k) {
     krb5_data d;
-    d.data = k->contents;
+    d.data = (char *) k->contents;
     d.length = k->length;
     printd(descr, &d);
 }
@@ -110,7 +111,7 @@ static void test_cts()
     static const unsigned char aeskey[16] = "chicken teriyaki";
     static const int lengths[] = { 17, 31, 32, 47, 48, 64 };
 
-    int i;
+    unsigned int i;
     char outbuf[64], encivbuf[16], decivbuf[16];
     krb5_crypto_iov iov;
     krb5_data in, enciv, deciv;

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/unparse.c */
 /*
- * lib/krb5/krb/unparse.c
- *
  * Copyright 1990, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * krb5_unparse_name() routine
  *
  * Rewritten by Theodore Ts'o to properly unparse principal names
@@ -143,9 +143,8 @@ static krb5_error_code
 k5_unparse_name(krb5_context context, krb5_const_principal principal,
                 int flags, char **name, unsigned int *size)
 {
-    char *cp, *q;
+    char *q;
     int i;
-    int     length;
     krb5_int32 nelem;
     unsigned int totalsize = 0;
     char *default_realm = NULL;
@@ -178,7 +177,6 @@ k5_unparse_name(krb5_context context, krb5_const_principal principal,
 
     nelem = krb5_princ_size(context, principal);
     for (i = 0; i < (int) nelem; i++) {
-        cp = krb5_princ_component(context, principal, i)->data;
         totalsize += component_length_quoted(krb5_princ_component(context, principal, i), flags);
         totalsize++;    /* This is for the separator */
     }
@@ -211,8 +209,6 @@ k5_unparse_name(krb5_context context, krb5_const_principal principal,
     q = *name;
 
     for (i = 0; i < (int) nelem; i++) {
-        cp = krb5_princ_component(context, principal, i)->data;
-        length = krb5_princ_component(context, principal, i)->length;
         q += copy_component_quoting(q,
                                     krb5_princ_component(context,
                                                          principal,

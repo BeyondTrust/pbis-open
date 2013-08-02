@@ -1,13 +1,8 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/ccache/ccapi/stdcc.c - ccache API support functions */
 /*
- * stdcc.c - additions to the Kerberos 5 library to support the memory
- *       credentical cache API
- *
- * Written by Frank Dabek July 1998
- * Updated by Jeffrey Altman June 2006
- *
- * Copyright 1998, 1999, 2006, 2008 by the Massachusetts Institute of Technology.
- * All Rights Reserved.
+ * Copyright 1998, 1999, 2006, 2008 by the Massachusetts Institute of
+ * Technology.  All Rights Reserved.
  *
  * Export of this software from the United States of America may
  *   require a specific license from the United States Government.
@@ -27,7 +22,11 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
+ */
+
+/*
+ * Written by Frank Dabek July 1998
+ * Updated by Jeffrey Altman June 2006
  */
 
 #if defined(_WIN32) || defined(USE_CCAPI)
@@ -96,6 +95,7 @@ krb5_cc_ops krb5_cc_stdcc_ops = {
     NULL, /* wasdefault */
     krb5_stdccv3_lock,
     krb5_stdccv3_unlock,
+    krb5_stdccv3_switch_to,
 #else
     krb5_stdcc_get_name,
     krb5_stdcc_resolve,
@@ -389,6 +389,7 @@ krb5_stdccv3_resolve (krb5_context context, krb5_ccache *id , const char *residu
     stdccCacheDataPtr ccapi_data = NULL;
     krb5_ccache ccache = NULL;
     char *name = NULL;
+    cc_string_t defname = NULL;
 
     if (id == NULL) { err = KRB5_CC_NOMEM; }
 
@@ -404,6 +405,14 @@ krb5_stdccv3_resolve (krb5_context context, krb5_ccache *id , const char *residu
     if (!err) {
         ccache = (krb5_ccache ) malloc (sizeof (*ccache));
         if (!ccache) { err = KRB5_CC_NOMEM; }
+    }
+
+    if (!err) {
+        if ((residual == NULL) || (strlen(residual) == 0)) {
+            err = cc_context_get_default_ccache_name(gCntrlBlock, &defname);
+            if (defname)
+                residual = defname->data;
+        }
     }
 
     if (!err) {
@@ -435,6 +444,7 @@ krb5_stdccv3_resolve (krb5_context context, krb5_ccache *id , const char *residu
     if (ccache)     { free (ccache); }
     if (ccapi_data) { free (ccapi_data); }
     if (name)       { free (name); }
+    if (defname)    { cc_string_release(defname); }
 
     return cc_err_xlate (err);
 }
@@ -754,11 +764,13 @@ krb5_stdccv3_get_principal (krb5_context context,
 
     if (!err) {
         err = krb5_parse_name (context, name->data, princ);
+    } else {
+        err = cc_err_xlate (err);
     }
 
     if (name) { cc_string_release (name); }
 
-    return cc_err_xlate (err);
+    return err;
 }
 
 /*
@@ -873,7 +885,7 @@ krb5_stdccv3_ptcursor_new(krb5_context context,
 
     ptcursor = malloc(sizeof(*ptcursor));
     if (ptcursor == NULL) {
-        err = ENOMEM;
+        err = ccErrNoMem;
     }
     else {
         memset(ptcursor, 0, sizeof(*ptcursor));
@@ -898,7 +910,7 @@ krb5_stdccv3_ptcursor_new(krb5_context context,
 
     *cursor = ptcursor;
 
-    return err;
+    return cc_err_xlate(err);
 }
 
 krb5_error_code KRB5_CALLCONV
@@ -924,12 +936,12 @@ krb5_stdccv3_ptcursor_next(
 
     if (!err) {
         newCache = (krb5_ccache) malloc (sizeof (*newCache));
-        if (!newCache) { err = KRB5_CC_NOMEM; }
+        if (!newCache) { err = ccErrNoMem; }
     }
 
     if (!err) {
         ccapi_data = (stdccCacheDataPtr) malloc (sizeof (*ccapi_data));
-        if (!ccapi_data) { err = KRB5_CC_NOMEM; }
+        if (!ccapi_data) { err = ccErrNoMem; }
     }
 
     if (!err) {
@@ -943,7 +955,7 @@ krb5_stdccv3_ptcursor_next(
 
     if (!err) {
         name = strdup (ccstring->data);
-        if (!name) { err = KRB5_CC_NOMEM; }
+        if (!name) { err = ccErrNoMem; }
     }
 
     if (!err) {
@@ -972,7 +984,7 @@ krb5_stdccv3_ptcursor_next(
         err = ccNoError;
     }
 
-    return err;
+    return cc_err_xlate(err);
 }
 
 krb5_error_code KRB5_CALLCONV
@@ -1068,6 +1080,21 @@ krb5_error_code KRB5_CALLCONV krb5_stdccv3_context_unlock
     if (!err) {
         err = cc_context_unlock(gCntrlBlock);
     }
+    return cc_err_xlate(err);
+}
+
+krb5_error_code KRB5_CALLCONV krb5_stdccv3_switch_to
+(krb5_context context, krb5_ccache id)
+{
+    krb5_error_code retval;
+    stdccCacheDataPtr ccapi_data = id->data;
+    int err;
+
+    retval = stdccv3_setup(context, ccapi_data);
+    if (retval)
+        return cc_err_xlate(retval);
+
+    err = cc_ccache_set_default(ccapi_data->NamedCache);
     return cc_err_xlate(err);
 }
 

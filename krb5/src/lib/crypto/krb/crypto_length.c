@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/crypto/krb/crypto_length.c */
 /*
- * lib/crypto/crypto_length.c
- *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -25,9 +24,7 @@
  * or implied warranty.
  */
 
-#include "k5-int.h"
-#include "etypes.h"
-#include "aead.h"
+#include "crypto_int.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_c_crypto_length(krb5_context context, krb5_enctype enctype,
@@ -45,7 +42,7 @@ krb5_c_crypto_length(krb5_context context, krb5_enctype enctype,
         *size = 0;
         break;
     case KRB5_CRYPTO_TYPE_DATA:
-        *size = (size_t)~0; /* match Heimdal */
+        *size = (unsigned int)~0; /* match Heimdal */
         break;
     case KRB5_CRYPTO_TYPE_HEADER:
     case KRB5_CRYPTO_TYPE_PADDING:

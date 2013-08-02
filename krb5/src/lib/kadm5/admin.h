@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/kadm5/admin.h */
 /*
- * lib/kadm5/admin.h
- *
  * Copyright 2001, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved
@@ -118,15 +116,20 @@ typedef long            kadm5_ret_t;
 
 
 /* kadm5_policy_ent_t */
-#define KADM5_PW_MAX_LIFE       0x004000
-#define KADM5_PW_MIN_LIFE       0x008000
-#define KADM5_PW_MIN_LENGTH     0x010000
-#define KADM5_PW_MIN_CLASSES    0x020000
-#define KADM5_PW_HISTORY_NUM    0x040000
-#define KADM5_REF_COUNT         0x080000
-#define KADM5_PW_MAX_FAILURE            0x100000
-#define KADM5_PW_FAILURE_COUNT_INTERVAL 0x200000
-#define KADM5_PW_LOCKOUT_DURATION       0x400000
+#define KADM5_PW_MAX_LIFE               0x00004000
+#define KADM5_PW_MIN_LIFE               0x00008000
+#define KADM5_PW_MIN_LENGTH             0x00010000
+#define KADM5_PW_MIN_CLASSES            0x00020000
+#define KADM5_PW_HISTORY_NUM            0x00040000
+#define KADM5_REF_COUNT                 0x00080000
+#define KADM5_PW_MAX_FAILURE            0x00100000
+#define KADM5_PW_FAILURE_COUNT_INTERVAL 0x00200000
+#define KADM5_PW_LOCKOUT_DURATION       0x00400000
+#define KADM5_POLICY_ATTRIBUTES         0x00800000
+#define KADM5_POLICY_MAX_LIFE           0x01000000
+#define KADM5_POLICY_MAX_RLIFE          0x02000000
+#define KADM5_POLICY_ALLOWED_KEYSALTS   0x04000000
+#define KADM5_POLICY_TL_DATA            0x08000000
 
 /* kadm5_config_params */
 #define KADM5_CONFIG_REALM              0x00000001
@@ -136,7 +139,7 @@ typedef long            kadm5_ret_t;
 #define KADM5_CONFIG_MAX_RLIFE          0x00000010
 #define KADM5_CONFIG_EXPIRATION         0x00000020
 #define KADM5_CONFIG_FLAGS              0x00000040
-#define KADM5_CONFIG_ADMIN_KEYTAB       0x00000080
+/*#define KADM5_CONFIG_ADMIN_KEYTAB       0x00000080*/
 #define KADM5_CONFIG_STASH_FILE         0x00000100
 #define KADM5_CONFIG_ENCTYPE            0x00000200
 #define KADM5_CONFIG_ADBNAME            0x00000400
@@ -161,6 +164,7 @@ typedef long            kadm5_ret_t;
 #define KADM5_CONFIG_IPROP_LOGFILE      0x08000000
 #define KADM5_CONFIG_IPROP_PORT         0x10000000
 #define KADM5_CONFIG_KVNO               0x20000000
+#define KADM5_CONFIG_IPROP_RESYNC_TIMEOUT   0x40000000
 /*
  * permission bits
  */
@@ -181,6 +185,7 @@ typedef long            kadm5_ret_t;
 #define KADM5_API_VERSION_MASK  0x12345700
 #define KADM5_API_VERSION_2     (KADM5_API_VERSION_MASK|0x02)
 #define KADM5_API_VERSION_3     (KADM5_API_VERSION_MASK|0x03)
+#define KADM5_API_VERSION_4     (KADM5_API_VERSION_MASK|0x04)
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal  principal;
@@ -220,6 +225,14 @@ typedef struct _kadm5_policy_ent_t {
     krb5_kvno       pw_max_fail;
     krb5_deltat     pw_failcnt_interval;
     krb5_deltat     pw_lockout_duration;
+
+    /* version 4 fields */
+    krb5_flags      attributes;
+    krb5_deltat     max_life;
+    krb5_deltat     max_renewable_life;
+    char            *allowed_keysalts;
+    krb5_int16      n_tl_data;
+    krb5_tl_data    *tl_data;
 } kadm5_policy_ent_rec, *kadm5_policy_ent_t;
 
 /*
@@ -242,7 +255,6 @@ typedef struct _kadm5_config_params {
        file.  */
     char *             dbname;
 
-    char *             admin_keytab;
     char *             acl_file;
     char *             dict_file;
 
@@ -263,6 +275,7 @@ typedef struct _kadm5_config_params {
     char *              iprop_logfile;
 /*    char *            iprop_server;*/
     int                 iprop_port;
+    int                 iprop_resync_timeout;
 } kadm5_config_params;
 
 /***********************************************************************
@@ -300,6 +313,8 @@ typedef struct __krb5_realm_params {
     unsigned int        realm_flags_valid:1;
     unsigned int        realm_reject_bad_transit_valid:1;
     unsigned int        realm_restrict_anon_valid:1;
+    unsigned int        realm_assume_des_crc_sess:1;
+    unsigned int        realm_assume_des_crc_sess_valid:1;
     krb5_int32          realm_num_keysalts;
 } krb5_realm_params;
 
@@ -514,6 +529,20 @@ kadm5_ret_t    kadm5_get_principal_keys(void *server_handle,
 kadm5_ret_t    kadm5_purgekeys(void *server_handle,
                                krb5_principal principal,
                                int keepkvno);
+
+kadm5_ret_t    kadm5_get_strings(void *server_handle,
+                                 krb5_principal principal,
+                                 krb5_string_attr **strings_out,
+                                 int *count_out);
+
+kadm5_ret_t    kadm5_set_string(void *server_handle,
+                                krb5_principal principal,
+                                const char *key,
+                                const char *value);
+
+kadm5_ret_t    kadm5_free_strings(void *server_handle,
+                                  krb5_string_attr *strings,
+                                  int count);
 
 KADM5INT_END_DECLS
 

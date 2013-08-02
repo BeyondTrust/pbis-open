@@ -1,6 +1,5 @@
 mydir=lib
-#LW#SUBDIRS=crypto krb5 gssapi rpc kdb kadm5 apputils
-SUBDIRS=crypto krb5 gssapi rpc kdb kadm5
+SUBDIRS=crypto krb5 gssapi rpc kdb kadm5 apputils
 WINSUBDIRS=crypto krb5 gssapi
 BUILDTOP=$(REL)..
 
@@ -137,4 +136,4 @@ clean-windows::
 ##WIN32##profile.lib: $(PLIB)
 
 ##WIN32##all-windows:: all-recurse lib-windows
-##WIN32##lib-windows:: krb5.lib gssapi.lib
+##WIN32##lib-windows:: krb5.lib gssapi.lib profile.lib

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* include/cm.h */
 /*
- * include/cm.h
- *
  * Copyright 2002 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -25,25 +24,22 @@
  * or implied warranty.
  */
 
-#ifdef HAVE_POLL
-#include <poll.h>
-#ifndef MAX_POLL_FDS
-#define MAX_POLL_FDS 1024
-#endif
+/*
+ * Since fd_set is large on some platforms (8K on AIX 5.2), this probably
+ * shouldn't be allocated in automatic storage.  Define USE_POLL and
+ * MAX_POLLFDS in the consumer of this header file to use poll state instead of
+ * select state.
+ */
 struct select_state {
-    int nfds;
-    struct timeval end_time;	/* magic: tv_sec==0 => never time out */
-    struct pollfd fds[MAX_POLL_FDS];
-};
+#ifdef USE_POLL
+    struct pollfd fds[MAX_POLLFDS];
 #else
-/* Since fd_set is large on some platforms (8K on AIX 5.2), this
-   probably shouldn't be allocated in automatic storage.  */
-struct select_state {
-    int max, nfds;
+    int max;
     fd_set rfds, wfds, xfds;
+#endif
+    int nfds;
     struct timeval end_time;    /* magic: tv_sec==0 => never time out */
 };
-#endif
 
 
 /* Select state flags.  */
@@ -74,7 +70,10 @@ struct conn_state {
     unsigned int is_udp : 1;
     int (*service)(krb5_context context, struct conn_state *,
                    struct select_state *, int);
-    struct addrinfo *addr;
+    int socktype;
+    int family;
+    size_t addrlen;
+    struct sockaddr_storage addr;
     struct {
         struct {
             sg_buf sgbuf[2];
@@ -84,6 +83,9 @@ struct conn_state {
         } out;
         struct incoming_krb5_message in;
     } x;
+    krb5_data callback_buffer;
+    size_t server_index;
+    struct conn_state *next;
 };
 
 struct sendto_callback_info {

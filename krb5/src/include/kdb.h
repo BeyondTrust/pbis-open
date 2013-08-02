@@ -1,7 +1,5 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
- * include/krb5/kdb.h
- *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +21,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * KDC Database interface definitions.
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -53,11 +47,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
 /*
  * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
+
+/* KDC Database interface definitions */
 
 /* This API is not considered as stable as the main krb5 API.
  *
@@ -74,7 +69,7 @@
 
 /* This version will be incremented when incompatible changes are made to the
  * KDB API, and will be kept in sync with the libkdb major version. */
-#define KRB5_KDB_API_VERSION 5
+#define KRB5_KDB_API_VERSION 7
 
 /* Salt types */
 #define KRB5_KDB_SALTTYPE_NORMAL        0
@@ -101,8 +96,8 @@
 #define KRB5_KDB_SUPPORT_DESMD5         0x00004000
 #define KRB5_KDB_NEW_PRINC              0x00008000
 #define KRB5_KDB_OK_AS_DELEGATE         0x00100000
-#define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE	0x00200000 /* S4U2Self OK */
-#define KRB5_KDB_NO_AUTH_DATA_REQUIRED	0x00400000
+#define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE 0x00200000 /* S4U2Self OK */
+#define KRB5_KDB_NO_AUTH_DATA_REQUIRED  0x00400000
 
 /* Creation flags */
 #define KRB5_KDB_CREATE_BTREE           0x00000001
@@ -136,6 +131,9 @@
 #define KRB5_KDB_FLAGS_S4U                      ( KRB5_KDB_FLAG_PROTOCOL_TRANSITION | \
                                                   KRB5_KDB_FLAG_CONSTRAINED_DELEGATION )
 
+/* String attribute names recognized by krb5 */
+#define KRB5_KDB_SK_SESSION_ENCTYPES            "session_enctypes"
+
 #if !defined(_WIN32)
 
 /*
@@ -149,6 +147,13 @@ typedef struct _krb5_tl_data {
     krb5_ui_2             tl_data_length;
     krb5_octet          * tl_data_contents;
 } krb5_tl_data;
+
+/* String attributes (currently stored inside tl-data) map C string keys to
+ * values.  They can be set via kadmin and consumed by KDC plugins. */
+typedef struct krb5_string_attr_st {
+    char *key;
+    char *value;
+} krb5_string_attr;
 
 /*
  * If this ever changes up the version number and make the arrays be as
@@ -171,6 +176,15 @@ typedef struct _krb5_keysalt {
     krb5_data             data;                 /* Length, data */
 } krb5_keysalt;
 
+/*
+ * A principal database entry.  Extensions to this structure currently use the
+ * tl_data list.  The e_data and e_length fields are not used by any calling
+ * code except kdb5_util dump and load, which marshal and unmarshal the array
+ * in the dump record.  KDB modules may use these fields internally as long as
+ * they set e_length appropriately (non-zero if the data should be marshalled
+ * across dump and load, zero if not) and handle null e_data values in
+ * caller-constructed principal entries.
+ */
 typedef struct _krb5_db_entry_new {
     krb5_magic            magic;                /* NOT saved */
     krb5_ui_2             len;
@@ -206,6 +220,13 @@ typedef struct _osa_policy_ent_t {
     krb5_ui_4       pw_max_fail;                /* pwdMaxFailure */
     krb5_ui_4       pw_failcnt_interval;        /* pwdFailureCountInterval */
     krb5_ui_4       pw_lockout_duration;        /* pwdLockoutDuration */
+    /* Only valid if version > 2 */
+    krb5_ui_4       attributes;
+    krb5_ui_4       max_life;
+    krb5_ui_4       max_renewable_life;
+    char          * allowed_keysalts;
+    krb5_int16      n_tl_data;
+    krb5_tl_data  * tl_data;
 } osa_policy_ent_rec, *osa_policy_ent_t;
 
 typedef       void    (*osa_adb_iter_policy_func) (void *, osa_policy_ent_t);
@@ -218,6 +239,8 @@ typedef struct __krb5_key_salt_tuple {
 #define KRB5_KDB_MAGIC_NUMBER           0xdbdbdbdb
 #define KRB5_KDB_V1_BASE_LENGTH         38
 
+#define KRB5_KDB_MAX_ALLOWED_KS_LEN     512
+
 #define KRB5_TL_LAST_PWD_CHANGE         0x0001
 #define KRB5_TL_MOD_PRINC               0x0002
 #define KRB5_TL_KADM_DATA               0x0003
@@ -225,12 +248,15 @@ typedef struct __krb5_key_salt_tuple {
 #define KRB5_TL_RB1_CHALLENGE           0x0005
 #ifdef SECURID
 #define KRB5_TL_SECURID_STATE           0x0006
-#define KRB5_TL_DB_ARGS                 0x7fff
 #endif /* SECURID */
 #define KRB5_TL_USER_CERTIFICATE        0x0007
 #define KRB5_TL_MKVNO                   0x0008
 #define KRB5_TL_ACTKVNO                 0x0009
 #define KRB5_TL_MKEY_AUX                0x000a
+
+/* String attributes may not always be represented in tl-data.  kadmin clients
+ * must use the get_strings and set_string RPCs. */
+#define KRB5_TL_STRING_ATTRS            0x000b
 
 #define KRB5_TL_PAC_LOGON_INFO          0x0100 /* NDR encoded validation info */
 #define KRB5_TL_SERVER_REFERRAL         0x0200 /* ASN.1 encoded ServerReferralInfo */
@@ -239,6 +265,8 @@ typedef struct __krb5_key_salt_tuple {
 #define KRB5_TL_LM_KEY                  0x0500 /* LM OWF */
 #define KRB5_TL_X509_SUBJECT_ISSUER_NAME 0x0600 /* <I>IssuerDN<S>SubjectDN */
 #define KRB5_TL_LAST_ADMIN_UNLOCK       0x0700 /* Timestamp of admin unlock */
+
+#define KRB5_TL_DB_ARGS                 0x7fff
 
 /* version number for KRB5_TL_ACTKVNO data */
 #define KRB5_TL_ACTKVNO_VER     1
@@ -320,7 +348,6 @@ extern char *krb5_mkey_pwd_prompt2;
 
 #define KRB5_DB_LOCKMODE_SHARED       0x0001
 #define KRB5_DB_LOCKMODE_EXCLUSIVE    0x0002
-#define KRB5_DB_LOCKMODE_DONTBLOCK    0x0004
 #define KRB5_DB_LOCKMODE_PERMANENT    0x0008
 
 /* libkdb.spec */
@@ -361,7 +388,6 @@ krb5_error_code krb5_db_store_master_key  ( krb5_context kcontext,
 krb5_error_code krb5_db_store_master_key_list  ( krb5_context kcontext,
                                                  char *keyfile,
                                                  krb5_principal mname,
-                                                 krb5_keylist_node *keylist,
                                                  char *master_pwd);
 krb5_error_code krb5_db_fetch_mkey  ( krb5_context   context,
                                       krb5_principal mname,
@@ -375,15 +401,7 @@ krb5_error_code krb5_db_fetch_mkey  ( krb5_context   context,
 krb5_error_code
 krb5_db_fetch_mkey_list( krb5_context    context,
                          krb5_principal  mname,
-                         const krb5_keyblock * mkey,
-                         krb5_kvno             mkvno,
-                         krb5_keylist_node  **mkeys_list );
-/**
- * Free a master keylist.
- */
-void
-krb5_db_free_mkey_list( krb5_context         context,
-                        krb5_keylist_node  *mkey_list );
+                         const krb5_keyblock * mkey );
 
 krb5_error_code
 krb5_dbe_find_enctype( krb5_context     kcontext,
@@ -435,14 +453,12 @@ krb5_dbe_fetch_act_key_list(krb5_context          context,
 
 krb5_error_code
 krb5_dbe_find_act_mkey( krb5_context          context,
-                        krb5_keylist_node   * mkey_list,
                         krb5_actkvno_node   * act_mkey_list,
                         krb5_kvno           * act_kvno,
                         krb5_keyblock      ** act_mkey);
 
 krb5_error_code
 krb5_dbe_find_mkey( krb5_context         context,
-                    krb5_keylist_node * mkey_list,
                     krb5_db_entry      * entry,
                     krb5_keyblock      ** mkey);
 
@@ -452,11 +468,13 @@ krb5_dbe_lookup_mkvno( krb5_context    context,
                        krb5_db_entry * entry,
                        krb5_kvno     * mkvno);
 
+krb5_keylist_node *
+krb5_db_mkey_list_alias( krb5_context kcontext );
+
 /* Set *mkvno to mkvno in entry tl_data, or minimum value from mkey_list. */
 krb5_error_code
 krb5_dbe_get_mkvno( krb5_context        context,
                     krb5_db_entry     * entry,
-                    krb5_keylist_node * mkey_list,
                     krb5_kvno         * mkvno);
 
 krb5_error_code
@@ -533,15 +551,44 @@ krb5_dbe_lookup_last_admin_unlock( krb5_context          context,
                                    krb5_db_entry       * entry,
                                    krb5_timestamp      * stamp);
 
+/* Retrieve the set of string attributes in entry, in no particular order.
+ * Free *strings_out with krb5_dbe_free_strings when done. */
+krb5_error_code
+krb5_dbe_get_strings(krb5_context context, krb5_db_entry *entry,
+                     krb5_string_attr **strings_out, int *count_out);
+
+/* Retrieve a single string attribute from entry, or NULL if there is no
+ * attribute for key.  Free *value_out with krb5_dbe_free_string when done. */
+krb5_error_code
+krb5_dbe_get_string(krb5_context context, krb5_db_entry *entry,
+                    const char *key, char **value_out);
+
+/* Change or add a string attribute in entry, or delete it if value is NULL. */
+krb5_error_code
+krb5_dbe_set_string(krb5_context context, krb5_db_entry *entry,
+                    const char *key, const char *value);
+
 krb5_error_code
 krb5_dbe_delete_tl_data( krb5_context    context,
                          krb5_db_entry * entry,
                          krb5_int16      tl_data_type);
 
 krb5_error_code
+krb5_db_update_tl_data(krb5_context          context,
+                       krb5_int16          * n_tl_datap,
+                       krb5_tl_data        **tl_datap,
+                       krb5_tl_data        * new_tl_data);
+
+krb5_error_code
 krb5_dbe_update_tl_data( krb5_context          context,
                          krb5_db_entry       * entry,
                          krb5_tl_data        * new_tl_data);
+
+/* Compute the salt for a key data entry given the corresponding principal. */
+krb5_error_code
+krb5_dbe_compute_salt(krb5_context context, const krb5_key_data *key,
+                      krb5_const_principal princ, krb5_int16 *salttype_out,
+                      krb5_data **salt_out);
 
 krb5_error_code
 krb5_dbe_cpw( krb5_context        kcontext,
@@ -607,14 +654,14 @@ krb5_error_code krb5_db_check_policy_as(krb5_context kcontext,
                                         krb5_db_entry *server,
                                         krb5_timestamp kdc_time,
                                         const char **status,
-                                        krb5_data *e_data);
+                                        krb5_pa_data ***e_data);
 
 krb5_error_code krb5_db_check_policy_tgs(krb5_context kcontext,
                                          krb5_kdc_req *request,
                                          krb5_db_entry *server,
                                          krb5_ticket *ticket,
                                          const char **status,
-                                         krb5_data *e_data);
+                                         krb5_pa_data ***e_data);
 
 void krb5_db_audit_as_req(krb5_context kcontext, krb5_kdc_req *request,
                           krb5_db_entry *client, krb5_db_entry *server,
@@ -659,7 +706,6 @@ krb5_error_code
 krb5_def_fetch_mkey_list( krb5_context            context,
                           krb5_principal        mprinc,
                           const krb5_keyblock  *mkey,
-                          krb5_kvno             mkvno,
                           krb5_keylist_node  **mkeys_list);
 
 krb5_error_code
@@ -736,6 +782,12 @@ krb5_dbe_free_mkey_aux_list(krb5_context, krb5_mkey_aux_node *);
 void
 krb5_dbe_free_tl_data(krb5_context, krb5_tl_data *);
 
+void
+krb5_dbe_free_strings(krb5_context, krb5_string_attr *, int count);
+
+void
+krb5_dbe_free_string(krb5_context, char *);
+
 #define KRB5_KDB_DEF_FLAGS      0
 
 #define KDB_MAX_DB_NAME                 128
@@ -757,12 +809,12 @@ krb5_dbe_free_tl_data(krb5_context, krb5_tl_data *);
  * This number indicates the date of the last incompatible change to the DAL.
  * The maj_ver field of the module's vtable structure must match this version.
  */
-#define KRB5_KDB_DAL_MAJOR_VERSION 2
+#define KRB5_KDB_DAL_MAJOR_VERSION 4
 
 /*
  * A krb5_context can hold one database object.  Modules should use
- * context->dal_handle->db_context to store state associated with the database
- * object.
+ * krb5_db_set_context and krb5_db_get_context to store state associated with
+ * the database object.
  *
  * Some module functions are mandatory for KDC operation; others are optional
  * or apply only to administrative operations.  If a function is optional, a
@@ -800,14 +852,6 @@ typedef struct _kdb_vftabl {
      * command-line arguments for module-specific flags.  mode will be one of
      * KRB5_KDB_OPEN_{RW,RO} or'd with one of
      * KRB5_KDB_SRV_TYPE_{KDC,ADMIN,PASSWD,OTHER}.
-     *
-     * A db_args value of "temporary" is generated programattically by
-     * kdb5_util load.  If this db_args value is present, the module should
-     * open a side copy of the database suitable for loading in a propagation
-     * from master to slave.  This side copy will later be promoted with
-     * promote_db, allowing complete updates of the DB with no loss in read
-     * availability.  If the module cannot comply with this architecture, it
-     * should return an error.
      */
     krb5_error_code (*init_module)(krb5_context kcontext, char *conf_section,
                                    char **db_args, int mode);
@@ -823,6 +867,13 @@ typedef struct _kdb_vftabl {
      * database.  conf_section and db_args have the same meaning as in
      * init_module.  This function may return an error if the database already
      * exists.  Used by kdb5_util create.
+     *
+     * If db_args contains the value "temporary", the module should create an
+     * exclusively locked side copy of the database suitable for loading in a
+     * propagation from master to slave.  This side copy will later be promoted
+     * with promote_db, allowing complete updates of the DB with no loss in
+     * read availability.  If the module cannot comply with this architecture,
+     * it should return an error.
      */
     krb5_error_code (*create)(krb5_context kcontext, char *conf_section,
                               char **db_args);
@@ -837,13 +888,8 @@ typedef struct _kdb_vftabl {
                                char **db_args);
 
     /*
-     * Optional: Set *age to the last modification time of the database.  Used
-     * by the KDC lookaside cache to ensure that lookaside entries are not used
-     * if the database has changed since the entry was recorded.
-     *
-     * If this function is unimplemented, lookaside cache entries will
-     * effectively expire immediately.  Another option is to supply the current
-     * time, which will cause lookaside cache entries to last for one second.
+     * Deprecated: No longer used as of krb5 1.10; can be removed in the next
+     * DAL revision.  Modules should leave as NULL.
      */
     krb5_error_code (*get_age)(krb5_context kcontext, char *db_name,
                                time_t *age);
@@ -855,7 +901,6 @@ typedef struct _kdb_vftabl {
      * KRB5_DB_LOCKMODE_SHARED: Lock may coexist with other shared locks.
      * KRB5_DB_LOCKMODE_EXCLUSIVE: Lock may not coexist with other locks.
      * KRB5_DB_LOCKMODE_PERMANENT: Exclusive lock surviving process exit.
-     * (KRB5_DB_LOCKMODE_DONTBLOCK is unused and unimplemented.)
      *
      * Used by the "kadmin lock" command, incremental propagation, and
      * kdb5_util dump.  Incremental propagation support requires shared locks
@@ -1053,7 +1098,6 @@ typedef struct _kdb_vftabl {
     krb5_error_code (*fetch_master_key_list)(krb5_context kcontext,
                                              krb5_principal mname,
                                              const krb5_keyblock *key,
-                                             krb5_kvno kvno,
                                              krb5_keylist_node **mkeys_list);
 
     /*
@@ -1104,10 +1148,13 @@ typedef struct _kdb_vftabl {
                                   krb5_db_entry *db_entry);
 
     /*
-     * Optional: Promote a temporary database to be the live one.  kdb5_util
-     * load opens the database with the "temporary" db_arg and then invokes
-     * this function when the load is complete, thus replacing the live
-     * database with no loss of read availability.
+     * Optional: Promote a temporary database to be the live one.  context must
+     * be initialized with an exclusively locked database created with the
+     * "temporary" db_arg.  On success, the database object contained in
+     * context will be finalized.
+     *
+     * This method is used by kdb5_util load to replace the live database with
+     * minimal loss of read availability.
      */
     krb5_error_code (*promote_db)(krb5_context context, char *conf_section,
                                   char **db_args);
@@ -1233,7 +1280,7 @@ typedef struct _kdb_vftabl {
                                        krb5_db_entry *server,
                                        krb5_timestamp kdc_time,
                                        const char **status,
-                                       krb5_data *e_data);
+                                       krb5_pa_data ***e_data);
 
     /*
      * Optional: Perform a policy check on a TGS request, in addition to the
@@ -1250,7 +1297,7 @@ typedef struct _kdb_vftabl {
                                         krb5_db_entry *server,
                                         krb5_ticket *ticket,
                                         const char **status,
-                                        krb5_data *e_data);
+                                        krb5_pa_data ***e_data);
 
     /*
      * Optional: This method informs the module of a successful or unsuccessful

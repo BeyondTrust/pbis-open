@@ -44,16 +44,18 @@ DEF_FUNC_PTRS(krb5_auth_pack);
 DEF_FUNC_PTRS(krb5_auth_pack_draft9);
 DEF_FUNC_PTRS(krb5_kdc_dh_key_info);
 DEF_FUNC_PTRS(krb5_pa_pk_as_rep);
-DEF_FUNC_PTRS(krb5_pa_pk_as_rep_draft9);
 DEF_FUNC_PTRS(krb5_pa_pk_as_req);
 DEF_FUNC_PTRS(krb5_pa_pk_as_req_draft9);
 DEF_FUNC_PTRS(krb5_reply_key_pack);
 DEF_FUNC_PTRS(krb5_reply_key_pack_draft9);
-DEF_FUNC_PTRS_ARRAY(krb5_typed_data);
 
 /* special cases... */
 krb5_error_code
 (*k5int_decode_krb5_principal_name)(const krb5_data *, krb5_principal_data **);
+
+krb5_error_code
+(*k5int_encode_krb5_pa_pk_as_rep_draft9)(const krb5_pa_pk_as_rep_draft9 *,
+                                         krb5_data **code);
 
 krb5_error_code
 (*k5int_encode_krb5_td_dh_parameters)(const krb5_algorithm_identifier **,
@@ -72,9 +74,6 @@ krb5_error_code
  krb5_external_principal_identifier ***);
 
 krb5_error_code
-(*k5int_decode_krb5_as_req)(const krb5_data *output, krb5_kdc_req **rep);
-
-krb5_error_code
 (*k5int_encode_krb5_kdc_req_body)(const krb5_kdc_req *rep, krb5_data **code);
 
 void KRB5_CALLCONV
@@ -83,16 +82,6 @@ void KRB5_CALLCONV
 void
 (*k5int_set_prompt_types)(krb5_context, krb5_prompt_type *);
 
-krb5_error_code
-(*k5int_encode_krb5_authdata_elt)(const krb5_authdata *rep, krb5_data **code);
-
-krb5_error_code
-(*k5int_make_srv_query_realm)
-        (const krb5_data *realm, const char *service,
-         const char *protocol, struct srv_dns_entry **answers);
-
-void
-(*k5int_free_srv_dns_data)(struct srv_dns_entry *);
 
 /*
  * Grab internal function pointers from the krb5int_accessor
@@ -115,23 +104,19 @@ pkinit_accessor_init(void)
     SET_PTRS(krb5_auth_pack_draft9);
     SET_PTRS(krb5_kdc_dh_key_info);
     SET_PTRS(krb5_pa_pk_as_rep);
-    SET_PTRS(krb5_pa_pk_as_rep_draft9);
     SET_PTRS(krb5_pa_pk_as_req);
     SET_PTRS(krb5_pa_pk_as_req_draft9);
     SET_PTRS(krb5_reply_key_pack);
     SET_PTRS(krb5_reply_key_pack_draft9);
     SET_PTRS(krb5_td_dh_parameters);
     SET_PTRS(krb5_td_trusted_certifiers);
-    SET_PTRS(krb5_typed_data);
 
     /* special cases... */
     k5int_decode_krb5_principal_name = k5int.decode_krb5_principal_name;
-    k5int_decode_krb5_as_req = k5int.decode_krb5_as_req;
     k5int_encode_krb5_kdc_req_body = k5int.encode_krb5_kdc_req_body;
+    k5int_encode_krb5_pa_pk_as_rep_draft9 = \
+        k5int.encode_krb5_pa_pk_as_rep_draft9;
     k5int_krb5_free_kdc_req = k5int.free_kdc_req;
     k5int_set_prompt_types = k5int.set_prompt_types;
-    k5int_encode_krb5_authdata_elt = k5int.encode_krb5_authdata_elt;
-    k5int_make_srv_query_realm = k5int.make_srv_query_realm;
-    k5int_free_srv_dns_data = k5int.free_srv_dns_data;
     return 0;
 }

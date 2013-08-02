@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/kdb/ldap/ldap_util/kdb5_ldap_util.c */
 /*
- * kadmin/ldap_util/kdb5_ldap_util.c
- *
  * (C) Copyright 1990,1991, 1996, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Edit a KDC database.
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -53,7 +48,6 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
 /* Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -81,6 +75,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <locale.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -108,90 +103,48 @@ krb5_boolean manual_mkey = FALSE;
 void
 usage(void)
 {
-    fprintf(stderr, "Usage: "
-            "kdb5_ldap_util [-D user_dn [-w passwd]] [-H ldapuri]\n"
-            "\tcmd [cmd_options]\n"
+    fprintf(stderr,
+            _("Usage: kdb5_ldap_util [-D user_dn [-w passwd]] [-H ldapuri]\n"
+              "\tcmd [cmd_options]\n"
 
 /* Create realm */
-            "create          [-subtrees subtree_dn_list] [-sscope search_scope] [-containerref container_reference_dn]\n"
-#ifdef HAVE_EDIRECTORY
-            "\t\t[-kdcdn kdc_service_list] [-admindn admin_service_list]\n"
-            "\t\t[-pwddn passwd_service_list]\n"
-#endif
-            "\t\t[-m|-P password|-sf stashfilename] [-k mkeytype] [-kv mkeyVNO] [-s]\n"
-            "\t\t[-maxtktlife max_ticket_life] [-maxrenewlife max_renewable_ticket_life]\n"
-            "\t\t[ticket_flags] [-r realm]\n"
+              "create          [-subtrees subtree_dn_list] [-sscope search_scope] [-containerref container_reference_dn]\n"
+              "\t\t[-m|-P password|-sf stashfilename] [-k mkeytype] [-kv mkeyVNO] [-s]\n"
+              "\t\t[-maxtktlife max_ticket_life] [-maxrenewlife max_renewable_ticket_life]\n"
+              "\t\t[ticket_flags] [-r realm]\n"
 
 /* modify realm */
-            "modify          [-subtrees subtree_dn_list] [-sscope search_scope] [-containerref container_reference_dn]\n"
-#ifdef HAVE_EDIRECTORY
-            "\t\t[-kdcdn kdc_service_list |\n"
-            "\t\t[-clearkdcdn kdc_service_list] [-addkdcdn kdc_service_list]]\n"
-            "\t\t[-admindn admin_service_list | [-clearadmindn admin_service_list]\n"
-            "\t\t[-addadmindn admin_service_list]] [-pwddn passwd_service_list |\n"
-            "\t\t[-clearpwddn passwd_service_list] [-addpwddn passwd_service_list]]\n"
-#endif
-            "\t\t[-maxtktlife max_ticket_life] [-maxrenewlife max_renewable_ticket_life]\n"
-            "\t\t[ticket_flags] [-r realm]\n"
+              "modify          [-subtrees subtree_dn_list] [-sscope search_scope] [-containerref container_reference_dn]\n"
+              "\t\t[-maxtktlife max_ticket_life] [-maxrenewlife max_renewable_ticket_life]\n"
+              "\t\t[ticket_flags] [-r realm]\n"
 /* View realm */
-            "view            [-r realm]\n"
+              "view            [-r realm]\n"
 
 /* Destroy realm */
-            "destroy                [-f] [-r realm]\n"
+              "destroy                [-f] [-r realm]\n"
 
 /* List realms */
-            "list\n"
-
-#ifdef HAVE_EDIRECTORY
-/* Create Service */
-            "create_service  {-kdc|-admin|-pwd} [-servicehost service_host_list]\n"
-            "\t\t[-realm realm_list] \n"
-            "\t\t[-randpw|-fileonly] [-f filename] service_dn\n"
-
-/* Modify service */
-            "modify_service  [-servicehost service_host_list |\n"
-            "\t\t[-clearservicehost service_host_list]\n"
-            "\t\t[-addservicehost service_host_list]]\n"
-            "\t\t[-realm realm_list | [-clearrealm realm_list]\n"
-            "\t\t[-addrealm realm_list]] service_dn\n"
-
-/* View Service */
-            "view_service    service_dn\n"
-
-/* Destroy Service */
-            "destroy_service [-force] [-f stashfilename] service_dn\n"
-
-/* List services */
-            "list_service    [-basedn base_dn]\n"
-
-/* Set Service password */
-            "setsrvpw        [-randpw|-fileonly] [-f filename] service_dn\n"
-
-#else
+              "list\n"
 
 /* Stash the service password */
-            "stashsrvpw      [-f filename] service_dn\n"
-
-#endif
+              "stashsrvpw      [-f filename] service_dn\n"
 
 /* Create policy */
-            "create_policy   [-r realm] [-maxtktlife max_ticket_life]\n"
-            "\t\t[-maxrenewlife max_renewable_ticket_life] [ticket_flags] policy\n"
+              "create_policy   [-r realm] [-maxtktlife max_ticket_life]\n"
+              "\t\t[-maxrenewlife max_renewable_ticket_life] [ticket_flags] policy\n"
 
 /* Modify policy */
-            "modify_policy   [-r realm] [-maxtktlife max_ticket_life]\n"
-            "\t\t[-maxrenewlife max_renewable_ticket_life] [ticket_flags] policy\n"
+              "modify_policy   [-r realm] [-maxtktlife max_ticket_life]\n"
+              "\t\t[-maxrenewlife max_renewable_ticket_life] [ticket_flags] policy\n"
 
 /* View policy */
-            "view_policy     [-r realm] policy\n"
+              "view_policy     [-r realm] policy\n"
 
 /* Destroy policy */
-            "destroy_policy  [-r realm] [-force] policy\n"
+              "destroy_policy  [-r realm] [-force] policy\n"
 
 /* List policies */
-            "list_policy     [-r realm]\n"
-
-    );
+              "list_policy     [-r realm]\n"));
 }
 
 void
@@ -217,16 +170,7 @@ static struct _cmd_table {
     {"view", kdb5_ldap_view, 1},
     {"destroy", kdb5_ldap_destroy, 1},
     {"list", kdb5_ldap_list, 1},
-#ifdef HAVE_EDIRECTORY
-    {"create_service", kdb5_ldap_create_service, 1},
-    {"modify_service", kdb5_ldap_modify_service, 1},
-    {"view_service", kdb5_ldap_view_service, 1},
-    {"destroy_service", kdb5_ldap_destroy_service, 1},
-    {"list_service",kdb5_ldap_list_services,1},
-    {"setsrvpw", kdb5_ldap_set_service_password, 0},
-#else
     {"stashsrvpw", kdb5_ldap_stash_service_password, 0},
-#endif
     {"create_policy", kdb5_ldap_create_policy, 1},
     {"modify_policy", kdb5_ldap_modify_policy, 1},
     {"view_policy", kdb5_ldap_view_policy, 1},
@@ -309,19 +253,20 @@ main(int argc, char *argv[])
     /*
      * Ensure that "progname" is set before calling com_err.
      */
+    setlocale(LC_ALL, "");
     progname = (strrchr(argv[0], '/') ? strrchr(argv[0], '/')+1 : argv[0]);
 
     retval = kadm5_init_krb5_context(&util_context);
     set_com_err_hook(extended_com_err_fn);
     if (retval) {
-        com_err (progname, retval, "while initializing Kerberos code");
+        com_err(progname, retval, _("while initializing Kerberos code"));
         exit_status++;
         goto cleanup;
     }
 
     cmd_argv = (char **) malloc(sizeof(char *)*argc);
     if (cmd_argv == NULL) {
-        com_err(progname, ENOMEM, "while creating sub-command arguments");
+        com_err(progname, ENOMEM, _("while creating sub-command arguments"));
         exit_status++;
         goto cleanup;
     }
@@ -344,13 +289,15 @@ main(int argc, char *argv[])
             /* not sure this is really necessary */
             if ((retval = krb5_set_default_realm(util_context,
                                                  global_params.realm))) {
-                com_err(progname, retval, "while setting default realm name");
+                com_err(progname, retval,
+                        _("while setting default realm name"));
                 exit_status++;
                 goto cleanup;
             }
         } else if (strcmp(*argv, "-k") == 0 && ARG_VAL) {
             if (krb5_string_to_enctype(koptarg, &global_params.enctype)) {
-                com_err(progname, EINVAL, ": %s is an invalid enctype", koptarg);
+                com_err(progname, EINVAL,
+                        _(": %s is an invalid enctype"), koptarg);
                 exit_status++;
                 goto cleanup;
             } else
@@ -358,7 +305,8 @@ main(int argc, char *argv[])
         } else if (strcmp(*argv, "-kv") == 0 && ARG_VAL) {
             global_params.kvno = (krb5_kvno) atoi(koptarg);
             if (global_params.kvno == IGNORE_VNO) {
-                com_err(progname, EINVAL, ": %s is an invalid mkeyVNO", koptarg);
+                com_err(progname, EINVAL,
+                        _(": %s is an invalid mkeyVNO"), koptarg);
                 exit_status++;
                 goto cleanup;
             } else
@@ -376,7 +324,7 @@ main(int argc, char *argv[])
         } else if (strcmp(*argv, "-D") == 0 && ARG_VAL) {
             bind_dn = koptarg;
             if (bind_dn == NULL) {
-                com_err(progname, ENOMEM, "while reading ldap parameters");
+                com_err(progname, ENOMEM, _("while reading ldap parameters"));
                 exit_status++;
                 goto cleanup;
             }
@@ -384,7 +332,7 @@ main(int argc, char *argv[])
         } else if (strcmp(*argv, "-w") == 0 && ARG_VAL) {
             passwd = strdup(koptarg);
             if (passwd == NULL) {
-                com_err(progname, ENOMEM, "while reading ldap parameters");
+                com_err(progname, ENOMEM, _("while reading ldap parameters"));
                 exit_status++;
                 goto cleanup;
             }
@@ -392,7 +340,7 @@ main(int argc, char *argv[])
         } else if (strcmp(*argv, "-H") == 0 && ARG_VAL) {
             ldap_server = koptarg;
             if (ldap_server == NULL) {
-                com_err(progname, ENOMEM, "while reading ldap parameters");
+                com_err(progname, ENOMEM, _("while reading ldap parameters"));
                 exit_status++;
                 goto cleanup;
             }
@@ -442,7 +390,7 @@ main(int argc, char *argv[])
         retval = krb5_get_default_realm(util_context, &temp);
         if (retval) {
             if (realm_name_required) {
-                com_err (progname, retval, "while getting default realm");
+                com_err (progname, retval, _("while getting default realm"));
                 exit_status++;
                 goto cleanup;
             }
@@ -481,7 +429,8 @@ main(int argc, char *argv[])
         retval = kadm5_get_config_params(util_context, 1,
                                          &global_params, &global_params);
         if (retval) {
-            com_err(progname, retval, "while retreiving configuration parameters");
+            com_err(progname, retval,
+                    _("while retreiving configuration parameters"));
             exit_status++;
             goto cleanup;
         }
@@ -489,7 +438,7 @@ main(int argc, char *argv[])
     }
 
     if ((retval = krb5_ldap_lib_init()) != 0) {
-        com_err(progname, retval, "while initializing error handling");
+        com_err(progname, retval, _("while initializing error handling"));
         exit_status++;
         goto cleanup;
     }
@@ -497,7 +446,7 @@ main(int argc, char *argv[])
     /* Initialize the ldap context */
     ldap_context = calloc(sizeof(krb5_ldap_context), 1);
     if (ldap_context == NULL) {
-        com_err(progname, ENOMEM, "while initializing ldap handle");
+        com_err(progname, ENOMEM, _("while initializing ldap handle"));
         exit_status++;
         goto cleanup;
     }
@@ -510,7 +459,8 @@ main(int argc, char *argv[])
         if (passwd == NULL) {
             passwd = (char *)malloc(MAX_PASSWD_LEN);
             if (passwd == NULL) {
-                com_err(progname, ENOMEM, "while retrieving ldap configuration");
+                com_err(progname, ENOMEM,
+                        _("while retrieving ldap configuration"));
                 exit_status++;
                 goto cleanup;
             }
@@ -518,18 +468,21 @@ main(int argc, char *argv[])
             if (prompt == NULL) {
                 free(passwd);
                 passwd = NULL;
-                com_err(progname, ENOMEM, "while retrieving ldap configuration");
+                com_err(progname, ENOMEM,
+                        _("while retrieving ldap configuration"));
                 exit_status++;
                 goto cleanup;
             }
             memset(passwd, 0, MAX_PASSWD_LEN);
             passwd_len = MAX_PASSWD_LEN - 1;
-            snprintf(prompt, MAX_PASSWD_PROMPT_LEN, "Password for \"%s\"", bind_dn);
+            snprintf(prompt, MAX_PASSWD_PROMPT_LEN,
+                     _("Password for \"%s\""), bind_dn);
 
             db_retval = krb5_read_password(util_context, prompt, NULL, passwd, &passwd_len);
 
             if ((db_retval) || (passwd_len == 0)) {
-                com_err(progname, ENOMEM, "while retrieving ldap configuration");
+                com_err(progname, ENOMEM,
+                        _("while retrieving ldap configuration"));
                 free(passwd);
                 passwd = NULL;
                 exit_status++;
@@ -546,14 +499,14 @@ main(int argc, char *argv[])
 
         ldap_context->server_info_list = (krb5_ldap_server_info **) calloc (2, sizeof (krb5_ldap_server_info *)) ;
         if (ldap_context->server_info_list == NULL) {
-            com_err(progname, ENOMEM, "while initializing server list");
+            com_err(progname, ENOMEM, _("while initializing server list"));
             exit_status++;
             goto cleanup;
         }
 
         ldap_context->server_info_list[0] = (krb5_ldap_server_info *) calloc (1, sizeof (krb5_ldap_server_info));
         if (ldap_context->server_info_list[0] == NULL) {
-            com_err(progname, ENOMEM, "while initializing server list");
+            com_err(progname, ENOMEM, _("while initializing server list"));
             exit_status++;
             goto cleanup;
         }
@@ -562,7 +515,7 @@ main(int argc, char *argv[])
 
         ldap_context->server_info_list[0]->server_name = strdup(ldap_server);
         if (ldap_context->server_info_list[0]->server_name == NULL) {
-            com_err(progname, ENOMEM, "while initializing server list");
+            com_err(progname, ENOMEM, _("while initializing server list"));
             exit_status++;
             goto cleanup;
         }
@@ -570,7 +523,8 @@ main(int argc, char *argv[])
     if (bind_dn) {
         ldap_context->bind_dn = strdup(bind_dn);
         if (ldap_context->bind_dn == NULL) {
-            com_err(progname, ENOMEM, "while retrieving ldap configuration");
+            com_err(progname, ENOMEM,
+                    _("while retrieving ldap configuration"));
             exit_status++;
             goto cleanup;
         }
@@ -583,7 +537,7 @@ main(int argc, char *argv[])
         if ((global_params.enctype != ENCTYPE_UNKNOWN) &&
             (!krb5_c_valid_enctype(global_params.enctype))) {
             com_err(progname, KRB5_PROG_KEYTYPE_NOSUPP,
-                    "while setting up enctype %d", global_params.enctype);
+                    _("while setting up enctype %d"), global_params.enctype);
         }
     }
 
@@ -592,7 +546,7 @@ main(int argc, char *argv[])
     /* Setup DAL handle to access the database */
     db_retval = krb5_db_setup_lib_handle(util_context);
     if (db_retval) {
-        com_err(progname, db_retval, "while setting up lib handle");
+        com_err(progname, db_retval, _("while setting up lib handle"));
         exit_status++;
         goto cleanup;
     }
@@ -601,7 +555,7 @@ main(int argc, char *argv[])
 
     db_retval = krb5_ldap_read_server_params(util_context, conf_section, KRB5_KDB_SRV_TYPE_OTHER);
     if (db_retval) {
-        com_err(progname, db_retval, "while reading ldap configuration");
+        com_err(progname, db_retval, _("while reading ldap configuration"));
         exit_status++;
         goto cleanup;
     }
@@ -609,7 +563,7 @@ main(int argc, char *argv[])
     if (cmd->opendb) {
         db_retval = krb5_ldap_db_init(util_context, (krb5_ldap_context *)util_context->dal_handle->db_context);
         if (db_retval) {
-            com_err(progname, db_retval, "while initializing database");
+            com_err(progname, db_retval, _("while initializing database"));
             exit_status++;
             goto cleanup;
         }

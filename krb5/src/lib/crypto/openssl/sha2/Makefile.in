@@ -1,17 +1,19 @@
-mydir=lib$(S)crypto$(S)openssl$(S)sha2
+# Nothing here!  But we can't remove this directory as the build
+# system currently assumes that all modules have the same directory
+# structure.
+
+mydir=lib$(S)crypto$(S)openssl$(S)aes
 BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+LOCALINCLUDES=
 DEFS=
 
-PROG_LIBPATH=-L$(TOPLIBD)
-PROG_RPATH=$(KRB5_LIBDIR)
+STLIBOBJS=
 
-STLIBOBJS= sha256.o
+OBJS=
 
-OBJS= $(OUTPRE)sha256.$(OBJEXT) 
+SRCS=
 
-SRCS= $(srcdir)/sha256.c
-
-all-unix:: all-libobjs
+all-unix:: all-libobjs 
 
 includes:: depend
 
@@ -20,4 +22,3 @@ depend:: $(SRCS)
 clean-unix:: clean-libobjs
 
 @libobj_frag@
-

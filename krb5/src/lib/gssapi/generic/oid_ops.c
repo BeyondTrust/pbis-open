@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/gssapi/generic/oid_ops.c */
 /*
- * lib/gssapi/generic/oid_ops.c
- *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,12 +22,30 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ */
+/*
+ * Copyright 1993 by OpenVision Technologies, Inc.
  *
+ * Permission to use, copy, modify, distribute, and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appears in all copies and
+ * that both that copyright notice and this permission notice appear in
+ * supporting documentation, and that the name of OpenVision not be used
+ * in advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission. OpenVision makes no
+ * representations about the suitability of this software for any
+ * purpose.  It is provided "as is" without express or implied warranty.
+ *
+ * OPENVISION DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+ * EVENT SHALL OPENVISION BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+ * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * oid_ops.c - GSS-API V2 interfaces to manipulate OIDs
- */
+/* GSS-API V2 interfaces to manipulate OIDs */
 
 #include "gssapiP_generic.h"
 #ifdef HAVE_UNISTD_H
@@ -40,6 +57,13 @@
 #include <gssapi/gssapi_generic.h>
 #include <errno.h>
 #include <ctype.h>
+
+/*
+ * The functions for allocating and releasing individual OIDs use malloc and
+ * free instead of the gssalloc wrappers, because the mechglue currently mixes
+ * generic_gss_copy_oid() with hand-freeing of OIDs.  We do not need to free
+ * free OIDs allocated by mechanisms, so this should not be a problem.
+ */
 
 OM_uint32
 generic_gss_release_oid(OM_uint32 *minor_status, gss_OID *oid)
@@ -73,6 +97,7 @@ generic_gss_release_oid(OM_uint32 *minor_status, gss_OID *oid)
         (*oid != GSS_C_NT_HOSTBASED_SERVICE) &&
         (*oid != GSS_C_NT_ANONYMOUS) &&
         (*oid != GSS_C_NT_EXPORT_NAME) &&
+        (*oid != GSS_C_NT_COMPOSITE_EXPORT) &&
         (*oid != gss_nt_service_name)) {
         free((*oid)->elements);
         free(*oid);
@@ -112,7 +137,7 @@ generic_gss_create_empty_oid_set(OM_uint32 *minor_status, gss_OID_set *oid_set)
 {
     *minor_status = 0;
 
-    if ((*oid_set = (gss_OID_set) malloc(sizeof(gss_OID_set_desc)))) {
+    if ((*oid_set = (gss_OID_set) gssalloc_malloc(sizeof(gss_OID_set_desc)))) {
         memset(*oid_set, 0, sizeof(gss_OID_set_desc));
         return(GSS_S_COMPLETE);
     }
@@ -138,8 +163,8 @@ generic_gss_add_oid_set_member(OM_uint32 *minor_status,
 
     elist = (*oid_set)->elements;
     /* Get an enlarged copy of the array */
-    if (((*oid_set)->elements = (gss_OID) malloc(((*oid_set)->count+1) *
-                                                 sizeof(gss_OID_desc)))) {
+    if (((*oid_set)->elements = (gss_OID) gssalloc_malloc(((*oid_set)->count+1) *
+                                                          sizeof(gss_OID_desc)))) {
         /* Copy in the old junk */
         if (elist)
             memcpy((*oid_set)->elements,
@@ -149,7 +174,7 @@ generic_gss_add_oid_set_member(OM_uint32 *minor_status,
         /* Duplicate the input element */
         lastel = &(*oid_set)->elements[(*oid_set)->count];
         if ((lastel->elements =
-             (void *) malloc((size_t) member_oid->length))) {
+             (void *) gssalloc_malloc((size_t) member_oid->length))) {
             /* Success - copy elements */
             memcpy(lastel->elements, member_oid->elements,
                    (size_t) member_oid->length);
@@ -159,12 +184,12 @@ generic_gss_add_oid_set_member(OM_uint32 *minor_status,
             /* Update count */
             (*oid_set)->count++;
             if (elist)
-                free(elist);
+                gssalloc_free(elist);
             *minor_status = 0;
             return(GSS_S_COMPLETE);
         }
         else
-            free((*oid_set)->elements);
+            gssalloc_free((*oid_set)->elements);
     }
     /* Failure - restore old contents of list */
     (*oid_set)->elements = elist;
@@ -214,7 +239,6 @@ generic_gss_oid_to_str(OM_uint32 *minor_status,
     OM_uint32           number;
     OM_uint32 i;
     unsigned char       *cp;
-    char                *bp;
     struct k5buf        buf;
 
     if (minor_status != NULL)
@@ -247,15 +271,12 @@ generic_gss_oid_to_str(OM_uint32 *minor_status,
             number = 0;
         }
     }
-    krb5int_buf_add(&buf, "}");
-    bp = krb5int_buf_data(&buf);
-    if (bp == NULL) {
+    krb5int_buf_add_len(&buf, "}\0", 2);
+    if (krb5int_buf_data(&buf) == NULL) {
         *minor_status = ENOMEM;
         return(GSS_S_FAILURE);
     }
-    oid_str->length = krb5int_buf_len(&buf)+1;
-    oid_str->value = (void *) bp;
-    return(GSS_S_COMPLETE);
+    return k5buf_to_gss(minor_status, &buf, oid_str);
 }
 
 OM_uint32
@@ -324,10 +345,10 @@ generic_gss_str_to_oid(OM_uint32 *minor_status,
         if (sscanf((char *)bp, "%ld", &numbuf) != 1) {
             return(GSS_S_FAILURE);
         }
-        while (numbuf) {
+        do {
             nbytes++;
             numbuf >>= 7;
-        }
+        } while (numbuf);
         while ((bp < &cp[oid_str->length]) && isdigit(*bp))
             bp++;
         while ((bp < &cp[oid_str->length]) &&
@@ -365,20 +386,20 @@ generic_gss_str_to_oid(OM_uint32 *minor_status,
                 nbytes = 0;
                 /* Have to fill in the bytes msb-first */
                 onumbuf = numbuf;
-                while (numbuf) {
+                do {
                     nbytes++;
                     numbuf >>= 7;
-                }
+                } while (numbuf);
                 numbuf = onumbuf;
                 op += nbytes;
                 i = -1;
-                while (numbuf) {
+                do {
                     op[i] = (unsigned char) numbuf & 0x7f;
                     if (i != -1)
                         op[i] |= 0x80;
                     i--;
                     numbuf >>= 7;
-                }
+                } while (numbuf);
                 while (isdigit(*bp))
                     bp++;
                 while (isspace(*bp) || *bp == '.')
@@ -478,27 +499,6 @@ generic_gss_oid_decompose(OM_uint32 *minor_status,
     return GSS_S_COMPLETE;
 }
 
-/*
- * Copyright 1993 by OpenVision Technologies, Inc.
- *
- * Permission to use, copy, modify, distribute, and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appears in all copies and
- * that both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of OpenVision not be used
- * in advertising or publicity pertaining to distribution of the software
- * without specific, written prior permission. OpenVision makes no
- * representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- * OPENVISION DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL OPENVISION BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
- */
 OM_uint32
 generic_gss_copy_oid_set(OM_uint32 *minor_status,
                          const gss_OID_set_desc * const oidset,
@@ -521,13 +521,13 @@ generic_gss_copy_oid_set(OM_uint32 *minor_status,
     if (new_oidset == NULL)
         return (GSS_S_CALL_INACCESSIBLE_WRITE);
 
-    if ((copy = (gss_OID_set_desc *) calloc(1, sizeof (*copy))) == NULL) {
+    if ((copy = (gss_OID_set_desc *) gssalloc_calloc(1, sizeof (*copy))) == NULL) {
         major = GSS_S_FAILURE;
         goto done;
     }
 
     if ((copy->elements = (gss_OID_desc *)
-         calloc(oidset->count, sizeof (*copy->elements))) == NULL) {
+         gssalloc_calloc(oidset->count, sizeof (*copy->elements))) == NULL) {
         major = GSS_S_FAILURE;
         goto done;
     }
@@ -537,7 +537,7 @@ generic_gss_copy_oid_set(OM_uint32 *minor_status,
         gss_OID_desc *out = &copy->elements[i];
         gss_OID_desc *in = &oidset->elements[i];
 
-        if ((out->elements = (void *) malloc(in->length)) == NULL) {
+        if ((out->elements = (void *) gssalloc_malloc(in->length)) == NULL) {
             major = GSS_S_FAILURE;
             goto done;
         }
@@ -548,7 +548,7 @@ generic_gss_copy_oid_set(OM_uint32 *minor_status,
     *new_oidset = copy;
 done:
     if (major != GSS_S_COMPLETE) {
-        (void) gss_release_oid_set(&minor, &copy);
+        (void) generic_gss_release_oid_set(&minor, &copy);
     }
 
     return (major);

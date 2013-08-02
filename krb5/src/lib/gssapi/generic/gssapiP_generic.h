@@ -25,7 +25,7 @@
 #define _GSSAPIP_GENERIC_H_
 
 /*
- * $Id: gssapiP_generic.h 24436 2010-10-06 18:25:04Z ghudson $
+ * $Id$
  */
 
 #if defined(_WIN32)
@@ -41,6 +41,7 @@
 
 #include "gssapi_generic.h"
 #include "gssapi_ext.h"
+#include <gssapi/gssapi_alloc.h>
 #include "gssapi_err_generic.h"
 #include <errno.h>
 
@@ -103,18 +104,6 @@ typedef UINT64_TYPE gssint_uint64;
 #define g_set_entry_add         gssint_g_set_entry_add
 #define g_set_entry_delete      gssint_g_set_entry_delete
 #define g_set_entry_get         gssint_g_set_entry_get
-#define g_save_name             gssint_g_save_name
-#define g_save_cred_id          gssint_g_save_cred_id
-#define g_save_ctx_id           gssint_g_save_ctx_id
-#define g_save_lucidctx_id      gssint_g_save_lucidctx_id
-#define g_validate_name         gssint_g_validate_name
-#define g_validate_cred_id      gssint_g_validate_cred_id
-#define g_validate_ctx_id       gssint_g_validate_ctx_id
-#define g_validate_lucidctx_id  gssint_g_validate_lucidctx_id
-#define g_delete_name           gssint_g_delete_name
-#define g_delete_cred_id        gssint_g_delete_cred_id
-#define g_delete_ctx_id         gssint_g_delete_ctx_id
-#define g_delete_lucidctx_id    gssint_g_delete_lucidctx_id
 #define g_make_string_buffer    gssint_g_make_string_buffer
 #define g_token_size            gssint_g_token_size
 #define g_make_token_header     gssint_g_make_token_header
@@ -276,6 +265,42 @@ int gssint_mecherrmap_get(OM_uint32 minor, gss_OID mech_oid,
                           OM_uint32 *mech_minor);
 OM_uint32 gssint_mecherrmap_map_errcode(OM_uint32 errcode);
 
+/*
+ * Transfer contents of a k5buf to a gss_buffer and invalidate the source
+ * On unix, this is a simple pointer copy
+ * On windows, memory is reallocated and copied.
+ */
+static inline OM_uint32
+k5buf_to_gss(OM_uint32 *minor,
+             struct k5buf *input_k5buf,
+             gss_buffer_t output_buffer)
+{
+    OM_uint32 status = GSS_S_COMPLETE;
+    char *bp = krb5int_buf_data(input_k5buf);
+    output_buffer->length = krb5int_buf_len(input_k5buf);
+#if defined(_WIN32) || defined(DEBUG_GSSALLOC)
+    if (output_buffer->length > 0) {
+        output_buffer->value = gssalloc_malloc(output_buffer->length);
+        if (output_buffer->value) {
+            memcpy(output_buffer->value, bp, output_buffer->length);
+        } else {
+            status = GSS_S_FAILURE;
+            *minor = ENOMEM;
+        }
+    } else {
+        output_buffer->value = NULL;
+    }
+    krb5int_free_buf(input_k5buf);
+#else
+    output_buffer->value = bp;
+    /*
+     * it would be nice to invalidate input_k5buf here
+     * but there is no api for that currently...
+     */
+#endif
+    return status;
+}
+
 OM_uint32 generic_gss_create_empty_buffer_set
 (OM_uint32 * /*minor_status*/,
             gss_buffer_set_t * /*buffer_set*/);
@@ -291,7 +316,7 @@ OM_uint32 generic_gss_release_buffer_set
 
 OM_uint32 generic_gss_copy_oid_set
 (OM_uint32 *, /* minor_status */
-            const gss_OID_set_desc *, /* const oidset*/
+            const gss_OID_set_desc * const /*oidset*/,
             gss_OID_set * /*new_oidset*/);
 
 extern gss_OID_set gss_ma_known_attrs;

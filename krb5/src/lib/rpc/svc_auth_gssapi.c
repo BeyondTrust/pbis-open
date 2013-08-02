@@ -1,7 +1,7 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: svc_auth_gssapi.c 23100 2009-10-31 00:48:38Z tlyu $
+ * $Id$
  *
  */
 

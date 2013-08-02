@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* Copyright (c) 2002 Naval Research Laboratory (NRL/CCS) */
 /*
- * Copyright (c) 2002 Naval Research Laboratory (NRL/CCS)
- *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the software,
@@ -10,7 +9,9 @@
  * NRL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION AND
  * DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES WHATSOEVER
  * RESULTING FROM THE USE OF THIS SOFTWARE.
- *
+ */
+
+/*
  * Key combination function.
  *
  * If Key1 and Key2 are two keys to be combined, the algorithm to combine
@@ -43,9 +44,7 @@
  * ASCII encoding of the string "combine"
  */
 
-#include "k5-int.h"
-#include "etypes.h"
-#include "dk.h"
+#include "crypto_int.h"
 
 static krb5_error_code dr(const struct krb5_enc_provider *enc,
                           const krb5_keyblock *inkey, unsigned char *outdata,
@@ -157,7 +156,7 @@ krb5int_c_combine_keys(krb5_context context, krb5_keyblock *key1,
     tkeyblock.length = keylength;
     tkeyblock.contents = output;
 
-    ret = (*enc->make_key)(&randbits, &tkeyblock);
+    ret = (*ktp->rand2key)(&randbits, &tkeyblock);
     if (ret)
         goto cleanup;
 

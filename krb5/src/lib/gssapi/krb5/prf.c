@@ -1,7 +1,6 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/gssapi/krb5/prf.c */
 /*
- * lib/gssapi/krb5/prf.c
- *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
  */
 
 #include <assert.h>
@@ -36,7 +33,7 @@
 #define MIN(_a,_b)  ((_a)<(_b)?(_a):(_b))
 #endif
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_pseudo_random(OM_uint32 *minor_status,
                        gss_ctx_id_t context,
                        int prf_key,
@@ -55,11 +52,6 @@ krb5_gss_pseudo_random(OM_uint32 *minor_status,
 
     prf_out->length = 0;
     prf_out->value = NULL;
-
-    if (!kg_validate_ctx_id(context)) {
-        *minor_status = G_VALIDATE_FAILED;
-        return GSS_S_NO_CONTEXT;
-    }
 
     t.length = 0;
     t.data = NULL;
@@ -140,4 +132,3 @@ cleanup:
     *minor_status = (OM_uint32)code;
     return (code == 0) ? GSS_S_COMPLETE : GSS_S_FAILURE;
 }
-

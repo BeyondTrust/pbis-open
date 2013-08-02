@@ -21,7 +21,7 @@
 # 
 
 #
-# $Id: gssapi_err_generic.et 18131 2006-06-14 22:27:54Z tlyu $
+# $Id$
 #
 
 error_table ggss

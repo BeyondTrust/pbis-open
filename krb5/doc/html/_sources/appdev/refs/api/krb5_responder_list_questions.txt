@@ -1,0 +1,46 @@
+krb5_responder_list_questions -  List the question names contained in the responder context. 
+=============================================================================================
+
+..
+
+.. c:function:: const char *const * krb5_responder_list_questions(krb5_context ctx, krb5_responder_context rctx)
+
+..
+
+
+:param:
+
+	          **[in]** **ctx** - Library context
+
+	          **[in]** **rctx** - Responder context
+
+
+..
+
+
+
+..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+..
+
+
+
+
+.. note::
+
+	 First introduced in 1.11
+ 
+

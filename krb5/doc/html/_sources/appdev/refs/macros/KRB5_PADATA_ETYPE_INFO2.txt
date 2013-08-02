@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-ETYPE-INFO2-data:
+
+KRB5_PADATA_ETYPE_INFO2
+=======================
+
+..
+.. data:: KRB5_PADATA_ETYPE_INFO2
+..
+
+
+
+
+============================== ======================
+``KRB5_PADATA_ETYPE_INFO2``       ``19``
+============================== ======================

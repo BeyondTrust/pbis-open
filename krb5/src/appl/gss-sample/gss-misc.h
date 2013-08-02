@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: gss-misc.h 23342 2009-11-24 17:46:45Z ghudson $
+ * $Id$
  */
 
 #ifndef _GSSMISC_H_

@@ -1,6 +1,5 @@
+/* ccapi/lib/ccapi_os_ipc.h */
 /*
- * $Header$
- *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -28,6 +27,8 @@
 #define CCAPI_OS_IPC_H
 
 #include "cci_common.h"
+
+cc_int32 cci_os_ipc_process_init (void);
 
 cc_int32 cci_os_ipc_thread_init (void);
 

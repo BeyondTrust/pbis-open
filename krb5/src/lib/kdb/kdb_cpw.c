@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/kdb/kdb_cpw.c */
 /*
- * lib/kdb/kdb_cpw.c
- *
  * Copyright 1995, 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
-
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -342,6 +339,37 @@ krb5_dbe_ark(context, master_key, ks_tuple, ks_tuple_count, db_entry)
     return(retval);
 }
 
+/* Construct a random explicit salt. */
+static krb5_error_code
+make_random_salt(krb5_context context, krb5_keysalt *salt_out)
+{
+    krb5_error_code retval;
+    unsigned char rndbuf[8];
+    krb5_data salt, rnd = make_data(rndbuf, sizeof(rndbuf));
+    unsigned int i;
+
+    /*
+     * Salts are limited by RFC 4120 to 7-bit ASCII.  For ease of examination
+     * and to avoid certain folding issues for older enctypes, we use printable
+     * characters with four fixed bits and four random bits, encoding 64
+     * psuedo-random bits into 16 bytes.
+     */
+    retval = krb5_c_random_make_octets(context, &rnd);
+    if (retval)
+        return retval;
+    retval = alloc_data(&salt, sizeof(rndbuf) * 2);
+    if (retval)
+        return retval;
+    for (i = 0; i < sizeof(rndbuf); i++) {
+        salt.data[i * 2] = 0x40 | (rndbuf[i] >> 4);
+        salt.data[i * 2 + 1] = 0x40 | (rndbuf[i] & 0xf);
+    }
+
+    salt_out->type = KRB5_KDB_SALTTYPE_SPECIAL;
+    salt_out->data = salt;
+    return 0;
+}
+
 /*
  * Add key_data for a krb5_db_entry
  * If passwd is NULL the assumes that the caller wants a random password.
@@ -361,6 +389,7 @@ add_key_pwd(context, master_key, ks_tuple, ks_tuple_count, passwd,
     krb5_keysalt          key_salt;
     krb5_keyblock         key;
     krb5_data             pwd;
+    krb5_data             afs_params = string2data("\1"), *s2k_params = NULL;
     int                   i, j, k;
     krb5_key_data         tmp_key_data;
     krb5_key_data        *tptr;
@@ -424,15 +453,17 @@ add_key_pwd(context, master_key, ks_tuple, ks_tuple_count, passwd,
             key_salt.data.data = 0;
             break;
         case KRB5_KDB_SALTTYPE_AFS3:
-            /* The afs_mit_string_to_key needs to use strlen, and the
-               realm field is not (necessarily) NULL terminated.  */
-            retval = krb5int_copy_data_contents_add0(context,
-                                                     krb5_princ_realm(context,
-                                                                      db_entry->princ),
-                                                     &key_salt.data);
+            retval = krb5int_copy_data_contents(context,
+                                                &db_entry->princ->realm,
+                                                &key_salt.data);
             if (retval)
                 return retval;
-            key_salt.data.length = SALT_TYPE_AFS_LENGTH; /*length actually used below...*/
+            s2k_params = &afs_params;
+            break;
+        case KRB5_KDB_SALTTYPE_SPECIAL:
+            retval = make_random_salt(context, &key_salt);
+            if (retval)
+                return retval;
             break;
         default:
             return(KRB5_KDB_BAD_SALTTYPE);
@@ -441,17 +472,14 @@ add_key_pwd(context, master_key, ks_tuple, ks_tuple_count, passwd,
         pwd.data = passwd;
         pwd.length = strlen(passwd);
 
-        /* AFS string to key will happen here */
-        if ((retval = krb5_c_string_to_key(context, ks_tuple[i].ks_enctype,
-                                           &pwd, &key_salt.data, &key))) {
-            if (key_salt.data.data)
-                free(key_salt.data.data);
-            return(retval);
+        retval = krb5_c_string_to_key_with_params(context,
+                                                  ks_tuple[i].ks_enctype,
+                                                  &pwd, &key_salt.data,
+                                                  s2k_params, &key);
+        if (retval) {
+            free(key_salt.data.data);
+            return retval;
         }
-
-        if (key_salt.data.length == SALT_TYPE_AFS_LENGTH)
-            key_salt.data.length =
-                krb5_princ_realm(context, db_entry->princ)->length;
 
         /* memory allocation to be done by db. So, use temporary block and later copy
            it to the memory allocated by db */

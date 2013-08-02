@@ -1,6 +1,5 @@
+/* ccapi/server/ccs_server.h */
 /*
- * $Header$
- *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -48,5 +47,7 @@ cc_int32 ccs_server_handle_request (ccs_pipe_t     in_client_pipe,
 cc_int32 ccs_server_send_reply (ccs_pipe_t     in_reply_pipe,
                                 cc_int32       in_reply_err,
                                 k5_ipc_stream   in_reply_data);
+
+cc_uint64 ccs_server_client_count ();
 
 #endif /* CCS_SERVER_H */

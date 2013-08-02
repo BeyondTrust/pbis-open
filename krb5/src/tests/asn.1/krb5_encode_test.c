@@ -1,12 +1,35 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* tests/asn.1/krb5_encode_test.c */
+/*
+ * Copyright (C) 1994 by the Massachusetts Institute of Technology.
+ * All rights reserved.
+ *
+ * Export of this software from the United States of America may
+ *   require a specific license from the United States Government.
+ *   It is the responsibility of any person or organization contemplating
+ *   export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  Furthermore if you modify this software you must label
+ * your software as modified software and not distribute it in such a
+ * fashion that it might be confused with the original M.I.T. software.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ */
+
 #include <stdio.h>
 #include "k5-int.h"
 #include "com_err.h"
 #include "utility.h"
 
 #include "ktest.h"
-#include <string.h>
-
 #include "debug.h"
 
 extern int current_appl_type;
@@ -14,21 +37,23 @@ extern int current_appl_type;
 krb5_context test_context;
 int error_count = 0;
 int do_trval = 0;
+int first_trval = 1;
 int trval2();
 
-static void encoder_print_results(code, typestring, description)
-    krb5_data *code;
-    char        *typestring;
-    char        *description;
+static void
+encoder_print_results(krb5_data *code, char *typestring, char *description)
 {
     char        *code_string = NULL;
-    krb5_error_code     retval;
     int r, rlen;
 
     if (do_trval) {
+        if (first_trval)
+            first_trval = 0;
+        else
+            printf("\n");
         printf("encode_krb5_%s%s:\n", typestring, description);
         r = trval2(stdout, code->data, code->length, 0, &rlen);
-        printf("\n\n");
+        printf("\n");
         if (rlen < 0 || (unsigned int) rlen != code->length) {
             printf("Error: length mismatch: was %d, parsed %d\n",
                    code->length, rlen);
@@ -40,12 +65,7 @@ static void encoder_print_results(code, typestring, description)
         }
         current_appl_type = -1; /* Reset type */
     } else {
-        retval = asn1_krb5_data_unparse(code,&(code_string));
-        if (retval) {
-            com_err("krb5_encode_test", retval ,
-                    "while unparsing %s", typestring);
-            exit(1);
-        }
+        asn1_krb5_data_unparse(code,&(code_string));
         printf("encode_krb5_%s%s: %s\n", typestring, description,
                code_string);
         free(code_string);
@@ -104,14 +124,7 @@ main(argc, argv)
     }
     init_access(argv[0]);
 
-#define setup(value,type,typestring,constructor)                        \
-    retval = constructor(&(value));                                     \
-    if (retval) {                                                       \
-        com_err("krb5_encode_test", retval, "while making sample %s", typestring); \
-        exit(1);                                                        \
-    }
-
-#define encode_run(value,type,typestring,description,encoder)           \
+#define encode_run(value,typestring,description,encoder)                \
     retval = encoder(&(value),&(code));                                 \
     if (retval) {                                                       \
         com_err("krb5_encode_test", retval,"while encoding %s", typestring); \
@@ -123,18 +136,20 @@ main(argc, argv)
     /* encode_krb5_authenticator */
     {
         krb5_authenticator authent;
-        setup(authent,authenticator,"authenticator",ktest_make_sample_authenticator);
+        ktest_make_sample_authenticator(&authent);
 
-        encode_run(authent,authenticator,"authenticator","",encode_krb5_authenticator);
+        encode_run(authent, "authenticator", "", encode_krb5_authenticator);
 
         ktest_destroy_checksum(&(authent.checksum));
         ktest_destroy_keyblock(&(authent.subkey));
         authent.seq_number = 0;
         ktest_empty_authorization_data(authent.authorization_data);
-        encode_run(authent,authenticator,"authenticator","(optionals empty)",encode_krb5_authenticator);
+        encode_run(authent, "authenticator", "(optionals empty)",
+                   encode_krb5_authenticator);
 
         ktest_destroy_authorization_data(&(authent.authorization_data));
-        encode_run(authent,authenticator,"authenticator","(optionals NULL)",encode_krb5_authenticator);
+        encode_run(authent, "authenticator", "(optionals NULL)",
+                   encode_krb5_authenticator);
         ktest_empty_authenticator(&authent);
     }
 
@@ -142,8 +157,8 @@ main(argc, argv)
     /* encode_krb5_ticket */
     {
         krb5_ticket tkt;
-        setup(tkt,ticket,"ticket",ktest_make_sample_ticket);
-        encode_run(tkt,ticket,"ticket","",encode_krb5_ticket);
+        ktest_make_sample_ticket(&tkt);
+        encode_run(tkt, "ticket", "", encode_krb5_ticket);
         ktest_empty_ticket(&tkt);
     }
 
@@ -151,9 +166,9 @@ main(argc, argv)
     /* encode_krb5_encryption_key */
     {
         krb5_keyblock keyblk;
-        setup(keyblk,keyblock,"keyblock",ktest_make_sample_keyblock);
+        ktest_make_sample_keyblock(&keyblk);
         current_appl_type = 1005;
-        encode_run(keyblk,keyblock,"keyblock","",encode_krb5_encryption_key);
+        encode_run(keyblk, "keyblock", "", encode_krb5_encryption_key);
         ktest_empty_keyblock(&keyblk);
     }
 
@@ -162,11 +177,11 @@ main(argc, argv)
     {
         krb5_ticket tkt;
         memset(&tkt, 0, sizeof(krb5_ticket));
-        tkt.enc_part2 = (krb5_enc_tkt_part*)calloc(1,sizeof(krb5_enc_tkt_part));
-        if (tkt.enc_part2 == NULL) com_err("allocating enc_tkt_part",errno,"");
-        setup(*(tkt.enc_part2),enc_tkt_part,"enc_tkt_part",ktest_make_sample_enc_tkt_part);
+        tkt.enc_part2 = ealloc(sizeof(krb5_enc_tkt_part));
+        ktest_make_sample_enc_tkt_part(tkt.enc_part2);
 
-        encode_run(*(tkt.enc_part2),enc_tkt_part,"enc_tkt_part","",encode_krb5_enc_tkt_part);
+        encode_run(*tkt.enc_part2, "enc_tkt_part", "",
+                   encode_krb5_enc_tkt_part);
 
         tkt.enc_part2->times.starttime = 0;
         tkt.enc_part2->times.renew_till = 0;
@@ -179,7 +194,8 @@ main(argc, argv)
         ktest_destroy_addresses(&(tkt.enc_part2->caddrs));
         ktest_destroy_authorization_data(&(tkt.enc_part2->authorization_data));
 
-        encode_run(*(tkt.enc_part2),enc_tkt_part,"enc_tkt_part","(optionals NULL)",encode_krb5_enc_tkt_part);
+        encode_run(*tkt.enc_part2, "enc_tkt_part", "(optionals NULL)",
+                   encode_krb5_enc_tkt_part);
         ktest_empty_ticket(&tkt);
     }
 
@@ -190,19 +206,19 @@ main(argc, argv)
 
         memset(&kdcr, 0, sizeof(kdcr));
 
-        kdcr.enc_part2 = (krb5_enc_kdc_rep_part*)
-            calloc(1,sizeof(krb5_enc_kdc_rep_part));
-        if (kdcr.enc_part2 == NULL) com_err("allocating enc_kdc_rep_part",errno,"");
-        setup(*(kdcr.enc_part2),enc_kdc_rep_part,"enc_kdc_rep_part",ktest_make_sample_enc_kdc_rep_part);
+        kdcr.enc_part2 = ealloc(sizeof(krb5_enc_kdc_rep_part));
+        ktest_make_sample_enc_kdc_rep_part(kdcr.enc_part2);
 
-        encode_run(*(kdcr.enc_part2),enc_kdc_rep_part,"enc_kdc_rep_part","",encode_krb5_enc_kdc_rep_part);
+        encode_run(*kdcr.enc_part2, "enc_kdc_rep_part", "",
+                   encode_krb5_enc_kdc_rep_part);
 
         kdcr.enc_part2->key_exp = 0;
         kdcr.enc_part2->times.starttime = 0;
         kdcr.enc_part2->flags &= ~TKT_FLG_RENEWABLE;
         ktest_destroy_addresses(&(kdcr.enc_part2->caddrs));
 
-        encode_run(*(kdcr.enc_part2),enc_kdc_rep_part,"enc_kdc_rep_part","(optionals NULL)",encode_krb5_enc_kdc_rep_part);
+        encode_run(*kdcr.enc_part2, "enc_kdc_rep_part", "(optionals NULL)",
+                   encode_krb5_enc_kdc_rep_part);
 
         ktest_empty_kdc_rep(&kdcr);
     }
@@ -211,7 +227,7 @@ main(argc, argv)
     /* encode_krb5_as_rep */
     {
         krb5_kdc_rep kdcr;
-        setup(kdcr,kdc_rep,"kdc_rep",ktest_make_sample_kdc_rep);
+        ktest_make_sample_kdc_rep(&kdcr);
 
 /*    kdcr.msg_type = KRB5_TGS_REP;
       test(encode_krb5_as_rep(&kdcr,&code) == KRB5_BADMSGTYPE,
@@ -219,10 +235,10 @@ main(argc, argv)
       ktest_destroy_data(&code);*/
 
         kdcr.msg_type = KRB5_AS_REP;
-        encode_run(kdcr,as_rep,"as_rep","",encode_krb5_as_rep);
+        encode_run(kdcr, "as_rep", "", encode_krb5_as_rep);
 
         ktest_destroy_pa_data_array(&(kdcr.padata));
-        encode_run(kdcr,as_rep,"as_rep","(optionals NULL)",encode_krb5_as_rep);
+        encode_run(kdcr, "as_rep", "(optionals NULL)", encode_krb5_as_rep);
 
         ktest_empty_kdc_rep(&kdcr);
 
@@ -232,17 +248,17 @@ main(argc, argv)
     /* encode_krb5_tgs_rep */
     {
         krb5_kdc_rep kdcr;
-        setup(kdcr,kdc_rep,"kdc_rep",ktest_make_sample_kdc_rep);
+        ktest_make_sample_kdc_rep(&kdcr);
 
 /*    kdcr.msg_type = KRB5_AS_REP;
       test(encode_krb5_tgs_rep(&kdcr,&code) == KRB5_BADMSGTYPE,
       "encode_krb5_tgs_rep type check\n");*/
 
         kdcr.msg_type = KRB5_TGS_REP;
-        encode_run(kdcr,tgs_rep,"tgs_rep","",encode_krb5_tgs_rep);
+        encode_run(kdcr, "tgs_rep", "", encode_krb5_tgs_rep);
 
         ktest_destroy_pa_data_array(&(kdcr.padata));
-        encode_run(kdcr,tgs_rep,"tgs_rep","(optionals NULL)",encode_krb5_tgs_rep);
+        encode_run(kdcr, "tgs_rep", "(optionals NULL)", encode_krb5_tgs_rep);
 
         ktest_empty_kdc_rep(&kdcr);
 
@@ -252,8 +268,8 @@ main(argc, argv)
     /* encode_krb5_ap_req */
     {
         krb5_ap_req apreq;
-        setup(apreq,ap_req,"ap_req",ktest_make_sample_ap_req);
-        encode_run(apreq,ap_req,"ap_req","",encode_krb5_ap_req);
+        ktest_make_sample_ap_req(&apreq);
+        encode_run(apreq, "ap_req", "", encode_krb5_ap_req);
         ktest_empty_ap_req(&apreq);
     }
 
@@ -261,8 +277,8 @@ main(argc, argv)
     /* encode_krb5_ap_rep */
     {
         krb5_ap_rep aprep;
-        setup(aprep,ap_rep,"ap_rep",ktest_make_sample_ap_rep);
-        encode_run(aprep,ap_rep,"ap_rep","",encode_krb5_ap_rep);
+        ktest_make_sample_ap_rep(&aprep);
+        encode_run(aprep, "ap_rep", "", encode_krb5_ap_rep);
         ktest_empty_ap_rep(&aprep);
     }
 
@@ -270,12 +286,13 @@ main(argc, argv)
     /* encode_krb5_ap_rep_enc_part */
     {
         krb5_ap_rep_enc_part apenc;
-        setup(apenc,ap_rep_enc_part,"ap_rep_enc_part",ktest_make_sample_ap_rep_enc_part);
-        encode_run(apenc,ap_rep_enc_part,"ap_rep_enc_part","",encode_krb5_ap_rep_enc_part);
+        ktest_make_sample_ap_rep_enc_part(&apenc);
+        encode_run(apenc, "ap_rep_enc_part", "", encode_krb5_ap_rep_enc_part);
 
         ktest_destroy_keyblock(&(apenc.subkey));
         apenc.seq_number = 0;
-        encode_run(apenc,ap_rep_enc_part,"ap_rep_enc_part","(optionals NULL)",encode_krb5_ap_rep_enc_part);
+        encode_run(apenc, "ap_rep_enc_part", "(optionals NULL)",
+                   encode_krb5_ap_rep_enc_part);
         ktest_empty_ap_rep_enc_part(&apenc);
     }
 
@@ -283,10 +300,10 @@ main(argc, argv)
     /* encode_krb5_as_req */
     {
         krb5_kdc_req asreq;
-        setup(asreq,kdc_req,"kdc_req",ktest_make_sample_kdc_req);
+        ktest_make_sample_kdc_req(&asreq);
         asreq.msg_type = KRB5_AS_REQ;
         asreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
-        encode_run(asreq,as_req,"as_req","",encode_krb5_as_req);
+        encode_run(asreq, "as_req", "", encode_krb5_as_req);
 
         ktest_destroy_pa_data_array(&(asreq.padata));
         ktest_destroy_principal(&(asreq.client));
@@ -298,13 +315,15 @@ main(argc, argv)
         asreq.rtime = 0;
         ktest_destroy_addresses(&(asreq.addresses));
         ktest_destroy_enc_data(&(asreq.authorization_data));
-        encode_run(asreq,as_req,"as_req","(optionals NULL except second_ticket)",encode_krb5_as_req);
+        encode_run(asreq, "as_req", "(optionals NULL except second_ticket)",
+                   encode_krb5_as_req);
         ktest_destroy_sequence_of_ticket(&(asreq.second_ticket));
 #ifndef ISODE_SUCKS
         ktest_make_sample_principal(&(asreq.server));
 #endif
         asreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
-        encode_run(asreq,as_req,"as_req","(optionals NULL except server)",encode_krb5_as_req);
+        encode_run(asreq, "as_req", "(optionals NULL except server)",
+                   encode_krb5_as_req);
         ktest_empty_kdc_req(&asreq);
     }
 
@@ -312,10 +331,10 @@ main(argc, argv)
     /* encode_krb5_tgs_req */
     {
         krb5_kdc_req tgsreq;
-        setup(tgsreq,kdc_req,"kdc_req",ktest_make_sample_kdc_req);
+        ktest_make_sample_kdc_req(&tgsreq);
         tgsreq.msg_type = KRB5_TGS_REQ;
         tgsreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
-        encode_run(tgsreq,tgs_req,"tgs_req","",encode_krb5_tgs_req);
+        encode_run(tgsreq, "tgs_req", "", encode_krb5_tgs_req);
 
         ktest_destroy_pa_data_array(&(tgsreq.padata));
         ktest_destroy_principal(&(tgsreq.client));
@@ -327,14 +346,16 @@ main(argc, argv)
         tgsreq.rtime = 0;
         ktest_destroy_addresses(&(tgsreq.addresses));
         ktest_destroy_enc_data(&(tgsreq.authorization_data));
-        encode_run(tgsreq,tgs_req,"tgs_req","(optionals NULL except second_ticket)",encode_krb5_tgs_req);
+        encode_run(tgsreq, "tgs_req", "(optionals NULL except second_ticket)",
+                   encode_krb5_tgs_req);
 
         ktest_destroy_sequence_of_ticket(&(tgsreq.second_ticket));
 #ifndef ISODE_SUCKS
         ktest_make_sample_principal(&(tgsreq.server));
 #endif
         tgsreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
-        encode_run(tgsreq,tgs_req,"tgs_req","(optionals NULL except server)",encode_krb5_tgs_req);
+        encode_run(tgsreq, "tgs_req", "(optionals NULL except server)",
+                   encode_krb5_tgs_req);
 
         ktest_empty_kdc_req(&tgsreq);
     }
@@ -344,10 +365,10 @@ main(argc, argv)
     {
         krb5_kdc_req kdcrb;
         memset(&kdcrb, 0, sizeof(kdcrb));
-        setup(kdcrb,kdc_req_body,"kdc_req_body",ktest_make_sample_kdc_req_body);
+        ktest_make_sample_kdc_req_body(&kdcrb);
         kdcrb.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
         current_appl_type = 1007;       /* Force interpretation as kdc-req-body */
-        encode_run(kdcrb,kdc_req_body,"kdc_req_body","",encode_krb5_kdc_req_body);
+        encode_run(kdcrb, "kdc_req_body", "", encode_krb5_kdc_req_body);
 
         ktest_destroy_principal(&(kdcrb.client));
 #ifndef ISODE_SUCKS
@@ -359,7 +380,9 @@ main(argc, argv)
         ktest_destroy_addresses(&(kdcrb.addresses));
         ktest_destroy_enc_data(&(kdcrb.authorization_data));
         current_appl_type = 1007;       /* Force interpretation as kdc-req-body */
-        encode_run(kdcrb,kdc_req_body,"kdc_req_body","(optionals NULL except second_ticket)",encode_krb5_kdc_req_body);
+        encode_run(kdcrb, "kdc_req_body",
+                   "(optionals NULL except second_ticket)",
+                   encode_krb5_kdc_req_body);
 
         ktest_destroy_sequence_of_ticket(&(kdcrb.second_ticket));
 #ifndef ISODE_SUCKS
@@ -367,7 +390,8 @@ main(argc, argv)
 #endif
         kdcrb.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
         current_appl_type = 1007;       /* Force interpretation as kdc-req-body */
-        encode_run(kdcrb,kdc_req_body,"kdc_req_body","(optionals NULL except server)",encode_krb5_kdc_req_body);
+        encode_run(kdcrb, "kdc_req_body", "(optionals NULL except server)",
+                   encode_krb5_kdc_req_body);
 
         ktest_empty_kdc_req(&kdcrb);
     }
@@ -376,14 +400,14 @@ main(argc, argv)
     /* encode_krb5_safe */
     {
         krb5_safe s;
-        setup(s,safe,"safe",ktest_make_sample_safe);
-        encode_run(s,safe,"safe","",encode_krb5_safe);
+        ktest_make_sample_safe(&s);
+        encode_run(s, "safe", "", encode_krb5_safe);
 
         s.timestamp = 0;
         /* s.usec should be opted out by the timestamp */
         s.seq_number = 0;
         ktest_destroy_address(&(s.r_address));
-        encode_run(s,safe,"safe","(optionals NULL)",encode_krb5_safe);
+        encode_run(s, "safe", "(optionals NULL)", encode_krb5_safe);
 
         ktest_empty_safe(&s);
     }
@@ -392,8 +416,8 @@ main(argc, argv)
     /* encode_krb5_priv */
     {
         krb5_priv p;
-        setup(p,priv,"priv",ktest_make_sample_priv);
-        encode_run(p,priv,"priv","",encode_krb5_priv);
+        ktest_make_sample_priv(&p);
+        encode_run(p, "priv", "", encode_krb5_priv);
         ktest_empty_priv(&p);
     }
 
@@ -401,14 +425,15 @@ main(argc, argv)
     /* encode_krb5_enc_priv_part */
     {
         krb5_priv_enc_part ep;
-        setup(ep,priv_enc_part,"priv_enc_part",ktest_make_sample_priv_enc_part);
-        encode_run(ep,enc_priv_part,"enc_priv_part","",encode_krb5_enc_priv_part);
+        ktest_make_sample_priv_enc_part(&ep);
+        encode_run(ep, "enc_priv_part", "", encode_krb5_enc_priv_part);
 
         ep.timestamp = 0;
         /* ep.usec should be opted out along with timestamp */
         ep.seq_number = 0;
         ktest_destroy_address(&(ep.r_address));
-        encode_run(ep,enc_priv_part,"enc_priv_part","(optionals NULL)",encode_krb5_enc_priv_part);
+        encode_run(ep, "enc_priv_part", "(optionals NULL)",
+                   encode_krb5_enc_priv_part);
 
         ktest_empty_priv_enc_part(&ep);
     }
@@ -417,8 +442,8 @@ main(argc, argv)
     /* encode_krb5_cred */
     {
         krb5_cred c;
-        setup(c,cred,"cred",ktest_make_sample_cred);
-        encode_run(c,cred,"cred","",encode_krb5_cred);
+        ktest_make_sample_cred(&c);
+        encode_run(c, "cred", "", encode_krb5_cred);
         ktest_empty_cred(&c);
     }
 
@@ -426,8 +451,8 @@ main(argc, argv)
     /* encode_krb5_enc_cred_part */
     {
         krb5_cred_enc_part cep;
-        setup(cep,cred_enc_part,"cred_enc_part",ktest_make_sample_cred_enc_part);
-        encode_run(cep,enc_cred_part,"enc_cred_part","",encode_krb5_enc_cred_part);
+        ktest_make_sample_cred_enc_part(&cep);
+        encode_run(cep, "enc_cred_part", "", encode_krb5_enc_cred_part);
 
         ktest_destroy_principal(&(cep.ticket_info[0]->client));
         ktest_destroy_principal(&(cep.ticket_info[0]->server));
@@ -441,7 +466,8 @@ main(argc, argv)
         cep.timestamp = 0;
         ktest_destroy_address(&(cep.s_address));
         ktest_destroy_address(&(cep.r_address));
-        encode_run(cep,enc_cred_part,"enc_cred_part","(optionals NULL)",encode_krb5_enc_cred_part);
+        encode_run(cep, "enc_cred_part", "(optionals NULL)",
+                   encode_krb5_enc_cred_part);
 
         ktest_empty_cred_enc_part(&cep);
     }
@@ -450,14 +476,14 @@ main(argc, argv)
     /* encode_krb5_error */
     {
         krb5_error kerr;
-        setup(kerr,error,"error",ktest_make_sample_error);
-        encode_run(kerr,error,"error","",encode_krb5_error);
+        ktest_make_sample_error(&kerr);
+        encode_run(kerr, "error", "", encode_krb5_error);
 
         kerr.ctime = 0;
         ktest_destroy_principal(&(kerr.client));
         ktest_empty_data(&(kerr.text));
         ktest_empty_data(&(kerr.e_data));
-        encode_run(kerr,error,"error","(optionals NULL)",encode_krb5_error);
+        encode_run(kerr, "error", "(optionals NULL)", encode_krb5_error);
 
         ktest_empty_error(&kerr);
     }
@@ -466,7 +492,7 @@ main(argc, argv)
     /* encode_krb5_authdata */
     {
         krb5_authdata **ad;
-        setup(ad,authorization_data,"authorization_data",ktest_make_sample_authorization_data);
+        ktest_make_sample_authorization_data(&ad);
 
         retval = encode_krb5_authdata(ad,&(code));
         if (retval) {
@@ -480,68 +506,19 @@ main(argc, argv)
     }
 
     /****************************************************************/
-    /* encode_pwd_sequence */
-    {
-        passwd_phrase_element ppe;
-        setup(ppe,passwd_phrase_element,"PasswdSequence",ktest_make_sample_passwd_phrase_element);
-        encode_run(ppe,passwd_phrase_element,"pwd_sequence","",encode_krb5_pwd_sequence);
-        ktest_empty_passwd_phrase_element(&ppe);
-    }
-
-    /****************************************************************/
-    /* encode_passwd_data */
-    {
-        krb5_pwd_data pd;
-        setup(pd,krb5_pwd_data,"PasswdData",ktest_make_sample_krb5_pwd_data);
-        encode_run(pd,krb5_pwd_data,"pwd_data","",encode_krb5_pwd_data);
-        ktest_empty_pwd_data(&pd);
-    }
-
-    /****************************************************************/
-    /* encode_padata_sequence */
+    /* encode_padata_sequence and encode_krb5_typed_data */
     {
         krb5_pa_data **pa;
 
-        setup(pa,krb5_pa_data,"PreauthData",ktest_make_sample_pa_data_array);
-        retval = encode_krb5_padata_sequence(pa,&(code));
-        if (retval) {
-            com_err("encoding padata_sequence",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "padata_sequence", "");
-
+        ktest_make_sample_pa_data_array(&pa);
+        encode_run(*pa, "padata_sequence", "", encode_krb5_padata_sequence);
+        encode_run(*pa, "typed_data", "", encode_krb5_typed_data);
         ktest_destroy_pa_data_array(&pa);
-    }
 
-    /****************************************************************/
-    /* encode_padata_sequence (empty) */
-    {
-        krb5_pa_data **pa;
-
-        setup(pa,krb5_pa_data,"EmptyPreauthData",ktest_make_sample_empty_pa_data_array);
-        retval = encode_krb5_padata_sequence(pa,&(code));
-        if (retval) {
-            com_err("encoding padata_sequence(empty)",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "padata_sequence(empty)", "");
-
+        ktest_make_sample_empty_pa_data_array(&pa);
+        encode_run(*pa, "padata_sequence", "(empty)",
+                   encode_krb5_padata_sequence);
         ktest_destroy_pa_data_array(&pa);
-    }
-
-    /****************************************************************/
-    /* encode_alt_method */
-    {
-        krb5_alt_method am;
-        setup(am,krb5_alt_method,"AltMethod",ktest_make_sample_alt_method);
-        encode_run(am,krb5_alt_method,"alt_method","",encode_krb5_alt_method);
-        am.length = 0;
-        if (am.data)
-            free(am.data);
-        am.data = 0;
-        encode_run(am,krb5_alt_method,"alt_method (no data)","",
-                   encode_krb5_alt_method);
-        ktest_empty_alt_method(&am);
     }
 
     /****************************************************************/
@@ -549,183 +526,126 @@ main(argc, argv)
     {
         krb5_etype_info_entry **info;
 
-        setup(info,krb5_etype_info_entry **,"etype_info",
-              ktest_make_sample_etype_info);
-        retval = encode_krb5_etype_info(info,&(code));
-        if (retval) {
-            com_err("encoding etype_info",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "etype_info", "");
+        ktest_make_sample_etype_info(&info);
+        encode_run(*info, "etype_info", "", encode_krb5_etype_info);
+
         ktest_destroy_etype_info_entry(info[2]);      info[2] = 0;
         ktest_destroy_etype_info_entry(info[1]);      info[1] = 0;
-
-        retval = encode_krb5_etype_info(info,&(code));
-        if (retval) {
-            com_err("encoding etype_info (only 1)",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "etype_info (only 1)", "");
+        encode_run(*info, "etype_info", "(only 1)", encode_krb5_etype_info);
 
         ktest_destroy_etype_info_entry(info[0]);      info[0] = 0;
-
-        retval = encode_krb5_etype_info(info,&(code));
-        if (retval) {
-            com_err("encoding etype_info (no info)",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "etype_info (no info)", "");
+        encode_run(*info, "etype_info", "(no info)", encode_krb5_etype_info);
 
         ktest_destroy_etype_info(info);
     }
 
-    /* encode_etype_info 2*/
+    /* encode_etype_info2 */
     {
         krb5_etype_info_entry **info;
 
-        setup(info,krb5_etype_info_entry **,"etype_info2",
-              ktest_make_sample_etype_info2);
-        retval = encode_krb5_etype_info2(info,&(code));
-        if (retval) {
-            com_err("encoding etype_info",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "etype_info2", "");
+        ktest_make_sample_etype_info2(&info);
+        encode_run(*info, "etype_info2", "", encode_krb5_etype_info2);
+
         ktest_destroy_etype_info_entry(info[2]);      info[2] = 0;
         ktest_destroy_etype_info_entry(info[1]);      info[1] = 0;
+        encode_run(*info, "etype_info2", "(only 1)", encode_krb5_etype_info2);
 
-        retval = encode_krb5_etype_info2(info,&(code));
-        if (retval) {
-            com_err("encoding etype_info (only 1)",retval,"");
-            exit(1);
-        }
-        encoder_print_results(code, "etype_info2 (only 1)", "");
+        /* etype_info2 sequences aren't allowed to be empty. */
 
         ktest_destroy_etype_info(info);
-/*    ktest_destroy_etype_info_entry(info[0]);      info[0] = 0;*/
-
     }
 
     /****************************************************************/
     /* encode_pa_enc_ts */
     {
         krb5_pa_enc_ts pa_enc;
-        setup(pa_enc,krb5_pa_enc_ts,"pa_enc_ts",ktest_make_sample_pa_enc_ts);
-        encode_run(pa_enc,krb5_pa_enc_ts,"pa_enc_ts","",encode_krb5_pa_enc_ts);
+        ktest_make_sample_pa_enc_ts(&pa_enc);
+        encode_run(pa_enc, "pa_enc_ts", "", encode_krb5_pa_enc_ts);
         pa_enc.pausec = 0;
-        encode_run(pa_enc,krb5_pa_enc_ts,"pa_enc_ts (no usec)","",encode_krb5_pa_enc_ts);
+        encode_run(pa_enc, "pa_enc_ts (no usec)", "", encode_krb5_pa_enc_ts);
     }
 
     /****************************************************************/
     /* encode_enc_data */
     {
         krb5_enc_data enc_data;
-        setup(enc_data,krb5_enc_data,"enc_data",ktest_make_sample_enc_data);
+        ktest_make_sample_enc_data(&enc_data);
         current_appl_type = 1001;
-        encode_run(enc_data,krb5_enc_data,"enc_data","",encode_krb5_enc_data);
+        encode_run(enc_data, "enc_data", "", encode_krb5_enc_data);
+        enc_data.kvno = 0xFF000000;
+        current_appl_type = 1001;
+        encode_run(enc_data, "enc_data", "(MSB-set kvno)",
+                   encode_krb5_enc_data);
+        enc_data.kvno = 0xFFFFFFFF;
+        current_appl_type = 1001;
+        encode_run(enc_data, "enc_data", "(kvno=-1)", encode_krb5_enc_data);
         ktest_destroy_enc_data(&enc_data);
     }
     /****************************************************************/
-    /* encode_krb5_sam_challenge */
+    /* encode_krb5_sam_challenge_2 */
     {
-        krb5_sam_challenge sam_ch;
-        setup(sam_ch,krb5_sam_challenge,"sam_challenge",
-              ktest_make_sample_sam_challenge);
-        encode_run(sam_ch,krb5_sam_challenge,"sam_challenge","",
-                   encode_krb5_sam_challenge);
-        ktest_empty_sam_challenge(&sam_ch);
+        krb5_sam_challenge_2 sam_ch2;
+        ktest_make_sample_sam_challenge_2(&sam_ch2);
+        encode_run(sam_ch2, "sam_challenge_2", "",
+                   encode_krb5_sam_challenge_2);
+        ktest_empty_sam_challenge_2(&sam_ch2);
     }
     /****************************************************************/
-    /* encode_krb5_sam_response */
+    /* encode_krb5_sam_challenge_2_body */
     {
-        krb5_sam_response sam_ch;
-        setup(sam_ch,krb5_sam_response,"sam_response",
-              ktest_make_sample_sam_response);
-        encode_run(sam_ch,krb5_sam_response,"sam_response","",
-                   encode_krb5_sam_response);
-        ktest_empty_sam_response(&sam_ch);
-    }
-    /****************************************************************/
-    /* encode_krb5_sam_key */
-    {
-        krb5_sam_key sam_ch;
-        setup(sam_ch,krb5_sam_key,"sam_key",
-              ktest_make_sample_sam_key);
-        encode_run(sam_ch,krb5_sam_key,"sam_key","",
-                   encode_krb5_sam_key);
-        ktest_empty_sam_key(&sam_ch);
-    }
-    /****************************************************************/
-    /* encode_krb5_enc_sam_response_enc */
-    {
-        krb5_enc_sam_response_enc sam_ch;
-        setup(sam_ch,krb5_enc_sam_response_enc,"enc_sam_response_enc",
-              ktest_make_sample_enc_sam_response_enc);
-        encode_run(sam_ch,krb5_enc_sam_response_enc,"enc_sam_response_enc","",
-                   encode_krb5_enc_sam_response_enc);
-        ktest_empty_enc_sam_response_enc(&sam_ch);
-    }
-    /****************************************************************/
-    /* encode_krb5_predicted_sam_response */
-    {
-        krb5_predicted_sam_response sam_ch;
-        setup(sam_ch,krb5_predicted_sam_response,"predicted_sam_response",
-              ktest_make_sample_predicted_sam_response);
-        encode_run(sam_ch,krb5_predicted_sam_response,"predicted_sam_response","",
-                   encode_krb5_predicted_sam_response);
-        ktest_empty_predicted_sam_response(&sam_ch);
+        krb5_sam_challenge_2_body body;
+        ktest_make_sample_sam_challenge_2_body(&body);
+        encode_run(body, "sam_challenge_2_body", "",
+                   encode_krb5_sam_challenge_2_body);
+        ktest_empty_sam_challenge_2_body(&body);
     }
     /****************************************************************/
     /* encode_krb5_sam_response_2 */
     {
         krb5_sam_response_2 sam_ch2;
-        setup(sam_ch2,krb5_sam_response_2,"sam_response_2",
-              ktest_make_sample_sam_response_2);
-        encode_run(sam_ch2,krb5_sam_response_2,"sam_response_2","",
-                   acc.encode_krb5_sam_response_2);
+        ktest_make_sample_sam_response_2(&sam_ch2);
+        encode_run(sam_ch2, "sam_response_2", "", encode_krb5_sam_response_2);
         ktest_empty_sam_response_2(&sam_ch2);
     }
     /****************************************************************/
     /* encode_krb5_sam_response_enc_2 */
     {
         krb5_enc_sam_response_enc_2 sam_ch2;
-        setup(sam_ch2,krb5_enc_sam_response_enc_2,"enc_sam_response_enc_2",
-              ktest_make_sample_enc_sam_response_enc_2);
-        encode_run(sam_ch2,krb5_enc_sam_response_enc_2,
-                   "enc_sam_response_enc_2","",
-                   acc.encode_krb5_enc_sam_response_enc_2);
+        ktest_make_sample_enc_sam_response_enc_2(&sam_ch2);
+        encode_run(sam_ch2, "enc_sam_response_enc_2", "",
+                   encode_krb5_enc_sam_response_enc_2);
         ktest_empty_enc_sam_response_enc_2(&sam_ch2);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_for_user */
+    {
+        krb5_pa_for_user s4u;
+        ktest_make_sample_pa_for_user(&s4u);
+        encode_run(s4u, "pa_for_user", "", encode_krb5_pa_for_user);
+        ktest_empty_pa_for_user(&s4u);
     }
     /****************************************************************/
     /* encode_krb5_pa_s4u_x509_user */
     {
         krb5_pa_s4u_x509_user s4u;
-        setup(s4u,krb5_pa_s4u_x509_user,"pa_s4u_x509_user",
-              ktest_make_sample_pa_s4u_x509_user);
-        encode_run(s4u,krb5_pa_s4u_x509_user,
-                   "pa_s4u_x509_user","",
-                   encode_krb5_pa_s4u_x509_user);
+        ktest_make_sample_pa_s4u_x509_user(&s4u);
+        encode_run(s4u, "pa_s4u_x509_user", "", encode_krb5_pa_s4u_x509_user);
         ktest_empty_pa_s4u_x509_user(&s4u);
     }
     /****************************************************************/
     /* encode_krb5_ad_kdcissued */
     {
         krb5_ad_kdcissued kdci;
-        setup(kdci,krb5_ad_kdcissued,"ad_kdcissued",
-              ktest_make_sample_ad_kdcissued);
-        encode_run(kdci,krb5_ad_kdcissued,
-                   "ad_kdcissued","",
-                   encode_krb5_ad_kdcissued);
+        ktest_make_sample_ad_kdcissued(&kdci);
+        encode_run(kdci, "ad_kdcissued", "", encode_krb5_ad_kdcissued);
         ktest_empty_ad_kdcissued(&kdci);
     }
     /****************************************************************/
     /* encode_krb5_ad_signedpath_data */
     {
         krb5_ad_signedpath_data spd;
-        setup(spd,krb5_ad_signedpath_data,"ad_signedpath_data",
-              ktest_make_sample_ad_signedpath_data);
-        encode_run(spd,krb5_ad_signedpath_data,
-                   "ad_signedpath_data","",
+        ktest_make_sample_ad_signedpath_data(&spd);
+        encode_run(spd, "ad_signedpath_data", "",
                    encode_krb5_ad_signedpath_data);
         ktest_empty_ad_signedpath_data(&spd);
     }
@@ -733,64 +653,198 @@ main(argc, argv)
     /* encode_krb5_ad_signedpath */
     {
         krb5_ad_signedpath sp;
-        setup(sp,krb5_ad_signedpath,"ad_signedpath",
-              ktest_make_sample_ad_signedpath);
-        encode_run(sp,krb5_ad_signedpath,
-                   "ad_signedpath","",
-                   encode_krb5_ad_signedpath);
+        ktest_make_sample_ad_signedpath(&sp);
+        encode_run(sp, "ad_signedpath", "", encode_krb5_ad_signedpath);
         ktest_empty_ad_signedpath(&sp);
     }
     /****************************************************************/
     /* encode_krb5_iakerb_header */
     {
         krb5_iakerb_header ih;
-        setup(ih,krb5_ad_signedpath,"iakerb_header",
-              ktest_make_sample_iakerb_header);
-        encode_run(ih,krb5_iakerb_header,
-                   "iakerb_header","",
-                   encode_krb5_iakerb_header);
+        ktest_make_sample_iakerb_header(&ih);
+        encode_run(ih, "iakerb_header", "", encode_krb5_iakerb_header);
         ktest_empty_iakerb_header(&ih);
     }
     /****************************************************************/
     /* encode_krb5_iakerb_finished */
     {
         krb5_iakerb_finished ih;
-        setup(ih,krb5_ad_signedpath,"iakerb_finished",
-              ktest_make_sample_iakerb_finished);
-        encode_run(ih,krb5_iakerb_finished,
-                   "iakerb_finished","",
-                   encode_krb5_iakerb_finished);
+        ktest_make_sample_iakerb_finished(&ih);
+        encode_run(ih, "iakerb_finished", "", encode_krb5_iakerb_finished);
         ktest_empty_iakerb_finished(&ih);
     }
     /****************************************************************/
-    /* encode_krb5_pa_s4u_x509_user */
+    /* encode_krb5_fast_response */
     {
-	krb5_pa_s4u_x509_user s4u;
-	setup(s4u,krb5_pa_s4u_x509_user,"pa_s4u_x509_user",
-	      ktest_make_sample_pa_s4u_x509_user);
-	encode_run(s4u,krb5_pa_s4u_x509_user,
-		   "pa_s4u_x509_user","",
-		   encode_krb5_pa_s4u_x509_user);
-	ktest_empty_pa_s4u_x509_user(&s4u);
+        krb5_fast_response fr;
+        ktest_make_sample_fast_response(&fr);
+        encode_run(fr, "fast_response", "", encode_krb5_fast_response);
+        ktest_empty_fast_response(&fr);
     }
     /****************************************************************/
-    /* encode_krb5_ad_kdcissued */
+    /* encode_krb5_pa_fx_fast_reply */
     {
-	krb5_ad_kdcissued kdci;
-	setup(kdci,krb5_ad_kdcissued,"ad_kdcissued",
-	      ktest_make_sample_ad_kdcissued);
-	encode_run(kdci,krb5_ad_kdcissued,
-		   "ad_kdcissued","",
-		   encode_krb5_ad_kdcissued);
-	ktest_empty_ad_kdcissued(&kdci);
+        krb5_enc_data enc_data;
+        ktest_make_sample_enc_data(&enc_data);
+        encode_run(enc_data, "pa_fx_fast_reply", "",
+                   encode_krb5_pa_fx_fast_reply);
+        ktest_destroy_enc_data(&enc_data);
     }
+    /****************************************************************/
+    /* encode_krb5_otp_tokeninfo */
+    {
+        krb5_otp_tokeninfo ti;
+        ktest_make_minimal_otp_tokeninfo(&ti);
+        encode_run(ti, "otp_tokeninfo", "(optionals NULL)",
+                   encode_krb5_otp_tokeninfo);
+        ktest_empty_otp_tokeninfo(&ti);
+        ktest_make_maximal_otp_tokeninfo(&ti);
+        encode_run(ti, "otp_tokeninfo", "", encode_krb5_otp_tokeninfo);
+        ktest_empty_otp_tokeninfo(&ti);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_otp_challenge */
+    {
+        krb5_pa_otp_challenge ch;
+        ktest_make_minimal_pa_otp_challenge(&ch);
+        encode_run(ch, "pa_otp_challenge", "(optionals NULL)",
+                   encode_krb5_pa_otp_challenge);
+        ktest_empty_pa_otp_challenge(&ch);
+        ktest_make_maximal_pa_otp_challenge(&ch);
+        encode_run(ch, "pa_otp_challenge", "", encode_krb5_pa_otp_challenge);
+        ktest_empty_pa_otp_challenge(&ch);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_otp_req */
+    {
+        krb5_pa_otp_req req;
+        ktest_make_minimal_pa_otp_req(&req);
+        encode_run(req, "pa_otp_req", "(optionals NULL)",
+                   encode_krb5_pa_otp_req);
+        ktest_empty_pa_otp_req(&req);
+        ktest_make_maximal_pa_otp_req(&req);
+        encode_run(req, "pa_otp_req", "", encode_krb5_pa_otp_req);
+        ktest_empty_pa_otp_req(&req);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_otp_enc_request */
+    {
+        krb5_data d;
+        ktest_make_sample_data(&d);
+        encode_run(d, "pa_otp_enc_req", "", encode_krb5_pa_otp_enc_req);
+        ktest_empty_data(&d);
+    }
+#ifndef DISABLE_PKINIT
+    /****************************************************************/
+    /* encode_krb5_pa_pk_as_req */
+    {
+        krb5_pa_pk_as_req req;
+        ktest_make_sample_pa_pk_as_req(&req);
+        encode_run(req, "pa_pk_as_req", "", acc.encode_krb5_pa_pk_as_req);
+        ktest_empty_pa_pk_as_req(&req);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_pk_as_req_draft9 */
+    {
+        krb5_pa_pk_as_req_draft9 req;
+        ktest_make_sample_pa_pk_as_req_draft9(&req);
+        encode_run(req, "pa_pk_as_req_draft9", "",
+                   acc.encode_krb5_pa_pk_as_req_draft9);
+        ktest_empty_pa_pk_as_req_draft9(&req);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_pk_as_rep */
+    {
+        krb5_pa_pk_as_rep rep;
+        ktest_make_sample_pa_pk_as_rep_dhInfo(&rep);
+        encode_run(rep, "pa_pk_as_rep", "(dhInfo)",
+                   acc.encode_krb5_pa_pk_as_rep);
+        ktest_empty_pa_pk_as_rep(&rep);
+        ktest_make_sample_pa_pk_as_rep_encKeyPack(&rep);
+        encode_run(rep, "pa_pk_as_rep", "(encKeyPack)",
+                   acc.encode_krb5_pa_pk_as_rep);
+        ktest_empty_pa_pk_as_rep(&rep);
+    }
+    /****************************************************************/
+    /* encode_krb5_pa_pk_as_rep_draft9 */
+    {
+        krb5_pa_pk_as_rep_draft9 rep;
+        ktest_make_sample_pa_pk_as_rep_draft9_dhSignedData(&rep);
+        encode_run(rep, "pa_pk_as_rep_draft9", "(dhSignedData)",
+                   acc.encode_krb5_pa_pk_as_rep_draft9);
+        ktest_empty_pa_pk_as_rep_draft9(&rep);
+        ktest_make_sample_pa_pk_as_rep_draft9_encKeyPack(&rep);
+        encode_run(rep, "pa_pk_as_rep_draft9", "(encKeyPack)",
+                   acc.encode_krb5_pa_pk_as_rep_draft9);
+        ktest_empty_pa_pk_as_rep_draft9(&rep);
+    }
+    /****************************************************************/
+    /* encode_krb5_auth_pack */
+    {
+        krb5_auth_pack pack;
+        ktest_make_sample_auth_pack(&pack);
+        encode_run(pack, "auth_pack", "", acc.encode_krb5_auth_pack);
+        ktest_empty_auth_pack(&pack);
+    }
+    /****************************************************************/
+    /* encode_krb5_auth_pack_draft9_draft9 */
+    {
+        krb5_auth_pack_draft9 pack;
+        ktest_make_sample_auth_pack_draft9(&pack);
+        encode_run(pack, "auth_pack_draft9", "",
+                   acc.encode_krb5_auth_pack_draft9);
+        ktest_empty_auth_pack_draft9(&pack);
+    }
+    /****************************************************************/
+    /* encode_krb5_kdc_dh_key_info */
+    {
+        krb5_kdc_dh_key_info ki;
+        ktest_make_sample_kdc_dh_key_info(&ki);
+        encode_run(ki, "kdc_dh_key_info", "", acc.encode_krb5_kdc_dh_key_info);
+        ktest_empty_kdc_dh_key_info(&ki);
+    }
+    /****************************************************************/
+    /* encode_krb5_reply_key_pack */
+    {
+        krb5_reply_key_pack pack;
+        ktest_make_sample_reply_key_pack(&pack);
+        encode_run(pack, "reply_key_pack", "", acc.encode_krb5_reply_key_pack);
+        ktest_empty_reply_key_pack(&pack);
+    }
+    /****************************************************************/
+    /* encode_krb5_reply_key_pack_draft9 */
+    {
+        krb5_reply_key_pack_draft9 pack;
+        ktest_make_sample_reply_key_pack_draft9(&pack);
+        encode_run(pack, "reply_key_pack_draft9", "",
+                   acc.encode_krb5_reply_key_pack_draft9);
+        ktest_empty_reply_key_pack_draft9(&pack);
+    }
+    /****************************************************************/
+    /* encode_krb5_sp80056a_other_info */
+    {
+        krb5_sp80056a_other_info info;
+        ktest_make_sample_sp80056a_other_info(&info);
+        encode_run(info, "sp80056a_other_info", "",
+                   encode_krb5_sp80056a_other_info);
+        ktest_empty_sp80056a_other_info(&info);
+    }
+    /****************************************************************/
+    /* encode_krb5_pkinit_supp_pub_info */
+    {
+        krb5_pkinit_supp_pub_info info;
+        ktest_make_sample_pkinit_supp_pub_info(&info);
+        encode_run(info, "pkinit_supp_pub_info", "",
+                   encode_krb5_pkinit_supp_pub_info);
+        ktest_empty_pkinit_supp_pub_info(&info);
+    }
+#endif /* not DISABLE_PKINIT */
 #ifdef ENABLE_LDAP
     {
         ldap_seqof_key_data skd;
 
-        setup(skd, ldap_seqof_key_data, "ldap_seqof_key_data",
-              ktest_make_sample_ldap_seqof_key_data);
-        encode_run(skd, ldap_seqof_key_data, "ldap_seqof_key_data", "",
+        ktest_make_sample_ldap_seqof_key_data(&skd);
+        encode_run(skd, "ldap_seqof_key_data", "",
                    acc.asn1_ldap_encode_sequence_of_keys);
         ktest_empty_ldap_seqof_key_data(test_context, &skd);
     }

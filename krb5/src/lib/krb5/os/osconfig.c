@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/osconfig.c */
 /*
- * lib/krb5/os/osconfig.c
- *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * Definition of default configuration parameters.
  *
  * ***** WARNING *****
@@ -35,12 +35,7 @@
 
 #include "k5-int.h"
 
-char *krb5_defkeyname  = DEFAULT_KEYTAB_NAME;
-
 unsigned int krb5_max_dgram_size = MAX_DGRAM_SIZE;
-unsigned int krb5_max_skdc_timeout = MAX_SKDC_TIMEOUT;
-unsigned int krb5_skdc_timeout_shift = SKDC_TIMEOUT_SHIFT;
-unsigned int krb5_skdc_timeout_1 = SKDC_TIMEOUT_1;
 
 const char *krb5_default_pwd_prompt1 = DEFAULT_PWD_STRING1;
 const char *krb5_default_pwd_prompt2 = DEFAULT_PWD_STRING2;

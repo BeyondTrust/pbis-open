@@ -1,6 +1,5 @@
+/* ccapi/common/win/win-utils.h */
 /*
- * $Header$
- *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -43,7 +42,8 @@ static enum ccapiMsgType {
     CCMSG_REQUEST_REPLY,
     CCMSG_DISCONNECT,
     CCMSG_LISTEN,
-    CCMSG_PING
+    CCMSG_PING,
+    CCMSG_QUIT
     };
 
 char*                   clientEndpoint(const char* UUID);

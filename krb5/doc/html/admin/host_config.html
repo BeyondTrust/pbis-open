@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Host configuration &mdash; MIT Kerberos Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/kerb.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.11.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="copyright" title="Copyright" href="../copyright.html" />
+    <link rel="top" title="MIT Kerberos Documentation" href="../index.html" />
+    <link rel="up" title="For administrators" href="index.html" />
+    <link rel="next" title="Backups of secure hosts" href="backup_host.html" />
+    <link rel="prev" title="Application servers" href="appl_servers.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper">
+        <div class="header" style="padding-bottom: 0px;">
+            
+            
+                <h1><a href="../index.html"
+                style="color: #5d1509; font-size: 120%;
+                padding-top: 10px;">MIT Kerberos Documentation</a></h1>
+            
+            <div class="rel">
+                    <a href="../index.html"
+                    title="Full Table of Contents"
+                    accesskey="C">Contents</a>
+                     |
+                    <a href="appl_servers.html"
+                    title="Application servers"
+                    accesskey="P">previous</a>
+                     |
+                    <a href="backup_host.html"
+                    title="Backups of secure hosts"
+                    accesskey="N">next</a>
+                     |
+                    <a href="../genindex.html"
+                    title="General Index"
+                    accesskey="I">index</a>
+                     |
+                    <a href="../search.html"
+                    title="Enter search criteria"
+                    accesskey="S">Search</a>
+                     |
+                <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__Host configuration">feedback</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="content">
+                <div class="sidebar"
+                    style="float: right; background: #F9F9F9">
+                    <h2>On this page </h2>
+                    <ul>
+<li><a class="reference internal" href="#">Host configuration</a><ul>
+<li><a class="reference internal" href="#plugin-module-configuration">Plugin module configuration</a><ul>
+<li><a class="reference internal" href="#kdc-location-modules">KDC location modules</a></li>
+<li><a class="reference internal" href="#gssapi-mechanism-modules">GSSAPI mechanism modules</a></li>
+<li><a class="reference internal" href="#configuration-profile-modules">Configuration profile modules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+                    <br/>
+                    <h2>Table of contents</h2>
+                    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../user/index.html">For users</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">For administrators</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="install.html">Installation guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conf_files/index.html">Configuration Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="realm_config.html">Realm configuration decisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="database.html">Database administration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockout.html">Account lockout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="conf_ldap.html">Configuring Kerberos with OpenLDAP back-end</a></li>
+<li class="toctree-l2"><a class="reference internal" href="appl_servers.html">Application servers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Host configuration</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="backup_host.html">Backups of secure hosts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pkinit.html">PKINIT configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="princ_dns.html">Principal names and DNS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="enctypes.html">Encryption types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin_commands/index.html">Administration  programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mitK5defaults.html">MIT Kerberos defaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="env_variables.html">Environment variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshoot.html">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced/index.html">Advanced topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="various_envs.html">Various links</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../appdev/index.html">For application developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugindev/index.html">For plugin module developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build/index.html">Building Kerberos V5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic/index.html">Kerberos V5 concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mitK5features.html">MIT Kerberos features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build_this.html">How to build this documentation from the source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">The Kerberos Documentation Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources.html">Resources</a></li>
+</ul>
+
+                    <br/>
+                    <h4><a href="../index.html">Full Table of Contents
+                    </a></h4>
+                    <h4>Search</h4>
+                    <form class="search" action="../search.html" method="get">
+                        <input type="text" name="q" size="18" />
+                        <input type="submit" value="Go" />
+                        <input type="hidden" name="check_keywords" value="yes" />
+                        <input type="hidden" name="area" value="default" />
+                    </form>
+                </div>
+            <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="host-configuration">
+<h1>Host configuration<a class="headerlink" href="#host-configuration" title="Permalink to this headline">¶</a></h1>
+<p>All hosts running Kerberos software, whether they are clients,
+application servers, or KDCs, can be configured using
+<a class="reference internal" href="conf_files/krb5_conf.html#krb5-conf-5"><em>krb5.conf</em></a>.  Here we describe some of the behavior changes
+you might want to make.</p>
+<div class="section" id="plugin-module-configuration">
+<span id="plugin-config"></span><h2>Plugin module configuration<a class="headerlink" href="#plugin-module-configuration" title="Permalink to this headline">¶</a></h2>
+<p>Many aspects of Kerberos behavior, such as client preauthentication
+and KDC service location, can be modified through the use of plugin
+modules.  For most of these behaviors, you can use the <a class="reference internal" href="conf_files/krb5_conf.html#plugins"><em>[plugins]</em></a>
+section of krb5.conf to register third-party modules, and to switch
+off registered or built-in modules.</p>
+<p>A plugin module takes the form of a Unix shared object
+(<tt class="docutils literal"><span class="pre">modname.so</span></tt>) or Windows DLL (<tt class="docutils literal"><span class="pre">modname.dll</span></tt>).  If you have
+installed a third-party plugin module and want to register it, you do
+so using the <strong>module</strong> relation in the appropriate subsection of the
+[plugins] section.  The value for <strong>module</strong> must give the module name
+and the path to the module, separated by a colon.  The module name
+will often be the same as the shared object&#8217;s name, but in unusual
+cases (such as a shared object which implements multiple modules for
+the same interface) it might not be.  For example, to register a
+client preauthentication module named <tt class="docutils literal"><span class="pre">otp</span></tt> installed at
+<tt class="docutils literal"><span class="pre">/path/to/otp.so</span></tt>, you could write:</p>
+<div class="highlight-python"><pre>[plugins]
+    clpreauth = {
+        module = otp:/path/to/otp.so
+    }</pre>
+</div>
+<p>Many of the pluggable behaviors in MIT krb5 contain built-in modules
+which can be switched off.  You can disable a built-in module (or one
+you have registered) using the <strong>disable</strong> directive in the
+appropriate subsection of the [plugins] section.  For example, to
+disable the use of .k5identity files to select credential caches, you
+could write:</p>
+<div class="highlight-python"><pre>[plugins]
+    ccselect = {
+        disable = k5identity
+    }</pre>
+</div>
+<p>If you want to disable multiple modules, specify the <strong>disable</strong>
+directive multiple times, giving one module to disable each time.</p>
+<p>Alternatively, you can explicitly specify which modules you want to be
+enabled for that behavior using the <strong>enable_only</strong> directive.  For
+example, to make <a class="reference internal" href="admin_commands/kadmind.html#kadmind-8"><em>kadmind</em></a> check password quality using only a
+module you have registered, and no other mechanism, you could write:</p>
+<div class="highlight-python"><pre>[plugins]
+    pwqual = {
+        module = mymodule:/path/to/mymodule.so
+        enable_only = mymodule
+    }</pre>
+</div>
+<p>Again, if you want to specify multiple modules, specify the
+<strong>enable_only</strong> directive multiple times, giving one module to enable
+each time.</p>
+<p>Some Kerberos interfaces use different mechanisms to register plugin
+modules.</p>
+<div class="section" id="kdc-location-modules">
+<h3>KDC location modules<a class="headerlink" href="#kdc-location-modules" title="Permalink to this headline">¶</a></h3>
+<p>For historical reasons, modules to control how KDC servers are located
+are registered simply by placing the shared object or DLL into the
+&#8220;libkrb5&#8221; subdirectory of the krb5 plugin directory, which defaults to
+<a class="reference internal" href="../mitK5defaults.html#paths"><em>LIBDIR</em></a><tt class="docutils literal"><span class="pre">/krb5/plugins</span></tt>.  For example, Samba&#8217;s winbind krb5
+locator plugin would be registered by placing its shared object in
+<a class="reference internal" href="../mitK5defaults.html#paths"><em>LIBDIR</em></a><tt class="docutils literal"><span class="pre">/krb5/plugins/libkrb5/winbind_krb5_locator.so</span></tt>.</p>
+</div>
+<div class="section" id="gssapi-mechanism-modules">
+<span id="gssapi-plugin-config"></span><h3>GSSAPI mechanism modules<a class="headerlink" href="#gssapi-mechanism-modules" title="Permalink to this headline">¶</a></h3>
+<p>GSSAPI mechanism module are registered using the file
+<tt class="docutils literal"><span class="pre">/etc/gss/mech</span></tt>.  Each line in this file has the form:</p>
+<div class="highlight-python"><pre>oid  pathname  [options]  &lt;type&gt;</pre>
+</div>
+<p>Only the oid and pathname are required.  <em>oid</em> is the object
+identifier of the GSSAPI mechanism to be registered.  <em>pathname</em> is a
+path to the module shared object or DLL.  <em>options</em> (if present) are
+options provided to the plugin module, surrounded in square brackets.
+<em>type</em> (if present) can be used to indicate a special type of module.
+Currently the only special module type is &#8220;interposer&#8221;, for a module
+designed to intercept calls to other mechanisms.</p>
+</div>
+<div class="section" id="configuration-profile-modules">
+<span id="profile-plugin-config"></span><h3>Configuration profile modules<a class="headerlink" href="#configuration-profile-modules" title="Permalink to this headline">¶</a></h3>
+<p>A configuration profile module replaces the information source for
+<a class="reference internal" href="conf_files/krb5_conf.html#krb5-conf-5"><em>krb5.conf</em></a> itself.  To use a profile module, begin krb5.conf
+with the line:</p>
+<div class="highlight-python"><pre>module PATHNAME:STRING</pre>
+</div>
+<p>where <em>PATHNAME</em> is a path to the module shared object or DLL, and
+<em>STRING</em> is a string to provide to the module.  The module will then
+take over, and the rest of krb5.conf will be ignored.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+            </div>
+            <div class="clearer" ></div>
+        </div>
+    </div>
+ 
+    <div class="footer-wrapper" >
+        <div class="footer" >
+            <div class="right" ><i>Release: 1.11.3</i><br />
+                &copy; <a href="../copyright.html">Copyright</a> 1985-2013, MIT.
+            </div>
+            <div class="left" >
+                    <a href="../index.html"
+                    title="Full Table of Contents"
+                    >Contents</a>
+                     |
+                    <a href="appl_servers.html"
+                    title="Application servers"
+                    >previous</a>
+                     |
+                    <a href="backup_host.html"
+                    title="Backups of secure hosts"
+                    >next</a>
+                     |
+                    <a href="../genindex.html"
+                    title="General Index"
+                    >index</a>
+                     |
+                    <a href="../search.html"
+                    title="Enter search criteria"
+                    >Search</a>
+                     |
+                    <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__Host configuration">feedback</a>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>

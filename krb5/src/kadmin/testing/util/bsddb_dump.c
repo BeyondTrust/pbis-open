@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
- * $Id: bsddb_dump.c 23100 2009-10-31 00:48:38Z tlyu $
+ * $Id$
  */
 
 #include <sys/file.h>

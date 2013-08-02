@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/hash_provider/hash_sha1.c
- *
+/* lib/crypto/nss/hash_provider/hash_sha1.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,9 +33,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "k5-int.h"
+#include "crypto_int.h"
 #include "nss_gen.h"
-#include "hash_provider.h"
 
 static krb5_error_code
 k5_sha1_hash(const krb5_crypto_iov *data, size_t num_data, krb5_data *output)

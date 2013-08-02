@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/crypto/krb/cf2.c */
 /*
- * lib/crypto/cf2.c
- *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -23,18 +22,14 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- *
- * Implement KRB_FX_CF2 function per
- *draft-ietf-krb-wg-preauth-framework-09.  Take two keys and two
- *pepper strings as input and return a combined key.
  */
 
-#include <k5-int.h>
-#include <assert.h>
-#include "etypes.h"
+/*
+ * Implement KRB_FX_CF2 function per draft-ietf-krb-wg-preauth-framework-09.
+ * Take two keys and two pepper strings as input and return a combined key.
+ */
 
+#include "crypto_int.h"
 
 /*
  * Call the PRF function multiple times with the pepper prefixed with
@@ -112,11 +107,12 @@ krb5_c_fx_cf2_simple(krb5_context context,
         return KRB5_BAD_ENCTYPE;
     out_enctype_num = k1->enctype;
     assert(out != NULL);
-    assert((out_enctype = find_enctype(out_enctype_num)) != NULL);
+    out_enctype = find_enctype(out_enctype_num);
+    assert(out_enctype != NULL);
     if (out_enctype->prf == NULL) {
         if (context)
             krb5int_set_error(&(context->err), KRB5_CRYPTO_INTERNAL,
-                              "Enctype %d has no PRF", out_enctype_num);
+                              _("Enctype %d has no PRF"), out_enctype_num);
         return KRB5_CRYPTO_INTERNAL;
     }
     keybytes = out_enctype->enc->keybytes;
@@ -136,7 +132,7 @@ krb5_c_fx_cf2_simple(krb5_context context,
         goto cleanup;
     keydata.data = prf1;
     keydata.length = keybytes;
-    retval = (*out_enctype->enc->make_key)(&keydata, out_key);
+    retval = (*out_enctype->rand2key)(&keydata, out_key);
     if (retval)
         goto cleanup;
 

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/an_to_ln.c */
 /*
- * lib/krb5/os/an_to_ln.c
- *
  * Copyright 1990,1991,2007,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * krb5_aname_to_localname()
  */
 
 /*
@@ -603,46 +599,34 @@ cleanup:
  * that name is returned as the lname.
  */
 static krb5_error_code
-default_an_to_ln(krb5_context context, krb5_const_principal aname, const unsigned int lnsize, char *lname)
+default_an_to_ln(krb5_context context, krb5_const_principal aname,
+                 const unsigned int lnsize, char *lname)
 {
-    krb5_error_code retval;
+    krb5_error_code ret;
     char *def_realm;
-    unsigned int realm_length;
 
-    realm_length = krb5_princ_realm(context, aname)->length;
+    ret = krb5_get_default_realm(context, &def_realm);
+    if (ret)
+        return ret;
 
-    if ((retval = krb5_get_default_realm(context, &def_realm))) {
-        return(retval);
+    if (!data_eq_string(aname->realm, def_realm)) {
+        ret = KRB5_LNAME_NOTRANS;
+    } else if (aname->length == 2) {
+        /* Check to see if second component is the local realm. */
+        if (!data_eq_string(aname->data[1], def_realm))
+            ret = KRB5_LNAME_NOTRANS;
+    } else if (aname->length != 1) {
+        ret = KRB5_LNAME_NOTRANS;
     }
-    if (!data_eq_string(*krb5_princ_realm(context, aname), def_realm)) {
-        free(def_realm);
-        return KRB5_LNAME_NOTRANS;
-    }
-
-    if (krb5_princ_size(context, aname) != 1) {
-        if (krb5_princ_size(context, aname) == 2 ) {
-            /* Check to see if 2nd component is the local realm. */
-            if ( strncmp(krb5_princ_component(context, aname,1)->data,def_realm,
-                         realm_length) ||
-                 realm_length != krb5_princ_component(context, aname,1)->length)
-                return KRB5_LNAME_NOTRANS;
-        }
-        else
-            /* no components or more than one component to non-realm part of name
-               --no translation. */
-            return KRB5_LNAME_NOTRANS;
-    }
-
     free(def_realm);
-    strncpy(lname, krb5_princ_component(context, aname,0)->data,
-            min(krb5_princ_component(context, aname,0)->length,lnsize));
-    if (lnsize <= krb5_princ_component(context, aname,0)->length ) {
-        retval = KRB5_CONFIG_NOTENUFSPACE;
-    } else {
-        lname[krb5_princ_component(context, aname,0)->length] = '\0';
-        retval = 0;
-    }
-    return retval;
+    if (ret)
+        return ret;
+
+    if (aname->data[0].length >= lnsize)
+        return KRB5_CONFIG_NOTENUFSPACE;
+    memcpy(lname, aname->data[0].data, aname->data[0].length);
+    lname[aname->data[0].length] = '\0';
+    return 0;
 }
 
 /*

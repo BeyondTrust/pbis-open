@@ -116,8 +116,7 @@ OM_uint32 *		time_rec;
     gss_union_cred_t	union_cred;
     gss_name_t		internal_name;
     gss_union_ctx_id_t	union_ctx_id;
-    gss_OID		mech_type = (gss_OID) req_mech_type;
-    gss_OID		local_actual_mech = GSS_C_NO_OID;
+    gss_OID		selected_mech;
     gss_mechanism	mech;
     gss_cred_id_t	input_cred_handle;
 
@@ -137,8 +136,10 @@ OM_uint32 *		time_rec;
     if (status != GSS_S_COMPLETE)
 	return (status);
 
-    if (req_mech_type)
-	mech_type = (gss_OID)req_mech_type;
+    status = gssint_select_mech_type(minor_status, req_mech_type,
+				     &selected_mech);
+    if (status != GSS_S_COMPLETE)
+	return (status);
 
     union_name = (gss_union_name_t)target_name;
 
@@ -147,15 +148,12 @@ OM_uint32 *		time_rec;
      * mechanism.  If mech_type is NULL, set it to the resultant
      * mechanism
      */
-    mech = gssint_get_mechanism (mech_type);
+    mech = gssint_get_mechanism(selected_mech);
     if (mech == NULL)
 	return (GSS_S_BAD_MECH);
 
     if (mech->gss_init_sec_context == NULL)
 	return (GSS_S_UNAVAILABLE);
-
-    if (mech_type == GSS_C_NULL_OID)
-	mech_type = &mech->mech_type;
 
     /*
      * If target_name is mechanism_specific, then it must match the
@@ -163,10 +161,10 @@ OM_uint32 *		time_rec;
      * the external_name form of the target name.
      */
     if (union_name->mech_type &&
-	g_OID_equal(union_name->mech_type, mech_type)) {
+	g_OID_equal(union_name->mech_type, selected_mech)) {
 	internal_name = union_name->mech_name;
     } else {
-	if ((status = gssint_import_internal_name(minor_status, mech_type,
+	if ((status = gssint_import_internal_name(minor_status, selected_mech,
 						 union_name,
 						 &internal_name)) != GSS_S_COMPLETE)
 	    return (status);
@@ -186,7 +184,7 @@ OM_uint32 *		time_rec;
 	if (union_ctx_id == NULL)
 	    goto end;
 
-	if (generic_gss_copy_oid(&temp_minor_status, mech_type,
+	if (generic_gss_copy_oid(&temp_minor_status, selected_mech,
 				 &union_ctx_id->mech_type) != GSS_S_COMPLETE) {
 	    free(union_ctx_id);
 	    goto end;
@@ -195,7 +193,7 @@ OM_uint32 *		time_rec;
 	/* copy the supplied context handle */
 	union_ctx_id->internal_ctx_id = GSS_C_NO_CONTEXT;
     } else
-	union_ctx_id = *context_handle;
+	union_ctx_id = (gss_union_ctx_id_t)*context_handle;
 
     /*
      * get the appropriate cred handle from the union cred struct.
@@ -203,7 +201,7 @@ OM_uint32 *		time_rec;
      * use the default credential.
      */
     union_cred = (gss_union_cred_t) claimant_cred_handle;
-    input_cred_handle = gssint_get_mechanism_cred(union_cred, mech_type);
+    input_cred_handle = gssint_get_mechanism_cred(union_cred, selected_mech);
 
     /*
      * now call the approprate underlying mechanism routine
@@ -214,12 +212,12 @@ OM_uint32 *		time_rec;
 	input_cred_handle,
 	&union_ctx_id->internal_ctx_id,
 	internal_name,
-	mech_type,
+	gssint_get_public_oid(selected_mech),
 	req_flags,
 	time_req,
 	input_chan_bindings,
 	input_token,
-	&local_actual_mech,
+	actual_mech_type,
 	output_token,
 	ret_flags,
 	time_rec);
@@ -241,33 +239,12 @@ OM_uint32 *		time_rec;
 	union_ctx_id->loopback = union_ctx_id;
 	*context_handle = (gss_ctx_id_t)union_ctx_id;
     }
-    if (status == GSS_S_COMPLETE && local_actual_mech) {
-        gss_OID temp_mech_type = union_ctx_id->mech_type;
-
-        status = generic_gss_copy_oid(minor_status, local_actual_mech,
-				      &union_ctx_id->mech_type);
-        if (status != GSS_S_COMPLETE) {
-            gssint_delete_internal_sec_context(&temp_minor_status,
-                                               local_actual_mech,
-                                               &union_ctx_id->internal_ctx_id,
-                                               NULL);
-            free(union_ctx_id);
-            *context_handle = GSS_C_NO_CONTEXT;
-        }
-
-        free(temp_mech_type->elements);
-        free(temp_mech_type);
-    }
-
-    if (actual_mech_type != NULL) {
-        *actual_mech_type = local_actual_mech;
-    }
 
 end:
     if (union_name->mech_name == NULL ||
 	union_name->mech_name != internal_name) {
 	(void) gssint_release_internal_name(&temp_minor_status,
-					   mech_type, &internal_name);
+					    selected_mech, &internal_name);
     }
 
     return(status);

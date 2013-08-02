@@ -24,10 +24,10 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id: context_time.c 23457 2009-12-08 00:04:48Z tlyu $
+ * $Id$
  */
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_context_time(minor_status, context_handle, time_rec)
     OM_uint32 *minor_status;
     gss_ctx_id_t context_handle;
@@ -37,12 +37,6 @@ krb5_gss_context_time(minor_status, context_handle, time_rec)
     krb5_gss_ctx_id_rec *ctx;
     krb5_timestamp now;
     krb5_deltat lifetime;
-
-    /* validate the context handle */
-    if (! kg_validate_ctx_id(context_handle)) {
-        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
-        return(GSS_S_NO_CONTEXT);
-    }
 
     ctx = (krb5_gss_ctx_id_rec *) context_handle;
 

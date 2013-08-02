@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* kadmin/dbutil/kdb5_destroy.c - Destroy a KDC database */
 /*
- * admin/destroy/kdb5_destroy.c
- *
  * Copyright 1990, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * kdb_dest(roy): destroy the named database.
- *
- * This version knows about DBM format databases.
  */
 
 #include "k5-int.h"
@@ -61,13 +55,13 @@ kdb5_destroy(argc, argv)
     retval1 = kadm5_init_krb5_context(&context);
     if( retval1 )
     {
-        com_err(progname, retval1, "while initializing krb5_context");
+        com_err(progname, retval1, _("while initializing krb5_context"));
         exit(1);
     }
 
     if ((retval1 = krb5_set_default_realm(context,
                                           util_context->default_realm))) {
-        com_err(progname, retval1, "while setting default realm name");
+        com_err(progname, retval1, _("while setting default realm name"));
         exit(1);
     }
 
@@ -87,20 +81,21 @@ kdb5_destroy(argc, argv)
         }
     }
     if (!force) {
-        printf("Deleting KDC database stored in '%s', are you sure?\n", dbname);
-        printf("(type 'yes' to confirm)? ");
+        printf(_("Deleting KDC database stored in '%s', are you sure?\n"),
+               dbname);
+        printf(_("(type 'yes' to confirm)? "));
         if (fgets(buf, sizeof(buf), stdin) == NULL) {
             exit_status++; return;
         }
         if (strcmp(buf, yes)) {
             exit_status++; return;
         }
-        printf("OK, deleting database '%s'...\n", dbname);
+        printf(_("OK, deleting database '%s'...\n"), dbname);
     }
 
     retval1 = krb5_db_destroy(context, db5util_db_args);
     if (retval1) {
-        com_err(progname, retval1, "deleting database '%s'",dbname);
+        com_err(progname, retval1, _("deleting database '%s'"), dbname);
         exit_status++; return;
     }
 
@@ -109,6 +104,6 @@ kdb5_destroy(argc, argv)
     }
 
     dbactive = FALSE;
-    printf("** Database '%s' destroyed.\n", dbname);
+    printf(_("** Database '%s' destroyed.\n"), dbname);
     return;
 }

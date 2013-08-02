@@ -31,6 +31,7 @@
  */
 
 #include    <errno.h>
+#include    <locale.h>
 #include    <stdio.h>
 #include    <signal.h>
 #include    <syslog.h>
@@ -59,37 +60,15 @@
 
 #include    "misc.h"
 
-#ifdef PURIFY
-#include    "purify.h"
-
-int     signal_pure_report = 0;
-int     signal_pure_clear = 0;
-void    request_pure_report(int);
-void    request_pure_clear(int);
-#endif /* PURIFY */
-
 #if defined(NEED_DAEMON_PROTO)
 extern int daemon(int, int);
 #endif
-
-void    setup_signal_handlers(iprop_role iproprole);
-void    request_exit(int);
-void    request_hup(int);
-void    reset_db(void);
-void    sig_pipe(int);
-
-#ifdef POSIX_SIGNALS
-static struct sigaction s_action;
-#endif /* POSIX_SIGNALS */
-
 
 #define TIMEOUT 15
 
 gss_name_t gss_changepw_name = NULL, gss_oldchangepw_name = NULL;
 gss_name_t gss_kadmin_name = NULL;
 void *global_server_handle;
-
-extern krb5_keylist_node  *master_keylist;
 
 char *build_princ_name(char *name, char *realm);
 void log_badauth(OM_uint32 major, OM_uint32 minor,
@@ -127,15 +106,14 @@ void kadm5_set_use_password_server (void);
 
 static void usage()
 {
-    fprintf(stderr, "Usage: kadmind [-x db_args]* [-r realm] [-m] [-nofork] "
-#ifdef USE_PASSWORD_SERVER
-            "[-passwordserver] "
-#endif
-            "[-port port-number]\n"
-            "\t\t[-P pid_file]\n"
-            "\nwhere,\n\t[-x db_args]* - any number of database specific arguments.\n"
-            "\t\t\tLook at each database documentation for supported arguments\n"
-    );
+    fprintf(stderr, _("Usage: kadmind [-x db_args]* [-r realm] [-m] [-nofork] "
+                      "[-port port-number]\n"
+                      "\t\t[-p path-to-kdb5_util] [-F dump-file]\n"
+                      "\t\t[-K path-to-kprop] [-P pid_file]\n"
+                      "\nwhere,\n\t[-x db_args]* - any number of database "
+                      "specific arguments.\n"
+                      "\t\t\tLook at each database documentation for "
+                      "supported arguments\n"));
     exit(1);
 }
 
@@ -181,8 +159,7 @@ static void display_status_1(m, code, type)
         maj_stat = gss_display_status(&min_stat, code,
                                       type, GSS_C_NULL_OID,
                                       &msg_ctx, &msg);
-        fprintf(stderr, "GSS-API error %s: %s\n", m,
-                (char *)msg.value);
+        fprintf(stderr, _("GSS-API error %s: %s\n"), m, (char *)msg.value);
         (void) gss_release_buffer(&min_stat, &msg);
 
         if (!msg_ctx)
@@ -227,6 +204,9 @@ static krb5_context context;
 static krb5_context hctx;
 
 int nofork = 0;
+char *kdb5_util = KPROPD_DEFAULT_KDB5_UTIL;
+char *kprop = KPROPD_DEFAULT_KPROP;
+char *dump_file = KPROP_DEFAULT_FILE;
 
 int main(int argc, char *argv[])
 {
@@ -249,6 +229,9 @@ int main(int argc, char *argv[])
 
     kdb_log_context *log_ctx;
 
+    verto_ctx *ctx;
+
+    setlocale(LC_ALL, "");
     setvbuf(stderr, NULL, _IONBF, 0);
 
     /* This is OID value the Krb5_Name NameType */
@@ -256,7 +239,7 @@ int main(int argc, char *argv[])
     gssbuf.length = strlen(gssbuf.value);
     major_status = gss_str_to_oid(&minor_status, &gssbuf, &nt_krb5_name_oid);
     if (major_status != GSS_S_COMPLETE) {
-        fprintf(stderr, "Couldn't create KRB5 Name NameType OID\n");
+        fprintf(stderr, _("Couldn't create KRB5 Name NameType OID\n"));
         display_status("str_to_oid", major_status, minor_status);
         exit(1);
     }
@@ -265,9 +248,6 @@ int main(int argc, char *argv[])
     names[0].type = names[1].type = names[2].type = names[3].type =
         nt_krb5_name_oid;
 
-#ifdef PURIFY
-    purify_start_batch();
-#endif /* PURIFY */
     whoami = (strrchr(argv[0], '/') ? strrchr(argv[0], '/')+1 : argv[0]);
 
     nofork = 0;
@@ -285,8 +265,8 @@ int main(int argc, char *argv[])
                 char **temp = realloc( db_args, sizeof(char*) * (db_args_size+1)); /* one for NULL */
                 if( temp == NULL )
                 {
-                    fprintf(stderr,"%s: cannot initialize. Not enough memory\n",
-                            whoami);
+                    fprintf(stderr, _("%s: cannot initialize. Not enough "
+                                      "memory\n"), whoami);
                     exit(1);
                 }
                 db_args = temp;
@@ -323,6 +303,21 @@ int main(int argc, char *argv[])
             pid_file = *argv;
         } else if (strcmp(*argv, "-W") == 0) {
             strong_random = 0;
+        } else if (strcmp(*argv, "-p") == 0) {
+            argc--; argv++;
+            if (!argc)
+                usage();
+            kdb5_util = *argv;
+        } else if (strcmp(*argv, "-F") == 0) {
+            argc--; argv++;
+            if (!argc)
+                usage();
+            dump_file = *argv;
+        } else if (strcmp(*argv, "-K") == 0) {
+            argc--; argv++;
+            if (!argc)
+                usage();
+            kprop = *argv;
         } else
             break;
         argc--; argv++;
@@ -332,7 +327,7 @@ int main(int argc, char *argv[])
         usage();
 
     if ((ret = kadm5_init_krb5_context(&context))) {
-        fprintf(stderr, "%s: %s while initializing context, aborting\n",
+        fprintf(stderr, _("%s: %s while initializing context, aborting\n"),
                 whoami, error_message(ret));
         exit(1);
     }
@@ -342,13 +337,12 @@ int main(int argc, char *argv[])
     if((ret = kadm5_init(context, "kadmind", NULL,
                          NULL, &params,
                          KADM5_STRUCT_VERSION,
-                         KADM5_API_VERSION_3,
+                         KADM5_API_VERSION_4,
                          db_args,
                          &global_server_handle)) != KADM5_OK) {
         const char *e_txt = krb5_get_error_message (context, ret);
-        krb5_klog_syslog(LOG_ERR, "%s while initializing, aborting",
-                         e_txt);
-        fprintf(stderr, "%s: %s while initializing, aborting\n",
+        krb5_klog_syslog(LOG_ERR, _("%s while initializing, aborting"), e_txt);
+        fprintf(stderr, _("%s: %s while initializing, aborting\n"),
                 whoami, e_txt);
         krb5_klog_close(context);
         exit(1);
@@ -357,9 +351,9 @@ int main(int argc, char *argv[])
     if ((ret = kadm5_get_config_params(context, 1, &params,
                                        &params))) {
         const char *e_txt = krb5_get_error_message (context, ret);
-        krb5_klog_syslog(LOG_ERR, "%s: %s while initializing, aborting",
+        krb5_klog_syslog(LOG_ERR, _("%s: %s while initializing, aborting"),
                          whoami, e_txt);
-        fprintf(stderr, "%s: %s while initializing, aborting\n",
+        fprintf(stderr, _("%s: %s while initializing, aborting\n"),
                 whoami, e_txt);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
@@ -369,36 +363,63 @@ int main(int argc, char *argv[])
 #define REQUIRED_PARAMS (KADM5_CONFIG_REALM | KADM5_CONFIG_ACL_FILE)
 
     if ((params.mask & REQUIRED_PARAMS) != REQUIRED_PARAMS) {
-        krb5_klog_syslog(LOG_ERR, "%s: Missing required configuration values "
-                         "(%lx) while initializing, aborting", whoami,
+        krb5_klog_syslog(LOG_ERR,
+                         _("%s: Missing required configuration values "
+                           "(%lx) while initializing, aborting"), whoami,
                          (params.mask & REQUIRED_PARAMS) ^ REQUIRED_PARAMS);
-        fprintf(stderr, "%s: Missing required configuration values "
-                "(%lx) while initializing, aborting\n", whoami,
+        fprintf(stderr, _("%s: Missing required configuration values "
+                          "(%lx) while initializing, aborting\n"), whoami,
                 (params.mask & REQUIRED_PARAMS) ^ REQUIRED_PARAMS);
         krb5_klog_close(context);
         kadm5_destroy(global_server_handle);
         exit(1);
     }
 
+    ctx = loop_init(VERTO_EV_TYPE_SIGNAL);
+    if (!ctx) {
+        krb5_klog_syslog(LOG_ERR,
+                         _("%s: could not initialize loop, aborting"),
+                         whoami);
+        fprintf(stderr, _("%s: could not initialize loop, aborting\n"),
+                whoami);
+        kadm5_destroy(global_server_handle);
+        krb5_klog_close(context);
+        exit(1);
+    }
+
+    if ((ret = loop_setup_signals(ctx, global_server_handle, NULL))) {
+        const char *e_txt = krb5_get_error_message (context, ret);
+        krb5_klog_syslog(LOG_ERR, _("%s: %s while initializing signal "
+                                    "handlers, aborting"), whoami, e_txt);
+        fprintf(stderr, _("%s: %s while initializing signal "
+                          "handlers, aborting\n"), whoami, e_txt);
+        loop_free(ctx);
+        kadm5_destroy(global_server_handle);
+        krb5_klog_close(context);
+        exit(1);
+    }
+
 #define server_handle ((kadm5_server_handle_t)global_server_handle)
-    if ((ret = add_udp_port(server_handle->params.kpasswd_port))
-        || (ret = add_tcp_port(server_handle->params.kpasswd_port))
-        || (ret = add_rpc_service(server_handle->params.kadmind_port,
-                                  KADM, KADMVERS, kadm_1))
+    if ((ret = loop_add_udp_port(server_handle->params.kpasswd_port))
+        || (ret = loop_add_tcp_port(server_handle->params.kpasswd_port))
+        || (ret = loop_add_rpc_service(server_handle->params.kadmind_port,
+                                       KADM, KADMVERS, kadm_1))
 #ifndef DISABLE_IPROP
         || (server_handle->params.iprop_enabled
-            ? (ret = add_rpc_service(server_handle->params.iprop_port,
-                                     KRB5_IPROP_PROG, KRB5_IPROP_VERS,
-                                     krb5_iprop_prog_1))
+            ? (ret = loop_add_rpc_service(server_handle->params.iprop_port,
+                                          KRB5_IPROP_PROG, KRB5_IPROP_VERS,
+                                          krb5_iprop_prog_1))
             : 0)
 #endif
 #undef server_handle
-        || (ret = setup_network(global_server_handle, whoami, 0))) {
+        || (ret = loop_setup_routing_socket(ctx, global_server_handle, whoami))
+        || (ret = loop_setup_network(ctx, global_server_handle, whoami))) {
         const char *e_txt = krb5_get_error_message (context, ret);
-        krb5_klog_syslog(LOG_ERR, "%s: %s while initializing network, aborting",
-                         whoami, e_txt);
-        fprintf(stderr, "%s: %s while initializing network, aborting\n",
+        krb5_klog_syslog(LOG_ERR, _("%s: %s while initializing network, "
+                                    "aborting"), whoami, e_txt);
+        fprintf(stderr, _("%s: %s while initializing network, aborting\n"),
                 whoami, e_txt);
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -407,11 +428,11 @@ int main(int argc, char *argv[])
     names[0].name = build_princ_name(KADM5_ADMIN_SERVICE, params.realm);
     names[1].name = build_princ_name(KADM5_CHANGEPW_SERVICE, params.realm);
     if (names[0].name == NULL || names[1].name == NULL) {
-        krb5_klog_syslog(LOG_ERR,
-                         "Cannot build GSS-API authentication names, "
-                         "failing.");
-        fprintf(stderr, "%s: Cannot build GSS-API authentication names.\n",
+        krb5_klog_syslog(LOG_ERR, _("Cannot build GSS-API authentication "
+                                    "names, failing."));
+        fprintf(stderr, _("%s: Cannot build GSS-API authentication names.\n"),
                 whoami);
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -427,36 +448,38 @@ int main(int argc, char *argv[])
     /* Set ktkdb's internal krb5_context. */
     ret = krb5_ktkdb_set_context(hctx);
     if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Can't set kdb keytab's internal context.");
+        krb5_klog_syslog(LOG_ERR,
+                         _("Can't set kdb keytab's internal context."));
         goto kterr;
     }
     ret = krb5_kt_register(context, &krb5_kt_kdb_ops);
     if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Can't register kdb keytab.");
+        krb5_klog_syslog(LOG_ERR, _("Can't register kdb keytab."));
         goto kterr;
     }
     /* Tell gssapi about the kdb keytab. */
     ret = krb5_gss_register_acceptor_identity("KDB:");
     if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Can't register acceptor keytab.");
+        krb5_klog_syslog(LOG_ERR, _("Can't register acceptor keytab."));
         goto kterr;
     }
 kterr:
     if (ret) {
         krb5_klog_syslog(LOG_ERR, "%s", krb5_get_error_message (context, ret));
-        fprintf(stderr, "%s: Can't set up keytab for RPC.\n", whoami);
+        fprintf(stderr, _("%s: Can't set up keytab for RPC.\n"), whoami);
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
     }
 
     if (svcauth_gssapi_set_names(names, 2) == FALSE) {
-        krb5_klog_syslog(LOG_ERR,
-                         "Cannot set GSS-API authentication names (keytab not present?), "
-                         "failing.");
-        fprintf(stderr, "%s: Cannot set GSS-API authentication names.\n",
+        krb5_klog_syslog(LOG_ERR, _("Cannot set GSS-API authentication names "
+                                    "(keytab not present?), failing."));
+        fprintf(stderr, _("%s: Cannot set GSS-API authentication names.\n"),
                 whoami);
         svcauth_gssapi_unset_names();
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -477,18 +500,19 @@ kterr:
     svcauth_gss_set_log_miscerr_func(log_miscerr, NULL);
 
     if (svcauth_gss_set_svc_name(GSS_C_NO_NAME) != TRUE) {
-        fprintf(stderr, "%s: Cannot initialize RPCSEC_GSS service name.\n",
+        fprintf(stderr, _("%s: Cannot initialize RPCSEC_GSS service name.\n"),
                 whoami);
+        loop_free(ctx);
         exit(1);
     }
 
     if ((ret = kadm5int_acl_init(context, 0, params.acl_file))) {
         errmsg = krb5_get_error_message (context, ret);
-        krb5_klog_syslog(LOG_ERR, "Cannot initialize acl file: %s",
-                         errmsg);
-        fprintf(stderr, "%s: Cannot initialize acl file: %s\n",
+        krb5_klog_syslog(LOG_ERR, _("Cannot initialize acl file: %s"), errmsg);
+        fprintf(stderr, _("%s: Cannot initialize acl file: %s\n"),
                 whoami, errmsg);
         svcauth_gssapi_unset_names();
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -497,10 +521,10 @@ kterr:
     if (!nofork && (ret = daemon(0, 0))) {
         ret = errno;
         errmsg = krb5_get_error_message (context, ret);
-        krb5_klog_syslog(LOG_ERR, "Cannot detach from tty: %s", errmsg);
-        fprintf(stderr, "%s: Cannot detach from tty: %s\n",
-                whoami, errmsg);
+        krb5_klog_syslog(LOG_ERR, _("Cannot detach from tty: %s"), errmsg);
+        fprintf(stderr, _("%s: Cannot detach from tty: %s\n"), whoami, errmsg);
         svcauth_gssapi_unset_names();
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -509,21 +533,23 @@ kterr:
         ret = write_pid_file(pid_file);
         if (ret) {
             errmsg = krb5_get_error_message(context, ret);
-            krb5_klog_syslog(LOG_ERR, "Cannot create PID file %s: %s",
+            krb5_klog_syslog(LOG_ERR, _("Cannot create PID file %s: %s"),
                              pid_file, errmsg);
             svcauth_gssapi_unset_names();
+            loop_free(ctx);
             kadm5_destroy(global_server_handle);
             krb5_klog_close(context);
             exit(1);
         }
     }
 
-    krb5_klog_syslog(LOG_INFO, "Seeding random number generator");
+    krb5_klog_syslog(LOG_INFO, _("Seeding random number generator"));
     ret = krb5_c_random_os_entropy(context, strong_random, NULL);
     if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Error getting random seed: %s, aborting",
+        krb5_klog_syslog(LOG_ERR, _("Error getting random seed: %s, aborting"),
                          krb5_get_error_message(context, ret));
         svcauth_gssapi_unset_names();
+        loop_free(ctx);
         kadm5_destroy(global_server_handle);
         krb5_klog_close(context);
         exit(1);
@@ -549,6 +575,7 @@ kterr:
             krb5_klog_syslog(LOG_ERR,
                              _("%s while mapping update log (`%s.ulog')"),
                              error_message(ret), params.dbname);
+            loop_free(ctx);
             krb5_klog_close(context);
             exit(1);
         }
@@ -556,7 +583,7 @@ kterr:
 
         if (nofork)
             fprintf(stderr,
-                    "%s: create IPROP svc (PROG=%d, VERS=%d)\n",
+                    _("%s: create IPROP svc (PROG=%d, VERS=%d)\n"),
                     whoami, KRB5_IPROP_PROG, KRB5_IPROP_VERS);
 
 #if 0
@@ -570,6 +597,7 @@ kterr:
             krb5_klog_syslog(LOG_ERR,
                              _("Cannot create IProp RPC service (PROG=%d, VERS=%d), failing."),
                              KRB5_IPROP_PROG, KRB5_IPROP_VERS);
+            loop_free(ctx);
             krb5_klog_close(context);
             exit(1);
         }
@@ -585,6 +613,7 @@ kterr:
             fprintf(stderr,
                     _("%s: %s while getting IProp svc name, failing\n"),
                     whoami, error_message(ret));
+            loop_free(ctx);
             krb5_klog_close(context);
             exit(1);
         }
@@ -620,24 +649,24 @@ kterr:
                         err.system_error);
             }
 
+            loop_free(ctx);
             exit(1);
         }
         free(kiprop_name);
 #endif
     }
 
-    setup_signal_handlers(log_ctx->iproprole);
     krb5_klog_syslog(LOG_INFO, _("starting"));
     if (nofork)
-        fprintf(stderr, "%s: starting...\n", whoami);
+        fprintf(stderr, _("%s: starting...\n"), whoami);
 
-    listen_and_process(global_server_handle, whoami, reset_db);
-    krb5_klog_syslog(LOG_INFO, "finished, exiting");
+    verto_run(ctx);
+    krb5_klog_syslog(LOG_INFO, _("finished, exiting"));
 
     /* Clean up memory, etc */
     svcauth_gssapi_unset_names();
     kadm5_destroy(global_server_handle);
-    closedown_network();
+    loop_free(ctx);
     kadm5int_acl_finish(context, 0);
     if(gss_changepw_name) {
         (void) gss_release_name(&OMret, &gss_changepw_name);
@@ -654,194 +683,6 @@ kterr:
     krb5_klog_close(context);
     krb5_free_context(context);
     exit(2);
-}
-
-/*
- * Function: setup_signal_handlers
- *
- * Purpose: Setup signal handling functions using POSIX's sigaction()
- * if possible, otherwise with System V's signal().
- */
-
-void setup_signal_handlers(iprop_role iproprole) {
-#ifdef POSIX_SIGNALS
-    (void) sigemptyset(&s_action.sa_mask);
-    s_action.sa_handler = request_exit;
-    (void) sigaction(SIGINT, &s_action, (struct sigaction *) NULL);
-    (void) sigaction(SIGTERM, &s_action, (struct sigaction *) NULL);
-    (void) sigaction(SIGQUIT, &s_action, (struct sigaction *) NULL);
-    s_action.sa_handler = request_hup;
-    (void) sigaction(SIGHUP, &s_action, (struct sigaction *) NULL);
-    s_action.sa_handler = sig_pipe;
-    (void) sigaction(SIGPIPE, &s_action, (struct sigaction *) NULL);
-#ifdef PURIFY
-    s_action.sa_handler = request_pure_report;
-    (void) sigaction(SIGUSR1, &s_action, (struct sigaction *) NULL);
-    s_action.sa_handler = request_pure_clear;
-    (void) sigaction(SIGUSR2, &s_action, (struct sigaction *) NULL);
-#endif /* PURIFY */
-
-    /*
-     * IProp will fork for a full-resync, we don't want to
-     * wait on it and we don't want the living dead procs either.
-     */
-    if (iproprole == IPROP_MASTER) {
-        s_action.sa_handler = SIG_IGN;
-        (void) sigaction(SIGCHLD, &s_action, (struct sigaction *) NULL);
-    }
-#else /* POSIX_SIGNALS */
-    signal(SIGINT, request_exit);
-    signal(SIGTERM, request_exit);
-    signal(SIGQUIT, request_exit);
-    signal(SIGHUP, request_hup);
-    signal(SIGPIPE, sig_pipe);
-#ifdef PURIFY
-    signal(SIGUSR1, request_pure_report);
-    signal(SIGUSR2, request_pure_clear);
-#endif /* PURIFY */
-
-    /*
-     * IProp will fork for a full-resync, we don't want to
-     * wait on it and we don't want the living dead procs either.
-     */
-    if (iproprole == IPROP_MASTER)
-        (void) signal(SIGCHLD, SIG_IGN);
-#endif /* POSIX_SIGNALS */
-}
-
-#ifdef PURIFY
-/*
- * Function: request_pure_report
- *
- * Purpose: sets flag saying the server got a signal and that it should
- *              dump a purify report when convenient.
- *
- * Arguments:
- * Requires:
- * Effects:
- * Modifies:
- *      sets signal_pure_report to one
- */
-
-void request_pure_report(int signum)
-{
-    krb5_klog_syslog(LOG_DEBUG, "Got signal to request a Purify report");
-    signal_pure_report = 1;
-    return;
-}
-
-/*
- * Function: request_pure_clear
- *
- * Purpose: sets flag saying the server got a signal and that it should
- *              dump a purify report when convenient, then clear the
- *              purify tables.
- *
- * Arguments:
- * Requires:
- * Effects:
- * Modifies:
- *      sets signal_pure_report to one
- *      sets signal_pure_clear to one
- */
-
-void request_pure_clear(int signum)
-{
-    krb5_klog_syslog(LOG_DEBUG, "Got signal to request a Purify report and clear the old Purify info");
-    signal_pure_report = 1;
-    signal_pure_clear = 1;
-    return;
-}
-#endif /* PURIFY */
-
-/*
- * Function: request_hup
- *
- * Purpose: sets flag saying the server got a signal and that it should
- *              reset the database files when convenient.
- *
- * Arguments:
- * Requires:
- * Effects:
- * Modifies:
- *      sets signal_requests_reset to one
- */
-
-void request_hup(int signum)
-{
-    signal_requests_reset = 1;
-    return;
-}
-
-/*
- * Function: reset_db
- *
- * Purpose: flushes the currently opened database files to disk.
- *
- * Arguments:
- * Requires:
- * Effects:
- *
- * Currently, just sets signal_requests_reset to 0.  The kdb and adb
- * libraries used to be sufficiently broken that it was prudent to
- * close and reopen the databases periodically.  They are no longer
- * that broken, so this function is not necessary.
- */
-void reset_db(void)
-{
-#ifdef notdef
-    kadm5_ret_t ret;
-    char *errmsg;
-
-    if (ret = kadm5_flush(global_server_handle)) {
-        krb5_klog_syslog(LOG_ERR, "FATAL ERROR!  %s while flushing databases.  "
-                         "Databases may be corrupt!  Aborting.",
-                         krb5_get_error_message (context, ret));
-        krb5_klog_close(context);
-        exit(3);
-    }
-#endif
-
-    return;
-}
-
-/*
- * Function: request_exit
- *
- * Purpose: sets flags saying the server got a signal and that it
- *          should exit when convient.
- *
- * Arguments:
- * Requires:
- * Effects:
- *      modifies signal_requests_exit which ideally makes the server exit
- *      at some point.
- *
- * Modifies:
- *      signal_requests_exit
- */
-
-void request_exit(int signum)
-{
-    krb5_klog_syslog(LOG_DEBUG, "Got signal to request exit");
-    signal_requests_exit = 1;
-    return;
-}
-
-/*
- * Function: sig_pipe
- *
- * Purpose: SIGPIPE handler
- *
- * Effects: krb5_klog_syslogs a message that a SIGPIPE occurred and returns,
- * thus causing the read() or write() to fail and, presumable, the RPC
- * to recover.  Otherwise, the process aborts.
- */
-void sig_pipe(int unused)
-{
-    krb5_klog_syslog(LOG_NOTICE, "Warning: Received a SIGPIPE; probably a "
-                     "client aborted.  Continuing.");
-    return;
 }
 
 /*
@@ -923,7 +764,9 @@ void log_badverf(gss_name_t client_name, gss_name_t server_name,
         {19, "CHPASS_PRINCIPAL3"},
         {20, "CHRAND_PRINCIPAL3"},
         {21, "SETKEY_PRINCIPAL3"},
-        {22, "PURGEKEYS"}
+        {22, "PURGEKEYS"},
+        {23, "GET_STRINGS"},
+        {24, "SET_STRING"}
     };
 #define NPROCNAMES (sizeof (proc_names) / sizeof (struct procnames))
     OM_uint32 minor;
@@ -968,13 +811,15 @@ void log_badverf(gss_name_t client_name, gss_name_t server_name,
         }
     }
     if (procname != NULL)
-        krb5_klog_syslog(LOG_NOTICE, "WARNING! Forged/garbled request: %s, "
-                         "claimed client = %.*s%s, server = %.*s%s, addr = %s",
+        krb5_klog_syslog(LOG_NOTICE,
+                         _("WARNING! Forged/garbled request: %s, claimed "
+                           "client = %.*s%s, server = %.*s%s, addr = %s"),
                          procname, (int) clen, (char *) client.value, cdots,
                          (int) slen, (char *) server.value, sdots, a);
     else
-        krb5_klog_syslog(LOG_NOTICE, "WARNING! Forged/garbled request: %d, "
-                         "claimed client = %.*s%s, server = %.*s%s, addr = %s",
+        krb5_klog_syslog(LOG_NOTICE,
+                         _("WARNING! Forged/garbled request: %d, claimed "
+                           "client = %.*s%s, server = %.*s%s, addr = %s"),
                          proc, (int) clen, (char *) client.value, cdots,
                          (int) slen, (char *) server.value, sdots, a);
 
@@ -1004,7 +849,8 @@ void log_miscerr(struct svc_req *rqst, struct rpc_msg *msg,
     char *a;
 
     a = inet_ntoa(rqst->rq_xprt->xp_raddr.sin_addr);
-    krb5_klog_syslog(LOG_NOTICE, "Miscellaneous RPC error: %s, %s", a, error);
+    krb5_klog_syslog(LOG_NOTICE, _("Miscellaneous RPC error: %s, %s"), a,
+                     error);
 }
 
 
@@ -1036,10 +882,10 @@ void log_badauth(OM_uint32 major, OM_uint32 minor,
 
     a = inet_ntoa(addr->sin_addr);
 
-    krb5_klog_syslog(LOG_NOTICE, "Authentication attempt failed: %s, GSS-API "
-                     "error strings are:", a);
+    krb5_klog_syslog(LOG_NOTICE, _("Authentication attempt failed: %s, "
+                                   "GSS-API error strings are:"), a);
     log_badauth_display_status("   ", major, minor);
-    krb5_klog_syslog(LOG_NOTICE, "   GSS-API error strings complete.");
+    krb5_klog_syslog(LOG_NOTICE, _("   GSS-API error strings complete."));
 }
 
 void log_badauth_display_status(char *msg, OM_uint32 major, OM_uint32 minor)
@@ -1066,8 +912,9 @@ void log_badauth_display_status_1(char *m, OM_uint32 code, int type,
                 log_badauth_display_status_1(m, minor_stat,
                                              GSS_C_MECH_CODE, 1);
             } else
-                krb5_klog_syslog(LOG_ERR, "GSS-API authentication error %.*s: "
-                                 "recursive failure!", (int) msg.length,
+                krb5_klog_syslog(LOG_ERR,
+                                 _("GSS-API authentication error %.*s: "
+                                   "recursive failure!"), (int) msg.length,
                                  (char *) msg.value);
             return;
         }

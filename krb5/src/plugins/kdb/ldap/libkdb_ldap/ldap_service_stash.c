@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/kdb/ldap/libkdb_ldap/ldap_service_stash.c */
 /*
- * lib/kdb/kdb_ldap/ldap_service_stash.c
- *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -101,7 +100,8 @@ krb5_ldap_readpassword(krb5_context context, krb5_ldap_context *ldap_context,
 
     if (entryfound == 0)  {
         st = KRB5_KDB_SERVER_INTERNAL_ERR;
-        krb5_set_error_message (context, st, "Bind DN entry missing in stash file");
+        krb5_set_error_message(context, st,
+                               _("Bind DN entry missing in stash file"));
         goto rp_exit;
     }
     /* replace the \n with \0 */
@@ -113,7 +113,7 @@ krb5_ldap_readpassword(krb5_context context, krb5_ldap_context *ldap_context,
     if (start == NULL) {
         /* password field missing */
         st = KRB5_KDB_SERVER_INTERNAL_ERR;
-        krb5_set_error_message (context, st, "Stash file entry corrupt");
+        krb5_set_error_message(context, st, _("Stash file entry corrupt"));
         goto rp_exit;
     }
     ++ start;
@@ -146,15 +146,18 @@ krb5_ldap_readpassword(krb5_context context, krb5_ldap_context *ldap_context,
                     break;
                 case ERR_PWD_ZERO:
                     st = EINVAL;
-                    krb5_set_error_message(context, st, "Password has zero length");
+                    krb5_set_error_message(context, st,
+                                           _("Password has zero length"));
                     break;
                 case ERR_PWD_BAD:
                     st = EINVAL;
-                    krb5_set_error_message(context, st, "Password corrupted");
+                    krb5_set_error_message(context, st,
+                                           _("Password corrupted"));
                     break;
                 case ERR_PWD_NOT_HEX:
                     st = EINVAL;
-                    krb5_set_error_message(context, st, "Not a hexadecimal password");
+                    krb5_set_error_message(context, st,
+                                           _("Not a hexadecimal password"));
                     break;
                 default:
                     st = KRB5_KDB_SERVER_INTERNAL_ERR;

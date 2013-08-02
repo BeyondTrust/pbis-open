@@ -28,7 +28,7 @@
 #
 error_table kdb5
 
-ec KRB5_KDB_RCSID,	"$Id: kdb5_err.et 24440 2010-10-07 17:49:44Z ghudson $"
+ec KRB5_KDB_RCSID,	"$Id$"
 # /* From the server side routines */
 ec KRB5_KDB_INUSE,		"Entry already exists in database"
 ec KRB5_KDB_UK_SERROR,		"Database store error"
@@ -84,5 +84,6 @@ ec KRB5_LOG_CORRUPT,		"Update log is corrupt"
 ec KRB5_LOG_ERROR,		"Generic update log error"
 ec KRB5_KDB_DBTYPE_MISMATCH,    "Database module does not match KDC version"
 ec KRB5_KDB_POLICY_REF,		"Policy is in use"
+ec KRB5_KDB_STRINGS_TOOLONG,    "Too much string mapping data"
 
 end

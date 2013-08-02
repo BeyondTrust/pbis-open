@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/keytab/kt_file.c */
 /*
- * lib/krb5/keytab/kt_file.c
- *
  * Copyright 1990,1991,1995,2007,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,33 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ */
+/*
+ * Copyright (c) Hewlett-Packard Company 1991
+ * Released to the Massachusetts Institute of Technology for inclusion
+ * in the Kerberos source code distribution.
  *
+ * Copyright 1990,1991 by the Massachusetts Institute of Technology.
+ * All Rights Reserved.
+ *
+ * Export of this software from the United States of America may
+ *   require a specific license from the United States Government.
+ *   It is the responsibility of any person or organization contemplating
+ *   export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  Furthermore if you modify this software you must label
+ * your software as modified software and not distribute it in such a
+ * fashion that it might be confused with the original M.I.T. software.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
  */
 
 #ifndef LEAN_CLIENT
@@ -98,9 +123,6 @@ static krb5_error_code KRB5_CALLCONV
 krb5_ktfile_resolve(krb5_context, const char *, krb5_keytab *);
 
 static krb5_error_code KRB5_CALLCONV
-krb5_ktfile_wresolve(krb5_context, const char *, krb5_keytab *);
-
-static krb5_error_code KRB5_CALLCONV
 krb5_ktfile_get_name(krb5_context, krb5_keytab, char *, unsigned int);
 
 static krb5_error_code KRB5_CALLCONV
@@ -162,21 +184,21 @@ krb5_ktfileint_find_slot(krb5_context, krb5_keytab, krb5_int32 *,
  * initialized with file keytab routines.
  */
 
-static krb5_error_code
-ktfile_common_resolve(krb5_context context, const char *name,
-                      krb5_keytab *idptr, const struct _krb5_kt_ops *ops)
+static krb5_error_code KRB5_CALLCONV
+krb5_ktfile_resolve(krb5_context context, const char *name,
+                    krb5_keytab *id_out)
 {
     krb5_ktfile_data *data = NULL;
     krb5_error_code err = ENOMEM;
     krb5_keytab id;
 
-    *idptr = NULL;
+    *id_out = NULL;
 
     id = calloc(1, sizeof(*id));
     if (id == NULL)
         return ENOMEM;
 
-    id->ops = ops;
+    id->ops = &krb5_ktf_ops;
     data = calloc(1, sizeof(krb5_ktfile_data));
     if (data == NULL)
         goto cleanup;
@@ -195,7 +217,7 @@ ktfile_common_resolve(krb5_context context, const char *name,
 
     id->data = (krb5_pointer) data;
     id->magic = KV5M_KEYTAB;
-    *idptr = id;
+    *id_out = id;
     return 0;
 cleanup:
     if (data)
@@ -203,12 +225,6 @@ cleanup:
     free(data);
     free(id);
     return err;
-}
-
-static krb5_error_code KRB5_CALLCONV
-krb5_ktfile_resolve(krb5_context context, const char *name, krb5_keytab *id)
-{
-    return ktfile_common_resolve(context, name, id, &krb5_ktf_writable_ops);
 }
 
 
@@ -379,8 +395,9 @@ krb5_ktfile_get_entry(krb5_context context, krb5_keytab id,
         else {
             kerror = KRB5_KT_NOTFOUND;
             if (krb5_unparse_name(context, principal, &princname) == 0) {
-                krb5_set_error_message(context, kerror, "No key table entry "
-                                       "found for %s", princname);
+                krb5_set_error_message(context, kerror,
+                                       _("No key table entry found for %s"),
+                                       princname);
                 free(princname);
             }
         }
@@ -737,8 +754,7 @@ krb5_ktf_keytab_internalize(krb5_context kcontext, krb5_pointer *argp, krb5_octe
     if (kret)
         goto cleanup;
 
-    if (keytab->ops != &krb5_ktf_writable_ops
-        && keytab->ops != &krb5_ktf_ops) {
+    if (keytab->ops != &krb5_ktf_ops) {
         kret = EINVAL;
         goto cleanup;
     }
@@ -790,17 +806,6 @@ cleanup:
     return kret;
 }
 
-/*
- * This is an implementation specific resolver.  It returns a keytab id
- * initialized with file keytab routines.
- */
-
-static krb5_error_code KRB5_CALLCONV
-krb5_ktfile_wresolve(krb5_context context, const char *name, krb5_keytab *id)
-{
-    return ktfile_common_resolve(context, name, id, &krb5_ktf_writable_ops);
-}
-
 
 /*
  * krb5_ktfile_add()
@@ -818,7 +823,8 @@ krb5_ktfile_add(krb5_context context, krb5_keytab id, krb5_keytab_entry *entry)
         /* Iterator(s) active -- no changes.  */
         KTUNLOCK(id);
         krb5_set_error_message(context, KRB5_KT_IOERR,
-                               "Cannot change keytab with keytab iterators active");
+                               _("Cannot change keytab with keytab iterators "
+                                 "active"));
         return KRB5_KT_IOERR;   /* XXX */
     }
     if ((retval = krb5_ktfileint_openw(context, id))) {
@@ -853,7 +859,8 @@ krb5_ktfile_remove(krb5_context context, krb5_keytab id, krb5_keytab_entry *entr
         /* Iterator(s) active -- no changes.  */
         KTUNLOCK(id);
         krb5_set_error_message(context, KRB5_KT_IOERR,
-                               "Cannot change keytab with keytab iterators active");
+                               _("Cannot change keytab with keytab iterators "
+                                 "active"));
         return KRB5_KT_IOERR;   /* XXX */
     }
 
@@ -916,19 +923,21 @@ const struct _krb5_kt_ops krb5_ktf_ops = {
     krb5_ktfile_start_seq_get,
     krb5_ktfile_get_next,
     krb5_ktfile_end_get,
-    0,
-    0,
+    krb5_ktfile_add,
+    krb5_ktfile_remove,
     &krb5_ktfile_ser_entry
 };
 
 /*
- * krb5_ktf_writable_ops
+ * krb5_ktf_writable_ops -- this is the same as krb5_ktf_ops except for the
+ * prefix.  WRFILE should no longer be needed, but is effectively aliased to
+ * FILE for compatibility.
  */
 
 const struct _krb5_kt_ops krb5_ktf_writable_ops = {
     0,
     "WRFILE",   /* Prefix -- this string should not appear anywhere else! */
-    krb5_ktfile_wresolve,
+    krb5_ktfile_resolve,
     krb5_ktfile_get_name,
     krb5_ktfile_close,
     krb5_ktfile_get_entry,
@@ -959,36 +968,9 @@ const krb5_kt_ops krb5_kt_dfl_ops = {
     &krb5_ktfile_ser_entry
 };
 
+/* Formerly lib/krb5/keytab/file/ktf_util.c */
+
 /*
- * lib/krb5/keytab/file/ktf_util.c
- *
- * Copyright (c) Hewlett-Packard Company 1991
- * Released to the Massachusetts Institute of Technology for inclusion
- * in the Kerberos source code distribution.
- *
- * Copyright 1990,1991 by the Massachusetts Institute of Technology.
- * All Rights Reserved.
- *
- * Export of this software from the United States of America may
- *   require a specific license from the United States Government.
- *   It is the responsibility of any person or organization contemplating
- *   export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  Furthermore if you modify this software you must label
- * your software as modified software and not distribute it in such a
- * fashion that it might be confused with the original M.I.T. software.
- * M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- *
- *
  * This function contains utilities for the file based implementation of
  * the keytab.  There are no public functions in this file.
  *
@@ -1077,7 +1059,7 @@ krb5_ktfileint_open(krb5_context context, krb5_keytab id, int mode)
                 return EMFILE;
             case ENOENT:
                 krb5_set_error_message(context, ENOENT,
-                                       "Key table file '%s' not found",
+                                       _("Key table file '%s' not found"),
                                        KTFILENAME(id));
                 return ENOENT;
             default:

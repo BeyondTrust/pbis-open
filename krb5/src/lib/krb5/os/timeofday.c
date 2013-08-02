@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/timeofday.c */
 /*
- * lib/krb5/os/timeofday.c
- *
  * Copyright 1990, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,11 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * libos: krb5_timeofday function for BSD 4.3
  */
-
 
 #include "k5-int.h"
 
@@ -56,8 +51,8 @@ krb5_timeofday(krb5_context context, register krb5_timestamp *timeret)
     return 0;
 }
 
-krb5_error_code
-krb5int_check_clockskew(krb5_context context, krb5_timestamp date)
+krb5_error_code KRB5_CALLCONV
+krb5_check_clockskew(krb5_context context, krb5_timestamp date)
 {
     krb5_timestamp currenttime;
     krb5_error_code retval;

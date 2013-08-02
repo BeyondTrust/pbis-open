@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2009  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -21,7 +21,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 #include "k5-int.h"
 #include "gssapiP_krb5.h"
@@ -41,6 +40,7 @@ enum iakerb_state {
 struct _iakerb_ctx_id_rec {
     krb5_magic magic;                   /* KG_IAKERB_CONTEXT */
     krb5_context k5c;
+    gss_cred_id_t defcred;              /* Initiator only */
     enum iakerb_state state;            /* Initiator only */
     krb5_init_creds_context icc;        /* Initiator only */
     krb5_tkt_creds_context tcc;         /* Initiator only */
@@ -66,6 +66,7 @@ iakerb_release_context(iakerb_ctx_id_t ctx)
     if (ctx == NULL)
         return;
 
+    krb5_gss_release_cred(&tmp, &ctx->defcred);
     krb5_init_creds_free(ctx->k5c, ctx->icc);
     krb5_tkt_creds_free(ctx->k5c, ctx->tcc);
     krb5_gss_delete_sec_context(&tmp, &ctx->gssc, NULL);
@@ -285,9 +286,11 @@ iakerb_make_token(iakerb_ctx_id_t ctx,
     else
         tokenSize = 2 + data->length;
 
-    token->value = q = k5alloc(tokenSize, &code);
-    if (code != 0)
+    token->value = q = gssalloc_malloc(tokenSize);
+    if (q == NULL) {
+        code = ENOMEM;
         goto cleanup;
+    }
     token->length = tokenSize;
 
     if (initialContextToken) {
@@ -415,7 +418,7 @@ iakerb_init_creds_ctx(iakerb_ctx_id_t ctx,
 {
     krb5_error_code code;
 
-    if (cred->iakerb_mech == 0 || cred->password.data == NULL) {
+    if (cred->iakerb_mech == 0) {
         code = EINVAL;
         goto cleanup;
     }
@@ -445,8 +448,13 @@ iakerb_init_creds_ctx(iakerb_ctx_id_t ctx,
     if (code != 0)
         goto cleanup;
 
-    code = krb5_init_creds_set_password(ctx->k5c, ctx->icc,
-                                        cred->password.data);
+    if (cred->password != NULL) {
+        code = krb5_init_creds_set_password(ctx->k5c, ctx->icc,
+                                            cred->password);
+    } else {
+        code = krb5_init_creds_set_keytab(ctx->k5c, ctx->icc,
+                                          cred->client_keytab);
+    }
     if (code != 0)
         goto cleanup;
 
@@ -547,11 +555,18 @@ iakerb_initiator_step(iakerb_ctx_id_t ctx,
 
         code = krb5_init_creds_step(ctx->k5c, ctx->icc, &in, &out, &realm,
                                     &flags);
-        if (code != 0)
-            goto cleanup;
-        if (!(flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE)) {
+        if (code != 0) {
+            if (cred->have_tgt) {
+                /* We were trying to refresh; keep going with current creds. */
+                ctx->state = IAKERB_TGS_REQ;
+                krb5_clear_error_message(ctx->k5c);
+            } else {
+                goto cleanup;
+            }
+        } else if (!(flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE)) {
             krb5_init_creds_get_times(ctx->k5c, ctx->icc, &times);
-            cred->tgt_expire = times.endtime;
+            kg_cred_set_initial_refresh(ctx->k5c, cred, &times);
+            cred->expire = times.endtime;
 
             krb5_init_creds_free(ctx->k5c, ctx->icc);
             ctx->icc = NULL;
@@ -560,6 +575,7 @@ iakerb_initiator_step(iakerb_ctx_id_t ctx,
         } else
             break;
         in = empty_data();
+        /* Done with AS request; fall through to TGS request. */
     case IAKERB_TGS_REQ:
         if (ctx->tcc == NULL) {
             code = iakerb_tkt_creds_ctx(ctx, cred, name, time_req);
@@ -573,7 +589,7 @@ iakerb_initiator_step(iakerb_ctx_id_t ctx,
             goto cleanup;
         if (!(flags & KRB5_TKT_CREDS_STEP_FLAG_CONTINUE)) {
             krb5_tkt_creds_get_times(ctx->k5c, ctx->tcc, &times);
-            cred->tgt_expire = times.endtime;
+            cred->expire = times.endtime;
 
             krb5_tkt_creds_free(ctx->k5c, ctx->tcc);
             ctx->tcc = NULL;
@@ -581,6 +597,7 @@ iakerb_initiator_step(iakerb_ctx_id_t ctx,
             ctx->state = IAKERB_AP_REQ;
         } else
             break;
+        /* Done with TGS request; fall through to AP request. */
     case IAKERB_AP_REQ:
         break;
     }
@@ -650,43 +667,18 @@ iakerb_get_initial_state(iakerb_ctx_id_t ctx,
         in_creds.times.endtime = now + time_req;
     }
 
-    code = krb5_get_credentials(ctx->k5c, KRB5_GC_CACHED,
-                                cred->ccache,
+    /* Make an AS request if we have no creds or it's time to refresh them. */
+    if (cred->expire == 0 || kg_cred_time_to_refresh(ctx->k5c, cred)) {
+        *state = IAKERB_AS_REQ;
+        code = 0;
+        goto cleanup;
+    }
+
+    code = krb5_get_credentials(ctx->k5c, KRB5_GC_CACHED, cred->ccache,
                                 &in_creds, &out_creds);
     if (code == KRB5_CC_NOTFOUND || code == KRB5_CC_NOT_KTYPE) {
-        krb5_principal tgs;
-        krb5_data *realm = krb5_princ_realm(ctx->k5c, in_creds.client);
-
-        /* If we have a TGT for the client realm, can proceed to TGS-REQ. */
-        code = krb5_build_principal_ext(ctx->k5c,
-                                        &tgs,
-                                        realm->length,
-                                        realm->data,
-                                        KRB5_TGS_NAME_SIZE,
-                                        KRB5_TGS_NAME,
-                                        realm->length,
-                                        realm->data,
-                                        NULL);
-        if (code != 0)
-            goto cleanup;
-
-        in_creds.server = tgs;
-
-        /* It would be nice if we could return KRB5KRB_AP_ERR_TKT_EXPIRED if
-         * the TGT is expired, for consistency with the krb5 mech.  As it
-         * stands, we won't see the expired TGT and will return
-         * KRB5_CC_NOTFOUND. */
-        code = krb5_get_credentials(ctx->k5c, KRB5_GC_CACHED,
-                                    cred->ccache,
-                                    &in_creds, &out_creds);
-        if (code == KRB5_CC_NOTFOUND && cred->password.data != NULL) {
-            *state = IAKERB_AS_REQ;
-            code = 0;
-        } else if (code == 0) {
-            *state = IAKERB_TGS_REQ;
-            krb5_free_creds(ctx->k5c, out_creds);
-        }
-        krb5_free_principal(ctx->k5c, tgs);
+        *state = cred->have_tgt ? IAKERB_TGS_REQ : IAKERB_AS_REQ;
+        code = 0;
     } else if (code == 0) {
         *state = IAKERB_AP_REQ;
         krb5_free_creds(ctx->k5c, out_creds);
@@ -712,6 +704,7 @@ iakerb_alloc_context(iakerb_ctx_id_t *pctx)
     ctx = k5alloc(sizeof(*ctx), &code);
     if (ctx == NULL)
         goto cleanup;
+    ctx->defcred = GSS_C_NO_CREDENTIAL;
     ctx->magic = KG_IAKERB_CONTEXT;
     ctx->state = IAKERB_AS_REQ;
     ctx->count = 0;
@@ -733,7 +726,7 @@ cleanup:
  * Delete an IAKERB context. This can also accept Kerberos context
  * handles. The heuristic is similar to SPNEGO's delete_sec_context.
  */
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 iakerb_gss_delete_sec_context(OM_uint32 *minor_status,
                               gss_ctx_id_t *context_handle,
                               gss_buffer_t output_token)
@@ -789,10 +782,7 @@ iakerb_make_exts(iakerb_ctx_id_t ctx, krb5_gss_ctx_ext_rec *exts)
         exts->iakerb.conv = &ctx->conv;
 }
 
-/*
- *
- */
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 iakerb_gss_accept_sec_context(OM_uint32 *minor_status,
                               gss_ctx_id_t *context_handle,
                               gss_cred_id_t verifier_cred_handle,
@@ -882,7 +872,7 @@ cleanup:
     return major_status;
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 iakerb_gss_init_sec_context(OM_uint32 *minor_status,
                             gss_cred_id_t claimant_cred_handle,
                             gss_ctx_id_t *context_handle,
@@ -898,10 +888,8 @@ iakerb_gss_init_sec_context(OM_uint32 *minor_status,
                             OM_uint32 *time_rec)
 {
     OM_uint32 major_status = GSS_S_FAILURE;
-    OM_uint32 tmpmin;
     krb5_error_code code;
     iakerb_ctx_id_t ctx;
-    gss_cred_id_t defcred = GSS_C_NO_CREDENTIAL;
     krb5_gss_cred_id_t kcred;
     krb5_gss_name_t kname;
     krb5_boolean cred_locked = FALSE;
@@ -913,36 +901,30 @@ iakerb_gss_init_sec_context(OM_uint32 *minor_status,
             *minor_status = code;
             goto cleanup;
         }
-    } else
+        if (claimant_cred_handle == GSS_C_NO_CREDENTIAL) {
+            major_status = iakerb_gss_acquire_cred(minor_status, NULL,
+                                                   GSS_C_INDEFINITE,
+                                                   GSS_C_NULL_OID_SET,
+                                                   GSS_C_INITIATE,
+                                                   &ctx->defcred, NULL, NULL);
+            if (GSS_ERROR(major_status))
+                goto cleanup;
+            claimant_cred_handle = ctx->defcred;
+        }
+    } else {
         ctx = (iakerb_ctx_id_t)*context_handle;
-
-    if (!kg_validate_name(target_name)) {
-        *minor_status = G_VALIDATE_FAILED;
-        major_status = GSS_S_CALL_BAD_STRUCTURE | GSS_S_BAD_NAME;
-        goto cleanup;
+        if (claimant_cred_handle == GSS_C_NO_CREDENTIAL)
+            claimant_cred_handle = ctx->defcred;
     }
 
     kname = (krb5_gss_name_t)target_name;
 
-    if (claimant_cred_handle != GSS_C_NO_CREDENTIAL) {
-        major_status = krb5_gss_validate_cred_1(minor_status,
-                                                claimant_cred_handle,
-                                                ctx->k5c);
-        if (GSS_ERROR(major_status))
-            goto cleanup;
-
-        cred_locked = TRUE;
-        kcred = (krb5_gss_cred_id_t)claimant_cred_handle;
-    } else {
-        major_status = krb5_gss_acquire_cred(minor_status, NULL,
-                                             GSS_C_INDEFINITE,
-                                             GSS_C_NULL_OID_SET,
-                                             GSS_C_INITIATE,
-                                             &defcred, NULL, NULL);
-        if (GSS_ERROR(major_status))
-            goto cleanup;
-        kcred = (krb5_gss_cred_id_t)defcred;
-    }
+    major_status = kg_cred_resolve(minor_status, ctx->k5c,
+                                   claimant_cred_handle, target_name);
+    if (GSS_ERROR(major_status))
+        goto cleanup;
+    cred_locked = TRUE;
+    kcred = (krb5_gss_cred_id_t)claimant_cred_handle;
 
     major_status = GSS_S_FAILURE;
 
@@ -1024,7 +1006,6 @@ cleanup:
         iakerb_release_context(ctx);
         *context_handle = GSS_C_NO_CONTEXT;
     }
-    krb5_gss_release_cred(&tmpmin, &defcred);
 
     return major_status;
 }

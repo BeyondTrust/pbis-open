@@ -1,13 +1,9 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: client.c 23100 2009-10-31 00:48:38Z tlyu $
+ * $Id$
  *
  */
-
-#if !defined(lint) && !defined(__CODECENTER__)
-static char *rcsid = "$Header$";
-#endif
 
 #include <stdio.h>
 #include <string.h>

@@ -1,7 +1,6 @@
 /* -*- mode: c; indent-tabs-mode: nil -*- */
+/* include/k5-platform.h */
 /*
- * k5-platform.h
- *
  * Copyright 2003, 2004, 2005, 2007, 2008, 2009 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * Some platform-dependent definitions to sync up the C support level.
  * Some to a C99-ish level, some related utility code.
  *
@@ -35,7 +35,13 @@
  * + shared library init/fini hooks
  * + consistent getpwnam/getpwuid interfaces
  * + va_copy fudged if not provided
+ * + strlcpy/strlcat
+ * + fnmatch
  * + [v]asprintf
+ * + mkstemp
+ * + zap (support function; macro is in k5-int.h)
+ * + path manipulation
+ * + _, N_, dgettext, bindtextdomain (for localization)
  */
 
 #ifndef K5_PLATFORM_H
@@ -50,6 +56,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_FNMATCH_H
+#include <fnmatch.h>
+#endif
 
 #ifdef _WIN32
 #define CAN_COPY_VA_LIST
@@ -412,12 +421,18 @@ typedef struct { int error; unsigned char did_run; } k5_init_t;
 # endif
 # define INT64_TYPE int64_t
 # define UINT64_TYPE uint64_t
+# define INT64_FMT PRId64
+# define UINT64_FMT PRIu64
 #elif defined(_WIN32)
 # define INT64_TYPE signed __int64
 # define UINT64_TYPE unsigned __int64
+# define INT64_FMT "I64d"
+# define UINT64_FMT "I64u"
 #else /* not Windows, and neither stdint.h nor inttypes.h */
 # define INT64_TYPE signed long long
 # define UINT64_TYPE unsigned long long
+# define INT64_FMT "lld"
+# define UINT64_FMT "llu"
 #endif
 
 #ifndef SIZE_MAX
@@ -912,7 +927,7 @@ set_cloexec_file(FILE *f)
    allocate some storage pointed to by the va_list, and in that case
    we'll just lose.  If anyone cares, we could try to devise a test
    for that case.  */
-#define va_copy(dest, src)      memcmp(dest, src, sizeof(va_list))
+#define va_copy(dest, src)      memcpy(dest, src, sizeof(va_list))
 #endif
 
 /* Provide strlcpy/strlcat interfaces. */
@@ -921,6 +936,20 @@ set_cloexec_file(FILE *f)
 #define strlcat krb5int_strlcat
 extern size_t krb5int_strlcpy(char *dst, const char *src, size_t siz);
 extern size_t krb5int_strlcat(char *dst, const char *src, size_t siz);
+#endif
+
+/* Provide fnmatch interface. */
+#ifndef HAVE_FNMATCH
+#define fnmatch k5_fnmatch
+int k5_fnmatch(const char *pattern, const char *string, int flags);
+#define FNM_NOMATCH     1       /* Match failed. */
+#define FNM_NOSYS       2       /* Function not implemented. */
+#define FNM_NORES       3       /* Out of resources */
+#define FNM_NOESCAPE    0x01    /* Disable backslash escaping. */
+#define FNM_PATHNAME    0x02    /* Slash must be matched by slash. */
+#define FNM_PERIOD      0x04    /* Period must be matched by period. */
+#define FNM_CASEFOLD    0x08    /* Pattern is matched case-insensitive */
+#define FNM_LEADING_DIR 0x10    /* Ignore /<tail> after Imatch. */
 #endif
 
 /* Provide [v]asprintf interfaces.  */
@@ -935,8 +964,10 @@ vsnprintf(char *str, size_t size, const char *format, va_list args)
     va_copy(args_copy, args);
     length = _vscprintf(format, args_copy);
     va_end(args_copy);
-    if (size)
+    if (size > 0) {
         _vsnprintf(str, size, format, args);
+        str[size - 1] = '\0';
+    }
     return length;
 }
 static inline int
@@ -1008,11 +1039,48 @@ extern int krb5int_mkstemp(char *);
 #define mkstemp krb5int_mkstemp
 #endif
 
+#ifndef HAVE_GETTIMEOFDAY
+extern int krb5int_gettimeofday(struct timeval *tp, void *ignore);
+#define gettimeofday krb5int_gettimeofday
+#endif
+
 extern void krb5int_zap(void *ptr, size_t len);
 
-/* Fudge for future adoption of gettext or the like.  */
-#ifndef _
-#define _(X) (X)
+/*
+ * Split a path into parent directory and basename.  Either output parameter
+ * may be NULL if the caller doesn't need it.  parent_out will be empty if path
+ * has no basename.  basename_out will be empty if path ends with a path
+ * separator.  Returns 0 on success or ENOMEM on allocation failure.
+ */
+long k5_path_split(const char *path, char **parent_out, char **basename_out);
+
+/*
+ * Compose two path components, inserting the platform-appropriate path
+ * separator if needed.  If path2 is an absolute path, path1 will be discarded
+ * and path_out will be a copy of path2.  Returns 0 on success or ENOMEM on
+ * allocation failure.
+ */
+long k5_path_join(const char *path1, const char *path2, char **path_out);
+
+/* Return 1 if path is absolute, 0 if it is relative. */
+int k5_path_isabs(const char *path);
+
+/*
+ * Localization macros.  If we have gettext, define _ appropriately for
+ * translating a string.  If we do not have gettext, define _ and
+ * bindtextdomain as no-ops.  N_ is always a no-op; it marks a string for
+ * extraction to pot files but does not translate it.
+ */
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#define KRB5_TEXTDOMAIN "mit-krb5"
+#define _(s) dgettext(KRB5_TEXTDOMAIN, s)
+#else
+#define _(s) s
+#define dgettext(d, m) m
+#define ngettext(m1, m2, n) (((n) == 1) ? m1 : m2)
+#define bindtextdomain(p, d)
 #endif
+#define N_(s) s
 
 #endif /* K5_PLATFORM_H */

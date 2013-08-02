@@ -2,14 +2,10 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: clnt_privs.c 23100 2009-10-31 00:48:38Z tlyu $
+ * $Id$
  * $Source$
  *
  */
-
-#if !defined(lint) && !defined(__CODECENTER__)
-static char *rcsid = "$Header$";
-#endif
 
 #include    <gssrpc/rpc.h>
 #include    <kadm5/admin.h>

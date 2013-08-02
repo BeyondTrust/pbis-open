@@ -5,10 +5,6 @@
  * $Header$
  */
 
-#if !defined(lint) && !defined(__CODECENTER__)
-static char *rcsid = "$Header$";
-#endif
-
 #include        <sys/file.h>
 #include        <fcntl.h>
 #include        <unistd.h>
@@ -16,8 +12,6 @@ static char *rcsid = "$Header$";
 #include        "policy_db.h"
 #include        <stdlib.h>
 #include        <db.h>
-
-#define MAX_LOCK_TRIES 5
 
 struct _locklist {
     osa_adb_lock_ent lockinfo;
@@ -62,54 +56,6 @@ osa_adb_destroy_db(char *filename, char *lockfilename, int magic)
         unlink(lockfilename) < 0)
         return errno;
     return OSA_ADB_OK;
-}
-
-krb5_error_code
-osa_adb_rename_db(char *filefrom, char *lockfrom, char *fileto, char *lockto,
-                  int magic)
-{
-    osa_adb_db_t fromdb, todb;
-    krb5_error_code ret;
-
-    /* make sure todb exists */
-    if ((ret = osa_adb_create_db(fileto, lockto, magic)) &&
-        ret != EEXIST)
-        return ret;
-
-    if ((ret = osa_adb_init_db(&fromdb, filefrom, lockfrom, magic)))
-        return ret;
-    if ((ret = osa_adb_init_db(&todb, fileto, lockto, magic))) {
-        (void) osa_adb_fini_db(fromdb, magic);
-        return ret;
-    }
-    if ((ret = osa_adb_get_lock(fromdb, KRB5_DB_LOCKMODE_PERMANENT))) {
-        (void) osa_adb_fini_db(fromdb, magic);
-        (void) osa_adb_fini_db(todb, magic);
-        return ret;
-    }
-    if ((ret = osa_adb_get_lock(todb, KRB5_DB_LOCKMODE_PERMANENT))) {
-        (void) osa_adb_fini_db(fromdb, magic);
-        (void) osa_adb_fini_db(todb, magic);
-        return ret;
-    }
-    if ((rename(filefrom, fileto) < 0)) {
-        (void) osa_adb_fini_db(fromdb, magic);
-        (void) osa_adb_fini_db(todb, magic);
-        return errno;
-    }
-    /*
-     * Do not release the lock on fromdb because it is being renamed
-     * out of existence; no one can ever use it again.
-     */
-    if ((ret = osa_adb_release_lock(todb))) {
-        (void) osa_adb_fini_db(fromdb, magic);
-        (void) osa_adb_fini_db(todb, magic);
-        return ret;
-    }
-
-    (void) osa_adb_fini_db(fromdb, magic);
-    (void) osa_adb_fini_db(todb, magic);
-    return 0;
 }
 
 krb5_error_code
@@ -264,7 +210,7 @@ osa_adb_fini_db(osa_adb_db_t db, int magic)
 krb5_error_code
 osa_adb_get_lock(osa_adb_db_t db, int mode)
 {
-    int tries, gotlock, perm, krb5_mode, ret = 0;
+    int perm, krb5_mode, ret = 0;
 
     if (db->lock->lockmode >= mode) {
         /* No need to upgrade lock, just incr refcnt and return */
@@ -286,22 +232,11 @@ osa_adb_get_lock(osa_adb_db_t db, int mode)
         return(EINVAL);
     }
 
-    for (gotlock = tries = 0; tries < MAX_LOCK_TRIES; tries++) {
-        if ((ret = krb5_lock_file(db->lock->context,
-                                  fileno(db->lock->lockfile),
-                                  krb5_mode|KRB5_LOCKMODE_DONTBLOCK)) == 0) {
-            gotlock++;
-            break;
-        } else if (ret == EBADF && mode == KRB5_DB_LOCKMODE_EXCLUSIVE)
-            /* tried to exclusive-lock something we don't have */
-            /* write access to */
-            return OSA_ADB_NOEXCL_PERM;
-
-        sleep(1);
-    }
-
-    /* test for all the likely "can't get lock" error codes */
-    if (ret == EACCES || ret == EAGAIN || ret == EWOULDBLOCK)
+    ret = krb5_lock_file(db->lock->context, fileno(db->lock->lockfile),
+                         krb5_mode);
+    if (ret == EBADF && mode == KRB5_DB_LOCKMODE_EXCLUSIVE)
+        return OSA_ADB_NOEXCL_PERM;
+    else if (ret == EACCES || ret == EAGAIN || ret == EWOULDBLOCK)
         return OSA_ADB_CANTLOCK_DB;
     else if (ret != 0)
         return ret;

@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/os/genaddrs.c */
 /*
- * lib/krb5/os/genaddrs.c
- *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
- * Take an IP addr & port and generate a full IP address.
  */
 
 #include "k5-int.h"
@@ -51,7 +47,6 @@ static void *cvtaddr (struct sockaddr_storage *a, struct addrpair *ap)
         SET (ap->port, ss2sin(a)->sin_port, ADDRTYPE_IPPORT);
         SET (ap->addr, ss2sin(a)->sin_addr, ADDRTYPE_INET);
         return a;
-#ifdef KRB5_USE_INET6
     case AF_INET6:
         SET (ap->port, ss2sin6(a)->sin6_port, ADDRTYPE_IPPORT);
         if (IN6_IS_ADDR_V4MAPPED (&ss2sin6(a)->sin6_addr)) {
@@ -61,7 +56,6 @@ static void *cvtaddr (struct sockaddr_storage *a, struct addrpair *ap)
         } else
             SET (ap->addr, ss2sin6(a)->sin6_addr, ADDRTYPE_INET6);
         return a;
-#endif
     default:
         return 0;
     }

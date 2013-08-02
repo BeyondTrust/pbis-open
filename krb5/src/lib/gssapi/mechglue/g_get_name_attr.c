@@ -21,12 +21,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
-/*
- *  glue routine for gss_get_name_attribute
- */
+/* Glue routine for gss_get_name_attribute */
 
 #include "mglueP.h"
 
@@ -58,6 +55,14 @@ gss_get_name_attribute(OM_uint32 *minor_status,
         *authenticated = 0;
     if (complete != NULL)
         *complete = 0;
+    if (value != GSS_C_NO_BUFFER) {
+        value->value = NULL;
+        value->length = 0;
+    }
+    if (display_value != GSS_C_NO_BUFFER) {
+        display_value->value = NULL;
+        display_value->length = 0;
+    }
 
     *minor_status = 0;
 

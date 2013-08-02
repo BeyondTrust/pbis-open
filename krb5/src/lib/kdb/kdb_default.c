@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/kdb/kdb_default.c */
 /*
- * lib/kdb/kdb_helper.c
- *
  * Copyright 1995, 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
-
 /*
  * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
@@ -64,6 +61,9 @@ krb5_dbe_def_search_enctype(kcontext, dbentp, start, ktype, stype, kvno, kdatap)
     krb5_boolean        saw_non_permitted = FALSE;
 
     ret = 0;
+    if (ktype != -1 && !krb5_is_permitted_enctype(kcontext, ktype))
+        return KRB5_KDB_NO_PERMITTED_KEY;
+
     if (kvno == -1 && stype == -1 && ktype == -1)
         kvno = 0;
 
@@ -77,6 +77,7 @@ krb5_dbe_def_search_enctype(kcontext, dbentp, start, ktype, stype, kvno, kdatap)
     }
 
     maxkvno = -1;
+    idx = -1;
     datap = (krb5_key_data *) NULL;
     for (i = *start; i < dbentp->n_key_data; i++) {
         krb5_boolean    similar;
@@ -163,9 +164,9 @@ krb5_def_store_mkey_list(krb5_context       context,
         /* if keyfile exists it better be a regular file */
         if (!S_ISREG(stb.st_mode)) {
             retval = EINVAL;
-            krb5_set_error_message (context, retval,
-                                    "keyfile (%s) is not a regular file: %s",
-                                    keyfile, error_message(retval));
+            krb5_set_error_message(context, retval,
+                                   _("keyfile (%s) is not a regular file: %s"),
+                                   keyfile, error_message(retval));
             goto out;
         }
     }
@@ -174,8 +175,8 @@ krb5_def_store_mkey_list(krb5_context       context,
 
     /* create temp file template for use by mktemp() */
     if ((retval = asprintf(&tmp_ktname, "WRFILE:%s_XXXXXX", keyfile)) < 0) {
-        krb5_set_error_message (context, retval,
-                                "Could not create temp keytab file name.");
+        krb5_set_error_message(context, retval,
+                               _("Could not create temp keytab file name."));
         goto out;
     }
 
@@ -188,9 +189,9 @@ krb5_def_store_mkey_list(krb5_context       context,
 
     if (mktemp(tmp_ktpath) == NULL) {
         retval = errno;
-        krb5_set_error_message (context, retval,
-                                "Could not create temp stash file: %s",
-                                error_message(errno));
+        krb5_set_error_message(context, retval,
+                               _("Could not create temp stash file: %s"),
+                               error_message(errno));
         goto out;
     }
 
@@ -218,9 +219,10 @@ krb5_def_store_mkey_list(krb5_context       context,
         /* rename original keyfile to original filename */
         if (rename(tmp_ktpath, keyfile) < 0) {
             retval = errno;
-            krb5_set_error_message (context, retval,
-                                    "rename of temporary keyfile (%s) to (%s) failed: %s",
-                                    tmp_ktpath, keyfile, error_message(errno));
+            krb5_set_error_message(context, retval,
+                                   _("rename of temporary keyfile (%s) to "
+                                     "(%s) failed: %s"), tmp_ktpath, keyfile,
+                                   error_message(errno));
         }
     }
 
@@ -408,7 +410,7 @@ krb5_db_def_fetch_mkey(krb5_context   context,
      */
     if (retval != 0) {
         krb5_set_error_message(context, KRB5_KDB_CANTREAD_STORED,
-                               "Can not fetch master key (error: %s).",
+                               _("Can not fetch master key (error: %s)."),
                                error_message(retval));
         return KRB5_KDB_CANTREAD_STORED;
     } else
@@ -419,7 +421,6 @@ krb5_error_code
 krb5_def_fetch_mkey_list(krb5_context        context,
                          krb5_principal        mprinc,
                          const krb5_keyblock  *mkey,
-                         krb5_kvno             mkvno,
                          krb5_keylist_node  **mkeys_list)
 {
     krb5_error_code retval;
@@ -471,8 +472,9 @@ krb5_def_fetch_mkey_list(krb5_context        context,
             }
         }
         if (found_key != TRUE) {
-            krb5_set_error_message (context, KRB5_KDB_BADMASTERKEY,
-                                    "Unable to decrypt latest master key with the provided master key\n");
+            krb5_set_error_message(context, KRB5_KDB_BADMASTERKEY,
+                                   _("Unable to decrypt latest master key "
+                                     "with the provided master key\n"));
             retval = KRB5_KDB_BADMASTERKEY;
             goto clean_n_exit;
         }

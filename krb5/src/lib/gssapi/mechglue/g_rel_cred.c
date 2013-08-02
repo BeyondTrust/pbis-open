@@ -22,9 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- *  glue routine for gss_release_cred
- */
+/* Glue routine for gss_release_cred */
 
 #include "mglueP.h"
 #include <stdio.h>
@@ -93,7 +91,6 @@ gss_cred_id_t *		cred_handle;
 	    status = GSS_S_DEFECTIVE_CREDENTIAL;
     }
 
-    gss_release_buffer(minor_status, &union_cred->auxinfo.name);
     free(union_cred->cred_array);
     free(union_cred->mechs_array);
     free(union_cred);

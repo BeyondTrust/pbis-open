@@ -22,7 +22,9 @@
 
 # Invoked by the testrealm target in the top-level Makefile.  Creates
 # a test realm and spawns a shell pointing at it, for convenience of
-# manual testing.
+# manual testing.  If a numeric argument is present after options,
+# creates that many fully connected test realms and point the shell at
+# the first one.
 
 from k5test import *
 
@@ -39,6 +41,7 @@ progpaths = [
     os.path.join('clients', 'kpasswd'),
     os.path.join('clients', 'ksu'),
     os.path.join('clients', 'kvno'),
+    os.path.join('clients', 'kswitch'),
     'slave'
 ]
 
@@ -52,7 +55,11 @@ def supplement_path(env):
     # Assume PATH exists in env for simplicity.
     env['PATH'] = path_prefix + env['PATH']
 
-realm = K5Realm()
+if args:
+    realms = cross_realms(int(args[0]), start_kadmind=True)
+    realm = realms[0]
+else:
+    realm = K5Realm(start_kadmind=True)
 env = realm.env_master.copy()
 supplement_path(env)
 

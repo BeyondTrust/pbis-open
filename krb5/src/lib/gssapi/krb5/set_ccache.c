@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/gssapi/krb5/set_ccache.c */
 /*
- * lib/gssapi/krb5/set_ccache.c
- *
  * Copyright 1999, 2003 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
+ */
+
+/*
  * Set ccache name used by gssapi, and optionally obtain old ccache
  * name.  Caller should not free returned name.
  */
@@ -35,7 +36,7 @@ OM_uint32
 gss_krb5int_ccache_name(OM_uint32 *minor_status,
                         const gss_OID desired_mech,
                         const gss_OID desired_object,
-                        gss_buffer_t value)
+                        const gss_buffer_t value)
 {
     char *old_name = NULL;
     OM_uint32 err = 0;

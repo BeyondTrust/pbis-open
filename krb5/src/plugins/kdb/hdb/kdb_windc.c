@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/kdb/hdb/kdb_windc.c */
 /*
- * plugins/kdb/hdb/kdb_windc.c
- *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
  */
 
 #include "k5-int.h"
@@ -272,11 +270,8 @@ kh_db_sign_auth_data(krb5_context context,
 
     if (!is_as_req) {
         /* find the existing PAC, if present */
-        code = krb5int_find_authdata(context,
-                                     tgt_auth_data,
-                                     NULL,
-                                     KRB5_AUTHDATA_WIN2K_PAC,
-                                     &authdata);
+        code = krb5_find_authdata(context, tgt_auth_data, NULL,
+                                  KRB5_AUTHDATA_WIN2K_PAC, &authdata);
         if (code != 0)
             goto cleanup;
     }
@@ -497,10 +492,12 @@ kh_db_check_policy_as(krb5_context context,
                       krb5_db_entry *server,
                       krb5_timestamp kdc_time,
                       const char **status,
-                      krb5_data *e_data)
+                      krb5_pa_data ***e_data_out)
 {
     kh_db_context *kh = KH_DB_CONTEXT(context);
     krb5_error_code code;
+    krb5_data d;
+    krb5_pa_data **e_data;
     heim_octet_string he_data;
     KDC_REQ hkdcreq;
     Principal *hclient = NULL;
@@ -554,8 +551,14 @@ kh_db_check_policy_as(krb5_context context,
                                   KH_DB_ENTRY(client),
                                   &hkdcreq, &he_data);
 
-    e_data->data   = he_data.data;
-    e_data->length = he_data.length;
+    if (he_data.data != NULL) {
+        d = make_data(he_data.data, he_data.length);
+        code = decode_krb5_padata_sequence(&d, &e_data);
+        if (code == 0)
+            *e_data_out = e_data;
+        free(he_data.data);
+        code = 0;
+    }
 
 cleanup:
     kh_free_HostAddresses(context, hkdcreq.req_body.addresses);

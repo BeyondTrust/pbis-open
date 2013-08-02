@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/copy_auth.c */
 /*
- * lib/krb5/krb/copy_auth.c
- *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,9 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- * krb5_merge_authdata()
- * krb5_copy_authdata()
  */
 /*
  * Copyright (c) 2006-2008, Novell, Inc.
@@ -90,7 +86,7 @@ krb5_merge_authdata(krb5_context context,
     if (inauthdat1) {
         for (nelems = 0; inauthdat1[nelems]; nelems++) {
             retval = krb5int_copy_authdatum(context, inauthdat1[nelems],
-                                    &tempauthdat[nelems]);
+                                            &tempauthdat[nelems]);
             if (retval) {
                 krb5_free_authdata(context, tempauthdat);
                 return retval;
@@ -101,7 +97,7 @@ krb5_merge_authdata(krb5_context context,
     if (inauthdat2) {
         for (nelems2 = 0; inauthdat2[nelems2]; nelems2++) {
             retval = krb5int_copy_authdatum(context, inauthdat2[nelems2],
-                                    &tempauthdat[nelems++]);
+                                            &tempauthdat[nelems++]);
             if (retval) {
                 krb5_free_authdata(context, tempauthdat);
                 return retval;

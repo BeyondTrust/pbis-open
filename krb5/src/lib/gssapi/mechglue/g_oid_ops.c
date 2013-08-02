@@ -1,7 +1,6 @@
 /* #pragma ident	"@(#)g_oid_ops.c	1.11	98/01/22 SMI" */
+/* lib/gssapi/mechglue/g_oid_ops.c - GSSAPI V2 interfaces to manipulate OIDs */
 /*
- * lib/gssapi/mechglue/g_oid_ops.c
- *
  * Copyright 1995, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,17 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- */
-
-/*
- * oid_ops.c - GSS-API V2 interfaces to manipulate OIDs
  */
 
 #include "mglueP.h"
-/* should include to get protos #include "../generic/gssapiP_generic.h" */
-
-extern gss_mechanism *gssint_mechs_array;
 
 /*
  * gss_release_oid has been moved to g_initialize, becasue it requires access
@@ -107,4 +98,15 @@ gssint_copy_oid_set(
     gss_OID_set *new_oidset)
 {
     return generic_gss_copy_oid_set(minor_status, oidset, new_oidset);
+}
+
+int KRB5_CALLCONV
+gss_oid_equal(
+    gss_const_OID first_oid,
+    gss_const_OID second_oid)
+{
+    /* GSS_C_NO_OID doesn't match itself, per draft-josefsson-gss-capsulate. */
+    if (first_oid == GSS_C_NO_OID || second_oid == GSS_C_NO_OID)
+	return 0;
+    return g_OID_equal(first_oid, second_oid);
 }

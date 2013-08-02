@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/nss_gen.h
- *
+/* lib/crypto/nss/nss_gen.h */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -98,7 +98,7 @@ k5_nss_gen_cbcmac_iov(krb5_key key, CK_MECHANISM_TYPE mech,
 
 /* Stream state management calls. */
 krb5_error_code k5_nss_stream_init_state(krb5_data *new_state);
-krb5_error_code k5_nss_stream_free_state(krb5_data *state);
+void k5_nss_stream_free_state(krb5_data *state);
 
 /*
  * Common hash functions

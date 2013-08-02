@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/t_etypes.c - test program for krb5int_parse_enctype_list */
 /*
- * t_etypes.c -- test program for krb5int_parse_enctype_list
- *
  * Copyright 2009  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -98,14 +97,12 @@ static struct {
         ENCTYPE_DES3_CBC_SHA1, 0 },
       0, 0
     },
-#ifdef CAMELLIA
     /* Family with enctype removed */
     { "camellia -camellia256-cts-cmac",
       { 0 },
       { ENCTYPE_CAMELLIA128_CTS_CMAC, 0 },
       { ENCTYPE_CAMELLIA128_CTS_CMAC, 0 }
     },
-#endif
     /* Enctype followed by two families */
     { "+rc4-hmAC des3 +des",
       { 0 },
@@ -238,8 +235,8 @@ main(int argc, char **argv)
 
             if (tests[i].str != NULL) {
                 copy = strdup(tests[i].str);
-                ret = krb5int_parse_enctype_list(ctx, copy, tests[i].defaults,
-                                                 &list);
+                ret = krb5int_parse_enctype_list(ctx, "", copy,
+                                                 tests[i].defaults, &list);
                 if (ret != expected_err) {
                     com_err("krb5int_parse_enctype_list", ret, "");
                     return 2;

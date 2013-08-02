@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/enc_provider/rc4.c
- *
+/* lib/crypto/nss/enc_provider/rc4.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,9 +33,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "k5-int.h"
-#include <aead.h>
-#include <rand2key.h>
+#include "crypto_int.h"
 #include "nss_gen.h"
 
 #define RC4_KEY_SIZE 16
@@ -69,10 +67,10 @@ k5_arcfour_decrypt_iov(krb5_key key, const krb5_data *state,
                                  data, num_data);
 }
 
-static krb5_error_code
+static void
 k5_arcfour_free_state(krb5_data *state)
 {
-    return k5_nss_stream_free_state(state);
+    (void)k5_nss_stream_free_state(state);
 }
 
 static krb5_error_code
@@ -95,7 +93,6 @@ const struct krb5_enc_provider krb5int_enc_arcfour = {
     k5_arcfour_encrypt_iov,
     k5_arcfour_decrypt_iov,
     NULL,
-    krb5int_arcfour_make_key,
     k5_arcfour_init_state,
     k5_arcfour_free_state,
     k5_nss_gen_cleanup

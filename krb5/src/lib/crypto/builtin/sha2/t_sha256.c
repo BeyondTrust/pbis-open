@@ -1,5 +1,5 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/t_sha256.c */
+/* lib/crypto/builtin/sha2/t_sha256.c */
 /*
  * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -35,15 +35,6 @@
 
 #include <k5-int.h>
 #include "sha2.h"
-
-#ifndef FORTUNA
-int
-main (void)
-{
-    return 0;
-}
-
-#else
 
 #define ONE_MILLION_A "one million a's"
 
@@ -81,18 +72,18 @@ main (void)
 
     for (t = tests; t->str; ++t) {
     
-        sha2Init(ctx);
+        k5_sha256_init(ctx);
         if(strcmp(t->str, ONE_MILLION_A) == 0) {
             int i;
             memset(buf, 'a', sizeof(buf));
             for(i = 0; i < 1000; i++) {
-                sha2Update(ctx, buf, sizeof(buf));
+                k5_sha256_update(ctx, buf, sizeof(buf));
             }
         } else {
-            sha2Update(ctx, (unsigned char *)t->str, strlen(t->str));
+            k5_sha256_update(ctx, (unsigned char *)t->str, strlen(t->str));
         }
 
-        sha2Final(res, ctx);
+        k5_sha256_final(res, ctx);
         if (memcmp (res, t->hash, SHA256_DIGEST_LENGTH) != 0) {
             int i;
 
@@ -123,4 +114,4 @@ main (void)
     printf ("success\n");
     return 0;
 }
-#endif /* FORTUNA */
+

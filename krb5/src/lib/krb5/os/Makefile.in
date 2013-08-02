@@ -4,7 +4,8 @@ KRB5_RUN_ENV = @KRB5_RUN_ENV@
 PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 DEFS=
-DEFINES=-DLIBDIR=\"$(KRB5_LIBDIR)\"
+DEFINES=-DLIBDIR=\"$(KRB5_LIBDIR)\" -DBINDIR=\"$(CLIENT_BINDIR)\" \
+	-DSBINDIR=\"$(ADMIN_BINDIR)\"
 LOCALINCLUDES=-I$(top_srcdir)/util/profile
 
 ##DOS##BUILDTOP = ..\..\..
@@ -18,8 +19,10 @@ STLIBOBJS= \
 	def_realm.o	\
 	ccdefname.o	\
 	changepw.o	\
+	cm.o		\
 	dnsglue.o	\
 	dnssrv.o	\
+	expand_path.o	\
 	free_krbhs.o	\
 	full_ipadr.o	\
 	get_krbhst.o	\
@@ -44,7 +47,6 @@ STLIBOBJS= \
 	read_msg.o	\
 	read_pwd.o	\
 	realm_dom.o	\
-	realm_iter.o	\
 	sendto_kdc.o	\
 	sn2princ.o	\
         thread_safe.o   \
@@ -62,8 +64,10 @@ OBJS= \
 	$(OUTPRE)def_realm.$(OBJEXT)	\
 	$(OUTPRE)ccdefname.$(OBJEXT)	\
 	$(OUTPRE)changepw.$(OBJEXT)	\
+	$(OUTPRE)cm.$(OBJEXT)		\
 	$(OUTPRE)dnsglue.$(OBJEXT)	\
 	$(OUTPRE)dnssrv.$(OBJEXT)	\
+	$(OUTPRE)expand_path.$(OBJEXT)	\
 	$(OUTPRE)free_krbhs.$(OBJEXT)	\
 	$(OUTPRE)full_ipadr.$(OBJEXT)	\
 	$(OUTPRE)get_krbhst.$(OBJEXT)	\
@@ -88,7 +92,6 @@ OBJS= \
 	$(OUTPRE)read_msg.$(OBJEXT)	\
 	$(OUTPRE)read_pwd.$(OBJEXT)	\
 	$(OUTPRE)realm_dom.$(OBJEXT)	\
-	$(OUTPRE)realm_iter.$(OBJEXT)	\
 	$(OUTPRE)sendto_kdc.$(OBJEXT)	\
 	$(OUTPRE)sn2princ.$(OBJEXT)	\
         $(OUTPRE)thread_safe.$(OBJEXT)  \
@@ -106,8 +109,10 @@ SRCS= \
 	$(srcdir)/def_realm.c	\
 	$(srcdir)/ccdefname.c	\
 	$(srcdir)/changepw.c	\
+	$(srcdir)/cm.c		\
 	$(srcdir)/dnsglue.c	\
 	$(srcdir)/dnssrv.c	\
+	$(srcdir)/expand_path.c	\
 	$(srcdir)/free_krbhs.c	\
 	$(srcdir)/full_ipadr.c	\
 	$(srcdir)/get_krbhst.c	\
@@ -131,7 +136,6 @@ SRCS= \
 	$(srcdir)/read_msg.c	\
 	$(srcdir)/read_pwd.c	\
 	$(srcdir)/realm_dom.c	\
-	$(srcdir)/realm_iter.c	\
 	$(srcdir)/port2ip.c	\
 	$(srcdir)/sendto_kdc.c	\
 	$(srcdir)/sn2princ.c	\
@@ -144,8 +148,8 @@ SRCS= \
 	$(srcdir)/write_msg.c
 
 EXTRADEPSRCS = \
-	t_an_to_ln.c t_gifconf.c t_locate_kdc.c t_realm_iter.c \
-	t_std_conf.c
+	t_an_to_ln.c t_expand_path.c t_gifconf.c t_kuserok.c t_locate_kdc.c \
+	t_std_conf.c t_trace.c
 
 ##DOS##LIBOBJS = $(OBJS)
 
@@ -155,7 +159,7 @@ clean-unix:: clean-libobjs
 shared:
 	mkdir shared
 
-TEST_PROGS= t_std_conf t_an_to_ln t_kuserok t_locate_kdc
+TEST_PROGS= t_std_conf t_an_to_ln t_kuserok t_locate_kdc t_trace t_expand_path
 
 T_STD_CONF_OBJS= t_std_conf.o 
 
@@ -163,7 +167,7 @@ T_AN_TO_LN_OBJS = t_an_to_ln.o an_to_ln.o
 
 T_KUSEROK_OBJS = t_kuserok.o
 
-T_REALM_ITER_OBJS = t_realm_iter.o realm_iter.o
+T_TRACE_OBJS = t_trace.o
 
 t_std_conf: $(T_STD_CONF_OBJS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o t_std_conf $(T_STD_CONF_OBJS) $(KRB5_BASE_LIBS)
@@ -173,9 +177,6 @@ t_an_to_ln: $(T_AN_TO_LN_OBJS) $(KRB5_BASE_DEPLIBS)
 
 t_kuserok: $(T_KUSEROK_OBJS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o t_kuserok $(T_KUSEROK_OBJS) $(KRB5_BASE_LIBS)
-
-t_realm_iter: $(T_REALM_ITER_OBJS) $(KRB5_BASE_DEPLIBS)
-	$(CC_LINK) -o t_realm_iter $(T_REALM_ITER_OBJS) $(KRB5_BASE_LIBS)
 
 t_localaddr: localaddr.c
 	$(CC_LINK) $(ALL_CFLAGS) -DTEST -o t_localaddr $(srcdir)/localaddr.c $(KRB5_BASE_LIBS) $(LIBS)
@@ -188,6 +189,12 @@ $(OUTPRE)t_locate_kdc.exe: $(OUTPRE)t_locate_kdc.obj \
 		$(KLIB) $(PLIB) $(CLIB) $(SLIB)
 	link $(EXE_LINKOPTS) -out:$@ $** ws2_32.lib $(DNSLIBS)
 
+t_trace: $(T_TRACE_OBJS) $(KRB5_BASE_DEPLIBS)
+	$(CC_LINK) -o t_trace $(T_TRACE_OBJS) $(KRB5_BASE_LIBS)
+
+t_expand_path: t_expand_path.o $(KRB5_BASE_DEPLIBS)
+	$(CC_LINK) -o $@ t_expand_path.o $(KRB5_BASE_LIBS)
+
 LCLINT=lclint
 LCLINTOPTS= -warnposix \
 	-usedef +charintliteral +ignoresigns -predboolint +boolint \
@@ -197,7 +204,8 @@ lclint-localaddr: localaddr.c
 	$(LCLINT) $(LCLINTOPTS) $(CPPFLAGS) $(LOCALINCLUDES) $(DEFS) \
 		-DTEST $(srcdir)/localaddr.c
 
-check-unix:: check-unix-stdconf check-unix-locate check-unix-antoln t_kuserok
+check-unix:: check-unix-stdconf check-unix-locate check-unix-antoln \
+	check-unix-trace check-unix-expand t_kuserok
 
 check-unix-stdconf:: t_std_conf
 	KRB5_CONFIG=$(srcdir)/td_krb5.conf ; export KRB5_CONFIG ;\
@@ -258,6 +266,21 @@ check-unix-antoln:: t_an_to_ln
 	KRB5_CONFIG=./t_an.conf ; export KRB5_CONFIG ; \
 	$(KRB5_RUN_ENV) $(VALGRIND) ./t_an_to_ln fred/r@r barney/r@r x/r/r/r@r
 	$(RM) ./t_an.*
+
+check-unix-trace:: t_trace
+	rm -f t_trace.out
+	KRB5_TRACE=t_trace.out ; export KRB5_TRACE ; \
+	$(KRB5_RUN_ENV) $(VALGRIND) ./t_trace
+	sed -e 's/^[^:]*: //' t_trace.out | cmp - $(srcdir)/t_trace.ref
+	rm -f t_trace.out
+
+check-unix-expand:: t_expand_path
+	$(KRB5_RUN_ENV) $(VALGRIND) ./t_expand_path '%{null}' ''
+	$(KRB5_RUN_ENV) $(VALGRIND) ./t_expand_path ' %{BINDIR}%{LIBDIR} ' \
+		' $(CLIENT_BINDIR)$(KRB5_LIBDIR) '
+	$(KRB5_RUN_ENV) $(VALGRIND) ./t_expand_path \
+		'the %{animal}%{s} on the %{place}%{s}' \
+		'the frogs on the pads'
 
 clean:: 
 	$(RM) $(TEST_PROGS) test.out t_std_conf.o t_an_to_ln.o t_locate_kdc.o

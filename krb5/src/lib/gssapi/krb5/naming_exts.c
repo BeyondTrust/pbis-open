@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/gssapi/krb5/naming_exts.c */
 /*
- * lib/gssapi/krb5/naming_exts.c
- *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,6 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
  */
 
 #include <assert.h>
@@ -33,11 +30,9 @@
 #include <stdarg.h>
 
 krb5_error_code
-kg_init_name(krb5_context context,
-             krb5_principal principal,
-             krb5_authdata_context ad_context,
-             krb5_flags flags,
-             krb5_gss_name_t *ret_name)
+kg_init_name(krb5_context context, krb5_principal principal,
+             char *service, char *host, krb5_authdata_context ad_context,
+             krb5_flags flags, krb5_gss_name_t *ret_name)
 {
     krb5_error_code code;
     krb5_gss_name_t name;
@@ -71,35 +66,43 @@ kg_init_name(krb5_context context,
             if (code != 0)
                 goto cleanup;
         }
+
+        code = ENOMEM;
+        if (service != NULL) {
+            name->service = strdup(service);
+            if (name->service == NULL)
+                goto cleanup;
+        }
+        if (host != NULL) {
+            name->host = strdup(host);
+            if (name->host == NULL)
+                goto cleanup;
+        }
+        code = 0;
     } else {
         name->princ = principal;
+        name->service = service;
+        name->host = host;
         name->ad_context = ad_context;
-    }
-
-    if ((flags & KG_INIT_NAME_INTERN) &&
-        !kg_save_name((gss_name_t)name)) {
-        code = G_VALIDATE_FAILED;
-        goto cleanup;
     }
 
     *ret_name = name;
 
 cleanup:
     if (code != 0)
-        kg_release_name(context, 0, &name);
+        kg_release_name(context, &name);
 
     return code;
 }
 
 krb5_error_code
 kg_release_name(krb5_context context,
-                krb5_flags flags,
                 krb5_gss_name_t *name)
 {
     if (*name != NULL) {
-        if (flags & KG_INIT_NAME_INTERN)
-            kg_delete_name((gss_name_t)*name);
         krb5_free_principal(context, (*name)->princ);
+        free((*name)->service);
+        free((*name)->host);
         krb5_authdata_context_free(context, (*name)->ad_context);
         k5_mutex_destroy(&(*name)->lock);
         free(*name);
@@ -112,7 +115,6 @@ kg_release_name(krb5_context context,
 krb5_error_code
 kg_duplicate_name(krb5_context context,
                   const krb5_gss_name_t src,
-                  krb5_flags flags,
                   krb5_gss_name_t *dst)
 {
     krb5_error_code code;
@@ -121,8 +123,8 @@ kg_duplicate_name(krb5_context context,
     if (code != 0)
         return code;
 
-    code = kg_init_name(context, src->princ,
-                        src->ad_context, flags, dst);
+    code = kg_init_name(context, src->princ, src->service, src->host,
+                        src->ad_context, 0, dst);
 
     k5_mutex_unlock(&src->lock);
 
@@ -136,6 +138,45 @@ kg_compare_name(krb5_context context,
                 krb5_gss_name_t name2)
 {
     return krb5_principal_compare(context, name1->princ, name2->princ);
+}
+
+/* Determine the principal to use for an acceptor name, which is different from
+ * name->princ for host-based names. */
+krb5_boolean
+kg_acceptor_princ(krb5_context context, krb5_gss_name_t name,
+                  krb5_principal *princ_out)
+{
+    krb5_error_code code;
+    const char *host;
+    char *tmp = NULL;
+
+    *princ_out = NULL;
+    if (name == NULL)
+        return 0;
+
+    /* If it's not a host-based name, just copy name->princ. */
+    if (name->service == NULL)
+        return krb5_copy_principal(context, name->princ, princ_out);
+
+    if (name->host != NULL && name->princ->length == 2) {
+        /* If a host was given, we have to use the canonicalized form of it (as
+         * given by krb5_sname_to_principal) for backward compatibility. */
+        const krb5_data *d = &name->princ->data[1];
+        tmp = k5alloc(d->length + 1, &code);
+        if (tmp == NULL)
+            return ENOMEM;
+        memcpy(tmp, d->data, d->length);
+        tmp[d->length] = '\0';
+        host = tmp;
+    } else                      /* No host was given; use an empty string. */
+        host = "";
+
+    code = krb5_build_principal(context, princ_out, 0, "", name->service, host,
+                                (char *)NULL);
+    if (*princ_out != NULL)
+        (*princ_out)->type = KRB5_NT_SRV_HST;
+    free(tmp);
+    return code;
 }
 
 static OM_uint32
@@ -163,53 +204,61 @@ kg_map_name_error(OM_uint32 *minor_status, krb5_error_code code)
 
 /* Owns data on success */
 static krb5_error_code
-kg_data_list_to_buffer_set_nocopy(krb5_data **pdata,
-                                  gss_buffer_set_t *buffer_set)
+data_list_to_buffer_set(krb5_context context,
+                        krb5_data *data,
+                        gss_buffer_set_t *buffer_set)
 {
-    gss_buffer_set_t set;
+    gss_buffer_set_t set = GSS_C_NO_BUFFER_SET;
     OM_uint32 minor_status;
-    unsigned int i;
-    krb5_data *data;
+    int i;
+    krb5_error_code code = 0;
 
-    data = *pdata;
+    if (data == NULL)
+        goto cleanup;
 
-    if (data == NULL) {
-        if (buffer_set != NULL)
-            *buffer_set = GSS_C_NO_BUFFER_SET;
-        return 0;
-    } else if (buffer_set == NULL)
-        return EINVAL;
+    if (buffer_set == NULL)
+        goto cleanup;
 
     if (GSS_ERROR(gss_create_empty_buffer_set(&minor_status,
                                               &set))) {
         assert(minor_status != 0);
-        return minor_status;
+        code = minor_status;
+        goto cleanup;
     }
 
     for (i = 0; data[i].data != NULL; i++)
         ;
 
     set->count = i;
-    set->elements = calloc(i, sizeof(gss_buffer_desc));
+    set->elements = gssalloc_calloc(i, sizeof(gss_buffer_desc));
     if (set->elements == NULL) {
         gss_release_buffer_set(&minor_status, &set);
-        return ENOMEM;
+        code = ENOMEM;
+        goto cleanup;
     }
 
-    for (i = 0; i < set->count; i++) {
-        set->elements[i].length = data[i].length;
-        set->elements[i].value = data[i].data;
+    /*
+     * Copy last element first so data remains properly
+     * NULL-terminated in case of allocation failure
+     * in data_to_gss() on windows.
+     */
+    for (i = set->count-1; i >= 0; i--) {
+        if (data_to_gss(&data[i], &set->elements[i])) {
+            gss_release_buffer_set(&minor_status, &set);
+            code = ENOMEM;
+            goto cleanup;
+        }
     }
+cleanup:
+    krb5int_free_data_list(context, data);
 
-    free(data);
-    *pdata = NULL;
+    if (buffer_set != NULL)
+        *buffer_set = set;
 
-    *buffer_set = set;
-
-    return 0;
+    return code;
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_inquire_name(OM_uint32 *minor_status,
                       gss_name_t name,
                       int *name_is_MN,
@@ -233,12 +282,6 @@ krb5_gss_inquire_name(OM_uint32 *minor_status,
         return GSS_S_FAILURE;
     }
 
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
-    }
-
     kname = (krb5_gss_name_t)name;
 
     code = k5_mutex_lock(&kname->lock);
@@ -259,7 +302,8 @@ krb5_gss_inquire_name(OM_uint32 *minor_status,
     if (code != 0)
         goto cleanup;
 
-    code = kg_data_list_to_buffer_set_nocopy(&kattrs, attrs);
+    code = data_list_to_buffer_set(context, kattrs, attrs);
+    kattrs = NULL;
     if (code != 0)
         goto cleanup;
 
@@ -272,7 +316,7 @@ cleanup:
     return kg_map_name_error(minor_status, code);
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_get_name_attribute(OM_uint32 *minor_status,
                             gss_name_t name,
                             gss_buffer_t attr,
@@ -298,12 +342,6 @@ krb5_gss_get_name_attribute(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -340,10 +378,8 @@ krb5_gss_get_name_attribute(OM_uint32 *minor_status,
                                        display_value ? &kdisplay_value : NULL,
                                        more);
     if (code == 0) {
-        if (value != NULL) {
-            value->value = kvalue.data;
-            value->length = kvalue.length;
-        }
+        if (value != NULL)
+            code = data_to_gss(&kvalue, value);
 
         if (authenticated != NULL)
             *authenticated = kauthenticated;
@@ -351,8 +387,10 @@ krb5_gss_get_name_attribute(OM_uint32 *minor_status,
             *complete = kcomplete;
 
         if (display_value != NULL) {
-            display_value->value = kdisplay_value.data;
-            display_value->length = kdisplay_value.length;
+            if (code == 0)
+                code = data_to_gss(&kdisplay_value, display_value);
+            else
+                free(kdisplay_value.data);
         }
     }
 
@@ -362,7 +400,7 @@ krb5_gss_get_name_attribute(OM_uint32 *minor_status,
     return kg_map_name_error(minor_status, code);
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_set_name_attribute(OM_uint32 *minor_status,
                             gss_name_t name,
                             int complete,
@@ -382,12 +420,6 @@ krb5_gss_set_name_attribute(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -426,7 +458,7 @@ krb5_gss_set_name_attribute(OM_uint32 *minor_status,
     return kg_map_name_error(minor_status, code);
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_delete_name_attribute(OM_uint32 *minor_status,
                                gss_name_t name,
                                gss_buffer_t attr)
@@ -443,12 +475,6 @@ krb5_gss_delete_name_attribute(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -482,7 +508,7 @@ krb5_gss_delete_name_attribute(OM_uint32 *minor_status,
     return kg_map_name_error(minor_status, code);
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_map_name_to_any(OM_uint32 *minor_status,
                          gss_name_t name,
                          int authenticated,
@@ -501,12 +527,6 @@ krb5_gss_map_name_to_any(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -546,7 +566,7 @@ krb5_gss_map_name_to_any(OM_uint32 *minor_status,
     return kg_map_name_error(minor_status, code);
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_release_any_name_mapping(OM_uint32 *minor_status,
                                   gss_name_t name,
                                   gss_buffer_t type_id,
@@ -564,12 +584,6 @@ krb5_gss_release_any_name_mapping(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -611,7 +625,7 @@ krb5_gss_release_any_name_mapping(OM_uint32 *minor_status,
 
 }
 
-OM_uint32
+OM_uint32 KRB5_CALLCONV
 krb5_gss_export_name_composite(OM_uint32 *minor_status,
                                gss_name_t name,
                                gss_buffer_t exp_composite_name)
@@ -631,12 +645,6 @@ krb5_gss_export_name_composite(OM_uint32 *minor_status,
     if (code != 0) {
         *minor_status = code;
         return GSS_S_FAILURE;
-    }
-
-    if (!kg_validate_name(name)) {
-        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
-        krb5_free_context(context);
-        return GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME;
     }
 
     kname = (krb5_gss_name_t)name;
@@ -665,8 +673,9 @@ krb5_gss_export_name_composite(OM_uint32 *minor_status,
     /* 04 02 OID Name AuthData */
 
     exp_composite_name->length = 10 + gss_mech_krb5->length + princlen;
+    exp_composite_name->length += 4; /* length of encoded attributes */
     if (attrs != NULL)
-        exp_composite_name->length += 4 + attrs->length;
+        exp_composite_name->length += attrs->length;
     exp_composite_name->value = malloc(exp_composite_name->length);
     if (exp_composite_name->value == NULL) {
         code = ENOMEM;
@@ -677,10 +686,7 @@ krb5_gss_export_name_composite(OM_uint32 *minor_status,
 
     /* Note: we assume the OID will be less than 128 bytes... */
     *cp++ = 0x04;
-    if (attrs != NULL)
-        *cp++ = 0x02;
-    else
-        *cp++ = 0x01;
+    *cp++ = 0x02;
 
     store_16_be(gss_mech_krb5->length + 2, cp);
     cp += 2;
@@ -694,9 +700,10 @@ krb5_gss_export_name_composite(OM_uint32 *minor_status,
     memcpy(cp, princstr, princlen);
     cp += princlen;
 
+    store_32_be(attrs != NULL ? attrs->length : 0, cp);
+    cp += 4;
+
     if (attrs != NULL) {
-        store_32_be(attrs->length, cp);
-        cp += 4;
         memcpy(cp, attrs->data, attrs->length);
         cp += attrs->length;
     }

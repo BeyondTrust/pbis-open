@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* plugins/kdb/ldap/libkdb_ldap/ldap_misc.c */
 /*
- * lib/kdb/kdb_ldap/ldap_misc.c
- *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -85,8 +84,8 @@ prof_get_integer_def(krb5_context ctx, const char *conf_section,
                                KDB_MODULE_SECTION, conf_section, name,
                                0, &out_temp);
     if (err) {
-        krb5_set_error_message (ctx, err, "Error reading '%s' attribute: %s",
-                                name, error_message(err));
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
+                               name, error_message(err));
         return err;
     }
     if (out_temp != 0) {
@@ -97,8 +96,8 @@ prof_get_integer_def(krb5_context ctx, const char *conf_section,
                                KDB_MODULE_DEF_SECTION, name, 0,
                                dfl, &out_temp);
     if (err) {
-        krb5_set_error_message (ctx, err, "Error reading '%s' attribute: %s",
-                                name, error_message(err));
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
+                               name, error_message(err));
         return err;
     }
     *out = out_temp;
@@ -117,7 +116,7 @@ prof_get_boolean_def(krb5_context ctx, const char *conf_section,
     err = profile_get_boolean(ctx->profile, KDB_MODULE_SECTION, conf_section,
                               name, -1, &out_temp);
     if (err) {
-        krb5_set_error_message(ctx, err, "Error reading '%s' attribute: %s",
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
                                name, error_message(err));
         return err;
     }
@@ -128,7 +127,7 @@ prof_get_boolean_def(krb5_context ctx, const char *conf_section,
     err = profile_get_boolean(ctx->profile, KDB_MODULE_DEF_SECTION, name, 0,
                               dfl, &out_temp);
     if (err) {
-        krb5_set_error_message(ctx, err, "Error reading '%s' attribute: %s",
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
                                name, error_message(err));
         return err;
     }
@@ -148,8 +147,8 @@ prof_get_string_def(krb5_context ctx, const char *conf_section,
                               KDB_MODULE_SECTION, conf_section, name,
                               0, out);
     if (err) {
-        krb5_set_error_message (ctx, err, "Error reading '%s' attribute: %s",
-                                name, error_message(err));
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
+                               name, error_message(err));
         return err;
     }
     if (*out != 0)
@@ -158,8 +157,8 @@ prof_get_string_def(krb5_context ctx, const char *conf_section,
                               KDB_MODULE_DEF_SECTION, name, 0,
                               0, out);
     if (err) {
-        krb5_set_error_message (ctx, err, "Error reading '%s' attribute: %s",
-                                name, error_message(err));
+        krb5_set_error_message(ctx, err, _("Error reading '%s' attribute: %s"),
+                               name, error_message(err));
         return err;
     }
     return 0;
@@ -225,8 +224,8 @@ krb5_ldap_read_server_params(krb5_context context, char *conf_section,
 
     if (ldap_context->max_server_conns < 2) {
         st = EINVAL;
-        krb5_set_error_message (context, st,
-                                "Minimum connections required per server is 2");
+        krb5_set_error_message(context, st, _("Minimum connections required "
+                                              "per server is 2"));
         goto cleanup;
     }
 
@@ -243,7 +242,7 @@ krb5_ldap_read_server_params(krb5_context context, char *conf_section,
         else if (srv_type == KRB5_KDB_SRV_TYPE_ADMIN)
             name = KRB5_CONF_LDAP_KADMIN_DN;
         else if (srv_type == KRB5_KDB_SRV_TYPE_PASSWD)
-            name = "ldap_kpasswdd_dn";
+            name = KRB5_CONF_LDAP_KPASSWDD_DN;
 
         if (name) {
             st = prof_get_string_def (context, conf_section, name,
@@ -266,21 +265,6 @@ krb5_ldap_read_server_params(krb5_context context, char *conf_section,
             goto cleanup;
     }
 
-#ifdef HAVE_EDIRECTORY
-    /*
-     * If root certificate file is not set read it from database
-     * module section of conf file this is the trusted root
-     * certificate of the Directory.
-     */
-    if (ldap_context->root_certificate_file == NULL) {
-        st = prof_get_string_def (context, conf_section,
-                                  KRB5_CONF_LDAP_ROOT_CERTIFICATE_FILE,
-                                  &ldap_context->root_certificate_file);
-        if (st)
-            goto cleanup;
-    }
-#endif
-
     /*
      * If the ldap server parameter is not set read the list of ldap
      * servers from the database module section of the conf file.
@@ -300,7 +284,8 @@ krb5_ldap_read_server_params(krb5_context context, char *conf_section,
 
         if ((st=profile_get_string(context->profile, KDB_MODULE_SECTION, conf_section,
                                    KRB5_CONF_LDAP_SERVERS, NULL, &tempval)) != 0) {
-            krb5_set_error_message (context, st, "Error reading 'ldap_servers' attribute");
+            krb5_set_error_message(context, st, _("Error reading "
+                                                  "'ldap_servers' attribute"));
             goto cleanup;
         }
 
@@ -374,11 +359,6 @@ krb5_ldap_free_server_context_params(krb5_ldap_context *ldap_context)
             if (ldap_context->server_info_list[i]->server_name) {
                 free (ldap_context->server_info_list[i]->server_name);
             }
-#ifdef HAVE_EDIRECTORY
-            if (ldap_context->server_info_list[i]->root_certificate_file) {
-                free (ldap_context->server_info_list[i]->root_certificate_file);
-            }
-#endif
             if (ldap_context->server_info_list[i]->ldap_server_handles) {
                 ldap_server_handle = ldap_context->server_info_list[i]->ldap_server_handles;
                 while (ldap_server_handle) {
@@ -415,13 +395,6 @@ krb5_ldap_free_server_context_params(krb5_ldap_context *ldap_context)
         krb5_xfree(ldap_context->service_password_file);
         ldap_context->service_password_file = NULL;
     }
-
-#ifdef HAVE_EDIRECTORY
-    if (ldap_context->root_certificate_file != NULL) {
-        krb5_xfree(ldap_context->root_certificate_file);
-        ldap_context->root_certificate_file = NULL;
-    }
-#endif
 
     if (ldap_context->service_cert_path != NULL) {
         krb5_xfree(ldap_context->service_cert_path);
@@ -1663,7 +1636,9 @@ krb5_ldap_policydn_to_name(krb5_context context, char *policy_dn, char **name)
         LDAPDN dn;
         rdn = strndup(policy_dn, len2 - len1 - 1); /* 1 character for ',' */
 
-        if (ldap_str2dn (rdn, &dn, LDAP_DN_FORMAT_LDAPV3 | LDAP_DN_PEDANTIC) != 0) {
+        st = ldap_str2dn(rdn, &dn, LDAP_DN_FORMAT_LDAPV3 | LDAP_DN_PEDANTIC);
+        free(rdn);
+        if (st != 0) {
             st = EINVAL;
             goto cleanup;
         }
@@ -1677,7 +1652,7 @@ krb5_ldap_policydn_to_name(krb5_context context, char *policy_dn, char **name)
                 st = EINVAL;
         }
 
-        ldap_memfree (dn);
+        ldap_dnfree(dn);
     }
 #elif defined HAVE_LDAP_EXPLODE_DN
     {
@@ -1954,18 +1929,14 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
                                  &attr_present)) != 0)
         goto cleanup;
     if (attr_present == TRUE) {
-        krb5_tl_data  kadm_tl_data;
-
         mask |= KDB_PWD_POL_REF_ATTR;
 
         /* Ensure that the policy is inside the realm container */
         if ((st = krb5_ldap_policydn_to_name (context, pwdpolicydn, &polname)) != 0)
             goto cleanup;
 
-        if ((st = krb5_update_tl_kadm_data(polname, &kadm_tl_data)) != 0) {
+        if ((st = krb5_update_tl_kadm_data(context, entry, polname)) != 0)
             goto cleanup;
-        }
-        krb5_dbe_update_tl_data(context, entry, &kadm_tl_data);
     }
 
     /* KRBSECRETKEY */
@@ -2073,7 +2044,10 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
             for (i = 0; ber_tl_data[i] != NULL; i++) {
                 if ((st = berval2tl_data (ber_tl_data[i] , &ptr)) != 0)
                     break;
-                if ((st = krb5_dbe_update_tl_data(context, entry, ptr)) != 0)
+                st = krb5_dbe_update_tl_data(context, entry, ptr);
+                free(ptr->tl_data_contents);
+                free(ptr);
+                if (st != 0)
                     break;
             }
             ldap_value_free_len (ber_tl_data);
@@ -2089,37 +2063,6 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
     if ((st=krb5_dbe_update_tl_data(context, entry, &userinfo_tl_data)) != 0)
         goto cleanup;
 
-#ifdef HAVE_EDIRECTORY
-    {
-        krb5_timestamp              expiretime=0;
-        char                        *is_login_disabled=NULL;
-
-        /* LOGIN EXPIRATION TIME */
-        if ((st=krb5_ldap_get_time(ld, ent, "loginexpirationtime", &expiretime,
-                                   &attr_present)) != 0)
-            goto cleanup;
-
-        if (attr_present == TRUE) {
-            if (mask & KDB_PRINC_EXPIRE_TIME_ATTR) {
-                if (expiretime < entry->expiration)
-                    entry->expiration = expiretime;
-            } else {
-                entry->expiration = expiretime;
-            }
-        }
-
-        /* LOGIN DISABLED */
-        if ((st=krb5_ldap_get_string(ld, ent, "logindisabled", &is_login_disabled,
-                                     &attr_present)) != 0)
-            goto cleanup;
-        if (attr_present == TRUE) {
-            if (strcasecmp(is_login_disabled, "TRUE")== 0)
-                entry->attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
-            free (is_login_disabled);
-        }
-    }
-#endif
-
     if ((st=krb5_read_tkt_policy (context, ldap_context, entry, tktpolname)) !=0)
         goto cleanup;
 
@@ -2134,7 +2077,7 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
         if ((st=krb5_ldap_get_password_policy(context, polname, &pwdpol)) != 0)
             goto cleanup;
         pw_max_life = pwdpol->pw_max_life;
-        free (pwdpol);
+        krb5_ldap_free_password_policy(context, pwdpol);
 
         if (pw_max_life > 0) {
             if ((st=krb5_dbe_lookup_last_pwd_change(context, entry, &last_pw_changed)) != 0)

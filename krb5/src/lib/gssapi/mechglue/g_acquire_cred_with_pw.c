@@ -177,7 +177,7 @@ OM_uint32 *		time_rec;
     /* for each requested mech attempt to obtain a credential */
     for (i = 0; i < mechs->count; i++) {
 	major = gss_add_cred_with_password(minor_status, (gss_cred_id_t)creds,
-			     desired_name, 
+			     desired_name,
 			     &mechs->elements[i],
 			     password,
 			     cred_usage, time_req, time_req, NULL,
@@ -216,12 +216,8 @@ OM_uint32 *		time_rec;
      * setup the actual mechs output parameter
      */
     if (actual_mechs != NULL) {
-	gss_OID_set_desc oids;
-
-	oids.count = creds->count;
-	oids.elements = creds->mechs_array;
-
-	major = generic_gss_copy_oid_set(minor_status, &oids, actual_mechs);
+	major = gssint_make_public_oid_set(minor_status, creds->mechs_array,
+					   creds->count, actual_mechs);
 	if (GSS_ERROR(major)) {
 	    (void) gss_release_cred(minor_status,
 				    (gss_cred_id_t *)&creds);
@@ -335,10 +331,11 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
     gss_name_t		internal_name = GSS_C_NO_NAME;
     gss_name_t		allocated_name = GSS_C_NO_NAME;
     gss_mechanism       mech;
-    gss_mechanism_ext	mech_ext;
     gss_cred_id_t	cred = NULL;
     gss_OID		new_mechs_array = NULL;
     gss_cred_id_t *	new_cred_array = NULL;
+    gss_OID_set		target_mechs = GSS_C_NO_OID_SET;
+    gss_OID		selected_mech = GSS_C_NO_OID;
 
     status = val_add_cred_pw_args(minor_status,
 			          input_cred_handle,
@@ -355,12 +352,15 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
     if (status != GSS_S_COMPLETE)
 	return (status);
 
-    mech = gssint_get_mechanism(desired_mech);
+    status = gssint_select_mech_type(minor_status, desired_mech,
+				     &selected_mech);
+    if (status != GSS_S_COMPLETE)
+	return (status);
+
+    mech = gssint_get_mechanism(selected_mech);
     if (!mech)
 	return GSS_S_BAD_MECH;
-
-    mech_ext = gssint_get_mechanism_ext(desired_mech);
-    if (!mech_ext || !mech_ext->gssspi_acquire_cred_with_password)
+    if (!mech->gssspi_acquire_cred_with_password)
 	return GSS_S_UNAVAILABLE;
 
     if (input_cred_handle == GSS_C_NO_CREDENTIAL) {
@@ -374,19 +374,19 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
 	internal_name = GSS_C_NO_NAME;
     } else {
 	union_cred = (gss_union_cred_t)input_cred_handle;
-	if (gssint_get_mechanism_cred(union_cred, desired_mech) !=
+	if (gssint_get_mechanism_cred(union_cred, selected_mech) !=
 	    GSS_C_NO_CREDENTIAL)
 	    return (GSS_S_DUPLICATE_ELEMENT);
     }
 
     /* may need to create a mechanism specific name */
     union_name = (gss_union_name_t)desired_name;
-    if (union_name->mech_type && g_OID_equal(union_name->mech_type,
-					     &mech->mech_type))
+    if (union_name->mech_type &&
+	g_OID_equal(union_name->mech_type, selected_mech))
 	internal_name = union_name->mech_name;
     else {
 	if (gssint_import_internal_name(minor_status,
-					&mech->mech_type, union_name,
+					selected_mech, union_name,
 					&allocated_name) != GSS_S_COMPLETE)
 	    return (GSS_S_BAD_NAME);
 	internal_name = allocated_name;
@@ -402,31 +402,28 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
     else
 	time_req = 0;
 
-    status = mech_ext->gssspi_acquire_cred_with_password(minor_status,
-				                         internal_name,
-				                         password,
-                                                         time_req,
-				                         GSS_C_NULL_OID_SET,
-                                                         cred_usage,
-				                         &cred,
-                                                         NULL,
-                                                         &time_rec);
+    status = gss_create_empty_oid_set(minor_status, &target_mechs);
+    if (status != GSS_S_COMPLETE)
+	goto errout;
+
+    status = gss_add_oid_set_member(minor_status,
+				    gssint_get_public_oid(selected_mech),
+				    &target_mechs);
+    if (status != GSS_S_COMPLETE)
+	goto errout;
+
+    status = mech->gssspi_acquire_cred_with_password(minor_status,
+						     internal_name,
+						     password,
+						     time_req,
+						     target_mechs,
+						     cred_usage,
+						     &cred,
+						     NULL,
+						     &time_rec);
     if (status != GSS_S_COMPLETE) {
 	map_error(minor_status, mech);
 	goto errout;
-    }
-
-    /* may need to set credential auxinfo strucutre */
-    if (union_cred->auxinfo.creation_time == 0) {
-	union_cred->auxinfo.creation_time = time(NULL);
-	union_cred->auxinfo.time_rec = time_rec;
-	union_cred->auxinfo.cred_usage = cred_usage;
-
-	status = mech->gss_display_name(&temp_minor_status, internal_name,
-					&union_cred->auxinfo.name,
-					&union_cred->auxinfo.name_type);
-	if (status != GSS_S_COMPLETE)
-	    goto errout;
     }
 
     /* now add the new credential elements */
@@ -458,19 +455,15 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
 
     new_cred_array[union_cred->count] = cred;
     if ((new_mechs_array[union_cred->count].elements =
-	 malloc(mech->mech_type.length)) == NULL)
+	 malloc(selected_mech->length)) == NULL)
 	goto errout;
 
-    g_OID_copy(&new_mechs_array[union_cred->count],
-	       &mech->mech_type);
+    g_OID_copy(&new_mechs_array[union_cred->count], selected_mech);
 
     if (actual_mechs != NULL) {
-	gss_OID_set_desc oids;
-
-	oids.count = union_cred->count + 1;
-	oids.elements = new_mechs_array;
-
-	status = generic_gss_copy_oid_set(minor_status, &oids, actual_mechs);
+	status = gssint_make_public_oid_set(minor_status, new_mechs_array,
+					    union_cred->count + 1,
+					    actual_mechs);
 	if (GSS_ERROR(status)) {
 	    free(new_mechs_array[union_cred->count].elements);
 	    goto errout;
@@ -500,7 +493,7 @@ gss_add_cred_with_password(minor_status, input_cred_handle,
 
     if (allocated_name)
 	(void) gssint_release_internal_name(&temp_minor_status,
-					   &mech->mech_type,
+					    selected_mech,
 					   &allocated_name);
 
     return (GSS_S_COMPLETE);
@@ -516,14 +509,13 @@ errout:
 
     if (allocated_name)
 	(void) gssint_release_internal_name(&temp_minor_status,
-					   &mech->mech_type,
-					   &allocated_name);
+					    selected_mech, &allocated_name);
 
-    if (input_cred_handle == GSS_C_NO_CREDENTIAL && union_cred) {
-	if (union_cred->auxinfo.name.value)
-	    free(union_cred->auxinfo.name.value);
+    if (target_mechs)
+	(void)gss_release_oid_set(&temp_minor_status, &target_mechs);
+
+    if (input_cred_handle == GSS_C_NO_CREDENTIAL && union_cred)
 	free(union_cred);
-    }
 
     return (status);
 }

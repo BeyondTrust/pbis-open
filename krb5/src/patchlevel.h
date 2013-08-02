@@ -1,6 +1,5 @@
+/* patchlevel.h */
 /*
- * patchlevel.h
- *
  * Copyright (C) 2004-2006 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -51,8 +50,8 @@
  * organization.
  */
 #define KRB5_MAJOR_RELEASE 1
-#define KRB5_MINOR_RELEASE 9
-#define KRB5_PATCHLEVEL 1
+#define KRB5_MINOR_RELEASE 11
+#define KRB5_PATCHLEVEL 3
 /* #undef KRB5_RELTAIL */
-#define KRB5_RELDATE "20110505"
-#define KRB5_RELTAG "tags/krb5-1-9-1-final"
+#define KRB5_RELDATE "20130603"
+#define KRB5_RELTAG "krb5-1.11.3-final"

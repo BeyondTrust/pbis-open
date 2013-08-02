@@ -3,26 +3,7 @@ AC_COPYRIGHT([Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 20
 Massachusetts Institute of Technology.
 ])
 dnl
-dnl Figure out the top of the source and build trees.  We depend on localdir
-dnl being a relative pathname; we could make it general later, but for now 
-dnl this is good enough.
-dnl
-dnl esyscmd([test -r aclocal.m4 && echo YES])
-define([fileexists],[dnl
-pushdef([x],esyscmd([if test -r $1; then echo YES;else echo NO; fi]))dnl
-dnl Strip out newline.
-ifelse(x,[YES
-],[YES],x,[NO
-],[NO],UNKNOWN)[]popdef([x])])
-define([K5_TOPDIR],dnl
-ifelse(fileexists(./aclocal.m4),YES,[.],[dnl
-ifelse(fileexists(../aclocal.m4),YES,[..],[dnl
-ifelse(fileexists(../../aclocal.m4),YES,[../..],[dnl
-ifelse(fileexists(../../../aclocal.m4),YES,[../../..],[dnl
-ifelse(fileexists(../../../../aclocal.m4),YES,[../../../..],[dnl
-errprint(__file__:__line__: Cannot find path to aclocal.m4[
-]) m4exit(1) dnl sometimes that does not work?
-builtin(m4exit,1)UNKNOWN])])])])]))
+define([K5_TOPDIR],[.])dnl
 dnl
 AC_DEFUN(V5_SET_TOPDIR,[dnl
 ac_reltopdir="K5_TOPDIR"
@@ -408,8 +389,7 @@ if test $ac_cv_func_getaddrinfo = yes; then
 fi
 dnl
 AC_REQUIRE([KRB5_SOCKADDR_SA_LEN])dnl
-AC_ARG_ENABLE([ipv6], , AC_MSG_WARN(enable/disable-ipv6 option is deprecated))dnl
-AC_MSG_CHECKING(for IPv6 compile-time support)
+AC_MSG_CHECKING(for IPv6 compile-time support without -DINET6)
 AC_CACHE_VAL(krb5_cv_inet6,[
 if test "$ac_cv_func_inet_ntop" != "yes" ; then
   krb5_cv_inet6=no
@@ -452,7 +432,6 @@ if test $krb5_cv_inet6 = yes || test "$krb5_cv_inet6_with_dinet6" = yes; then
   if test "$krb5_cv_inet6_with_dinet6" = yes; then
     AC_DEFINE(INET6,1,[May need to be defined to enable IPv6 support, for example on IRIX])
   fi
-  AC_DEFINE(KRB5_USE_INET6,1,[Define if we should compile in IPv6 support (even if we can't use it at run time)])
 fi
 ])dnl
 dnl
@@ -543,7 +522,7 @@ if test "$GCC" = yes ; then
     TRY_WARN_CC_FLAG(-Wno-format-zero-length)
     # Other flags here may not be supported on some versions of
     # gcc that people want to use.
-    for flag in overflow strict-overflow missing-format-attribute missing-prototypes return-type missing-braces parentheses switch unused-function unused-label unused-variable unused-value unknown-pragmas sign-compare newline-eof ; do
+    for flag in overflow strict-overflow missing-format-attribute missing-prototypes return-type missing-braces parentheses switch unused-function unused-label unused-variable unused-value unknown-pragmas sign-compare newline-eof error=uninitialized ; do
       TRY_WARN_CC_FLAG(-W$flag)
     done
     #  old-style-definition? generates many, many warnings
@@ -726,49 +705,6 @@ AC_DEFUN(KRB5_AC_NEED_DAEMON, [
 KRB5_NEED_PROTO([#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif],daemon,1)])dnl
-dnl
-dnl Check if stdarg or varargs is available *and compiles*; prefer stdarg.
-dnl (This was sent to djm for incorporation into autoconf 3/12/1996.  KR)
-dnl
-AC_DEFUN(AC_HEADER_STDARG, [
-
-AC_MSG_CHECKING([for stdarg.h])
-AC_CACHE_VAL(ac_cv_header_stdarg_h,
-[AC_TRY_COMPILE([#include <stdarg.h>], [
-  } /* ac_try_compile will have started a function body */
-  int aoeu (char *format, ...) {
-    va_list v;
-    int i;
-    va_start (v, format);
-    i = va_arg (v, int);
-    va_end (v);
-],ac_cv_header_stdarg_h=yes,ac_cv_header_stdarg_h=no)])dnl
-AC_MSG_RESULT($ac_cv_header_stdarg_h)
-if test $ac_cv_header_stdarg_h = yes; then
-  AC_DEFINE(HAVE_STDARG_H, 1, [Define if stdarg available and compiles])
-else
-
-AC_MSG_CHECKING([for varargs.h])
-AC_CACHE_VAL(ac_cv_header_varargs_h,
-[AC_TRY_COMPILE([#include <varargs.h>],[
-  } /* ac_try_compile will have started a function body */
-  int aoeu (va_alist) va_dcl {
-    va_list v;
-    int i;
-    va_start (v);
-    i = va_arg (v, int);
-    va_end (v);
-],ac_cv_header_varargs_h=yes,ac_cv_header_varargs_h=no)])dnl
-AC_MSG_RESULT($ac_cv_header_varargs_h)
-if test $ac_cv_header_varargs_h = yes; then
-  AC_DEFINE(HAVE_VARARGS_H, 1, [Define if varargs available and compiles])
-else
-  AC_MSG_ERROR(Neither stdarg nor varargs compile?)
-fi
-
-fi dnl stdarg test failure
-
-])dnl
 
 dnl
 dnl KRB5_AC_NEED_LIBGEN --- check if libgen needs to be linked in for
@@ -1076,6 +1012,9 @@ AC_REQUIRE([AC_PROG_ARCHIVE])dnl
 AC_REQUIRE([AC_PROG_ARCHIVE_ADD])dnl
 AC_REQUIRE([AC_PROG_INSTALL])dnl
 AC_CHECK_PROG(AR, ar, ar, false)
+if test "$AR" = "false"; then
+  AC_MSG_ERROR([ar not found in PATH])
+fi
 AC_CHECK_PROG(PERL, perl, perl, false)
 if test "$ac_cv_prog_PERL" = "false"; then
   AC_MSG_ERROR(Perl is now required for Kerberos builds.)
@@ -1130,7 +1069,6 @@ AC_REQUIRE([KRB5_AC_NEED_LIBGEN])dnl
 AC_SUBST(CC_LINK)
 AC_SUBST(CXX_LINK)
 AC_SUBST(RPATH_FLAG)
-AC_SUBST(RPATH_TAIL)
 AC_SUBST(PROG_RPATH_FLAGS)
 AC_SUBST(DEPLIBEXT)])
 
@@ -1193,9 +1131,13 @@ if test "x$enable_static" = xyes; then
 	KDB5_PLUGIN_DEPLIBS='$(TOPLIBD)/libkrb5_db2$(DEPLIBEXT)'
 	KDB5_PLUGIN_LIBS='-lkrb5_db2'
 	if test "x$OPENLDAP_PLUGIN" = xyes; then
-		KDB5_PLUGIN_DEBLIBS=$KDB5_PLUGIN_DEPLIBS' $(TOPLIBD)/libkrb5_ldap$(DEPLIBEXT)'
-		KDB5_PLUGIN_LIBS=$KDB_LUGIN_LIBS' -lkrb5_ldap'
+		KDB5_PLUGIN_DEBLIBS=$KDB5_PLUGIN_DEPLIBS' $(TOPLIBD)/libkrb5_ldap$(DEPLIBEXT) $(TOPLIBD)/libkdb_ldap$(DEPLIBEXT)'
+		KDB5_PLUGIN_LIBS=$KDB5_PLUGIN_LIBS' -lkrb5_kldap -lkdb_ldap $(LDAP_LIBS)'
 	fi
+	# kadm5srv_mit normally comes before kdb on the link line.  Add it
+	# again after the KDB plugins, since they depend on it for XDR stuff.
+	KDB5_PLUGIN_DEPLIBS=$KDB5_PLUGIN_DEPLIBS' $(TOPLIBD)/libkadm5srv_mit$(DEPLIBEXT)'
+	KDB5_PLUGIN_LIBS=$KDB5_PLUGIN_LIBS' -lkadm5srv_mit'
 
 	# avoid duplicate rules generation for AIX and such
 	SHLIBEXT=.so-nobuild
@@ -1222,7 +1164,7 @@ else
 	esac
 	OBJLISTS="OBJS.SH"
 	PLUGIN='$(LIBBASE)$(DYNOBJEXT)'
-	PLUGINLINK=
+	PLUGINLINK='../$(PLUGIN)'
 	PLUGININST=install-plugin
 	KDB5_PLUGIN_DEPLIBS=
 	KDB5_PLUGIN_LIBS=
@@ -1317,18 +1259,6 @@ AC_DEFUN(AC_LIBRARY_NET, [
 
 _KRB5_AC_CHECK_RES_FUNCS(res_ninit res_nclose res_ndestroy res_nsearch dnl
 ns_initparse ns_name_uncompress dn_skipname res_search)
-AC_MSG_CHECKING(whether res_ninit works)
-if test $krb5_cv_func_res_ninit = yes; then
-AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <resolv.h>
-int main(void)
-{
-	struct __res_state statbuf;
-	memset(&statbuf, 0, sizeof(statbuf));
-	res_ninit(&statbuf);
-	return 0;
-}]])], [AC_MSG_RESULT(yes)
-		AC_DEFINE(HAVE_WORKING_RES_NINIT, 1, [Define if res_ninit does not crash the system])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
-fi
     if test $krb5_cv_func_res_nsearch = no \
       && test $krb5_cv_func_res_search = no; then
 	# Attempt to link with res_search(), in case it's not prototyped.
@@ -1473,6 +1403,7 @@ AC_ARG_WITH([system-et],
 AC_HELP_STRING(--with-system-et,use system compile_et and -lcom_err @<:@default: build and install a local version@:>@))
 AC_MSG_CHECKING(which version of com_err to use)
 if test "x$with_system_et" = xyes ; then
+  # This will be changed to "intlsys" if textdomain support is present.
   COM_ERR_VERSION=sys
   AC_MSG_RESULT(system)
 else
@@ -1501,11 +1432,29 @@ EOF
       		 ],[ &et_foo_error_table; ],:,
 		 [AC_MSG_ERROR(cannot use et_foo_error_table)])
   # Anything else we need to test for?
-  rm -f conf$$e.et conf$$e.c conf$$e.h
+  rm -f conf$$e.c conf$$e.h
   krb5_cv_compile_et_useful=yes
   ])
+  AC_CACHE_CHECK(whether compile_et supports --textdomain,
+                 krb5_cv_compile_et_textdomain,[
+  krb5_cv_compile_et_textdomain=no
+  if compile_et --textdomain=xyzw conf$$e.et >/dev/null 2>&1 ; then
+    if grep -q xyzw conf$$e.c; then
+      krb5_cv_compile_et_textdomain=yes
+    fi
+  fi
+  rm -f conf$$e.c conf$$e.h
+  ])
+  if test "$krb5_cv_compile_et_textdomain" = yes; then
+    COM_ERR_VERSION=intlsys
+  fi
+  rm -f conf$$e.et
 fi
 AC_SUBST(COM_ERR_VERSION)
+if test "$COM_ERR_VERSION" = k5 -o "$COM_ERR_VERSION" = intlsys; then
+  AC_DEFINE(HAVE_COM_ERR_INTL,1,
+            [Define if com_err has compatible gettext support])
+fi
 ])
 AC_DEFUN([KRB5_AC_CHOOSE_SS],[
 AC_ARG_WITH(system-ss,
@@ -1672,10 +1621,8 @@ dnl KRB5_AC_PRAGMA_WEAK_REF
 AC_DEFUN([KRB5_AC_PRAGMA_WEAK_REF],
 [AC_CACHE_CHECK([whether pragma weak references are supported],
 krb5_cv_pragma_weak_ref,
-[AC_TRY_LINK([
-#include <pthread.h>
-#pragma weak pthread_create
-],[if (&pthread_create != 0) return 0;],
+[AC_TRY_LINK([#pragma weak flurbl
+extern int flurbl(void);],[if (&flurbl != 0) return flurbl();],
 krb5_cv_pragma_weak_ref=yes,krb5_cv_pragma_weak_ref=no)])
 if test $krb5_cv_pragma_weak_ref = yes ; then
   AC_DEFINE(HAVE_PRAGMA_WEAK_REF,1,[Define if #pragma weak references work])
@@ -1683,6 +1630,7 @@ fi])
 dnl
 dnl
 m4_include(config/ac-archive/acx_pthread.m4)
+m4_include(config/ac-archive/relpaths.m4)
 dnl
 dnl
 dnl
@@ -1694,15 +1642,8 @@ AC_ARG_WITH([ldap],
 [case "$withval" in
     OPENLDAP) with_ldap=yes ;;
     yes | no) ;;
-    EDIRECTORY) AC_MSG_ERROR(Option --with-ldap=EDIRECTORY is deprecated; use --with-edirectory instead.) ;;
     *)  AC_MSG_ERROR(Invalid option value --with-ldap="$withval") ;;
 esac], with_ldap=no)dnl
-AC_ARG_WITH([edirectory],
-[  --with-edirectory       compile eDirectory database backend module],
-[case "$withval" in
-    yes | no) ;;
-    *)  AC_MSG_ERROR(Invalid option value --with-edirectory="$withval") ;;
-esac], with_edirectory=no)dnl
 
 if test $with_ldap = yes; then
   if test $with_edirectory = yes; then
@@ -1710,13 +1651,6 @@ if test $with_ldap = yes; then
   fi
   AC_MSG_NOTICE(enabling OpenLDAP database backend module support)
   OPENLDAP_PLUGIN=yes
-elif test $with_edirectory = yes; then
-  AC_MSG_NOTICE(enabling eDirectory database backend module support)
-  OPENLDAP_PLUGIN=yes
-  AC_DEFINE(HAVE_EDIRECTORY,1,[Define if LDAP KDB interface should assume eDirectory.])
-else
-  : # neither enabled
-dnl  AC_MSG_NOTICE(disabling ldap backend module support)
 fi
 ])dnl
 dnl

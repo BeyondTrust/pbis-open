@@ -5,10 +5,6 @@
  * $Header$
  */
 
-#if !defined(lint) && !defined(__CODECENTER__)
-static char *rcsid = "$Header$";
-#endif
-
 #include    <gssrpc/rpc.h>
 #include    <kadm5/admin.h>
 #include    <kadm5/kadm_rpc.h>
@@ -92,6 +88,8 @@ kadm5_get_policy(void *server_handle, char *name, kadm5_policy_ent_t ent)
     gpol_arg        arg;
     gpol_ret        *r;
     kadm5_server_handle_t handle = server_handle;
+
+    memset(ent, 0, sizeof(*ent));
 
     CHECK_HANDLE(server_handle);
 

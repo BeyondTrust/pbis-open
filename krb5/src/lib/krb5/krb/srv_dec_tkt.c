@@ -1,7 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+/* lib/krb5/krb/srv_dec_tkt.c */
 /*
- * lib/krb5/krb/srv_dec_tkt.c
- *
  * Copyright 2006, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,8 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- *
- *
+ */
+
+/*
  * Server decrypt ticket via keytab or keyblock.
  *
  * Different from krb5_rd_req_decoded. (krb5/src/lib/krb5/krb/rd_req_dec.c)
@@ -79,8 +79,6 @@ krb5_server_decrypt_ticket_keytab(krb5_context context,
     krb5_error_code       retval;
     krb5_keytab_entry     ktent;
 
-    retval = KRB5_KT_NOTFOUND;
-
     if (keytab->ops->start_seq_get == NULL) {
         retval = krb5_kt_get_entry(context, keytab,
                                    ticket->server,
@@ -99,6 +97,7 @@ krb5_server_decrypt_ticket_keytab(krb5_context context,
         if (retval != 0)
             goto map_error;
 
+        retval = KRB5_KT_NOTFOUND;
         while ((code = krb5_kt_next_entry(context, keytab,
                                           &ktent, &cursor)) == 0) {
             if (ktent.key.enctype != ticket->enc_part.enctype)

@@ -155,7 +155,7 @@ init_any(krb5_context context, char *client_name, enum init_type init_type,
          kadm5_config_params *params_in, krb5_ui_4 struct_version,
          krb5_ui_4 api_version, char **db_args, void **server_handle)
 {
-    int fd;
+    int fd = -1;
 
     krb5_boolean iprop_enable;
     int port;
@@ -192,11 +192,12 @@ init_any(krb5_context context, char *client_name, enum init_type init_type,
     handle->struct_version = struct_version;
     handle->api_version = api_version;
     handle->clnt = 0;
+    handle->client_socket = -1;
     handle->cache_name = 0;
     handle->destroy_cache = 0;
     handle->context = 0;
     *handle->lhandle = *handle;
-    handle->lhandle->api_version = KADM5_API_VERSION_3;
+    handle->lhandle->api_version = KADM5_API_VERSION_4;
     handle->lhandle->struct_version = KADM5_STRUCT_VERSION;
     handle->lhandle->lhandle = handle->lhandle;
 
@@ -235,8 +236,7 @@ init_any(krb5_context context, char *client_name, enum init_type init_type,
 #define ILLEGAL_PARAMS (KADM5_CONFIG_DBNAME | KADM5_CONFIG_ADBNAME |    \
                         KADM5_CONFIG_ADB_LOCKFILE |                     \
                         KADM5_CONFIG_ACL_FILE | KADM5_CONFIG_DICT_FILE  \
-                        | KADM5_CONFIG_ADMIN_KEYTAB |                   \
-                        KADM5_CONFIG_STASH_FILE |                       \
+                        | KADM5_CONFIG_STASH_FILE |                     \
                         KADM5_CONFIG_MKEY_NAME | KADM5_CONFIG_ENCTYPE   \
                         | KADM5_CONFIG_MAX_LIFE |                       \
                         KADM5_CONFIG_MAX_RLIFE |                        \
@@ -301,7 +301,9 @@ init_any(krb5_context context, char *client_name, enum init_type init_type,
 #endif
         goto error;
     }
+    handle->client_socket = fd;
     handle->lhandle->clnt = handle->clnt;
+    handle->lhandle->client_socket = fd;
 
     /* now that handle->clnt is set, we can check the handle */
     if ((code = _kadm5_check_handle((void *) handle)))
@@ -334,6 +336,16 @@ init_any(krb5_context context, char *client_name, enum init_type init_type,
         clnt_perror(handle->clnt, "init_2 null resp");
 #endif
         goto error;
+    }
+    /* Drop down to v3 wire protocol if server does not support v4 */
+    if (r->code == KADM5_NEW_SERVER_API_VERSION &&
+        handle->api_version == KADM5_API_VERSION_4) {
+        handle->api_version = KADM5_API_VERSION_3;
+        r = init_2(&handle->api_version, handle->clnt);
+        if (r == NULL) {
+            code = KADM5_RPC_ERROR;
+            goto error;
+        }
     }
     /* Drop down to v2 wire protocol if server does not support v3 */
     if (r->code == KADM5_NEW_SERVER_API_VERSION &&
@@ -372,6 +384,8 @@ error:
         AUTH_DESTROY(handle->clnt->cl_auth);
     if(handle->clnt)
         clnt_destroy(handle->clnt);
+    if (fd != -1)
+        close(fd);
 
     kadm5_free_config_params(handle->context, &handle->params);
 
@@ -563,8 +577,9 @@ connect_to_server(const char *hostname, int port, int *fd)
     (void) snprintf(portbuf, sizeof(portbuf), "%d", port);
     memset(&hint, 0, sizeof(hint));
     hint.ai_socktype = SOCK_STREAM;
+    hint.ai_flags = AI_ADDRCONFIG;
 #ifdef AI_NUMERICSERV
-    hint.ai_flags = AI_NUMERICSERV;
+    hint.ai_flags |= AI_NUMERICSERV;
 #endif
     err = getaddrinfo(hostname, portbuf, &hint, &addrs);
     if (err != 0)
@@ -795,6 +810,8 @@ kadm5_destroy(void *server_handle)
         AUTH_DESTROY(handle->clnt->cl_auth);
     if (handle->clnt)
         clnt_destroy(handle->clnt);
+    if (handle->client_socket != -1)
+        close(handle->client_socket);
     if (handle->lhandle)
         free (handle->lhandle);
 

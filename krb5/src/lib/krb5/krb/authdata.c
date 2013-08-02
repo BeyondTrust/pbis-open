@@ -71,7 +71,7 @@ k5_ad_init_modules(krb5_context kcontext,
     int j, k = *module_count;
     krb5_error_code code;
     void *plugin_context = NULL;
-    void **rcpp;
+    void **rcpp = NULL;
 
     if (table->ad_type_list == NULL) {
 #ifdef DEBUG
@@ -514,11 +514,8 @@ k5_get_kdc_issued_authdata(krb5_context kcontext,
 
     ticket_authdata = ap_req->ticket->enc_part2->authorization_data;
 
-    code = krb5int_find_authdata(kcontext,
-                                 ticket_authdata,
-                                 NULL,
-                                 KRB5_AUTHDATA_KDC_ISSUED,
-                                 &authdata);
+    code = krb5_find_authdata(kcontext, ticket_authdata, NULL,
+                              KRB5_AUTHDATA_KDC_ISSUED, &authdata);
     if (code != 0 || authdata == NULL)
         return code;
 
@@ -571,12 +568,10 @@ krb5int_authdata_verify(krb5_context kcontext,
         if (module->ftable->import_authdata == NULL)
             continue;
 
-        if (kdc_issued_authdata != NULL) {
-            code = krb5int_find_authdata(kcontext,
-                                         kdc_issued_authdata,
-                                         NULL,
-                                         module->ad_type,
-                                         &authdata);
+        if (kdc_issued_authdata != NULL &&
+            (module->flags & AD_USAGE_KDC_ISSUED)) {
+            code = krb5_find_authdata(kcontext, kdc_issued_authdata, NULL,
+                                      module->ad_type, &authdata);
             if (code != 0)
                 break;
 
@@ -584,11 +579,24 @@ krb5int_authdata_verify(krb5_context kcontext,
         }
 
         if (authdata == NULL) {
-            code = krb5int_find_authdata(kcontext,
-                                         ticket_authdata,
-                                         authen_authdata,
-                                         module->ad_type,
-                                         &authdata);
+            krb5_boolean ticket_usage = FALSE;
+            krb5_boolean authen_usage = FALSE;
+
+            /*
+             * Determine which authdata sources to interrogate based on the
+             * module's usage. This is important if the authdata is signed
+             * by the KDC with the TGT key (as the user can forge that in
+             * the AP-REQ).
+             */
+            if (module->flags & (AD_USAGE_AS_REQ | AD_USAGE_TGS_REQ))
+                ticket_usage = TRUE;
+            if (module->flags & AD_USAGE_AP_REQ)
+                authen_usage = TRUE;
+
+            code = krb5_find_authdata(kcontext,
+                                      ticket_usage ? ticket_authdata : NULL,
+                                      authen_usage ? authen_authdata : NULL,
+                                      module->ad_type, &authdata);
             if (code != 0)
                 break;
         }
@@ -1184,7 +1192,7 @@ krb5_ser_authdata_context_init(krb5_context kcontext)
 
 krb5_error_code
 krb5int_copy_authdatum(krb5_context context,
-               const krb5_authdata *inad, krb5_authdata **outad)
+                       const krb5_authdata *inad, krb5_authdata **outad)
 {
     krb5_authdata *tmpad;
 

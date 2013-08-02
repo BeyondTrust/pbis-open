@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/pbkdf2.c
- *
+/* lib/crypto/nss/pbkdf2.c */
+/*
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -34,8 +34,7 @@
  */
 
 #include <ctype.h>
-#include "k5-int.h"
-#include "hash_provider.h"
+#include "crypto_int.h"
 #include "pk11pub.h"
 #include "nss_gen.h"
 
@@ -63,8 +62,9 @@ krb5int_pbkdf2_hmac_sha1(const krb5_data *out, unsigned long count,
     if (slot == NULL)
         return k5_nss_map_last_error();
 
+    /* NSS treats a null saltItem.data as a request for a random salt. */
     saltItem.type = siBuffer;
-    saltItem.data = (unsigned char *)salt->data;
+    saltItem.data = (salt->data == NULL) ? "" : (unsigned char *)salt->data;
     saltItem.len = salt->length;
 
     /* PKCS 5 was designed to be DER encoded. Algid's carry all the
