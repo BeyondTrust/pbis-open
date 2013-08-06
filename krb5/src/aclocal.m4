@@ -507,6 +507,10 @@ if test "$GCC" = yes ; then
       AC_MSG_NOTICE(skipping pedantic warnings on Darwin)
     elif test "`uname -s`" = Linux ; then
       AC_MSG_NOTICE(skipping pedantic warnings on Linux)
+    elif test "`uname -s`" = FreeBSD ; then
+      AC_MSG_NOTICE(skipping pedantic warnings on FreeBSD)
+    elif test "`uname -s`" = Solaris ; then
+      AC_MSG_NOTICE(skipping pedantic warnings on Solaris)
     else
       WARN_CFLAGS="$WARN_CFLAGS -pedantic"
     fi
