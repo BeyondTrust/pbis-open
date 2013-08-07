@@ -5,6 +5,10 @@
  * $Header$
  */
 
+#if !defined(lint) && !defined(__CODECENTER__)
+static char *rcsid = "$Header$";
+#endif
+
 #include "autoconf.h"
 #if defined(HAVE_COMPILE) && defined(HAVE_STEP)
 #define SOLARIS_REGEXPS
@@ -187,7 +191,7 @@ static kadm5_ret_t kadm5_get_either(int princ,
 #ifdef BSD_REGEXPS
     char *msg;
 #endif
-    char *regexp = NULL;
+    char *regexp;
     int i, ret;
     kadm5_server_handle_t handle = server_handle;
 

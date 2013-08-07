@@ -49,11 +49,11 @@ extern "C" {
 #define FKPROPLOG       2
 #define FKPROPD         3
 #define FKCOMMAND       4       /* Includes kadmin.local and kdb5_util */
-#define FKLOAD          5       /* kdb5_util load */
 
 /*
  * Default ulog file attributes
  */
+#define MAX_ULOGENTRIES 2500
 #define DEF_ULOGENTRIES 1000
 #define ULOG_IDLE_TIME  10              /* in seconds */
 /*
@@ -107,8 +107,6 @@ typedef struct kdb_hlog {
     uint16_t        kdb_state;      /* State of update log */
     uint16_t        kdb_block;      /* Block size of each element */
 } kdb_hlog_t;
-
-extern void ulog_sync_header(kdb_hlog_t *);
 
 typedef struct kdb_ent_header {
     uint32_t        kdb_umagic;     /* Update entry magic # */

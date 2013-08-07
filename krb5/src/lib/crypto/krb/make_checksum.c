@@ -25,7 +25,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "cksumtypes.h"
+#include "etypes.h"
+#include "dk.h"
 
 /* A 0 checksum type means use the mandatory checksum. */
 

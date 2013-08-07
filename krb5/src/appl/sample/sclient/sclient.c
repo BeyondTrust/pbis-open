@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* appl/sample/sclient/sclient.c */
 /*
+ * appl/sample/sclient/sclient.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * Sample Kerberos v5 client.
  *
@@ -125,7 +124,6 @@ main(int argc, char *argv[])
 
     memset(&aihints, 0, sizeof(aihints));
     aihints.ai_socktype = SOCK_STREAM;
-    aihints.ai_flags = AI_ADDRCONFIG;
     aierr = getaddrinfo(argv[1], portstr, &aihints, &ap);
     if (aierr) {
         fprintf(stderr, "%s: error looking up host '%s' port '%s'/tcp: %s\n",

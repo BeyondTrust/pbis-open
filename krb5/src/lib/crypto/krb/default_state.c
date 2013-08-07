@@ -30,11 +30,10 @@
  * contains that default code.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
 
-krb5_error_code
-krb5int_des_init_state(const krb5_keyblock *key, krb5_keyusage usage,
-                       krb5_data *new_state)
+krb5_error_code krb5int_des_init_state
+(const krb5_keyblock *key, krb5_keyusage usage, krb5_data *new_state )
 {
     new_state->length = 8;
     new_state->data = (void *) malloc(8);
@@ -50,12 +49,13 @@ krb5int_des_init_state(const krb5_keyblock *key, krb5_keyusage usage,
     return 0;
 }
 
-void
-krb5int_default_free_state(krb5_data *state)
+krb5_error_code krb5int_default_free_state
+(krb5_data *state)
 {
     if (state->data) {
         free (state->data);
         state-> data = NULL;
         state->length = 0;
     }
+    return 0;
 }

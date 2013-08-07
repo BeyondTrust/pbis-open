@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/srv/pwqual_empty.c */
 /*
+ * lib/kadm5/srv/pwqual_empty.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Password quality module to reject empty passwords.
  */
-
-/* Password quality module to reject empty passwords */
 
 #include "k5-platform.h"
 #include <krb5/pwqual_plugin.h>
@@ -39,7 +41,7 @@ empty_check(krb5_context context, krb5_pwqual_moddata data,
      * with no password policy. */
     if (*password == '\0') {
         krb5_set_error_message(context, KADM5_PASS_Q_TOOSHORT,
-                               _("Empty passwords are not allowed"));
+                               "Empty passwords are not allowed");
         return KADM5_PASS_Q_TOOSHORT;
     }
     return 0;

@@ -1,13 +1,16 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/enc_provider/rc4.c */
-/*
+/* arcfour.c
+ *
  * Copyright (c) 2000 by Computer Science Laboratory,
  *                       Rensselaer Polytechnic Institute
  *
  * #include STD_DISCLAIMER
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "enc_provider.h"
+#include <aead.h>
+#include <rand2key.h>
 
 typedef struct
 {
@@ -187,6 +190,7 @@ const struct krb5_enc_provider krb5int_enc_arcfour = {
     k5_arcfour_docrypt,
     k5_arcfour_docrypt,
     NULL,
+    krb5int_arcfour_make_key,
     k5_arcfour_init_state, /*xxx not implemented yet*/
     krb5int_default_free_state
 };

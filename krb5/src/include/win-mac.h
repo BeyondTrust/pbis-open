@@ -13,6 +13,7 @@
 #define _KRB5_WIN_MAC_H
 
 #ifdef _WIN32
+
 #define ID_READ_PWD_DIALOG  10000
 #define ID_READ_PWD_PROMPT  10001
 #define ID_READ_PWD_PROMPT2 10002
@@ -24,10 +25,6 @@
 #include <windows.h>
 
 #else /* ! RES_ONLY */
-#include <stdlib.h>
-#ifdef DEBUG
-#include <crtdbg.h>
-#endif
 
 /* To ensure backward compatibility of the ABI use 32-bit time_t on
  * 32-bit Windows.
@@ -80,8 +77,6 @@ typedef unsigned long    u_long;      /* Not part of sys/types.h on the pc */
 typedef unsigned int     u_int;
 typedef unsigned short   u_short;
 typedef unsigned char    u_char;
-typedef unsigned short   uint16_t;
-typedef short            int16_t;
 typedef unsigned int     uint32_t;
 typedef int              int32_t;
 #if _INTEGRAL_MAX_BITS >= 64
@@ -106,7 +101,6 @@ typedef _W64 int         ssize_t;
 #define MAXPATHLEN      256            /* Also for Windows temp files */
 #endif
 
-#ifdef KRB5_PRIVATE
 #define HAVE_NETINET_IN_H
 #define MSDOS_FILESYSTEM
 #define HAVE_STRING_H
@@ -121,9 +115,9 @@ typedef _W64 int         ssize_t;
 #define SYS_ERRLIST_DECLARED
 /* if __STDC_VERSION__ >= 199901L this shouldn't be needed */
 #define inline __inline
+#define KRB5_USE_INET6
 #define NEED_INSIXADDR_ANY
 #define ENABLE_THREADS
-#endif
 
 #define WM_KERBEROS5_CHANGED "Kerberos5 Changed"
 #ifdef KRB4
@@ -164,12 +158,10 @@ typedef _W64 int         ssize_t;
 #define INI_RECENT_LOGINS "Recent Logins"
 #define INI_LOGIN       "Login"
 
-#ifdef KRB5_PRIVATE
 #define HAS_VOID_TYPE
 #define HAVE_STDARG_H
 #define HAVE_SYS_TYPES_H
 #define HAVE_STDLIB_H
-#endif
 
 /* This controls which encryption routines libcrypto will provide */
 #define PROVIDE_DES_CBC_MD5
@@ -192,7 +184,6 @@ typedef _W64 int         ssize_t;
 #include <fcntl.h>
 #include <io.h>
 #include <process.h>
-#include <wincrypt.h>
 
 #ifdef NEED_SYSERROR
 /* Only needed by util/et/error_message.c but let's keep the source clean */
@@ -230,9 +221,6 @@ HINSTANCE get_lib_instance(void);
 #endif /* _WIN32 */
 
 #define THREEPARAMOPEN(x,y,z) open(x,y,z)
-
-#define DEFKTNAME "FILE:%{WINDOWS}\\krb5kt"
-#define DEFCKTNAME "FILE:%{WINDOWS}\\krb5clientkt"
 
 #ifndef KRB5_CALLCONV
 #define KRB5_CALLCONV

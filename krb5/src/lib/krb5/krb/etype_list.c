@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/etype_list.c */
 /*
+ * lib/krb5/krb/etype_list.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * Helper functions related to zero-terminated lists of enctypes.
  */
@@ -33,7 +32,7 @@
 #include "int-proto.h"
 
 size_t
-k5_count_etypes(const krb5_enctype *list)
+krb5int_count_etypes(const krb5_enctype *list)
 {
     size_t count;
 
@@ -43,26 +42,17 @@ k5_count_etypes(const krb5_enctype *list)
 
 /* Copy the zero-terminated enctype list old_list into *new_list. */
 krb5_error_code
-k5_copy_etypes(const krb5_enctype *old_list, krb5_enctype **new_list)
+krb5int_copy_etypes(const krb5_enctype *old_list, krb5_enctype **new_list)
 {
     size_t count;
     krb5_enctype *list;
 
     *new_list = NULL;
-    count = k5_count_etypes(old_list);
+    count = krb5int_count_etypes(old_list);
     list = malloc(sizeof(krb5_enctype) * (count + 1));
     if (list == NULL)
         return ENOMEM;
     memcpy(list, old_list, sizeof(krb5_enctype) * (count + 1));
     *new_list = list;
     return 0;
-}
-
-krb5_boolean
-k5_etypes_contains(const krb5_enctype *list, krb5_enctype etype)
-{
-    size_t i;
-
-    for (i = 0; list[i] && list[i] != etype; i++);
-    return (list[i] == etype);
 }

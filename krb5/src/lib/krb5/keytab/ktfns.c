@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/keytab/ktfns.c */
 /*
+ * lib/krb5/keytab/ktfns.c
+ *
  * Copyright 2001,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -96,37 +97,6 @@ krb5_kt_end_seq_get(krb5_context context, krb5_keytab keytab,
                     krb5_kt_cursor *cursor)
 {
     return krb5_x((keytab)->ops->end_get,(context, keytab, cursor));
-}
-
-krb5_error_code KRB5_CALLCONV
-krb5_kt_have_content(krb5_context context, krb5_keytab keytab)
-{
-    krb5_keytab_entry entry;
-    krb5_kt_cursor cursor;
-    krb5_error_code ret;
-    char name[1024];
-
-    /* If the keytab is not iterable, assume that it has content. */
-    if (keytab->ops->start_seq_get == NULL)
-        return 0;
-
-    /* See if we can get at least one entry via iteration. */
-    ret = krb5_kt_start_seq_get(context, keytab, &cursor);
-    if (ret)
-	goto no_entries;
-    ret = krb5_kt_next_entry(context, keytab, &entry, &cursor);
-    krb5_kt_end_seq_get(context, keytab, &cursor);
-    if (ret)
-	goto no_entries;
-    krb5_kt_free_entry(context, &entry);
-    return 0;
-
-no_entries:
-    if (krb5_kt_get_name(context, keytab, name, sizeof(name)) == 0) {
-        krb5_set_error_message(context, KRB5_KT_NOTFOUND,
-                               _("Keytab %s is nonexistent or empty"), name);
-    }
-    return KRB5_KT_NOTFOUND;
 }
 
 /*

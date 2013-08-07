@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* tests/threads/init_ctx.c */
 /*
+ * test/threads/init_ctx.c
+ *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * krb5 context creation performance testing
  * initially contributed by Ken Raeburn
  */
@@ -165,12 +165,12 @@ static void run_iterations (struct resource_info *r)
 
     r->start_time = now ();
     for (i = 0; i < iter_count; i++) {
-        err = krb5_init_context(&ctx);
-        if (err) {
-            com_err(prog, err, "initializing krb5 context");
-            exit(1);
-        }
-        krb5_free_context(ctx);
+	err = krb5_init_context(&ctx);
+	if (err) {
+	    com_err(prog, err, "initializing krb5 context");
+	    exit(1);
+	}
+	krb5_free_context(ctx);
     }
     r->end_time = now ();
 }

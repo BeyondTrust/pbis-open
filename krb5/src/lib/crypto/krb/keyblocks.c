@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/krb/keyblocks.c - Keyblock utility functions */
 /*
+ * lib/crypto/keyblocks.c
+ *
  * Copyright (C) 2002, 2005 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,16 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ *
+ * krb5_init_keyblock- a function to set up
+ *  an empty keyblock
  */
 
-#include "crypto_int.h"
+
+#include "k5-int.h"
+#include <assert.h>
 
 krb5_error_code
 krb5int_c_init_keyblock(krb5_context context, krb5_enctype enctype,
@@ -68,7 +76,6 @@ krb5int_c_free_keyblock_contents(krb5_context context, krb5_keyblock *key)
     if (key && key->contents) {
         zapfree(key->contents, key->length);
         key->contents = NULL;
-        key->length = 0;
     }
 }
 

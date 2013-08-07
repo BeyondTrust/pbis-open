@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/gic_keytab.c */
 /*
+ * lib/krb5/krb/gic_keytab.c
+ *
  * Copyright (C) 2002, 2003, 2008 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -26,7 +27,6 @@
 #ifndef LEAN_CLIENT
 
 #include "k5-int.h"
-#include "int-proto.h"
 #include "init_creds_ctx.h"
 
 static krb5_error_code
@@ -38,17 +38,12 @@ get_as_key_keytab(krb5_context context,
                   krb5_data *salt,
                   krb5_data *params,
                   krb5_keyblock *as_key,
-                  void *gak_data,
-                  k5_response_items *ritems)
+                  void *gak_data)
 {
     krb5_keytab keytab = (krb5_keytab) gak_data;
     krb5_error_code ret;
     krb5_keytab_entry kt_ent;
     krb5_keyblock *kt_key;
-
-    /* We don't need the password from the responder to create the AS key. */
-    if (as_key == NULL)
-        return 0;
 
     /* if there's already a key of the correct etype, we're done.
        if the etype is wrong, free the existing key, and make
@@ -82,184 +77,15 @@ get_as_key_keytab(krb5_context context,
     return(ret);
 }
 
-/* Return the list of etypes available for client in keytab. */
-static krb5_error_code
-lookup_etypes_for_keytab(krb5_context context, krb5_keytab keytab,
-                         krb5_principal client, krb5_enctype **etypes_out)
-{
-    krb5_kt_cursor cursor;
-    krb5_keytab_entry entry;
-    krb5_enctype *p, *etypes = NULL;
-    krb5_kvno max_kvno = 0;
-    krb5_error_code ret;
-    size_t count = 0;
-
-    *etypes_out = NULL;
-
-    if (keytab->ops->start_seq_get == NULL)
-        return EINVAL;
-    ret = krb5_kt_start_seq_get(context, keytab, &cursor);
-    if (ret != 0)
-        return ret;
-
-    for (;;) {
-        ret = krb5_kt_next_entry(context, keytab, &entry, &cursor);
-        if (ret == KRB5_KT_END)
-            break;
-        if (ret)
-            goto cleanup;
-
-        if (!krb5_c_valid_enctype(entry.key.enctype)) {
-            krb5_free_keytab_entry_contents(context, &entry);
-            continue;
-        }
-        if (!krb5_principal_compare(context, entry.principal, client)) {
-            krb5_free_keytab_entry_contents(context, &entry);
-            continue;
-        }
-        /* Make sure our list is for the highest kvno found for client. */
-        if (entry.vno > max_kvno) {
-            free(etypes);
-            etypes = NULL;
-            count = 0;
-            max_kvno = entry.vno;
-        } else if (entry.vno != max_kvno) {
-            krb5_free_keytab_entry_contents(context, &entry);
-            continue;
-        }
-
-        /* Leave room for the terminator and possibly a second entry. */
-        p = realloc(etypes, (count + 3) * sizeof(*etypes));
-        if (p == NULL) {
-            krb5_free_keytab_entry_contents(context, &entry);
-            ret = ENOMEM;
-            goto cleanup;
-        }
-        etypes = p;
-        etypes[count++] = entry.key.enctype;
-        /* All DES key types work with des-cbc-crc, which is more likely to be
-         * accepted by the KDC (since MIT KDCs refuse des-cbc-md5). */
-        if (entry.key.enctype == ENCTYPE_DES_CBC_MD5 ||
-            entry.key.enctype == ENCTYPE_DES_CBC_MD4)
-            etypes[count++] = ENCTYPE_DES_CBC_CRC;
-        etypes[count] = 0;
-        krb5_free_keytab_entry_contents(context, &entry);
-    }
-
-    ret = 0;
-    *etypes_out = etypes;
-    etypes = NULL;
-cleanup:
-    krb5_kt_end_seq_get(context, keytab, &cursor);
-    free(etypes);
-    return ret;
-}
-
-/* Move the entries in keytab_list (zero-terminated) to the front of req_list
- * (of length req_len), preserving order otherwise. */
-static krb5_error_code
-sort_enctypes(krb5_enctype *req_list, int req_len, krb5_enctype *keytab_list)
-{
-    krb5_enctype *save_list;
-    int save_pos, req_pos, i;
-
-    save_list = malloc(req_len * sizeof(*save_list));
-    if (save_list == NULL)
-        return ENOMEM;
-
-    /* Sort req_list entries into the front of req_list or into save_list. */
-    req_pos = save_pos = 0;
-    for (i = 0; i < req_len; i++) {
-        if (k5_etypes_contains(keytab_list, req_list[i]))
-            req_list[req_pos++] = req_list[i];
-        else
-            save_list[save_pos++] = req_list[i];
-    }
-
-    /* Put the entries we saved back in at the end, in order. */
-    for (i = 0; i < save_pos; i++)
-        req_list[req_pos++] = save_list[i];
-    assert(req_pos == req_len);
-
-    free(save_list);
-    return 0;
-}
-
 krb5_error_code KRB5_CALLCONV
 krb5_init_creds_set_keytab(krb5_context context,
                            krb5_init_creds_context ctx,
                            krb5_keytab keytab)
 {
-    krb5_enctype *etype_list;
-    krb5_error_code ret;
-    char *name;
-
     ctx->gak_fct = get_as_key_keytab;
     ctx->gak_data = keytab;
 
-    ret = lookup_etypes_for_keytab(context, keytab, ctx->request->client,
-                                   &etype_list);
-    if (ret) {
-        TRACE_INIT_CREDS_KEYTAB_LOOKUP_FAILED(context, ret);
-        return 0;
-    }
-    TRACE_INIT_CREDS_KEYTAB_LOOKUP(context, etype_list);
-
-    /* Error out if we have no keys for the client principal. */
-    if (etype_list == NULL) {
-        ret = krb5_unparse_name(context, ctx->request->client, &name);
-        if (ret == 0) {
-            krb5_set_error_message(context, KRB5_KT_NOTFOUND,
-                                   _("Keytab contains no suitable keys for "
-                                     "%s"), name);
-        }
-        krb5_free_unparsed_name(context, name);
-        return KRB5_KT_NOTFOUND;
-    }
-
-    /* Sort the request enctypes so the ones in the keytab appear first. */
-    ret = sort_enctypes(ctx->request->ktype, ctx->request->nktypes,
-                        etype_list);
-    free(etype_list);
-    return ret;
-}
-
-static krb5_error_code
-get_init_creds_keytab(krb5_context context, krb5_creds *creds,
-                      krb5_principal client, krb5_keytab keytab,
-                      krb5_deltat start_time, const char *in_tkt_service,
-                      krb5_get_init_creds_opt *options, int *use_master)
-{
-    krb5_error_code ret;
-    krb5_init_creds_context ctx = NULL;
-
-    ret = krb5_init_creds_init(context, client, NULL, NULL, start_time,
-                               options, &ctx);
-    if (ret != 0)
-        goto cleanup;
-
-    if (in_tkt_service) {
-        ret = krb5_init_creds_set_service(context, ctx, in_tkt_service);
-        if (ret != 0)
-            goto cleanup;
-    }
-
-    ret = krb5_init_creds_set_keytab(context, ctx, keytab);
-    if (ret != 0)
-        goto cleanup;
-
-    ret = k5_init_creds_get(context, ctx, use_master);
-    if (ret != 0)
-        goto cleanup;
-
-    ret = krb5_init_creds_get_creds(context, ctx, creds);
-    if (ret != 0)
-        goto cleanup;
-
-cleanup:
-    krb5_init_creds_free(context, ctx);
-
-    return ret;
+    return 0;
 }
 
 krb5_error_code KRB5_CALLCONV
@@ -268,7 +94,7 @@ krb5_get_init_creds_keytab(krb5_context context,
                            krb5_principal client,
                            krb5_keytab arg_keytab,
                            krb5_deltat start_time,
-                           const char *in_tkt_service,
+                           char *in_tkt_service,
                            krb5_get_init_creds_opt *options)
 {
     krb5_error_code ret, ret2;
@@ -286,8 +112,10 @@ krb5_get_init_creds_keytab(krb5_context context,
 
     /* first try: get the requested tkt from any kdc */
 
-    ret = get_init_creds_keytab(context, creds, client, keytab, start_time,
-                                in_tkt_service, options, &use_master);
+    ret = krb5int_get_init_creds(context, creds, client, NULL, NULL,
+                                 start_time, in_tkt_service, options,
+                                 get_as_key_keytab, (void *) keytab,
+                                 &use_master,NULL);
 
     /* check for success */
 
@@ -305,9 +133,10 @@ krb5_get_init_creds_keytab(krb5_context context,
     if (!use_master) {
         use_master = 1;
 
-        ret2 = get_init_creds_keytab(context, creds, client, keytab,
-                                     start_time, in_tkt_service, options,
-                                     &use_master);
+        ret2 = krb5int_get_init_creds(context, creds, client, NULL, NULL,
+                                      start_time, in_tkt_service, options,
+                                      get_as_key_keytab, (void *) keytab,
+                                      &use_master, NULL);
 
         if (ret2 == 0) {
             ret = 0;

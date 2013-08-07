@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/krb/encrypt_iov.c */
 /*
+ * lib/crypto/encrypt_iov.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -24,7 +25,8 @@
  * or implied warranty.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_k_encrypt_iov(krb5_context context, krb5_key key, krb5_keyusage usage,

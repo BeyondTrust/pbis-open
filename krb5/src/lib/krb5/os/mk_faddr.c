@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/os/mk_faddr.c - Generate full address from IP addr and port */
 /*
+ * lib/krb5/os/full_ipadr.c
+ *
  * Copyright 1995, 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Take an IP addr & port and generate a full IP address.
  */
 
 #include "k5-int.h"
@@ -35,8 +39,7 @@
 #endif
 
 krb5_error_code
-krb5_make_fulladdr(krb5_context context, krb5_address *kaddr,
-                   krb5_address *kport, krb5_address *raddr)
+krb5_make_fulladdr(krb5_context context, krb5_address *kaddr, krb5_address *kport, krb5_address *raddr)
 {
     register krb5_octet * marshal;
     krb5_int32 tmp32;

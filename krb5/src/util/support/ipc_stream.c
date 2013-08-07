@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* util/support/ipc_stream.c */
 /*
+ * $Header$
+ *
  * Copyright 2006, 2007, 2009 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

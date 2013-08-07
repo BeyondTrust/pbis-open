@@ -25,7 +25,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
 
 /*
  * The following functions were removed from the API in krb5 1.3 but
@@ -211,25 +211,6 @@ krb5_checksum_size(krb5_context context, krb5_cksumtype ctype)
     return ret;
 }
 
-/* Guess the enctype for an untyped key used with checksum type ctype. */
-static krb5_enctype
-guess_enctype(krb5_cksumtype ctype)
-{
-    const struct krb5_cksumtypes *ctp;
-    int i;
-
-    if (ctype == CKSUMTYPE_HMAC_MD5_ARCFOUR)
-        return ENCTYPE_ARCFOUR_HMAC;
-    ctp = find_cksumtype(ctype);
-    if (ctp == NULL || ctp->enc == NULL)
-        return 0;
-    for (i = 0; i < krb5int_enctypes_length; i++) {
-        if (krb5int_enctypes_list[i].enc == ctp->enc)
-            return i;
-    }
-    return 0;
-}
-
 krb5_error_code KRB5_CALLCONV
 krb5_calculate_checksum(krb5_context context, krb5_cksumtype ctype,
                         krb5_const_pointer in, size_t in_length,
@@ -237,18 +218,15 @@ krb5_calculate_checksum(krb5_context context, krb5_cksumtype ctype,
                         krb5_checksum *outcksum)
 {
     krb5_data input = make_data((void *) in, in_length);
-    krb5_keyblock keyblock, *kptr = NULL;
+    krb5_keyblock key;
     krb5_error_code ret;
     krb5_checksum cksum;
 
-    if (seed != NULL) {
-        keyblock.enctype = guess_enctype(ctype);
-        keyblock.length = seed_length;
-        keyblock.contents = (unsigned char *) seed;
-        kptr = &keyblock;
-    }
+    key.enctype = ENCTYPE_NULL;
+    key.length = seed_length;
+    key.contents = (unsigned char *) seed;
 
-    ret = krb5_c_make_checksum(context, ctype, kptr, 0, &input, &cksum);
+    ret = krb5_c_make_checksum(context, ctype, &key, 0, &input, &cksum);
     if (ret)
         return ret;
 
@@ -275,18 +253,14 @@ krb5_verify_checksum(krb5_context context, krb5_cksumtype ctype,
                      size_t seed_length)
 {
     krb5_data input = make_data((void *) in, in_length);
-    krb5_keyblock keyblock, *kptr = NULL;
+    krb5_keyblock key;
     krb5_error_code ret;
     krb5_boolean valid;
 
-    if (seed != NULL) {
-        keyblock.enctype = guess_enctype(ctype);
-        keyblock.length = seed_length;
-        keyblock.contents = (unsigned char *) seed;
-        kptr = &keyblock;
-    }
+    key.length = seed_length;
+    key.contents = (unsigned char *) seed;
 
-    ret = krb5_c_verify_checksum(context, kptr, 0, &input, cksum, &valid);
+    ret = krb5_c_verify_checksum(context, &key, 0, &input, cksum, &valid);
     if (ret)
         return ret;
 

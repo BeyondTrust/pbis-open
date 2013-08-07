@@ -21,7 +21,7 @@
  */
 
 /*
- * $Id$
+ * $Id: gss-misc.h 23100 2009-10-31 00:48:38Z tlyu $
  */
 
 #ifndef _GSSMISC_H_

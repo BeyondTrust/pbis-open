@@ -82,11 +82,7 @@ gss_ctx_id_t *		context_handle;
     OM_uint32		status;
     char		*p;
     gss_union_ctx_id_t	ctx;
-    gss_ctx_id_t	mctx;
     gss_buffer_desc	token;
-    gss_OID_desc	token_mech;
-    gss_OID		selected_mech = GSS_C_NO_OID;
-    gss_OID		public_mech;
     gss_mechanism	mech;
 
     status = val_imp_sec_ctx_args(minor_status,
@@ -100,6 +96,12 @@ gss_ctx_id_t *		context_handle;
     ctx = (gss_union_ctx_id_t) malloc(sizeof(gss_union_ctx_id_desc));
     if (!ctx)
 	return (GSS_S_FAILURE);
+
+    ctx->mech_type = (gss_OID) malloc(sizeof(gss_OID_desc));
+    if (!ctx->mech_type) {
+	free(ctx);
+	return (GSS_S_FAILURE);
+    }
 
     if (interprocess_token->length >= sizeof (OM_uint32)) {
 	p = interprocess_token->value;
@@ -115,9 +117,12 @@ gss_ctx_id_t *		context_handle;
 	return (GSS_S_CALL_BAD_STRUCTURE | GSS_S_DEFECTIVE_TOKEN);
     }
 
-    token_mech.length = length;
-    token_mech.elements = p;
-
+    ctx->mech_type->length = length;
+    ctx->mech_type->elements = malloc(length);
+    if (!ctx->mech_type->elements) {
+	goto error_out;
+    }
+    memcpy(ctx->mech_type->elements, p, length);
     p += length;
 
     token.length = interprocess_token->length - sizeof (OM_uint32) - length;
@@ -128,48 +133,35 @@ gss_ctx_id_t *		context_handle;
      * call it.
      */
 
-    status = gssint_select_mech_type(minor_status, &token_mech,
-				     &selected_mech);
-    if (status != GSS_S_COMPLETE)
-	goto error_out;
-
-    mech = gssint_get_mechanism(selected_mech);
+    mech = gssint_get_mechanism (ctx->mech_type);
     if (!mech) {
 	status = GSS_S_BAD_MECH;
 	goto error_out;
     }
-    if (!mech->gssspi_import_sec_context_by_mech &&
-	!mech->gss_import_sec_context) {
+    if (!mech->gss_import_sec_context) {
 	status = GSS_S_UNAVAILABLE;
 	goto error_out;
     }
 
-    if (generic_gss_copy_oid(minor_status, selected_mech,
-			     &ctx->mech_type) != GSS_S_COMPLETE) {
-	status = GSS_S_FAILURE;
-	goto error_out;
-    }
+    status = mech->gss_import_sec_context(minor_status,
+					  &token, &ctx->internal_ctx_id);
 
-    if (mech->gssspi_import_sec_context_by_mech) {
-	public_mech = gssint_get_public_oid(selected_mech);
-	status = mech->gssspi_import_sec_context_by_mech(minor_status,
-							 public_mech,
-							 &token, &mctx);
-    } else {
-	status = mech->gss_import_sec_context(minor_status, &token, &mctx);
-    }
     if (status == GSS_S_COMPLETE) {
-	ctx->internal_ctx_id = mctx;
 	ctx->loopback = ctx;
-	*context_handle = (gss_ctx_id_t)ctx;
+	*context_handle = ctx;
 	return (GSS_S_COMPLETE);
     }
     map_error(minor_status, mech);
-    free(ctx->mech_type->elements);
-    free(ctx->mech_type);
 
 error_out:
-    free(ctx);
+    if (ctx) {
+	if (ctx->mech_type) {
+	    if (ctx->mech_type->elements)
+		free(ctx->mech_type->elements);
+	    free(ctx->mech_type);
+	}
+	free(ctx);
+    }
     return status;
 }
 #endif /* LEAN_CLIENT */

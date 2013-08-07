@@ -25,7 +25,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_c_make_random_key(krb5_context context, krb5_enctype enctype,
@@ -64,7 +65,7 @@ krb5_c_make_random_key(krb5_context context, krb5_enctype enctype,
     random_key->enctype = enctype;
     random_key->length = keylength;
 
-    ret = (*ktp->rand2key)(&random_data, random_key);
+    ret = (*enc->make_key)(&random_data, random_key);
 
 cleanup:
     if (ret) {

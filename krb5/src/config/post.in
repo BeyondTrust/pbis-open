@@ -42,7 +42,7 @@ $(BUILDTOP)/.depend-verify-et: depend-verify-et-$(COM_ERR_VERSION)
 depend-verify-et-k5:
 	@if test -r $(BUILDTOP)/.depend-verify-et; then :; \
 		else (set -x; touch $(BUILDTOP)/.depend-verify-et); fi
-depend-verify-et-sys depend-verify-et-intlsys:
+depend-verify-et-sys:
 	@echo 1>&2 error: cannot build dependencies using system et package
 	@exit 1
 $(BUILDTOP)/.depend-verify-ss: depend-verify-ss-$(SS_VERSION)
@@ -139,9 +139,8 @@ check-pytests::
 clean:: clean-$(WHAT)
 
 clean-unix::
-	$(RM) $(OBJS) $(DEPTARGETS_CLEAN) $(EXTRA_FILES)
-	$(RM) et-[ch]-*.et et-[ch]-*.[ch] testlog
-	-$(RM) -r $(top_srcdir)/autom4te.cache testdir
+	$(RM) $(OBJS) $(DEPTARGETS_CLEAN) $(EXTRA_FILES) et-[ch]-*.et et-[ch]-*.[ch]
+	-$(RM) -r $(top_srcdir)/autom4te.cache
 
 clean-windows::
 	$(RM) *.$(OBJEXT)

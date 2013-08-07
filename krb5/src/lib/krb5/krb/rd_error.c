@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/rd_error.c */
 /*
+ * lib/krb5/krb/rd_error.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,16 +23,21 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * krb5_rd_error() routine
  */
 
 #include "k5-int.h"
 
 /*
- * Parse an error message from enc_errbuf and return an allocated structure
- * containing the error message.  Upon return, dec_error will point to
- * allocated storage which the caller should free when finished.
+ *  Parses an error message from enc_errbuf and returns an allocated
+ * structure which contain the error message.
  *
- * Returns system errors.
+ *  Upon return dec_error will point to allocated storage which the
+ * caller should free when finished.
+ *
+ *  returns system errors
  */
 
 krb5_error_code KRB5_CALLCONV

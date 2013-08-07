@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/ldap_create.c */
 /*
+ * lib/kdb/kdb_ldap/ldap_create.c
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -62,6 +63,9 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
     krb5_ldap_krbcontainer_params kparams = {0};
     int srv_cnt = 0;
     int mask = 0;
+#ifdef HAVE_EDIRECTORY
+    int i = 0, rightsmask = 0;
+#endif
 
     /* Clear the global error string */
     krb5_clear_error_message(context);
@@ -177,6 +181,36 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
             }
 
             srv_cnt++;
+#ifdef HAVE_EDIRECTORY
+        } else if (opt && !strcmp(opt, "cert")) {
+            if (val == NULL) {
+                status = EINVAL;
+                krb5_set_error_message (context, status, "'cert' value missing");
+                free(opt);
+                goto cleanup;
+            }
+
+            if (ldap_context->root_certificate_file == NULL) {
+                ldap_context->root_certificate_file = strdup(val);
+                if (ldap_context->root_certificate_file == NULL) {
+                    free (opt);
+                    free (val);
+                    status = ENOMEM;
+                    goto cleanup;
+                }
+            } else {
+                char *newstr;
+
+                if (asprintf(&newstr, "%s %s",
+                             ldap_context->root_certificate_file, val) < 0) {
+                    free (opt);
+                    free (val);
+                    status = ENOMEM;
+                    goto cleanup;
+                }
+                ldap_context->root_certificate_file = newstr;
+            }
+#endif
         } else {
             /* ignore hash argument. Might have been passed from create */
             status = EINVAL;
@@ -185,13 +219,11 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
                  * temporary is passed in when kdb5_util load without -update is done.
                  * This is unsupported by the LDAP plugin.
                  */
-                krb5_set_error_message(context, status,
-                                       _("creation of LDAP entries aborted, "
-                                         "plugin requires -update argument"));
+                krb5_set_error_message (context, status,
+                                        "creation of LDAP entries aborted, plugin requires -update argument");
             } else {
-                krb5_set_error_message(context, status,
-                                       _("unknown option \'%s\'"),
-                                       opt?opt:val);
+                krb5_set_error_message (context, status, "unknown option \'%s\'",
+                                        opt?opt:val);
             }
             free(opt);
             free(val);
@@ -225,7 +257,7 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
         if (ldap_context->conf_section) {
             if ((status = profile_get_string(context->profile,
                                              KDB_MODULE_SECTION, ldap_context->conf_section,
-                                             KRB5_CONF_LDAP_KERBEROS_CONTAINER_DN, NULL,
+                                             "ldap_kerberos_container_dn", NULL,
                                              &kparams.DN)) != 0) {
                 goto cleanup;
             }
@@ -233,7 +265,7 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
         if (kparams.DN == NULL) {
             if ((status = profile_get_string(context->profile,
                                              KDB_MODULE_DEF_SECTION,
-                                             KRB5_CONF_LDAP_KERBEROS_CONTAINER_DN, NULL,
+                                             "ldap_kerberos_container_dn", NULL,
                                              NULL, &kparams.DN)) != 0) {
                 goto cleanup;
             }
@@ -281,6 +313,51 @@ krb5_ldap_create(krb5_context context, char *conf_section, char **db_args)
                                               &mask)))
         goto cleanup;
 
+#ifdef HAVE_EDIRECTORY
+    if ((mask & LDAP_REALM_KDCSERVERS) || (mask & LDAP_REALM_ADMINSERVERS) ||
+        (mask & LDAP_REALM_PASSWDSERVERS)) {
+
+        rightsmask =0;
+        rightsmask |= LDAP_REALM_RIGHTS;
+        rightsmask |= LDAP_SUBTREE_RIGHTS;
+        if ((rparams != NULL) && (rparams->kdcservers != NULL)) {
+            for (i=0; (rparams->kdcservers[i] != NULL); i++) {
+                if ((status=krb5_ldap_add_service_rights(context,
+                                                         LDAP_KDC_SERVICE, rparams->kdcservers[i],
+                                                         rparams->realm_name, rparams->subtree, rparams->containerref, rightsmask)) != 0) {
+                    goto cleanup;
+                }
+            }
+        }
+
+        rightsmask = 0;
+        rightsmask |= LDAP_REALM_RIGHTS;
+        rightsmask |= LDAP_SUBTREE_RIGHTS;
+        if ((rparams != NULL) && (rparams->adminservers != NULL)) {
+            for (i=0; (rparams->adminservers[i] != NULL); i++) {
+                if ((status=krb5_ldap_add_service_rights(context,
+                                                         LDAP_ADMIN_SERVICE, rparams->adminservers[i],
+                                                         rparams->realm_name, rparams->subtree, rparams->containerref, rightsmask)) != 0) {
+                    goto cleanup;
+                }
+            }
+        }
+
+        rightsmask = 0;
+        rightsmask |= LDAP_REALM_RIGHTS;
+        rightsmask |= LDAP_SUBTREE_RIGHTS;
+        if ((rparams != NULL) && (rparams->passwdservers != NULL)) {
+            for (i=0; (rparams->passwdservers[i] != NULL); i++) {
+                if ((status=krb5_ldap_add_service_rights(context,
+                                                         LDAP_PASSWD_SERVICE, rparams->passwdservers[i],
+                                                         rparams->realm_name, rparams->subtree, rparams->containerref, rightsmask)) != 0) {
+                    goto cleanup;
+                }
+            }
+        }
+    }
+#endif
+
 cleanup:
 
     /* If the krbcontainer/realm creation is not complete, do the roll-back here */
@@ -289,8 +366,7 @@ cleanup:
         rc = krb5_ldap_delete_krbcontainer(context,
                                            ((kparams.DN != NULL) ? &kparams : NULL));
         krb5_set_error_message(context, rc,
-                               _("could not complete roll-back, error "
-                                 "deleting Kerberos Container"));
+                               "could not complete roll-back, error deleting Kerberos Container");
     }
 
     /* should call krb5_ldap_free_krbcontainer_params() but can't */

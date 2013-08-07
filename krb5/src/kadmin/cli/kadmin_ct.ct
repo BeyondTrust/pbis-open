@@ -35,9 +35,6 @@ request kadmin_delprinc, "Delete principal",
 request kadmin_modprinc, "Modify principal",
 	modify_principal, modprinc;
 
-request kadmin_renameprinc, "Rename principal",
-	rename_principal, renprinc;
-
 request kadmin_cpw, "Change password",
 	change_password, cpw;
 
@@ -79,15 +76,6 @@ request kadmin_unlock, "Release exclusive database lock",
 
 request kadmin_purgekeys, "Purge previously retained old keys from a principal",
 	purgekeys;
-
-request kadmin_getstrings, "Show string attributes on a principal",
-	get_strings, getstrs;
-
-request kadmin_setstring, "Set a string attribute on a principal",
-	set_string, setstr;
-
-request kadmin_delstring, "Delete a string attribute on a principal",
-	del_string, delstr;
 
 # list_requests is generic -- unrelated to Kerberos
 request	ss_list_requests, "List available requests.",

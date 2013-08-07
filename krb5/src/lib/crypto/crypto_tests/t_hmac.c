@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/crypto_tests/t_hmac.c */
 /*
+ * lib/crypto/t_hmac.c
+ *
  * Copyright 2001,2002 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * Test vectors for HMAC-MD5 and HMAC-SHA1 (placeholder only).
  * Tests taken from RFC 2202.
  */
@@ -34,7 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "crypto_int.h"
+#include "hash_provider.h"
 
 #define ASIZE(ARRAY) (sizeof(ARRAY)/sizeof(ARRAY[0]))
 
@@ -57,7 +57,7 @@ static void check_error (int r, int line) {
 #endif
 
 static void printd (const char *descr, krb5_data *d) {
-    unsigned int i, j;
+    int i, j;
     const int r = 16;
 
     printf("%s (%d bytes):", descr, d->length);
@@ -139,7 +139,7 @@ static void test_hmac()
     char outbuf[20];
     char stroutbuf[80];
     krb5_error_code err;
-    unsigned int i, j;
+    int i, j;
     int lose = 0;
     struct k5buf buf;
 

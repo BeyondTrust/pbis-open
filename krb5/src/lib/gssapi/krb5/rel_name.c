@@ -23,7 +23,7 @@
 
 #include "gssapiP_krb5.h"
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_release_name(minor_status, input_name)
     OM_uint32 *minor_status;
     gss_name_t *input_name;
@@ -37,7 +37,14 @@ krb5_gss_release_name(minor_status, input_name)
         return GSS_S_FAILURE;
     }
 
-    kg_release_name(context, (krb5_gss_name_t *)input_name);
+    if (! kg_validate_name(*input_name)) {
+        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
+        krb5_free_context(context);
+        return(GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME);
+    }
+
+    kg_release_name(context, KG_INIT_NAME_INTERN,
+                    (krb5_gss_name_t *)input_name);
     krb5_free_context(context);
 
     *input_name = (gss_name_t) NULL;

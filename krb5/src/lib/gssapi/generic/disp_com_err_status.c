@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id$
+ * $Id: disp_com_err_status.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 #include "gssapiP_generic.h"
@@ -45,8 +45,10 @@ static const char * const no_error = "No error";
 */
 
 OM_uint32
-g_display_com_err_status(OM_uint32 *minor_status, OM_uint32 status_value,
-                         gss_buffer_t status_string)
+g_display_com_err_status(minor_status, status_value, status_string)
+    OM_uint32 *minor_status;
+    OM_uint32 status_value;
+    gss_buffer_t status_string;
 {
     status_string->length = 0;
     status_string->value = NULL;

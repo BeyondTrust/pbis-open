@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/lockout.c */
 /*
+ * plugins/kdb/ldap/lockout.c
+ *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ *
  */
 
 #include <stdio.h>
@@ -127,7 +131,7 @@ krb5_ldap_lockout_check_policy(krb5_context context,
     code = lookup_lockout_policy(context, entry, &max_fail,
                                  &failcnt_interval,
                                  &lockout_duration);
-    if (code != 0)
+    if (code != 0 || failcnt_interval == 0)
         return code;
 
     if (locked_check_p(context, stamp, max_fail, lockout_duration, entry))
@@ -161,9 +165,6 @@ krb5_ldap_lockout_audit(krb5_context context,
         return 0;
     }
 
-    if (entry == NULL)
-        return 0;
-
     if (!ldap_context->disable_lockout) {
         code = lookup_lockout_policy(context, entry, &max_fail,
                                      &failcnt_interval,
@@ -172,16 +173,9 @@ krb5_ldap_lockout_audit(krb5_context context,
             return code;
     }
 
-    /*
-     * Don't continue to modify the DB for an already locked account.
-     * (In most cases, status will be KRB5KDC_ERR_CLIENT_REVOKED, and
-     * this check is unneeded, but in rare cases, we can fail with an
-     * integrity error or preauth failure before a policy check.)
-     */
-    if (locked_check_p(context, stamp, max_fail, lockout_duration, entry))
-        return 0;
-
     entry->mask = 0;
+
+    assert (!locked_check_p(context, stamp, max_fail, lockout_duration, entry));
 
     /* Only mark the authentication as successful if the entry
      * required preauthentication, otherwise we have no idea. */

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/ccache/cc_keyring.c */
 /*
+ * lib/krb5/ccache/cc_keyring.c
+ *
  * Copyright (c) 2006
  * The Regents of the University of Michigan
  * ALL RIGHTS RESERVED
@@ -28,10 +29,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
  * IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
+ *
  */
 /*
- * Copyright 1990,1991,1992,1993,1994,2000,2004 Massachusetts Institute of
- * Technology.  All Rights Reserved.
+ * Copyright 1990,1991,1992,1993,1994,2000,2004 Massachusetts Institute of Technology.
+ * All Rights Reserved.
  *
  * Original stdio support copyright 1995 by Cygnus Support.
  *
@@ -2073,7 +2075,6 @@ const krb5_cc_ops krb5_krcc_ops = {
     NULL, /* wasdefault */
     krb5_krcc_lock,
     krb5_krcc_unlock,
-    NULL, /* switch_to */
 };
 
 #else /* !USE_KEYRING_CCACHE */
@@ -2099,7 +2100,6 @@ const krb5_cc_ops krb5_krcc_ops = {
     NULL,
     NULL,
     NULL,                       /* added after 1.4 release */
-    NULL,
     NULL,
     NULL,
     NULL,

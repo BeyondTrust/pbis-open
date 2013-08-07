@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* kdc/replay.c - Replay lookaside cache for the KDC, to avoid extra work */
 /*
+ * kdc/replay.c
+ *
  * Copyright 1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,219 +23,153 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Replay lookaside cache for the KDC, to avoid extra work.
+ *
  */
 
 #include "k5-int.h"
-#include "k5-queue.h"
 #include "kdc_util.h"
 #include "extern.h"
 
 #ifndef NOCACHE
 
-struct entry {
-    LIST_ENTRY(entry) bucket_links;
-    TAILQ_ENTRY(entry) expire_links;
+typedef struct _krb5_kdc_replay_ent {
+    struct _krb5_kdc_replay_ent *next;
     int num_hits;
-    krb5_timestamp timein;
-    krb5_data req_packet;
-    krb5_data reply_packet;
-};
+    krb5_int32 timein;
+    time_t db_age;
+    krb5_data *req_packet;
+    krb5_data *reply_packet;
+} krb5_kdc_replay_ent;
 
-#ifndef LOOKASIDE_HASH_SIZE
-#define LOOKASIDE_HASH_SIZE 16384
-#endif
-#ifndef LOOKASIDE_MAX_SIZE
-#define LOOKASIDE_MAX_SIZE (10 * 1024 * 1024)
-#endif
-
-LIST_HEAD(entry_list, entry);
-TAILQ_HEAD(entry_queue, entry);
-
-static struct entry_list hash_table[LOOKASIDE_HASH_SIZE];
-static struct entry_queue expiration_queue;
+static krb5_kdc_replay_ent root_ptr = {0};
 
 static int hits = 0;
 static int calls = 0;
 static int max_hits_per_entry = 0;
 static int num_entries = 0;
-static size_t total_size = 0;
-static krb5_ui_4 seed;
 
-#define STALE_TIME      (2*60)            /* two minutes */
-#define STALE(ptr, now) (abs((ptr)->timein - (now)) >= STALE_TIME)
+#define STALE_TIME      2*60            /* two minutes */
+#define STALE(ptr) ((abs((ptr)->timein - timenow) >= STALE_TIME) ||     \
+                    ((ptr)->db_age != db_age))
 
-/* Return x rotated to the left by r bits. */
-static inline krb5_ui_4
-rotl32(krb5_ui_4 x, int r)
-{
-    return (x << r) | (x >> (32 - r));
-}
+#define MATCH(ptr) (((ptr)->req_packet->length == inpkt->length) &&     \
+                    !memcmp((ptr)->req_packet->data, inpkt->data,       \
+                            inpkt->length) &&                           \
+                    ((ptr)->db_age == db_age))
+/* XXX
+   Todo:  quench the size of the queue...
+*/
 
-/*
- * Return a non-cryptographic hash of data, seeded by seed (the global
- * variable), using the MurmurHash3 algorithm by Austin Appleby.  Return the
- * result modulo LOOKASIDE_HASH_SIZE.
- */
-static int
-murmurhash3(const krb5_data *data)
-{
-    const krb5_ui_4 c1 = 0xcc9e2d51, c2 = 0x1b873593;
-    const unsigned char *start = (unsigned char *)data->data, *endblocks, *p;
-    int tail_len = (data->length % 4);
-    krb5_ui_4 h = seed, final;
+/* return TRUE if outpkt is filled in with a packet to reply with,
+   FALSE if the caller should do the work */
 
-    endblocks = start + data->length - tail_len;
-    for (p = start; p < endblocks; p += 4) {
-        h ^= rotl32(load_32_le(p) * c1, 15) * c2;
-        h = rotl32(h, 13) * 5 + 0xe6546b64;
-    }
-
-    final = 0;
-    final |= (tail_len >= 3) ? p[2] << 16 : 0;
-    final |= (tail_len >= 2) ? p[1] << 8 : 0;
-    final |= (tail_len >= 1) ? p[0] : 0;
-    h ^= rotl32(final * c1, 15) * c2;
-
-    h ^= data->length;
-    h = (h ^ (h >> 16)) * 0x85ebca6b;
-    h = (h ^ (h >> 13)) * 0xc2b2ae35;
-    h ^= h >> 16;
-    return h % LOOKASIDE_HASH_SIZE;
-}
-
-/* Return the rough memory footprint of an entry containing req and rep. */
-static size_t
-entry_size(const krb5_data *req, const krb5_data *rep)
-{
-    return sizeof(struct entry) + req->length +
-        ((rep == NULL) ? 0 : rep->length);
-}
-
-/* Remove entry from its hash bucket and the expiration queue, and free it. */
-static void
-discard_entry(krb5_context context, struct entry *entry)
-{
-    total_size -= entry_size(&entry->req_packet, &entry->reply_packet);
-    LIST_REMOVE(entry, bucket_links);
-    TAILQ_REMOVE(&expiration_queue, entry, expire_links);
-    krb5_free_data_contents(context, &entry->req_packet);
-    krb5_free_data_contents(context, &entry->reply_packet);
-    free(entry);
-}
-
-/* Return the entry for req_packet, or NULL if we don't have one. */
-static struct entry *
-find_entry(krb5_data *req_packet)
-{
-    krb5_ui_4 hash = murmurhash3(req_packet);
-    struct entry *e;
-
-    LIST_FOREACH(e, &hash_table[hash], bucket_links) {
-        if (data_eq(e->req_packet, *req_packet))
-            return e;
-    }
-    return NULL;
-}
-
-/* Initialize the lookaside cache structures and randomize the hash seed. */
-krb5_error_code
-kdc_init_lookaside(krb5_context context)
-{
-    krb5_data d = make_data(&seed, sizeof(seed));
-    int i;
-
-    for (i = 0; i < LOOKASIDE_HASH_SIZE; i++)
-        LIST_INIT(&hash_table[i]);
-    TAILQ_INIT(&expiration_queue);
-    return krb5_c_random_make_octets(context, &d);
-}
-
-/* Remove the lookaside cache entry for a packet. */
-void
-kdc_remove_lookaside(krb5_context kcontext, krb5_data *req_packet)
-{
-    struct entry *e;
-
-    e = find_entry(req_packet);
-    if (e != NULL)
-        discard_entry(kcontext, e);
-}
-
-/* Return true and fill in reply_packet_out if req_packet is in the lookaside
- * cache; otherwise return false.  Also discard old entries in the cache. */
 krb5_boolean
-kdc_check_lookaside(krb5_context kcontext, krb5_data *req_packet,
-                    krb5_data **reply_packet_out)
+kdc_check_lookaside(krb5_data *inpkt, krb5_data **outpkt)
 {
-    struct entry *e;
+    krb5_int32 timenow;
+    register krb5_kdc_replay_ent *eptr, *last, *hold;
+    time_t db_age;
 
-    *reply_packet_out = NULL;
-    calls++;
-
-    e = find_entry(req_packet);
-    if (e == NULL)
+    if (krb5_timeofday(kdc_context, &timenow) ||
+        krb5_db_get_age(kdc_context, 0, &db_age))
         return FALSE;
 
-    e->num_hits++;
-    hits++;
-    return (krb5_copy_data(kcontext, &e->reply_packet,
-                           reply_packet_out) == 0);
+    calls++;
+
+    /* search for a replay entry in the queue, possibly removing
+       stale entries while we're here */
+
+    if (root_ptr.next) {
+        for (last = &root_ptr, eptr = root_ptr.next;
+             eptr;
+             eptr = eptr->next) {
+            if (MATCH(eptr)) {
+                eptr->num_hits++;
+                hits++;
+
+                if (krb5_copy_data(kdc_context, eptr->reply_packet, outpkt))
+                    return FALSE;
+                else
+                    return TRUE;
+                /* return here, don't bother flushing even if it is stale.
+                   if we just matched, we may get another retransmit... */
+            }
+            if (STALE(eptr)) {
+                /* flush it and collect stats */
+                max_hits_per_entry = max(max_hits_per_entry, eptr->num_hits);
+                krb5_free_data(kdc_context, eptr->req_packet);
+                krb5_free_data(kdc_context, eptr->reply_packet);
+                hold = eptr;
+                last->next = eptr->next;
+                eptr = last;
+                free(hold);
+            } else {
+                /* this isn't it, just move along */
+                last = eptr;
+            }
+        }
+    }
+    return FALSE;
 }
 
-/* Insert a request and reply into the lookaside cache.  Assumes it's not
- * already there, and can fail silently on memory exhaustion. */
+/* insert a request & reply into the lookaside queue.  assumes it's not
+   already there, and can fail softly due to other weird errors. */
+
 void
-kdc_insert_lookaside(krb5_context kcontext, krb5_data *req_packet,
-                     krb5_data *reply_packet)
+kdc_insert_lookaside(krb5_data *inpkt, krb5_data *outpkt)
 {
-    struct entry *e, *next;
-    krb5_timestamp timenow;
-    krb5_ui_4 hash = murmurhash3(req_packet);
-    size_t esize = entry_size(req_packet, reply_packet);
+    register krb5_kdc_replay_ent *eptr;
+    krb5_int32 timenow;
+    time_t db_age;
 
-    if (krb5_timeofday(kcontext, &timenow))
+    if (krb5_timeofday(kdc_context, &timenow) ||
+        krb5_db_get_age(kdc_context, 0, &db_age))
         return;
 
-    /* Purge stale entries and limit the total size of the entries. */
-    TAILQ_FOREACH_SAFE(e, &expiration_queue, expire_links, next) {
-        if (!STALE(e, timenow) && total_size + esize <= LOOKASIDE_MAX_SIZE)
-            break;
-        max_hits_per_entry = max(max_hits_per_entry, e->num_hits);
-        discard_entry(kcontext, e);
-    }
-
-    /* Create a new entry for this request and reply. */
-    e = calloc(1, sizeof(*e));
-    if (e == NULL)
+    /* this is a new entry */
+    eptr = (krb5_kdc_replay_ent *)calloc(1, sizeof(*eptr));
+    if (!eptr)
         return;
-    e->timein = timenow;
-    if (krb5int_copy_data_contents(kcontext, req_packet, &e->req_packet)) {
-        free(e);
+    eptr->timein = timenow;
+    eptr->db_age = db_age;
+    /*
+     * This is going to hurt a lot malloc()-wise due to the need to
+     * allocate memory for the krb5_data and krb5_address elements.
+     * ARGH!
+     */
+    if (krb5_copy_data(kdc_context, inpkt, &eptr->req_packet)) {
+        free(eptr);
         return;
     }
-    if (reply_packet != NULL &&
-        krb5int_copy_data_contents(kcontext, reply_packet,
-                                   &e->reply_packet)) {
-        krb5_free_data_contents(kcontext, &e->req_packet);
-        free(e);
+    if (krb5_copy_data(kdc_context, outpkt, &eptr->reply_packet)) {
+        krb5_free_data(kdc_context, eptr->req_packet);
+        free(eptr);
         return;
     }
-
-    TAILQ_INSERT_TAIL(&expiration_queue, e, expire_links);
-    LIST_INSERT_HEAD(&hash_table[hash], e, bucket_links);
+    eptr->next = root_ptr.next;
+    root_ptr.next = eptr;
     num_entries++;
-    total_size += esize;
     return;
 }
 
-/* Free all entries in the lookaside cache. */
+/* frees memory associated with the lookaside queue for memory profiling */
 void
 kdc_free_lookaside(krb5_context kcontext)
 {
-    struct entry *e, *next;
-
-    TAILQ_FOREACH_SAFE(e, &expiration_queue, expire_links, next) {
-        discard_entry(kcontext, e);
+    register krb5_kdc_replay_ent *eptr, *last, *hold;
+    if (root_ptr.next) {
+        for (last = &root_ptr, eptr = root_ptr.next;
+             eptr; eptr = eptr->next) {
+            krb5_free_data(kcontext, eptr->req_packet);
+            krb5_free_data(kcontext, eptr->reply_packet);
+            hold = eptr;
+            last->next = eptr->next;
+            eptr = last;
+            free(hold);
+        }
     }
 }
 

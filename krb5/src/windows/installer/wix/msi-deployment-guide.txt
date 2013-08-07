@@ -942,5 +942,5 @@ Kerberos for Windows
     (Q/A's will be added here as needed)
 
 ----------------------------------------------------------------------
-$Id$
+$Id: msi-deployment-guide.txt 19922 2007-09-05 18:03:13Z jaltman $
 

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/krb/enctype_util.c */
 /*
+ * lib/crypto/krb/enctype_util.c
+ *
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
  * All rights reserved.
@@ -24,9 +25,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
+ *
  * krb5int_c_valid_enctype()
  * krb5int_c_weak_enctype()
  * krb5_c_enctype_compare()
@@ -34,7 +34,8 @@
  * krb5_enctype_to_string()
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
 
 krb5_boolean KRB5_CALLCONV
 krb5_c_valid_enctype(krb5_enctype etype)

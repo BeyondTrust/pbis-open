@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* include/net-server.h */
 /*
+ * include/net-server.h
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,14 +23,13 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Declarations for "API" of network listener/dispatcher in libapputils.
  */
-
-/* Declarations for "API" of network listener/dispatcher in libapputils. */
 
 #ifndef NET_SERVER_H
 #define NET_SERVER_H
-
-#include <verto.h>
 
 typedef struct _krb5_fulladdr {
     krb5_address *      address;
@@ -37,21 +37,16 @@ typedef struct _krb5_fulladdr {
 } krb5_fulladdr;
 
 /* exported from network.c */
+extern volatile int signal_requests_exit, signal_requests_reset;
 void init_addr(krb5_fulladdr *, struct sockaddr *);
-
-/* exported from net-server.c */
-verto_ctx *loop_init(verto_ev_type types);
-krb5_error_code loop_add_udp_port(int port);
-krb5_error_code loop_add_tcp_port(int port);
-krb5_error_code loop_add_rpc_service(int port, u_long prognum, u_long versnum,
-                                     void (*dispatch)());
-krb5_error_code loop_setup_routing_socket(verto_ctx *ctx, void *handle,
-                                          const char *progname);
-krb5_error_code loop_setup_network(verto_ctx *ctx, void *handle,
-                                   const char *progname);
-krb5_error_code loop_setup_signals(verto_ctx *ctx, void *handle,
-                                   void (*reset)());
-void loop_free(verto_ctx *ctx);
+krb5_error_code add_udp_port(int port);
+krb5_error_code add_tcp_port(int port);
+krb5_error_code add_rpc_service(int port, u_long prognum, u_long versnum,
+                                void (*dispatch)());
+krb5_error_code setup_network(void *handle, const char *prog, int no_reconfig);
+krb5_error_code listen_and_process(void *handle, const char *prog,
+                                   void (*reset)(void));
+void closedown_network(void);
 
 /* to be supplied by the server application */
 
@@ -62,13 +57,14 @@ void loop_free(verto_ctx *ctx);
  * The first, dispatch(), is for normal processing of a request.  The
  * second, make_toolong_error(), is obviously for generating an error
  * to send back when the incoming message is bigger than
- * the main loop can accept.
+ * listen_and_process can accept.
  */
-typedef void (*loop_respond_fn)(void *arg, krb5_error_code code,
-                                krb5_data *response);
-void dispatch(void *handle, struct sockaddr *local_addr,
-              const krb5_fulladdr *remote_addr, krb5_data *request,
-              int is_tcp, verto_ctx *vctx, loop_respond_fn respond, void *arg);
+krb5_error_code dispatch (void *handle,
+                          struct sockaddr *local_addr,
+                          const krb5_fulladdr *remote_addr,
+                          krb5_data *request,
+                          krb5_data **response,
+                          int is_tcp);
 krb5_error_code make_toolong_error (void *handle, krb5_data **);
 
 /*

@@ -743,7 +743,9 @@ skip_call:
 					   gssstat, minor_stat));
      }
 
-     free(AUTH_PRIVATE(auth)->client_handle.value);
+     if (AUTH_PRIVATE(auth)->client_handle.length != 0)
+	  gss_release_buffer(&minor_stat,
+			     &AUTH_PRIVATE(auth)->client_handle);
 
 #if 0
      PRINTF(("gssapi_destroy: calling GSSAPI_EXIT\n"));

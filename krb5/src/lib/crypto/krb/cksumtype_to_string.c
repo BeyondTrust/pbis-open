@@ -25,7 +25,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "cksumtypes.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_cksumtype_to_string(krb5_cksumtype cksumtype, char *buffer, size_t buflen)

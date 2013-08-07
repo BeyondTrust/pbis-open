@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/krb/aead.c */
 /*
+ * lib/crypto/aead.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -24,7 +25,11 @@
  * or implied warranty.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
+#include "cksumtypes.h"
+#include "dk.h"
+#include "aead.h"
 
 krb5_crypto_iov *
 krb5int_c_locate_iov(krb5_crypto_iov *data, size_t num_data,

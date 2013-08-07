@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/authdata_dec.c */
 /*
+ * lib/krb5/krb/copy_auth.c
+ *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ * krb5_decode_authdata_container()
+ * krb5_verify_authdata_kdc_issued()
+ *
  */
 /*
  * Copyright (c) 2006-2008, Novell, Inc.
@@ -105,7 +110,7 @@ grow_find_authdata(krb5_context context, struct find_authdata_context *fctx,
     }
     fctx->out[fctx->length+1] = NULL;
     retval = krb5int_copy_authdatum(context, elem,
-                                    &fctx->out[fctx->length]);
+                            &fctx->out[fctx->length]);
     if (retval == 0)
         fctx->length++;
     return retval;
@@ -154,11 +159,11 @@ find_authdata_1(krb5_context context, krb5_authdata *const *in_authdat,
     return retval;
 }
 
-krb5_error_code KRB5_CALLCONV
-krb5_find_authdata(krb5_context context,
-                   krb5_authdata *const *ticket_authdata,
-                   krb5_authdata *const *ap_req_authdata,
-                   krb5_authdatatype ad_type, krb5_authdata ***results)
+krb5_error_code
+krb5int_find_authdata(krb5_context context,
+                      krb5_authdata *const *ticket_authdata,
+                      krb5_authdata *const *ap_req_authdata,
+                      krb5_authdatatype ad_type, krb5_authdata ***results)
 {
     krb5_error_code retval = 0;
     struct find_authdata_context fctx;

@@ -1,5 +1,5 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/enc_provider/camellia.c - Camellia enc provider */
+/* lib/crypto/enc_provider/camellia.c - Camellia enc provider definition */
 /*
  * Copyright (C) 2009, 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
@@ -24,8 +24,13 @@
  * or implied warranty.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "enc_provider.h"
 #include "camellia.h"
+#include <aead.h>
+#include <rand2key.h>
+
+#ifdef CAMELLIA
 
 /*
  * Private per-key data to cache after first generation.  We don't want to mess
@@ -79,7 +84,7 @@ xorblock(unsigned char *out, const unsigned char *in)
 
 static krb5_error_code
 krb5int_camellia_encrypt(krb5_key key, const krb5_data *ivec,
-                         krb5_crypto_iov *data, size_t num_data)
+			 krb5_crypto_iov *data, size_t num_data)
 {
     unsigned char tmp[BLOCK_SIZE], tmp2[BLOCK_SIZE];
     int nblocks = 0, blockno;
@@ -94,7 +99,7 @@ krb5int_camellia_encrypt(krb5_key key, const krb5_data *ivec,
     }
     if (CACHE(key)->enc_ctx.keybitlen == 0) {
         if (camellia_enc_key(key->keyblock.contents, key->keyblock.length,
-                             &CACHE(key)->enc_ctx) != camellia_good)
+			     &CACHE(key)->enc_ctx) != camellia_good)
             abort();
     }
     if (ivec != NULL)
@@ -171,7 +176,7 @@ krb5int_camellia_encrypt(krb5_key key, const krb5_data *ivec,
 
 static krb5_error_code
 krb5int_camellia_decrypt(krb5_key key, const krb5_data *ivec,
-                         krb5_crypto_iov *data, size_t num_data)
+			 krb5_crypto_iov *data, size_t num_data)
 {
     unsigned char tmp[BLOCK_SIZE], tmp2[BLOCK_SIZE], tmp3[BLOCK_SIZE];
     int nblocks = 0, blockno;
@@ -187,7 +192,7 @@ krb5int_camellia_decrypt(krb5_key key, const krb5_data *ivec,
     }
     if (CACHE(key)->dec_ctx.keybitlen == 0) {
         if (camellia_dec_key(key->keyblock.contents, key->keyblock.length,
-                             &CACHE(key)->dec_ctx) != camellia_good)
+			     &CACHE(key)->dec_ctx) != camellia_good)
             abort();
     }
 
@@ -269,7 +274,7 @@ krb5int_camellia_decrypt(krb5_key key, const krb5_data *ivec,
 krb5_error_code
 krb5int_camellia_cbc_mac(krb5_key key, const krb5_crypto_iov *data,
                          size_t num_data, const krb5_data *iv,
-                         krb5_data *output)
+			 krb5_data *output)
 {
     camellia_ctx ctx;
     unsigned char blockY[BLOCK_SIZE];
@@ -292,7 +297,7 @@ krb5int_camellia_cbc_mac(krb5_key key, const krb5_crypto_iov *data,
         unsigned char blockB[BLOCK_SIZE];
 
         if (!krb5int_c_iov_get_block(blockB, BLOCK_SIZE, data, num_data,
-                                     &iov_state))
+				     &iov_state))
             break;
 
         xorblock(blockB, blockY);
@@ -308,7 +313,7 @@ krb5int_camellia_cbc_mac(krb5_key key, const krb5_crypto_iov *data,
 
 static krb5_error_code
 camellia_init_state(const krb5_keyblock *key, krb5_keyusage usage,
-                    krb5_data *state)
+		    krb5_data *state)
 {
     state->length = 16;
     state->data = malloc(16);
@@ -318,21 +323,15 @@ camellia_init_state(const krb5_keyblock *key, krb5_keyusage usage,
     return 0;
 }
 
-static void
-camellia_key_cleanup(krb5_key key)
-{
-    zapfree(key->cache, sizeof(struct camellia_key_info_cache));
-}
-
 const struct krb5_enc_provider krb5int_enc_camellia128 = {
     16,
     16, 16,
     krb5int_camellia_encrypt,
     krb5int_camellia_decrypt,
     krb5int_camellia_cbc_mac,
+    krb5int_camellia_make_key,
     camellia_init_state,
     krb5int_default_free_state,
-    camellia_key_cleanup
 };
 
 const struct krb5_enc_provider krb5int_enc_camellia256 = {
@@ -341,7 +340,29 @@ const struct krb5_enc_provider krb5int_enc_camellia256 = {
     krb5int_camellia_encrypt,
     krb5int_camellia_decrypt,
     krb5int_camellia_cbc_mac,
+    krb5int_camellia_make_key,
     camellia_init_state,
-    krb5int_default_free_state,
-    camellia_key_cleanup
+    krb5int_default_free_state
 };
+
+#else /* CAMELLIA */
+
+/* These won't be used, but are still in the export table. */
+
+krb5_error_code
+krb5int_camellia_cbc_mac(krb5_key key, const krb5_crypto_iov *data,
+                         size_t num_data, const krb5_data *iv,
+			 krb5_data *output)
+{
+    return EINVAL;
+}
+
+const struct krb5_enc_provider krb5int_enc_camellia128 = {
+    0
+};
+
+const struct krb5_enc_provider krb5int_enc_camellia256 = {
+    0
+};
+
+#endif /* CAMELLIA */

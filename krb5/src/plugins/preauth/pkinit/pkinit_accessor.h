@@ -48,17 +48,16 @@ DEF_EXT_FUNC_PTRS(krb5_auth_pack);
 DEF_EXT_FUNC_PTRS(krb5_auth_pack_draft9);
 DEF_EXT_FUNC_PTRS(krb5_kdc_dh_key_info);
 DEF_EXT_FUNC_PTRS(krb5_pa_pk_as_rep);
+DEF_EXT_FUNC_PTRS(krb5_pa_pk_as_rep_draft9);
 DEF_EXT_FUNC_PTRS(krb5_pa_pk_as_req);
 DEF_EXT_FUNC_PTRS(krb5_pa_pk_as_req_draft9);
 DEF_EXT_FUNC_PTRS(krb5_reply_key_pack);
 DEF_EXT_FUNC_PTRS(krb5_reply_key_pack_draft9);
+DEF_EXT_FUNC_PTRS_ARRAY(krb5_typed_data);
 
 /* special cases... */
 extern krb5_error_code (*k5int_decode_krb5_principal_name)
 	(const krb5_data *, krb5_principal_data **);
-
-extern krb5_error_code (*k5int_encode_krb5_pa_pk_as_rep_draft9)
-	(const krb5_pa_pk_as_rep_draft9 *, krb5_data **code);
 
 extern krb5_error_code (*k5int_encode_krb5_td_dh_parameters)
 	(const krb5_algorithm_identifier **, krb5_data **code);
@@ -70,11 +69,21 @@ extern krb5_error_code (*k5int_encode_krb5_td_trusted_certifiers)
 extern krb5_error_code (*k5int_decode_krb5_td_trusted_certifiers)
 	(const krb5_data *, krb5_external_principal_identifier ***);
 
+extern krb5_error_code (*k5int_decode_krb5_as_req)
+	(const krb5_data *output, krb5_kdc_req **rep);
 extern krb5_error_code (*k5int_encode_krb5_kdc_req_body)
 	(const krb5_kdc_req *rep, krb5_data **code);
 extern void KRB5_CALLCONV (*k5int_krb5_free_kdc_req)
 	(krb5_context, krb5_kdc_req * );
 extern void (*k5int_set_prompt_types)
 	(krb5_context, krb5_prompt_type *);
+extern krb5_error_code (*k5int_encode_krb5_authdata_elt)
+	(const krb5_authdata *rep, krb5_data **code);
+
+struct srv_dns_entry;
+extern krb5_error_code (*k5int_make_srv_query_realm)
+        (const krb5_data *realm, const char *service,
+         const char *protocol, struct srv_dns_entry **answers);
+extern void (*k5int_free_srv_dns_data)(struct srv_dns_entry *);
 
 #endif /* _PKINIT_ACCESSOR_H */

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* tests/resolve/resolve.c */
 /*
+ * test/resolve/resolve.c
+ *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * A simple program to test the functionality of the resolver library.
  * It simply will try to get the IP address of the host, and then look
  * up the name from the address. If the resulting name does not contain the
@@ -151,6 +151,29 @@ main(argc, argv)
         printf("%s\n", fqdn);
     else
         printf("FQDN: %s\n", fqdn);
+
+    /*
+     * The host name must have at least one '.' in the name, and
+     * if there is only one '.', it must not be at the end of the
+     * string.  (i.e., "foo." is not a FQDN)
+     */
+    ptr = strchr(fqdn, '.');
+    if (ptr == NULL || ptr[1] == '\0') {
+        fprintf(stderr,
+                "\nResolve library did not return a "
+                "fully qualified domain name.\n\n"
+                "If you are using /etc/hosts before DNS, "
+                "e.g. \"files\" is listed first\n"
+                "for \"hosts:\" in nsswitch.conf, ensure that "
+                "you have listed the FQDN\n"
+                "as the first name for the local host.\n\n"
+                "If this does not correct the problem, "
+                "you may have to reconfigure the kerberos\n"
+                "distribution to select a "
+                "different set of libraries using \n"
+                "--with-netlib[=libs]\n");
+        exit(3);
+    }
 
     if (!quiet)
         printf("Resolve library appears to have passed the test\n");

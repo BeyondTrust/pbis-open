@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/mk_safe.c */
 /*
+ * lib/krb5/krb/mk_safe.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * krb5_mk_safe()
  */
 
 #include "k5-int.h"
@@ -119,7 +123,7 @@ safe_cksumtype(krb5_context context, krb5_auth_context auth_context,
      * Otherwise return 0 for the mandatory checksum. */
     retval = krb5_c_keyed_checksum_types(context, enctype, &nsumtypes,
                                          &sumtypes);
-    if (retval != 0)
+    if (retval != 0 || nsumtypes == 0)
         return 0;
     for (i = 0; i < nsumtypes; i++) {
         if (auth_context->safe_cksumtype == sumtypes[i])
@@ -137,9 +141,6 @@ krb5_mk_safe(krb5_context context, krb5_auth_context auth_context,
     krb5_error_code       retval;
     krb5_key              key;
     krb5_replay_data      replaydata;
-    krb5_data             buf = empty_data();
-
-    *outbuf = empty_data();
 
     /* Clear replaydata block */
     memset(&replaydata, 0, sizeof(krb5_replay_data));
@@ -220,7 +221,7 @@ krb5_mk_safe(krb5_context context, krb5_auth_context auth_context,
         sumtype = safe_cksumtype(context, auth_context, key->keyblock.enctype);
         if ((retval = krb5_mk_safe_basic(context, userdata, key, &replaydata,
                                          plocal_fulladdr, premote_fulladdr,
-                                         sumtype, &buf))) {
+                                         sumtype, outbuf))) {
             CLEANUP_DONE();
             goto error;
         }
@@ -232,24 +233,26 @@ krb5_mk_safe(krb5_context context, krb5_auth_context auth_context,
         krb5_donot_replay replay;
 
         if ((retval = krb5_gen_replay_name(context, auth_context->local_addr,
-                                           "_safe", &replay.client)))
+                                           "_safe", &replay.client))) {
+            free(outbuf);
             goto error;
+        }
 
         replay.server = "";             /* XXX */
         replay.msghash = NULL;
         replay.cusec = replaydata.usec;
         replay.ctime = replaydata.timestamp;
-        /* should we really error out here? XXX */
-        if ((retval = krb5_rc_store(context, auth_context->rcache, &replay)))
+        if ((retval = krb5_rc_store(context, auth_context->rcache, &replay))) {
+            /* should we really error out here? XXX */
+            free(outbuf);
             goto error;
+        }
         free(replay.client);
     }
 
-    *outbuf = buf;
     return 0;
 
 error:
-    krb5_free_data_contents(context, &buf);
     if ((auth_context->auth_context_flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) ||
         (auth_context->auth_context_flags & KRB5_AUTH_CONTEXT_RET_SEQUENCE))
         auth_context->local_seq_number--;

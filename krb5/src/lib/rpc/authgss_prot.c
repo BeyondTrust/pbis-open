@@ -1,5 +1,6 @@
-/* lib/rpc/authgss_prot.c */
 /*
+  authgss_prot.c
+
   Copyright (c) 2000 The Regents of the University of Michigan.
   All rights reserved.
 
@@ -212,7 +213,7 @@ xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		/* Verify checksum and QOP. */
 		maj_stat = gss_verify_mic(&min_stat, ctx, &databuf,
 					  &wrapbuf, &qop_state);
-		free(wrapbuf.value);
+		gss_release_buffer(&min_stat, &wrapbuf);
 
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop) {
 			gss_release_buffer(&min_stat, &databuf);
@@ -230,7 +231,7 @@ xdr_rpc_gss_unwrap_data(XDR *xdrs, xdrproc_t xdr_func, caddr_t xdr_ptr,
 		maj_stat = gss_unwrap(&min_stat, ctx, &wrapbuf, &databuf,
 				      &conf_state, &qop_state);
 
-		free(wrapbuf.value);
+		gss_release_buffer(&min_stat, &wrapbuf);
 
 		/* Verify encryption and QOP. */
 		if (maj_stat != GSS_S_COMPLETE || qop_state != qop ||

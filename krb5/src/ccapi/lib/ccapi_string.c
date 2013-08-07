@@ -1,5 +1,6 @@
-/* ccapi/lib/ccapi_string.c */
 /*
+ * $Header$
+ *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

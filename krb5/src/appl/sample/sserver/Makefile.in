@@ -14,3 +14,4 @@ clean::
 
 install::
 	$(INSTALL_PROGRAM) sserver ${DESTDIR}$(SERVER_BINDIR)/sserver
+	$(INSTALL_DATA) $(srcdir)/sserver.M ${DESTDIR}$(SERVER_MANDIR)/sserver.8

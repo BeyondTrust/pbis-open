@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/enc_keyhelper.c */
 /*
+ * lib/krb5/krb/enc_keyhelper.c
+ *
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
  * All rights reserved.

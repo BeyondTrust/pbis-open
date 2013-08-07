@@ -1,29 +1,4 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* tests/asn.1/krb5_decode_leak.c */
-/*
- * Copyright (C) 2009 by the Massachusetts Institute of Technology.
- * All rights reserved.
- *
- * Export of this software from the United States of America may
- *   require a specific license from the United States Government.
- *   It is the responsibility of any person or organization contemplating
- *   export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  Furthermore if you modify this software you must label
- * your software as modified software and not distribute it in such a
- * fashion that it might be confused with the original M.I.T. software.
- * M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
-
 /*
  * This program is intended to help detect memory leaks in the ASN.1
  * decoder functions by exercising their failure paths.  The setup
@@ -75,6 +50,14 @@ main(int argc, char **argv)
     }
     init_access(argv[0]);
 
+#define setup(value, typestring, constructor)                           \
+    retval = constructor(&(value));                                     \
+    if (retval) {                                                       \
+        com_err("krb5_decode_leak", retval, "while making sample %s",   \
+                typestring);                                            \
+        exit(1);                                                        \
+    }
+
 #define encode_run(value,type,typestring,description,encoder)
 
     /*
@@ -106,7 +89,7 @@ main(int argc, char **argv)
     {
         krb5_authenticator authent, *tmp;
 
-        ktest_make_sample_authenticator(&authent);
+        setup(authent, "authenticator", ktest_make_sample_authenticator);
         leak_test(authent, encode_krb5_authenticator,
                   decode_krb5_authenticator, krb5_free_authenticator);
 
@@ -128,7 +111,7 @@ main(int argc, char **argv)
     {
         krb5_ticket tkt, *tmp;
 
-        ktest_make_sample_ticket(&tkt);
+        setup(tkt, "ticket", ktest_make_sample_ticket);
         leak_test(tkt, encode_krb5_ticket, decode_krb5_ticket,
                   krb5_free_ticket);
         ktest_empty_ticket(&tkt);
@@ -139,7 +122,7 @@ main(int argc, char **argv)
     {
         krb5_keyblock keyblk, *tmp;
 
-        ktest_make_sample_keyblock(&keyblk);
+        setup(keyblk, "keyblock", ktest_make_sample_keyblock);
         leak_test(keyblk, encode_krb5_encryption_key,
                   decode_krb5_encryption_key, krb5_free_keyblock);
         ktest_empty_keyblock(&keyblk);
@@ -152,8 +135,11 @@ main(int argc, char **argv)
         krb5_enc_tkt_part *tmp;
 
         memset(&tkt, 0, sizeof(krb5_ticket));
-        tkt.enc_part2 = ealloc(sizeof(krb5_enc_tkt_part));
-        ktest_make_sample_enc_tkt_part(tkt.enc_part2);
+        tkt.enc_part2 = calloc(1, sizeof(krb5_enc_tkt_part));
+        if (tkt.enc_part2 == NULL)
+            com_err("allocating enc_tkt_part", errno, "");
+        setup(*(tkt.enc_part2), "enc_tkt_part",
+              ktest_make_sample_enc_tkt_part);
 
         leak_test(*(tkt.enc_part2), encode_krb5_enc_tkt_part,
                   decode_krb5_enc_tkt_part, krb5_free_enc_tkt_part);
@@ -182,8 +168,11 @@ main(int argc, char **argv)
 
         memset(&kdcr, 0, sizeof(kdcr));
 
-        kdcr.enc_part2 = ealloc(sizeof(krb5_enc_kdc_rep_part));
-        ktest_make_sample_enc_kdc_rep_part(kdcr.enc_part2);
+        kdcr.enc_part2 = calloc(1, sizeof(krb5_enc_kdc_rep_part));
+        if (kdcr.enc_part2 == NULL)
+            com_err("allocating enc_kdc_rep_part", errno, "");
+        setup(*(kdcr.enc_part2), "enc_kdc_rep_part",
+              ktest_make_sample_enc_kdc_rep_part);
 
         leak_test(*(kdcr.enc_part2), encode_krb5_enc_kdc_rep_part,
                   decode_krb5_enc_kdc_rep_part, krb5_free_enc_kdc_rep_part);
@@ -204,7 +193,7 @@ main(int argc, char **argv)
     {
         krb5_kdc_rep kdcr, *tmp;
 
-        ktest_make_sample_kdc_rep(&kdcr);
+        setup(kdcr, "kdc_rep", ktest_make_sample_kdc_rep);
         kdcr.msg_type = KRB5_AS_REP;
         leak_test(kdcr, encode_krb5_as_rep, decode_krb5_as_rep,
                   krb5_free_kdc_rep);
@@ -222,7 +211,7 @@ main(int argc, char **argv)
     {
         krb5_kdc_rep kdcr, *tmp;
 
-        ktest_make_sample_kdc_rep(&kdcr);
+        setup(kdcr, "kdc_rep", ktest_make_sample_kdc_rep);
         kdcr.msg_type = KRB5_TGS_REP;
         leak_test(kdcr, encode_krb5_tgs_rep, decode_krb5_tgs_rep,
                   krb5_free_kdc_rep);
@@ -240,7 +229,7 @@ main(int argc, char **argv)
     {
         krb5_ap_req apreq, *tmp;
 
-        ktest_make_sample_ap_req(&apreq);
+        setup(apreq, "ap_req", ktest_make_sample_ap_req);
         leak_test(apreq, encode_krb5_ap_req, decode_krb5_ap_req,
                   krb5_free_ap_req);
         ktest_empty_ap_req(&apreq);
@@ -251,7 +240,7 @@ main(int argc, char **argv)
     {
         krb5_ap_rep aprep, *tmp;
 
-        ktest_make_sample_ap_rep(&aprep);
+        setup(aprep, "ap_rep", ktest_make_sample_ap_rep);
         leak_test(aprep, encode_krb5_ap_rep, decode_krb5_ap_rep,
                   krb5_free_ap_rep);
         ktest_empty_ap_rep(&aprep);
@@ -262,7 +251,7 @@ main(int argc, char **argv)
     {
         krb5_ap_rep_enc_part apenc, *tmp;
 
-        ktest_make_sample_ap_rep_enc_part(&apenc);
+        setup(apenc, "ap_rep_enc_part", ktest_make_sample_ap_rep_enc_part);
         leak_test(apenc, encode_krb5_ap_rep_enc_part,
                   decode_krb5_ap_rep_enc_part, krb5_free_ap_rep_enc_part);
 
@@ -278,7 +267,7 @@ main(int argc, char **argv)
     {
         krb5_kdc_req asreq, *tmp;
 
-        ktest_make_sample_kdc_req(&asreq);
+        setup(asreq, "kdc_req", ktest_make_sample_kdc_req);
         asreq.msg_type = KRB5_AS_REQ;
         asreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
         leak_test(asreq, encode_krb5_as_req, decode_krb5_as_req,
@@ -312,7 +301,7 @@ main(int argc, char **argv)
     {
         krb5_kdc_req tgsreq, *tmp;
 
-        ktest_make_sample_kdc_req(&tgsreq);
+        setup(tgsreq, "kdc_req", ktest_make_sample_kdc_req);
         tgsreq.msg_type = KRB5_TGS_REQ;
         tgsreq.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
         leak_test(tgsreq, encode_krb5_tgs_req, decode_krb5_tgs_req,
@@ -347,7 +336,7 @@ main(int argc, char **argv)
         krb5_kdc_req kdcrb, *tmp;
 
         memset(&kdcrb, 0, sizeof(kdcrb));
-        ktest_make_sample_kdc_req_body(&kdcrb);
+        setup(kdcrb, "kdc_req_body", ktest_make_sample_kdc_req_body);
         kdcrb.kdc_options &= ~KDC_OPT_ENC_TKT_IN_SKEY;
         leak_test(kdcrb, encode_krb5_kdc_req_body, decode_krb5_kdc_req_body,
                   krb5_free_kdc_req);
@@ -379,7 +368,7 @@ main(int argc, char **argv)
     {
         krb5_safe s, *tmp;
 
-        ktest_make_sample_safe(&s);
+        setup(s, "safe", ktest_make_sample_safe);
         leak_test(s, encode_krb5_safe, decode_krb5_safe, krb5_free_safe);
 
         s.timestamp = 0;
@@ -395,7 +384,7 @@ main(int argc, char **argv)
     {
         krb5_priv p, *tmp;
 
-        ktest_make_sample_priv(&p);
+        setup(p, "priv", ktest_make_sample_priv);
         leak_test(p, encode_krb5_priv, decode_krb5_priv, krb5_free_priv);
         ktest_empty_priv(&p);
     }
@@ -405,7 +394,7 @@ main(int argc, char **argv)
     {
         krb5_priv_enc_part ep, *tmp;
 
-        ktest_make_sample_priv_enc_part(&ep);
+        setup(ep, "priv_enc_part", ktest_make_sample_priv_enc_part);
         leak_test(ep, encode_krb5_enc_priv_part, decode_krb5_enc_priv_part,
                   krb5_free_priv_enc_part);
 
@@ -423,7 +412,7 @@ main(int argc, char **argv)
     {
         krb5_cred c, *tmp;
 
-        ktest_make_sample_cred(&c);
+        setup(c, "cred", ktest_make_sample_cred);
         leak_test(c, encode_krb5_cred, decode_krb5_cred, krb5_free_cred);
         ktest_empty_cred(&c);
     }
@@ -433,7 +422,7 @@ main(int argc, char **argv)
     {
         krb5_cred_enc_part cep, *tmp;
 
-        ktest_make_sample_cred_enc_part(&cep);
+        setup(cep, "cred_enc_part", ktest_make_sample_cred_enc_part);
         leak_test(cep, encode_krb5_enc_cred_part, decode_krb5_enc_cred_part,
                   free_cred_enc_part_whole);
 
@@ -459,7 +448,7 @@ main(int argc, char **argv)
     {
         krb5_error kerr, *tmp;
 
-        ktest_make_sample_error(&kerr);
+        setup(kerr, "error", ktest_make_sample_error);
         leak_test(kerr, encode_krb5_error, decode_krb5_error, krb5_free_error);
 
         kerr.ctime = 0;
@@ -476,22 +465,42 @@ main(int argc, char **argv)
     {
         krb5_authdata **ad, **tmp;
 
-        ktest_make_sample_authorization_data(&ad);
+        setup(ad, "authorization_data", ktest_make_sample_authorization_data);
         leak_test(*ad, encode_krb5_authdata, decode_krb5_authdata,
                   krb5_free_authdata);
         ktest_destroy_authorization_data(&ad);
     }
 
     /****************************************************************/
-    /* encode_padata_sequence and encode_typed_data */
+    /* encode_pwd_sequence */
+    {
+        passwd_phrase_element ppe, *tmp;
+
+        setup(ppe, "PasswdSequence", ktest_make_sample_passwd_phrase_element);
+        leak_test(ppe, encode_krb5_pwd_sequence, decode_krb5_pwd_sequence,
+                  krb5_free_passwd_phrase_element);
+        ktest_empty_passwd_phrase_element(&ppe);
+    }
+
+    /****************************************************************/
+    /* encode_passwd_data */
+    {
+        krb5_pwd_data pd, *tmp;
+
+        setup(pd, "PasswdData", ktest_make_sample_krb5_pwd_data);
+        leak_test(pd, encode_krb5_pwd_data, decode_krb5_pwd_data,
+                  krb5_free_pwd_data);
+        ktest_empty_pwd_data(&pd);
+    }
+
+    /****************************************************************/
+    /* encode_padata_sequence */
     {
         krb5_pa_data **pa, **tmp;
 
-        ktest_make_sample_pa_data_array(&pa);
+        setup(pa, "PreauthData", ktest_make_sample_pa_data_array);
         leak_test(*pa, encode_krb5_padata_sequence,
                   decode_krb5_padata_sequence, krb5_free_pa_data);
-        leak_test(*pa, encode_krb5_typed_data,
-                  decode_krb5_typed_data, krb5_free_pa_data);
         ktest_destroy_pa_data_array(&pa);
     }
 
@@ -500,10 +509,27 @@ main(int argc, char **argv)
     {
         krb5_pa_data **pa, **tmp;
 
-        ktest_make_sample_empty_pa_data_array(&pa);
+        setup(pa,"EmptyPreauthData",ktest_make_sample_empty_pa_data_array);
         leak_test(*pa, encode_krb5_padata_sequence,
                   decode_krb5_padata_sequence, krb5_free_pa_data);
         ktest_destroy_pa_data_array(&pa);
+    }
+
+    /****************************************************************/
+    /* encode_alt_method */
+    {
+        krb5_alt_method am, *tmp;
+
+        setup(am, "AltMethod", ktest_make_sample_alt_method);
+        leak_test(am, encode_krb5_alt_method, decode_krb5_alt_method,
+                  krb5_free_alt_method);
+        am.length = 0;
+        if (am.data)
+            free(am.data);
+        am.data = 0;
+        leak_test(am, encode_krb5_alt_method, decode_krb5_alt_method,
+                  krb5_free_alt_method);
+        ktest_empty_alt_method(&am);
     }
 
     /****************************************************************/
@@ -511,7 +537,7 @@ main(int argc, char **argv)
     {
         krb5_etype_info_entry **info, **tmp;
 
-        ktest_make_sample_etype_info(&info);
+        setup(info, "etype_info", ktest_make_sample_etype_info);
         leak_test(*info, encode_krb5_etype_info, decode_krb5_etype_info,
                   krb5_free_etype_info);
 
@@ -531,7 +557,7 @@ main(int argc, char **argv)
     {
         krb5_etype_info_entry **info, **tmp;
 
-        ktest_make_sample_etype_info2(&info);
+        setup(info, "etype_info2", ktest_make_sample_etype_info2);
         leak_test(*info, encode_krb5_etype_info2, decode_krb5_etype_info2,
                   krb5_free_etype_info);
 
@@ -548,7 +574,7 @@ main(int argc, char **argv)
     {
         krb5_pa_enc_ts pa_enc, *tmp;
 
-        ktest_make_sample_pa_enc_ts(&pa_enc);
+        setup(pa_enc, "pa_enc_ts", ktest_make_sample_pa_enc_ts);
         leak_test(pa_enc, encode_krb5_pa_enc_ts, decode_krb5_pa_enc_ts,
                   krb5_free_pa_enc_ts);
         pa_enc.pausec = 0;
@@ -561,38 +587,61 @@ main(int argc, char **argv)
     {
         krb5_enc_data enc_data, *tmp;
 
-        ktest_make_sample_enc_data(&enc_data);
+        setup(enc_data, "enc_data", ktest_make_sample_enc_data);
         leak_test(enc_data, encode_krb5_enc_data, decode_krb5_enc_data,
                   krb5_free_enc_data);
         ktest_destroy_enc_data(&enc_data);
     }
     /****************************************************************/
-    /* encode_krb5_sam_challenge_2 */
+    /* encode_krb5_sam_challenge */
     {
-        krb5_sam_challenge_2 sam_ch2, *tmp;
+        krb5_sam_challenge sam_ch, *tmp;
 
-        ktest_make_sample_sam_challenge_2(&sam_ch2);
-        leak_test(sam_ch2, encode_krb5_sam_challenge_2,
-                  decode_krb5_sam_challenge_2, krb5_free_sam_challenge_2);
-        ktest_empty_sam_challenge_2(&sam_ch2);
+        setup(sam_ch, "sam_challenge", ktest_make_sample_sam_challenge);
+        leak_test(sam_ch, encode_krb5_sam_challenge, decode_krb5_sam_challenge,
+                  krb5_free_sam_challenge);
+        ktest_empty_sam_challenge(&sam_ch);
     }
     /****************************************************************/
-    /* encode_krb5_sam_challenge_2 */
+    /* encode_krb5_sam_response */
     {
-        krb5_sam_challenge_2_body body, *tmp;
+        krb5_sam_response sam_ch, *tmp;
 
-        ktest_make_sample_sam_challenge_2_body(&body);
-        leak_test(body, encode_krb5_sam_challenge_2_body,
-                  decode_krb5_sam_challenge_2_body,
-                  krb5_free_sam_challenge_2_body);
-        ktest_empty_sam_challenge_2_body(&body);
+        setup(sam_ch, "sam_response", ktest_make_sample_sam_response);
+        leak_test(sam_ch, encode_krb5_sam_response, decode_krb5_sam_response,
+                  krb5_free_sam_response);
+        ktest_empty_sam_response(&sam_ch);
+    }
+    /****************************************************************/
+    /* encode_krb5_enc_sam_response_enc */
+    {
+        krb5_enc_sam_response_enc sam_ch, *tmp;
+
+        setup(sam_ch, "enc_sam_response_enc",
+              ktest_make_sample_enc_sam_response_enc);
+        leak_test(sam_ch, encode_krb5_enc_sam_response_enc,
+                  decode_krb5_enc_sam_response_enc,
+                  krb5_free_enc_sam_response_enc);
+        ktest_empty_enc_sam_response_enc(&sam_ch);
+    }
+    /****************************************************************/
+    /* encode_krb5_predicted_sam_response */
+    {
+        krb5_predicted_sam_response sam_ch, *tmp;
+
+        setup(sam_ch, "predicted_sam_response",
+              ktest_make_sample_predicted_sam_response);
+        leak_test(sam_ch, encode_krb5_predicted_sam_response,
+                  decode_krb5_predicted_sam_response,
+                  krb5_free_predicted_sam_response);
+        ktest_empty_predicted_sam_response(&sam_ch);
     }
     /****************************************************************/
     /* encode_krb5_sam_response_2 */
     {
         krb5_sam_response_2 sam_ch2, *tmp;
 
-        ktest_make_sample_sam_response_2(&sam_ch2);
+        setup(sam_ch2, "sam_response_2", ktest_make_sample_sam_response_2);
         leak_test(sam_ch2, encode_krb5_sam_response_2,
                   decode_krb5_sam_response_2, krb5_free_sam_response_2);
         ktest_empty_sam_response_2(&sam_ch2);
@@ -602,26 +651,19 @@ main(int argc, char **argv)
     {
         krb5_enc_sam_response_enc_2 sam_ch2, *tmp;
 
-        ktest_make_sample_enc_sam_response_enc_2(&sam_ch2);
+        setup(sam_ch2, "enc_sam_response_enc_2",
+              ktest_make_sample_enc_sam_response_enc_2);
         leak_test(sam_ch2, encode_krb5_enc_sam_response_enc_2,
                   decode_krb5_enc_sam_response_enc_2,
                   krb5_free_enc_sam_response_enc_2);
         ktest_empty_enc_sam_response_enc_2(&sam_ch2);
     }
     /****************************************************************/
-    /* encode_krb5_pa_for_user */
-    {
-        krb5_pa_for_user foru, *tmp;
-        ktest_make_sample_pa_for_user(&foru);
-        leak_test(foru, encode_krb5_pa_for_user, decode_krb5_pa_for_user,
-                  krb5_free_pa_for_user);
-        ktest_empty_pa_for_user(&foru);
-    }
-    /****************************************************************/
     /* encode_krb5_pa_s4u_x509_user */
     {
         krb5_pa_s4u_x509_user s4u, *tmp;
-        ktest_make_sample_pa_s4u_x509_user(&s4u);
+        setup(s4u, "pa_s4u_x509_user",
+              ktest_make_sample_pa_s4u_x509_user);
         leak_test(s4u, encode_krb5_pa_s4u_x509_user,
                   decode_krb5_pa_s4u_x509_user,
                   krb5_free_pa_s4u_x509_user);
@@ -631,7 +673,8 @@ main(int argc, char **argv)
     /* encode_krb5_ad_kdcissued */
     {
         krb5_ad_kdcissued kdci, *tmp;
-        ktest_make_sample_ad_kdcissued(&kdci);
+        setup(kdci, "ad_kdcissued",
+              ktest_make_sample_ad_kdcissued);
         leak_test(kdci, encode_krb5_ad_kdcissued,
                   decode_krb5_ad_kdcissued,
                   krb5_free_ad_kdcissued);
@@ -642,7 +685,8 @@ main(int argc, char **argv)
     /* encode_krb5_ad_signedpath_data */
     {
         krb5_ad_signedpath_data spd, *tmp;
-        ktest_make_sample_ad_signedpath_data(&spd);
+        setup(spd, "ad_signedpath_data",
+              ktest_make_sample_ad_signedpath_data);
         leak_test(spd, encode_krb5_ad_signedpath_data,
                   decode_krb5_ad_signedpath_data,
                   NULL);
@@ -653,7 +697,8 @@ main(int argc, char **argv)
     /* encode_krb5_ad_signedpath */
     {
         krb5_ad_signedpath sp, *tmp;
-        ktest_make_sample_ad_signedpath(&sp);
+        setup(sp, "ad_signedpath",
+              ktest_make_sample_ad_signedpath);
         leak_test(sp, encode_krb5_ad_signedpath,
                   decode_krb5_ad_signedpath,
                   krb5_free_ad_signedpath);
@@ -663,7 +708,8 @@ main(int argc, char **argv)
     /* encode_krb5_iakerb_header */
     {
         krb5_iakerb_header ih, *tmp;
-        ktest_make_sample_iakerb_header(&ih);
+        setup(ih, "iakerb_header",
+              ktest_make_sample_iakerb_header);
         leak_test(ih, encode_krb5_iakerb_header,
                   decode_krb5_iakerb_header,
                   krb5_free_iakerb_header);
@@ -673,29 +719,12 @@ main(int argc, char **argv)
     /* encode_krb5_iakerb_finished */
     {
         krb5_iakerb_finished ih, *tmp;
-        ktest_make_sample_iakerb_finished(&ih);
+        setup(ih, "iakerb_finished",
+              ktest_make_sample_iakerb_finished);
         leak_test(ih, encode_krb5_iakerb_finished,
                   decode_krb5_iakerb_finished,
                   krb5_free_iakerb_finished);
         ktest_empty_iakerb_finished(&ih);
-    }
-    /****************************************************************/
-    /* encode_krb5_fast_response */
-    {
-        krb5_fast_response fr, *tmp;
-        ktest_make_sample_fast_response(&fr);
-        leak_test(fr, encode_krb5_fast_response, decode_krb5_fast_response,
-                  krb5_free_fast_response);
-        ktest_empty_fast_response(&fr);
-    }
-    /****************************************************************/
-    /* encode_krb5_pa_fx_fast_reply */
-    {
-        krb5_enc_data enc, *tmp;
-        ktest_make_sample_enc_data(&enc);
-        leak_test(enc, encode_krb5_pa_fx_fast_reply,
-                  decode_krb5_pa_fx_fast_reply, krb5_free_enc_data);
-        ktest_destroy_enc_data(&enc);
     }
     krb5_free_context(test_context);
     return 0;

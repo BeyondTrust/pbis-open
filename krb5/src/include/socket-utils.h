@@ -51,7 +51,7 @@
 
    Do NOT install this file.  */
 
-/* for HAVE_SOCKLEN_T etc */
+/* for HAVE_SOCKLEN_T, KRB5_USE_INET6, etc */
 #include "autoconf.h"
 /* for sockaddr_storage */
 #include "port-sockets.h"
@@ -72,10 +72,12 @@ static inline struct sockaddr_in *sa2sin (struct sockaddr *sa)
 {
     return (struct sockaddr_in *) (void *) sa;
 }
+#ifdef KRB5_USE_INET6
 static inline struct sockaddr_in6 *sa2sin6 (struct sockaddr *sa)
 {
     return (struct sockaddr_in6 *) (void *) sa;
 }
+#endif
 static inline struct sockaddr *ss2sa (struct sockaddr_storage *ss)
 {
     return (struct sockaddr *) ss;
@@ -84,17 +86,23 @@ static inline struct sockaddr_in *ss2sin (struct sockaddr_storage *ss)
 {
     return (struct sockaddr_in *) ss;
 }
+#ifdef KRB5_USE_INET6
 static inline struct sockaddr_in6 *ss2sin6 (struct sockaddr_storage *ss)
 {
     return (struct sockaddr_in6 *) ss;
 }
+#endif
 
 #if !defined (socklen)
 /* socklen_t socklen (struct sockaddr *) */
 #  ifdef HAVE_SA_LEN
 #    define socklen(X) ((X)->sa_len)
 #  else
-#    define socklen(X) ((X)->sa_family == AF_INET6 ? (socklen_t) sizeof (struct sockaddr_in6) : (X)->sa_family == AF_INET ? (socklen_t) sizeof (struct sockaddr_in) : (socklen_t) sizeof (struct sockaddr))
+#    ifdef KRB5_USE_INET6
+#      define socklen(X) ((X)->sa_family == AF_INET6 ? (socklen_t) sizeof (struct sockaddr_in6) : (X)->sa_family == AF_INET ? (socklen_t) sizeof (struct sockaddr_in) : (socklen_t) sizeof (struct sockaddr))
+#    else
+#      define socklen(X) ((X)->sa_family == AF_INET ? (socklen_t) sizeof (struct sockaddr_in) : (socklen_t) sizeof (struct sockaddr))
+#    endif
 #  endif
 #endif
 

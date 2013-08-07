@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/rel_oid.c - Release an OID */
 /*
+ * lib/gssapi/krb5/rel_oid.c
+ *
  * Copyright 1995, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,17 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
+/*
+ * rel_oid.c - Release an OID.
+ */
 #include "gssapiP_krb5.h"
+
+OM_uint32 krb5_gss_internal_release_oid (OM_uint32 *, /* minor_status */
+                                         gss_OID * /* oid */
+);
 
 OM_uint32
 krb5_gss_release_oid(minor_status, oid)
@@ -51,7 +60,7 @@ krb5_gss_release_oid(minor_status, oid)
     }
 }
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_internal_release_oid(minor_status, oid)
     OM_uint32   *minor_status;
     gss_OID     *oid;

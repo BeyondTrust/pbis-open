@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/os/gen_rname.c */
 /*
+ * lib/krb5/os/gen_rname.c
+ *
  * Copyright 1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,10 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
- * Take a port-style address and unique string, and return
+ *
+ *
+ * take a port-style address and unique string, and return
  * a replay cache tag string.
  */
 

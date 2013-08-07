@@ -1,5 +1,6 @@
-/* windows/lib/cacheapi.h */
 /*
+ *  $Id: cacheapi.h 23100 2009-10-31 00:48:38Z tlyu $
+ *
  * Copyright 1997 by the Regents of the University of Michigan
  *
  * This software is being provided to you, the LICENSEE, by the

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/hdb/kdb_hdb.c */
 /*
+ * plugins/kdb/hdb/kdb_hdb.c
+ *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 #include "k5-int.h"
@@ -1088,7 +1090,7 @@ kh_dbekd_decrypt_key_data(krb5_context context,
 
     if (mkey->enctype != ENCTYPE_UNKNOWN)
         code = krb5_dbe_def_decrypt_key_data(context, mkey, key_data,
-                                             kkey, keysalt);
+                                               kkey, keysalt);
     else
         code = kh_decrypt_key(context, kh, key_data, kkey, keysalt);
 

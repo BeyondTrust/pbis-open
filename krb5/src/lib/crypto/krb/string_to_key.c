@@ -25,7 +25,17 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
+
+krb5_error_code KRB5_CALLCONV
+krb5_c_string_to_key_with_params(krb5_context context,
+                                 krb5_enctype enctype,
+                                 const krb5_data *string,
+                                 const krb5_data *salt,
+                                 const krb5_data *params,
+                                 krb5_keyblock *key);
+
 
 krb5_error_code KRB5_CALLCONV
 krb5_c_string_to_key(krb5_context context, krb5_enctype enctype,
@@ -51,9 +61,21 @@ krb5_c_string_to_key_with_params(krb5_context context, krb5_enctype enctype,
         return KRB5_BAD_ENCTYPE;
     keylength = ktp->enc->keylength;
 
-    /* Fail gracefully if someone is using the old AFS string-to-key hack. */
-    if (salt != NULL && salt->length == SALT_TYPE_AFS_LENGTH)
-        return EINVAL;
+    /*
+     * xxx AFS string2key function is indicated by a special length  in
+     * the salt in much of the code.  However only the DES enctypes can
+     * deal with this.  Using s2kparams would be a much better solution.
+     */
+    if (salt && salt->length == SALT_TYPE_AFS_LENGTH) {
+        switch (enctype) {
+        case ENCTYPE_DES_CBC_CRC:
+        case ENCTYPE_DES_CBC_MD4:
+        case ENCTYPE_DES_CBC_MD5:
+            break;
+        default:
+            return KRB5_CRYPTO_INTERNAL;
+        }
+    }
 
     key->contents = malloc(keylength);
     if (key->contents == NULL)

@@ -93,7 +93,6 @@ static void do_batchmode(profile)
         switch (print_status) {
         case PRINT_VALUE:
             printf("%s\n", value);
-            profile_release_string(value);
             break;
         case PRINT_VALUES:
             for (cpp = values; *cpp; cpp++)

@@ -39,7 +39,11 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 
+#include <k5-int.h>
 #include "pkinit.h"
+
+/* Remove when FAST PKINIT is settled. */
+#include "../fast_factor.h"
 
 /*
  * It is anticipated that all the special checks currently
@@ -53,23 +57,6 @@
  * be fixed in SP1 of Longhorn.
  */
 int longhorn = 0;       /* Talking to a Longhorn server? */
-
-/**
- * Return true if we should use ContentInfo rather than SignedData. This
- * happens if we are talking to what might be an old (pre-6112) MIT KDC and
- * we're using anonymous.
- */
-static int
-use_content_info(krb5_context context, pkinit_req_context req,
-                 krb5_principal client)
-{
-    if (req->rfc6112_kdc)
-        return 0;
-    if (krb5_principal_compare_any_realm(context, client,
-                                         krb5_anonymous_principal()))
-        return 1;
-    return 0;
-}
 
 static krb5_error_code
 pkinit_as_req_create(krb5_context context, pkinit_context plgctx,
@@ -85,15 +72,14 @@ pkinit_as_rep_parse(krb5_context context, pkinit_context plgctx,
                     krb5_kdc_req *request, const krb5_data *as_rep,
                     krb5_keyblock *key_block, krb5_enctype etype, krb5_data *);
 
-static void pkinit_client_plugin_fini(krb5_context context,
-                                      krb5_clpreauth_moddata moddata);
+static void pkinit_client_plugin_fini(krb5_context context, void *blob);
 
 static krb5_error_code
 pa_pkinit_gen_req(krb5_context context,
                   pkinit_context plgctx,
                   pkinit_req_context reqctx,
                   krb5_kdc_req * request,
-                  krb5_preauthtype pa_type,
+                  krb5_pa_data * in_padata,
                   krb5_pa_data *** out_padata,
                   krb5_prompter_fct prompter,
                   void *prompter_data,
@@ -110,7 +96,7 @@ pa_pkinit_gen_req(krb5_context context,
     krb5_pa_data **return_pa_data = NULL;
 
     cksum.contents = NULL;
-    reqctx->pa_type = pa_type;
+    reqctx->pa_type = in_padata->pa_type;
 
     pkiDebug("kdc_options = 0x%x  till = %d\n",
              request->kdc_options, request->till);
@@ -138,7 +124,6 @@ pa_pkinit_gen_req(krb5_context context,
                                   der_req, &cksum);
     if (retval)
         goto cleanup;
-    TRACE_PKINIT_CLIENT_REQ_CHECKSUM(context, &cksum);
 #ifdef DEBUG_CKSUM
     pkiDebug("calculating checksum on buf size (%d)\n", der_req->length);
     print_buffer(der_req->data, der_req->length);
@@ -184,10 +169,10 @@ pa_pkinit_gen_req(krb5_context context,
 
     return_pa_data[0]->magic = KV5M_PA_DATA;
 
-    if (pa_type == KRB5_PADATA_PK_AS_REQ_OLD)
+    if (in_padata->pa_type == KRB5_PADATA_PK_AS_REQ_OLD)
         return_pa_data[0]->pa_type = KRB5_PADATA_PK_AS_REP_OLD;
     else
-        return_pa_data[0]->pa_type = pa_type;
+        return_pa_data[0]->pa_type = in_padata->pa_type;
     return_pa_data[0]->length = out_data->length;
     return_pa_data[0]->contents = (krb5_octet *) out_data->data;
 
@@ -261,6 +246,10 @@ pkinit_as_req_create(krb5_context context,
         auth_pack9->pkAuthenticator.cusec = cusec;
         auth_pack9->pkAuthenticator.nonce = nonce;
         auth_pack9->pkAuthenticator.kdcName = server;
+        auth_pack9->pkAuthenticator.kdcRealm.magic = 0;
+        auth_pack9->pkAuthenticator.kdcRealm.data =
+            (unsigned char *)server->realm.data;
+        auth_pack9->pkAuthenticator.kdcRealm.length = server->realm.length;
         free(cksum->contents);
         break;
     case KRB5_PADATA_PK_AS_REQ:
@@ -276,7 +265,6 @@ pkinit_as_req_create(krb5_context context,
         auth_pack->pkAuthenticator.paChecksum = *cksum;
         auth_pack->clientDHNonce.length = 0;
         auth_pack->clientPublicValue = info;
-        auth_pack->supportedKDFs = (krb5_data **) supported_kdf_alg_ids;
 
         /* add List of CMS algorithms */
         retval = create_krb5_supportedCMSTypes(context, plgctx->cryptoctx,
@@ -294,9 +282,8 @@ pkinit_as_req_create(krb5_context context,
 
     switch(protocol) {
     case DH_PROTOCOL:
-        TRACE_PKINIT_CLIENT_REQ_DH(context);
         pkiDebug("as_req: DH key transport algorithm\n");
-        retval = pkinit_copy_krb5_data(&info->algorithm.algorithm, &dh_oid);
+        retval = pkinit_copy_krb5_octet_data(&info->algorithm.algorithm, &dh_oid);
         if (retval) {
             pkiDebug("failed to copy dh_oid\n");
             goto cleanup;
@@ -305,10 +292,8 @@ pkinit_as_req_create(krb5_context context,
         /* create client-side DH keys */
         if ((retval = client_create_dh(context, plgctx->cryptoctx,
                                        reqctx->cryptoctx, reqctx->idctx, reqctx->opts->dh_size,
-                                       (unsigned char **)
                                        &info->algorithm.parameters.data,
                                        &info->algorithm.parameters.length,
-                                       (unsigned char **)
                                        &info->subjectPublicKey.data,
                                        &info->subjectPublicKey.length)) != 0) {
             pkiDebug("failed to create dh parameters\n");
@@ -316,7 +301,6 @@ pkinit_as_req_create(krb5_context context,
         }
         break;
     case RSA_PROTOCOL:
-        TRACE_PKINIT_CLIENT_REQ_RSA(context);
         pkiDebug("as_req: RSA key transport algorithm\n");
         switch((int)reqctx->pa_type) {
         case KRB5_PADATA_PK_AS_REQ_OLD:
@@ -363,14 +347,14 @@ pkinit_as_req_create(krb5_context context,
             retval = ENOMEM;
             goto cleanup;
         }
-        if (use_content_info(context, reqctx, client)) {
+        /* For the new protocol, we support anonymous. */
+        if (krb5_principal_compare_any_realm(context, client,
+                                             krb5_anonymous_principal())) {
             retval = cms_contentinfo_create(context, plgctx->cryptoctx,
                                             reqctx->cryptoctx, reqctx->idctx,
-                                            CMS_SIGN_CLIENT,
-                                            (unsigned char *)
+                                            CMS_SIGN_CLIENT, (unsigned char *)
                                             coded_auth_pack->data,
                                             coded_auth_pack->length,
-                                            (unsigned char **)
                                             &req->signedAuthPack.data,
                                             &req->signedAuthPack.length);
         } else {
@@ -380,7 +364,6 @@ pkinit_as_req_create(krb5_context context,
                                            (unsigned char *)
                                            coded_auth_pack->data,
                                            coded_auth_pack->length,
-                                           (unsigned char **)
                                            &req->signedAuthPack.data,
                                            &req->signedAuthPack.length);
         }
@@ -398,11 +381,8 @@ pkinit_as_req_create(krb5_context context,
         }
         retval = cms_signeddata_create(context, plgctx->cryptoctx,
                                        reqctx->cryptoctx, reqctx->idctx, CMS_SIGN_DRAFT9, 1,
-                                       (unsigned char *)coded_auth_pack->data,
-                                       coded_auth_pack->length,
-                                       (unsigned char **)
-                                       &req9->signedAuthPack.data,
-                                       &req9->signedAuthPack.length);
+                                       (unsigned char *)coded_auth_pack->data, coded_auth_pack->length,
+                                       &req9->signedAuthPack.data, &req9->signedAuthPack.length);
         break;
 #ifdef DEBUG_ASN1
         print_buffer_bin((unsigned char *)req9->signedAuthPack.data,
@@ -424,8 +404,7 @@ pkinit_as_req_create(krb5_context context,
         if (retval)
             goto cleanup;
         retval = create_issuerAndSerial(context, plgctx->cryptoctx,
-                                        reqctx->cryptoctx, reqctx->idctx,
-                                        (unsigned char **)&req->kdcPkId.data,
+                                        reqctx->cryptoctx, reqctx->idctx, &req->kdcPkId.data,
                                         &req->kdcPkId.length);
         if (retval)
             goto cleanup;
@@ -434,9 +413,16 @@ pkinit_as_req_create(krb5_context context,
         retval = k5int_encode_krb5_pa_pk_as_req(req, as_req);
         break;
     case KRB5_PADATA_PK_AS_REQ_OLD:
+#if 0
+        /* W2K3 KDC doesn't like this */
+        retval = create_krb5_trustedCas(context, plgctx->cryptoctx,
+                                        reqctx->cryptoctx, reqctx->idctx, 1, &req9->trustedCertifiers);
+        if (retval)
+            goto cleanup;
+
+#endif
         retval = create_issuerAndSerial(context, plgctx->cryptoctx,
-                                        reqctx->cryptoctx, reqctx->idctx,
-                                        (unsigned char **)&req9->kdcCert.data,
+                                        reqctx->cryptoctx, reqctx->idctx, &req9->kdcCert.data,
                                         &req9->kdcCert.length);
         if (retval)
             goto cleanup;
@@ -451,12 +437,17 @@ pkinit_as_req_create(krb5_context context,
 #endif
 
 cleanup:
-    if (auth_pack != NULL)
-        auth_pack->supportedKDFs = NULL; /*alias to global constant*/
-    free_krb5_auth_pack(&auth_pack);
-    free_krb5_pa_pk_as_req(&req);
-    free_krb5_pa_pk_as_req_draft9(&req9);
-    free(auth_pack9);
+    switch((int)reqctx->pa_type) {
+    case KRB5_PADATA_PK_AS_REQ:
+        free_krb5_auth_pack(&auth_pack);
+        free_krb5_pa_pk_as_req(&req);
+        break;
+    case KRB5_PADATA_PK_AS_REQ_OLD:
+        free_krb5_pa_pk_as_req_draft9(&req9);
+        free(auth_pack9);
+        break;
+    }
+
 
     pkiDebug("pkinit_as_req_create retval=%d\n", (int) retval);
 
@@ -514,16 +505,19 @@ verify_kdc_san(krb5_context context,
                int *need_eku_checking)
 {
     krb5_error_code retval;
-    char **certhosts = NULL, **cfghosts = NULL, **hostptr;
-    krb5_principal *princs = NULL, *princptr;
+    char **certhosts = NULL, **cfghosts = NULL;
+    krb5_principal *princs = NULL;
     unsigned char ***get_dns;
+    struct srv_dns_entry *kdc_dns_entries = NULL;
+    const char *kdc_realm;
     int i, j;
 
     *valid_san = 0;
     *need_eku_checking = 1;
 
+    kdc_realm = krb5_princ_realm(context, kdcprinc);
     retval = pkinit_libdefault_strings(context,
-                                       krb5_princ_realm(context, kdcprinc),
+				       kdc_realm, 
                                        KRB5_CONF_PKINIT_KDC_HOSTNAME,
                                        &cfghosts);
     if (retval || cfghosts == NULL) {
@@ -533,8 +527,6 @@ verify_kdc_san(krb5_context context,
     } else {
         pkiDebug("%s: pkinit_kdc_hostname values found in config file\n",
                  __FUNCTION__);
-        for (hostptr = cfghosts; *hostptr != NULL; hostptr++)
-            TRACE_PKINIT_CLIENT_SAN_CONFIG_DNSNAME(context, *hostptr);
         get_dns = (unsigned char ***)&certhosts;
     }
 
@@ -543,15 +535,8 @@ verify_kdc_san(krb5_context context,
                                        &princs, NULL, get_dns);
     if (retval) {
         pkiDebug("%s: error from retrieve_certificate_sans()\n", __FUNCTION__);
-        TRACE_PKINIT_CLIENT_SAN_ERR(context);
         retval = KRB5KDC_ERR_KDC_NAME_MISMATCH;
         goto out;
-    }
-    for (princptr = princs; *princptr != NULL; princptr++)
-        TRACE_PKINIT_CLIENT_SAN_KDCCERT_PRINC(context, *princptr);
-    if (certhosts != NULL) {
-        for (hostptr = certhosts; *hostptr != NULL; hostptr++)
-            TRACE_PKINIT_CLIENT_SAN_KDCCERT_DNSNAME(context, *hostptr);
     }
 #if 0
     retval = call_san_checking_plugins(context, plgctx, reqctx, idctx,
@@ -575,7 +560,6 @@ verify_kdc_san(krb5_context context,
     pkiDebug("%s: Checking pkinit sans\n", __FUNCTION__);
     for (i = 0; princs != NULL && princs[i] != NULL; i++) {
         if (krb5_principal_compare(context, princs[i], kdcprinc)) {
-            TRACE_PKINIT_CLIENT_SAN_MATCH_PRINC(context, kdcprinc);
             pkiDebug("%s: pkinit san match found\n", __FUNCTION__);
             *valid_san = 1;
             *need_eku_checking = 0;
@@ -594,10 +578,49 @@ verify_kdc_san(krb5_context context,
 
     for (i = 0; certhosts[i] != NULL; i++) {
         for (j = 0; cfghosts != NULL && cfghosts[j] != NULL; j++) {
+            if (!strcmp(cfghosts[j], "<DNS>")) {
+#ifdef KRB5_DNS_LOOKUP
+                struct srv_dns_entry *entry;
+
+                if (kdc_dns_entries == NULL) {
+                    if (k5int_make_srv_query_realm(kdc_realm,
+                                "_kerberos", "_tcp", &kdc_dns_entries)) {
+                        pkiDebug("%s: DNS lookup failed\n", __FUNCTION__);
+                        continue;
+                    }
+
+                    /* Remove trailing dots from DNS names. */
+                    for (entry = kdc_dns_entries; entry != NULL;
+                            entry = entry->next) {
+                        char *cp = strrchr(entry->host, '.');
+
+                        if (cp[1] == '\0') {
+                            *cp = '\0';
+                        }
+                    }
+                }
+
+                for (entry = kdc_dns_entries; entry != NULL;
+                        entry = entry->next) {
+                    pkiDebug("%s: comparing cert name '%s' with DNS name '%s'\n",
+                             __FUNCTION__, certhosts[i], entry->host);
+                    if (!strcasecmp(certhosts[i], entry->host)) {
+                        pkiDebug("%s: we have a dnsName match\n", __FUNCTION__);
+                        *valid_san = 1;
+                        retval = 0;
+                        goto out;
+                    }
+                }
+#else /* KRB5_DNS_LOOKUP */
+                pkiDebug("%s: <DNS> tag used but DNS lookup not enabled in build\n",
+                        __FUNCTION__);
+#endif /* KRB5_DNS_LOOKUP */
+
+                continue;
+            }
             pkiDebug("%s: comparing cert name '%s' with config name '%s'\n",
                      __FUNCTION__, certhosts[i], cfghosts[j]);
-            if (strcmp(certhosts[i], cfghosts[j]) == 0) {
-                TRACE_PKINIT_CLIENT_SAN_MATCH_DNSNAME(context, certhosts[i]);
+	    if (strcasecmp(certhosts[i], cfghosts[j]) == 0) {
                 pkiDebug("%s: we have a dnsName match\n", __FUNCTION__);
                 *valid_san = 1;
                 retval = 0;
@@ -605,7 +628,6 @@ verify_kdc_san(krb5_context context,
             }
         }
     }
-    TRACE_PKINIT_CLIENT_SAN_MATCH_NONE(context);
     pkiDebug("%s: no dnsName san match found\n", __FUNCTION__);
 
     /* We found no match */
@@ -624,6 +646,9 @@ out:
     }
     if (cfghosts != NULL)
         profile_free_list(cfghosts);
+    if (kdc_dns_entries != NULL) {
+        k5int_free_srv_dns_data(kdc_dns_entries);
+    }
 
     pkiDebug("%s: returning retval %d, valid_san %d, need_eku_checking %d\n",
              __FUNCTION__, retval, *valid_san, *need_eku_checking);
@@ -641,7 +666,6 @@ verify_kdc_eku(krb5_context context,
     *eku_accepted = 0;
 
     if (reqctx->opts->require_eku == 0) {
-        TRACE_PKINIT_CLIENT_EKU_SKIP(context);
         pkiDebug("%s: configuration requests no EKU checking\n", __FUNCTION__);
         *eku_accepted = 1;
         retval = 0;
@@ -659,10 +683,6 @@ verify_kdc_eku(krb5_context context,
     }
 
 out:
-    if (*eku_accepted)
-        TRACE_PKINIT_CLIENT_EKU_ACCEPT(context);
-    else
-        TRACE_PKINIT_CLIENT_EKU_REJECT(context);
     pkiDebug("%s: returning retval %d, eku_accepted %d\n",
              __FUNCTION__, retval, *eku_accepted);
     return retval;
@@ -690,12 +710,11 @@ pkinit_as_rep_parse(krb5_context context,
     krb5_kdc_dh_key_info *kdc_dh = NULL;
     krb5_reply_key_pack *key_pack = NULL;
     krb5_reply_key_pack_draft9 *key_pack9 = NULL;
-    krb5_data dh_data = { 0, 0, NULL };
+    krb5_octet_data dh_data = { 0, 0, NULL };
     unsigned char *client_key = NULL, *kdc_hostname = NULL;
     unsigned int client_key_len = 0;
     krb5_checksum cksum = {0, 0, 0, NULL};
     krb5_data k5data;
-    krb5_data secret;
     int valid_san = 0;
     int valid_eku = 0;
     int need_eku_checking = 1;
@@ -722,33 +741,26 @@ pkinit_as_rep_parse(krb5_context context,
         if ((retval = cms_signeddata_verify(context, plgctx->cryptoctx,
                                             reqctx->cryptoctx, reqctx->idctx, CMS_SIGN_SERVER,
                                             reqctx->opts->require_crl_checking,
-                                            (unsigned char *)
                                             kdc_reply->u.dh_Info.dhSignedData.data,
                                             kdc_reply->u.dh_Info.dhSignedData.length,
-                                            (unsigned char **)&dh_data.data,
-                                            &dh_data.length,
+                                            &dh_data.data, &dh_data.length,
                                             NULL, NULL, NULL)) != 0) {
             pkiDebug("failed to verify pkcs7 signed data\n");
-            TRACE_PKINIT_CLIENT_REP_DH_FAIL(context);
             goto cleanup;
         }
-        TRACE_PKINIT_CLIENT_REP_DH(context);
+
         break;
     case choice_pa_pk_as_rep_encKeyPack:
         pkiDebug("as_rep: RSA key transport algorithm\n");
         if ((retval = cms_envelopeddata_verify(context, plgctx->cryptoctx,
                                                reqctx->cryptoctx, reqctx->idctx, pa_type,
                                                reqctx->opts->require_crl_checking,
-                                               (unsigned char *)
                                                kdc_reply->u.encKeyPack.data,
                                                kdc_reply->u.encKeyPack.length,
-                                               (unsigned char **)&dh_data.data,
-                                               &dh_data.length)) != 0) {
+                                               &dh_data.data, &dh_data.length)) != 0) {
             pkiDebug("failed to verify pkcs7 enveloped data\n");
-            TRACE_PKINIT_CLIENT_REP_RSA_FAIL(context);
             goto cleanup;
         }
-        TRACE_PKINIT_CLIENT_REP_RSA(context);
         break;
     default:
         pkiDebug("unknown as_rep type %d\n", kdc_reply->choice);
@@ -806,7 +818,6 @@ pkinit_as_rep_parse(krb5_context context,
         /* client after KDC reply */
         if ((retval = client_process_dh(context, plgctx->cryptoctx,
                                         reqctx->cryptoctx, reqctx->idctx,
-                                        (unsigned char *)
                                         kdc_dh->subjectPublicKey.data,
                                         kdc_dh->subjectPublicKey.length,
                                         &client_key, &client_key_len)) != 0) {
@@ -814,36 +825,12 @@ pkinit_as_rep_parse(krb5_context context,
             goto cleanup;
         }
 
-        /* If we have a KDF algorithm ID, call the algorithm agility KDF... */
-        if (kdc_reply->u.dh_Info.kdfID) {
-            secret.length = client_key_len;
-            secret.data = (char *)client_key;
-
-            retval = pkinit_alg_agility_kdf(context, &secret,
-                                            kdc_reply->u.dh_Info.kdfID,
-                                            request->client, request->server,
-                                            etype, encoded_request,
-                                            (krb5_data *)as_rep, key_block);
-
-            if (retval) {
-                pkiDebug("failed to create key pkinit_alg_agility_kdf %s\n",
-                         error_message(retval));
-                goto cleanup;
-            }
-            TRACE_PKINIT_CLIENT_KDF_ALG(context, kdc_reply->u.dh_Info.kdfID,
-                                        key_block);
-
-            /* ...otherwise, use the older octetstring2key function. */
-        } else {
-
-            retval = pkinit_octetstring2key(context, etype, client_key,
-                                            client_key_len, key_block);
-            if (retval) {
-                pkiDebug("failed to create key pkinit_octetstring2key %s\n",
-                         error_message(retval));
-                goto cleanup;
-            }
-            TRACE_PKINIT_CLIENT_KDF_OS2K(context, key_block);
+        retval = pkinit_octetstring2key(context, etype, client_key,
+                                        client_key_len, key_block);
+        if (retval) {
+            pkiDebug("failed to create key pkinit_octetstring2key %s\n",
+                     error_message(retval));
+            goto cleanup;
         }
 
         break;
@@ -904,8 +891,6 @@ pkinit_as_rep_parse(krb5_context context,
         if ((cksum.length != key_pack->asChecksum.length) ||
             memcmp(cksum.contents, key_pack->asChecksum.contents,
                    cksum.length)) {
-            TRACE_PKINIT_CLIENT_REP_CHECKSUM_FAIL(context, &cksum,
-                                                  &key_pack->asChecksum);
             pkiDebug("failed to match the checksums\n");
 #ifdef DEBUG_CKSUM
             pkiDebug("calculating checksum on buf size (%d)\n",
@@ -929,7 +914,6 @@ pkinit_as_rep_parse(krb5_context context,
 
         krb5_copy_keyblock_contents(context, &key_pack->replyKey,
                                     key_block);
-        TRACE_PKINIT_CLIENT_REP_RSA_KEY(context, key_block, &cksum);
 
         break;
     default:
@@ -964,11 +948,8 @@ static void
 pkinit_client_profile(krb5_context context,
                       pkinit_context plgctx,
                       pkinit_req_context reqctx,
-                      krb5_clpreauth_callbacks cb,
-                      krb5_clpreauth_rock rock,
                       const krb5_data *realm)
 {
-    const char *configured_identity;
     char *eku_string = NULL;
 
     pkiDebug("pkinit_client_profile %p %p %p %p\n",
@@ -1038,47 +1019,51 @@ pkinit_client_profile(krb5_context context,
     pkinit_libdefault_strings(context, realm,
                               KRB5_CONF_PKINIT_IDENTITIES,
                               &reqctx->idopts->identity_alt);
-    reqctx->do_identity_matching = TRUE;
-
-    /* If we had a primary identity in the stored configuration, pick it up. */
-    configured_identity = cb->get_cc_config(context, rock,
-                                            "X509_user_identity");
-    if (configured_identity != NULL) {
-        free(reqctx->idopts->identity);
-        reqctx->idopts->identity = strdup(configured_identity);
-        reqctx->do_identity_matching = FALSE;
-    }
 }
 
 static krb5_error_code
-pkinit_client_process(krb5_context context, krb5_clpreauth_moddata moddata,
-                      krb5_clpreauth_modreq modreq,
+pkinit_client_process(krb5_context context,
+                      void *plugin_context,
+                      void *request_context,
                       krb5_get_init_creds_opt *gic_opt,
-                      krb5_clpreauth_callbacks cb, krb5_clpreauth_rock rock,
-                      krb5_kdc_req *request, krb5_data *encoded_request_body,
+                      preauth_get_client_data_proc get_data_proc,
+                      struct _krb5_preauth_client_rock *rock,
+                      krb5_kdc_req *request,
+                      krb5_data *encoded_request_body,
                       krb5_data *encoded_previous_request,
                       krb5_pa_data *in_padata,
-                      krb5_prompter_fct prompter, void *prompter_data,
+                      krb5_prompter_fct prompter,
+                      void *prompter_data,
+                      preauth_get_as_key_proc gak_fct,
+                      void *gak_data,
+                      krb5_data *salt,
+                      krb5_data *s2kparams,
+                      krb5_keyblock *as_key,
                       krb5_pa_data ***out_padata)
 {
     krb5_error_code retval = KRB5KDC_ERR_PREAUTH_FAILED;
     krb5_enctype enctype = -1;
+    krb5_data *cdata = NULL;
     int processing_request = 0;
-    pkinit_context plgctx = (pkinit_context)moddata;
-    pkinit_req_context reqctx = (pkinit_req_context)modreq;
-    krb5_keyblock as_key;
+    pkinit_context plgctx = (pkinit_context)plugin_context;
+    pkinit_req_context reqctx = (pkinit_req_context)request_context;
+    krb5_keyblock *armor_key = NULL;
 
     pkiDebug("pkinit_client_process %p %p %p %p\n",
              context, plgctx, reqctx, request);
 
+    /* Remove (along with armor_key) when FAST PKINIT is settled. */
+    retval = fast_get_armor_key(context, get_data_proc, rock, &armor_key);
+    if (retval == 0 && armor_key != NULL) {
+        /* Don't use PKINIT if also using FAST. */
+        krb5_free_keyblock(context, armor_key);
+        return EINVAL;
+    }
 
     if (plgctx == NULL || reqctx == NULL)
         return EINVAL;
 
     switch ((int) in_padata->pa_type) {
-    case KRB5_PADATA_PKINIT_KX:
-        reqctx->rfc6112_kdc = 1;
-        return 0;
     case KRB5_PADATA_PK_AS_REQ:
         pkiDebug("processing KRB5_PADATA_PK_AS_REQ\n");
         processing_request = 1;
@@ -1104,34 +1089,45 @@ pkinit_client_process(krb5_context context, krb5_clpreauth_moddata moddata,
         return EINVAL;
     }
 
+    if (plgctx->cryptoctx == NULL)
+    {
+        retval = pkinit_init_plg_crypto(&plgctx->cryptoctx);
+        if (retval)
+            return retval;
+    }
+
     if (processing_request) {
-        pkinit_client_profile(context, plgctx, reqctx, cb, rock,
+        pkinit_client_profile(context, plgctx, reqctx,
                               &request->server->realm);
         pkinit_identity_set_prompter(reqctx->idctx, prompter, prompter_data);
         retval = pkinit_identity_initialize(context, plgctx->cryptoctx,
                                             reqctx->cryptoctx, reqctx->idopts,
-                                            reqctx->idctx, cb, rock,
-                                            reqctx->do_identity_matching,
-                                            request->client);
+                                            reqctx->idctx, 1, request->client);
         if (retval) {
-            TRACE_PKINIT_CLIENT_NO_IDENTITY(context);
             pkiDebug("pkinit_identity_initialize returned %d (%s)\n",
                      retval, error_message(retval));
             return retval;
         }
         retval = pa_pkinit_gen_req(context, plgctx, reqctx, request,
-                                   in_padata->pa_type, out_padata, prompter,
+                                   in_padata, out_padata, prompter,
                                    prompter_data, gic_opt);
     } else {
         /*
          * Get the enctype of the reply.
          */
-        enctype = cb->get_etype(context, rock);
+        retval = (*get_data_proc)(context, rock,
+                                  krb5plugin_preauth_client_get_etype, &cdata);
+        if (retval) {
+            pkiDebug("get_data_proc returned %d (%s)\n",
+                     retval, error_message(retval));
+            return retval;
+        }
+        enctype = *((krb5_enctype *)cdata->data);
+        (*get_data_proc)(context, rock,
+                         krb5plugin_preauth_client_free_etype, &cdata);
         retval = pa_pkinit_parse_rep(context, plgctx, reqctx, request,
-                                     in_padata, enctype, &as_key,
+                                     in_padata, enctype, as_key,
                                      encoded_previous_request);
-        if (retval == 0)
-            retval = cb->set_as_key(context, rock, &as_key);
     }
 
     pkiDebug("pkinit_client_process: returning %d (%s)\n",
@@ -1140,83 +1136,101 @@ pkinit_client_process(krb5_context context, krb5_clpreauth_moddata moddata,
 }
 
 static krb5_error_code
-pkinit_client_tryagain(krb5_context context, krb5_clpreauth_moddata moddata,
-                       krb5_clpreauth_modreq modreq,
+pkinit_client_tryagain(krb5_context context,
+                       void *plugin_context,
+                       void *request_context,
                        krb5_get_init_creds_opt *gic_opt,
-                       krb5_clpreauth_callbacks cb, krb5_clpreauth_rock rock,
-                       krb5_kdc_req *request, krb5_data *encoded_request_body,
+                       preauth_get_client_data_proc get_data_proc,
+                       struct _krb5_preauth_client_rock *rock,
+                       krb5_kdc_req *request,
+                       krb5_data *encoded_request_body,
                        krb5_data *encoded_previous_request,
-                       krb5_preauthtype pa_type, krb5_error *err_reply,
-                       krb5_pa_data **err_padata, krb5_prompter_fct prompter,
-                       void *prompter_data, krb5_pa_data ***out_padata)
+                       krb5_pa_data *in_padata,
+                       krb5_error *err_reply,
+                       krb5_prompter_fct prompter,
+                       void *prompter_data,
+                       preauth_get_as_key_proc gak_fct,
+                       void *gak_data,
+                       krb5_data *salt,
+                       krb5_data *s2kparams,
+                       krb5_keyblock *as_key,
+                       krb5_pa_data ***out_padata)
 {
     krb5_error_code retval = KRB5KDC_ERR_PREAUTH_FAILED;
-    pkinit_context plgctx = (pkinit_context)moddata;
-    pkinit_req_context reqctx = (pkinit_req_context)modreq;
-    krb5_pa_data *pa;
+    pkinit_context plgctx = (pkinit_context)plugin_context;
+    pkinit_req_context reqctx = (pkinit_req_context)request_context;
+    krb5_typed_data **typed_data = NULL;
     krb5_data scratch;
-    krb5_external_principal_identifier **certifiers = NULL;
+    krb5_external_principal_identifier **krb5_trusted_certifiers = NULL;
     krb5_algorithm_identifier **algId = NULL;
     int do_again = 0;
 
     pkiDebug("pkinit_client_tryagain %p %p %p %p\n",
              context, plgctx, reqctx, request);
 
-    if (reqctx->pa_type != pa_type || err_padata == NULL)
+    if (reqctx->pa_type != in_padata->pa_type)
         return retval;
 
-    for (; *err_padata != NULL && !do_again; err_padata++) {
-        pa = *err_padata;
-        PADATA_TO_KRB5DATA(pa, &scratch);
-        switch (pa->pa_type) {
-        case TD_TRUSTED_CERTIFIERS:
-        case TD_INVALID_CERTIFICATES:
-            retval = k5int_decode_krb5_td_trusted_certifiers(&scratch,
-                                                             &certifiers);
-            if (retval) {
-                pkiDebug("failed to decode sequence of trusted certifiers\n");
-                goto cleanup;
-            }
-            retval = pkinit_process_td_trusted_certifiers(context,
-                                                          plgctx->cryptoctx,
-                                                          reqctx->cryptoctx,
-                                                          reqctx->idctx,
-                                                          certifiers,
-                                                          pa->pa_type);
-            if (!retval)
-                do_again = 1;
-            break;
-        case TD_DH_PARAMETERS:
-            retval = k5int_decode_krb5_td_dh_parameters(&scratch, &algId);
-            if (retval) {
-                pkiDebug("failed to decode td_dh_parameters\n");
-                goto cleanup;
-            }
-            retval = pkinit_process_td_dh_params(context, plgctx->cryptoctx,
-                                                 reqctx->cryptoctx,
-                                                 reqctx->idctx, algId,
-                                                 &reqctx->opts->dh_size);
-            if (!retval)
-                do_again = 1;
-            break;
-        default:
-            break;
+#ifdef DEBUG_ASN1
+    print_buffer_bin((unsigned char *)err_reply->e_data.data,
+                     err_reply->e_data.length, "/tmp/client_edata");
+#endif
+    retval = k5int_decode_krb5_typed_data(&err_reply->e_data, &typed_data);
+    if (retval) {
+        pkiDebug("decode_krb5_typed_data failed\n");
+        goto cleanup;
+    }
+#ifdef DEBUG_ASN1
+    print_buffer_bin(typed_data[0]->data, typed_data[0]->length,
+                     "/tmp/client_typed_data");
+#endif
+    OCTETDATA_TO_KRB5DATA(typed_data[0], &scratch);
+
+    switch(typed_data[0]->type) {
+    case TD_TRUSTED_CERTIFIERS:
+    case TD_INVALID_CERTIFICATES:
+        retval = k5int_decode_krb5_td_trusted_certifiers(&scratch,
+                                                         &krb5_trusted_certifiers);
+        if (retval) {
+            pkiDebug("failed to decode sequence of trusted certifiers\n");
+            goto cleanup;
         }
+        retval = pkinit_process_td_trusted_certifiers(context,
+                                                      plgctx->cryptoctx, reqctx->cryptoctx, reqctx->idctx,
+                                                      krb5_trusted_certifiers, typed_data[0]->type);
+        if (!retval)
+            do_again = 1;
+        break;
+    case TD_DH_PARAMETERS:
+        retval = k5int_decode_krb5_td_dh_parameters(&scratch, &algId);
+        if (retval) {
+            pkiDebug("failed to decode td_dh_parameters\n");
+            goto cleanup;
+        }
+        retval = pkinit_process_td_dh_params(context, plgctx->cryptoctx,
+                                             reqctx->cryptoctx, reqctx->idctx, algId,
+                                             &reqctx->opts->dh_size);
+        if (!retval)
+            do_again = 1;
+        break;
+    default:
+        break;
     }
 
     if (do_again) {
-        TRACE_PKINIT_CLIENT_TRYAGAIN(context);
-        retval = pa_pkinit_gen_req(context, plgctx, reqctx, request, pa_type,
-                                   out_padata, prompter, prompter_data,
-                                   gic_opt);
+        retval = pa_pkinit_gen_req(context, plgctx, reqctx, request, in_padata,
+                                   out_padata, prompter, prompter_data, gic_opt);
         if (retval)
             goto cleanup;
     }
 
     retval = 0;
 cleanup:
-    if (certifiers != NULL)
-        free_krb5_external_principal_identifier(&certifiers);
+    if (krb5_trusted_certifiers != NULL)
+        free_krb5_external_principal_identifier(&krb5_trusted_certifiers);
+
+    if (typed_data != NULL)
+        free_krb5_typed_data(&typed_data);
 
     if (algId != NULL)
         free_krb5_algorithm_identifiers(&algId);
@@ -1229,36 +1243,29 @@ cleanup:
 static int
 pkinit_client_get_flags(krb5_context kcontext, krb5_preauthtype patype)
 {
-    if (patype == KRB5_PADATA_PKINIT_KX)
-        return PA_INFO|PA_PSEUDO;
     return PA_REAL;
 }
 
-/*
- * We want to be notified about KRB5_PADATA_PKINIT_KX in addition to the actual
- * pkinit patypes because RFC 6112 requires anonymous KDCs to send it. We use
- * that to determine whether to use the broken MIT 1.9 behavior of sending
- * ContentInfo rather than SignedData or the RFC 6112 behavior
- */
 static krb5_preauthtype supported_client_pa_types[] = {
+#if 0 /* Doesn't work yet. */
     KRB5_PADATA_PK_AS_REP,
     KRB5_PADATA_PK_AS_REQ,
+#endif
     KRB5_PADATA_PK_AS_REP_OLD,
     KRB5_PADATA_PK_AS_REQ_OLD,
-    KRB5_PADATA_PKINIT_KX,
     0
 };
 
 static void
 pkinit_client_req_init(krb5_context context,
-                       krb5_clpreauth_moddata moddata,
-                       krb5_clpreauth_modreq *modreq_out)
+                       void *plugin_context,
+                       void **request_context)
 {
     krb5_error_code retval = ENOMEM;
     pkinit_req_context reqctx = NULL;
-    pkinit_context plgctx = (pkinit_context)moddata;
+    pkinit_context plgctx = plugin_context;
 
-    *modreq_out = NULL;
+    *request_context = NULL;
 
     reqctx = malloc(sizeof(*reqctx));
     if (reqctx == NULL)
@@ -1293,7 +1300,7 @@ pkinit_client_req_init(krb5_context context,
     if (retval)
         goto cleanup;
 
-    *modreq_out = (krb5_clpreauth_modreq)reqctx;
+    *request_context = (void *) reqctx;
     pkiDebug("%s: returning reqctx at %p\n", __FUNCTION__, reqctx);
 
 cleanup:
@@ -1313,10 +1320,11 @@ cleanup:
 }
 
 static void
-pkinit_client_req_fini(krb5_context context, krb5_clpreauth_moddata moddata,
-                       krb5_clpreauth_modreq modreq)
+pkinit_client_req_fini(krb5_context context,
+                       void *plugin_context,
+                       void *request_context)
 {
-    pkinit_req_context reqctx = (pkinit_req_context)modreq;
+    pkinit_req_context reqctx = request_context;
 
     pkiDebug("%s: received reqctx at %p\n", __FUNCTION__, reqctx);
     if (reqctx == NULL)
@@ -1343,8 +1351,7 @@ pkinit_client_req_fini(krb5_context context, krb5_clpreauth_moddata moddata,
 }
 
 static int
-pkinit_client_plugin_init(krb5_context context,
-                          krb5_clpreauth_moddata *moddata_out)
+pkinit_client_plugin_init(krb5_context context, void **blob)
 {
     krb5_error_code retval = ENOMEM;
     pkinit_context ctx = NULL;
@@ -1366,29 +1373,25 @@ pkinit_client_plugin_init(krb5_context context,
     if (retval)
         goto errout;
 
-    retval = pkinit_init_plg_crypto(&ctx->cryptoctx);
-    if (retval)
-        goto errout;
-
     retval = pkinit_init_identity_opts(&ctx->idopts);
     if (retval)
         goto errout;
 
-    *moddata_out = (krb5_clpreauth_moddata)ctx;
+    *blob = ctx;
 
     pkiDebug("%s: returning plgctx at %p\n", __FUNCTION__, ctx);
 
 errout:
     if (retval)
-        pkinit_client_plugin_fini(context, (krb5_clpreauth_moddata)ctx);
+        pkinit_client_plugin_fini(context, ctx);
 
     return retval;
 }
 
 static void
-pkinit_client_plugin_fini(krb5_context context, krb5_clpreauth_moddata moddata)
+pkinit_client_plugin_fini(krb5_context context, void *blob)
 {
-    pkinit_context ctx = (pkinit_context)moddata;
+    pkinit_context ctx = blob;
 
     if (ctx == NULL || ctx->magic != PKINIT_CTX_MAGIC) {
         pkiDebug("pkinit_lib_fini: got bad plgctx (%p)!\n", ctx);
@@ -1474,13 +1477,14 @@ handle_gic_opt(krb5_context context,
 }
 
 static krb5_error_code
-pkinit_client_gic_opt(krb5_context context, krb5_clpreauth_moddata moddata,
+pkinit_client_gic_opt(krb5_context context,
+                      void *plugin_context,
                       krb5_get_init_creds_opt *gic_opt,
                       const char *attr,
                       const char *value)
 {
     krb5_error_code retval;
-    pkinit_context plgctx = (pkinit_context)moddata;
+    pkinit_context plgctx = plugin_context;
 
     pkiDebug("(pkinit) received '%s' = '%s'\n", attr, value);
     retval = handle_gic_opt(context, plgctx, attr, value);
@@ -1490,28 +1494,20 @@ pkinit_client_gic_opt(krb5_context context, krb5_clpreauth_moddata moddata,
     return 0;
 }
 
-krb5_error_code
-clpreauth_pkinit_initvt(krb5_context context, int maj_ver, int min_ver,
-                        krb5_plugin_vtable vtable);
+/* Only necessary for static plugin linking support. */
+#include "k5-plugin.h"
 
-krb5_error_code
-clpreauth_pkinit_initvt(krb5_context context, int maj_ver, int min_ver,
-                        krb5_plugin_vtable vtable)
-{
-    krb5_clpreauth_vtable vt;
-
-    if (maj_ver != 1)
-        return KRB5_PLUGIN_VER_NOTSUPP;
-    vt = (krb5_clpreauth_vtable)vtable;
-    vt->name = "pkinit";
-    vt->pa_type_list = supported_client_pa_types;
-    vt->init = pkinit_client_plugin_init;
-    vt->fini = pkinit_client_plugin_fini;
-    vt->flags = pkinit_client_get_flags;
-    vt->request_init = pkinit_client_req_init;
-    vt->request_fini = pkinit_client_req_fini;
-    vt->process = pkinit_client_process;
-    vt->tryagain = pkinit_client_tryagain;
-    vt->gic_opts = pkinit_client_gic_opt;
-    return 0;
-}
+struct krb5plugin_preauth_client_ftable_v1
+PLUGIN_SYMBOL_NAME(krb5_preauth, preauthentication_client_1) = {
+    "pkinit",                   /* name */
+    supported_client_pa_types,  /* pa_type_list */
+    NULL,                       /* enctype_list */
+    pkinit_client_plugin_init,  /* (*init) */
+    pkinit_client_plugin_fini,  /* (*fini) */
+    pkinit_client_get_flags,    /* (*flags) */
+    pkinit_client_req_init,     /* (*client_req_init) */
+    pkinit_client_req_fini,     /* (*client_req_fini) */
+    pkinit_client_process,      /* (*process) */
+    pkinit_client_tryagain,     /* (*tryagain) */
+    pkinit_client_gic_opt       /* (*gic_opt) */
+};

@@ -16,21 +16,27 @@
 
 #define RFC3244_VERSION 0xff80
 
-static krb5_error_code
-process_chpw_request(krb5_context context, void *server_handle, char *realm,
-                     krb5_keytab keytab, const krb5_fulladdr *local_faddr,
-                     const krb5_fulladdr *remote_faddr, krb5_data *req,
-                     krb5_data *rep)
+krb5_error_code
+process_chpw_request(context, server_handle, realm, keytab,
+                     local_faddr, remote_faddr, req, rep)
+    krb5_context context;
+    void *server_handle;
+    char *realm;
+    krb5_keytab keytab;
+    krb5_fulladdr *local_faddr;
+    krb5_fulladdr *remote_faddr;
+    krb5_data *req;
+    krb5_data *rep;
 {
     krb5_error_code ret;
     char *ptr;
-    unsigned int plen, vno;
-    krb5_data ap_req, ap_rep = empty_data();
-    krb5_data cipher = empty_data(), clear = empty_data();
-    krb5_auth_context auth_context = NULL;
-    krb5_principal changepw = NULL;
+    int plen, vno;
+    krb5_data ap_req, ap_rep;
+    krb5_auth_context auth_context;
+    krb5_principal changepw;
     krb5_principal client, target = NULL;
-    krb5_ticket *ticket = NULL;
+    krb5_ticket *ticket;
+    krb5_data cipher, clear;
     krb5_replay_data replay;
     krb5_error krberror;
     int numresult;
@@ -44,7 +50,16 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
     char addrbuf[100];
     krb5_address *addr = remote_faddr->address;
 
-    *rep = empty_data();
+    ret = 0;
+    rep->length = 0;
+    rep->data = NULL;
+
+    auth_context = NULL;
+    changepw = NULL;
+    ap_rep.length = 0;
+    ticket = NULL;
+    clear.length = 0;
+    cipher.length = 0;
 
     if (req->length < 4) {
         /* either this, or the server is printing bad messages,
@@ -52,7 +67,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         ret = KRB5KRB_AP_ERR_MODIFIED;
         numresult = KRB5_KPASSWD_MALFORMED;
         strlcpy(strresult, "Request was truncated", sizeof(strresult));
-        goto bailout;
+        goto chpwfail;
     }
 
     ptr = req->data;
@@ -67,7 +82,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         numresult = KRB5_KPASSWD_MALFORMED;
         strlcpy(strresult, "Request length was inconsistent",
                 sizeof(strresult));
-        goto bailout;
+        goto chpwfail;
     }
 
     /* verify version number */
@@ -80,7 +95,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         numresult = KRB5_KPASSWD_BAD_VERSION;
         snprintf(strresult, sizeof(strresult),
                  "Request contained unknown protocol version number %d", vno);
-        goto bailout;
+        goto chpwfail;
     }
 
     /* read, check ap-req length */
@@ -93,7 +108,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         numresult = KRB5_KPASSWD_MALFORMED;
         strlcpy(strresult, "Request was truncated in AP-REQ",
                 sizeof(strresult));
-        goto bailout;
+        goto chpwfail;
     }
 
     /* verify ap_req */
@@ -137,6 +152,29 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         goto chpwfail;
     }
 
+    /* mk_priv requires that the local address be set.
+       getsockname is used for this.  rd_priv requires that the
+       remote address be set.  recvfrom is used for this.  If
+       rd_priv is given a local address, and the message has the
+       recipient addr in it, this will be checked.  However, there
+       is simply no way to know ahead of time what address the
+       message will be delivered *to*.  Therefore, it is important
+       that either no recipient address is in the messages when
+       mk_priv is called, or that no local address is passed to
+       rd_priv.  Both is a better idea, and I have done that.  In
+       summary, when mk_priv is called, *only* a local address is
+       specified.  when rd_priv is called, *only* a remote address
+       is specified.  Are we having fun yet?  */
+
+    ret = krb5_auth_con_setaddrs(context, auth_context, NULL,
+                                 remote_faddr->address);
+    if (ret) {
+        numresult = KRB5_KPASSWD_HARDERROR;
+        strlcpy(strresult, "Failed storing client internet address",
+                sizeof(strresult));
+        goto chpwfail;
+    }
+
     /* construct the ap-rep */
 
     ret = krb5_mk_rep(context, auth_context, &ap_rep);
@@ -151,14 +189,6 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
 
     cipher.length = (req->data + req->length) - ptr;
     cipher.data = ptr;
-
-    /*
-     * Don't set a remote address in auth_context before calling krb5_rd_priv,
-     * so that we can work against clients behind a NAT.  Reflection attacks
-     * aren't a concern since we use sequence numbers and since our requests
-     * don't look anything like our responses.  Also don't set a local address,
-     * since we don't know what interface the request was received on.
-     */
 
     ret = krb5_rd_priv(context, auth_context, &cipher, &clear, &replay);
     if (ret) {
@@ -181,7 +211,8 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
             goto chpwfail;
         }
 
-        zapfree(clear.data, clear.length);
+        memset(clear.data, 0, clear.length);
+        free(clear.data);
 
         clear = *clear_data;
         free(clear_data);
@@ -227,9 +258,11 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         errmsg = krb5_get_error_message(context, ret);
 
     /* zap the password */
-    zapfree(clear.data, clear.length);
-    zapfree(ptr, clear.length);
-    clear = empty_data();
+    memset(clear.data, 0, clear.length);
+    memset(ptr, 0, clear.length);
+    free(clear.data);
+    free(ptr);
+    clear.length = 0;
 
     clen = strlen(clientstr);
     trunc_name(&clen, &cdots);
@@ -244,6 +277,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         salen = sizeof(*sin);
         break;
     }
+#ifdef KRB5_USE_INET6
     case ADDRTYPE_INET6: {
         struct sockaddr_in6 *sin6 = ss2sin6(&ss);
 
@@ -253,6 +287,7 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
         salen = sizeof(*sin6);
         break;
     }
+#endif
     default: {
         struct sockaddr *sa = ss2sa(&ss);
 
@@ -282,13 +317,15 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
             targetp = clientstr;
         }
 
-        krb5_klog_syslog(LOG_NOTICE, _("setpw request from %s by %.*s%s for "
-                                       "%.*s%s: %s"), addrbuf, (int) clen,
-                         clientstr, cdots, (int) tlen, targetp, tdots,
+        krb5_klog_syslog(LOG_NOTICE, "setpw request from %s by %.*s%s for %.*s%s: %s",
+                         addrbuf,
+                         (int) clen, clientstr, cdots,
+                         (int) tlen, targetp, tdots,
                          errmsg ? errmsg : "success");
     } else {
-        krb5_klog_syslog(LOG_NOTICE, _("chpw request from %s for %.*s%s: %s"),
-                         addrbuf, (int) clen, clientstr, cdots,
+        krb5_klog_syslog(LOG_NOTICE, "chpw request from %s for %.*s%s: %s",
+                         addrbuf,
+                         (int) clen, clientstr, cdots,
                          errmsg ? errmsg : "success");
     }
     switch (ret) {
@@ -299,16 +336,15 @@ process_chpw_request(krb5_context context, void *server_handle, char *realm,
     case KADM5_PASS_REUSE:
     case KADM5_PASS_Q_CLASS:
     case KADM5_PASS_Q_DICT:
-    case KADM5_PASS_Q_GENERIC:
     case KADM5_PASS_TOOSOON:
-        numresult = KRB5_KPASSWD_SOFTERROR;
+        numresult = KRB5_KPASSWD_HARDERROR;
         break;
     case 0:
         numresult = KRB5_KPASSWD_SUCCESS;
         strlcpy(strresult, "", sizeof(strresult));
         break;
     default:
-        numresult = KRB5_KPASSWD_HARDERROR;
+        numresult = KRB5_KPASSWD_SOFTERROR;
         break;
     }
 
@@ -324,7 +360,7 @@ chpwfail:
 
     memcpy(ptr, strresult, strlen(strresult));
 
-    cipher = empty_data();
+    cipher.length = 0;
 
     if (ap_rep.length) {
         ret = krb5_auth_con_setaddrs(context, auth_context,
@@ -354,7 +390,7 @@ chpwfail:
 
         if (ap_rep.length) {
             free(ap_rep.data);
-            ap_rep = empty_data();
+            ap_rep.length = 0;
         }
 
         krberror.ctime = 0;
@@ -391,9 +427,13 @@ chpwfail:
 
     /* construct the reply */
 
-    ret = alloc_data(rep, 6 + ap_rep.length + cipher.length);
-    if (ret)
+    rep->length = 6 + ap_rep.length + cipher.length;
+    rep->data = (char *) malloc(rep->length);
+    if (rep->data == NULL) {
+        rep->length = 0;        /* checked by caller */
+        ret = ENOMEM;
         goto bailout;
+    }
     ptr = rep->data;
 
     /* length */
@@ -423,36 +463,48 @@ chpwfail:
     memcpy(ptr, cipher.data, cipher.length);
 
 bailout:
-    krb5_auth_con_free(context, auth_context);
-    krb5_free_principal(context, changepw);
-    krb5_free_ticket(context, ticket);
-    free(ap_rep.data);
-    free(clear.data);
-    free(cipher.data);
-    krb5_free_principal(context, target);
-    krb5_free_unparsed_name(context, targetstr);
-    krb5_free_unparsed_name(context, clientstr);
-    krb5_free_error_message(context, errmsg);
-    return ret;
+    if (auth_context)
+        krb5_auth_con_free(context, auth_context);
+    if (changepw)
+        krb5_free_principal(context, changepw);
+    if (ap_rep.length)
+        free(ap_rep.data);
+    if (ticket)
+        krb5_free_ticket(context, ticket);
+    if (clear.length)
+        free(clear.data);
+    if (cipher.length)
+        free(cipher.data);
+    if (target)
+        krb5_free_principal(context, target);
+    if (targetstr)
+        krb5_free_unparsed_name(context, targetstr);
+    if (clientstr)
+        krb5_free_unparsed_name(context, clientstr);
+    if (errmsg)
+        krb5_free_error_message(context, errmsg);
+
+    return(ret);
 }
 
 /* Dispatch routine for set/change password */
-void
-dispatch(void *handle, struct sockaddr *local_saddr,
-         const krb5_fulladdr *remote_faddr, krb5_data *request, int is_tcp,
-         verto_ctx *vctx, loop_respond_fn respond, void *arg)
+krb5_error_code
+dispatch(void *handle,
+         struct sockaddr *local_saddr, const krb5_fulladdr *remote_faddr,
+         krb5_data *request, krb5_data **response, int is_tcp)
 {
     krb5_error_code ret;
     krb5_keytab kt = NULL;
     kadm5_server_handle_t server_handle = (kadm5_server_handle_t)handle;
     krb5_fulladdr local_faddr;
     krb5_address **local_kaddrs = NULL, local_kaddr_buf;
-    krb5_data *response = NULL;
+
+    *response = NULL;
 
     if (local_saddr == NULL) {
         ret = krb5_os_localaddr(server_handle->context, &local_kaddrs);
         if (ret != 0)
-            goto egress;
+            goto cleanup;
 
         local_faddr.address = local_kaddrs[0];
         local_faddr.port = 0;
@@ -463,14 +515,16 @@ dispatch(void *handle, struct sockaddr *local_saddr,
 
     ret = krb5_kt_resolve(server_handle->context, "KDB:", &kt);
     if (ret != 0) {
-        krb5_klog_syslog(LOG_ERR, _("chpw: Couldn't open admin keytab %s"),
+        krb5_klog_syslog(LOG_ERR, "chpw: Couldn't open admin keytab %s",
                          krb5_get_error_message(server_handle->context, ret));
-        goto egress;
+        goto cleanup;
     }
 
-    response = k5alloc(sizeof(krb5_data), &ret);
-    if (response == NULL)
-        goto egress;
+    *response = (krb5_data *)malloc(sizeof(krb5_data));
+    if (*response == NULL) {
+        ret = ENOMEM;
+        goto cleanup;
+    }
 
     ret = process_chpw_request(server_handle->context,
                                handle,
@@ -479,11 +533,17 @@ dispatch(void *handle, struct sockaddr *local_saddr,
                                &local_faddr,
                                remote_faddr,
                                request,
-                               response);
-egress:
-    if (ret)
-        krb5_free_data(server_handle->context, response);
-    krb5_free_addresses(server_handle->context, local_kaddrs);
+                               *response);
+
+cleanup:
+    if (local_kaddrs != NULL)
+        krb5_free_addresses(server_handle->context, local_kaddrs);
+
+    if ((*response)->data == NULL) {
+        free(*response);
+        *response = NULL;
+    }
     krb5_kt_close(server_handle->context, kt);
-    (*respond)(arg, ret, ret == 0 ? response : NULL);
+
+    return ret;
 }

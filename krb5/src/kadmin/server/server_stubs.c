@@ -4,7 +4,6 @@
  *
  */
 
-#include <k5-platform.h>
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h> /* for gss_nt_krb5_name */
 #include <krb5.h>
@@ -16,6 +15,10 @@
 #include <arpa/inet.h>  /* inet_ntoa */
 #include <adm_proto.h>  /* krb5_klog_syslog */
 #include "misc.h"
+#include <string.h>
+
+#define LOG_UNAUTH  "Unauthorized request: %s, %s, client=%s, service=%s, addr=%s"
+#define LOG_DONE    "Request: %s, %s, %s, client=%s, service=%s, addr=%s"
 
 extern gss_name_t                       gss_changepw_name;
 extern gss_name_t                       gss_oldchangepw_name;
@@ -259,8 +262,8 @@ log_unauth(
 
     /* okay to cast lengths to int because trunc_name limits max value */
     return krb5_klog_syslog(LOG_NOTICE,
-                            _("Unauthorized request: %s, %.*s%s, "
-                              "client=%.*s%s, service=%.*s%s, addr=%s"),
+                            "Unauthorized request: %s, %.*s%s, "
+                            "client=%.*s%s, service=%.*s%s, addr=%s",
                             op, (int)tlen, target, tdots,
                             (int)clen, (char *)client->value, cdots,
                             (int)slen, (char *)server->value, sdots,
@@ -279,8 +282,6 @@ log_done(
     size_t tlen, clen, slen;
     char *tdots, *cdots, *sdots;
 
-    if (errmsg == NULL)
-        errmsg = _("success");
     tlen = strlen(target);
     trunc_name(&tlen, &tdots);
     clen = client->length;
@@ -290,8 +291,8 @@ log_done(
 
     /* okay to cast lengths to int because trunc_name limits max value */
     return krb5_klog_syslog(LOG_NOTICE,
-                            _("Request: %s, %.*s%s, %s, "
-                              "client=%.*s%s, service=%.*s%s, addr=%s"),
+                            "Request: %s, %.*s%s, %s, "
+                            "client=%.*s%s, service=%.*s%s, addr=%s",
                             op, (int)tlen, target, tdots, errmsg,
                             (int)clen, (char *)client->value, cdots,
                             (int)slen, (char *)server->value, sdots,
@@ -344,7 +345,8 @@ create_principal_2_svc(cprinc_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_create_principal", prime_arg, errmsg,
+        log_done("kadm5_create_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -406,7 +408,8 @@ create_principal3_2_svc(cprinc3_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_create_principal", prime_arg, errmsg,
+        log_done("kadm5_create_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -462,7 +465,8 @@ delete_principal_2_svc(dprinc_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_delete_principal", prime_arg, errmsg,
+        log_done("kadm5_delete_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -521,7 +525,8 @@ modify_principal_2_svc(mprinc_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_modify_principal", prime_arg, errmsg,
+        log_done("kadm5_modify_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -594,9 +599,9 @@ rename_principal_2_svc(rprinc_arg *arg, struct svc_req *rqstp)
     if (ret.code != KADM5_OK) {
         /* okay to cast lengths to int because trunc_name limits max value */
         krb5_klog_syslog(LOG_NOTICE,
-                         _("Unauthorized request: kadm5_rename_principal, "
-                           "%.*s%s to %.*s%s, "
-                           "client=%.*s%s, service=%.*s%s, addr=%s"),
+                         "Unauthorized request: kadm5_rename_principal, "
+                         "%.*s%s to %.*s%s, "
+                         "client=%.*s%s, service=%.*s%s, addr=%s",
                          (int)tlen1, prime_arg1, tdots1,
                          (int)tlen2, prime_arg2, tdots2,
                          (int)clen, (char *)client_name.value, cdots,
@@ -610,12 +615,12 @@ rename_principal_2_svc(rprinc_arg *arg, struct svc_req *rqstp)
 
         /* okay to cast lengths to int because trunc_name limits max value */
         krb5_klog_syslog(LOG_NOTICE,
-                         _("Request: kadm5_rename_principal, "
-                           "%.*s%s to %.*s%s, %s, "
-                           "client=%.*s%s, service=%.*s%s, addr=%s"),
+                         "Request: kadm5_rename_principal, "
+                         "%.*s%s to %.*s%s, %s, "
+                         "client=%.*s%s, service=%.*s%s, addr=%s",
                          (int)tlen1, prime_arg1, tdots1,
                          (int)tlen2, prime_arg2, tdots2,
-                         errmsg ? errmsg : _("success"),
+                         errmsg ? errmsg : "success",
                          (int)clen, (char *)client_name.value, cdots,
                          (int)slen, (char *)service_name.value, sdots,
                          inet_ntoa(rqstp->rq_xprt->xp_raddr.sin_addr));
@@ -681,7 +686,7 @@ get_principal_2_svc(gprinc_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done(funcname, prime_arg, errmsg,
+        log_done(funcname, prime_arg, errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -739,7 +744,8 @@ get_princs_2_svc(gprincs_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_get_principals", prime_arg, errmsg,
+        log_done("kadm5_get_principals", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -801,7 +807,8 @@ chpass_principal_2_svc(chpass_arg *arg, struct svc_req *rqstp)
         if (ret.code != 0)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_chpass_principal", prime_arg, errmsg,
+        log_done("kadm5_chpass_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -870,7 +877,8 @@ chpass_principal3_2_svc(chpass3_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_chpass_principal", prime_arg, errmsg,
+        log_done("kadm5_chpass_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -930,7 +938,8 @@ setv4key_principal_2_svc(setv4key_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_setv4key_principal", prime_arg, errmsg,
+        log_done("kadm5_setv4key_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -990,7 +999,8 @@ setkey_principal_2_svc(setkey_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_setkey_principal", prime_arg, errmsg,
+        log_done("kadm5_setkey_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1053,7 +1063,8 @@ setkey_principal3_2_svc(setkey3_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_setkey_principal", prime_arg, errmsg,
+        log_done("kadm5_setkey_principal", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1126,7 +1137,7 @@ chrand_principal_2_svc(chrand_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done(funcname, prime_arg, errmsg,
+        log_done(funcname, prime_arg, errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1203,7 +1214,7 @@ chrand_principal3_2_svc(chrand3_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done(funcname, prime_arg, errmsg,
+        log_done(funcname, prime_arg, errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1258,7 +1269,8 @@ create_policy_2_svc(cpol_arg *arg, struct svc_req *rqstp)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
         log_done("kadm5_create_policy",
-                 ((prime_arg == NULL) ? "(null)" : prime_arg), errmsg,
+                 ((prime_arg == NULL) ? "(null)" : prime_arg),
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1310,7 +1322,8 @@ delete_policy_2_svc(dpol_arg *arg, struct svc_req *rqstp)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
         log_done("kadm5_delete_policy",
-                 ((prime_arg == NULL) ? "(null)" : prime_arg), errmsg,
+                 ((prime_arg == NULL) ? "(null)" : prime_arg),
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1363,7 +1376,8 @@ modify_policy_2_svc(mpol_arg *arg, struct svc_req *rqstp)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
         log_done("kadm5_modify_policy",
-                 ((prime_arg == NULL) ? "(null)" : prime_arg), errmsg,
+                 ((prime_arg == NULL) ? "(null)" : prime_arg),
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1435,7 +1449,8 @@ get_policy_2_svc(gpol_arg *arg, struct svc_req *rqstp)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
         log_done(funcname,
-                 ((prime_arg == NULL) ? "(null)" : prime_arg), errmsg,
+                 ((prime_arg == NULL) ? "(null)" : prime_arg),
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
         if (errmsg != NULL)
             krb5_free_error_message(handle->context, errmsg);
@@ -1494,7 +1509,8 @@ get_pols_2_svc(gpols_arg *arg, struct svc_req *rqstp)
         if( ret.code != 0 )
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done("kadm5_get_policies", prime_arg, errmsg,
+        log_done("kadm5_get_policies", prime_arg,
+                 errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1534,7 +1550,8 @@ getprivs_ret * get_privs_2_svc(krb5_ui_4 *arg, struct svc_req *rqstp)
     if( ret.code != 0 )
         errmsg = krb5_get_error_message(handle->context, ret.code);
 
-    log_done("kadm5_get_privs", client_name.value, errmsg,
+    log_done("kadm5_get_privs", client_name.value,
+             errmsg ? errmsg : "success",
              &client_name, &service_name, rqstp);
 
     if (errmsg != NULL)
@@ -1590,122 +1607,7 @@ purgekeys_2_svc(purgekeys_arg *arg, struct svc_req *rqstp)
         if (ret.code != 0)
             errmsg = krb5_get_error_message(handle->context, ret.code);
 
-        log_done(funcname, prime_arg, errmsg,
-                 &client_name, &service_name, rqstp);
-
-        if (errmsg != NULL)
-            krb5_free_error_message(handle->context, errmsg);
-    }
-    free(prime_arg);
-    gss_release_buffer(&minor_stat, &client_name);
-    gss_release_buffer(&minor_stat, &service_name);
-exit_func:
-    free_server_handle(handle);
-    return &ret;
-}
-
-gstrings_ret *
-get_strings_2_svc(gstrings_arg *arg, struct svc_req *rqstp)
-{
-    static gstrings_ret             ret;
-    char                            *prime_arg;
-    gss_buffer_desc                 client_name,
-        service_name;
-    OM_uint32                       minor_stat;
-    kadm5_server_handle_t           handle;
-    const char                      *errmsg = NULL;
-
-    xdr_free(xdr_gstrings_ret, &ret);
-
-    if ((ret.code = new_server_handle(arg->api_version, rqstp, &handle)))
-        goto exit_func;
-
-    if ((ret.code = check_handle((void *)handle)))
-        goto exit_func;
-
-    ret.api_version = handle->api_version;
-
-    if (setup_gss_names(rqstp, &client_name, &service_name) < 0) {
-        ret.code = KADM5_FAILURE;
-        goto exit_func;
-    }
-    if (krb5_unparse_name(handle->context, arg->princ, &prime_arg)) {
-        ret.code = KADM5_BAD_PRINCIPAL;
-        goto exit_func;
-    }
-
-    if (! cmp_gss_krb5_name(handle, rqst2name(rqstp), arg->princ) &&
-        (CHANGEPW_SERVICE(rqstp) || !kadm5int_acl_check(handle->context,
-                                                        rqst2name(rqstp),
-                                                        ACL_INQUIRE,
-                                                        arg->princ,
-                                                        NULL))) {
-        ret.code = KADM5_AUTH_GET;
-        log_unauth("kadm5_get_strings", prime_arg,
-                   &client_name, &service_name, rqstp);
-    } else {
-        ret.code = kadm5_get_strings((void *)handle, arg->princ, &ret.strings,
-                                     &ret.count);
-        if (ret.code != 0)
-            errmsg = krb5_get_error_message(handle->context, ret.code);
-
-        log_done("kadm5_get_strings", prime_arg, errmsg,
-                 &client_name, &service_name, rqstp);
-
-        if (errmsg != NULL)
-            krb5_free_error_message(handle->context, errmsg);
-    }
-    free(prime_arg);
-    gss_release_buffer(&minor_stat, &client_name);
-    gss_release_buffer(&minor_stat, &service_name);
-exit_func:
-    free_server_handle(handle);
-    return &ret;
-}
-
-generic_ret *
-set_string_2_svc(sstring_arg *arg, struct svc_req *rqstp)
-{
-    static generic_ret              ret;
-    char                            *prime_arg;
-    gss_buffer_desc                 client_name,
-        service_name;
-    OM_uint32                       minor_stat;
-    kadm5_server_handle_t           handle;
-    const char                      *errmsg = NULL;
-
-    xdr_free(xdr_generic_ret, &ret);
-
-    if ((ret.code = new_server_handle(arg->api_version, rqstp, &handle)))
-        goto exit_func;
-
-    if ((ret.code = check_handle((void *)handle)))
-        goto exit_func;
-
-    ret.api_version = handle->api_version;
-
-    if (setup_gss_names(rqstp, &client_name, &service_name) < 0) {
-        ret.code = KADM5_FAILURE;
-        goto exit_func;
-    }
-    if (krb5_unparse_name(handle->context, arg->princ, &prime_arg)) {
-        ret.code = KADM5_BAD_PRINCIPAL;
-        goto exit_func;
-    }
-
-    if (CHANGEPW_SERVICE(rqstp)
-        || !kadm5int_acl_check(handle->context, rqst2name(rqstp), ACL_MODIFY,
-                               arg->princ, NULL)) {
-        ret.code = KADM5_AUTH_MODIFY;
-        log_unauth("kadm5_mod_strings", prime_arg,
-                   &client_name, &service_name, rqstp);
-    } else {
-        ret.code = kadm5_set_string((void *)handle, arg->princ, arg->key,
-                                    arg->value);
-        if (ret.code != 0)
-            errmsg = krb5_get_error_message(handle->context, ret.code);
-
-        log_done("kadm5_mod_strings", prime_arg, errmsg,
+        log_done(funcname, prime_arg, errmsg ? errmsg : "success",
                  &client_name, &service_name, rqstp);
 
         if (errmsg != NULL)
@@ -1753,11 +1655,11 @@ generic_ret *init_2_svc(krb5_ui_4 *arg, struct svc_req *rqstp)
     slen = service_name.length;
     trunc_name(&slen, &sdots);
     /* okay to cast lengths to int because trunc_name limits max value */
-    krb5_klog_syslog(LOG_NOTICE, _("Request: kadm5_init, %.*s%s, %s, "
-                                   "client=%.*s%s, service=%.*s%s, addr=%s, "
-                                   "vers=%d, flavor=%d"),
+    krb5_klog_syslog(LOG_NOTICE, "Request: kadm5_init, %.*s%s, %s, "
+                     "client=%.*s%s, service=%.*s%s, addr=%s, "
+                     "vers=%d, flavor=%d",
                      (int)clen, (char *)client_name.value, cdots,
-                     errmsg ? errmsg : _("success"),
+                     errmsg ? errmsg : "success",
                      (int)clen, (char *)client_name.value, cdots,
                      (int)slen, (char *)service_name.value, sdots,
                      inet_ntoa(rqstp->rq_xprt->xp_raddr.sin_addr),

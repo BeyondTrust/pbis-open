@@ -1,6 +1,8 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/openssl/enc_provider/rc4.c */
-/*
+/*  lib/crypto/openssl/enc_provider/rc4.c
+ *
+ * #include STD_DISCLAIMER
+ *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -24,7 +26,8 @@
  * or implied warranty.
  */
 
-/*
+/* arcfour.c
+ *
  * Copyright (c) 2000 by Computer Science Laboratory,
  *                       Rensselaer Polytechnic Institute
  *
@@ -32,7 +35,9 @@
  */
 
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include <aead.h>
+#include <rand2key.h>
 #include <openssl/evp.h>
 
 /*
@@ -50,7 +55,14 @@ struct arcfour_state {
 #define RC4_KEY_SIZE 16
 #define RC4_BLOCK_SIZE 1
 
-/* Interface layer to krb5 crypto layer */
+/* Interface layer to kerb5 crypto layer */
+
+/* prototypes */
+static krb5_error_code
+k5_arcfour_free_state ( krb5_data *state);
+static krb5_error_code
+k5_arcfour_init_state (const krb5_keyblock *key,
+                       krb5_keyusage keyusage, krb5_data *new_state);
 
 /* The workhorse of the arcfour system,
  * this impliments the cipher
@@ -109,8 +121,8 @@ k5_arcfour_docrypt(krb5_key key,const krb5_data *state, krb5_crypto_iov *data,
     return 0;
 }
 
-static void
-k5_arcfour_free_state(krb5_data *state)
+static krb5_error_code
+k5_arcfour_free_state ( krb5_data *state)
 {
     struct arcfour_state *arcstate = (struct arcfour_state *) state->data;
 
@@ -118,11 +130,12 @@ k5_arcfour_free_state(krb5_data *state)
     if (arcstate && arcstate->loopback == arcstate)
         EVP_CIPHER_CTX_cleanup(&arcstate->ctx);
     free(arcstate);
+    return 0;
 }
 
 static krb5_error_code
-k5_arcfour_init_state(const krb5_keyblock *key,
-                      krb5_keyusage keyusage, krb5_data *new_state)
+k5_arcfour_init_state (const krb5_keyblock *key,
+                       krb5_keyusage keyusage, krb5_data *new_state)
 {
     struct arcfour_state *arcstate;
 
@@ -151,6 +164,7 @@ const struct krb5_enc_provider krb5int_enc_arcfour = {
     k5_arcfour_docrypt,
     k5_arcfour_docrypt,
     NULL,
+    krb5int_arcfour_make_key,
     k5_arcfour_init_state,
     k5_arcfour_free_state
 };

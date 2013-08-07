@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/in_tkt_sky.c */
 /*
+ * lib/krb5/krb/in_tkt_sky.c
+ *
  * Copyright 1990,1991, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * krb5_get_in_tkt_with_skey()
+ *
  */
 
 #include "k5-int.h"
@@ -32,8 +37,7 @@ static krb5_error_code
 get_as_key_skey(krb5_context context, krb5_principal client,
                 krb5_enctype etype, krb5_prompter_fct prompter,
                 void *prompter_data, krb5_data *salt, krb5_data *params,
-                krb5_keyblock *as_key, void *gak_data,
-                k5_response_items *ritems)
+                krb5_keyblock *as_key, void *gak_data)
 {
     const krb5_keyblock *key = gak_data;
 

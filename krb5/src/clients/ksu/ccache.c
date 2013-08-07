@@ -70,7 +70,8 @@ krb5_error_code krb5_ccache_copy (context, cc_def, cc_other_tag,
     cc_other = (krb5_ccache *)  xcalloc(1, sizeof (krb5_ccache));
 
     if ((retval = krb5_cc_resolve(context, cc_other_tag, cc_other))){
-        com_err(prog_name, retval, _("resolving ccache %s"), cc_other_tag);
+        com_err (prog_name, retval, "resolving ccache %s",
+                 cc_other_tag);
         return retval;
     }
 
@@ -381,7 +382,7 @@ krb5_get_login_princ(luser, princ_list)
     }
     result = snprintf(pbuf, sizeof(pbuf), "%s/.k5login", pwd->pw_dir);
     if (SNPRINTF_OVERFLOW(result, sizeof(pbuf))) {
-        fprintf(stderr, _("home directory path for %s too long\n"), luser);
+        fprintf (stderr, "home directory path for %s too long\n", luser);
         exit (1);
     }
 
@@ -463,22 +464,22 @@ show_credential(context, cred, cc)
 
     retval = krb5_unparse_name(context, cred->client, &name);
     if (retval) {
-        com_err(prog_name, retval, _("while unparsing client name"));
+        com_err(prog_name, retval, "while unparsing client name");
         return;
     }
     retval = krb5_unparse_name(context, cred->server, &sname);
     if (retval) {
-        com_err(prog_name, retval, _("while unparsing server name"));
+        com_err(prog_name, retval, "while unparsing server name");
         free(name);
         return;
     }
 
     if ((retval = krb5_cc_get_principal(context, cc, &princ))) {
-        com_err(prog_name, retval, _("while retrieving principal name"));
+        com_err(prog_name, retval, "while retrieving principal name");
         return;
     }
     if ((retval = krb5_unparse_name(context, princ, &defname))) {
-        com_err(prog_name, retval, _("while unparsing principal name"));
+        com_err(prog_name, retval, "while unparsing principal name");
         return;
     }
 
@@ -493,7 +494,7 @@ show_credential(context, cred, cc)
     printf("%s\n", sname);
 
     if (strcmp(name, defname)) {
-        printf(_("\tfor client %s"), name);
+        printf("\tfor client %s", name);
         first = 0;
     }
 
@@ -502,7 +503,7 @@ show_credential(context, cred, cc)
             fputs("\t",stdout);
         else
             fputs(", ",stdout);
-        fputs(_("renew until "), stdout);
+        fputs("renew until ", stdout);
         printtime(cred->times.renew_till);
     }
     if (show_flags) {
@@ -512,7 +513,7 @@ show_credential(context, cred, cc)
                 fputs("\t",stdout);
             else
                 fputs(", ",stdout);
-            printf(_("Flags: %s"), flags);
+            printf("Flags: %s", flags);
             first = 0;
         }
     }
@@ -659,7 +660,8 @@ krb5_error_code krb5_ccache_copy_restricted (context, cc_def, cc_other_tag,
     cc_other = (krb5_ccache *)  xcalloc(1, sizeof (krb5_ccache));
 
     if ((retval = krb5_cc_resolve(context, cc_other_tag, cc_other))){
-        com_err(prog_name, retval, _("resolving ccache %s"), cc_other_tag);
+        com_err (prog_name, retval, "resolving ccache %s",
+                 cc_other_tag);
         return retval;
     }
 

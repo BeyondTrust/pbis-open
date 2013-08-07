@@ -26,7 +26,7 @@
 #include "k5-int.h"
 
 /*
- * $Id$
+ * $Id: util_seqnum.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 krb5_error_code

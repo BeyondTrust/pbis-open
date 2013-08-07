@@ -64,7 +64,7 @@ SECURITY_ATTRIBUTES     sa                  = { 0 };
  */
 
 cc_int32        ccapi_connect(const struct tspdata* tsp);
-static DWORD    handle_exception(DWORD code, struct tspdata* ptspdata);
+static DWORD    handle_exception(DWORD code);
 
 extern "C" {
 cc_int32        cci_os_ipc_msg( cc_int32        in_launch_server,
@@ -75,63 +75,26 @@ cc_int32        cci_os_ipc_msg( cc_int32        in_launch_server,
 
 /* ------------------------------------------------------------------------ */
 
-extern "C" cc_int32 cci_os_ipc_process_init (void) {
-    RPC_STATUS status;
-
-    if (!isNT()) {
-        status = RpcServerRegisterIf(ccs_reply_ServerIfHandle,  // interface
-                                     NULL,                      // MgrTypeUuid
-                                     NULL);                     // MgrEpv; null means use default
-        }
-    else {
-        status = RpcServerRegisterIfEx(ccs_reply_ServerIfHandle,  // interface
-                                       NULL,                      // MgrTypeUuid
-                                       NULL,                      // MgrEpv; 0 means default
-                                       RPC_IF_ALLOW_SECURE_ONLY,
-                                       RPC_C_LISTEN_MAX_CALLS_DEFAULT,
-                                       NULL);                     // No security callback.
-        }
-    cci_check_error(status);
-
-    if (!status) {
-        status = RpcServerRegisterAuthInfo(0, // server principal
-                                           RPC_C_AUTHN_WINNT,
-                                           0,
-                                           0 );
-        cci_check_error(status);
-        }
-
-    return status; // ugh. needs translation
-}
-
-/* ------------------------------------------------------------------------ */
-
 extern "C" cc_int32 cci_os_ipc_thread_init (void) {
     cc_int32                    err         = ccNoError;
     struct tspdata*             ptspdata;
-    HANDLE                      replyEvent  = NULL;
+    HANDLE                      replyEvent;
     UUID __RPC_FAR              uuid;
-    RPC_CSTR __RPC_FAR          uuidString  = NULL;
-    char*                       endpoint    = NULL;
+    unsigned char __RPC_FAR*    uuidString  = NULL;
 
     if (!GetTspData(GetTlsIndex(), &ptspdata)) return ccErrNoMem;
+
+    opts.cMinCalls  = 1;
+    opts.cMaxCalls  = 20;
+    opts.fDontWait  = TRUE;
 
     err   = cci_check_error(UuidCreate(&uuid)); // Get a UUID
     if (err == RPC_S_OK) {                      // Convert to string
         err = UuidToString(&uuid, &uuidString);
-        cci_check_error(err);
         }
     if (!err) {                                 // Save in thread local storage
         tspdata_setUUID(ptspdata, uuidString);
-        endpoint = clientEndpoint((const char *)uuidString);
-        err = RpcServerUseProtseqEp((RPC_CSTR)"ncalrpc",
-                                    RPC_C_PROTSEQ_MAX_REQS_DEFAULT,
-                                    (RPC_CSTR)endpoint,
-                                    sa.lpSecurityDescriptor);  // SD
-        free(endpoint);
-        cci_check_error(err);
         }
-
 #if 0
     cci_debug_printf("%s UUID:<%s>", __FUNCTION__, tspdata_getUUID(ptspdata));
 #endif
@@ -144,15 +107,6 @@ extern "C" cc_int32 cci_os_ipc_thread_init (void) {
            know when the reply has been received.  It does that by waiting for a 
            client-specific event to be set.  Define the event name to be <UUID>_reply:  */
         replyEvent = createThreadEvent((char*)uuidString, REPLY_SUFFIX);
-        }
-
-    if (!err) {
-        static bool bListening = false;
-        if (!bListening) {
-            err = RpcServerListen(1, RPC_C_LISTEN_MAX_CALLS_DEFAULT, TRUE);
-            cci_check_error(err);
-            }
-            bListening = err == 0;
         }
 
     if (replyEvent) tspdata_setReplyEvent(ptspdata, replyEvent);
@@ -194,20 +148,11 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
     PROCESS_INFORMATION     pi      = { 0 };
     HANDLE          replyEvent      = 0;
     BOOL            bCCAPI_Connected= FALSE;
-    BOOL            bListening      = FALSE;
-    unsigned char tspdata_handle[8] = { 0 };
 
     if (!in_request_stream) { err = cci_check_error (ccErrBadParam); }
     if (!out_reply_stream ) { err = cci_check_error (ccErrBadParam); }
     
     if (!GetTspData(GetTlsIndex(), &ptspdata)) {return ccErrBadParam;}
-    bListening = tspdata_getListening(ptspdata);
-    if (!bListening) {
-        err = cci_check_error(cci_os_ipc_thread_init());
-        bListening = !err;
-        tspdata_setListening(ptspdata, bListening);
-        }
-
     bCCAPI_Connected = tspdata_getConnected  (ptspdata);
     replyEvent       = tspdata_getReplyEvent (ptspdata);
     sst              = tspdata_getSST (ptspdata);
@@ -216,7 +161,7 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
     // The lazy connection to the server has been put off as long as possible!
     // ccapi_connect starts listening for replies as an RPC server and then
     //   calls ccs_rpc_connect.
-    if (!err && !bCCAPI_Connected) {
+    if (!bCCAPI_Connected) {
         err                 = cci_check_error(ccapi_connect(ptspdata));
         bCCAPI_Connected    = !err;
         tspdata_setConnected(ptspdata, bCCAPI_Connected);
@@ -237,6 +182,10 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
     CcAutoLock*     a = 0;
     CcAutoLock::Start(a, Client::sLock);
 
+    // Initialize old CCAPI if necessary:
+    if (!err) if (!Init::  Initialized()) err = cci_check_error(Init::  Initialize( ));
+    if (!err) if (!Client::Initialized()) err = cci_check_error(Client::Initialize(0));
+
     // New code using new RPC procedures for sending the data and receiving a reply:
     if (!err) {
         RpcTryExcept {
@@ -247,11 +196,9 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
             cci_debug_printf("%s calling remote ccs_rpc_request tsp*:0x%X", __FUNCTION__, ptspdata);
             cci_debug_printf("  rpcmsg:%d; UUID[%d]:<%s> SST:%ld", in_msg, lenUUID, uuid, sst);
 #endif
-            /* copy ptr into handle; ptr may be 4 or 8 bytes, depending on platform; handle is always 8 */
-            memcpy(tspdata_handle, &ptspdata, sizeof(ptspdata));
             ccs_rpc_request(                    /* make call with user message: */
                 in_msg,                         /* Message type */
-                tspdata_handle,                 /* Our tspdata* will be sent back to the reply proc. */
+                (unsigned char*)&ptspdata,      /* Our tspdata* will be sent back to the reply proc. */
                 (unsigned char*)uuid,
                 krb5int_ipc_stream_size(in_request_stream),
                 (unsigned char*)krb5int_ipc_stream_data(in_request_stream), /* Data buffer */
@@ -259,7 +206,7 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
                 (long*)(&err) );                /* Return code */
             }
         RpcExcept(1) {
-            err = handle_exception(RpcExceptionCode(), ptspdata);
+            handle_exception(RpcExceptionCode());
             }
         RpcEndExcept;
         }
@@ -297,13 +244,12 @@ extern "C" cc_int32 cci_os_ipc_msg( cc_int32        in_launch_server,
 
 
 
-static DWORD handle_exception(DWORD code, struct tspdata* ptspdata) {
+static DWORD handle_exception(DWORD code) {
     cci_debug_printf("%s code %u; ccs_request_IfHandle:0x%X", __FUNCTION__, code, ccs_request_IfHandle);
     if ( (code == RPC_S_SERVER_UNAVAILABLE) || (code == RPC_S_INVALID_BINDING) ) {
-        Client::Cleanup();
-        tspdata_setConnected(ptspdata, FALSE);
+        Client::Reconnect(0);
         }
-    return code;
+    return 4;
     }
 
 
@@ -313,10 +259,10 @@ static DWORD handle_exception(DWORD code, struct tspdata* ptspdata) {
  */
 cc_int32 ccapi_connect(const struct tspdata* tsp) {
     BOOL                    bListen     = TRUE;
+    char*                   endpoint    = NULL;
     HANDLE                  replyEvent  = 0;
     RPC_STATUS              status      = FALSE;
     char*                   uuid        = NULL;
-    unsigned char           tspdata_handle[8] = {0};
 
     /* Start listening to our uuid before establishing the connection,
      *  so that when the server tries to call ccapi_listen, we will be ready.
@@ -325,8 +271,55 @@ cc_int32 ccapi_connect(const struct tspdata* tsp) {
     /* Build complete RPC uuid using previous CCAPI implementation: */
     replyEvent      = tspdata_getReplyEvent(tsp);
     uuid            = tspdata_getUUID(tsp);
+    endpoint        = clientEndpoint(uuid);
+    cci_debug_printf("%s Registering endpoint %s", __FUNCTION__, endpoint);
+
+    opts.cMinCalls  = 1;
+    opts.cMaxCalls  = 20;
+    opts.fDontWait  = TRUE;
+
+    if (!status) {
+        status = RpcServerUseProtseqEp((RPC_CSTR)"ncalrpc",
+                                       opts.cMaxCalls,
+                                       (RPC_CSTR)endpoint,
+                                       sa.lpSecurityDescriptor);  // SD
+        cci_check_error(status);
+        }
+
+    if (!status) {
+        status = RpcServerRegisterAuthInfo(0, // server principal
+                                           RPC_C_AUTHN_WINNT,
+                                           0,
+                                           0 );
+        cci_check_error(status);
+        }
 
     cci_debug_printf("%s is listening ...", __FUNCTION__);
+
+    if (!status) {
+        if (!isNT()) {
+            status = RpcServerRegisterIf(ccs_reply_ServerIfHandle,  // interface 
+                                         NULL,                      // MgrTypeUuid
+                                         NULL);                     // MgrEpv; null means use default
+            } 
+        else {
+            status = RpcServerRegisterIfEx(ccs_reply_ServerIfHandle,// interface
+                                         NULL,                      // MgrTypeUuid
+                                         NULL,                      // MgrEpv; 0 means default
+                                         RPC_IF_ALLOW_SECURE_ONLY,
+                                         opts.cMaxCalls,
+                                         NULL);                     // No security callback.
+            }
+
+        cci_check_error(status);
+
+        if (!status) {
+            status = RpcServerListen(opts.cMinCalls,
+                                     opts.cMaxCalls,
+                                     TRUE);
+            cci_check_error(status);
+            }
+        }
 
     // Clear replyEvent so we can detect when a reply to our connect request has been received:
     ResetEvent(replyEvent);
@@ -345,11 +338,10 @@ cc_int32 ccapi_connect(const struct tspdata* tsp) {
 
     // New code using new RPC procedures for sending the data and receiving a reply:
     if (!status) {
-        memcpy(tspdata_handle, &tsp, sizeof(tsp));
         RpcTryExcept {
             ccs_rpc_connect(                /* make call with user message: */
                 CCMSG_CONNECT,              /* Message type */
-                tspdata_handle,             /* Our tspdata* will be sent back to the reply proc. */
+                (unsigned char*)&tsp,       /* Our tspdata* will be sent back to the reply proc. */
                 (unsigned char*)uuid,
                 (long*)(&status) );         /* Return code */
             }

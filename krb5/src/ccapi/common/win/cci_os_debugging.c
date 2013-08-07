@@ -1,5 +1,6 @@
-/* ccapi/common/win/cci_os_debugging.c */
 /*
+ * $Header$
+ *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -32,9 +33,7 @@
 /* ------------------------------------------------------------------------ */
 
 void cci_os_debug_vprintf (const char *in_format, va_list in_args) {
-#ifdef DEBUG
     printf  ( "%s %ld ", timestamp(), GetCurrentThreadId() );
     vprintf ( in_format, in_args );
     printf  ( "\n" );
-#endif
     }

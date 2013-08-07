@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/fwd_tgt.c Definition of krb5_fwd_tgt_creds() routine */
 /*
+ * lib/krb5/krb/get_in_tkt.c
+ *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -28,17 +29,21 @@
 #ifdef HAVE_MEMORY_H
 #include <memory.h>
 #endif
-#include "int-proto.h"
 
 /* helper function: convert flags to necessary KDC options */
 #define flags2options(flags) (flags & KDC_TKT_COMMON_MASK)
 
 /* Get a TGT for use at the remote host */
 krb5_error_code KRB5_CALLCONV
-krb5_fwd_tgt_creds(krb5_context context, krb5_auth_context auth_context,
-                   char *rhost, krb5_principal client, krb5_principal server,
-                   krb5_ccache cc, int forwardable, krb5_data *outbuf)
+krb5_fwd_tgt_creds(krb5_context context, krb5_auth_context auth_context, char *rhost, krb5_principal client, krb5_principal server, krb5_ccache cc, int forwardable, krb5_data *outbuf)
+
+
+
+
+
+
 /* Should forwarded TGT also be forwardable? */
+
 {
     krb5_replay_data replaydata;
     krb5_data * scratch = 0;
@@ -94,9 +99,14 @@ krb5_fwd_tgt_creds(krb5_context context, krb5_auth_context auth_context,
     if ((retval = krb5_copy_principal(context, client, &creds.client)))
         goto errout;
 
-    retval = krb5int_tgtname(context, &client->realm, &client->realm,
-                             &creds.server);
-    if (retval)
+    if ((retval = krb5_build_principal_ext(context, &creds.server,
+                                           client->realm.length,
+                                           client->realm.data,
+                                           KRB5_TGS_NAME_SIZE,
+                                           KRB5_TGS_NAME,
+                                           client->realm.length,
+                                           client->realm.data,
+                                           0)))
         goto errout;
 
     /* fetch tgt directly from cache */

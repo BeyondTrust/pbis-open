@@ -99,17 +99,56 @@ asn1_error_code asn1buf_create(asn1buf **buf);
  *           Returns ENOMEM if the buffer can't be created.
  */
 
+asn1_error_code asn1buf_wrap_data(asn1buf *buf, const krb5_data *code);
+/*
+ * requires  *buf has already been allocated
+ * effects   Turns *buf into a "wrapper" for *code.  i.e. *buf is set up
+ *            such that its bottom is the beginning of *code, and its top
+ *            is the top of *code.
+ *           Returns ASN1_MISSING_FIELD if code is empty.
+ */
+
+asn1_error_code asn1buf_imbed(asn1buf *subbuf, const asn1buf *buf,
+                              const unsigned int length,
+                              const int indef);
+/*
+ * requires  *subbuf and *buf are allocated
+ * effects   *subbuf becomes a sub-buffer of *buf.  *subbuf begins
+ *            at *buf's current position and is length octets long.
+ *            (Unless this would exceed the bounds of *buf -- in
+ *            that case, ASN1_OVERRUN is returned)  *subbuf's current
+ *            position starts at the beginning of *subbuf.
+ */
+
+asn1_error_code asn1buf_sync(asn1buf *buf, asn1buf *subbuf, asn1_class Class,
+                             asn1_tagnum lasttag,
+                             unsigned int length, int indef,
+                             int seqindef);
+/*
+ * requires  *subbuf is a sub-buffer of *buf, as created by asn1buf_imbed.
+ *           lasttag is the last tagnumber read.
+ * effects   Synchronizes *buf's current position to match that of *subbuf.
+ */
+
+asn1_error_code asn1buf_skiptail(asn1buf *buf, const unsigned int length,
+                                 const int indef);
+/*
+ * requires  *buf is a subbuffer used in a decoding of a
+ *           constructed indefinite sequence.
+ * effects   skips trailing fields.
+ */
+
 void asn1buf_destroy(asn1buf **buf);
 /* effects   Deallocates **buf, sets *buf to NULL. */
 
+asn1_error_code asn1buf_insert_octet(asn1buf *buf, const int o);
 /*
  * requires  *buf is allocated
  * effects   Inserts o into the buffer *buf, expanding the buffer if
  *           necessary.  Returns ENOMEM memory is exhausted.
  */
 #if ((__GNUC__ >= 2) && !defined(ASN1BUF_OMIT_INLINE_FUNCS)) && !defined(CONFIG_SMALL)
-static inline asn1_error_code
-asn1buf_insert_octet(asn1buf *buf, const int o)
+extern __inline__ asn1_error_code asn1buf_insert_octet(asn1buf *buf, const int o)
 {
     asn1_error_code retval;
 
@@ -119,8 +158,6 @@ asn1buf_insert_octet(asn1buf *buf, const int o)
     (buf->next)++;
     return 0;
 }
-#else
-asn1_error_code asn1buf_insert_octet(asn1buf *buf, const int o);
 #endif
 
 asn1_error_code
@@ -137,11 +174,69 @@ asn1buf_insert_bytestring(
  */
 
 #define asn1buf_insert_octetstring asn1buf_insert_bytestring
+#define asn1buf_insert_charstring  asn1buf_insert_bytestring
+
+asn1_error_code asn1buf_remove_octet(asn1buf *buf, asn1_octet *o);
+/*
+ * requires  *buf is allocated
+ * effects   Returns *buf's current octet in *o and advances to
+ *            the next octet.
+ *           Returns ASN1_OVERRUN if *buf has already been exhausted.
+ */
+#define asn1buf_remove_octet(buf,o)                     \
+    (((buf)->next > (buf)->bound)                       \
+     ? ASN1_OVERRUN                                     \
+     : ((*(o) = (asn1_octet)(*(((buf)->next)++))),0))
+
+asn1_error_code
+asn1buf_remove_octetstring(
+    asn1buf *buf,
+    const unsigned int len,
+    asn1_octet **s);
+/*
+ * requires  *buf is allocated
+ * effects   Removes the next len octets of *buf and returns them in **s.
+ *           Returns ASN1_OVERRUN if there are fewer than len unread octets
+ *            left in *buf.
+ *           Returns ENOMEM if *s could not be allocated.
+ */
+
+asn1_error_code
+asn1buf_remove_charstring(asn1buf *buf, const unsigned int len, char **s);
+/*
+ * requires  *buf is allocated
+ * effects   Removes the next len octets of *buf and returns them in **s.
+ *           Returns ASN1_OVERRUN if there are fewer than len unread octets
+ *            left in *buf.
+ *           Returns ENOMEM if *s could not be allocated.
+ */
+
+asn1_error_code asn1buf_unparse(const asn1buf *buf, char **s);
+/*
+ * modifies  *s
+ * effects   Returns a human-readable representation of *buf in *s,
+ *           where each octet in *buf is represented by a character in *s.
+ */
+
+asn1_error_code asn1buf_hex_unparse(const asn1buf *buf, char **s);
+/*
+ * modifies  *s
+ * effects   Returns a human-readable representation of *buf in *s,
+ *           where each octet in *buf is represented by a 2-digit
+ *           hexadecimal number in *s.
+ */
 
 asn1_error_code asn12krb5_buf(const asn1buf *buf, krb5_data **code);
 /*
  * modifies  *code
  * effects   Instantiates **code with the krb5_data representation of **buf.
+ */
+
+int asn1buf_remains(asn1buf *buf, int indef);
+/*
+ * requires  *buf is a buffer containing an asn.1 structure or array
+ * modifies  *buf
+ * effects   Returns the number of unprocessed octets remaining in *buf.
  */
 
 #endif

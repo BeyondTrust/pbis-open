@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/k5sealv3iov.c */
 /*
+ * lib/gssapi/krb5/k5sealv3iov.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
  */
 
 #include <assert.h>
@@ -54,6 +57,7 @@ gss_krb5int_make_seal_token_v3_iov(krb5_context context,
     krb5_cksumtype cksumtype;
     size_t data_length, assoc_data_length;
 
+    assert(ctx->big_endian == 0);
     assert(ctx->proto == 1);
 
     acceptor_flag = ctx->initiate ? 0 : FLAG_SENDER_IS_ACCEPTOR;
@@ -267,6 +271,9 @@ gss_krb5int_make_seal_token_v3_iov(krb5_context context,
     if (conf_state != NULL)
         *conf_state = conf_req_flag;
 
+    if (conf_state != NULL)
+        *conf_state = conf_req_flag;
+
 cleanup:
     if (code != 0)
         kg_release_iov(iov, iov_count);
@@ -298,6 +305,9 @@ gss_krb5int_unseal_v3_iov(krb5_context context,
     krb5_boolean valid;
     krb5_cksumtype cksumtype;
     int conf_flag = 0;
+
+    if (ctx->big_endian != 0)
+        return GSS_S_DEFECTIVE_TOKEN;
 
     if (qop_state != NULL)
         *qop_state = GSS_C_QOP_DEFAULT;

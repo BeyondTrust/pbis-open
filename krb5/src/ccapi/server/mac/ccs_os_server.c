@@ -1,5 +1,6 @@
-/* ccapi/server/mac/ccs_os_server.c */
 /*
+ * $Header$
+ *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

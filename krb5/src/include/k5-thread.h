@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* include/k5-thread.h - Preliminary portable thread support */
 /*
+ * include/k5-thread.h
+ *
  * Copyright 2004,2005,2006,2007,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Preliminary thread support.
  */
 
 #ifndef K5_THREAD_H
@@ -406,8 +410,10 @@ typedef enum {
     K5_KEY_GSS_KRB5_SET_CCACHE_OLD_NAME,
     K5_KEY_GSS_KRB5_CCACHE_NAME,
     K5_KEY_GSS_KRB5_ERROR_MESSAGE,
+    K5_KEY_KIM_ERROR_MESSAGE,
 #if defined(__MACH__) && defined(__APPLE__)
     K5_KEY_IPC_CONNECTION_INFO,
+    K5_KEY_COM_ERR_REENTER,
 #endif
     K5_KEY_MAX
 } k5_key_t;

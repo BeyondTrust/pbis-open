@@ -330,35 +330,12 @@ typedef struct _GSS_MECH_CONFIG
         OM_uint32*
         );
 
-    OM_uint32        (KRB5_CALLCONV *gss_localname)
-        (
-                    OM_uint32 *,        /* minor */
-                    const gss_name_t,   /* name */
-                    gss_const_OID,      /* mech_type */
-                    gss_buffer_t /* localname */
-            );
-        OM_uint32               (KRB5_CALLCONV *gssspi_authorize_localname)
-        (
-                    OM_uint32 *,        /* minor_status */
-                    const gss_name_t,   /* pname */
-                    gss_const_buffer_t, /* local user */
-                    gss_const_OID       /* local nametype */
-        );
-
-
     OM_uint32
     (*gss_export_name)(
         OM_uint32*,
         const gss_name_t,
         gss_buffer_t
         );
-
-        OM_uint32       (KRB5_CALLCONV *gss_duplicate_name)
-        (
-                    OM_uint32*,         /* minor_status */
-                    const gss_name_t,   /* input_name */
-                    gss_name_t *        /* output_name */
-        /* */);
 
     OM_uint32
     (*gss_store_cred)(
@@ -570,128 +547,6 @@ typedef struct _GSS_MECH_CONFIG
         gss_buffer_t,
         gss_any_t *
         );    
-
-
-        OM_uint32       (KRB5_CALLCONV *gss_pseudo_random)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_ctx_id_t,               /* context */
-            int,                        /* prf_key */
-            const gss_buffer_t,         /* prf_in */
-            ssize_t,                    /* desired_output_len */
-            gss_buffer_t                /* prf_out */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_set_neg_mechs)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_cred_id_t,              /* cred_handle */
-            const gss_OID_set           /* mech_set */
-        /* */);
-        OM_uint32       (KRB5_CALLCONV *gss_inquire_saslname_for_mech)
-        (
-            OM_uint32 *,                /* minor_status */
-            const gss_OID,              /* desired_mech */
-            gss_buffer_t,               /* sasl_mech_name */
-            gss_buffer_t,               /* mech_name */
-            gss_buffer_t                /* mech_description */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_inquire_mech_for_saslname)
-        (
-            OM_uint32 *,                /* minor_status */
-            const gss_buffer_t,         /* sasl_mech_name */
-            gss_OID *                   /* mech_type */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_inquire_attrs_for_mech)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_const_OID,              /* mech */
-            gss_OID_set *,              /* mech_attrs */
-            gss_OID_set *               /* known_mech_attrs */
-        /* */);
-
-        /* Credential store extensions */
-
-        OM_uint32       (KRB5_CALLCONV *gss_acquire_cred_from)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_name_t,                 /* desired_name */
-            OM_uint32,                  /* time_req */
-            gss_OID_set,                /* desired_mechs */
-            gss_cred_usage_t,           /* cred_usage */
-            gss_const_key_value_set_t,  /* cred_store */
-            gss_cred_id_t *,            /* output_cred_handle */
-            gss_OID_set *,              /* actual_mechs */
-            OM_uint32 *                 /* time_rec */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_store_cred_into)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_cred_id_t,              /* input_cred_handle */
-            gss_cred_usage_t,           /* input_usage */
-            gss_OID,                    /* desired_mech */
-            OM_uint32,                  /* overwrite_cred */
-            OM_uint32,                  /* default_cred */
-            gss_const_key_value_set_t,  /* cred_store */
-            gss_OID_set *,              /* elements_stored */
-            gss_cred_usage_t *          /* cred_usage_stored */
-        /* */);
-
-       OM_uint32       (KRB5_CALLCONV *gssspi_acquire_cred_with_password)
-        (
-            OM_uint32 *,                /* minor_status */
-            const gss_name_t,           /* desired_name */
-            const gss_buffer_t,  /* password */
-            OM_uint32,                  /* time_req */
-            const gss_OID_set,          /* desired_mechs */
-            int,                        /* cred_usage */
-            gss_cred_id_t *,            /* output_cred_handle */
-            gss_OID_set *,              /* actual_mechs */
-            OM_uint32 *                 /* time_rec */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_export_cred)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_cred_id_t,              /* cred_handle */
-            gss_buffer_t                /* token */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gss_import_cred)
-        (
-                OM_uint32 *,            /* minor_status */
-                gss_buffer_t,           /* token */
-                gss_cred_id_t *         /* cred_handle */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gssspi_import_sec_context_by_mech)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_OID,                    /* desired_mech */
-            gss_buffer_t,               /* interprocess_token */
-            gss_ctx_id_t *              /* context_handle */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gssspi_import_name_by_mech)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_OID,                    /* mech_type */
-            gss_buffer_t,               /* input_name_buffer */
-            gss_OID,                    /* input_name_type */
-            gss_name_t*                 /* output_name */
-        /* */);
-
-        OM_uint32       (KRB5_CALLCONV *gssspi_import_cred_by_mech)
-        (
-            OM_uint32 *,                /* minor_status */
-            gss_OID,                    /* mech_type */
-            gss_buffer_t,               /* token */
-            gss_cred_id_t *             /* cred_handle */
-        /* */);
-
 } GSS_MECH_CONFIG, *PGSS_MECH_CONFIG;
 
 typedef struct _NTLM_GSS_NAME
@@ -755,11 +610,8 @@ static GSS_MECH_CONFIG gNtlmMech =
     ntlm_gss_inquire_context,
     ntlm_gss_release_oid,
     NULL, //ntlm_gss_wrap_size_limit,
-    NULL, // gss_localname
-    NULL, // gssspi_authorize_localname
-    NULL, // ntlm_gss_export_name,
-    NULL, // gss_duplicate_name
-    NULL, // ntlm_gss_store_cred,
+    NULL, //ntlm_gss_export_name,
+    NULL, //ntlm_gss_store_cred,
     ntlm_gss_inquire_sec_context_by_oid,
     NULL, //ntlm_gss_inquire_cred_by_oid,
     NULL, //ntlm_gss_set_sec_context_option,
@@ -771,29 +623,8 @@ static GSS_MECH_CONFIG gNtlmMech =
     ntlm_gss_unwrap_iov,
     ntlm_gss_wrap_iov_length,
     NULL, //ntlm_gss_complete_auth_token,
-    NULL, // gss_acquire_cred_impersonate_name
-    NULL, // gss_add_cred_impersonate_name
-    NULL, // gss_display_name_ext
-    NULL, // gss_inquire_name
-    .gss_get_name_attribute = ntlm_gss_get_name_attribute,
-    NULL, // gss_set_name_attribute
-    NULL, // gss_delete_name_attribute
-    NULL, // gss_export_name_composite
-    NULL, // gss_map_name_to_any
-    NULL, // gss_release_any_name_mapping
-    NULL, // gss_pseudo_random
-    NULL, // gss_set_neg_mechs
-    NULL, // gss_inquire_saslname_for_mech
-    NULL, // gss_inquire_mech_for_saslname
-    NULL, // gss_inquire_attrs_for_mech
-    NULL, // gss_acquire_cred_from
-    NULL, // gss_store_cred_into
-    NULL, // gssspi_acquire_cred_with_password
-    NULL, // gss_export_cred
-    NULL, // gss_import_cred
-    NULL, // gssspi_import_sec_context_by_mech
-    NULL, // gssspi_import_name_by_mech
-    NULL, // gssspi_import_cred_by_mech
+    NULL, //ntlm_gss_inquire_context2
+    .gss_get_name_attribute = ntlm_gss_get_name_attribute
 };
 
 //

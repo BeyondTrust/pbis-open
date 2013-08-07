@@ -1,7 +1,7 @@
 #!/afs/athena/contrib/perl/p
 
 #
-# $Id$
+# $Id: do-test.pl 17357 2005-08-25 22:04:59Z tlyu $
 #
 
 $debug = $ARGV[1] || $ENV{'VERBOSE_TEST'};

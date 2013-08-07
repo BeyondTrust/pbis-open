@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/ldap_krbcontainer.c */
 /*
+ * lib/kdb/kdb_ldap/ldap_krbcontainer.c
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -91,11 +92,10 @@ krb5_ldap_read_krbcontainer_params(krb5_context context,
     /* read kerberos containter location from [dbmodules] section of krb5.conf file */
     if (ldap_context->conf_section) {
         if ((st=profile_get_string(context->profile, KDB_MODULE_SECTION, ldap_context->conf_section,
-                                   KRB5_CONF_LDAP_KERBEROS_CONTAINER_DN, NULL,
+                                   "ldap_kerberos_container_dn", NULL,
                                    &cparams->DN)) != 0) {
-            krb5_set_error_message(context, st,
-                                   _("Error reading kerberos container "
-                                     "location from krb5.conf"));
+            krb5_set_error_message(context, st, "Error reading kerberos container location "
+                                   "from krb5.conf");
             goto cleanup;
         }
     }
@@ -103,35 +103,71 @@ krb5_ldap_read_krbcontainer_params(krb5_context context,
     /* read kerberos containter location from [dbdefaults] section of krb5.conf file */
     if (cparams->DN == NULL) {
         if ((st=profile_get_string(context->profile, KDB_MODULE_DEF_SECTION,
-                                   KRB5_CONF_LDAP_KERBEROS_CONTAINER_DN, NULL,
+                                   "ldap_kerberos_container_dn", NULL,
                                    NULL, &cparams->DN)) != 0) {
-            krb5_set_error_message(context, st,
-                                   _("Error reading kerberos container "
-                                     "location from krb5.conf"));
+            krb5_set_error_message(context, st, "Error reading kerberos container location "
+                                   "from krb5.conf");
             goto cleanup;
         }
     }
 
+#ifndef HAVE_EDIRECTORY
+/*
+ * In case eDirectory, we can fall back to security container if the kerberos container location
+ * is missing in the conf file. In openldap we will have to return an error.
+ */
     if (cparams->DN == NULL) {
         st = KRB5_KDB_SERVER_INTERNAL_ERR;
-        krb5_set_error_message(context, st,
-                               _("Kerberos container location not specified"));
+        krb5_set_error_message(context, st, "Kerberos container location not specified");
         goto cleanup;
     }
+#endif
 
-    /* NOTE: krbmaxtktlife, krbmaxrenewableage ... present on Kerberos Container is
-     * not read
+    if (cparams->DN != NULL) {
+        /* NOTE: krbmaxtktlife, krbmaxrenewableage ... present on Kerberos Container is
+         * not read
+         */
+        LDAP_SEARCH_1(cparams->DN, LDAP_SCOPE_BASE, "(objectclass=krbContainer)", policyrefattribute, IGNORE_STATUS);
+        if (st != LDAP_SUCCESS && st != LDAP_NO_SUCH_OBJECT) {
+            st = set_ldap_error(context, st, OP_SEARCH);
+            goto cleanup;
+        }
+
+        if (st == LDAP_NO_SUCH_OBJECT) {
+            st = KRB5_KDB_NOENTRY;
+            goto cleanup;
+        }
+    }
+
+#ifdef HAVE_EDIRECTORY
+    /*
+     * If the kerberos location in the conf file is missing or invalid, fall back to the
+     * security container. If the kerberos location in the security container is also missing
+     * then fall back to the default value
      */
-    LDAP_SEARCH_1(cparams->DN, LDAP_SCOPE_BASE, "(objectclass=krbContainer)", policyrefattribute, IGNORE_STATUS);
-    if (st != LDAP_SUCCESS && st != LDAP_NO_SUCH_OBJECT) {
-        st = set_ldap_error(context, st, OP_SEARCH);
-        goto cleanup;
-    }
+    if ((cparams->DN == NULL) || (st == LDAP_NO_SUCH_OBJECT)) {
+        /*
+         * kerberos container can be anywhere. locate it by reading the security
+         * container to find the location.
+         */
+        LDAP_SEARCH(SECURITY_CONTAINER, LDAP_SCOPE_BASE, NULL, krbcontainerrefattr);
+        if ((ent = ldap_first_entry(ld, result)) != NULL) {
+            if ((st=krb5_ldap_get_string(ld, ent, "krbcontainerreference",
+                                         &(cparams->DN), NULL)) != 0)
+                goto cleanup;
+            if (cparams->DN == NULL) {
+                cparams->DN = strdup(KERBEROS_CONTAINER);
+                CHECK_NULL(cparams->DN);
+            }
+        }
+        ldap_msgfree(result);
 
-    if (st == LDAP_NO_SUCH_OBJECT) {
-        st = KRB5_KDB_NOENTRY;
-        goto cleanup;
+        /* NOTE: krbmaxtktlife, krbmaxrenewableage ... attributes present on
+         * Kerberos Container is not read
+         */
+        LDAP_SEARCH(cparams->DN, LDAP_SCOPE_BASE, "(objectclass=krbContainer)", policyrefattribute);
     }
+#endif
 
     if ((ent = ldap_first_entry(ld, result))) {
         if ((st=krb5_ldap_get_string(ld, ent, "krbticketpolicyreference",

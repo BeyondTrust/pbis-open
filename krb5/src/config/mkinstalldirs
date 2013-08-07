@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id$
+# $Id: mkinstalldirs 17354 2005-08-24 16:32:24Z epeisach $
 
 errstatus=0
 

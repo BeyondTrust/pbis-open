@@ -1,5 +1,6 @@
-/* ccapi/server/win/ccs_win_pipe.c */
 /*
+ * $Header$
+ *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -33,13 +34,13 @@
 /* Ref:
 struct ccs_win_pipe_t {
     char*   uuid;
-    UINT64  clientHandle;
+    HANDLE  clientHandle;
     }
  */
 
 /* ------------------------------------------------------------------------ */
 
-struct ccs_win_pipe_t* ccs_win_pipe_new (const char* uuid, const UINT64 h) {
+struct ccs_win_pipe_t* ccs_win_pipe_new (const char* uuid, const HANDLE h) {
 
     cc_int32                err         = ccNoError;
     struct ccs_win_pipe_t*  out_pipe    = NULL;
@@ -153,9 +154,9 @@ char* ccs_win_pipe_getUuid    (const WIN_PIPE* in_pipe) {
 
 /* ------------------------------------------------------------------------ */
 
-UINT64 ccs_win_pipe_getHandle  (const WIN_PIPE* in_pipe) {
+HANDLE ccs_win_pipe_getHandle  (const WIN_PIPE* in_pipe) {
 
-    UINT64 result = 0;
+    HANDLE result = NULL;
 
     if (!ccs_win_pipe_valid(in_pipe)) {cci_check_error(ccErrBadParam);}
     else                              {result = in_pipe->clientHandle;}

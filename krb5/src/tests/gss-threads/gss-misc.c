@@ -43,6 +43,10 @@
  * or implied warranty.
  */
 
+#if !defined(lint) && !defined(__CODECENTER__)
+static char *rcsid = "$Header$";
+#endif
+
 #include <stdio.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -386,7 +390,7 @@ void display_ctx_flags(flags)
 void print_token(tok)
      gss_buffer_t tok;
 {
-    size_t i;
+    int i;
     unsigned char *p = tok->value;
 
     if (!display_file)

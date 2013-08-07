@@ -189,30 +189,6 @@ set passes {
 	{dummy=[verbose -log "AES enctypes"]}
     }
     {
-	camellia-only
-	mode=udp
-	des3_krbtgt=0
-	{supported_enctypes=camellia256-cts:normal}
-	{permitted_enctypes(kdc)=camellia256-cts}
-	{permitted_enctypes(slave)=camellia256-cts}
-	{permitted_enctypes(client)=camellia256-cts}
-	{permitted_enctypes(server)=camellia256-cts}
-	{default_tgs_enctypes(kdc)=camellia256-cts}
-	{default_tgs_enctypes(slave)=camellia256-cts}
-	{default_tgs_enctypes(client)=camellia256-cts}
-	{default_tgs_enctypes(server)=camellia256-cts}
-	{default_tkt_enctypes(kdc)=camellia256-cts}
-	{default_tkt_enctypes(slave)=camellia256-cts}
-	{default_tkt_enctypes(client)=camellia256-cts}
-	{default_tkt_enctypes(server)=camellia256-cts}
-	{allow_weak_crypto(kdc)=false}
-	{allow_weak_crypto(slave)=false}
-	{allow_weak_crypto(client)=false}
-	{allow_weak_crypto(server)=false}
-	{master_key_type=camellia256-cts}
-	{dummy=[verbose -log "Camellia-256 enctype"]}
-    }
-    {
 	aes-des3
 	mode=udp
 	des3_krbtgt=0
@@ -286,6 +262,32 @@ set passes {
 		"DES3 TGT, KDC permitting only des-cbc-crc"]}
     }
 }
+
+# Add to above when Camellia support becomes unconditional.
+#    {
+#	camellia-only
+#	mode=udp
+#	des3_krbtgt=0
+#	{supported_enctypes=camellia256-cts:normal}
+#	{permitted_enctypes(kdc)=camellia256-cts}
+#	{permitted_enctypes(slave)=camellia256-cts}
+#	{permitted_enctypes(client)=camellia256-cts}
+#	{permitted_enctypes(server)=camellia256-cts}
+#	{default_tgs_enctypes(kdc)=camellia256-cts}
+#	{default_tgs_enctypes(slave)=camellia256-cts}
+#	{default_tgs_enctypes(client)=camellia256-cts}
+#	{default_tgs_enctypes(server)=camellia256-cts}
+#	{default_tkt_enctypes(kdc)=camellia256-cts}
+#	{default_tkt_enctypes(slave)=camellia256-cts}
+#	{default_tkt_enctypes(client)=camellia256-cts}
+#	{default_tkt_enctypes(server)=camellia256-cts}
+#	{allow_weak_crypto(kdc)=false}
+#	{allow_weak_crypto(slave)=false}
+#	{allow_weak_crypto(client)=false}
+#	{allow_weak_crypto(server)=false}
+#	{master_key_type=camellia256-cts}
+#	{dummy=[verbose -log "Camellia-256 enctype"]}
+#    }
 
 # des.md5-tgt is set as unused, since it won't trigger the error case
 # if SUPPORT_DESMD5 isn't honored.
@@ -629,7 +631,7 @@ proc envstack_pop { } {
 # Initialize the envstack
 #
 set envvars_tosave {
-    KRB5_CONFIG KRB5CCNAME KRB5_CLIENT_KTNAME KRB5RCACHEDIR KRB5_KDC_PROFILE
+    KRB5_CONFIG KRB5CCNAME KRBTKFILE KRB5RCACHEDIR KRB5_KDC_PROFILE
 }
 set krb5_init_vars [list ]
 # XXX -- fix me later!
@@ -641,10 +643,6 @@ foreach i $runvarlist {
 	verbose "savelist $envvars_tosave"
 	lappend krb5_init_vars $i
     }
-    # Make sure we don't get confused by translated messages
-    # or localized times.
-    lappend envvars_tosave "LC_ALL"
-    lappend krb5_init_vars "LC_ALL=C"
 }
 set envstackp 0
 envstack_push
@@ -667,13 +665,14 @@ proc setup_runtime_env { } {
 }
 
 # get_hostname
-# This procedure sets the global variale hostname to the local
-# hostname as seen by krb5_sname_to_principal.  Returns 1 on success,
-# 0 on failure.
+# This procedure will get the local hostname.  It sets the global
+# variables hostname (the full name) and domain (all but the first
+# part of the name).  Returns 1 on success, 0 on failure.
 
 proc get_hostname { } {
     global RESOLVE
     global hostname
+    global domain
     global tmppwd
 
     if {[info exists hostname]} {
@@ -696,8 +695,11 @@ proc get_hostname { } {
     }
     close $file
     file delete $tmppwd/hostname
+    regexp "^\[^.\]*\\.(.*)$" $hostname foo domain
 
     set hostname [string tolower $hostname]
+    set domain [string tolower $domain]
+    verbose "hostname: $hostname; domain: $domain"
 
     return 1
 }
@@ -759,6 +761,7 @@ set ulog 0
 proc setup_kerberos_files { } {
     global REALMNAME
     global hostname
+    global domain
     global tmppwd
     global supported_enctypes
     global last_passname_conf
@@ -873,10 +876,12 @@ proc setup_kerberos_files { } {
     }
 
     # Create ACL file.
-    set aclfile [open $tmppwd/acl w]
-    puts $aclfile "krbtest/admin@$REALMNAME *"
-    puts $aclfile "kiprop/$hostname@$REALMNAME p"
-    close $aclfile
+    if ![file exists $tmppwd/acl] {
+	set aclfile [open $tmppwd/acl w]
+	puts $aclfile "krbtest/admin@$REALMNAME *"
+	puts $aclfile "kiprop/$hostname@$REALMNAME p"
+	close $aclfile
+    }
 
     # Create dictfile file.
     if ![file exists $tmppwd/dictfile] {
@@ -899,6 +904,7 @@ proc reset_kerberos_files { } {
 proc setup_krb5_conf { {type client} } {
     global tmppwd
     global hostname
+    global domain
     global REALMNAME
     global last_passname_conf
     global multipass_name
@@ -908,6 +914,8 @@ proc setup_krb5_conf { {type client} } {
     global allow_weak_crypto
     global mode
     global portbase
+    global KRB5_DB_MODULE_DIR
+    global KRB5_PA_MODULE_DIR
     global srcdir
 
     set pkinit_certs [findfile "[pwd]/$srcdir/pkinit-certs" "[pwd]/$srcdir/pkinit-certs" "$srcdir/pkinit-certs"]
@@ -939,7 +947,7 @@ proc setup_krb5_conf { {type client} } {
 	if { $mode == "tcp" } {
 	    puts $conffile "	udp_preference_limit = 1"
 	}
-	puts $conffile "	plugin_base_dir = $tmppwd/../../../plugins"
+	puts $conffile "	preauth_module_dir = $tmppwd/../../../util/fakedest$KRB5_PA_MODULE_DIR"
 	puts $conffile ""
 	puts $conffile "\[realms\]"
 	puts $conffile "	$REALMNAME = \{"
@@ -960,7 +968,8 @@ proc setup_krb5_conf { {type client} } {
 	puts $conffile "	\}"
 	puts $conffile ""
 	puts $conffile "\[domain_realm\]"
-	puts $conffile "	$hostname = $REALMNAME"
+	puts $conffile "	.$domain = $REALMNAME"
+	puts $conffile "	$domain = $REALMNAME"
 	puts $conffile ""
 	puts $conffile "\[logging\]"
 	puts $conffile "	admin_server = FILE:$tmppwd/kadmind5.log"
@@ -968,7 +977,7 @@ proc setup_krb5_conf { {type client} } {
 	puts $conffile "	default = FILE:$tmppwd/others.log"
 	puts $conffile ""
 	puts $conffile "\[dbmodules\]"
-	puts $conffile "	db_module_dir = $tmppwd/../../../plugins/kdb"
+	puts $conffile "	db_module_dir = $tmppwd/../../../util/fakedest$KRB5_DB_MODULE_DIR"
 	puts $conffile "	foo_db2 = {"
 	puts $conffile "		db_library = db2"
 	puts $conffile "		database_name = $tmppwd/$type-db"
@@ -992,12 +1001,6 @@ if [info exists env(KRB5CCNAME)] {
     set orig_krb5ccname $env(KRB5CCNAME)
 } else {
     catch "unset orig_krb5ccname"
-}
-
-if [info exists env(KRB5_CLIENT_KTNAME)] {
-    set orig_krb5clientktname $env(KRB5_CLIENT_KTNAME)
-} else {
-    catch "unset orig_krb5clientktname"
 }
 
 if [ info exists env(KRB5RCACHEDIR)] {
@@ -1027,10 +1030,6 @@ proc setup_kerberos_env { {type client} } {
     set env(KRB5CCNAME) $tmppwd/tkt
     verbose "KRB5CCNAME=$env(KRB5CCNAME)"
 
-    # Direct the Kerberos programs at a local client keytab.
-    set env(KRB5_CLIENT_KTNAME) $tmppwd/client_keytab
-    verbose "KRB5_CLIENT_KTNAME=$env(KRB5_CLIENT_KTNAME)"
-
     # Direct the Kerberos server at a cache file stored in the
     # temporary directory.
     set env(KRB5RCACHEDIR) $tmppwd
@@ -1056,7 +1055,6 @@ proc setup_kerberos_env { {type client} } {
 	set envfile [open $tmppwd/$type-env.sh w]
 	puts $envfile "KRB5_CONFIG=$env(KRB5_CONFIG)"
 	puts $envfile "KRB5CCNAME=$env(KRB5CCNAME)"
-	puts $envfile "KRB5_CLIENT_KTNAME=$env(KRB5_CLIENT_KTNAME)"
 	puts $envfile "KRB5RCACHEDIR=$env(KRB5RCACHEDIR)"
 	if [info exists env(KRB5_KDC_PROFILE)] {
 	    puts $envfile "KRB5_KDC_PROFILE=$env(KRB5_KDC_PROFILE)"
@@ -1064,7 +1062,7 @@ proc setup_kerberos_env { {type client} } {
 	    puts $envfile "unset KRB5_KDC_PROFILE"
 	}
 	puts $envfile "export KRB5_CONFIG KRB5CCNAME KRB5RCACHEDIR"
-	puts $envfile "export KRB5_KDC_PROFILE KRB5_CLIENT_KTNAME"
+	puts $envfile "export KRB5_KDC_PROFILE"
 	foreach i $krb5_init_vars {
 		regexp "^(\[^=\]*)=(.*)" $i foo evar evalue
 		puts $envfile "$evar=$env($evar)"
@@ -1076,7 +1074,6 @@ proc setup_kerberos_env { {type client} } {
 	set envfile [open $tmppwd/$type-env.csh w]
 	puts $envfile "setenv KRB5_CONFIG $env(KRB5_CONFIG)"
 	puts $envfile "setenv KRB5CCNAME $env(KRB5CCNAME)"
-	puts $envfile "setenv KRB5_CLIENT_KTNAME $env(KRB5_CLIENT_KTNAME)"
 	puts $envfile "setenv KRB5RCACHEDIR $env(KRB5RCACHEDIR)"
 	if [info exists env(KRB5_KDC_PROFILE)] {
 	    puts $envfile "setenv KRB5_KDC_PROFILE $env(KRB5_KDC_PROFILE)"
@@ -1510,7 +1507,7 @@ proc start_kpropd {} {
 
     envstack_push
     setup_kerberos_env slave
-    spawn $KPROPD -S -d -t -P [expr 10 + $portbase] -s $tmppwd/srvtab -f $tmppwd/incoming-slave-datatrans -p $KDB5_UTIL -a $tmppwd/kpropd-acl
+    spawn $KPROPD -S -d -P [expr 10 + $portbase] -s $tmppwd/srvtab -f $tmppwd/incoming-slave-datatrans -p $KDB5_UTIL -a $tmppwd/kpropd-acl
     set kpropd_pid [exp_pid]
     set kpropd_spawn_id $spawn_id
 #    send_user [list $KPROPD -S -d -P [expr 10 + $portbase] -s $tmppwd/srvtab -f $tmppwd/incoming-slave-datatrans -p $KDB5_UTIL -a $tmppwd/kpropd-acl]\n

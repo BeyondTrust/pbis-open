@@ -1,8 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-#include <locale.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "k5-platform.h"
+#include "autoconf.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -10,8 +9,8 @@
 
 #include <krb5.h>
 
-#define P1 _("Enter new password")
-#define P2 _("Enter it again")
+#define P1 "Enter new password"
+#define P2 "Enter it again"
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
@@ -26,12 +25,11 @@ void get_name_from_passwd_file(program_name, kcontext, me)
     krb5_error_code code;
     if ((pw = getpwuid(getuid()))) {
         if ((code = krb5_parse_name(kcontext, pw->pw_name, me))) {
-            com_err(program_name, code, _("when parsing name %s"),
-                    pw->pw_name);
+            com_err (program_name, code, "when parsing name %s", pw->pw_name);
             exit(1);
         }
     } else {
-        fprintf(stderr, _("Unable to identify user from password file\n"));
+        fprintf(stderr, "Unable to identify user from password file\n");
         exit(1);
     }
 }
@@ -40,7 +38,7 @@ void get_name_from_passwd_file(kcontext, me)
     krb5_context kcontext;
     krb5_principal * me;
 {
-    fprintf(stderr, _("Unable to identify user\n"));
+    fprintf(stderr, "Unable to identify user\n");
     exit(1);
 }
 #endif /* HAVE_PWD_H */
@@ -54,16 +52,14 @@ int main(int argc, char *argv[])
     krb5_ccache ccache;
     krb5_get_init_creds_opt *opts = NULL;
     krb5_creds creds;
-    char *message;
 
     char pw[1024];
     unsigned int pwlen;
     int result_code;
     krb5_data result_code_string, result_string;
 
-    setlocale(LC_ALL, "");
     if (argc > 2) {
-        fprintf(stderr, _("usage: %s [principal]\n"), argv[0]);
+        fprintf(stderr, "usage: %s [principal]\n", argv[0]);
         exit(1);
     }
 
@@ -71,11 +67,11 @@ int main(int argc, char *argv[])
 
     ret = krb5_init_context(&context);
     if (ret) {
-        com_err(argv[0], ret, _("initializing kerberos library"));
+        com_err(argv[0], ret, "initializing kerberos library");
         exit(1);
     }
     if ((ret = krb5_get_init_creds_opt_alloc(context, &opts))) {
-        com_err(argv[0], ret, _("allocating krb5_get_init_creds_opt"));
+        com_err(argv[0], ret, "allocating krb5_get_init_creds_opt");
         exit(1);
     }
 
@@ -90,33 +86,33 @@ int main(int argc, char *argv[])
     */
     ret = krb5_cc_default(context, &ccache);
     if (ret != 0) {
-        com_err(argv[0], ret, _("opening default ccache"));
+        com_err(argv[0], ret, "opening default ccache");
         exit(1);
     }
     ret = krb5_cc_get_principal(context, ccache, &princ);
     if (ret != 0 && ret != KRB5_CC_NOTFOUND && ret != KRB5_FCC_NOFILE) {
-        com_err(argv[0], ret, _("getting principal from ccache"));
+        com_err(argv[0], ret, "getting principal from ccache");
         exit(1);
     } else {
         if (princ != NULL) {
             ret = krb5_get_init_creds_opt_set_fast_ccache(context, opts,
                                                           ccache);
             if (ret) {
-                com_err(argv[0], ret, _("while setting FAST ccache"));
+                com_err(argv[0], ret, "while setting FAST ccache");
                 exit(1);
             }
         }
     }
     ret = krb5_cc_close(context, ccache);
     if (ret != 0) {
-        com_err(argv[0], ret, _("closing ccache"));
+        com_err(argv[0], ret, "closing ccache");
         exit(1);
     }
     if (pname) {
         krb5_free_principal(context, princ);
         princ = NULL;
         if ((ret = krb5_parse_name(context, pname, &princ))) {
-            com_err(argv[0], ret, _("parsing client name"));
+            com_err(argv[0], ret, "parsing client name");
             exit(1);
         }
     }
@@ -133,16 +129,16 @@ int main(int argc, char *argv[])
                                             0, "kadmin/changepw", opts))) {
         if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY)
             com_err(argv[0], 0,
-                    _("Password incorrect while getting initial ticket"));
+                    "Password incorrect while getting initial ticket");
         else
-            com_err(argv[0], ret, _("getting initial ticket"));
+            com_err(argv[0], ret, "getting initial ticket");
         krb5_get_init_creds_opt_free(context, opts);
         exit(1);
     }
 
     pwlen = sizeof(pw);
     if ((ret = krb5_read_password(context, P1, P2, pw, &pwlen))) {
-        com_err(argv[0], ret, _("while reading password"));
+        com_err(argv[0], ret, "while reading password");
         krb5_get_init_creds_opt_free(context, opts);
         exit(1);
     }
@@ -150,18 +146,17 @@ int main(int argc, char *argv[])
     if ((ret = krb5_change_password(context, &creds, pw,
                                     &result_code, &result_code_string,
                                     &result_string))) {
-        com_err(argv[0], ret, _("changing password"));
+        com_err(argv[0], ret, "changing password");
         krb5_get_init_creds_opt_free(context, opts);
         exit(1);
     }
 
     if (result_code) {
-        if (krb5_chpw_message(context, &result_string, &message) != 0)
-            message = NULL;
-        printf("%.*s%s%s\n",
+        printf("%.*s%s%.*s\n",
                (int) result_code_string.length, result_code_string.data,
-               message ? ": " : "", message ? message : NULL);
-        krb5_free_string(context, message);
+               result_string.length?": ":"",
+               (int) result_string.length,
+               result_string.data ? result_string.data : "");
         krb5_get_init_creds_opt_free(context, opts);
         exit(2);
     }
@@ -172,6 +167,6 @@ int main(int argc, char *argv[])
         free(result_code_string.data);
     krb5_get_init_creds_opt_free(context, opts);
 
-    printf(_("Password changed.\n"));
+    printf("Password changed.\n");
     exit(0);
 }

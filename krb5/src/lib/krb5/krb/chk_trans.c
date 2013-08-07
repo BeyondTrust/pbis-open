@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/chk_trans.c */
 /*
+ * lib/krb5/krb/chk_trans.c
+ *
  * Copyright 2001, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,8 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * krb5_check_transited_list()
  */
-
 #include "k5-int.h"
 #include <stdarg.h>
 

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/kdb_ldap.h */
 /*
+ * lib/kdb/kdb_ldap/kdb_ldap.h
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -62,6 +63,11 @@ extern struct timeval timelimit;
 #define  SERV_COUNT                  100
 #define  DEFAULT_CONNS_PER_SERVER    5
 #define  REALM_READ_REFRESH_INTERVAL (5 * 60)
+
+#ifdef HAVE_EDIRECTORY
+#define  SECURITY_CONTAINER "cn=Security"
+#define  KERBEROS_CONTAINER "cn=Kerberos,cn=Security"
+#endif
 
 #if !defined(LDAP_OPT_RESULT_CODE) && defined(LDAP_OPT_ERROR_NUMBER)
 #define LDAP_OPT_RESULT_CODE LDAP_OPT_ERROR_NUMBER
@@ -141,6 +147,10 @@ extern void prepend_err_str (krb5_context ctx, const char *s, krb5_error_code er
 #define UNSTORE16_INT(ptr, val) (val = load_16_be(ptr))
 #define UNSTORE32_INT(ptr, val) (val = load_32_be(ptr))
 
+#define KRB5_CONF_KDC_BIND_DN "ldap_kdc_dn"
+#define KRB5_CONF_ADMIN_BIND_DN "ldap_kadmind_dn"
+#define KRB5_CONF_PWD_BIND_DN "ldap_passwd_dn"
+
 #define  KDB_TL_USER_INFO      0x7ffe
 
 #define KDB_TL_PRINCTYPE          0x01
@@ -189,6 +199,9 @@ struct _krb5_ldap_server_info {
     krb5_ldap_server_handle      *ldap_server_handles;
     time_t                       downtime;
     char                        *server_name;
+#ifdef HAVE_EDIRECTORY
+    char                        *root_certificate_file;
+#endif
     int                          modify_increment;
     struct _krb5_ldap_server_info *next;
 };
@@ -285,7 +298,7 @@ krb5_error_code
 krb5_ldap_check_policy_as(krb5_context kcontext, krb5_kdc_req *request,
                           krb5_db_entry *client, krb5_db_entry *server,
                           krb5_timestamp kdc_time, const char **status,
-                          krb5_pa_data ***e_data);
+                          krb5_data *e_data);
 
 void
 krb5_ldap_audit_as_req(krb5_context kcontext, krb5_kdc_req *request,

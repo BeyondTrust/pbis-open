@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/keytab/ktdefault.c */
 /*
+ * lib/krb5/keytab/ktdefault.c
+ *
  * Copyright 1990,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * Get a default keytab.
  */
@@ -42,20 +41,6 @@ krb5_kt_default(krb5_context context, krb5_keytab *id)
     if ((retval = krb5_kt_default_name(context, defname, sizeof(defname))))
         return retval;
     return krb5_kt_resolve(context, defname, id);
-}
-
-krb5_error_code KRB5_CALLCONV
-krb5_kt_client_default(krb5_context context, krb5_keytab *keytab_out)
-{
-    krb5_error_code ret;
-    char *name;
-
-    ret = k5_kt_client_default_name(context, &name);
-    if (ret)
-        return ret;
-    ret = krb5_kt_resolve(context, name, keytab_out);
-    free(name);
-    return ret;
 }
 
 #endif /* LEAN_CLIENT */

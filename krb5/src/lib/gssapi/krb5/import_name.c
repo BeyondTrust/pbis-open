@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id$
+ * $Id: import_name.c 23528 2009-12-28 18:03:31Z ghudson $
  */
 
 #include "gssapiP_krb5.h"
@@ -57,9 +57,6 @@ import_name_composite(krb5_context context,
     krb5_error_code code;
     krb5_data data;
 
-    if (enc_length == 0)
-        return 0;
-
     code = krb5_authdata_context_init(context, &ad_context);
     if (code != 0)
         return code;
@@ -81,45 +78,7 @@ import_name_composite(krb5_context context,
     return 0;
 }
 
-/* Split a host-based name "service[@host]" into allocated strings
- * placed in *service_out and *host_out (possibly NULL). */
-static krb5_error_code
-parse_hostbased(const char *str, size_t len,
-                char **service_out, char **host_out)
-{
-    const char *at;
-    size_t servicelen, hostlen;
-    char *service, *host = NULL;
-
-    *service_out = *host_out = NULL;
-
-    /* Find the bound of the service name and copy it. */
-    at = memchr(str, '@', len);
-    servicelen = (at == NULL) ? len : (size_t)(at - str);
-    service = xmalloc(servicelen + 1);
-    if (service == NULL)
-        return ENOMEM;
-    memcpy(service, str, servicelen);
-    service[servicelen] = '\0';
-
-    /* If present, copy the hostname. */
-    if (at != NULL) {
-        hostlen = len - servicelen - 1;
-        host = malloc(hostlen + 1);
-        if (host == NULL) {
-            free(service);
-            return ENOMEM;
-        }
-        memcpy(host, at + 1, hostlen);
-        host[hostlen] = '\0';
-    }
-
-    *service_out = service;
-    *host_out = host;
-    return 0;
-}
-
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_import_name(minor_status, input_name_buffer,
                      input_name_type, output_name)
     OM_uint32 *minor_status;
@@ -131,63 +90,81 @@ krb5_gss_import_name(minor_status, input_name_buffer,
     krb5_principal princ = NULL;
     krb5_error_code code;
     unsigned char *cp, *end;
-    char *tmp = NULL, *tmp2 = NULL, *service = NULL, *host = NULL, *stringrep;
+    char *tmp, *stringrep, *tmp2;
     ssize_t    length;
 #ifndef NO_PASSWORD
     struct passwd *pw;
 #endif
-    int is_composite = 0;
+    int has_ad = 0;
     krb5_authdata_context ad_context = NULL;
-    OM_uint32 status = GSS_S_FAILURE;
-    krb5_gss_name_t name;
+
+    code = krb5_gss_init_context(&context);
+    if (code) {
+        *minor_status = code;
+        return GSS_S_FAILURE;
+    }
+
+    /* set up default returns */
 
     *output_name = NULL;
     *minor_status = 0;
 
-    code = krb5_gss_init_context(&context);
-    if (code)
-        goto cleanup;
+    /* Go find the appropriate string rep to pass into parse_name */
 
     if ((input_name_type != GSS_C_NULL_OID) &&
         (g_OID_equal(input_name_type, gss_nt_service_name) ||
          g_OID_equal(input_name_type, gss_nt_service_name_v2))) {
-        /* Split the name into service and host (or NULL). */
-        code = parse_hostbased(input_name_buffer->value,
-                               input_name_buffer->length, &service, &host);
-        if (code)
-            goto cleanup;
+        char *service, *host;
 
-        /*
-         * Compute the initiator target name.  In some cases this is a waste of
-         * getaddrinfo/getnameinfo queries, but computing the name when we need
-         * it would require a lot of code changes.
-         */
+        if ((tmp =
+             xmalloc(input_name_buffer->length + 1)) == NULL) {
+            *minor_status = ENOMEM;
+            krb5_free_context(context);
+            return(GSS_S_FAILURE);
+        }
+
+        memcpy(tmp, input_name_buffer->value, input_name_buffer->length);
+        tmp[input_name_buffer->length] = 0;
+
+        service = tmp;
+        if ((host = strchr(tmp, '@'))) {
+            *host = '\0';
+            host++;
+        }
+
         code = krb5_sname_to_principal(context, host, service, KRB5_NT_SRV_HST,
                                        &princ);
-        if (code)
-            goto cleanup;
+
+        xfree(tmp);
     } else if ((input_name_type != GSS_C_NULL_OID) &&
                (g_OID_equal(input_name_type, gss_nt_krb5_principal))) {
         krb5_principal input;
 
         if (input_name_buffer->length != sizeof(krb5_principal)) {
-            code = G_WRONG_SIZE;
-            status = GSS_S_BAD_NAME;
-            goto cleanup;
+            *minor_status = (OM_uint32) G_WRONG_SIZE;
+            krb5_free_context(context);
+            return(GSS_S_BAD_NAME);
         }
 
         input = *((krb5_principal *) input_name_buffer->value);
 
-        code = krb5_copy_principal(context, input, &princ);
-        if (code)
-            goto cleanup;
+        if ((code = krb5_copy_principal(context, input, &princ))) {
+            *minor_status = code;
+            save_error_info(*minor_status, context);
+            krb5_free_context(context);
+            return(GSS_S_FAILURE);
+        }
     } else if ((input_name_type != NULL) &&
                g_OID_equal(input_name_type, GSS_C_NT_ANONYMOUS)) {
         code = krb5_copy_principal(context, krb5_anonymous_principal(),
                                    &princ);
-        if (code)
-            goto cleanup;
-    } else {
+        if (code != 0) {
+            krb5_free_context(context);
+            *minor_status = code;
+            return GSS_S_FAILURE;
+        }
+    }
+    else {
 #ifndef NO_PASSWORD
         uid_t uid;
         struct passwd pwx;
@@ -196,15 +173,17 @@ krb5_gss_import_name(minor_status, input_name_buffer,
 
         stringrep = NULL;
 
-        tmp = k5alloc(input_name_buffer->length + 1, &code);
-        if (tmp == NULL)
-            goto cleanup;
-        tmp2 = NULL;
+        if ((tmp =
+             (char *) xmalloc(input_name_buffer->length + 1)) == NULL) {
+            *minor_status = ENOMEM;
+            krb5_free_context(context);
+            return(GSS_S_FAILURE);
+        }
+        tmp2 = 0;
 
         memcpy(tmp, input_name_buffer->value, input_name_buffer->length);
-        tmp[input_name_buffer->length] = '\0';
+        tmp[input_name_buffer->length] = 0;
 
-        /* Find the appropriate string rep to pass into parse_name. */
         if ((input_name_type == GSS_C_NULL_OID) ||
             g_OID_equal(input_name_type, gss_nt_krb5_name) ||
             g_OID_equal(input_name_type, gss_nt_user_name)) {
@@ -216,15 +195,13 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             if (k5_getpwuid_r(uid, &pwx, pwbuf, sizeof(pwbuf), &pw) == 0)
                 stringrep = pw->pw_name;
             else
-                code = G_NOUSER;
+                *minor_status = (OM_uint32) G_NOUSER;
         } else if (g_OID_equal(input_name_type, gss_nt_string_uid_name)) {
             uid = atoi(tmp);
             goto do_getpwuid;
 #endif
-        } else if (g_OID_equal(input_name_type, gss_nt_exported_name) ||
-                   g_OID_equal(input_name_type, GSS_C_NT_COMPOSITE_EXPORT)) {
-#define BOUNDS_CHECK(cp, end, n)                                        \
-            do { if ((end) - (cp) < (n)) goto fail_name; } while (0)
+        } else if (g_OID_equal(input_name_type, gss_nt_exported_name)) {
+#define BOUNDS_CHECK(cp, end, n) do { if ((end) - (cp) < (n)) goto fail_name; } while (0)
             cp = (unsigned char *)tmp;
             end = cp + input_name_buffer->length;
 
@@ -235,7 +212,7 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             case 0x01:
                 break;
             case 0x02:
-                is_composite++;
+                has_ad++;
                 break;
             default:
                 goto fail_name;
@@ -267,15 +244,19 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             length = (length << 8) | *cp++;
 
             BOUNDS_CHECK(cp, end, length);
-            tmp2 = k5alloc(length + 1, &code);
-            if (tmp2 == NULL)
-                goto cleanup;
+            tmp2 = malloc(length+1);
+            if (tmp2 == NULL) {
+                xfree(tmp);
+                *minor_status = ENOMEM;
+                krb5_free_context(context);
+                return GSS_S_FAILURE;
+            }
             strncpy(tmp2, (char *)cp, length);
             tmp2[length] = 0;
             stringrep = tmp2;
             cp += length;
 
-            if (is_composite) {
+            if (has_ad) {
                 BOUNDS_CHECK(cp, end, 4);
                 length = *cp++;
                 length = (length << 8) | *cp++;
@@ -292,43 +273,56 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             }
             assert(cp == end);
         } else {
-            status = GSS_S_BAD_NAMETYPE;
-            goto cleanup;
+            xfree(tmp);
+            krb5_free_context(context);
+            return(GSS_S_BAD_NAMETYPE);
         }
 
-        /* At this point, stringrep is set, or if not, code is. */
-        if (stringrep) {
-            code = krb5_parse_name(context, (char *)stringrep, &princ);
-            if (code)
-                goto cleanup;
-        } else {
+        /* at this point, stringrep is set, or if not, *minor_status is. */
+
+        if (stringrep)
+            code = krb5_parse_name(context, (char *) stringrep, &princ);
+        else {
         fail_name:
-            status = GSS_S_BAD_NAME;
-            goto cleanup;
+            xfree(tmp);
+            if (tmp2)
+                xfree(tmp2);
+            krb5_free_context(context);
+            return(GSS_S_BAD_NAME);
         }
+
+        if (tmp2)
+            xfree(tmp2);
+        xfree(tmp);
     }
 
-    /* Create a name and save it in the validation database. */
-    code = kg_init_name(context, princ, service, host, ad_context,
-                        KG_INIT_NAME_NO_COPY, &name);
-    if (code)
-        goto cleanup;
-    princ = NULL;
-    ad_context = NULL;
-    service = host = NULL;
-    *output_name = (gss_name_t)name;
-    status = GSS_S_COMPLETE;
+    /* at this point, a krb5 function has been called to set princ.  code
+       contains the return status */
 
-cleanup:
-    *minor_status = (OM_uint32)code;
-    if (*minor_status)
+    if (code) {
+        *minor_status = (OM_uint32) code;
         save_error_info(*minor_status, context);
-    krb5_free_principal(context, princ);
-    krb5_authdata_context_free(context, ad_context);
+        krb5_authdata_context_free(context, ad_context);
+        krb5_free_context(context);
+        return(GSS_S_BAD_NAME);
+    }
+
+    /* save the name in the validation database */
+    code = kg_init_name(context, princ, ad_context,
+                        KG_INIT_NAME_INTERN | KG_INIT_NAME_NO_COPY,
+                        (krb5_gss_name_t *)output_name);
+    if (code != 0) {
+        *minor_status = (OM_uint32) code;
+        save_error_info(*minor_status, context);
+        krb5_free_principal(context, princ);
+        krb5_authdata_context_free(context, ad_context);
+        krb5_free_context(context);
+        return(GSS_S_FAILURE);
+    }
+
     krb5_free_context(context);
-    free(tmp);
-    free(tmp2);
-    free(service);
-    free(host);
-    return status;
+
+    /* return it */
+
+    return(GSS_S_COMPLETE);
 }

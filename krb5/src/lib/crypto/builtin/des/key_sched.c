@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/des/key_sched.c */
 /*
+ * lib/crypto/des/key_sched.c
+ *
  * Copyright 1985, 1986, 1987, 1988, 1990 by the Massachusetts Institute
  * of Technology.
  * All Rights Reserved.
@@ -23,9 +24,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * This routine computes the DES key schedule given a key.  The
  * permutations and shifts have been done at compile time, resulting
  * in a direct one-step mapping from the input key to the key

@@ -24,10 +24,10 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id$
+ * $Id: process_context_token.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_process_context_token(minor_status, context_handle,
                                token_buffer)
     OM_uint32 *minor_status;
@@ -36,6 +36,12 @@ krb5_gss_process_context_token(minor_status, context_handle,
 {
     krb5_gss_ctx_id_rec *ctx;
     OM_uint32 majerr;
+
+    /* validate the context handle */
+    if (! kg_validate_ctx_id(context_handle)) {
+        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
+        return(GSS_S_NO_CONTEXT);
+    }
 
     ctx = (krb5_gss_ctx_id_t) context_handle;
 

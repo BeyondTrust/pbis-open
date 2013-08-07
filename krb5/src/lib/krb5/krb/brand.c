@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/brand.c */
 /*
+ * lib/krb5/krb/brand.c
+ *
  * Copyright (C) 2004 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -69,4 +70,4 @@
 
 #define BRANDSTR RELTAG " " RELNAME " " RELDATE
 
-char krb5_brand[] = "KRB5_BRAND: " BRANDSTR;
+static char krb5_brand[] = "KRB5_BRAND: " BRANDSTR;

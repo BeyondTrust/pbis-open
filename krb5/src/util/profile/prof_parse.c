@@ -26,8 +26,7 @@ struct parse_state {
     struct profile_node *current_section;
 };
 
-static errcode_t parse_file(FILE *f, struct parse_state *state,
-                            char **ret_modspec);
+static errcode_t parse_file(FILE *f, struct parse_state *state);
 
 static char *skip_over_blanks(char *cp)
 {
@@ -46,6 +45,8 @@ static void strip_line(char *line)
 static void parse_quoted_string(char *str)
 {
     char *to, *from;
+
+    to = from = str;
 
     for (to = from = str; *from && *from != '"'; to++, from++) {
         if (*from == '\\') {
@@ -215,7 +216,7 @@ static errcode_t parse_include_file(char *filename, struct parse_state *state)
     fp = fopen(filename, "r");
     if (fp == NULL)
         return PROF_FAIL_INCLUDE_FILE;
-    retval = parse_file(fp, &incstate, NULL);
+    retval = parse_file(fp, &incstate);
     fclose(fp);
     return retval;
 }
@@ -301,8 +302,7 @@ cleanup:
 #endif /* not _WIN32 */
 }
 
-static errcode_t parse_line(char *line, struct parse_state *state,
-                            char **ret_modspec)
+static errcode_t parse_line(char *line, struct parse_state *state)
 {
     char    *cp;
 
@@ -318,23 +318,6 @@ static errcode_t parse_line(char *line, struct parse_state *state,
     }
     switch (state->state) {
     case STATE_INIT_COMMENT:
-        if (strncmp(line, "module", 6) == 0 && isspace(line[6])) {
-            /*
-             * If we are expecting a module declaration, fill in *ret_modspec
-             * and return PROF_MODULE, which will cause parsing to abort and
-             * the module to be loaded instead.  If we aren't expecting a
-             * module declaration, return PROF_MODULE without filling in
-             * *ret_modspec, which will be treated as an ordinary error.
-             */
-            if (ret_modspec) {
-                cp = skip_over_blanks(line + 6);
-                strip_line(cp);
-                *ret_modspec = strdup(cp);
-                if (!*ret_modspec)
-                    return ENOMEM;
-            }
-            return PROF_MODULE;
-        }
         if (line[0] != '[')
             return 0;
         state->state = STATE_STD_LINE;
@@ -349,8 +332,7 @@ static errcode_t parse_line(char *line, struct parse_state *state,
     return 0;
 }
 
-static errcode_t parse_file(FILE *f, struct parse_state *state,
-                            char **ret_modspec)
+static errcode_t parse_file(FILE *f, struct parse_state *state)
 {
 #define BUF_SIZE        2048
     char *bptr;
@@ -364,7 +346,7 @@ static errcode_t parse_file(FILE *f, struct parse_state *state,
         if (fgets(bptr, BUF_SIZE, f) == NULL)
             break;
 #ifndef PROFILE_SUPPORTS_FOREIGN_NEWLINES
-        retval = parse_line(bptr, state, ret_modspec);
+        retval = parse_line(bptr, state);
         if (retval) {
             free (bptr);
             return retval;
@@ -408,7 +390,7 @@ static errcode_t parse_file(FILE *f, struct parse_state *state,
 
                 /* parse_line modifies contents of p */
                 newp = p + strlen (p) + 1;
-                retval = parse_line (p, state, ret_modspec);
+                retval = parse_line (p, state);
                 if (retval) {
                     free (bptr);
                     return retval;
@@ -424,8 +406,7 @@ static errcode_t parse_file(FILE *f, struct parse_state *state,
     return 0;
 }
 
-errcode_t profile_parse_file(FILE *f, struct profile_node **root,
-                             char **ret_modspec)
+errcode_t profile_parse_file(FILE *f, struct profile_node **root)
 {
     struct parse_state state;
     errcode_t retval;
@@ -440,7 +421,7 @@ errcode_t profile_parse_file(FILE *f, struct profile_node **root,
     if (retval)
         return retval;
 
-    retval = parse_file(f, &state, ret_modspec);
+    retval = parse_file(f, &state);
     if (retval) {
         profile_free_node(state.root_section);
         return retval;

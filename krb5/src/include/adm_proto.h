@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* include/adm_proto.h */
 /*
+ * include/krb5/adm_proto.h
+ *
  * Copyright 1995, 2007,2008,2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,8 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
-
 #ifndef KRB5_ADM_PROTO_H__
 #define KRB5_ADM_PROTO_H__
 
@@ -100,7 +101,7 @@ krb5_error_code krb5_keysalt_iterate(krb5_key_salt_tuple *, krb5_int32,
                                                          krb5_pointer),
                                      krb5_pointer);
 
-krb5_error_code krb5_string_to_keysalts(const char *, const char *,
-                                        const char *, krb5_boolean,
-                                        krb5_key_salt_tuple **, krb5_int32 *);
+krb5_error_code krb5_string_to_keysalts(char *, const char *, const char *,
+                                        krb5_boolean, krb5_key_salt_tuple **,
+                                        krb5_int32 *);
 #endif  /* KRB5_ADM_PROTO_H__ */

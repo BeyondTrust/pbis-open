@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/keytab/t_keytab.c - Tests for keytab interface */
 /*
+ * lib/krb5/keytab/t_keytab.c
+ *
  * Copyright (C) 2007 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,7 +23,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ *
+ * A set of tests for the keytab interface
  */
+
 
 #include "k5-int.h"
 #include "autoconf.h"
@@ -40,14 +46,13 @@ extern const krb5_kt_ops krb5_ktf_writable_ops;
 
 #define KRB5_OK 0
 
-#define CHECK_ERR(kret,err,msg)                         \
-    if (kret != err) {                                  \
+#define CHECK(kret,msg)                                 \
+    if (kret != KRB5_OK) {                              \
         com_err(msg, kret, "");                         \
         fflush(stderr);                                 \
         exit(1);                                        \
     } else if(debug) printf("%s went ok\n", msg);
 
-#define CHECK(kret,msg) CHECK_ERR(kret, 0, msg)
 
 #define CHECK_STR(str,msg)                              \
     if (str == 0) {                                     \
@@ -67,7 +72,9 @@ test_misc(krb5_context context)
     fprintf(stderr, "Testing miscellaneous error conditions\n");
 
     kret = krb5_kt_resolve(context, "unknown_method_ep:/tmp/name", &ktid);
-    CHECK_ERR(kret, KRB5_KT_UNKNOWN_TYPE, "resolve unknown type");
+    if (kret != KRB5_KT_UNKNOWN_TYPE) {
+        CHECK(kret, "resolve unknown type");
+    }
 
     /* Test length limits on krb5_kt_default_name */
     kret = krb5_kt_default_name(context, defname, sizeof(defname));
@@ -81,7 +88,9 @@ test_misc(krb5_context context)
     }
     kret = krb5_kt_default_name(context, name, strlen(defname));
     free(name);
-    CHECK_ERR(kret, KRB5_CONFIG_NOTENUFSPACE, "krb5_kt_default_name limited");
+    if (kret != KRB5_CONFIG_NOTENUFSPACE) {
+        CHECK(kret, "krb5_kt_default_name limited");
+    }
 }
 
 static void
@@ -114,26 +123,26 @@ kt_test(krb5_context context, const char *name)
     */
     p = malloc(strlen(buf));
     kret = krb5_kt_get_name(context, kt, p, 1);
-    CHECK_ERR(kret, KRB5_KT_NAME_TOOLONG, "get_name - size 1");
+    if(kret != KRB5_KT_NAME_TOOLONG) {
+        CHECK(kret, "get_name - size 1");
+    }
 
 
     kret = krb5_kt_get_name(context, kt, p, strlen(buf));
-    CHECK_ERR(kret, KRB5_KT_NAME_TOOLONG, "get_name");
+    if(kret != KRB5_KT_NAME_TOOLONG) {
+        CHECK(kret, "get_name");
+    }
     free(p);
 
     /* Try to lookup unknown principal - when keytab does not exist*/
     kret = krb5_parse_name(context, "test/test2@TEST.MIT.EDU", &princ);
     CHECK(kret, "parsing principal");
 
-    /* This will return ENOENT for FILE because the file doesn't exist,
-     * so accept that or KRB5_KT_NOTFOUND. */
-    kret = krb5_kt_get_entry(context, kt, princ, 0, 0, &kent);
-    if (kret != ENOENT) {
-        CHECK_ERR(kret, KRB5_KT_NOTFOUND, "Getting non-existent entry");
-    }
 
-    kret = krb5_kt_have_content(context, kt);
-    CHECK_ERR(kret, KRB5_KT_NOTFOUND, "Checking for keytab content (empty)");
+    kret = krb5_kt_get_entry(context, kt, princ, 0, 0, &kent);
+    if((kret != KRB5_KT_NOTFOUND) && (kret != ENOENT)) {
+        CHECK(kret, "Getting non-existant entry");
+    }
 
 
     /* ===================   Add entries to keytab ================= */
@@ -172,9 +181,6 @@ kt_test(krb5_context context, const char *name)
 
     /* ==============   Test iterating over contents of keytab ========= */
 
-    kret = krb5_kt_have_content(context, kt);
-    CHECK(kret, "Checking for keytab content (full)");
-
     kret = krb5_kt_start_seq_get(context, kt, &cursor);
     CHECK(kret, "Start sequence get");
 
@@ -199,7 +205,9 @@ kt_test(krb5_context context, const char *name)
         cnt++;
         krb5_free_keytab_entry_contents(context, &kent);
     }
-    CHECK_ERR(kret, KRB5_KT_END, "getting next entry");
+    if (kret != KRB5_KT_END) {
+        CHECK(kret, "getting next entry");
+    }
 
     if(cnt != 3) {
         fprintf(stderr, "Mismatch in number of entries in keytab");
@@ -217,7 +225,9 @@ kt_test(krb5_context context, const char *name)
 
 
     kret = krb5_kt_get_entry(context, kt, princ, 0, 0, &kent);
-    CHECK_ERR(kret, KRB5_KT_NOTFOUND, "Getting non-existant entry");
+    if((kret != KRB5_KT_NOTFOUND)) {
+        CHECK(kret, "Getting non-existant entry");
+    }
 
     krb5_free_principal(context, princ);
 
@@ -335,8 +345,9 @@ kt_test(krb5_context context, const char *name)
     /* Try to lookup specified enctype and kvno  - that does not exist*/
 
     kret = krb5_kt_get_entry(context, kt, princ, 3, 1, &kent);
-    CHECK_ERR(kret, KRB5_KT_KVNONOTFOUND,
-              "looking up specific principal, kvno, enctype");
+    if(kret != KRB5_KT_KVNONOTFOUND) {
+        CHECK(kret, "looking up specific principal, kvno, enctype");
+    }
 
     krb5_free_principal(context, princ);
 
@@ -431,7 +442,9 @@ main(void)
     /* All keytab types are registered by default -- test for
        redundant error */
     kret = krb5_kt_register(context, &krb5_ktf_writable_ops);
-    CHECK_ERR(kret, KRB5_KT_TYPE_EXISTS, "register ktf_writable");
+    if(kret && kret != KRB5_KT_TYPE_EXISTS) {
+        CHECK(kret, "register ktf_writable");
+    }
 
     test_misc(context);
     do_test(context, "WRFILE:", FALSE);

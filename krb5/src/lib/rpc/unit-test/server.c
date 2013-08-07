@@ -1,9 +1,13 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id$
+ * $Id: server.c 23100 2009-10-31 00:48:38Z tlyu $
  * $Source$
  */
+
+#if !defined(lint) && !defined(__CODECENTER__)
+static char *rcsid = "$Header$";
+#endif
 
 #include "k5-platform.h"
 

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/hdb/kdb_hdb.h */
 /*
+ * plugins/kdb/hdb/kdb_hdb.c
+ *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 #ifndef KRB5_KDB_HDB_H
@@ -171,7 +173,7 @@ kh_db_check_policy_as(krb5_context kcontext,
                       krb5_db_entry *server,
                       krb5_timestamp kdc_time,
                       const char **status,
-                      krb5_pa_data ***e_data);
+                      krb5_data *e_data);
 
 krb5_error_code
 kh_hdb_windc_init(krb5_context context,

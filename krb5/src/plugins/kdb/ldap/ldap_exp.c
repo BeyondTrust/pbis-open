@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/ldap_exp.c */
 /*
+ * lib/kdb/kdb_ldap/ldap_exp.c
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *

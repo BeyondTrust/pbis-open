@@ -1,8 +1,9 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* util/support/threads.c - Portable thread support */
 /*
- * Copyright 2004,2005,2006,2007,2008 by the Massachusetts Institute of
- * Technology.  All Rights Reserved.
+ * util/support/threads.c
+ *
+ * Copyright 2004,2005,2006,2007,2008 by the Massachusetts Institute of Technology.
+ * All Rights Reserved.
  *
  * Export of this software from the United States of America may
  *   require a specific license from the United States Government.
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Preliminary thread support.
  */
 
 #include <assert.h>

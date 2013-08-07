@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* include/kdb_kt.h - KDC keytab declarations */
 /*
+ * include/krb5/kdb_kt.h
+ *
  * Copyright 1997 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,7 +23,11 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * KDC keytab definitions.
  */
+
 
 #ifndef KRB5_KDB5_KT_H
 #define KRB5_KDB5_KT_H

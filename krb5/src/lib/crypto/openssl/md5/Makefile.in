@@ -2,11 +2,14 @@ mydir=lib$(S)crypto$(S)openssl$(S)md5
 BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
 DEFS=
 
-STLIBOBJS=
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
 
-OBJS=
+STLIBOBJS= md5.o
 
-SRCS=
+OBJS= $(OUTPRE)md5.$(OBJEXT) 
+
+SRCS= $(srcdir)/md5.c
 
 all-unix:: all-libobjs
 

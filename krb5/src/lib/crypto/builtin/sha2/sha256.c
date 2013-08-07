@@ -1,5 +1,5 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/sha2/sha256.c - SHA-256 implementation */
+/* lib/crypto/builtin/sha256.c */
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -36,33 +36,7 @@
 #include <k5-int.h>
 #include "sha2.h"
 
-#ifdef K5_BE
-#define WORDS_BIGENDIAN
-#endif
-
-#ifndef min
-#define min(a,b) (((a)>(b))?(b):(a))
-#endif
-
-/* Vector Crays doesn't have a good 32-bit type, or more precisely,
- * int32_t as defined by <bind/bitypes.h> isn't 32 bits, and we don't
- * want to depend in being able to redefine this type.  To cope with
- * this we have to clamp the result in some places to [0,2^32); no
- * need to do this on other machines.  Did I say this was a mess?
- */
-
-#ifdef _CRAY
-#define CRAYFIX(X) ((X) & 0xffffffff)
-#else
-#define CRAYFIX(X) (X)
-#endif
-
-static inline uint32_t
-cshift (uint32_t x, unsigned int n)
-{
-    x = CRAYFIX(x);
-    return CRAYFIX((x << n) | (x >> (32 - n)));
-}
+#ifdef FORTUNA
 
 #define Ch(x,y,z) (((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
@@ -103,7 +77,7 @@ static const uint32_t constant_256[64] = {
 };
 
 void
-k5_sha256_init(SHA256_CTX *m)
+sha2Init (SHA256_CTX *m)
 {
     m->sz[0] = 0;
     m->sz[1] = 0;
@@ -118,7 +92,7 @@ k5_sha256_init(SHA256_CTX *m)
 }
 
 static void
-calc(SHA256_CTX *m, uint32_t *in)
+calc (SHA256_CTX *m, uint32_t *in)
 {
     uint32_t AA, BB, CC, DD, EE, FF, GG, HH;
     uint32_t data[64];
@@ -171,7 +145,7 @@ calc(SHA256_CTX *m, uint32_t *in)
 
 #if !defined(WORDS_BIGENDIAN) || defined(_CRAY)
 static inline uint32_t
-swap_uint32_t(uint32_t t)
+swap_uint32_t (uint32_t t)
 {
 #define ROL(x,n) ((x)<<(n))|((x)>>(32-(n)))
     uint32_t temp1, temp2;
@@ -185,13 +159,13 @@ swap_uint32_t(uint32_t t)
 }
 #endif
 
-struct x32 {
+struct x32{
     unsigned int a:32;
     unsigned int b:32;
 };
 
 void
-k5_sha256_update(SHA256_CTX *m, const void *v, size_t len)
+sha2Update (SHA256_CTX *m, const void *v, size_t len)
 {
     const unsigned char *p = v;
     size_t old_sz = m->sz[0];
@@ -226,7 +200,7 @@ k5_sha256_update(SHA256_CTX *m, const void *v, size_t len)
 }
 
 void
-k5_sha256_final(void *res, SHA256_CTX *m)
+sha2Final (void *res, SHA256_CTX *m)
 {
     unsigned char zeros[72];
     unsigned offset = (m->sz[0] / 8) % 64;
@@ -242,7 +216,7 @@ k5_sha256_final(void *res, SHA256_CTX *m)
     zeros[dstart+2] = (m->sz[1] >> 8) & 0xff;
     zeros[dstart+1] = (m->sz[1] >> 16) & 0xff;
     zeros[dstart+0] = (m->sz[1] >> 24) & 0xff;
-    k5_sha256_update(m, zeros, dstart + 8);
+    sha2Update (m, zeros, dstart + 8);
     {
 	int i;
 	unsigned char *r = (unsigned char*)res;
@@ -255,3 +229,4 @@ k5_sha256_final(void *res, SHA256_CTX *m)
 	}
     }
 }
+#endif /* FORTUNA */

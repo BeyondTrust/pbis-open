@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/openssl/hmac.c */
-/*
+/* lib/crypto/openssl/hmac.c
+ *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -51,7 +51,8 @@
  */
 
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "aead.h"
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 

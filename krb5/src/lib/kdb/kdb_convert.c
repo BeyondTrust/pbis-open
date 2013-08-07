@@ -145,7 +145,8 @@ find_changed_attrs(krb5_db_entry *current, krb5_db_entry *new,
 }
 
 
-/* Initialize *u with a copy of d.  Return 0 on success, -1 on failure. */
+/*
+ */
 static int
 data_to_utf8str(utf8str_t *u, krb5_data d)
 {
@@ -248,8 +249,7 @@ set_from_utf8str(krb5_data *d, utf8str_t u)
 static krb5_principal
 conv_princ_2db(krb5_context context, kdbe_princ_t *kdbe_princ)
 {
-    unsigned int i;
-    int j;
+    int i;
     krb5_principal princ;
     kdbe_data_t *components;
 
@@ -276,10 +276,10 @@ conv_princ_2db(krb5_context context, kdbe_princ_t *kdbe_princ)
         princ->data[i].data = NULL;
     princ->length = (krb5_int32)kdbe_princ->k_components.k_components_len;
 
-    for (j = 0; j < princ->length; j++) {
-        princ->data[j].magic = components[j].k_magic;
-        set_from_utf8str(&princ->data[j], components[j].k_data);
-        if (princ->data[j].data == NULL)
+    for (i = 0; i < princ->length; i++) {
+        princ->data[i].magic = components[i].k_magic;
+        set_from_utf8str(&princ->data[i], components[i].k_data);
+        if (princ->data[i].data == NULL)
             goto error;
     }
 
@@ -585,7 +585,7 @@ ulog_conv_2dbentry(krb5_context context, krb5_db_entry **entry,
     int i, j, cnt = 0, mod_time = 0, nattrs;
     krb5_principal dbprinc;
     char *dbprincstr = NULL;
-    krb5_tl_data newtl;
+    krb5_tl_data *newtl = NULL;
     krb5_error_code ret;
     unsigned int prev_n_keys = 0;
     krb5_boolean is_add;
@@ -732,13 +732,40 @@ ulog_conv_2dbentry(krb5_context context, krb5_db_entry **entry,
             break;
 
         case AT_TL_DATA: {
-            for (j = 0; j < (int)u.av_tldata.av_tldata_len; j++) {
-                newtl.tl_data_type = (krb5_int16)u.av_tldata.av_tldata_val[j].tl_type;
-                newtl.tl_data_length = (krb5_int16)u.av_tldata.av_tldata_val[j].tl_data.tl_data_len;
-                newtl.tl_data_contents = (krb5_octet *)u.av_tldata.av_tldata_val[j].tl_data.tl_data_val;
-                newtl.tl_data_next = NULL;
-                if ((ret = krb5_dbe_update_tl_data(context, ent, &newtl)))
-                    return (ret);
+            int t;
+
+            cnt = u.av_tldata.av_tldata_len;
+            newtl = calloc(cnt, sizeof (krb5_tl_data));
+            if (newtl == NULL)
+                return (ENOMEM);
+
+            for (j = 0, t = 0; j < cnt; j++) {
+                newtl[t].tl_data_type = (krb5_int16)u.av_tldata.av_tldata_val[j].tl_type;
+                newtl[t].tl_data_length = (krb5_int16)u.av_tldata.av_tldata_val[j].tl_data.tl_data_len;
+                newtl[t].tl_data_contents = malloc(newtl[t].tl_data_length * sizeof (krb5_octet));
+                if (newtl[t].tl_data_contents == NULL)
+                    /* XXX Memory leak: newtl
+                       and previously
+                       allocated elements.  */
+                    return (ENOMEM);
+
+                (void) memcpy(newtl[t].tl_data_contents, u.av_tldata.av_tldata_val[t].tl_data.tl_data_val, newtl[t].tl_data_length);
+                newtl[t].tl_data_next = NULL;
+                if (t > 0)
+                    newtl[t - 1].tl_data_next = &newtl[t];
+                t++;
+            }
+
+            if ((ret = krb5_dbe_update_tl_data(context, ent, newtl)))
+                return (ret);
+            for (j = 0; j < t; j++)
+                if (newtl[j].tl_data_contents) {
+                    free(newtl[j].tl_data_contents);
+                    newtl[j].tl_data_contents = NULL;
+                }
+            if (newtl) {
+                free(newtl);
+                newtl = NULL;
             }
             break;
 /* END CSTYLED */
@@ -796,8 +823,7 @@ ulog_free_entries(kdb_incr_update_t *updates, int no_of_updates)
 {
 
     kdb_incr_update_t *upd;
-    unsigned int i, j;
-    int k, cnt;
+    int i, j, k, cnt;
 
     if (updates == NULL)
         return;

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/set_allowable_enctypes.c */
 /*
+ * lib/gssapi/krb5/set_allowable_enctypes.c
+ *
  * Copyright 2004  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  * krb5_gss_set_allowable_enctypes()
  */
 
@@ -71,6 +70,7 @@ gss_krb5int_set_allowable_enctypes(OM_uint32 *minor_status,
     OM_uint32 major_status;
     krb5_gss_cred_id_t cred;
     krb5_error_code kerr = 0;
+    OM_uint32 temp_status;
     struct krb5_gss_set_allowable_enctypes_req *req;
 
     /* Assume a failure */

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/pac.c */
 /*
+ * lib/krb5/krb/pac.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 #include "k5-int.h"
@@ -425,8 +427,7 @@ k5_pac_validate_client(krb5_context context,
     krb5_int64 pac_nt_authtime;
     krb5_principal pac_principal;
 
-    ret = k5_pac_locate_buffer(context, pac, KRB5_PAC_CLIENT_INFO,
-                               &client_info);
+    ret = k5_pac_locate_buffer(context, pac, PAC_CLIENT_INFO, &client_info);
     if (ret != 0)
         return ret;
 
@@ -452,8 +453,7 @@ k5_pac_validate_client(krb5_context context,
     if (ret != 0)
         return ret;
 
-    ret = krb5_parse_name_flags(context, pac_princname,
-                                KRB5_PRINCIPAL_PARSE_NO_REALM, &pac_principal);
+    ret = krb5_parse_name_flags(context, pac_princname, 0, &pac_principal);
     if (ret != 0) {
         free(pac_princname);
         return ret;
@@ -482,8 +482,7 @@ k5_pac_zero_signature(krb5_context context,
     PAC_INFO_BUFFER *buffer = NULL;
     size_t i;
 
-    assert(type == KRB5_PAC_SERVER_CHECKSUM ||
-           type == KRB5_PAC_PRIVSVR_CHECKSUM);
+    assert(type == PAC_SERVER_CHECKSUM || type == PAC_PRIVSVR_CHECKSUM);
     assert(data->length >= pac->data.length);
 
     for (i = 0; i < pac->pac->cBuffers; i++) {
@@ -522,8 +521,8 @@ k5_pac_verify_server_checksum(krb5_context context,
     krb5_boolean valid;
     krb5_octet *p;
 
-    ret = k5_pac_locate_buffer(context, pac, KRB5_PAC_SERVER_CHECKSUM,
-                               &checksum_data);
+    ret = k5_pac_locate_buffer(context, pac,
+                               PAC_SERVER_CHECKSUM, &checksum_data);
     if (ret != 0)
         return ret;
 
@@ -545,15 +544,15 @@ k5_pac_verify_server_checksum(krb5_context context,
     memcpy(pac_data.data, pac->data.data, pac->data.length);
 
     /* Zero out both checksum buffers */
-    ret = k5_pac_zero_signature(context, pac, KRB5_PAC_SERVER_CHECKSUM,
-                                &pac_data);
+    ret = k5_pac_zero_signature(context, pac,
+                                PAC_SERVER_CHECKSUM, &pac_data);
     if (ret != 0) {
         free(pac_data.data);
         return ret;
     }
 
-    ret = k5_pac_zero_signature(context, pac, KRB5_PAC_PRIVSVR_CHECKSUM,
-                                &pac_data);
+    ret = k5_pac_zero_signature(context, pac,
+                                PAC_PRIVSVR_CHECKSUM, &pac_data);
     if (ret != 0) {
         free(pac_data.data);
         return ret;
@@ -586,16 +585,16 @@ k5_pac_verify_kdc_checksum(krb5_context context,
     krb5_boolean valid;
     krb5_octet *p;
 
-    ret = k5_pac_locate_buffer(context, pac, KRB5_PAC_PRIVSVR_CHECKSUM,
-                               &privsvr_checksum);
+    ret = k5_pac_locate_buffer(context, pac,
+                               PAC_PRIVSVR_CHECKSUM, &privsvr_checksum);
     if (ret != 0)
         return ret;
 
     if (privsvr_checksum.length < PAC_SIGNATURE_DATA_LENGTH)
         return KRB5_BAD_MSIZE;
 
-    ret = k5_pac_locate_buffer(context, pac, KRB5_PAC_SERVER_CHECKSUM,
-                               &server_checksum);
+    ret = k5_pac_locate_buffer(context, pac,
+                               PAC_SERVER_CHECKSUM, &server_checksum);
     if (ret != 0)
         return ret;
 
@@ -634,11 +633,12 @@ krb5_pac_verify(krb5_context context,
 {
     krb5_error_code ret;
 
-    if (server != NULL) {
-        ret = k5_pac_verify_server_checksum(context, pac, server);
-        if (ret != 0)
-            return ret;
-    }
+    if (server == NULL)
+        return EINVAL;
+
+    ret = k5_pac_verify_server_checksum(context, pac, server);
+    if (ret != 0)
+        return ret;
 
     if (privsvr != NULL) {
         ret = k5_pac_verify_kdc_checksum(context, pac, privsvr);
@@ -677,7 +677,7 @@ mspac_flags(krb5_context kcontext,
             krb5_authdatatype ad_type,
             krb5_flags *flags)
 {
-    *flags = AD_USAGE_TGS_REQ;
+    *flags = AD_USAGE_KDC_ISSUED;
 }
 
 static void
@@ -833,29 +833,14 @@ static struct {
     krb5_ui_4 type;
     krb5_data attribute;
 } mspac_attribute_types[] = {
-    { (krb5_ui_4)-1,            { KV5M_DATA, STRLENOF("urn:mspac:"),
-                                  "urn:mspac:" } },
-    { KRB5_PAC_LOGON_INFO,       { KV5M_DATA,
-                                   STRLENOF("urn:mspac:logon-info"),
-                                   "urn:mspac:logon-info" } },
-    { KRB5_PAC_CREDENTIALS_INFO, { KV5M_DATA,
-                                   STRLENOF("urn:mspac:credentials-info"),
-                                   "urn:mspac:credentials-info" } },
-    { KRB5_PAC_SERVER_CHECKSUM,  { KV5M_DATA,
-                                   STRLENOF("urn:mspac:server-checksum"),
-                                   "urn:mspac:server-checksum" } },
-    { KRB5_PAC_PRIVSVR_CHECKSUM, { KV5M_DATA,
-                                   STRLENOF("urn:mspac:privsvr-checksum"),
-                                   "urn:mspac:privsvr-checksum" } },
-    { KRB5_PAC_CLIENT_INFO,      { KV5M_DATA,
-                                   STRLENOF("urn:mspac:client-info"),
-                                   "urn:mspac:client-info" } },
-    { KRB5_PAC_DELEGATION_INFO,  { KV5M_DATA,
-                                   STRLENOF("urn:mspac:delegation-info"),
-                                   "urn:mspac:delegation-info" } },
-    { KRB5_PAC_UPN_DNS_INFO,     { KV5M_DATA,
-                                   STRLENOF("urn:mspac:upn-dns-info"),
-                                   "urn:mspac:upn-dns-info" } },
+    { (krb5_ui_4)-1,            { KV5M_DATA, STRLENOF("urn:mspac:"), "urn:mspac:" } },
+    { PAC_LOGON_INFO,           { KV5M_DATA, STRLENOF("urn:mspac:logon-info"), "urn:mspac:logon-info" } },
+    { PAC_CREDENTIALS_INFO,     { KV5M_DATA, STRLENOF("urn:mspac:credentials-info"), "urn:mspac:credentials-info" } },
+    { PAC_SERVER_CHECKSUM,      { KV5M_DATA, STRLENOF("urn:mspac:server-checksum"), "urn:mspac:server-checksum" } },
+    { PAC_PRIVSVR_CHECKSUM,     { KV5M_DATA, STRLENOF("urn:mspac:privsvr-checksum"), "urn:mspac:privsvr-checksum" } },
+    { PAC_CLIENT_INFO,          { KV5M_DATA, STRLENOF("urn:mspac:client-info"), "urn:mspac:client-info" } },
+    { PAC_DELEGATION_INFO,      { KV5M_DATA, STRLENOF("urn:mspac:delegation-info"), "urn:mspac:delegation-info" } },
+    { PAC_UPN_DNS_INFO,         { KV5M_DATA, STRLENOF("urn:mspac:upn-dns-info"), "urn:mspac:upn-dns-info" } },
 };
 
 #define MSPAC_ATTRIBUTE_COUNT   (sizeof(mspac_attribute_types)/sizeof(mspac_attribute_types[0]))

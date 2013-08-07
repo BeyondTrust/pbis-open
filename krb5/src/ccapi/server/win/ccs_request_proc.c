@@ -1,5 +1,6 @@
-/* ccapi/server/win/ccs_request_proc.c */
 /*
+ * $Header$
+ *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -42,8 +43,8 @@ void ccs_rpc_request(
     long*       return_status ) {   /* Return code */
 
     cc_int32        status  = 0;
-    k5_ipc_stream   stream;
-    UINT64*         p       = (UINT64*)(tspHandle);
+    k5_ipc_stream    stream;
+    DWORD*          p       = (DWORD*)(tspHandle);
     WIN_PIPE*       pipe    = NULL;
 #if 0
     cci_debug_printf("%s rpcmsg:%d; UUID:<%s> SST:<%s>", __FUNCTION__, rpcmsg, pszUUID, serverStartTime);
@@ -70,7 +71,7 @@ void ccs_rpc_connect(
     const char* pszUUID,            /* Data buffer */
     long*       return_status ) {   /* Return code */
 
-    UINT64*     p       = (UINT64*)(tspHandle);
+    DWORD*      p       = (DWORD*)(tspHandle);
     WIN_PIPE*   pipe    = ccs_win_pipe_new(pszUUID, *p);
 #if 0
     cci_debug_printf("%s; rpcmsg:%d; UUID: <%s>", __FUNCTION__, rpcmsg, pszUUID);

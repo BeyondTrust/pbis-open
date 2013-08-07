@@ -156,10 +156,6 @@ cc_int32 ccs_os_server_initialize (int argc, const char *argv[]) {
 //        status = startup_server(opts);
 //        }
 
-    if (!err) {
-        err = worklist_initialize();
-        }
-
     if (err) {
         Init::Cleanup();
         fprintf(    stderr, "An error occured while %s the server (%u)\n",
@@ -178,8 +174,6 @@ cc_int32 ccs_os_server_cleanup (int argc, const char *argv[]) {
 
     cci_debug_printf("%s for user <%s> shutting down.", argv[0], argv[1]);
 
-    worklist_cleanup();
-
     return cci_check_error (err);
     }
 
@@ -196,10 +190,10 @@ cc_int32 ccs_os_server_cleanup (int argc, const char *argv[]) {
 cc_int32 ccs_os_server_listen_loop (int argc, const char *argv[]) {
     cc_int32        err = 0;
     uintptr_t       threadStatus;
+    unsigned int    loopCounter  = 0;
 
     ParseOpts::Opts opts         = { 0 };
     ParseOpts       PO;
-    BOOL            bQuitIfNoClients = FALSE;
 
     opts.cMinCalls  = 1;
     opts.cMaxCalls  = 20;
@@ -227,13 +221,15 @@ cc_int32 ccs_os_server_listen_loop (int argc, const char *argv[]) {
        queue.  */
     rpcargs.sessID  = (unsigned char*)sessID;
     rpcargs.opts    = &opts;
-    /// TODO: check for NULL handle, error, etc.  probably move to initialize func...
     threadStatus    = _beginthread(receiveLoop, 0, (void*)&rpcargs);
 
     /* We handle the queue entries here.  Work loop: */
-    while (ccs_server_client_count() > 0 || !bQuitIfNoClients) {
-        worklist_wait();
-        while (!worklist_isEmpty()) {
+    while (TRUE) {
+        loopCounter++;
+        if (worklist_isEmpty() & 1) {
+            SleepEx(1000, TRUE);
+            }
+        else if (TRUE) {      // Take next WorkItem from the queue:
             k5_ipc_stream    buf             = NULL;
             long            rpcmsg          = CCMSG_INVALID;
             time_t          serverStartTime = 0xDEADDEAD;
@@ -286,9 +282,6 @@ cc_int32 ccs_os_server_listen_loop (int argc, const char *argv[]) {
                             err = krb5int_ipc_stream_write(stream, "This is a test of the emergency broadcasting system", 52);
                             err = ccs_os_server_send_reply(pipe, stream);
                             break;
-                        case CCMSG_QUIT:
-                            bQuitIfNoClients = TRUE;
-                            break;
                         default:
                             cci_debug_printf("Huh?  Received invalid message type %ld from UUID:<%s>",
                                 rpcmsg, uuid);
@@ -310,6 +303,7 @@ cc_int32 ccs_os_server_listen_loop (int argc, const char *argv[]) {
             else {cci_debug_printf("Huh?  Queue not empty but no item to remove.");}
             }
         }
+
     return cci_check_error (err);
     }
 
@@ -324,7 +318,7 @@ cc_int32 ccs_os_server_send_reply (ccs_pipe_t   in_pipe,
 
     cc_int32    err     = 0;
     char*       uuid    = ccs_win_pipe_getUuid(in_pipe);
-    UINT64      h       = ccs_win_pipe_getHandle(in_pipe);
+    HANDLE      h       = ccs_win_pipe_getHandle(in_pipe);
 
     if (!err) {
         err = send_init(uuid);      // Sets RPC handle to be used.
@@ -466,8 +460,6 @@ void    receiveLoop(void* rpcargs) {
             free_alloc_p(&endpoint);
         }
 
-    // tell main thread to shutdown since it won't receive any more messages
-    worklist_add(CCMSG_QUIT, NULL, NULL, 0);
     _endthread();
     }   // End receiveLoop
 
@@ -627,7 +619,7 @@ RPC_STATUS send_finish() {
 
 RPC_STATUS send_connection_reply(ccs_pipe_t in_pipe) {
     char*       uuid    = ccs_win_pipe_getUuid  (in_pipe);
-    UINT64      h       = ccs_win_pipe_getHandle(in_pipe);
+    HANDLE      h       = ccs_win_pipe_getHandle(in_pipe);
     RPC_STATUS  status  = send_init(uuid);
 
     RpcTryExcept {

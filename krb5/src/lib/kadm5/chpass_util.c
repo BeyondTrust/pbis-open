@@ -102,10 +102,12 @@ kadm5_ret_t _kadm5_chpass_principal_util(void *server_handle,
                 msg_ret[msg_len - 1] = '\0';
                 return(code);
             } else {
-                snprintf(msg_ret, msg_len, "%s %s\n\n%s",
-                         error_message(code),
-                         string_text(CHPASS_UTIL_WHILE_READING_PASSWORD),
-                         string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED));
+                strncpy(msg_ret, error_message(code), msg_len - 1);
+                strncat(msg_ret, " ", msg_len - 1);
+                strncat(msg_ret, string_text(CHPASS_UTIL_WHILE_READING_PASSWORD),
+                        msg_len - 1);
+                strncat(msg_ret, string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
+                        msg_len - 1);
                 msg_ret[msg_len - 1] = '\0';
                 return(code);
             }
@@ -140,10 +142,11 @@ kadm5_ret_t _kadm5_chpass_principal_util(void *server_handle,
         (code != KADM5_PASS_REUSE) &&(code != KADM5_PASS_Q_CLASS) &&
         (code != KADM5_PASS_Q_DICT) && (code != KADM5_PASS_TOOSOON)) {
         /* Can't get more info for other errors */
-        snprintf(msg_ret, msg_len, "%s\n%s %s\n",
-                 string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
-                 error_message(code),
+        snprintf(buffer, sizeof(buffer), "%s %s", error_message(code),
                  string_text(CHPASS_UTIL_WHILE_TRYING_TO_CHANGE));
+        snprintf(msg_ret, msg_len, "%s\n%s\n",
+                 string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
+                 buffer);
         return(code);
     }
 
@@ -167,22 +170,32 @@ kadm5_ret_t _kadm5_chpass_principal_util(void *server_handle,
     code2 = kadm5_get_principal (lhandle, princ, &princ_ent,
                                  KADM5_PRINCIPAL_NORMAL_MASK);
     if (code2 != 0) {
-        snprintf(msg_ret, msg_len, "%s %s\n%s %s\n\n%s\n",
-                 error_message(code2),
-                 string_text(CHPASS_UTIL_GET_PRINC_INFO),
-                 error_message(code),
-                 string_text(CHPASS_UTIL_WHILE_TRYING_TO_CHANGE),
-                 string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED));
+        strncpy(msg_ret, error_message(code2), msg_len - 1);
+        strncat(msg_ret, " ", msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, string_text(CHPASS_UTIL_GET_PRINC_INFO), msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, "\n", msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, error_message(code), msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, " ", msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, string_text(CHPASS_UTIL_WHILE_TRYING_TO_CHANGE),
+                msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, "\n\n", msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
+                msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, "\n", msg_len - 1 - strlen(msg_ret));
         msg_ret[msg_len - 1] = '\0';
         return(code);
     }
 
     if ((princ_ent.aux_attributes & KADM5_POLICY) == 0) {
-        /* Some module implements its own password policy. */
-        snprintf(msg_ret, msg_len, "%s\n\n%s",
-                 error_message(code),
-                 string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED));
+        strncpy(msg_ret, error_message(code), msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, " ", msg_len - 1 - strlen(msg_ret));
+        strncpy(msg_ret, string_text(CHPASS_UTIL_NO_POLICY_YET_Q_ERROR),
+                msg_len - 1 - strlen(msg_ret));
+        strncat(msg_ret, "\n\n", msg_len - 1 - strlen(msg_ret));
+        strncpy(msg_ret, string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
+                msg_len - 1 - strlen(msg_ret));
         msg_ret[msg_len - 1] = '\0';
+
         (void) kadm5_free_principal_ent(lhandle, &princ_ent);
         return(code);
     }
@@ -235,10 +248,11 @@ kadm5_ret_t _kadm5_chpass_principal_util(void *server_handle,
     }
 
     /* We should never get here, but just in case ... */
-    snprintf(msg_ret, msg_len, "%s\n%s %s\n",
-             string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
-             error_message(code),
+    snprintf(buffer, sizeof(buffer), "%s %s", error_message(code),
              string_text(CHPASS_UTIL_WHILE_TRYING_TO_CHANGE));
+    snprintf(msg_ret, msg_len, "%s\n%s\n",
+             string_text(CHPASS_UTIL_PASSWORD_NOT_CHANGED),
+             buffer);
     (void) kadm5_free_principal_ent(lhandle, &princ_ent);
     (void) kadm5_free_policy_ent(lhandle, &policy_ent);
     return(code);

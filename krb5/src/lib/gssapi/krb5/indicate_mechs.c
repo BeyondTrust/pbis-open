@@ -22,13 +22,13 @@
  */
 
 /*
- * $Id$
+ * $Id: indicate_mechs.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 #include "gssapiP_krb5.h"
 #include "mglueP.h"
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_indicate_mechs(minor_status, mech_set)
     OM_uint32 *minor_status;
     gss_OID_set *mech_set;

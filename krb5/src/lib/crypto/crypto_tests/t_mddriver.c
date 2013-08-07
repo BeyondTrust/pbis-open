@@ -1,17 +1,18 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/crypto_tests/t_mddriver.c - test driver for MD2, MD4 and MD5 */
-/*
- * Copyright (C) 1990-2, RSA Data Security, Inc. Created 1990. All
- * rights reserved.
- *
- * RSA Data Security, Inc. makes no representations concerning either
- * the merchantability of this software or the suitability of this
- * software for any particular purpose. It is provided "as is"
- * without express or implied warranty of any kind.
- *
- * These notices must be retained in any copies of any part of this
- * documentation and/or software.
+/* MDDRIVER.C - test driver for MD2, MD4 and MD5
  */
+
+/* Copyright (C) 1990-2, RSA Data Security, Inc. Created 1990. All
+   rights reserved.
+
+   RSA Data Security, Inc. makes no representations concerning either
+   the merchantability of this software or the suitability of this
+   software for any particular purpose. It is provided "as is"
+   without express or implied warranty of any kind.
+
+   These notices must be retained in any copies of any part of this
+   documentation and/or software.
+*/
 
 /* The following makes MD default to MD5 if it has not already been
    defined with C compiler flags.
@@ -20,17 +21,28 @@
 #define MD 5
 #endif
 
-#include "crypto_int.h"
+#include "k5-int.h"
+
+#if MD == 2
+#include "md2.h"
+#endif
+#if MD == 4
+#include "rsa-md4.h"
+#endif
+#if MD == 5
+#include "rsa-md5.h"
+#endif
 
 /* Length of test block, number of test blocks.
  */
 #define TEST_BLOCK_LEN 1000
 #define TEST_BLOCK_COUNT 1000
 
-static void MDHash (char *, size_t, size_t, unsigned char *);
 static void MDString (char *);
 static void MDTimeTrial (void);
 static void MDTestSuite (void);
+static void MDFile (char *);
+static void MDFilter (void);
 static void MDPrint (unsigned char [16]);
 
 struct md_test_entry {
@@ -38,8 +50,18 @@ struct md_test_entry {
     unsigned char digest[16];
 };
 
+#if MD == 2
+#define MD_CTX krb5_MD2_CTX
+#define MDInit krb5_MD2Init
+#define MDUpdate krb5_MD2Update
+#define MDFinal krb5_MD2Final
+#endif
+
 #if MD == 4
-#define MDProvider krb5int_hash_md4
+#define MD_CTX krb5_MD4_CTX
+#define MDInit krb5int_MD4Init
+#define MDUpdate krb5int_MD4Update
+#define MDFinal krb5int_MD4Final
 
 #define HAVE_TEST_SUITE
 /* Test suite from RFC 1320 */
@@ -72,7 +94,10 @@ struct md_test_entry md_test_suite[] = {
 #endif
 
 #if MD == 5
-#define MDProvider krb5int_hash_md5
+#define MD_CTX krb5_MD5_CTX
+#define MDInit krb5int_MD5Init
+#define MDUpdate krb5int_MD5Update
+#define MDFinal krb5int_MD5Final
 
 #define HAVE_TEST_SUITE
 /* Test suite from RFC 1321 */
@@ -110,6 +135,8 @@ struct md_test_entry md_test_suite[] = {
    -sstring - digests string
    -t       - runs time trial
    -x       - runs test script
+   filename - digests file
+   (none)   - digests standard input
 */
 int main (argc, argv)
     int argc;
@@ -117,35 +144,20 @@ int main (argc, argv)
 {
     int i;
 
-    for (i = 1; i < argc; i++) {
-        if (argv[i][0] == '-' && argv[i][1] == 's')
-            MDString (argv[i] + 2);
-        else if (strcmp (argv[i], "-t") == 0)
-            MDTimeTrial ();
-        else if (strcmp (argv[i], "-x") == 0)
-            MDTestSuite ();
-    }
+    if (argc > 1)
+        for (i = 1; i < argc; i++)
+            if (argv[i][0] == '-' && argv[i][1] == 's')
+                MDString (argv[i] + 2);
+            else if (strcmp (argv[i], "-t") == 0)
+                MDTimeTrial ();
+            else if (strcmp (argv[i], "-x") == 0)
+                MDTestSuite ();
+            else
+                MDFile (argv[i]);
+    else
+        MDFilter ();
+
     return (0);
-}
-
-static void MDHash (bytes, len, count, out)
-    char *bytes;
-    size_t len, count;
-    unsigned char *out;
-{
-    krb5_crypto_iov *iov;
-    krb5_data outdata = make_data (out, MDProvider.hashsize);
-    size_t i;
-
-    iov = malloc (count * sizeof(*iov));
-    if (iov == NULL)
-        abort ();
-    for (i = 0; i < count; i++) {
-        iov[i].flags = KRB5_CRYPTO_TYPE_DATA;
-        iov[i].data = make_data (bytes, len);
-    }
-    MDProvider.hash(iov, count, &outdata);
-    free(iov);
 }
 
 /* Digests a string and prints the result.
@@ -153,11 +165,15 @@ static void MDHash (bytes, len, count, out)
 static void MDString (string)
     char *string;
 {
-    unsigned char digest[16];
+    MD_CTX context;
+    unsigned int len = strlen (string);
 
-    MDHash (string, strlen(string), 1, digest);
+    MDInit (&context);
+    MDUpdate (&context, (unsigned char *) string, len);
+    MDFinal (&context);
+
     printf ("MD%d (\"%s\") = ", MD, string);
-    MDPrint (digest);
+    MDPrint (context.digest);
     printf ("\n");
 }
 
@@ -166,8 +182,9 @@ static void MDString (string)
 */
 static void MDTimeTrial ()
 {
+    MD_CTX context;
     time_t endTime, startTime;
-    unsigned char block[TEST_BLOCK_LEN], digest[16];
+    unsigned char block[TEST_BLOCK_LEN];
     unsigned int i;
 
     printf("MD%d time trial. Digesting %d %d-byte blocks ...", MD,
@@ -181,14 +198,17 @@ static void MDTimeTrial ()
     time (&startTime);
 
     /* Digest blocks */
-    MDHash ((char *)block, TEST_BLOCK_LEN, TEST_BLOCK_COUNT, digest);
+    MDInit (&context);
+    for (i = 0; i < TEST_BLOCK_COUNT; i++)
+        MDUpdate (&context, block, TEST_BLOCK_LEN);
+    MDFinal (&context);
 
     /* Stop timer */
     time (&endTime);
 
     printf (" done\n");
     printf ("Digest = ");
-    MDPrint (digest);
+    MDPrint (context.digest);
     printf ("\nTime = %ld seconds\n", (long)(endTime-startTime));
     printf
         ("Speed = %ld bytes/second\n",
@@ -200,24 +220,29 @@ static void MDTimeTrial ()
 static void MDTestSuite ()
 {
 #ifdef HAVE_TEST_SUITE
+    MD_CTX context;
     struct md_test_entry *entry;
-    int num_tests = 0, num_failed = 0;
-    unsigned char digest[16];
+    int i, num_tests = 0, num_failed = 0;
 
     printf ("MD%d test suite:\n\n", MD);
     for (entry = md_test_suite; entry->string; entry++) {
         unsigned int len = strlen (entry->string);
 
-        MDHash (entry->string, len, 1, digest);
+        MDInit (&context);
+        MDUpdate (&context, (unsigned char *) entry->string, len);
+        MDFinal (&context);
 
         printf ("MD%d (\"%s\") = ", MD, entry->string);
-        MDPrint (digest);
+        MDPrint (context.digest);
         printf ("\n");
-        if (memcmp(digest, entry->digest, 16) != 0) {
-            printf("\tIncorrect MD%d digest!  Should have been:\n\t\t ", MD);
-            MDPrint(entry->digest);
-            printf("\n");
-            num_failed++;
+        for (i=0; i < 16; i++) {
+            if (context.digest[i] != entry->digest[i]) {
+                printf("\tIncorrect MD%d digest!  Should have been:\n\t\t ",
+                       MD);
+                MDPrint(entry->digest);
+                printf("\n");
+                num_failed++;
+            }
         }
         num_tests++;
     }
@@ -242,6 +267,49 @@ static void MDTestSuite ()
     MDString
         ("12345678901234567890123456789012345678901234567890123456789012345678901234567890");
 #endif
+}
+
+/* Digests a file and prints the result. */
+
+static void MDFile (filename)
+    char *filename;
+{
+    FILE *file;
+    MD_CTX context;
+    int len;
+    unsigned char buffer[1024];
+
+    if ((file = fopen (filename, "rb")) == NULL)
+        printf ("%s can't be opened\n", filename);
+    else {
+        MDInit (&context);
+        while ((len = fread (buffer, 1, 1024, file)) != 0)
+            MDUpdate (&context, buffer, len);
+        MDFinal (&context);
+
+        fclose (file);
+
+        printf ("MD%d (%s) = ", MD, filename);
+        MDPrint (context.digest);
+        printf ("\n");
+    }
+}
+
+/* Digests the standard input and prints the result.
+ */
+static void MDFilter ()
+{
+    MD_CTX context;
+    int len;
+    unsigned char buffer[16];
+
+    MDInit (&context);
+    while ((len = fread (buffer, 1, 16, stdin)) != 0)
+        MDUpdate (&context, buffer, len);
+    MDFinal (&context);
+
+    MDPrint (context.digest);
+    printf ("\n");
 }
 
 /* Prints a message digest in hexadecimal.

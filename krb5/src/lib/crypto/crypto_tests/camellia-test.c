@@ -1,5 +1,6 @@
-/* lib/crypto/crypto_tests/camellia-test.c */
 /*
+ * lib/crypto/camellia/camellia-test.c
+ *
  * Copyright (c) 2009
  * NTT (Nippon Telegraph and Telephone Corporation) . All rights reserved.
  *
@@ -28,7 +29,9 @@
  */
 
 #include <stdio.h>
-#include "crypto_int.h"
+#include "k5-int.h"
+
+#ifdef CAMELLIA
 
 static char key[32];
 static char plain[16], cipher[16], zero[16];
@@ -122,8 +125,11 @@ static void vt_test()
     vt_test_1(32);
 }
 
+#endif /* CAMELLIA */
+
 int main (int argc, char *argv[])
 {
+#ifdef CAMELLIA
     if (argc > 2 || (argc == 2 && strcmp(argv[1], "-k"))) {
 	fprintf(stderr,
 		"usage:\t%s -k\tfor variable-key tests\n"
@@ -136,5 +142,6 @@ int main (int argc, char *argv[])
 	vk_test();
     else
 	vt_test();
+#endif /* CAMELLIA */
     return 0;
 }

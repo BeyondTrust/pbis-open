@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/ser_auth.c - Serialize krb5_authenticator structure */
 /*
+ * lib/krb5/krb/ser_auth.c
+ *
  * Copyright 1995, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,11 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ */
+
+/*
+ * ser_auth.c - Serialize krb5_authenticator structure.
  */
 
 #ifndef LEAN_CLIENT

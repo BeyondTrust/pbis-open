@@ -1,5 +1,6 @@
-/* ccapi/common/cci_array_internal.h */
 /*
+ * $Header$
+ *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

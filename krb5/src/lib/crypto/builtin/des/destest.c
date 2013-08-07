@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/des/destest.c */
 /*
+ * lib/crypto/des/destest.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,7 +23,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Test a DES implementation against known inputs & outputs
  */
+
+
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
@@ -48,8 +54,6 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-/* Test a DES implementation against known inputs & outputs. */
 
 #include "des_int.h"
 #include <stdio.h>
@@ -94,8 +98,7 @@ main(argc, argv)
             fprintf(stderr, "des test: %s %s %s\n", block1, block2, block3);
             exit(1);
         }
-        mit_des_cbc_encrypt((const mit_des_cblock *) input,
-                            (mit_des_cblock *) output2, 8,
+        mit_des_cbc_encrypt((const mit_des_cblock *) input, output2, 8,
                             sched, zeroblock, 1);
 
         if (memcmp((char *)output2, (char *)output, 8)) {
@@ -110,8 +113,7 @@ main(argc, argv)
         /*
          * Now try decrypting....
          */
-        mit_des_cbc_encrypt((const mit_des_cblock *) output,
-                            (mit_des_cblock *) output2, 8,
+        mit_des_cbc_encrypt((const mit_des_cblock *) output, output2, 8,
                             sched, zeroblock, 0);
 
         if (memcmp((char *)output2, (char *)input, 8)) {
@@ -175,6 +177,8 @@ convert(text, cblock)
  * Fake out the DES library, for the purposes of testing.
  */
 
+#include "des_int.h"
+
 int
 mit_des_is_weak_key(key)
     mit_des_cblock key;
@@ -213,7 +217,7 @@ int
 mit_des_check_key_parity(key)
     register mit_des_cblock key;
 {
-    unsigned int i;
+    int i;
 
     for (i=0; i<sizeof(mit_des_cblock); i++) {
         if ((key[i] & 1) == parity_char(0xfe&key[i])) {
@@ -232,7 +236,7 @@ void
 mit_des_fixup_key_parity(key)
     register mit_des_cblock key;
 {
-    unsigned int i;
+    int i;
     for (i=0; i<sizeof(mit_des_cblock); i++)
     {
         key[i] &= 0xfe;

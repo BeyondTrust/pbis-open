@@ -4,8 +4,11 @@
 
 mydir=lib$(S)crypto$(S)openssl$(S)aes
 BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
-LOCALINCLUDES=
+LOCALINCLUDES = -I$(srcdir)/.. -I$(srcdir)/../../krb/dk  -I$(srcdir)/../../../../include
 DEFS=
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
 
 STLIBOBJS=
 
@@ -22,3 +25,4 @@ depend:: $(SRCS)
 clean-unix:: clean-libobjs
 
 @libobj_frag@
+

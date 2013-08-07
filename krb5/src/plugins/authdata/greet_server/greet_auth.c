@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/authdata/greet_server/greet_auth.c */
 /*
+ * plugins/authdata/greet_server/
+ *
  * Copyright 2009 by the Massachusetts Institute of Technology.
  *
  * Export of this software from the United States of America may
@@ -21,9 +22,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * Sample authorization data plugin
  */
@@ -65,8 +64,11 @@ greet_kdc_verify(krb5_context context,
     krb5_authdata **kdc_issued = NULL;
     krb5_authdata **greet = NULL;
 
-    code = krb5_find_authdata(context, enc_tkt_request->authorization_data,
-                              NULL, KRB5_AUTHDATA_KDC_ISSUED, &tgt_authdata);
+    code = krb5int_find_authdata(context,
+                                 enc_tkt_request->authorization_data,
+                                 NULL,
+                                 KRB5_AUTHDATA_KDC_ISSUED,
+                                 &tgt_authdata);
     if (code != 0 || tgt_authdata == NULL)
         return 0;
 
@@ -80,7 +82,11 @@ greet_kdc_verify(krb5_context context,
         return code;
     }
 
-    code = krb5_find_authdata(context, kdc_issued, NULL, -42, &greet);
+    code = krb5int_find_authdata(context,
+                                 kdc_issued,
+                                 NULL,
+                                 -42,
+                                 &greet);
     if (code == 0) {
         krb5_data tmp;
 

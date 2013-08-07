@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/srv/pwqual_princ.c */
 /*
+ * lib/kadm5/srv/pwqual_princ.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Password quality module to check passwords against principal components.
  */
-
-/* Password quality module to check passwords against principal components */
 
 #include "k5-platform.h"
 #include <krb5/pwqual_plugin.h>
@@ -51,7 +53,7 @@ princ_check(krb5_context context, krb5_pwqual_moddata data,
         cp = krb5_princ_component(handle->context, princ, i)->data;
         if (strcasecmp(cp, password) == 0) {
             krb5_set_error_message(context, KADM5_PASS_Q_DICT,
-                                   _("Password may not match principal name"));
+                                   "Password may not match principal name");
             return KADM5_PASS_Q_DICT;
         }
     }
@@ -61,7 +63,7 @@ princ_check(krb5_context context, krb5_pwqual_moddata data,
 
 krb5_error_code
 pwqual_princ_initvt(krb5_context context, int maj_ver, int min_ver,
-                    krb5_plugin_vtable vtable)
+                   krb5_plugin_vtable vtable)
 {
     krb5_pwqual_vtable vt;
 

@@ -21,9 +21,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
-/* Glue routine for gss_set_name_attribute */
+/*
+ *  glue routine for gss_set_name_attribute
+ */
 
 #include "mglueP.h"
 

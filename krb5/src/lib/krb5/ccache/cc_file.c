@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/ccache/cc_file.c - File-based credential cache */
 /*
+ * lib/krb5/ccache/cc_file.c
+ *
  * Copyright 1990,1991,1992,1993,1994,2000,2004,2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -24,6 +25,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * implementation of file-based credentials cache
  */
 
 /*
@@ -324,7 +328,7 @@ static struct fcc_set *fccs = NULL;
 
 /* Iterator over file caches.  */
 struct krb5_fcc_ptcursor_data {
-    krb5_boolean first;
+    struct fcc_set *cur;
 };
 
 /* An off_t can be arbitrarily complex */
@@ -1240,7 +1244,7 @@ krb5_fcc_open_file (krb5_context context, krb5_ccache id, int mode)
         case ENOENT:
             retval = KRB5_FCC_NOFILE;
             krb5_set_error_message(context, retval,
-                                   _("Credentials cache file '%s' not found"),
+                                   "Credentials cache file '%s' not found",
                                    data->filename);
             return retval;
         default:
@@ -1449,9 +1453,9 @@ krb5_fcc_initialize(krb5_context context, krb5_ccache id, krb5_principal princ)
 #if defined(HAVE_FCHMOD) || defined(HAVE_CHMOD)
     {
 #ifdef HAVE_FCHMOD
-        reti = fchmod(((krb5_fcc_data *)id->data)->file, S_IRUSR | S_IWUSR);
+        reti = fchmod(((krb5_fcc_data *) id->data)->file, S_IREAD | S_IWRITE);
 #else
-        reti = chmod(((krb5_fcc_data *)id->data)->filename, S_IRUSR | S_IWUSR);
+        reti = chmod(((krb5_fcc_data *) id->data)->filename, S_IREAD | S_IWRITE);
 #endif
         if (reti == -1) {
             kret = krb5_fcc_interpret(context, errno);
@@ -1945,14 +1949,29 @@ krb5_fcc_end_seq_get(krb5_context context, krb5_ccache id, krb5_cc_cursor *curso
     return 0;
 }
 
-/* Generate a unique file ccache using the given template (which will be
- * modified to contain the actual name of the file). */
-krb5_error_code
-krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
+
+/*
+ * Effects:
+ * Creates a new file cred cache whose name is guaranteed to be
+ * unique.  The name begins with the string TKT_ROOT (from fcc.h).
+ * The cache is not opened, but the new filename is reserved.
+ *
+ * Returns:
+ * The filled in krb5_ccache id.
+ *
+ * Errors:
+ * KRB5_CC_NOMEM - there was insufficient memory to allocate the
+ *              krb5_ccache.  id is undefined.
+ * system errors (from open)
+ */
+static krb5_error_code KRB5_CALLCONV
+krb5_fcc_generate_new (krb5_context context, krb5_ccache *id)
 {
     krb5_ccache lid;
     int ret;
     krb5_error_code    kret = 0;
+    char scratch[sizeof(TKT_ROOT)+6+1]; /* +6 for the scratch part, +1 for
+                                           NUL */
     krb5_fcc_data *data;
     krb5_int16 fcc_fvno = htons(context->fcc_default_format);
     krb5_int16 fcc_flen = 0;
@@ -1964,7 +1983,8 @@ krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
     if (kret)
         return kret;
 
-    ret = mkstemp(template);
+    (void) snprintf(scratch, sizeof(scratch), "%sXXXXXX", TKT_ROOT);
+    ret = mkstemp(scratch);
     if (ret == -1) {
         k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
         return krb5_fcc_interpret(context, errno);
@@ -1976,16 +1996,16 @@ krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
     if (data == NULL) {
         k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
         close(ret);
-        unlink(template);
+        unlink(scratch);
         return KRB5_CC_NOMEM;
     }
 
-    data->filename = strdup(template);
+    data->filename = strdup(scratch);
     if (data->filename == NULL) {
         k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
         free(data);
         close(ret);
-        unlink(template);
+        unlink(scratch);
         return KRB5_CC_NOMEM;
     }
 
@@ -1995,7 +2015,7 @@ krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
         free(data->filename);
         free(data);
         close(ret);
-        unlink(template);
+        unlink(scratch);
         return kret;
     }
     kret = k5_cc_mutex_lock(context, &data->lock);
@@ -2005,7 +2025,7 @@ krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
         free(data->filename);
         free(data);
         close(ret);
-        unlink(template);
+        unlink(scratch);
         return kret;
     }
 
@@ -2062,7 +2082,7 @@ krb5int_fcc_new_unique(krb5_context context, char *template, krb5_ccache *id)
         free(data->filename);
         free(data);
         (void) close(ret);
-        (void) unlink(template);
+        (void) unlink(scratch);
         return KRB5_CC_NOMEM;
     }
     setptr->refcount = 1;
@@ -2100,30 +2120,6 @@ err_out:
     free(data->filename);
     free(data);
     return kret;
-}
-
-/*
- * Effects:
- * Creates a new file cred cache whose name is guaranteed to be
- * unique.  The name begins with the string TKT_ROOT (from fcc.h).
- * The cache is not opened, but the new filename is reserved.
- *
- * Returns:
- * The filled in krb5_ccache id.
- *
- * Errors:
- * KRB5_CC_NOMEM - there was insufficient memory to allocate the
- *              krb5_ccache.  id is undefined.
- * system errors (from open)
- */
-static krb5_error_code KRB5_CALLCONV
-krb5_fcc_generate_new (krb5_context context, krb5_ccache *id)
-{
-    char scratch[sizeof(TKT_ROOT)+6+1]; /* +6 for the scratch part, +1 for
-                                           NUL */
-
-    (void) snprintf(scratch, sizeof(scratch), "%sXXXXXX", TKT_ROOT);
-    return krb5int_fcc_new_unique(context, scratch, id);
 }
 
 /*
@@ -2332,53 +2328,71 @@ krb5_fcc_ptcursor_new(krb5_context context, krb5_cc_ptcursor *cursor)
     if (n == NULL)
         return ENOMEM;
     n->ops = &krb5_fcc_ops;
-    cdata = malloc(sizeof(*cdata));
+    cdata = malloc(sizeof(struct krb5_fcc_ptcursor_data));
     if (cdata == NULL) {
-        free(n);
-        return ENOMEM;
+        ret = ENOMEM;
+        goto errout;
     }
-    cdata->first = TRUE;
     n->data = cdata;
+    ret = k5_cc_mutex_lock(context, &krb5int_cc_file_mutex);
+    if (ret)
+        goto errout;
+    cdata->cur = fccs;
+    ret = k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
+    if (ret)
+        goto errout;
+
+errout:
+    if (ret) {
+        krb5_fcc_ptcursor_free(context, &n);
+    }
     *cursor = n;
     return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
-krb5_fcc_ptcursor_next(krb5_context context, krb5_cc_ptcursor cursor,
-                       krb5_ccache *cache_out)
+krb5_fcc_ptcursor_next(krb5_context context,
+                       krb5_cc_ptcursor cursor,
+                       krb5_ccache *ccache)
 {
-    krb5_error_code ret;
-    struct krb5_fcc_ptcursor_data *cdata = cursor->data;
-    const char *defname, *residual;
-    krb5_ccache cache;
-    struct stat sb;
+    krb5_error_code ret = 0;
+    struct krb5_fcc_ptcursor_data *cdata = NULL;
+    krb5_ccache n;
 
-    *cache_out = NULL;
-    if (!cdata->first)
-        return 0;
-    cdata->first = FALSE;
+    *ccache = NULL;
+    n = malloc(sizeof(*n));
+    if (n == NULL)
+        return ENOMEM;
 
-    defname = krb5_cc_default_name(context);
-    if (!defname)
-        return 0;
+    cdata = cursor->data;
 
-    /* Check if the default has type FILE or no type; find the residual. */
-    if (strncmp(defname, "FILE:", 5) == 0)
-        residual = defname + 5;
-    else if (strchr(defname + 2, ':') == NULL)  /* Skip drive prefix if any. */
-        residual = defname;
-    else
-        return 0;
-
-    /* Don't yield a nonexistent default file cache. */
-    if (stat(residual, &sb) != 0)
-        return 0;
-
-    ret = krb5_cc_resolve(context, defname, &cache);
+    ret = k5_cc_mutex_lock(context, &krb5int_cc_file_mutex);
     if (ret)
-        return ret;
-    *cache_out = cache;
-    return 0;
+        goto errout;
+
+    if (cdata->cur == NULL) {
+        k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
+        free(n);
+        n = NULL;
+        goto errout;
+    }
+
+    n->ops = &krb5_fcc_ops;
+    n->data = cdata->cur->data;
+    cdata->cur->refcount++;
+
+    cdata->cur = cdata->cur->next;
+
+    ret = k5_cc_mutex_unlock(context, &krb5int_cc_file_mutex);
+    if (ret)
+        goto errout;
+errout:
+    if (ret && n != NULL) {
+        free(n);
+        n = NULL;
+    }
+    *ccache = n;
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -2387,7 +2401,8 @@ krb5_fcc_ptcursor_free(krb5_context context,
 {
     if (*cursor == NULL)
         return 0;
-    free((*cursor)->data);
+    if ((*cursor)->data != NULL)
+        free((*cursor)->data);
     free(*cursor);
     *cursor = NULL;
     return 0;
@@ -2506,8 +2521,8 @@ krb5_fcc_interpret(krb5_context context, int errnum)
     default:
         retval = KRB5_CC_IO;            /* XXX */
         krb5_set_error_message(context, retval,
-                               _("Credentials cache I/O operation failed "
-                                 "(%s)"), strerror(errnum));
+                               "Credentials cache I/O operation failed (%s)",
+                               strerror(errnum));
     }
     return retval;
 }
@@ -2538,7 +2553,6 @@ const krb5_cc_ops krb5_fcc_ops = {
     NULL, /* wasdefault */
     krb5_fcc_lock,
     krb5_fcc_unlock,
-    NULL, /* switch_to */
 };
 
 #if defined(_WIN32)
@@ -2608,5 +2622,4 @@ const krb5_cc_ops krb5_cc_file_ops = {
     NULL, /* wasdefault */
     krb5_fcc_lock,
     krb5_fcc_unlock,
-    NULL, /* switch_to */
 };

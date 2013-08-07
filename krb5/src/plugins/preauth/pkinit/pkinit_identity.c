@@ -93,9 +93,6 @@ idtype2string(int idtype)
     case IDTYPE_PKCS11: return "PKCS11"; break;
     case IDTYPE_PKCS12: return "PKCS12"; break;
     case IDTYPE_ENVVAR: return "ENV"; break;
-#ifdef PKINIT_CRYPTO_IMPL_NSS
-    case IDTYPE_NSS: return "NSS"; break;
-#endif
     default: return "INVALID"; break;
     }
 }
@@ -414,16 +411,12 @@ process_option_identity(krb5_context context,
             idtype = IDTYPE_DIR;
         } else if (strncmp(value, "ENV:", typelen) == 0) {
             idtype = IDTYPE_ENVVAR;
-#ifdef PKINIT_CRYPTO_IMPL_NSS
-        } else if (strncmp(value, "NSS:", typelen) == 0) {
-            idtype = IDTYPE_NSS;
-#endif
         } else {
             pkiDebug("%s: Unsupported type while processing '%s'\n",
                      __FUNCTION__, value);
             krb5_set_error_message(context, KRB5_PREAUTH_FAILED,
-                                   _("Unsupported type while processing "
-                                     "'%s'\n"), value);
+                                   "Unsupported type while processing '%s'\n",
+                                   value);
             return KRB5_PREAUTH_FAILED;
         }
     } else {
@@ -454,17 +447,9 @@ process_option_identity(krb5_context context,
         if (idopts->cert_filename == NULL)
             retval = ENOMEM;
         break;
-#ifdef PKINIT_CRYPTO_IMPL_NSS
-    case IDTYPE_NSS:
-        idopts->cert_filename = strdup(residual);
-        if (idopts->cert_filename == NULL)
-            retval = ENOMEM;
-        break;
-#endif
     default:
         krb5_set_error_message(context, KRB5_PREAUTH_FAILED,
-                               _("Internal error parsing "
-                                 "X509_user_identity\n"));
+                               "Internal error parsing X509_user_identity\n");
         retval = EINVAL;
         break;
     }
@@ -497,10 +482,6 @@ process_option_ca_crl(krb5_context context,
         idtype = IDTYPE_FILE;
     } else if (strncmp(value, "DIR:", typelen) == 0) {
         idtype = IDTYPE_DIR;
-#ifdef PKINIT_CRYPTO_IMPL_NSS
-    } else if (strncmp(value, "NSS:", typelen) == 0) {
-        idtype = IDTYPE_NSS;
-#endif
     } else {
         return ENOTSUP;
     }
@@ -517,13 +498,10 @@ pkinit_identity_initialize(krb5_context context,
                            pkinit_req_crypto_context req_cryptoctx,
                            pkinit_identity_opts *idopts,
                            pkinit_identity_crypto_context id_cryptoctx,
-                           krb5_clpreauth_callbacks cb,
-                           krb5_clpreauth_rock rock,
                            int do_matching,
                            krb5_principal princ)
 {
     krb5_error_code retval = EINVAL;
-    const char *signer_identity;
     int i;
 
     pkiDebug("%s: %p %p %p\n", __FUNCTION__, context, idopts, id_cryptoctx);
@@ -551,9 +529,6 @@ pkinit_identity_initialize(krb5_context context,
                                                  idopts->identity_alt[i]);
             }
         } else {
-            retval = KRB5_PREAUTH_FAILED;
-            krb5_set_error_message(context, retval,
-                                   _("No user identity options specified"));
             pkiDebug("%s: no user identity options specified\n", __FUNCTION__);
             goto errout;
         }
@@ -584,15 +559,6 @@ pkinit_identity_initialize(krb5_context context,
                 crypto_free_cert_info(context, plg_cryptoctx, req_cryptoctx,
                                       id_cryptoctx);
                 goto errout;
-            }
-        }
-
-        if (rock != NULL && cb != NULL && retval == 0) {
-            /* Save the signer identity if we're the client. */
-            if (crypto_retrieve_signer_identity(context, id_cryptoctx,
-                                                &signer_identity) == 0) {
-                cb->set_cc_config(context, rock, "X509_user_identity",
-                                  signer_identity);
             }
         }
 

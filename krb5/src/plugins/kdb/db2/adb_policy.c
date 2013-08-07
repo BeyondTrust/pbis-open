@@ -5,6 +5,10 @@
  * $Header$
  */
 
+#if !defined(lint) && !defined(__CODECENTER__)
+static char *rcsid = "$Header$";
+#endif
+
 #include "k5-int.h"
 
 #include <sys/file.h>

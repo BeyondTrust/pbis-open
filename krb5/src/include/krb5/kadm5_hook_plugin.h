@@ -1,5 +1,8 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
+ * include/krb5/kadm5_hook_plugin.h
+ */
+/*
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -107,7 +110,6 @@ typedef struct kadm5_hook_vtable_1_st {
     /** Indicates that the password is being changed.
      * @param stage is an integer from #kadm5_hook_stage enumeration
      * @param keepold is true if existing keys are being kept.
-     * @param newpass is NULL if the key sare being randomized.
      */
     kadm5_ret_t (*chpass)(krb5_context,
                           kadm5_hook_modinfo *modinfo,

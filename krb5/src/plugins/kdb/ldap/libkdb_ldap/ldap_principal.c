@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/ldap_principal.c */
 /*
+ * lib/kdb/kdb_ldap/ldap_principal.c
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -54,6 +55,10 @@ char     *principal_attributes[] = { "krbprincipalname",
                                      "krbLastFailedAuth",
                                      "krbLoginFailedCount",
                                      "krbLastSuccessfulAuth",
+#ifdef HAVE_EDIRECTORY
+                                     "loginexpirationtime",
+                                     "logindisabled",
+#endif
                                      "krbLastPwdChange",
                                      "krbLastAdminUnlock",
                                      "krbExtraData",
@@ -156,7 +161,7 @@ krb5_ldap_iterate(krb5_context context, char *match_expr,
         realm = context->default_realm;
         if (realm == NULL) {
             st = EINVAL;
-            krb5_set_error_message(context, st, _("Default realm not set"));
+            krb5_set_error_message(context, st, "Default realm not set");
             goto cleanup;
         }
     }
@@ -256,7 +261,7 @@ krb5_ldap_delete_principal(krb5_context context,
 
     if (DN == NULL) {
         st = EINVAL;
-        krb5_set_error_message(context, st, _("DN information missing"));
+        krb5_set_error_message(context, st, "DN information missing");
         goto cleanup;
     }
 

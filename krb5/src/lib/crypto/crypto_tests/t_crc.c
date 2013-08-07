@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/crypto_tests/t_crc.c */
 /*
+ * lib/crypto/crc32/t_crc.c
+ *
  * Copyright 2002,2005 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  * Sanity checks for CRC32.
  */
 #include <sys/times.h>
@@ -32,7 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "crc-32.h"
 
 #define HEX 1
 #define STR 2
@@ -106,12 +106,11 @@ struct crc_trial trials[] = {
 
 #define NTRIALS (sizeof(trials) / sizeof(trials[0]))
 
-#if 0
 static void
 timetest(unsigned int nblk, unsigned int blksiz)
 {
     char *block;
-    unsigned int i;
+    int i;
     struct tms before, after;
     unsigned long cksum;
 
@@ -137,7 +136,6 @@ timetest(unsigned int nblk, unsigned int blksiz)
 
     free(block);
 }
-#endif
 
 static void gethexstr(char *data, size_t *outlen, unsigned char *outbuf,
                       size_t buflen)
@@ -148,7 +146,7 @@ static void gethexstr(char *data, size_t *outlen, unsigned char *outbuf,
 
     inlen = strlen(data);
     *outlen = 0;
-    for (cp = data; (size_t) (cp - data) < inlen; cp += 2) {
+    for (cp = data; cp - data < inlen; cp += 2) {
         strncpy(buf, cp, 2);
         buf[2] = '\0';
         n = strtol(buf, NULL, 16);
@@ -161,7 +159,7 @@ static void gethexstr(char *data, size_t *outlen, unsigned char *outbuf,
 static void
 verify(void)
 {
-    unsigned int i;
+    int i;
     struct crc_trial trial;
     unsigned char buf[4];
     size_t len;

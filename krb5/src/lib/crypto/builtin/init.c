@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/init.c - Module init and cleanup functions */
 /*
+ * lib/crypto/builtin/init.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Built-in back-end library init functions
  */
-
-#include "crypto_int.h"
 
 int
 krb5int_crypto_impl_init(void)

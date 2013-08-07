@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/mk_priv.c */
 /*
+ * lib/krb5/krb/mk_priv.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * krb5_mk_priv()
  */
 
 #include "k5-int.h"
@@ -38,8 +42,8 @@ mk_priv_basic(krb5_context context, const krb5_data *userdata,
     krb5_error_code     retval;
     krb5_priv           privmsg;
     krb5_priv_enc_part  privmsg_enc_part;
-    krb5_data           *scratch1, *scratch2, cstate, ivdata;
-    size_t              enclen;
+    krb5_data           *scratch1, *scratch2, ivdata;
+    size_t              blocksize, enclen;
 
     privmsg.enc_part.kvno = 0;  /* XXX allow user-set? */
     privmsg.enc_part.enctype = enctype;
@@ -71,12 +75,11 @@ mk_priv_basic(krb5_context context, const krb5_data *userdata,
 
     /* call the encryption routine */
     if (i_vector) {
-        if ((retval = krb5_c_init_state(context, &key->keyblock, 0, &cstate)))
+        if ((retval = krb5_c_block_size(context, enctype, &blocksize)))
             goto clean_encpart;
 
-        ivdata.length = cstate.length;
+        ivdata.length = blocksize;
         ivdata.data = i_vector;
-        krb5_c_free_state(context, &key->keyblock, &cstate);
     }
 
     if ((retval = krb5_k_encrypt(context, key,
@@ -115,9 +118,6 @@ krb5_mk_priv(krb5_context context, krb5_auth_context auth_context,
     krb5_error_code       retval;
     krb5_key              key;
     krb5_replay_data      replaydata;
-    krb5_data             buf = empty_data();
-
-    *outbuf = empty_data();
 
     /* Clear replaydata block */
     memset(&replaydata, 0, sizeof(krb5_replay_data));
@@ -195,7 +195,7 @@ krb5_mk_priv(krb5_context context, krb5_auth_context auth_context,
 
         if ((retval = mk_priv_basic(context, userdata, key, &replaydata,
                                     plocal_fulladdr, premote_fulladdr,
-                                    auth_context->i_vector, &buf))) {
+                                    auth_context->i_vector, outbuf))) {
             CLEANUP_DONE();
             goto error;
         }
@@ -207,8 +207,10 @@ krb5_mk_priv(krb5_context context, krb5_auth_context auth_context,
         krb5_donot_replay replay;
 
         if ((retval = krb5_gen_replay_name(context, auth_context->local_addr,
-                                           "_priv", &replay.client)))
+                                           "_priv", &replay.client))) {
+            free(outbuf);
             goto error;
+        }
 
         replay.server = "";             /* XXX */
         replay.msghash = NULL;
@@ -222,11 +224,9 @@ krb5_mk_priv(krb5_context context, krb5_auth_context auth_context,
         free(replay.client);
     }
 
-    *outbuf = buf;
     return 0;
 
 error:
-    krb5_free_data_contents(context, &buf);
     if ((auth_context->auth_context_flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) ||
         (auth_context->auth_context_flags & KRB5_AUTH_CONTEXT_RET_SEQUENCE))
         auth_context->local_seq_number--;

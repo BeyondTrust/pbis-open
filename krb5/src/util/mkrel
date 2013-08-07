@@ -1,11 +1,10 @@
 #!/bin/sh
 set -e
-repository=git.mit.edu:/git/krb5.git
+repository=svn+ssh://svn.mit.edu/krb5
 dodoc=t
 dosrc=t
 checkout=t
 multitar=nil
-: ${TAR=tar}
 while test $# -gt 2; do
 	case $1 in
 	--srconly)
@@ -94,25 +93,31 @@ echo "major=$relmajor minor=$relminor patch=$relpatch"
 # $reltag, $release, $reldate are used for brand.c currently
 # $relmajor, $relminor, $relpatch are used for patchlevel.h currently
 
-if test $checkout = t; then
-	echo "Checking out krb5 with tag $reltag into directory $reldir..."
-	git clone -q -n $repository $reldir
-	(cd $reldir && git checkout -q $reltag)
-fi
-
 #
 # $newstyle = t if patchlevel.h is the master version stamp file.  If
 # so, we don't edit it here.
 #
-if grep KRB5_RELDATE $reldir/src/patchlevel.h > /dev/null 2>&1; then
-	newstyle=t;
+if test $checkout = t; then
+	if svn cat $repository/$reltag/src/patchlevel.h | grep KRB5_RELDATE > /dev/null 2>&1; then
+		newstyle=t
+	else
+		newstyle=nil;
+	fi
 else
-	newstyle=nil;
+	if grep KRB5_RELDATE $reldir/src/patchlevel.h > /dev/null 2>&1; then
+		newstyle=t;
+	else
+		newstyle=nil;
+	fi
 fi
 
 if test $newstyle = t; then
 	echo "parsing new style patchlevel.h..."
-	eval `sed -n 's/#define \([A-Z0-9_]*\)[ \t]*\(.*\)/\1=\2/p' < $reldir/src/patchlevel.h`
+	if test $checkout = t; then
+		eval `svn cat $repository/$reltag/src/patchlevel.h | sed -n 's/#define \([A-Z0-9_]*\)[ \t]*\(.*\)/\1=\2/p'`
+	else
+		eval `sed -n 's/#define \([A-Z0-9_]*\)[ \t]*\(.*\)/\1=\2/p' < $reldir/src/patchlevel.h`
+	fi
 	if test "$KRB5_RELTAG" != $reltag && \
 		test "$KRB5_RELTAG" != `echo $reltag|sed 's%[^/]*/%%'` ; then
 		echo "WARNING: patchlevel.h '$KRB5_RELTAG' != $reltag"
@@ -129,6 +134,11 @@ else
 	echo "old style patchlevel.h"
 fi
 
+if test $checkout = t; then
+	echo "Checking out krb5 with tag $reltag into directory $reldir..."
+	svn export $repository/$reltag $reldir
+fi
+
 echo "Editing release-specific files..."
 
 if test $newstyle = t; then 
@@ -137,7 +147,7 @@ if test $newstyle = t; then
 #define KRB5_RELDATE "'"$reldate"'"' patchlevel.h > patchlevel.h.new && \
 		mv patchlevel.h.new patchlevel.h)
 	if test $checkout = t; then
-		(cd $reldir && git log --stat $reltag > doc/CHANGES)
+		(cd $reldir && svn log -v $repository/$reltag > doc/CHANGES)
 	fi
 else
 
@@ -177,18 +187,14 @@ fi
 
 echo "Nuking unneeded files..."
 find $reldir \( -name TODO -o -name todo -o -name .cvsignore \
-	-o -name .gitignore -o -name BADSYMS -o -name .Sanitize \
-	-o -name .rconf \) -print | xargs rm -f || true
-find $reldir -type d \( -name autom4te.cache \
+	-o -name BADSYMS -o -name .Sanitize -o -name .rconf \) -print \
+	| xargs rm -f || true
+find $reldir -type d \( -name autom4te.cache -o -name .svn \
 	-o -name \$ac_config_fragdir \) -exec rm -rf {} \; || true
-rm -rf $reldir/.git || true
 
 if test $dodoc = t; then
 	echo "Building doc..."
-	(cd $reldir/src/doc && make -f Makefile.in \
-	    top_srcdir=.. srcdir=. SPHINX_ARGS=-W PYTHON=python html pdf)
-	(cd $reldir/src/doc && make -f Makefile.in \
-	    top_srcdir=.. srcdir=. SPHINX_ARGS=-W PYTHON=python clean)
+	(cd $reldir/doc; make)
 fi
 
 echo "Generating tarfiles..."
@@ -201,22 +207,22 @@ if test $multitar = t; then
 		then notice=$reldir/NOTICE
 	fi
 	if test $dosrc = t; then
-		$TAR --exclude $reldir/src/lib/crypto \
+		gtar --exclude $reldir/src/lib/crypto \
 			--exclude $reldir/src/lib/des425 \
 			--exclude $reldir/doc \
 			-zcf ${reldir}.src.tar.gz $reldir
 
-		$TAR zcf ${reldir}.crypto.tar.gz \
+		gtar zcf ${reldir}.crypto.tar.gz \
 			$reldir/src/lib/crypto \
 			$des425
 	fi
 	if test $dodoc = t; then
-		$TAR zcf ${reldir}.doc.tar.gz $reldir/doc $reldir/README $notice
+		gtar zcf ${reldir}.doc.tar.gz $reldir/doc $reldir/README $notice
 	fi
 	ls -l ${reldir}.*.tar.gz
 fi
 
-$TAR zcf ${reldir}.tar.gz $reldir
+gtar zcf ${reldir}.tar.gz $reldir
 ls -l ${reldir}.tar.gz
 
 echo "Done."

@@ -72,7 +72,6 @@ typedef struct _kadm5_server_handle_t {
     char *          cache_name;
     int             destroy_cache;
     CLIENT *        clnt;
-    int             client_socket;
     krb5_context    context;
     kadm5_config_params params;
     struct _kadm5_server_handle_t *lhandle;

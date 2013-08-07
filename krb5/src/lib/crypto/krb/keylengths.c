@@ -29,7 +29,8 @@
  * SUCH DAMAGES.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
 
 /*
  * keybytes is the number of bytes required as input to make a key,

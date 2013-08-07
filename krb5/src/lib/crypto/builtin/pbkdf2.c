@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/pbkdf2.c - Implementation of PBKDF2 from RFC 2898 */
 /*
+ * lib/crypto/pbkdf2.c
+ *
  * Copyright 2002, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,10 +23,14 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Implementation of PBKDF2 from RFC 2898.
  */
 
 #include <ctype.h>
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "hash_provider.h"
 
 /*
  * RFC 2898 specifies PBKDF2 in terms of an underlying pseudo-random
@@ -37,18 +42,18 @@
  * longer than the block size.)
  *
  * For efficiency, it is better to generate the key from the password
- * once at the beginning, so we specify prf_fn in terms of a
+ * once at the beginning, so we specify prf_func in terms of a
  * krb5_key first argument.  That might not be convenient for a PRF
  * which uses the password in some other way, so this might need to be
  * adjusted in the future.
  */
 
-typedef krb5_error_code (*prf_fn)(krb5_key pass, krb5_data *salt,
-                                  krb5_data *out);
+typedef krb5_error_code (*prf_func)(krb5_key pass, krb5_data *salt,
+                                    krb5_data *out);
 
 /* Not exported, for now.  */
 static krb5_error_code
-krb5int_pbkdf2 (prf_fn prf, size_t hlen, krb5_key pass,
+krb5int_pbkdf2 (prf_func prf, size_t hlen, krb5_key pass,
                 const krb5_data *salt, unsigned long count,
                 const krb5_data *output);
 
@@ -76,7 +81,7 @@ static void printd (const char *descr, krb5_data *d) {
 }
 
 static krb5_error_code
-F(char *output, char *u_tmp1, char *u_tmp2, prf_fn prf, size_t hlen,
+F(char *output, char *u_tmp1, char *u_tmp2, prf_func prf, size_t hlen,
   krb5_key pass, const krb5_data *salt, unsigned long count, int i)
 {
     unsigned char ibytes[4];
@@ -146,11 +151,11 @@ F(char *output, char *u_tmp1, char *u_tmp2, prf_fn prf, size_t hlen,
 }
 
 static krb5_error_code
-krb5int_pbkdf2 (prf_fn prf, size_t hlen, krb5_key pass,
+krb5int_pbkdf2 (prf_func prf, size_t hlen, krb5_key pass,
                 const krb5_data *salt, unsigned long count,
                 const krb5_data *output)
 {
-    int l, i;
+    int l, r, i;
     char *utmp1, *utmp2;
     char utmp3[20];             /* XXX length shouldn't be hardcoded! */
 
@@ -161,6 +166,7 @@ krb5int_pbkdf2 (prf_fn prf, size_t hlen, krb5_key pass,
         abort();
     /* Step 2.  */
     l = (output->length + hlen - 1) / hlen;
+    r = output->length - (l - 1) * hlen;
 
     utmp1 = /*output + dklen; */ malloc(hlen);
     if (utmp1 == NULL)

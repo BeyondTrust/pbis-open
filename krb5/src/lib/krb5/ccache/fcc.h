@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/ccache/fcc.h */
 /*
+ * lib/krb5/ccache/file/fcc.h
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * This file contains constant and function declarations used in the
  * file-based credential cache routines.
@@ -34,8 +33,5 @@
 #define __KRB5_FILE_CCACHE__
 
 extern const krb5_cc_ops krb5_cc_file_ops;
-
-krb5_error_code krb5int_fcc_new_unique(krb5_context context, char *template,
-                                       krb5_ccache *id);
 
 #endif /* __KRB5_FILE_CCACHE__ */

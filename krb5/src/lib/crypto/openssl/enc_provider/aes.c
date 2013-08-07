@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/openssl/enc_provider/aes.c */
 /*
+ * lib/crypto/openssl/enc_provider/aes.c
+ *
  * Copyright (C) 2003, 2007, 2008, 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -24,7 +25,11 @@
  * or implied warranty.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "enc_provider.h"
+#include "rand2key.h"
+#include "aead.h"
+#include "hash_provider/hash_provider.h"
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include <openssl/modes.h>
@@ -305,6 +310,7 @@ const struct krb5_enc_provider krb5int_enc_aes128 = {
     krb5int_aes_encrypt,
     krb5int_aes_decrypt,
     NULL,
+    krb5int_aes_make_key,
     krb5int_aes_init_state,
     krb5int_default_free_state
 };
@@ -315,6 +321,7 @@ const struct krb5_enc_provider krb5int_enc_aes256 = {
     krb5int_aes_encrypt,
     krb5int_aes_decrypt,
     NULL,
+    krb5int_aes_make_key,
     krb5int_aes_init_state,
     krb5int_default_free_state
 };

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/inq_names.c - Return nametypes supported by krb5 mech */
 /*
+ * lib/gssapi/krb5/inq_names.c
+ *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,11 +23,15 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
+/*
+ * inq_names.c - Return set of nametypes supported by the KRB5 mechanism.
+ */
 #include "gssapiP_krb5.h"
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_inquire_names_for_mech(minor_status, mechanism, name_types)
     OM_uint32   *minor_status;
     gss_OID     mechanism;
@@ -76,10 +81,6 @@ krb5_gss_inquire_names_for_mech(minor_status, mechanism, name_types)
             ) == GSS_S_COMPLETE) &&
             ((major = generic_gss_add_oid_set_member(minor_status,
                                                      gss_nt_krb5_name,
-                                                     name_types)
-            ) == GSS_S_COMPLETE) &&
-            ((major = generic_gss_add_oid_set_member(minor_status,
-                                                     GSS_C_NT_COMPOSITE_EXPORT,
                                                      name_types)
             ) == GSS_S_COMPLETE)
         ) {

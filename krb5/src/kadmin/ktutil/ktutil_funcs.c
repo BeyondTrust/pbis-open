@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* kadmin/ktutil/ktutil_funcs.c */
 /*
+ * kadmin/ktutil/ktutil_funcs.c
+ *
  *(C) Copyright 1995, 1996 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  * Utility functions for ktutil.
  */
 
@@ -159,7 +158,7 @@ krb5_error_code ktutil_add(context, list, princ_str, kvno,
             goto cleanup;
         }
 
-        snprintf(promptstr, sizeof(promptstr), _("Password for %.1000s"),
+        snprintf(promptstr, sizeof(promptstr), "Password for %.1000s",
                  princ_str);
         retval = krb5_read_password(context, promptstr, NULL, password.data,
                                     &password.length);
@@ -176,7 +175,7 @@ krb5_error_code ktutil_add(context, list, princ_str, kvno,
         password.length = 0;
         lp->entry->key = key;
     } else {
-        printf(_("Key for %s (hex): "), princ_str);
+        printf("Key for %s (hex): ", princ_str);
         fgets(buf, BUFSIZ, stdin);
         /*
          * We need to get rid of the trailing '\n' from fgets.
@@ -188,7 +187,7 @@ krb5_error_code ktutil_add(context, list, princ_str, kvno,
          */
         buf[strlen(buf) - 1] = strlen(buf) % 2 ? '\0' : '0';
         if (strlen(buf) == 0) {
-            fprintf(stderr, _("addent: Error reading key.\n"));
+            fprintf(stderr, "addent: Error reading key.\n");
             retval = 0;
             goto cleanup;
         }
@@ -203,7 +202,7 @@ krb5_error_code ktutil_add(context, list, princ_str, kvno,
         i = 0;
         for (cp = buf; *cp; cp += 2) {
             if (!isxdigit((int) cp[0]) || !isxdigit((int) cp[1])) {
-                fprintf(stderr, _("addent: Illegal character in key.\n"));
+                fprintf(stderr, "addent: Illegal character in key.\n");
                 retval = 0;
                 goto cleanup;
             }

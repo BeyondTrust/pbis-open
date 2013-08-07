@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/princ_comp.c - Compare two principals for equality */
 /*
+ * lib/krb5/krb/princ_comp.c
+ *
  * Copyright 1990,1991,2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,10 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * compare two principals, returning a krb5_boolean true if equal, false if
+ * not.
  */
 
 #include "k5-int.h"
@@ -143,6 +148,12 @@ krb5_boolean KRB5_CALLCONV krb5_is_referral_realm(const krb5_data *r)
      * on that string constant being zero-length.  (Unlike principal realm
      * names, KRB5_REFERRAL_REALM is known to be a string.)
      */
+#ifdef DEBUG_REFERRALS
+#if 0
+    printf("krb5_is_ref_realm: checking <%s> for referralness: %s\n",
+           r->data,(r->length==0)?"true":"false");
+#endif
+#endif
     assert(strlen(KRB5_REFERRAL_REALM)==0);
     if (r->length==0)
         return TRUE;

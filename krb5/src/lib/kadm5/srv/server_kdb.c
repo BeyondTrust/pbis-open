@@ -10,6 +10,10 @@
  * Use is subject to license terms.
  */
 
+#if !defined(lint) && !defined(__CODECENTER__)
+static char *rcsid = "$Header$";
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "k5-int.h"
@@ -18,6 +22,7 @@
 
 krb5_principal      master_princ;
 krb5_keyblock       master_keyblock; /* local mkey */
+krb5_keylist_node  *master_keylist = NULL;
 krb5_actkvno_node   *active_mkey_list = NULL;
 krb5_db_entry       master_db;
 
@@ -68,7 +73,7 @@ krb5_error_code kdb_init_master(kadm5_server_handle_t handle,
         goto done;
 
     if ((ret = krb5_db_fetch_mkey_list(handle->context, master_princ,
-                                       &master_keyblock))) {
+                                       &master_keyblock, mkvno, &master_keylist))) {
         krb5_db_fini(handle->context);
         return (ret);
     }
@@ -151,20 +156,27 @@ create_hist(kadm5_server_handle_t handle)
 }
 
 /*
- * Fetch the current history key(s), creating the history principal if
- * necessary.  Database created since krb5 1.3 will have only one key, but
- * databases created before that may have multiple keys (of the same kvno)
- * and we need to try them all.  History keys will be returned in a list
- * terminated by an entry with enctype 0.
+ * Function: kdb_get_hist_key
+ *
+ * Purpose: Fetches the current history key, creating it if necessary
+ *
+ * Arguments:
+ *
+ *      handle          (r) kadm5 api server handle
+ *      hist_keyblock   (w) keyblock to fill in with history key
+ *      hist_kvno       (w) kvno to fill in with history kvno
+ *
+ * Effects: This function looks up the history principal and retrieves the
+ * current history key and version.  If the history principal does not exist,
+ * it will be created.
  */
 krb5_error_code
-kdb_get_hist_key(kadm5_server_handle_t handle, krb5_keyblock **keyblocks_out,
-                 krb5_kvno *kvno_out)
+kdb_get_hist_key(kadm5_server_handle_t handle, krb5_keyblock *hist_keyblock,
+                 krb5_kvno *hist_kvno)
 {
     krb5_error_code ret;
     krb5_db_entry *kdb;
-    krb5_keyblock *mkey, *kblist = NULL;
-    krb5_int16 i;
+    krb5_keyblock *mkey;
 
     /* Fetch the history principal, creating it if necessary. */
     ret = kdb_get_entry(handle, hist_princ, &kdb, NULL);
@@ -180,46 +192,24 @@ kdb_get_hist_key(kadm5_server_handle_t handle, krb5_keyblock **keyblocks_out,
     if (kdb->n_key_data <= 0) {
         ret = KRB5_KDB_NO_MATCHING_KEY;
         krb5_set_error_message(handle->context, ret,
-                               _("History entry contains no key data"));
+                               "History entry contains no key data");
         goto done;
     }
 
-    ret = krb5_dbe_find_mkey(handle->context, kdb, &mkey);
+    ret = krb5_dbe_find_mkey(handle->context, master_keylist, kdb, &mkey);
     if (ret)
         goto done;
 
-    kblist = k5alloc((kdb->n_key_data + 1) * sizeof(*kblist), &ret);
-    if (kblist == NULL)
+    ret = krb5_dbe_decrypt_key_data(handle->context, mkey, &kdb->key_data[0],
+                                    hist_keyblock, NULL);
+    if (ret)
         goto done;
-    for (i = 0; i < kdb->n_key_data; i++) {
-        ret = krb5_dbe_decrypt_key_data(handle->context, mkey,
-                                        &kdb->key_data[i], &kblist[i],
-                                        NULL);
-        if (ret)
-            goto done;
-    }
 
-    *keyblocks_out = kblist;
-    kblist = NULL;
-    *kvno_out = kdb->key_data[0].key_data_kvno;
+    *hist_kvno = kdb->key_data[0].key_data_kvno;
 
 done:
     kdb_free_entry(handle, kdb, NULL);
-    kdb_free_keyblocks(handle, kblist);
     return ret;
-}
-
-/* Free all keyblocks in a list (terminated by a keyblock with enctype 0). */
-void
-kdb_free_keyblocks(kadm5_server_handle_t handle, krb5_keyblock *keyblocks)
-{
-    krb5_keyblock *kb;
-
-    if (keyblocks == NULL)
-        return;
-    for (kb = keyblocks; kb->enctype != 0; kb++)
-        krb5_free_keyblock_contents(handle->context, kb);
-    free(keyblocks);
 }
 
 /*

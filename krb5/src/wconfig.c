@@ -1,5 +1,6 @@
-/* wconfig.c */
 /*
+ * wconfig.c
+ *
  * Copyright 1995,1996,1997,1998 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -21,9 +22,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * Program to take the place of the configure shell script under DOS.
  * The makefile.in files are constructed in such a way that all this
  * program needs to do is uncomment lines beginning ##DOS by removing the

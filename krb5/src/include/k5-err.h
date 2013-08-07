@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* include/k5-err.h */
 /*
+ * include/k5-err.h
+ *
  * Copyright 2006, 2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,15 +23,17 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * Error-message handling
  */
 
 #ifndef K5_ERR_H
 #define K5_ERR_H
+
+#ifndef _
+#define _(X) (X)
+#endif
 
 #if defined(_MSDOS) || defined(_WIN32)
 #include <win-mac.h>

@@ -1,4 +1,4 @@
-                   Kerberos Version 5, Release 1.11
+                   Kerberos Version 5, Release 1.9
 
                             Release Notes
                         The MIT Kerberos Team
@@ -6,46 +6,35 @@
 Copyright and Other Notices
 ---------------------------
 
-Copyright (C) 1985-2013 by the Massachusetts Institute of Technology
+Copyright (C) 1985-2011 by the Massachusetts Institute of Technology
 and its contributors.  All rights reserved.
 
 Please see the file named NOTICE for additional notices.
 
-Documentation
--------------
+MIT Kerberos is a project of the MIT Kerberos Consortium.  For more
+information about the Kerberos Consortium, see http://kerberos.org/
 
-Unified documentation for Kerberos V5 is available in both HTML and
-PDF formats.  The table of contents of the HTML format documentation
-is at doc/html/index.html, and the PDF format documentation is in the
-doc/pdf directory.
-
-Additionally, you may find copies of the HTML format documentation
-online at
-
-    http://web.mit.edu/kerberos/krb5-latest/doc/
-
-for the most recent supported release, or at
-
-    http://web.mit.edu/kerberos/krb5-devel/doc/
-
-for the release under development.
-
-More information about Kerberos may be found at
-
+For more information about the MIT Kerberos software, see
     http://web.mit.edu/kerberos/
 
-and at the MIT Kerberos Consortium web site
-
-    http://kerberos.org/
+People interested in participating in the MIT Kerberos development
+effort should visit http://k5wiki.kerberos.org/
 
 Building and Installing Kerberos 5
 ----------------------------------
 
-Build documentation is in doc/html/build/index.html or
-doc/pdf/build.pdf.
+The first file you should look at is doc/install-guide.ps; it contains
+the notes for building and installing Kerberos 5.  The info file
+krb5-install.info has the same information in info file format.  You
+can view this using the GNU emacs info-mode, or by using the
+standalone info file viewer from the Free Software Foundation.  This
+is also available as an HTML file, install.html.
 
-The installation guide is in doc/html/admin/install.html or
-doc/pdf/install.pdf.
+Other good files to look at are admin-guide.ps and user-guide.ps,
+which contain the system administrator's guide, and the user's guide,
+respectively.  They are also available as info files
+kerberos-admin.info and krb5-user.info, respectively.  These files are
+also available as HTML files.
 
 If you are attempting to build under Windows, please see the
 src/windows/README file.
@@ -62,9 +51,13 @@ If you are not able to use krb5-send-pr because you haven't been able
 compile and install Kerberos V5 on any platform, you may send mail to
 krb5-bugs@mit.edu.
 
+Please keep in mind that unencrypted e-mail is not secure. If you need
+to report a security vulnerability, or send sensitive information,
+please PGP-encrypt it to krbcore-security@mit.edu.
+
 You may view bug reports by visiting
 
-http://krbdev.mit.edu/rt/
+    http://krbdev.mit.edu/rt/
 
 and logging in as "guest" with password "guest".
 
@@ -77,385 +70,202 @@ from using single-DES cryptosystems.  Among these is a configuration
 variable that enables "weak" enctypes, which defaults to "false"
 beginning with krb5-1.8.
 
-Major changes in 1.11.3 (2013-06-03)
-------------------------------------
+Major changes in 1.9.1
+----------------------
 
-* Fix a UDP ping-pong vulnerability in the kpasswd (password changing)
-  service.  [CVE-2002-2443]
+This is primarily a bugfix release.
 
-* Improve interoperability with some Windows native PKINIT clients.
+* Fix vulnerabilities:
+  ** kpropd denial of service [MITKRB5-SA-2011-001 CVE-2010-4022]
+  ** KDC denial of service attacks [MITKRB5-SA-2011-002
+     CVE-2011-0281 CVE-2011-0282 CVE-2011-0283]
+  ** KDC double-free when PKINIT enabled [MITKRB5-SA-2011-003
+     CVE-2011-0284]
+  ** kadmind frees invalid pointer [MITKRB5-SA-2011-004 CVE-2011-0285]
 
-krb5-1.11.3 changes by ticket ID
---------------------------------
+* Interoperability:
 
-7596    PKINIT should allow missing DH param Q
-7602    allow dh_min_bits >= 1024
-7605    Set msg_type when decoding FAST requests
-7626    Rename internal Camellia symbols
-7637    Fix kpasswd UDP ping-pong [CVE-2002-2443]
-7639    Transited realm checks sometimes fail for GSSAPI
-7640    Clarify that kdc.conf and krb5.conf are merged
-7641    Clarify krb5_rd_req documentation
-7644    Sphinx doc build leaves python bytecode (.pyc) in release tarball
-7653    Document preauth flags for service principals
-7654    Clarify retiring-des based on user feedback
-7655    Clean up dangling antecedent in allow_weak_crypto
+  ** Don't reject AP-REQ messages if their PAC doesn't validate;
+     suppress the PAC instead.
 
-Major changes in 1.11.2 (2013-04-12)
-------------------------------------
+  ** Correctly validate HMAC-MD5 checksums that use DES keys
 
-This is a bugfix release.
+krb5-1.9.1 changes by ticket ID
+-------------------------------
 
-* Incremental propagation could erroneously act as if a slave's
-  database were current after the slave received a full dump that
-  failed to load.
+6596    [Michael Spang] Bug#561176: krb5-kdc-ldap: krb5kdc leaks file
+        descriptors
+6675    segfault in gss_export_sec_context
+6800    memory leak in kg_new_connection
+6847    Suppress camellia-gen in 1.9 make check
+6849    Fix edge case in LDAP last_admin_unlock processing
+6852    Make gss_krb5_set_allowable_enctypes work for the acceptor
+6856    Fix seg faulting trace log message for use of fallback realm
+6859    kpropd denial of service [MITKRB5-SA-2011-001 CVE-2010-4022]
+6860    KDC denial of service attacks [MITKRB5-SA-2011-002
+        CVE-2011-0281 CVE-2011-0282 CVE-2011-0283]
+6867    Trace logging file descriptor leak
+6869    hmac-md5 checksum doesn't work with DES keys
+6870    Don't reject AP-REQs based on PACs
+6871    "make distclean" leaves an object file behind.
+6875    kdb5_util mkey operations hit assertion when iprop is enabled
+6881    KDC double-free when PKINIT enabled [MITKRB5-SA-2011-003 CVE-2011-0284]
+6899    kadmind frees invalid pointer [MITKRB5-SA-2011-004 CVE-2011-0285]
 
-* gss_import_sec_context incorrectly set internal state that
-  identifies whether an imported context is from an interposer
-  mechanism or from the underlying mechanism.
-
-krb5-1.11.2 changes by ticket ID
---------------------------------
-
-7530    iprop treats slave as current if full dump fails to load
-7586    memory leak in lookup_etypes_for_keytab()
-7587    Fix dependencies in tests/gssapi
-7591    Fix condition with empty body
-7592    gss_import_sec_context broken with interposer plugins
-7594    Export verto_set_flags from libverto
-7601    RST docs missing krb5-config man page
-
-Major changes in 1.11.1 (2013-02-21)
-------------------------------------
-
-This is a bugfix release.
-
-* Restore capability for multi-hop SAM-2 preauth exchanges, which
-  krb5-1.11 had inadvertently removed.
-
-* Fix a null pointer dereference in the KDC PKINIT code
-  [CVE-2013-1415].
-
-krb5-1.11.1 changes by ticket ID
---------------------------------
-
-7458    add more strftime format strings for klist
-7523    Fix gss_str_to_oid for OIDs with zero-valued arcs
-7525    Fix DPRINT in ipropd_svc.c
-7534    Minor pointer management patches
-7539    Fix no_host_referral concatention in KDC
-7548    Fix iprop safety net in kdb5_util load
-7553    sendto_kdc can invoke poll with negative timeout
-7557    Fix h1 end tag in Sphinx header titles
-7558    Fix typos in layout.html
-7559    Fix "search" accesskey in layout.html
-7560    Fix kdb5_util dump.c uninitialized warnings
-7561    kprop doesn't work with RC4 session key
-7567    Fix RFC 5587 const pointer typedefs
-7569    Convert success in krb5_chpw_result_code_string
-7570    PKINIT null pointer deref [CVE-2013-1415]
-7571    Allow multi-hop SAM-2 exchanges
-7573    File descriptor leak in DIR ccaches
-7574    Fix memory leak closing DIR ccaches
-
-Major changes in 1.11 (2012-12-17)
-----------------------------------
+Major changes in 1.9
+--------------------
 
 Additional background information on these changes may be found at
 
-    http://k5wiki.kerberos.org/wiki/Release_1.11
+    http://k5wiki.kerberos.org/wiki/Release_1.9
 
 and
 
-    http://k5wiki.kerberos.org/wiki/Category:Release_1.11_projects
+    http://k5wiki.kerberos.org/wiki/Category:Release_1.9_projects
 
 Code quality:
 
-* Improve ASN.1 support code, making it table-driven for decoding as
-  well as encoding
+* Fix MITKRB5-SA-2010-007 checksum vulnerabilities (CVE-2010-1324 and
+  others).
 
-* Refactor parts of KDC
+* Add a Python-based testing framework.
+
+* Perform DAL cleanup.
 
 Developer experience:
 
-* Documentation consolidation
+* Add NSS crypto back end.
 
-* Add a new API krb5_kt_have_content() to determine whether a keytab
-  exists and contains any entries.
+* Improve PRNG modularity.
 
-* Add a new API krb5_cccol_have_content() to determine whether the
-  ccache collection contains any credentials.
-
-* Add a new API krb5_kt_client_default() to resolve the default client
-  keytab.
-
-* Add new APIs gss_export_cred and gss_import_cred to serialize and
-  unserialize GSSAPI credentials.
-
-* Add a krb5_get_init_creds_opt_set_in_ccache() option.
-
-* Add get_cc_config() and set_cc_config() clpreauth callbacks for
-  getting string attribute values from an in_ccache and storing them
-  in an out_ccache, respectively.
-
-* Add a plugin interface for GSSAPI interposer mechanisms.
-
-* Add an optional responder callback to the krb5_get_init_creds
-  functions. The responder callback can consider and answer all
-  preauth-related questions at once, and can process more complicated
-  questions than the prompter.
-
-* Add a method to the clpreauth interface to allow modules to supply
-  response items for consideration by the responder callback.
-
-* Projects/Password_response_item
-
-* Add GSSAPI extensions to allow callers to specify credential store
-  locations when acquiring or storing credentials
-
-* Add a new API krb5_kt_client_default() to resolve the default client
-  keytab.
-
-Administrator experience:
-
-* Documentation consolidation
-
-* Add parameter expansion for default_keytab_name and
-  default_client_keytab_name profile variables.
-
-* Add new default_ccache_name profile variable to override the
-  built-in default credential cache name.
-
-* Add configure-time support for changing the built-in ccache and
-  keytab names.
-
-* Add krb5-config options for displaying the built-in ccache and
-  keytab names.
-
-* In the default build, use the system's built-in ccache and keytab
-  names if they can be discovered using krb5-config.
-
-* Add support for a "default client keytab". Its location is
-  determined by the KRB5_CLIENT_KTNAME environment variable, the
-  default_client_keytab profile relation, or a hardcoded path (TBD).
-
-* GSSAPI initiator applications can now acquire credentials
-  automatically from the default client keytab, if one is available.
-
-* Add client support for FAST OTP (RFC 6560)
-
-End-user experience:
-
-* Documentation consolidation
-
-* Store metadata in the ccache about how a credential was acquired, to
-  improve the user's experience when reacquiring
-
-* Projects/Extensible_Policy
+* Add a Fortuna-like PRNG back end.
 
 Performance:
 
-* Improve KDC lookaside cache performance
+* Account lockout performance improvements -- allow disabling of some
+  account lockout functionality to reduce the number of write
+  operations to the database during authentication
+
+* Add support for multiple KDC worker processes.
+
+Administrator experience:
+
+* Add Trace logging support to ease the diagnosis of configuration
+  problems.
+
+* Add support for purging old keys (e.g. from "cpw -randkey -keepold").
+
+* Add plugin interface for password sync -- based on proposed patches
+  by Russ Allbery that support his krb5-sync package
+
+* Add plugin interface for password quality checks -- enables
+  pluggable password quality checks similar to Russ Allbery's
+  krb5-strength package.
+
+* Add a configuration file validator script.
+
+* Add KDC support for SecurID preauthentication -- this is the old
+  SAM-2 protocol, implemented to support existing deployments, not the
+  in-progress FAST-OTP work.
+
+* Add "cheat" capability for kinit when running on a KDC host.
 
 Protocol evolution:
 
-* Add client support for FAST OTP (RFC 6560)
+* Add support for IAKERB -- a mechanism for tunneling Kerberos KDC
+  transactions over GSS-API, enabling clients to authenticate to
+  services even when the clients cannot directly reach the KDC that
+  serves the services.
 
-* Build Camellia encryption support by default
+* Add support for Camellia encryption (experimental; disabled by
+  default).
 
-krb5-1.11 changes by ticket ID
-------------------------------
+* Add GSS-API support for implementors of the SASL GS2 bridge
+  mechanism.
 
-2131    krb5_get_init_creds_keytab() doesn't restrict requested
-        enctypes to those in keytab entry
-2545    AFS string_to_key broken for passwords > 8 chars
-5126    krb5_verify_init_creds behaves badly with a ticket cache
-6973    error reporting made worse in gss_acquire_creds
-7025    FAST: error handling and const keyblock
-7026    FAST TGS
-7046    Allow S4U2Proxy delegated credentials to be saved
-7047    Allow S4U2Proxy service tickets to be cached
-7048    Allow null server key to krb5_pac_verify
-7054    Test suite requires python 2.6 or better...
-7061    Fix PKINIT serverDHNonce encoding
-7063    Prompter delay can cause spurious clock skew
-7064    install sphinx-generated manpages
-7072    PKINIT pk_as_rep_draft9 encoding issues
-7073    kadmin.local.8 belongs in ADMIN_mandir
-7080    failures to compile src/lib/krb5/krb/x-deltat.y with GCC 4.7
-7085    Better short/long descs in gss_display_mech_attr
-7086    potential memory leak in krb5int_get_fq_hostname
-7091    Report profile errors when initializing krb5 context
-7094    Fail during configure if unable to find ar
-7097    improve kadm5 acl testing coverage
-7100    trunk a86e885 does not deal with default salt
-7105    side effects in assertions
-7106    documentation nit in tkt_mgmt.rst
-7107    Suppress some gcc uninitialized variable warnings
-7109    Key rollover for MIT/AD cross TGT principals fails due to
-        kvno 0
-7110    Fix password reuse check with cpw -keepold
-7111    Incorrect ASN.1 tag for EncASRepPart in svn trunk
-7112    KRB5_TRACE is broken in trunk
-7113    add tests for trace logging
-7114    Support using kdc time during encrypted timestamp preauth
-7121    password argument to krb5_get_init_creds_password not const
-7125    krb5_verify_init_creds should try all host principals in
-        keytab by default
-7126    Documentation__Building Kerberos V5
-7128    Add API to interpret changepw result strings
-7129    Add krb5_parse_name flag to ignore realm
-7130    kinit to AD server should be more tolerant of clock skew
-7131    [PATCH 1/1] sn2princ.c: add terminal newline to "failed to
-        canonicalize" debug message.
-7133    [PATCH 1/1] trace.c: rename k5trace to krb5int_trace in
-        comments.
-7134    Fix "(null" typo in "{key}" handler in trace.c
-7137    Fix "(empty" typo in "{etypes}" handler in trace.c
-7138    [PATCH] Add missing $(LIBS) to Makefile.in in several
-        directories.
-7139    Remove mention of util/autoconf
-7147    Make doc/coding-style point to wiki page
-7151    Convert DEBUG_REFERRALS to TRACE_* framework
-7158    Add krb5_kt_have_content API
-7159    Fail from gss_acquire_cred if we have no keytab
-7160    gss_acquire_cred for krb5 initiator creds should fail if no
-        tickets exist
-7161    Minor memory leak in default_an_to_ln on error
-7162    krb5_verify_init_creds frees its input argument
-7166    Remove big-endian gss-krb5 support
-7173    Add krb5_cccol_have_content API
-7179    krb5_cc_get_full_name() does not document how to free
-        fullname_out
-7183    PKINIT should handle CMS SignedData without certificates
-7187    ReST html docs render '--' as &#8211 (en dash)
-7188    Add krb5_kt_client_default API
-7189    Add client keytab initiation support
-7190    Try harder to make keytab-based AS requests work
-7192    klist does not use localized time formatting
-7196    Automatically create DIR ccache directories
-7205    Rename 'free' -> 'free_func' in asn1_encode.c/.h
-7211    define USE_HEAPALLOC in gssapi_alloc.h
-7216    Add kinit/klist -i options to use client keytab
-7217    Introduce credential store extensions
-7218    Do something reasonable if "kinit -t" without "-k"
-7219    Add token expansion for keytab names
-7220    Add default_ccache_name profile variable
-7221    Support changing the built-in ccache/keytab names
-7223    Policy extensions + new policy: allowed ks types
-7224    Fix edge-case bugs in kdb5_util load
-7229    Turn off replay cache in krb5_verify_init_creds()
-7242    Add otp client preauth plugin
-7346    Support kdc_timesync offsets in memory ccache
-7347    Add support for GSS_C_NT_COMPOSITE_EXPORT
-7351    Avoid libdl dependencies in bundled libverto
-7354    Introduce gss_export_cred and gss_import_cred
-7355    Add responder feature for initial cred exchanges
-7356    GSSAPI constrained delegation fails with default initiator
-        cred
-7358    Map CANTLOCK_DB to SVC_UNAVAILABLE in krb5kdc
-7359    Use blocking locks in krb5kdc and libkadm5srv
-7360    Fix lock inconsistency in ctx_unlock()
-7364    Update FILES and WINFILES for kerbsrc.zip
-7366    Keep verifier cred locked in accept_sec_context
-7367    Remove kerbsrc.win
-7368    MAX_ULOGENTRIES is too low
-7369    iprop can block for extended periods due to UPDATE_BUSY
-7370    kdb5_util load needs an iprop safety net
-7371    kadmind per-slave ipropd dumps are wasteful
-7372    kadmind hardcodes paths to kdb5_util, kprop, and dump file
-7373    kpropd handling of full resyncs is racy
-7374    iprop full resyncs need testing
-7375    feature request: kproplog -R to reset ulog, force full resync
-7376    kpropd -S option is superfluous
-7377    kdb5_util dump is racy
-7378    k5test.py needs a start_kpropd() method
-7379    kpropd docs are out of date regarding iprop
-7384    kdb5_util dump race can leave policy refcounts incorrect
-7399    Race in kdb5_util load completion
-7400    GENC should always export composite names
-7403    krb5_db_delete_principal() can fail to unlock ulog
-7407    Import remaining content from texinfo to reST
-7408    Remove obsolete texinfo documentation
-7409    rework documentation tree layout
-7413    Add an input ccache get_init_creds option
-7414    Add "pa_type" configuration to ccaches
-7415    Fix sam2 client preauth after salt changes
-7416    Use config storage for client OTP token selection
-7417    Don't expose binary format in preauth otp
-7418    Add dependencies for some test programs
-7419    Alter responder function signature for consistency
-7421    Documentation__krb5_rd_req - Parse and decrypt a KRB_AP_REQ
-        message.
-7422    Only record real selected preauth type
-7423    Document prompter and responder callbacks
-7424    Add missing macro and type index.rst entries
-7425    Fix verto_ctx declaration in preauth_plugin.h
-7426    Add loop() kdcpreauth method
-7427    Don't save empty cc_config_out in ccache
-7428    Don't leak new fields of krb5_init_creds_context
-7429    Document GSSAPI loadable module interface
-7431    Improve documentation for krb5_unparse_name_ext()
-7433    Documentation build system improvements
-7435    Always rebuild rst_composite in src/doc
-7436    Document PKINIT and anonymos PKINIT configuration
-7437    Update Camellia feature description
-7439    Add Camellia to enctype table in documentation
-7444    De-conditionalize Camellia code
-7445    Make kdb5_util dump work with LDAP again
-7446    Add Camellia enctypes to default enctype lists
-7447    Fix warnings in doc build
-7448    Avoid using grep -q in configure.in
-7451    Add "Kerberos" to PDF titles
-7452    Reword krb5_unparse_name_ext doxygen markup
-7453    Update mkrel for new doc build process
-7455    Documentation: table formating and ref correction in MIT
-        features
-7456    Documentation: Update 1.11 feature list
-7457    camellia needs key_cleanup() routine
-7459    Remove broken clean_hostname trace messages
-7460    Add first-introduced version for
-        krb5_get_init_creds_opt_set_in_ccache() in doxygen markup
-7461    Remove .doctrees when cleaning src/doc
-7462    Move Release tag to the footer in Sphinx html documentation
-7464    Remove "Test coverage" topic from Sphinx documentation
-7466    Do not generate unused parts of toctree
-7467    Do not include hidden files in the sidebar
-7468    Make sphinx warnings fatal for doc build
-7469    Reformat RST to avoid sphinx warnings
-7470    Note notice.txt's dependency on version.py
-7471    Fix typo
-7472    Document parameter expansion for keytab and ccache
-        configuration options
-7474    Update comments about conflicting KRB5_KEYUSAGE_PA types
-7477    Document account lockout configuration
-7479    Build fixes for windows
-7480    Cross-reference account lockout documentation
-7482    Make resources.rst more useful to non-devs
-7483    KDC can return host referral to its own realm
-7488    Various nits in krb5-1.10.3
-7489    Do not document unused symbols
-7490    Update comments for RFC 3244 kpasswd extensions
-7491    Make building docs easier in an unconfigured tree
-7492    Doc build in unconfigured tree broken on some platforms
-7494    Regenerate checked-in man pages
-7495    Make the doc build quieter
-7496    Document API for getting anonymous tickets
-7497    Update mkrel for SPHINX_ARGS
-7498    Document principal name interactions with DNS
-7499    Use an empty challenge for the password question
-7500    Add examples to init_creds.rst
-7501    Update retiring-des with real-world experience
-7503    Fix documentation browser resizing behavior
-7504    Conditionally include MITKC logo in HTML doc
-7505    Better names for doxygen-Sphinx bridge functions
-7506    PKINIT (draft9) null ptr deref [CVE-2012-1016]
-7507    Document enctypes
-7509    Update README for Sphinx documentation
-7510    Add copyright footer to HTML docs
-7512    Add web pages to resources.rst
-7513    Clarify enctype settings in krb5_conf.rst
-7515    Add release string to index.rst page heading
+krb5-1.9 changes by ticket ID
+-----------------------------
+
+1219    mechanism to delete old keys should exist
+2032    No advanced warning of password expiry
+5014    kadmin (and other utilities) should report enctypes as it takes them
+6647    Memory leak in kdc
+6672    Python test framework
+6679    Lazy history key creation
+6684    Simple kinit verbosity patch
+6686    IPv6 support for kprop and kpropd
+6688    mit-krb5-1.7 fails to compile against openssl-1.0.0
+6699    Validate and renew should work on non-TGT creds
+6700    Introduce new krb5_tkt_creds API
+6712    Add IAKERB mechanism and gss_acquire_cred_with_password
+6714    [patch] fix format errors in krb5-1.8.1
+6715    cksum_body exports
+6719    Add lockout-related performance tuning variables
+6720    Negative enctypes improperly read from keytabs
+6723    Negative enctypes improperly read from ccaches
+6733    Make signedpath authdata visible via GSS naming exts
+6736    Add krb5_enctype_to_name() API
+6737    Trace logging
+6746    Make kadmin work over IPv6
+6749    DAL improvements
+6753    Fix XDR decoding of large values in xdr_u_int
+6755    Add GIC option for password/account expiration callback
+6758    Allow krb5_gss_register_acceptor_identity to unset keytab name
+6760    Fail properly when profile can't be accessed
+6761    add profile include support
+6762    key expiration computed incorrectly in libkdb_ldap
+6763    New plugin infrastructure
+6765    Password quality pluggable interface
+6769    clean up memory leak and potential unused variable in crypto tests
+6771    Fix memory leaks in kdb5_verify
+6772    Ensure valid key in krb5int_yarrow_cipher_encrypt_block
+6774    pkinit client cert matching can be disrupted by one of the
+        candidate certs
+6775    pkinit <KU> evaluation during certificate matching may fail
+6776    Typos in src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+6777    Segmentation fault in krb library (sn2princ.c) if realm not resolved
+6778    kdb: store mkey list in context and permit NULL mkey for
+        kdb_dbe_decrypt_key_data
+6779    kinit: add KDB keytab support
+6783    KDC worker processes feature
+6784    relicense Sun RPC to 3-clause BSD-style
+6785    Add gss_krb5_import_cred
+6786    kpasswd: if a credential cache is present, use FAST
+6787    S4U memory leak
+6791    kadm5_hook: new plugin interface
+6792    Implement k5login_directory and k5login_authoritative options
+6793    acquire_init_cred leaks interned name
+6794    krb5.conf manpage missing reference to rdns setting
+6795    Propagate modprinc -unlock from master to slave KDCs
+6796    segfault due to uninitialized variable in S4U
+6799    Performance issue in LDAP policy fetch
+6801    Fix leaks in get_init_creds interface
+6802    copyright notice updates
+6804    Remove KDC replay cache
+6805    securID code fixes
+6806    securID error handling fix
+6807    SecurID build support
+6809    gss_krb5int_make_seal_token_v3_iov fails to set conf_state
+6810    Better  libk5crypto NSS fork safety
+6811    Mark Camellia-CCM code as experimental
+6812    krb5_get_credentials should not fail due to inability to store
+        a credential in a cache
+6815    Failed kdb5_util load removes real database
+6819    Handle referral realm in kprop client principal
+6820    Read KDC profile settings in kpropd
+6822    Implement Camellia-CTS-CMAC instead of Camellia-CCM
+6823    getdate.y: declare yyparse
+6824    Export krb5_tkt_creds_get
+6825    Add missing KRB5_CALLCONV in callback declaration
+6826    Fix Windows build
+6827    SA-2010-007 Checksum vulnerabilities (CVE-2010-1324 and others)
+6828    Install kadm5_hook_plugin.h
+6829    Implement restrict_anonymous_to_tgt realm flag
+6838    Regression in renewable handling
+6839    handle MS PACs that lack server checksum
+6840    typo in plugin-related error message
+6841    memory leak in changepw.c
+6842    Ensure time() is prototyped in g_accept_sec_context.c
 
 Acknowledgements
 ----------------
@@ -468,7 +278,6 @@ Past and present Sponsors of the MIT Kerberos Consortium:
     Columbia University
     Cornell University
     The Department of Defense of the United States of America (DoD)
-    Fidelity Investments
     Google
     Iowa State University
     MIT
@@ -503,7 +312,6 @@ Past and present members of the Kerberos Team at MIT:
     Mark Colan
     Don Davis
     Alexandra Ellwood
-    Carlos Garay
     Dan Geer
     Nancy Gilman
     Matt Hancher
@@ -514,12 +322,10 @@ Past and present members of the Kerberos Team at MIT:
     Eva Jacobus
     Miroslav Jurisic
     Barry Jaspan
-    Benjamin Kaduk
     Geoffrey King
     Kevin Koch
     John Kohl
     HaoQi Li
-    Jonathan Lin
     Peter Litwack
     Scott McGuire
     Steve Miller
@@ -546,21 +352,16 @@ Past and present members of the Kerberos Team at MIT:
 The following external contributors have provided code, patches, bug
 reports, suggestions, and valuable resources:
 
-    Ian Abbott
     Brandon Allbery
     Russell Allbery
     Brian Almeida
     Michael B Allen
-    Heinz-Ado Arnolds
     Derek Atkins
-    Mark Bannister
     David Bantz
     Alex Baule
-    Adam Bernstein
     Arlene Berry
     Jeff Blaine
     Radoslav Bodo
-    Sumit Bose
     Emmanuel Bouillon
     Michael Calmer
     Julien Chaffraix
@@ -574,22 +375,18 @@ reports, suggestions, and valuable resources:
     Simon Cooper
     Sylvain Cortes
     Nalin Dahyabhai
-    Mark Davies
     Dennis Davis
-    Mark Deneen
     Roland Dowdeswell
     Jason Edgecombe
     Mark Eichin
     Shawn M. Emery
     Douglas E. Engert
     Peter Eriksson
-    Juha Erkkilä
     Ronni Feldt
     Bill Fellows
     JC Ferguson
     William Fiveash
     Ákos Frohner
-    Sebastian Galiano
     Marcus Granado
     Scott Grizzard
     Helmut Grohne
@@ -597,10 +394,7 @@ reports, suggestions, and valuable resources:
     Philip Guenther
     Dominic Hargreaves
     Jakob Haufe
-    Matthieu Hautreux
-    Paul B. Henson
     Jeff Hodges
-    Christopher Hogan
     Love Hörnquist Åstrand
     Ken Hornstein
     Henry B. Hotz
@@ -612,36 +406,25 @@ reports, suggestions, and valuable resources:
     Holger Isenberg
     Pavel Jindra
     Joel Johnson
-    W. Trevor King
     Mikkel Kruse
-    Reinhard Kugler
     Volker Lendecke
     Jan iankko Lieskovsky
-    Oliver Loch
     Kevin Longfellow
     Ryan Lynch
-    Nathaniel McCallum
-    Greg McClement
     Cameron Meadors
-    Alexey Melnikov
     Franklyn Mendez
     Markus Moeller
-    Kyle Moffett
     Paul Moore
     Keiichi Mori
-    Michael Morony
     Zbysek Mraz
     Edward Murrell
     Nikos Nikoleris
     Felipe Ortega
-    Andrej Ota
     Dmitri Pal
     Javier Palacios
-    Tom Parker
     Ezra Peisach
     W. Michael Petullo
     Mark Phalan
-    Jonathan Reams
     Robert Relyea
     Martin Rex
     Jason Rogers
@@ -653,25 +436,16 @@ reports, suggestions, and valuable resources:
     Michael Spang
     Michael Ströder
     Bjørn Tore Sund
-    Joe Travaglini
     Rathor Vipin
     Jorgen Wahlsten
-    Stef Walter
     Max (Weijun) Wang
     John Washington
-    Stef Walter
-    Xi Wang
-    Kevin Wasserman
-    Margaret Wasserman
     Marcus Watts
-    Andreas Wiese
     Simon Wilkinson
     Nicolas Williams
     Ross Wilper
     Xu Qiang
-    Nickolai Zeldovich
     Hanz van Zijst
-    Gertjan Zwartjes
 
 The above is not an exhaustive list; many others have contributed in
 various ways to the MIT Kerberos development effort over the years.

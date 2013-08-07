@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/openssl/hash_provider/hash_sha1.c */
-/*
+/* lib/crypto/openssl/hash/yhash.h
+ *
  * Copyright (C) 1998 by the FundsXpress, INC.
  *
  * All rights reserved.
@@ -26,34 +26,42 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
-#include <openssl/evp.h>
-#include <openssl/sha.h>
+#include "k5-int.h"
+#include "shs.h"
+#include "hash_provider.h"
+#include "aead.h"
 
 static krb5_error_code
 k5_sha1_hash(const krb5_crypto_iov *data, size_t num_data, krb5_data *output)
 {
-    EVP_MD_CTX ctx;
+    SHS_INFO ctx;
     unsigned int i;
 
-    if (output->length != SHA_DIGEST_LENGTH)
-        return KRB5_CRYPTO_INTERNAL;
+    if (output->length != SHS_DIGESTSIZE)
+        return(KRB5_CRYPTO_INTERNAL);
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_DigestInit_ex(&ctx, EVP_sha1(), NULL);
+    shsInit(&ctx);
     for (i = 0; i < num_data; i++) {
-        const krb5_data *d = &data[i].data;
-        if (SIGN_IOV(&data[i]))
-            EVP_DigestUpdate(&ctx, (unsigned char *)d->data, d->length);
+        const krb5_crypto_iov *iov = &data[i];
+
+        if (SIGN_IOV(iov)) {
+            shsUpdate(&ctx, (unsigned char *) iov->data.data,
+                      iov->data.length);
+        }
     }
-    EVP_DigestFinal_ex(&ctx, (unsigned char *)output->data, NULL);
-    EVP_MD_CTX_cleanup(&ctx);
-    return 0;
+    shsFinal(&ctx);
+
+    if (ctx.digestLen > 0 && ctx.digestLen <= output->length){
+        output->length = ctx.digestLen;
+        memcpy(output->data, ctx.digestBuf,ctx.digestLen);
+    }
+
+    return(0);
 }
 
 const struct krb5_hash_provider krb5int_hash_sha1 = {
     "SHA1",
-    SHA_DIGEST_LENGTH,
-    64,
+    SHS_DIGESTSIZE,
+    SHS_DATASIZE,
     k5_sha1_hash
 };

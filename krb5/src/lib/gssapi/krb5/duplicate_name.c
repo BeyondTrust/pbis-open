@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/duplicate_name.c */
 /*
+ * lib/gssapi/krb5/duplicate_name.c
+ *
  * Copyright 1997,2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,13 +23,14 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 #include "gssapiP_krb5.h"
 
-OM_uint32 KRB5_CALLCONV
-krb5_gss_duplicate_name(OM_uint32 *minor_status, const gss_name_t input_name,
-                        gss_name_t *dest_name)
+OM_uint32 krb5_gss_duplicate_name(OM_uint32  *minor_status,
+                                  const gss_name_t input_name,
+                                  gss_name_t *dest_name)
 {
     krb5_context context;
     krb5_error_code code;
@@ -44,9 +46,15 @@ krb5_gss_duplicate_name(OM_uint32 *minor_status, const gss_name_t input_name,
         return GSS_S_FAILURE;
     }
 
+    if (! kg_validate_name(input_name)) {
+        if (minor_status)
+            *minor_status = (OM_uint32) G_VALIDATE_FAILED;
+        krb5_free_context(context);
+        return(GSS_S_CALL_BAD_STRUCTURE|GSS_S_BAD_NAME);
+    }
+
     princ = (krb5_gss_name_t)input_name;
-    code = kg_duplicate_name(context, princ, &outprinc);
-    if (code) {
+    if ((code = kg_duplicate_name(context, princ, KG_INIT_NAME_INTERN, &outprinc))) {
         *minor_status = code;
         save_error_info(*minor_status, context);
         krb5_free_context(context);
@@ -54,6 +62,7 @@ krb5_gss_duplicate_name(OM_uint32 *minor_status, const gss_name_t input_name,
     }
     krb5_free_context(context);
     *dest_name = (gss_name_t) outprinc;
+    assert(kg_validate_name(*dest_name));
     return(GSS_S_COMPLETE);
 
 }

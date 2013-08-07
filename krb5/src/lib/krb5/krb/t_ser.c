@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/t_ser.c - Test serialization */
 /*
+ * lib/krb5/krb/t_ser.c
+ *
  * Copyright 1995 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,8 +23,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
+/*
+ * t_ser.c - Test serialization.
+ */
 #include "k5-int.h"
 #include "com_err.h"
 #include "auth_con.h"
@@ -41,7 +46,7 @@ can't safely dereference.  This test file used to make this mistake, often.";
 static void
 print_erep(krb5_octet *erep, size_t elen)
 {
-    unsigned int i, j;
+    int i, j;
 
     for (i=0; i<elen; ) {
         printf("%08d: ", i);

@@ -14,27 +14,22 @@ SRCS = \
 	$(srcdir)/g_acquire_cred.c \
 	$(srcdir)/g_acquire_cred_with_pw.c \
 	$(srcdir)/g_acquire_cred_imp_name.c \
-	$(srcdir)/g_authorize_localname.c \
 	$(srcdir)/g_buffer_set.c \
 	$(srcdir)/g_canon_name.c \
 	$(srcdir)/g_compare_name.c \
 	$(srcdir)/g_complete_auth_token.c \
 	$(srcdir)/g_context_time.c \
-	$(srcdir)/g_decapsulate_token.c \
 	$(srcdir)/g_delete_sec_context.c \
 	$(srcdir)/g_del_name_attr.c \
 	$(srcdir)/g_dsp_name.c \
 	$(srcdir)/g_dsp_name_ext.c \
 	$(srcdir)/g_dsp_status.c \
 	$(srcdir)/g_dup_name.c \
-	$(srcdir)/g_encapsulate_token.c \
 	$(srcdir)/g_exp_sec_context.c \
-	$(srcdir)/g_export_cred.c \
 	$(srcdir)/g_export_name.c \
 	$(srcdir)/g_export_name_comp.c \
 	$(srcdir)/g_get_name_attr.c \
 	$(srcdir)/g_glue.c \
-	$(srcdir)/g_imp_cred.c \
 	$(srcdir)/g_imp_name.c \
 	$(srcdir)/g_imp_sec_context.c \
 	$(srcdir)/g_init_sec_context.c \
@@ -70,35 +65,29 @@ SRCS = \
 	$(srcdir)/g_unwrap_iov.c \
 	$(srcdir)/g_verify.c \
 	$(srcdir)/g_wrap_aead.c \
-	$(srcdir)/g_wrap_iov.c \
-	$(srcdir)/gssd_pname_to_uid.c
+	$(srcdir)/g_wrap_iov.c
 
 OBJS = \
 	$(OUTPRE)g_accept_sec_context.$(OBJEXT) \
 	$(OUTPRE)g_acquire_cred.$(OBJEXT) \
 	$(OUTPRE)g_acquire_cred_with_pw.$(OBJEXT) \
 	$(OUTPRE)g_acquire_cred_imp_name.$(OBJEXT) \
-	$(OUTPRE)g_authorize_localname.$(OBJEXT) \
 	$(OUTPRE)g_buffer_set.$(OBJEXT) \
 	$(OUTPRE)g_canon_name.$(OBJEXT) \
 	$(OUTPRE)g_compare_name.$(OBJEXT) \
 	$(OUTPRE)g_complete_auth_token.$(OBJEXT) \
 	$(OUTPRE)g_context_time.$(OBJEXT) \
-	$(OUTPRE)g_decapsulate_token.$(OBJEXT) \
 	$(OUTPRE)g_delete_sec_context.$(OBJEXT) \
 	$(OUTPRE)g_del_name_attr.$(OBJEXT) \
 	$(OUTPRE)g_dsp_name.$(OBJEXT) \
 	$(OUTPRE)g_dsp_name_ext.$(OBJEXT) \
 	$(OUTPRE)g_dsp_status.$(OBJEXT) \
 	$(OUTPRE)g_dup_name.$(OBJEXT) \
-	$(OUTPRE)g_encapsulate_token.$(OBJEXT) \
 	$(OUTPRE)g_exp_sec_context.$(OBJEXT) \
-	$(OUTPRE)g_export_cred.$(OBJEXT) \
 	$(OUTPRE)g_export_name.$(OBJEXT) \
 	$(OUTPRE)g_export_name_comp.$(OBJEXT) \
 	$(OUTPRE)g_get_name_attr.$(OBJEXT) \
 	$(OUTPRE)g_glue.$(OBJEXT) \
-	$(OUTPRE)g_imp_cred.$(OBJEXT) \
 	$(OUTPRE)g_imp_name.$(OBJEXT) \
 	$(OUTPRE)g_imp_sec_context.$(OBJEXT) \
 	$(OUTPRE)g_init_sec_context.$(OBJEXT) \
@@ -134,35 +123,29 @@ OBJS = \
 	$(OUTPRE)g_unwrap_iov.$(OBJEXT) \
 	$(OUTPRE)g_verify.$(OBJEXT) \
 	$(OUTPRE)g_wrap_aead.$(OBJEXT) \
-	$(OUTPRE)g_wrap_iov.$(OBJEXT) \
-	$(OUTPRE)gssd_pname_to_uid.$(OBJEXT)
+	$(OUTPRE)g_wrap_iov.$(OBJEXT)
 
 STLIBOBJS = \
 	g_accept_sec_context.o \
 	g_acquire_cred.o \
 	g_acquire_cred_with_pw.o \
 	g_acquire_cred_imp_name.o \
-	g_authorize_localname.o \
 	g_buffer_set.o \
 	g_canon_name.o \
 	g_compare_name.o \
 	g_complete_auth_token.o \
 	g_context_time.o \
-	g_decapsulate_token.o \
 	g_delete_sec_context.o \
 	g_del_name_attr.o \
 	g_dsp_name.o \
 	g_dsp_name_ext.o \
 	g_dsp_status.o \
 	g_dup_name.o \
-	g_encapsulate_token.o \
 	g_exp_sec_context.o \
-	g_export_cred.o \
 	g_export_name.o \
 	g_export_name_comp.o \
 	g_get_name_attr.o \
 	g_glue.o \
-	g_imp_cred.o \
 	g_imp_name.o \
 	g_imp_sec_context.o \
 	g_init_sec_context.o \
@@ -198,8 +181,7 @@ STLIBOBJS = \
 	g_unwrap_iov.o \
 	g_verify.o \
 	g_wrap_aead.o \
-	g_wrap_iov.o \
-	gssd_pname_to_uid.o
+	g_wrap_iov.o
 
 EHDRDIR= $(BUILDTOP)$(S)include$(S)gssapi
 EXPORTED_HEADERS = mechglue.h

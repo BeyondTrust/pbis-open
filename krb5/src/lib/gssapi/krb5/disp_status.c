@@ -48,7 +48,7 @@ char *get_error_message(OM_uint32 minor_code)
     gsserrmap *p = k5_getspecific(K5_KEY_GSS_KRB5_ERROR_MESSAGE);
     char *msg = NULL;
 #ifdef DEBUG
-    fprintf(stderr, "%s(%lu, p=%p)", __FUNCTION__, (unsigned long) minor_code,
+    fprintf(stderr, "%s(%lu, p=%p)", __func__, (unsigned long) minor_code,
             (void *) p);
 #endif
     if (p) {
@@ -74,7 +74,7 @@ static int save_error_string_nocopy(OM_uint32 minor_code, char *msg)
     int ret;
 
 #ifdef DEBUG
-    fprintf(stderr, "%s(%lu, %s)", __FUNCTION__, (unsigned long) minor_code, msg);
+    fprintf(stderr, "%s(%lu, %s)", __func__, (unsigned long) minor_code, msg);
 #endif
     p = k5_getspecific(K5_KEY_GSS_KRB5_ERROR_MESSAGE);
     if (!p) {
@@ -131,12 +131,12 @@ void krb5_gss_save_error_info(OM_uint32 minor_code, krb5_context ctx)
     char *s;
 
 #ifdef DEBUG
-    fprintf(stderr, "%s(%lu, ctx=%p)\n", __FUNCTION__,
+    fprintf(stderr, "%s(%lu, ctx=%p)\n", __func__,
             (unsigned long) minor_code, (void *)ctx);
 #endif
     s = (char *)krb5_get_error_message(ctx, (krb5_error_code)minor_code);
 #ifdef DEBUG
-    fprintf(stderr, "%s(%lu, ctx=%p) saving: %s\n", __FUNCTION__,
+    fprintf(stderr, "%s(%lu, ctx=%p) saving: %s\n", __func__,
             (unsigned long) minor_code, (void *)ctx, s);
 #endif
     save_error_string(minor_code, s);
@@ -153,7 +153,7 @@ void krb5_gss_delete_error_info(void *p)
 
 /**/
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_display_status(minor_status, status_value, status_type,
                         mech_type, message_context, status_string)
     OM_uint32 *minor_status;
@@ -168,8 +168,7 @@ krb5_gss_display_status(minor_status, status_value, status_type,
 
     if ((mech_type != GSS_C_NULL_OID) &&
         !g_OID_equal(gss_mech_krb5, mech_type) &&
-        !g_OID_equal(gss_mech_krb5_old, mech_type) &&
-        !g_OID_equal(gss_mech_iakerb, mech_type)) {
+        !g_OID_equal(gss_mech_krb5_old, mech_type)) {
         *minor_status = 0;
         return(GSS_S_BAD_MECH);
     }
@@ -186,12 +185,16 @@ krb5_gss_display_status(minor_status, status_value, status_type,
         }
 
         /* If this fails, there's not much we can do...  */
-        if (!g_make_string_buffer(krb5_gss_get_error_message(status_value),
-                                  status_string)) {
+        if (g_make_string_buffer(krb5_gss_get_error_message(status_value),
+                                 status_string) == 0)
+        {
             *minor_status = ENOMEM;
             return(GSS_S_FAILURE);
         }
-        *minor_status = 0;
+        else
+        {
+            *minor_status = 0;
+        }
         return(GSS_S_COMPLETE);
     } else {
         *minor_status = 0;

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* clients/kinit/kinit_kdb.c */
 /*
+ * clients/kinit/kinit_kdb.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,8 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
+ *
+ *
+  */
 /**
  *    @file kinit_kdb.c
  *    Operations to open the KDB and make the KDB key table available
@@ -62,7 +64,7 @@ kinit_kdb_init(krb5_context *pcontext, char *realm)
     config.realm = realm;
     retval = kadm5_init(*pcontext, "kinit", NULL /*pass*/,
                         "kinit", &config,
-                        KADM5_STRUCT_VERSION, KADM5_API_VERSION_4, NULL,
+                        KADM5_STRUCT_VERSION, KADM5_API_VERSION_3, NULL,
                         &server_handle);
     if (retval)
         return retval;

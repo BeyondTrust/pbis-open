@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/krb/verify_checksum_iov.c */
 /*
+ * lib/crypto/verify_checksum_iov.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -24,7 +25,9 @@
  * or implied warranty.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "cksumtypes.h"
+#include "aead.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_k_verify_checksum_iov(krb5_context context,

@@ -84,7 +84,7 @@ is used).  The command-line options have the following meanings:
 The client's command line usage is
 
 	gss-client [-port port] [-mech mechanism] [-d] [-f] [-q]
-        [-seq] [-noreplay] [-nomutual] [-dce]
+        [-seq] [-noreplay] [-nomutual]		
         [-ccount count] [-mcount count] [-na] [-nw] [-nx] [-nm]
 		host service_name msg
 
@@ -111,8 +111,6 @@ the following meanings:
 
 -noreplay Tells the client to disable the use of replay
     detection.
-
--dce	Tells the client to request DCE-style authentication.
 
 -nomutual Tells the client to disable the use of mutual authentication.
 
@@ -162,4 +160,4 @@ This application was originally written by Barry Jaspan of OpenVision
 Technologies, Inc.  It was updated significantly by Jonathan Kamens of
 OpenVision Technologies, Inc.
 
-$Id$
+$Id: README 16027 2004-02-07 19:44:24Z jaltman $

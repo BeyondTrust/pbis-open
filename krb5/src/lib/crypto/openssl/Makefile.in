@@ -1,7 +1,16 @@
 mydir=lib$(S)crypto$(S)openssl
 BUILDTOP=$(REL)..$(S)..$(S)..
 SUBDIRS=camellia des aes md4 md5  sha1 sha2 enc_provider hash_provider
-LOCALINCLUDES = -I$(srcdir)/../krb -I$(srcdir)
+LOCALINCLUDES = -I$(srcdir)/../krb 			\
+		-I$(srcdir)/../krb/hash_provider 	\
+		-I$(srcdir)/des 	\
+		-I$(srcdir)/aes 	\
+		-I$(srcdir)/sha1 	\
+		-I$(srcdir)/sha2 	\
+		-I$(srcdir)/md4 	\
+		-I$(srcdir)/md5	\
+		-I$(srcdir)/enc_provider	\
+		-I$(srcdir)/hash_provider 	
 PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 DEFS=
@@ -9,20 +18,17 @@ DEFS=
 STLIBOBJS=\
 	hmac.o	\
 	init.o	\
-	pbkdf2.o \
-	stubs.o
+	pbkdf2.o
 
 OBJS=\
 	$(OUTPRE)hmac.$(OBJEXT)	\
 	$(OUTPRE)init.$(OBJEXT)	\
-	$(OUTPRE)pbkdf2.$(OBJEXT) \
-	$(OUTPRE)stubs.$(OBJEXT)
+	$(OUTPRE)pbkdf2.$(OBJEXT)
 
 SRCS=\
 	$(srcdir)/hmac.c	\
 	$(srcdir)/init.c	\
-	$(srcdir)/pbkdf2.c	\
-	$(srcdir)/stubs.c
+	$(srcdir)/pbkdf2.c	
 
 STOBJLISTS= des/OBJS.ST md4/OBJS.ST 	\
 	md5/OBJS.ST sha1/OBJS.ST sha2/OBJS.ST 	\

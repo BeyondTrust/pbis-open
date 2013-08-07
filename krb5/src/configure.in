@@ -1,4 +1,11 @@
 K5_AC_INIT([aclocal.m4])
+#
+# autoconf 2.49 defaults to a /dev/null cache file, which is what we
+# do not want for performance reasons. 
+if test "x$cache_file" = "x/dev/null"; then
+  cache_file=./config.cache
+  AC_CACHE_LOAD
+fi
 
 CONFIG_RULES
 KRB5_VERSION=K5_VERSION
@@ -8,7 +15,7 @@ AC_SUBST(KRB5_VERSION)
 AC_REQUIRE_CPP
 
 AC_CACHE_CHECK(if va_copy is available, krb5_cv_va_copy,
-[AC_LINK_IFELSE([AC_LANG_SOURCE([
+[AC_LINK_IFELSE([
 #include <stdarg.h>
 void f(va_list ap) {
   va_list ap2;
@@ -20,7 +27,7 @@ int main()
 {
   f(x);
   return 0;
-}])], krb5_cv_va_copy=yes, krb5_cv_va_copy=no)])
+}], krb5_cv_va_copy=yes, krb5_cv_va_copy=no)])
 if test "$krb5_cv_va_copy" = yes; then
   AC_DEFINE(HAS_VA_COPY,1,[Define if va_copy macro or function is available.])
 fi
@@ -31,11 +38,11 @@ fi
 AC_CACHE_CHECK(if va_list objects can be copied by assignment,
 	       krb5_cv_va_simple_copy,
 [AC_COMPILE_IFELSE([
-AC_LANG_SOURCE([#include <stdarg.h>
+#include <stdarg.h>
 void f(va_list va2) {
   va_list va1;
   va1 = va2;
-}])], krb5_cv_va_simple_copy=yes, krb5_cv_va_simple_copy=no)])
+}], krb5_cv_va_simple_copy=yes, krb5_cv_va_simple_copy=no)])
 if test "$krb5_cv_va_simple_copy" = yes; then
   AC_DEFINE(CAN_COPY_VA_LIST,1,[Define if va_list objects can be simply copied by assignment.])
 fi
@@ -48,9 +55,22 @@ AC_KRB5_TCL
 AC_ARG_ENABLE([athena],
 [  --enable-athena         build with MIT Project Athena configuration],,)
 
+# Special --enable-includes-only build option.
+
+includes_only=
+AC_ARG_ENABLE([includes-only],
+  AC_HELP_STRING([--enable-includes-only],[build only include files @<:@disabled@:>@]),
+  includes_only=yes,)
+SUBDIRS_TYPE="all"
+if test -n "$includes_only" ; then
+  SUBDIRS_TYPE="includes_only"
+fi
+AC_SUBST(SUBDIRS_TYPE)
+
 # Begin autoconf tests for the Makefiles generated out of the top-level
 # configure.in...
 
+AC_CHECK_FUNCS(memmove)
 KRB5_BUILD_LIBOBJS
 KRB5_BUILD_LIBRARY
 KRB5_BUILD_PROGRAM
@@ -65,43 +85,14 @@ AC_CHECK_LIB(util,main,[AC_DEFINE(HAVE_LIBUTIL,1,[Define if the util library is 
 LIBUTIL=-lutil
 ])
 AC_SUBST(LIBUTIL)
-
-AC_CHECK_HEADER(libintl.h, [
-	AC_SEARCH_LIBS(dgettext, intl, [
-		AC_DEFINE(ENABLE_NLS, 1,
-			[Define if translation functions should be used.])])])
-
-AC_CHECK_PROG(MSGFMT,msgfmt,msgfmt)
-po=
-if test x"$MSGFMT" != x; then
-	po=po
-fi
-AC_SUBST(po)
-
 # for kdc
-AC_CHECK_HEADERS(syslog.h sys/sockio.h ifaddrs.h unistd.h fnmatch.h)
+AC_CHECK_HEADERS(syslog.h stdarg.h sys/select.h sys/sockio.h ifaddrs.h unistd.h)
 AC_CHECK_FUNCS(openlog syslog closelog strftime vsprintf vasprintf vsnprintf)
-AC_CHECK_FUNCS(strlcpy fnmatch)
-
+AC_CHECK_FUNCS(strlcpy)
 EXTRA_SUPPORT_SYMS=
-AC_CHECK_FUNC(strlcpy,
-[STRLCPY_ST_OBJ=
-STRLCPY_OBJ=],
-[STRLCPY_ST_OBJ=strlcpy.o
-STRLCPY_OBJ='$(OUTPRE)strlcpy.$(OBJEXT)'
-EXTRA_SUPPORT_SYMS="$EXTRA_SUPPORT_SYMS krb5int_strlcpy krb5int_strlcat"])
+AC_CHECK_FUNC(strlcpy, [STRLCPY_ST_OBJ= STRLCPY_OBJ=], [STRLCPY_ST_OBJ=strlcpy.o STRLCPY_OBJ='$(OUTPRE)strlcpy.$(OBJEXT)' EXTRA_SUPPORT_SYMS="$EXTRA_SUPPORT_SYMS krb5int_strlcpy krb5int_strlcat"])
 AC_SUBST(STRLCPY_OBJ)
 AC_SUBST(STRLCPY_ST_OBJ)
-
-AC_CHECK_FUNC(fnmatch,
-[FNMATCH_ST_OBJ=
-FNMATCH_OBJ=],
-[FNMATCH_ST_OBJ=fnmatch.o
-FNMATCH_OBJ='$(OUTPRE)fnmatch.$(OBJEXT)'
-EXTRA_SUPPORT_SYMS="$EXTRA_SUPPORT_SYMS k5_fnmatch"])
-AC_SUBST(FNMATCH_OBJ)
-AC_SUBST(FNMATCH_ST_OBJ)
-
 AC_CHECK_FUNC(vasprintf,
 [PRINTF_ST_OBJ=
 PRINTF_OBJ=],
@@ -160,12 +151,14 @@ nss)
   AC_DEFINE(CRYPTO_IMPL_NSS,1,[Define if crypto implementation is NSS])
   save_CFLAGS=$CFLAGS
   CFLAGS="$CFLAGS $CRYPTO_IMPL_CFLAGS"
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+  AC_COMPILE_IFELSE([
 #include <nss.h>
-#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 13)
+#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 12)
+#error
+#elif NSS_VMAJOR == 3 && NSS_VMINOR == 12 && NSS_VPATCH < 9
 #error
 #endif
-  ])], [], [AC_MSG_ERROR([NSS version 3.13 or later required.])])
+  ], [], [AC_MSG_ERROR([NSS version 3.12.9 or later required.])])
   CFLAGS=$save_CFLAGS
   ;;
 *)
@@ -180,59 +173,27 @@ AC_SUBST(CRYPTO_IMPL_LIBS)
 if test "$CRYPTO_IMPL" = nss; then
 	PRNG_ALG="nss"
 else
+PRNG_ALG="yarrow"
 AC_ARG_WITH([prng-alg],
-AC_HELP_STRING([--with-prng-alg=ALG], [use specified PRNG algorithm. Ignored for nss. @<:@fortuna@:>@]),
+AC_HELP_STRING([--with-prng-alg=ALG], [use specified PRNG algorithm. Ignored for nss. @<:@yarrow@:>@]),
 [PRNG_ALG=$withval
 AC_MSG_RESULT("k5crypto will use \'$withval\'")
-], PRNG_ALG=fortuna)
+], withval=yarrow)
 fi
 AC_CONFIG_COMMANDS(PRNG_ALG, , PRNG_ALG=$PRNG_ALG)
 AC_SUBST(PRNG_ALG)
-if test "$PRNG_ALG" = fortuna; then
+if test "$withval" = fortuna; then
 	AC_DEFINE(FORTUNA,1,[Define if Fortuna PRNG is selected])
 fi
 
-# WITH_PKINIT_CRYPTO_IMPL
-
-PKINIT_CRYPTO_IMPL="$CRYPTO_IMPL"
-AC_ARG_WITH([pkinit-crypto-impl],
-AC_HELP_STRING([--with-pkinit-crypto-impl=IMPL], [use specified pkinit crypto implementation @<:@openssl@:>@]),
-[PKINIT_CRYPTO_IMPL=$withval
-AC_MSG_RESULT("pkinit will use \'$withval\'")
-], withval=$PKINIT_CRYPTO_IMPL)
-case "$withval" in
-builtin|openssl)
-  AC_CHECK_LIB(crypto, PKCS7_get_signer_info, PKINIT_CRYPTO_IMPL_LIBS=-lcrypto)
-  PKINIT_CRYPTO_IMPL=openssl
-  ;;
-nss)
-  if test "${PKINIT_CRYPTO_IMPL_CFLAGS+set}" != set; then
-    PKINIT_CRYPTO_IMPL_CFLAGS=`pkg-config --cflags nss`
-  fi
-  if test "${PKINIT_CRYPTO_IMPL_LIBS+set}" != set; then
-    PKINIT_CRYPTO_IMPL_LIBS=`pkg-config --libs nss`
-  fi
-  AC_DEFINE(PKINIT_CRYPTO_IMPL_NSS,1,[Define if pkinit crypto implementation is NSS])
-  save_CFLAGS=$CFLAGS
-  CFLAGS="$CFLAGS $PKINIT_CRYPTO_IMPL_CFLAGS"
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#include <nss.h>
-#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 12)
-#error
-#elif NSS_VMAJOR == 3 && NSS_VMINOR == 12 && NSS_VPATCH < 11
-#error
-#endif
-  ])], [], [AC_MSG_ERROR([NSS version 3.12.11 or later required.])])
-  CFLAGS=$save_CFLAGS
-  ;;
-*)
-  AC_MSG_ERROR([Unknown crypto implementation $withval])
-  ;;
-esac
-AC_CONFIG_COMMANDS(PKINIT_CRYPTO_IMPL,,PKINIT_CRYPTO_IMPL=$PKINIT_CRYPTO_IMPL)
-AC_SUBST(PKINIT_CRYPTO_IMPL)
-AC_SUBST(PKINIT_CRYPTO_IMPL_CFLAGS)
-AC_SUBST(PKINIT_CRYPTO_IMPL_LIBS)
+AC_ARG_ENABLE([fortuna-test],
+	[  --enable-fortuna-test  build to test Fortuna PRNG],,enableval=no)
+if test "$enableval" = yes ; then
+	PRNG_FORTUNA_TEST="yes"
+	AC_DEFINE(TEST_FORTUNA,1,[Create a special build to test Fortuna PRNG])
+	AC_CONFIG_COMMANDS(PRNG_FORTUNA_TEST, , PRNG_FORTUNA_TEST=$PRNG_FORTUNA_TEST)
+	AC_SUBST(PRNG_FORTUNA_TEST)
+fi
 
 # --with-kdc-kdb-update makes the KDC update the database with last request
 # information and failure information.
@@ -260,10 +221,12 @@ AH_TEMPLATE([HAVE_STRUCT_SOCKADDR_STORAGE],
 [Define if "struct sockaddr_storage" is available.])
 
 AC_CONFIG_HEADERS(include/autoconf.h, [echo timestamp > include/autoconf.stamp])
+AC_PROG_INSTALL
+AC_PROG_AWK
 AC_PROG_LEX
 AC_C_CONST
 AC_HEADER_DIRENT
-AC_CHECK_FUNCS(strdup setvbuf seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell access getcwd srand48 srand srandom stat strchr strerror strerror_r timegm isblank)
+AC_CHECK_FUNCS(strdup setvbuf inet_ntoa inet_aton seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell access getcwd srand48 srand srandom stat strchr strerror strerror_r poll)
 
 AC_CHECK_FUNC(mkstemp,
 [MKSTEMP_ST_OBJ=
@@ -273,21 +236,11 @@ MKSTEMP_OBJ='$(OUTPRE)mkstemp.$(OBJEXT)'
 EXTRA_SUPPORT_SYMS="$EXTRA_SUPPORT_SYMS krb5int_mkstemp"])
 AC_SUBST(MKSTEMP_OBJ)
 AC_SUBST(MKSTEMP_ST_OBJ)
-
-AC_CHECK_FUNC(gettimeofday,
-	[GETTIMEOFDAY_ST_OBJ=
-	GETTIMEOFDAY_OBJ=
-	AC_DEFINE(HAVE_GETTIMEOFDAY, 1, [Have the gettimeofday function])
-],
-	[GETTIMEOFDAY_ST_OBJ='gettimeofday.o'
-	GETTIMEOFDAY_OBJ='$(OUTPRE)gettimeofday.$(OBJEXT)'
-	EXTRA_SUPPORT_SYMS="$EXTRA_SUPPORT_SYMS krb5int_gettimeofday"])
-AC_SUBST(GETTIMEOFDAY_OBJ)
-AC_SUBST(GETTIMEOFDAY_ST_OBJ)
 AC_SUBST(EXTRA_SUPPORT_SYMS)
 
+AC_HEADER_STDARG
 DECLARE_SYS_ERRLIST
-AC_CHECK_HEADERS(unistd.h paths.h regex.h regexpr.h fcntl.h memory.h ifaddrs.h sys/filio.h byteswap.h machine/endian.h machine/byte_order.h sys/bswap.h endian.h pwd.h arpa/inet.h alloca.h dlfcn.h limits.h)
+AC_CHECK_HEADERS(unistd.h paths.h regex.h regexpr.h fcntl.h memory.h ifaddrs.h sys/filio.h byteswap.h machine/endian.h machine/byte_order.h sys/bswap.h endian.h pwd.h arpa/inet.h alloca.h dlfcn.h limits.h pthread.h semaphore.h)
 AC_CHECK_HEADER(regexp.h, [], [],
 [#define INIT char *sp = instring;
 #define GETC() (*sp++)
@@ -296,9 +249,17 @@ AC_CHECK_HEADER(regexp.h, [], [],
 #define RETURN(c) return(c)
 #define ERROR(c)
 ])
+AC_CHECK_DECLS([dn_expand, res_init, res_search], , ,
+[#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+])
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len, struct sockaddr.sa_len], , ,
   [#include <sys/types.h>
 #include <netinet/in.h>])
+AC_CHECK_MEMBERS([struct sockaddr_in6.sin6_addr], , ,
+  [#include <sys/types.h>
+#include <netinet/in6.h>])
 AC_CHECK_MEMBERS([struct stat.st_mtimensec,struct stat.st_mtimespec.tv_nsec,struct stat.st_mtim.tv_nsec],,,[#include <sys/types.h>
 #include <sys/stat.h>])
 KRB5_AC_REGEX_FUNCS
@@ -545,13 +506,16 @@ fi
 HAVE_YYLINENO
 CHECK_DIRENT
 AC_TYPE_UID_T
+AC_TYPE_MODE_T
 
 AC_CHECK_HEADER(termios.h,
 [AC_CHECK_FUNC([tcsetattr],
   AC_DEFINE(POSIX_TERMIOS,1,[Define if termios.h exists and tcsetattr exists]))])
 
 KRB5_SIGTYPE
-AC_CHECK_HEADERS(poll.h stdlib.h string.h stddef.h sys/types.h sys/file.h sys/param.h sys/stat.h sys/time.h netinet/in.h sys/uio.h sys/filio.h sys/select.h time.h paths.h errno.h)
+AC_CHECK_HEADERS(stdlib.h string.h stddef.h sys/types.h sys/file.h sys/param.h sys/stat.h sys/time.h netinet/in.h sys/uio.h sys/filio.h sys/select.h time.h paths.h errno.h)
+AC_HEADER_STDARG
+KRB5_AC_INET6
 
 # If compiling with IPv6 support, test if in6addr_any functions.
 # Irix 6.5.16 defines it, but lacks support in the C library.
@@ -779,6 +743,7 @@ ath_compat=compat,)
 # kadmin testing.
 AC_CHECK_PROG(have_RUNTEST,runtest,runtest)
 AC_CHECK_PROG(have_PERL,perl,perl)
+AC_KRB5_TCL	
 if test "$have_PERL" = perl -a "$have_RUNTEST" = runtest -a "$TCL_LIBS" != ""; then
  	DO_TEST=ok
 fi
@@ -1003,27 +968,24 @@ AC_ARG_ENABLE([pkinit],
 enable_pkinit=try)
 if test "$enable_pkinit" = yes || test "$enable_pkinit" = try; then
   AC_CACHE_CHECK(for a recent enough OpenSSL, k5_cv_openssl_version_okay,
-[AC_COMPILE_IFELSE([AC_LANG_SOURCE([#include <openssl/opensslv.h>
+[AC_COMPILE_IFELSE([#include <openssl/opensslv.h>
 #if OPENSSL_VERSION_NUMBER < 0x00908000L
 # error openssl is too old, need 0.9.8
 #endif
 int i = 1;
-])], k5_cv_openssl_version_okay=yes, k5_cv_openssl_version_okay=no)])
+], k5_cv_openssl_version_okay=yes, k5_cv_openssl_version_okay=no)])
   old_LIBS="$LIBS"
   AC_CHECK_LIB(crypto, PKCS7_get_signer_info)
   LIBS="$old_LIBS"
 fi
 if test "$k5_cv_openssl_version_okay" = yes && (test "$enable_pkinit" = yes || test "$enable_pkinit" = try); then
   K5_GEN_MAKEFILE(plugins/preauth/pkinit)
-  PKINIT=yes
 elif test "$k5_cv_openssl_version_okay" = no && test "$enable_pkinit" = yes; then
   AC_MSG_ERROR([Version of OpenSSL is too old; cannot enable PKINIT.])
 else
   AC_DEFINE([DISABLE_PKINIT], 1, [Define to disable PKINIT plugin support])
   AC_MSG_NOTICE([Disabling PKINIT support.])
-  PKINIT=no
 fi
-AC_SUBST(PKINIT)
 
 # for lib/apputils
 AC_REPLACE_FUNCS(daemon)
@@ -1055,7 +1017,9 @@ AC_SUBST(HAVE_PYTHON)
 # it is linked again later.
 case $krb5_cv_host in
 *-*-aix*)
-	DB_EXTRA_LIBS=-ldb
+        # This is causing problems on AIX 5.2
+        #DB_EXTRA_LIBS=-ldb
+	DB_EXTRA_LIBS=
 	;;
 *)
 	DB_EXTRA_LIBS=
@@ -1105,6 +1069,13 @@ case $krb5_cv_host in
 esac
 AC_SUBST(SUPPORTLIB_MAJOR)
 
+# On the Mac we need CoreFoundation for UCS-2 conversion for RC4.
+case $krb5_cv_host in
+*-*-darwin* | *-*-rhapsody*) CRYPTO_LIBS="-framework CoreFoundation" ;;
+*)			     CRYPTO_LIBS="" ;;
+esac
+AC_SUBST(CRYPTO_LIBS)
+
 
 if test "$COM_ERR_VERSION" = k5 ; then
   K5_GEN_MAKEFILE(util/et)
@@ -1142,7 +1113,7 @@ if test -n "$OPENLDAP_PLUGIN"; then
   K5_GEN_MAKEFILE(plugins/kdb/ldap)
   K5_GEN_MAKEFILE(plugins/kdb/ldap/ldap_util)
   K5_GEN_MAKEFILE(plugins/kdb/ldap/libkdb_ldap)
-  ldap_plugin_dir='plugins/kdb/ldap plugins/kdb/ldap/ldap_util'
+  ldap_plugin_dir=plugins/kdb/ldap
   LDAP=yes
 else
   LDAP=no
@@ -1153,10 +1124,10 @@ AC_SUBST(LDAP)
 sam2_plugin=""
 old_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-AC_CHECK_LIB(aceclnt, sd_init, [
-	     AC_MSG_NOTICE([Enabling RSA securID support])
-	     sam2_plugin=plugins/preauth/securid_sam2
-	     ])
+AC_CHECK_LIB(aceclnt, sd_init,[
+		      AC_MSG_NOTICE([Enabling RSA securID support])
+		      sam2_plugin=plugins/preauth/securid_sam2
+		      ])
 AC_SUBST(sam2_plugin)
 CFLAGS=$old_CFLAGS
 
@@ -1176,136 +1147,25 @@ if test "$ac_cv_lib_socket" = "yes" -a "$ac_cv_lib_nsl" = "yes"; then
 	AC_DEFINE(BROKEN_STREAMS_SOCKETS,1,[Define if socket can't be bound to 0.0.0.0])
 fi
 
-# Compile with libedit support in ss by default if available.  Compile
-# with readline only if asked, to avoid a default GPL dependency.
-# Building with readline also breaks the dejagnu test suite.
-AC_ARG_WITH([libedit],
-	    AC_HELP_STRING([--without-libedit], [do not compile with libedit]),
-	    [], [with_libedit=default])
-AC_ARG_WITH([readline],
-	    AC_HELP_STRING([--with-readline], [compile with GNU Readline]),
-	    [], [with_readline=no])
-AC_MSG_CHECKING([for readline support])
-if test "x$with_readline" = xyes; then
-  with_libedit=no
-fi
-RL_CFLAGS=
-RL_LIBS=
-if test "x$with_libedit" != xno; then
-  if rl_cflags=`pkg-config --cflags libedit 2>&1`; then
-    RL_CFLAGS=$rl_cflags
-    RL_LIBS=`pkg-config --libs libedit`
-    AC_DEFINE([HAVE_LIBEDIT], 1, [Define if building with libedit.])
-    AC_MSG_RESULT([using libedit])
-  elif test "x$with_libedit" = yes; then
-    # We were explicitly asked for libedit and couldn't find it.
-    AC_MSG_ERROR([Could not detect libedit with pkg-config.])
-  else
-    AC_MSG_RESULT([not using any])
-  fi
-elif test "x$with_readline" = xyes; then
-  AC_MSG_RESULT([using GNU Readline])
-  AC_CHECK_LIB([readline], [main], :,
-	       AC_MSG_FAILURE([Cannot find readline library.]), [-lncurses])
-  AC_DEFINE([HAVE_READLINE], 1, [Define if building with GNU Readline.])
-  RL_LIBS='-lreadline -lhistory -lncurses'
-else
-  AC_MSG_RESULT([not using any])
-fi
-AC_SUBST([RL_CFLAGS])
-AC_SUBST([RL_LIBS])
-
-AC_ARG_WITH([system-verto],
-  [AC_HELP_STRING([--with-system-verto], [always use system verto library])],
-  [], [with_system_verto=default])
-VERTO_CFLAGS=
-VERTO_LIBS="-lverto"
-VERTO_VERSION=k5
-if test "x$with_system_verto" != xno; then
-  if verto_cflags=`pkg-config --cflags libverto 2>&1`; then
-    VERTO_CFLAGS=$verto_cflags
-    VERTO_LIBS=`pkg-config --libs libverto`
-    VERTO_VERSION=sys
-  else
-    AC_CHECK_LIB([verto], [verto_run], [VERTO_VERSION=sys],
-      [if test "x$with_system_verto" = xyes; then
-        AC_MSG_ERROR([cannot detect system libverto])
-      fi])
-  fi
-fi
-if test "x$VERTO_VERSION" = xsys; then
-  AC_MSG_NOTICE([Using system libverto])
-else
-  AC_MSG_RESULT([Using built-in libverto])
-fi
-AC_SUBST([VERTO_CFLAGS])
-AC_SUBST([VERTO_LIBS])
-AC_SUBST([VERTO_VERSION])
-
-AC_PATH_PROG(GROFF, groff)
-
-# Make localedir work in autoconf 2.5x.
-if test "${localedir+set}" != set; then
-    localedir='$(datadir)/locale'
-fi
-AC_SUBST(localedir)
-
-# Build-time default ccache, keytab, and client keytab names.  These
-# can be given as variable arguments DEFCCNAME, DEFKTNAME, and
-# DEFCKTNAME.  Otherwise, we try to get the OS defaults from
-# krb5-config if we can, or fall back to hardcoded defaults.
-AC_ARG_VAR(DEFCCNAME, [Default ccache name])
-AC_ARG_VAR(DEFKTNAME, [Default keytab name])
-AC_ARG_VAR(DEFCKTNAME, [Default client keytab name])
-AC_ARG_WITH([krb5-config],
-	AC_HELP_STRING([--with-krb5-config=PATH],
-		[path to existing krb5-config program for defaults]), ,
-        [with_krb5_config=krb5-config])
-if test "x$with_krb5_config" != xno; then
-	if test "x$with_krb5_config" = xyes; then
-		with_krb5_config=krb5-config
-	fi
-	if $with_krb5_config --help 2>&1 | grep defccname >/dev/null; then
-		AC_MSG_NOTICE([Using $with_krb5_config for build defaults])
-		: "${DEFCCNAME=`$with_krb5_config --defccname`}"
-		: "${DEFKTNAME=`$with_krb5_config --defktname`}"
-		: "${DEFCKTNAME=`$with_krb5_config --defcktname`}"
-	fi
-fi
-if test "${DEFCCNAME+set}" != set; then
-	DEFCCNAME=FILE:/tmp/krb5cc_%{uid}
-fi
-if test "${DEFKTNAME+set}" != set; then
-	DEFKTNAME=FILE:/etc/krb5.keytab
-fi
-if test "${DEFCKTNAME+set}" != set; then
-	adl_RECURSIVE_EVAL($localstatedir, exp_localstatedir)
-	DEFCKTNAME=FILE:$exp_localstatedir/krb5/user/%{euid}/client.keytab
-fi
-AC_MSG_NOTICE([Default ccache name: $DEFCCNAME])
-AC_MSG_NOTICE([Default keytab name: $DEFKTNAME])
-AC_MSG_NOTICE([Default client keytab name: $DEFCKTNAME])
-AC_DEFINE_UNQUOTED(DEFCCNAME, ["$DEFCCNAME"], [Define to default ccache name])
-AC_DEFINE_UNQUOTED(DEFKTNAME, ["$DEFKTNAME"], [Define to default keytab name])
-AC_DEFINE_UNQUOTED(DEFCKTNAME, ["$DEFCKTNAME"],
-                   [Define to default client keytab name])
-
 AC_CONFIG_FILES(krb5-config, [chmod +x krb5-config])
 V5_AC_OUTPUT_MAKEFILE(.
 
-	util util/support util/profile util/profile/testmod util/send-pr
-	util/verto
+	util util/support util/profile util/send-pr
 
 	lib lib/kdb
 
-	lib/crypto lib/crypto/krb lib/crypto/$CRYPTO_IMPL
-	lib/crypto/$CRYPTO_IMPL/enc_provider
-	lib/crypto/$CRYPTO_IMPL/hash_provider
-	lib/crypto/$CRYPTO_IMPL/des
-	lib/crypto/$CRYPTO_IMPL/md4 lib/crypto/$CRYPTO_IMPL/md5
-        lib/crypto/$CRYPTO_IMPL/sha1 lib/crypto/$CRYPTO_IMPL/sha2
-	lib/crypto/$CRYPTO_IMPL/aes lib/crypto/$CRYPTO_IMPL/camellia
-	lib/crypto/crypto_tests
+	lib/crypto lib/crypto/krb lib/crypto/krb/crc32 lib/crypto/$CRYPTO_IMPL/des
+	lib/crypto/krb/dk lib/crypto/$CRYPTO_IMPL/enc_provider
+	lib/crypto/$CRYPTO_IMPL/hash_provider lib/crypto/krb/checksum
+	lib/crypto/krb/prf lib/crypto/krb/rand2key
+	lib/crypto/$CRYPTO_IMPL lib/crypto/$CRYPTO_IMPL/md4 lib/crypto/$CRYPTO_IMPL/md5
+	lib/crypto/krb/old lib/crypto/krb/raw
+        lib/crypto/$CRYPTO_IMPL/sha1
+        lib/crypto/$CRYPTO_IMPL/sha2
+	lib/crypto/krb/arcfour lib/crypto/krb/prng
+	lib/crypto/krb/prng/$PRNG_ALG
+	lib/crypto/$CRYPTO_IMPL/aes
+	lib/crypto/$CRYPTO_IMPL/camellia lib/crypto/crypto_tests
 
 	lib/krb5 lib/krb5/error_tables lib/krb5/asn.1 lib/krb5/ccache
 dnl	lib/krb5/ccache/ccapi
@@ -1323,20 +1183,12 @@ dnl	lib/krb5/ccache/ccapi
 
 dnl	ccapi ccapi/lib ccapi/lib/unix ccapi/server ccapi/server/unix ccapi/test
 
-	kdc slave config-files man doc include
+	kdc slave config-files gen-manpages include
 
 	plugins/locate/python
 	plugins/kadm5_hook/test
-	plugins/kdb/db2
-	plugins/kdb/db2/libdb2
-	plugins/kdb/db2/libdb2/hash
-	plugins/kdb/db2/libdb2/btree
-	plugins/kdb/db2/libdb2/db
-	plugins/kdb/db2/libdb2/mpool
-	plugins/kdb/db2/libdb2/recno
-	plugins/kdb/db2/libdb2/test
 	plugins/kdb/hdb
-	plugins/preauth/cksum_body
+	plugins/preauth/cksum_body plugins/preauth/encrypted_challenge
 	plugins/preauth/securid_sam2
 	plugins/preauth/wpse
 	plugins/authdata/greet
@@ -1344,7 +1196,7 @@ dnl	ccapi ccapi/lib ccapi/lib/unix ccapi/server ccapi/server/unix ccapi/test
 	plugins/authdata/greet_server
 
 	clients clients/klist clients/kinit clients/kvno
-	clients/kdestroy clients/kpasswd clients/ksu clients/kswitch
+	clients/kdestroy clients/kpasswd clients/ksu
 
 	kadmin kadmin/cli kadmin/dbutil kadmin/ktutil kadmin/server
 	kadmin/testing kadmin/testing/scripts kadmin/testing/util
@@ -1357,6 +1209,5 @@ dnl	ccapi ccapi/lib ccapi/lib/unix ccapi/server ccapi/server/unix ccapi/test
 	tests tests/resolve tests/asn.1 tests/create tests/hammer
 	tests/verify tests/gssapi tests/dejagnu tests/threads tests/shlib
 	tests/gss-threads tests/misc tests/mkeystash_compat
-	util/gss-kernel-lib util/collected-client-lib
-	po
+	util/collected-client-lib
 )

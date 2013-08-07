@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id$
+ * $Id: util_set.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 #include "gssapiP_generic.h"

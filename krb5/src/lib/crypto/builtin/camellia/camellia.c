@@ -1,5 +1,5 @@
-/* lib/crypto/builtin/camellia/camellia.c - Camellia version 1.2.0 */
-/*
+/* camellia.c ver 1.2.0
+ *
  * Copyright (c) 2006,2007,2009
  * NTT (Nippon Telegraph and Telephone Corporation) . All rights reserved.
  *
@@ -35,6 +35,9 @@
 #include <stdlib.h>
 
 #include "camellia.h"
+
+#include "k5-int.h" /* Only for CAMELLIA; remove later. */
+#ifdef CAMELLIA
 
 /* key constants */
 
@@ -1537,3 +1540,5 @@ camellia_dec_blk(const unsigned char in_blk[],  unsigned char out_blk[],
     Camellia_DecryptBlock(cx->keybitlen, in_blk, cx->k_sch, out_blk);
     return camellia_good;
 }
+
+#endif /* CAMELLIA */

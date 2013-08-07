@@ -1,5 +1,6 @@
-/* ccapi/server/ccs_lock_state.c */
 /*
+ * $Header$
+ *
  * Copyright 2006, 2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

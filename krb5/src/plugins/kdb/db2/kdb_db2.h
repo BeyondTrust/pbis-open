@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/db2/kdb_db2.h */
 /*
+ * lib/kdb/kdb_db2.h
+ *
  * Copyright 1997 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
  *
  * KDC Database backend definitions for Berkely DB.
  */
@@ -40,6 +39,7 @@ typedef struct _krb5_db2_context {
     krb5_boolean        hashfirst;      /* Try hash database type first */
     char *              db_lf_name;     /* Name of lock file            */
     int                 db_lf_file;     /* File descriptor of lock file */
+    time_t              db_lf_time;     /* Time last updated            */
     int                 db_locks_held;  /* Number of times locked       */
     int                 db_lock_mode;   /* Last lock mode, e.g. greatest*/
     krb5_boolean        db_nb_locks;    /* [Non]Blocking lock modes     */
@@ -49,14 +49,24 @@ typedef struct _krb5_db2_context {
     krb5_boolean        disable_lockout;
 } krb5_db2_context;
 
+#define KRB5_DB2_MAX_RETRY 5
+
+#define KDB2_LOCK_EXT ".ok"
+#define KDB2_TEMP_LOCK_EXT "~.ok"
+
 krb5_error_code krb5_db2_init(krb5_context);
 krb5_error_code krb5_db2_fini(krb5_context);
 krb5_error_code krb5_db2_get_age(krb5_context, char *, time_t *);
+krb5_error_code krb5_db2_rename(krb5_context, char *, char *, int );
 krb5_error_code krb5_db2_get_principal(krb5_context, krb5_const_principal,
                                        unsigned int, krb5_db_entry **);
 void krb5_db2_free_principal(krb5_context, krb5_db_entry *);
 krb5_error_code krb5_db2_put_principal(krb5_context, krb5_db_entry *,
                                        char **db_args);
+krb5_error_code krb5_db2_iterate_ext(krb5_context,
+                                     krb5_error_code (*)(krb5_pointer,
+                                                         krb5_db_entry *),
+                                     krb5_pointer, int, int);
 krb5_error_code krb5_db2_iterate(krb5_context, char *,
                                  krb5_error_code (*)(krb5_pointer,
                                                      krb5_db_entry *),
@@ -133,7 +143,7 @@ krb5_error_code
 krb5_db2_check_policy_as(krb5_context kcontext, krb5_kdc_req *request,
                          krb5_db_entry *client, krb5_db_entry *server,
                          krb5_timestamp kdc_time, const char **status,
-                         krb5_pa_data ***e_data);
+                         krb5_data *e_data);
 
 void
 krb5_db2_audit_as_req(krb5_context kcontext, krb5_kdc_req *request,

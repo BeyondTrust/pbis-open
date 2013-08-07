@@ -36,11 +36,9 @@ KDB5_DB_LIB=@KDB5_DB_LIB@
 LDFLAGS='@LDFLAGS@'
 RPATH_FLAG='@RPATH_FLAG@'
 PROG_RPATH_FLAGS='@PROG_RPATH_FLAGS@'
+RPATH_TAIL=@RPATH_TAIL@
 PTHREAD_CFLAGS='@PTHREAD_CFLAGS@'
 DL_LIB='@DL_LIB@'
-DEFCCNAME='@DEFCCNAME@'
-DEFKTNAME='@DEFKTNAME@'
-DEFCKTNAME='@DEFCKTNAME@'
 
 LIBS='@LIBS@'
 GEN_LIB=@GEN_LIB@
@@ -60,15 +58,6 @@ while test $# != 0; do
 	    ;;
 	--cflags)
 	    do_cflags=1
-	    ;;
-	--defccname)
-	    do_defccname=1
-	    ;;
-	--defcktname)
-	    do_defcktname=1
-	    ;;
-	--defktname)
-	    do_defktname=1
 	    ;;
 	--deps)
 	    do_deps=1
@@ -114,10 +103,7 @@ while test $# != 0; do
 done
 
 # If required options - provide help
-if test -z "$do_all" -a -z "$do_version" -a -z "$do_vendor" -a \
-    -z "$do_prefix" -a -z "$do_vendor" -a -z "$do_exec_prefix" -a \
-    -z "$do_defccname" -a -z "$do_defktname" -a -z "$do_defcktname" -a \
-    -z "$do_cflags" -a -z "$do_libs"; then
+if test -z "$do_all" -a -z "$do_version" -a -z "$do_vendor" -a -z "$do_prefix" -a -z "$do_vendor" -a -z "$do_exec_prefix" -a -z "$do_cflags" -a -z "$do_libs"; then
     do_help=1
 fi
 
@@ -131,9 +117,6 @@ if test -n "$do_help"; then
     echo "        [--vendor]        Vendor information"
     echo "        [--prefix]        Kerberos installed prefix"
     echo "        [--exec-prefix]   Kerberos installed exec_prefix"
-    echo "        [--defccname]     Show built-in default ccache name"
-    echo "        [--defktname]     Show built-in default keytab name"
-    echo "        [--defcktname]    Show built-in default client keytab name"
     echo "        [--cflags]        Compile time CFLAGS"
     echo "        [--libs]          List libraries required to link [LIBRARIES]"
     echo "Libraries:"
@@ -179,21 +162,6 @@ if test -n "$do_exec_prefix"; then
     $all_exit
 fi
 
-if test -n "$do_defccname"; then
-    echo "$DEFCCNAME"
-    $all_exit
-fi
-
-if test -n "$do_defktname"; then
-    echo "$DEFKTNAME"
-    $all_exit
-fi
-
-if test -n "$do_defcktname"; then
-    echo "$DEFCKTNAME"
-    $all_exit
-fi
-
 if test -n "$do_cflags"; then
     if test x"$includedir" != x"/usr/include" ; then
         echo "-I${includedir}"
@@ -219,7 +187,7 @@ if test -n "$do_libs"; then
 	    -e 's#\$(RPATH_FLAG)#'"$RPATH_FLAG"'#' \
 	    -e 's#\$(LDFLAGS)#'"$LDFLAGS"'#' \
 	    -e 's#\$(PTHREAD_CFLAGS)#'"$PTHREAD_CFLAGS"'#' \
-	    -e 's#\$(CFLAGS)##'`
+	    -e 's#\$(CFLAGS)#'"$CFLAGS"'#'`
 
     if test $library = 'kdb'; then
 	lib_flags="$lib_flags -lkdb5 $KDB5_DB_LIB"
@@ -247,12 +215,8 @@ if test -n "$do_libs"; then
     fi
 
     if test $library = 'krb5'; then
-	lib_flags="$lib_flags -lkrb5 -lk5crypto -lcom_err"
+	lib_flags="$lib_flags -lkrb5 -lk5crypto -lcom_err $GEN_LIB $LIBS $DL_LIB"
     fi
-
-    # If we ever support a flag to generate output suitable for static
-    # linking, we would output "-lkrb5support $GEN_LIB $LIBS $DL_LIB"
-    # here.
 
     echo $lib_flags
 fi

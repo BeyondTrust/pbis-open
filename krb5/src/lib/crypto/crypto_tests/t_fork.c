@@ -34,14 +34,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-static krb5_context ctx = NULL;
+static krb5_context ctx;
 
 static void
 t(krb5_error_code code)
 {
     if (code != 0) {
-        fprintf(stderr, "Failure: %s\n", krb5_get_error_message(ctx, code));
-        exit(1);
+	fprintf(stderr, "Failure: %s\n", krb5_get_error_message(ctx, code));
+	exit(1);
     }
 }
 
@@ -65,12 +65,9 @@ main()
     pid_t pid;
     int status;
 
-    /* Seed the PRNG instead of creating a context, so we don't need
-     * krb5.conf. */
-    t(krb5_c_random_seed(ctx, &plain));
-
     /* Create AES and RC4 ciphertexts with random keys.  Use cipher state for
      * RC4. */
+    t(krb5_init_context(&ctx));
     t(krb5_c_make_random_key(ctx, ENCTYPE_AES256_CTS_HMAC_SHA1_96, &kb_aes));
     t(krb5_c_make_random_key(ctx, ENCTYPE_ARCFOUR_HMAC, &kb_rc4));
     t(krb5_k_create_key(ctx, &kb_aes, &key_aes));
@@ -103,11 +100,11 @@ main()
 
     /* If we're the parent, make sure the child succeeded. */
     if (pid != 0) {
-        assert(wait(&status) == pid);
-        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-            fprintf(stderr, "Child failed with status %d\n", status);
-            return 1;
-        }
+	assert(wait(&status) == pid);
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+	    fprintf(stderr, "Child failed with status %d\n", status);
+	    return 1;
+	}
     }
 
     return 0;

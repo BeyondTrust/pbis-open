@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* tests/threads/profread.c */
 /*
+ * test/threads/profread.c
+ *
  * Copyright (C) 2009 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * krb5 profile data retrieval performance testing
  * initially contributed by Ken Raeburn
  */
@@ -168,22 +168,22 @@ static void run_iterations (struct resource_info *r)
 
     err = krb5_init_context(&ctx);
     if (err) {
-        com_err(prog, err, "initializing krb5 context");
-        exit(1);
+	com_err(prog, err, "initializing krb5 context");
+	exit(1);
     }
     err = krb5_get_profile(ctx, &prof);
     if (err) {
-        com_err(prog, err, "fetching profile from context");
-        exit(1);
+	com_err(prog, err, "fetching profile from context");
+	exit(1);
     }
     r->start_time = now ();
     for (i = 0; i < iter_count; i++) {
-        int ival;
-        err = profile_get_integer(prof, "one", "two", "three", 42, &ival);
-        if (err) {
-            com_err(prog, err, "fetching value from profile");
-            exit(1);
-        }
+	int ival;
+	err = profile_get_integer(prof, "one", "two", "three", 42, &ival);
+	if (err) {
+	    com_err(prog, err, "fetching value from profile");
+	    exit(1);
+	}
     }
     r->end_time = now ();
     profile_release (prof);
@@ -273,8 +273,8 @@ main (int argc, char *argv[])
      * performance issue you're chasing down, different values may be
      * of particular interest, so report all the info we've got.
      */
-    printf ("Overall run time with %d threads = %Lfs, %.2Lfus per iteration.\n",
-            n_threads, wallclock, 1000000 * wallclock / iter_count);
+    printf ("Overall run time with %d threads = %Lfs, %Lfms per iteration.\n",
+            n_threads, wallclock, 1000 * wallclock / iter_count);
     user = tvsub (finish.ru_utime, start.ru_utime);
     sys = tvsub (finish.ru_stime, start.ru_stime);
     total = user + sys;
@@ -287,7 +287,7 @@ main (int argc, char *argv[])
             100 * user / wallclock / n_threads,
             100 * sys / wallclock / n_threads,
             100 * total / wallclock / n_threads);
-    printf ("Total CPU use per iteration per thread: %.2Lfus\n",
-            1000000 * total / n_threads / iter_count);
+    printf ("Total CPU use per iteration per thread: %Lfms\n",
+            1000 * total / n_threads / iter_count);
     return 0;
 }

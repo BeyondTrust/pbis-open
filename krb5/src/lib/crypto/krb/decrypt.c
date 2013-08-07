@@ -25,11 +25,13 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "etypes.h"
+#include "aead.h"
 
 krb5_error_code KRB5_CALLCONV
 krb5_k_decrypt(krb5_context context, krb5_key key,
-               krb5_keyusage usage, const krb5_data *cipher_state,
+               krb5_keyusage usage, const krb5_data *ivec,
                const krb5_enc_data *input, krb5_data *output)
 {
     const struct krb5_keytypes *ktp;
@@ -75,7 +77,7 @@ krb5_k_decrypt(krb5_context context, krb5_key key,
     memcpy(iov[3].data.data, input->ciphertext.data + header_len + plain_len,
            trailer_len);
 
-    ret = ktp->decrypt(ktp, key, usage, cipher_state, iov, 4);
+    ret = ktp->decrypt(ktp, key, usage, ivec, iov, 4);
     if (ret != 0)
         zap(output->data, plain_len);
     else
@@ -86,7 +88,7 @@ krb5_k_decrypt(krb5_context context, krb5_key key,
 
 krb5_error_code KRB5_CALLCONV
 krb5_c_decrypt(krb5_context context, const krb5_keyblock *keyblock,
-               krb5_keyusage usage, const krb5_data *cipher_state,
+               krb5_keyusage usage, const krb5_data *ivec,
                const krb5_enc_data *input, krb5_data *output)
 {
     krb5_key key;
@@ -95,7 +97,7 @@ krb5_c_decrypt(krb5_context context, const krb5_keyblock *keyblock,
     ret = krb5_k_create_key(context, keyblock, &key);
     if (ret != 0)
         return ret;
-    ret = krb5_k_decrypt(context, key, usage, cipher_state, input, output);
+    ret = krb5_k_decrypt(context, key, usage, ivec, input, output);
     krb5_k_free_key(context, key);
     return ret;
 }

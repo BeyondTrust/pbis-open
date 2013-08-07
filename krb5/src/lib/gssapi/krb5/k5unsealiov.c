@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/gssapi/krb5/k5unsealiov.c */
 /*
+ * lib/gssapi/krb5/k5unsealiov.c
+ *
  * Copyright 2008, 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
  */
 
 #include <assert.h>
@@ -137,6 +140,8 @@ kg_unseal_v1_iov(krb5_context context,
         return GSS_S_BAD_SIG;
     }
 
+    assert(ctx->big_endian == 0);
+
     /* decode the message, if SEAL */
     if (toktype == KG_TOK_WRAP_MSG) {
         if (sealalg != 0xFFFF) {
@@ -223,11 +228,10 @@ kg_unseal_v1_iov(krb5_context context,
     switch (signalg) {
     case SGN_ALG_DES_MAC_MD5:
     case SGN_ALG_3:
-        code = kg_encrypt_inplace(context, ctx->seq, KG_USAGE_SEAL,
-                                  (g_OID_equal(ctx->mech_used,
-                                               gss_mech_krb5_old) ?
-                                   ctx->seq->keyblock.contents : NULL),
-                                  md5cksum.contents, 16);
+        code = kg_encrypt(context, ctx->seq, KG_USAGE_SEAL,
+                          (g_OID_equal(ctx->mech_used, gss_mech_krb5_old) ?
+                           ctx->seq->keyblock.contents : NULL),
+                          md5cksum.contents, md5cksum.contents, 16);
         if (code != 0) {
             retval = GSS_S_FAILURE;
             goto cleanup;
@@ -334,7 +338,7 @@ kg_unseal_iov_token(OM_uint32 *minor_status,
 
         kg_iov_msglen(iov, iov_count, &data_length, &assoc_data_length);
 
-        input_length += data_length - assoc_data_length;
+        input_length += data_length;
 
         if (padding != NULL)
             input_length += padding->buffer.length;
@@ -500,14 +504,10 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
     case KG2_TOK_WRAP_MSG:
     case KG2_TOK_DEL_CTX: {
         size_t ec, rrc;
-        krb5_enctype enctype;
+        krb5_enctype enctype = ctx->enc->keyblock.enctype;
         unsigned int k5_headerlen = 0;
         unsigned int k5_trailerlen = 0;
 
-        if (ctx->have_acceptor_subkey)
-            enctype = ctx->acceptor_subkey->keyblock.enctype;
-        else
-            enctype = ctx->subkey->keyblock.enctype;
         conf_req_flag = ((ptr[0] & FLAG_WRAP_CONFIDENTIAL) != 0);
         ec = conf_req_flag ? load_16_be(ptr + 2) : 0;
         rrc = load_16_be(ptr + 4);
@@ -601,8 +601,12 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
                                        tiov, i, toktype);
     if (major_status == GSS_S_COMPLETE)
         *data = *tdata;
-    else
-        kg_release_iov(tdata, 1);
+    else if (tdata->type & GSS_IOV_BUFFER_FLAG_ALLOCATED) {
+        OM_uint32 tmp;
+
+        gss_release_buffer(&tmp, &tdata->buffer);
+        tdata->type &= ~(GSS_IOV_BUFFER_FLAG_ALLOCATED);
+    }
 
 cleanup:
     if (tiov != NULL)
@@ -625,6 +629,11 @@ kg_unseal_iov(OM_uint32 *minor_status,
     krb5_gss_ctx_id_rec *ctx;
     OM_uint32 code;
 
+    if (!kg_validate_ctx_id(context_handle)) {
+        *minor_status = (OM_uint32)G_VALIDATE_FAILED;
+        return GSS_S_NO_CONTEXT;
+    }
+
     ctx = (krb5_gss_ctx_id_rec *)context_handle;
     if (!ctx->established) {
         *minor_status = KG_CTX_INCOMPLETE;
@@ -641,38 +650,3 @@ kg_unseal_iov(OM_uint32 *minor_status,
 
     return code;
 }
-
-OM_uint32 KRB5_CALLCONV
-krb5_gss_unwrap_iov(OM_uint32 *minor_status,
-                    gss_ctx_id_t context_handle,
-                    int *conf_state,
-                    gss_qop_t *qop_state,
-                    gss_iov_buffer_desc *iov,
-                    int iov_count)
-{
-    OM_uint32 major_status;
-
-    major_status = kg_unseal_iov(minor_status, context_handle,
-                                 conf_state, qop_state,
-                                 iov, iov_count, KG_TOK_WRAP_MSG);
-
-    return major_status;
-}
-
-#if 0
-OM_uint32
-krb5_gss_verify_mic_iov(OM_uint32 *minor_status,
-                        gss_ctx_id_t context_handle,
-                        gss_qop_t *qop_state,
-                        gss_iov_buffer_desc *iov,
-                        int iov_count)
-{
-    OM_uint32 major_status;
-
-    major_status = kg_unseal_iov(minor_status, context_handle,
-                                 NULL, qop_state,
-                                 iov, iov_count, KG_TOK_WRAP_MSG);
-
-    return major_status;
-}
-#endif

@@ -7,14 +7,17 @@ mydir=.
 #	plugins/preauth/wpse
 #	plugins/preauth/cksum_body
 #	plugins/authdata/greet
-SUBDIRS=util include lib \
-	@sam2_plugin@ \
-	plugins/kadm5_hook/test \
-	plugins/kdb/db2 \
+# We moved to building only client side code because of issues buildng under AIX. 
+# The proper fixed is to have a configure option to be build only client side bits.
+SUBDIRS_all=util include lib \
+	kadmin/ktutil \
 	@ldap_plugin_dir@ \
+	@sam2_plugin@ \
 	plugins/preauth/pkinit \
-	kdc kadmin slave clients appl tests \
-	config-files man doc @po@
+	clients \
+	config-files gen-manpages
+SUBDIRS_includes_only=util/support util/et util/profile include
+SUBDIRS=$(SUBDIRS_@SUBDIRS_TYPE@)
 WINSUBDIRS=include util lib ccapi windows clients appl
 BUILDTOP=$(REL).
 LOCALINCLUDES = -I$(srcdir) 
@@ -54,10 +57,7 @@ world::
 INSTALLMKDIRS = $(KRB5ROOT) $(KRB5MANROOT) $(KRB5OTHERMKDIRS) \
 		$(ADMIN_BINDIR) $(SERVER_BINDIR) $(CLIENT_BINDIR) \
 		$(ADMIN_MANDIR) $(SERVER_MANDIR) $(CLIENT_MANDIR) \
-		$(FILE_MANDIR) \
-		$(ADMIN_CATDIR) $(SERVER_CATDIR) $(CLIENT_CATDIR) \
-		$(FILE_CATDIR) \
-		$(KRB5_LIBDIR) $(KRB5_INCDIR) \
+		$(FILE_MANDIR) $(KRB5_LIBDIR) $(KRB5_INCDIR) \
 		$(KRB5_DB_MODULE_DIR) $(KRB5_PA_MODULE_DIR) \
 		$(KRB5_AD_MODULE_DIR) \
 		$(KRB5_LIBKRB5_MODULE_DIR) \
@@ -83,12 +83,28 @@ install-headers-prerecurse: install-headers-mkdirs
 # install::
 #	$(MAKE) $(MFLAGS) install.man
 
+fake-install: runenv.py
+	$(RM) -r $(FAKEPREFIX)
+	@for i in $(INSTALLMKDIRS); do \
+		$(srcdir)/config/mkinstalldirs util/fakedest$$i; \
+	done
+	(w=`pwd`; cd util && $(MAKE) install DESTDIR="$$w/util/fakedest")
+	(w=`pwd`; cd lib && $(MAKE) install DESTDIR="$$w/util/fakedest")
+	(w=`pwd`; cd plugins/kdb/db2 && $(MAKE) install DESTDIR="$$w/util/fakedest")
+	(w=`pwd`; cd plugins/preauth/encrypted_challenge && $(MAKE) install DESTDIR="$$w/util/fakedest")
+	if test -r plugins/preauth/pkinit/Makefile; then \
+	  (w=`pwd`; cd plugins/preauth/pkinit && $(MAKE) install DESTDIR="$$w/util/fakedest"); \
+	fi
+
+#	(w=`pwd`; cd plugins/locate/python && $(MAKE) install DESTDIR="$$w/util/fakedest")
+
 TAGS: $(SRCS)
 	etags $(SRCS)
 
 clean-:: clean-windows
 clean-unix::
 	$(RM) *.o core krb5-config
+	$(RM) -r util/fakedest
 
 mostlyclean: clean
 
@@ -153,9 +169,13 @@ WINMAKEFILES=Makefile \
 	clients\kinit\Makefile clients\klist\Makefile \
 	clients\kpasswd\Makefile clients\kvno\Makefile \
 	clients\kcpytkt\Makefile clients\kdeltkt\Makefile \
-	clients\kswitch\Makefile \
 	include\Makefile \
 	lib\Makefile lib\crypto\Makefile lib\crypto\krb\Makefile \
+	lib\crypto\krb\crc32\Makefile lib\crypto\krb\rand2key\Makefile \
+	lib\crypto\krb\prng\Makefile lib\crypto\krb\prng\yarrow\Makefile \
+	lib\crypto\krb\prf\Makefile lib\crypto\krb\checksum\Makefile \
+	lib\crypto\krb\old\Makefile lib\crypto\krb\raw\Makefile \
+	lib\crypto\krb\arcfour\Makefile lib\crypto\krb\dk\Makefile \
 	lib\crypto\builtin\Makefile lib\crypto\builtin\aes\Makefile \
 	lib\crypto\builtin\enc_provider\Makefile \
 	lib\crypto\builtin\des\Makefile lib\crypto\builtin\md5\Makefile \
@@ -176,16 +196,13 @@ WINMAKEFILES=Makefile \
 	lib\krb5\rcache\Makefile \
 	lib\krb5\unicode\Makefile \
 	util\Makefile \
-	util\et\Makefile util\profile\Makefile util\profile\testmod\Makefile \
+	util\et\Makefile util\profile\Makefile \
 	util\support\Makefile \
 	util\windows\Makefile \
-	util\wshelper\Makefile \
 	windows\Makefile windows\lib\Makefile \
 	windows\cns\Makefile windows\gina\Makefile \
-	windows\ms2mit\Makefile \
-	windows\wintel\Makefile windows\kfwlogon\Makefile \
-	windows\leashdll\Makefile windows\leash\Makefile \
-	windows\leash\htmlhelp\Makefile
+	windows\gss\Makefile windows\ms2mit\Makefile \
+	windows\wintel\Makefile windows\kfwlogon\Makefile
 
 ##DOS##Makefile-windows:: $(MKFDEP) $(WINMAKEFILES)
 
@@ -213,8 +230,6 @@ WINMAKEFILES=Makefile \
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##clients\kpasswd\Makefile: clients\kpasswd\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##clients\kswitch\Makefile: clients\kswitch\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##clients\kvno\Makefile: clients\kvno\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##clients\kcpytkt\Makefile: clients\kcpytkt\Makefile.in $(MKFDEP)
@@ -227,7 +242,29 @@ WINMAKEFILES=Makefile \
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\crypto\Makefile: lib\crypto\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\crc32\Makefile: lib\crypto\krb\crc32\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\rand2key\Makefile: lib\crypto\krb\rand2key\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\prng\fortuna\Makefile: lib\crypto\krb\prng\fortuna\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\prng\yarrow\Makefile: lib\crypto\krb\prng\yarrow\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\prng\Makefile: lib\crypto\krb\prng\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\prf\Makefile: lib\crypto\krb\prf\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\checksum\Makefile: lib\crypto\krb\checksum\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\crypto\krb\Makefile: lib\crypto\krb\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\old\Makefile: lib\crypto\krb\old\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\raw\Makefile: lib\crypto\krb\raw\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\arcfour\Makefile: lib\crypto\krb\arcfour\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\dk\Makefile: lib\crypto\krb\dk\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\crypto\builtin\aes\Makefile: lib\crypto\builtin\aes\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
@@ -289,13 +326,9 @@ WINMAKEFILES=Makefile \
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##util\profile\Makefile: util\profile\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##util\profile\testmod\Makefile: util\profile\testmod\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##util\support\Makefile: util\support\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##util\windows\Makefile: util\windows\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##util\wshelper\Makefile: util\wshelper\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##windows\Makefile: windows\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
@@ -305,17 +338,13 @@ WINMAKEFILES=Makefile \
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##windows\gina\Makefile: windows\gina\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##windows\gss\Makefile: windows\gss\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##windows\ms2mit\Makefile: windows\ms2mit\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##windows\wintel\Makefile: windows\wintel\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##windows\kfwlogon\Makefile: windows\kfwlogon\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##windows\leashdll\Makefile: windows\leashdll\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##windows\leash\Makefile: windows\leash\Makefile.in $(MKFDEP)
-##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##windows\leash\htmlhelp\Makefile: windows\leash\htmlhelp\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 
 clean-windows:: Makefile-windows
@@ -327,12 +356,51 @@ ren2long:
 	-sh config/ren2long
 
 #
-# Helper for the windows build
+# Builds the file that distributes Kerberos sources for DOS and 
+# Macintosh sites from the source tree on Unix.
 #
-TOPLEVEL=dummy
+ZIP=zip
+FILES= ./* appl/* appl/gss-sample/* \
+    clients/* clients/kdestroy/* clients/kinit/* clients/klist/* \
+	clients/kpasswd/* clients/kvno/* clients/kcpytkt/* clients/kdeltkt/* \
+	config/* include/* \
+	include/krb5/* lib/* lib/crypto/* lib/crypto/krb/* \
+	lib/crypto/krb/crc32/* lib/crypto/krb/rand2key/* \
+	lib/crypto/krb/prng/fortuna/* lib/crypto/krb/prng/nss/* \
+	lib/crypto/krb/prng/yarrow/* lib/crypto/krb/prng/* \
+	lib/crypto/krb/prf/* lib/crypto/krb/checksum/* lib/crypto/krb/old/* \
+	lib/crypto/krb/raw/* lib/crypto/krb/arcfour/* lib/crypto/krb/dk/* \
+	lib/crypto/builtin/aes/* lib/crypto/builtin/enc_provider/* \
+	lib/crypto/builtin/des/* lib/crypto/builtin/md5/* \
+	lib/crypto/builtin/camellia/* lib/crypto/builtin/md4/* \
+	lib/crypto/builtin/hash_provider/* lib/crypto/builtin/sha2/* \
+	lib/crypto/builtin/sha1/* lib/crypto/builtin/* \
+	lib/crypto/crypto_tests/* \
+	lib/gssapi/* lib/gssapi/generic/* lib/gssapi/krb5/* \
+	lib/gssapi/mechglue/* lib/gssapi/spnego/* \
+	lib/krb5/* lib/krb5/asn.1/* lib/krb5/krb/* \
+	lib/krb5/ccache/* lib/krb5/ccache/ccapi/* \
+	lib/krb5/error_tables/* \
+	lib/krb5/keytab/* lib/krb5/os/* lib/krb5/posix/* lib/krb5/rcache/* \
+	lib/krb5/unicode/* lib/krb5/unicode/utbm/* lib/krb5/unicode/ure/* \
+	lib/krb5/unicode/ucdata/* \
+	util/* util/et/* util/profile/* util/support/*
+
+WINFILES= \
+    ccapi/* ccapi/common/* ccapi/common/win/* ccapi/common/win/OldCC/* \
+    ccapi/lib/* ccapi/lib/win/* ccapi/lib/win/OldCC/* \
+    ccapi/server/* ccapi/server/win/* \
+    ccapi/test/* \
+    util/windows/* windows/* windows/lib/* windows/cns/* \
+	windows/wintel/* windows/gss/* windows/gina/* windows/ms2mit/* \
+	windows/kfwlogon/*
+
+WINBINARYFILES=	windows/*/*.ico windows/*/*.doc windows/*/*.hlp \
+	windows/*/*.hpj
 
 #
-# Building error tables requires awk.
+# Part of building the PC release has to be done on Unix. This includes
+# anything the requires awk.
 #
 AWK = awk
 AH  = util/et/et_h.awk
@@ -360,16 +428,15 @@ ETOUT =	\
 HOUT =	$(INC)krb5/krb5.h $(GG)gssapi.h $(PR)profile.h
 
 CLEANUP= Makefile $(ETOUT) $(HOUT) \
-	include/profile.h include/osconf.h
+	include/profile.h include/osconf.h \
+	winfile.list
 
 
-kerbsrc.win: kerbsrc-is-obsolete
+kerbsrc.win: kerbsrc.zip
 
-kerbsrc-is-obsolete:
-	@echo "kerbsrc.zip is no longer supported.  It was intended to avoid"
-	@echo "needing Unix utilities on Windows, but these utilities are now"
-	@echo "available through the Utilities and SDK for UNIX-based"
-	@echo "Applications."
+winfile.list:
+	echo $(FILES) $(WINFILES) | tr ' ' \\012 | \
+		sed -f config/winexclude.sed > winfile.list
 
 dos-Makefile:
 	cat config/win-pre.in Makefile.in config/win-post.in | \
@@ -378,6 +445,28 @@ dos-Makefile:
 
 prep-windows: dos-Makefile awk-windows-mac
 
+krbsrc83.zip: krbsrc83-is-obsolete
+
+krbsrc83-is-obsolete:
+	@echo "Win16 and krbsrc83.zip are no longer supported."
+	@echo "We don't support building under 8.3 restricted filesystems"
+	@echo "anymore.  You can still build for Win32 on filesystems"
+	@echo "without 8.3 restrictions using kerbsrc.zip"
+	@echo " "
+
+kerbsrc.zip: dos-Makefile awk-windows-mac winfile.list
+	rm -f kerbsrc.zip
+	$(ZIP) -@Dl kerbsrc.zip < winfile.list
+	$(ZIP) -D kerbsrc.zip $(WINBINARYFILES)
+	rm -f $(CLEANUP)
+
+kerbsrc-nt.zip: kerbsrc-nt-is-obsolete
+
+kerbsrc-nt-is-obsolete:
+	@echo "kerbsrc-nt.zip is now obsolete.  Just use and build kerbsrc.zip"
+	@echo "We don't support building under 8.3 restricted filesystems"
+	@echo "anymore, so what was kerbsrc-nt.zip is now kerbsrc.zip."
+	@echo " "
 
 $(INC)asn1_err.h: $(AH) $(ET)asn1_err.et
 	$(AWK) -f $(AH) outfile=$@ $(ET)asn1_err.et
@@ -482,37 +571,16 @@ install-windows::
 	copy include\profile.h "$(KRB_INSTALL_DIR)\include\."
 	copy include\com_err.h "$(KRB_INSTALL_DIR)\include\."
 	copy include\gssapi\gssapi.h "$(KRB_INSTALL_DIR)\include\gssapi\."
-	copy include\gssapi\gssapi_alloc.h "$(KRB_INSTALL_DIR)\include\gssapi\."
 	copy include\gssapi\gssapi_krb5.h "$(KRB_INSTALL_DIR)\include\gssapi\."
 	copy include\gssapi\gssapi_ext.h "$(KRB_INSTALL_DIR)\include\gssapi\."
 	copy lib\$(OUTPRE)*.lib "$(KRB_INSTALL_DIR)\lib\."
 	copy lib\$(OUTPRE)*.dll "$(KRB_INSTALL_DIR)\bin\."
-	-copy lib\$(OUTPRE)*.pdb "$(KRB_INSTALL_DIR)\bin\."
 	copy windows\cns\$(OUTPRE)krb5.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy windows\cns\$(OUTPRE)krb5.pdb "$(KRB_INSTALL_DIR)\bin\."
+	copy windows\gss\$(OUTPRE)gss.exe "$(KRB_INSTALL_DIR)\bin\."
 	copy appl\gss-sample\$(OUTPRE)gss-server.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy appl\gss-sample\$(OUTPRE)gss-server.pdb "$(KRB_INSTALL_DIR)\bin\."
 	copy appl\gss-sample\$(OUTPRE)gss-client.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy appl\gss-sample\$(OUTPRE)gss-client.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\ms2mit\$(OUTPRE)*.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy windows\ms2mit\$(OUTPRE)*.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\leashdll\$(OUTPRE)*.lib "$(KRB_INSTALL_DIR)\lib\."
-	copy windows\leashdll\$(OUTPRE)*.dll "$(KRB_INSTALL_DIR)\bin\."
-	-copy windows\leashdll\$(OUTPRE)*.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\leash\$(OUTPRE)*.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy windows\leash\$(OUTPRE)*.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\leash\$(OUTPRE)*.chm "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\kfwlogon\$(OUTPRE)*.lib "$(KRB_INSTALL_DIR)\lib\."
-	copy windows\kfwlogon\$(OUTPRE)*.exe "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\kfwlogon\$(OUTPRE)*.dll "$(KRB_INSTALL_DIR)\bin\."
-	-copy windows\kfwlogon\$(OUTPRE)*.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy util\windows\$(OUTPRE)*.lib $(KRB_INSTALL_DIR)\lib\."
-	copy util\wshelper\$(OUTPRE)$(DLIB).lib "$(KRB_INSTALL_DIR)\lib\."
-	copy util\wshelper\$(OUTPRE)$(DLIB).dll "$(KRB_INSTALL_DIR)\bin\."
-	-copy util\wshelper\$(OUTPRE)$(DLIB).pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy ccapi\lib\win\srctmp\$(OUTPRE)$(CCLIB).dll "$(KRB_INSTALL_DIR)\bin\."
-	-copy ccapi\lib\win\srctmp\$(OUTPRE)$(CCLIB).pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy ccapi\lib\win\srctmp\$(CCLIB).lib "$(KRB_INSTALL_DIR)\lib\."
+	copy windows\ms2mit\$(OUTPRE)ms2mit.exe "$(KRB_INSTALL_DIR)\bin\."
+	copy ccapi\lib\win\srctmp\$(OUTPRE)ccapi.dll "$(KRB_INSTALL_DIR)\bin\."
 	copy ccapi\server\win\srctmp\$(OUTPRE)ccapiserver.exe "$(KRB_INSTALL_DIR)\bin\."
 	copy clients\kvno\$(OUTPRE)kvno.exe "$(KRB_INSTALL_DIR)\bin\."
 	copy clients\klist\$(OUTPRE)klist.exe "$(KRB_INSTALL_DIR)\bin\."
@@ -521,21 +589,11 @@ install-windows::
 	copy clients\kcpytkt\$(OUTPRE)kcpytkt.exe "$(KRB_INSTALL_DIR)\bin\."
 	copy clients\kdeltkt\$(OUTPRE)kdeltkt.exe "$(KRB_INSTALL_DIR)\bin\."
 	copy clients\kpasswd\$(OUTPRE)kpasswd.exe "$(KRB_INSTALL_DIR)\bin\."
-	copy clients\kswitch\$(OUTPRE)kswitch.exe "$(KRB_INSTALL_DIR)\bin\."
-	-copy ccapi\server\win\srctmp\$(OUTPRE)ccapiserver.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kvno\$(OUTPRE)kvno.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\klist\$(OUTPRE)klist.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kinit\$(OUTPRE)kinit.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kdestroy\$(OUTPRE)kdestroy.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kcpytkt\$(OUTPRE)kcpytkt.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kdeltkt\$(OUTPRE)kdeltkt.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kpasswd\$(OUTPRE)kpasswd.pdb "$(KRB_INSTALL_DIR)\bin\."
-	-copy clients\kswitch\$(OUTPRE)kswitch.pdb "$(KRB_INSTALL_DIR)\bin\."
-	copy windows\leash\htmlhelp\*.chm "$(KRB_INSTALL_DIR)\bin\."
 
 install-unix:: 
 	$(INSTALL_SCRIPT) krb5-config \
 		$(DESTDIR)$(CLIENT_BINDIR)/krb5-config
+	$(INSTALL_DATA) $(srcdir)/krb5-config.M $(DESTDIR)$(CLIENT_MANDIR)/krb5-config.1
 
 krb5-config: $(srcdir)/krb5-config.in config.status
 	$(SHELL) config.status krb5-config
@@ -544,14 +602,11 @@ krb5-config: $(srcdir)/krb5-config.in config.status
 # $(PURE) or $(LDFLAGS) in case someone changes config/shlib.conf
 check-unix:: krb5-config
 	$(SHELL) $(srcdir)/t_krbconf
-check-prerecurse: runenv.py
+check-prerecurse: fake-install
 
 # Create a test realm and spawn a shell in an environment pointing to it.
-# If CROSSNUM is set, create that many fully connected test realms and
-# point the shell at the first one.
-testrealm: runenv.py
-	PYTHONPATH=$(top_srcdir)/util $(PYTHON) $(srcdir)/util/testrealm.py \
-		$(CROSSNUM)
+testrealm: fake-install
+	PYTHONPATH=$(BUILDTOP):$(top_srcdir)/util $(PYTHON) $(srcdir)/util/testrealm.py
 
 # environment variable settings to propagate to Python-based tests
 
@@ -566,7 +621,7 @@ runenv.py: pyrunenv.vals
 	cat pyrunenv.vals >> $@
 
 clean-unix::
-	$(RM) runenv.py runenv.pyc pyrunenv.vals
+	$(RM) runenv.py pyrunenv.vals
 
 COV_BUILD=	cov-build
 COV_ANALYZE=	cov-analyze
@@ -645,10 +700,7 @@ OTHEREXCLUDES = \
 	include/k5-platform.h \
 	include/gssrpc \
 	lib/apputils/dummy.c \
-	lib/crypto/crypto_tests/camellia-test.c \
 	lib/crypto/builtin/aes \
-	lib/crypto/builtin/camellia \
-	lib/crypto/builtin/sha2 \
 	lib/gssapi/generic/gssapiP_generic.h \
 	lib/gssapi/generic/gssapi_ext.h \
 	lib/gssapi/krb5/gssapiP_krb5.h \
@@ -678,23 +730,14 @@ OTHEREXCLUDES = \
 	util/et/com_err.h \
 	util/profile/prof_int.h \
 	util/profile/profile.hin \
-	util/profile/profile_tcl.c \
-	util/support/fnmatch.c \
-	util/verto \
-	util/k5ev \
-	util/wshelper
+	util/profile/profile_tcl.c
 
 EXCLUDES = `for i in $(BSDFILES) $(OTHEREXCLUDES); do echo $$i; done | $(AWK) '{ print "-path", $$1, "-o" }'` -path /dev/null
 
-FIND_REINDENT = cd $(top_srcdir) && \
-	$(FIND) $(INDENTDIRS) \( $(EXCLUDES) \) -prune -o \
-	\( -name '*.[ch]' -o -name '*.hin' -o -name '*.[ch].in' \)
-
-show-reindentfiles::
-	($(FIND_REINDENT) -print)
-
 reindent::
-	($(FIND_REINDENT) \
+	(cd $(top_srcdir) && \
+	$(FIND) . \
+	\( -name '*.[ch]' -o -name '*.hin' -o -name '*.[ch].in' \) \
 	-print0 | $(XARGS) -0 $(EMACS) -q -batch \
 	-l util/krb5-c-style.el \
 	-l util/krb5-batch-reindent.el)
@@ -711,8 +754,3 @@ mark-cstyle-krb5::
 mark-cstyle-bsd::
 	(cd $(top_srcdir) && $(FIND) $(BSDFILES) -print0 | $(XARGS) -0 \
 	$(PYTHON) util/krb5-mark-cstyle.py --cstyle=bsd)
-
-check-copyright:
-	(cd $(top_srcdir) && \
-	$(FIND) . \( -name '*.[ch]' -o -name '*.hin' \) -print0 | \
-	$(XARGS) -0 python util/krb5-check-copyright.py)

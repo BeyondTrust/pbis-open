@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/os/ktdefname.c - Return default keytab name */
 /*
+ * lib/krb5/os/ktdefname.c
+ *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,73 +23,58 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Return default keytab file name.
  */
 
 #define NEED_WINDOWS
 
 #include "k5-int.h"
-#include "os-proto.h"
+
+extern char *krb5_defkeyname;
 
 /* this is a an exceedinly gross thing. */
 char *krb5_overridekeyname = NULL;
 
-static krb5_error_code
-kt_default_name(krb5_context context, char **name_out)
-{
-    krb5_error_code ret;
-    char *str;
-
-    if (krb5_overridekeyname != NULL) {
-        *name_out = strdup(krb5_overridekeyname);
-        return (*name_out == NULL) ? ENOMEM : 0;
-    } else if (context->profile_secure == FALSE &&
-               (str = getenv("KRB5_KTNAME")) != NULL) {
-        *name_out = strdup(str);
-        return (*name_out == NULL) ? ENOMEM : 0;
-    } else if (profile_get_string(context->profile, KRB5_CONF_LIBDEFAULTS,
-                                  KRB5_CONF_DEFAULT_KEYTAB_NAME, NULL, NULL,
-                                  &str) == 0 && str != NULL) {
-        ret = k5_expand_path_tokens(context, str, name_out);
-        profile_release_string(str);
-        return ret;
-    } else {
-        return k5_expand_path_tokens(context, DEFKTNAME, name_out);
-    }
-}
-
-krb5_error_code
-k5_kt_client_default_name(krb5_context context, char **name_out)
-{
-    krb5_error_code ret;
-    char *str;
-
-    if (context->profile_secure == FALSE &&
-        (str = getenv("KRB5_CLIENT_KTNAME")) != NULL) {
-        *name_out = strdup(str);
-        return (*name_out == NULL) ? ENOMEM : 0;
-    } else if (profile_get_string(context->profile, KRB5_CONF_LIBDEFAULTS,
-                                  KRB5_CONF_DEFAULT_CLIENT_KEYTAB_NAME, NULL,
-                                  NULL, &str) == 0 && str != NULL) {
-        ret = k5_expand_path_tokens(context, str, name_out);
-        profile_release_string(str);
-        return ret;
-    } else {
-        return k5_expand_path_tokens(context, DEFCKTNAME, name_out);
-    }
-}
-
 krb5_error_code KRB5_CALLCONV
 krb5_kt_default_name(krb5_context context, char *name, int name_size)
 {
-    krb5_error_code ret;
+    char *cp = 0;
+    char *retval;
     unsigned int namesize = (name_size < 0 ? 0 : name_size);
-    char *ktname;
 
-    ret = kt_default_name(context, &ktname);
-    if (ret)
-        return ret;
-    if (strlcpy(name, ktname, namesize) >= namesize)
-        ret = KRB5_CONFIG_NOTENUFSPACE;
-    free(ktname);
-    return ret;
+    if (krb5_overridekeyname) {
+        if (strlcpy(name, krb5_overridekeyname, namesize) >= namesize)
+            return KRB5_CONFIG_NOTENUFSPACE;
+    } else if ((context->profile_secure == FALSE) &&
+               (cp = getenv("KRB5_KTNAME"))) {
+        if (strlcpy(name, cp, namesize) >= namesize)
+            return KRB5_CONFIG_NOTENUFSPACE;
+    } else if ((profile_get_string(context->profile,
+                                   KRB5_CONF_LIBDEFAULTS,
+                                   KRB5_CONF_DEFAULT_KEYTAB_NAME, NULL,
+                                   NULL, &retval) == 0) &&
+               retval) {
+        if (strlcpy(name, retval, namesize) >= namesize)
+            return KRB5_CONFIG_NOTENUFSPACE;
+        profile_release_string(retval);
+    } else {
+#if defined(_WIN32)
+        {
+            char    defname[160];
+            int     len;
+
+            len= GetWindowsDirectory( defname, sizeof(defname)-2 );
+            defname[len]= '\0';
+            if ( (len + strlen(krb5_defkeyname) + 1) > namesize )
+                return KRB5_CONFIG_NOTENUFSPACE;
+            snprintf(name, namesize, krb5_defkeyname, defname);
+        }
+#else
+        if (strlcpy(name, krb5_defkeyname, namesize) >= namesize)
+            return KRB5_CONFIG_NOTENUFSPACE;
+#endif
+    }
+    return 0;
 }

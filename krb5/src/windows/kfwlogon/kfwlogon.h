@@ -151,11 +151,7 @@ cc_free_NC_info,
 );
 /* End private ccapiv2 headers */
 
-#ifdef _WIN64
-#define CCAPI_DLL   "krbcc64.dll"
-#else
 #define CCAPI_DLL   "krbcc32.dll"
-#endif
 
 
 /* */
@@ -191,6 +187,10 @@ DWORD APIENTRY NPPasswordChangeNotify(
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void UnloadFuncs(FUNC_INFO [], HINSTANCE);
+
+int  LoadFuncs(const char*, FUNC_INFO [], HINSTANCE*, int*, int, int, int);
 
 void DebugEvent0(char *a);
 void DebugEvent(char *b,...);

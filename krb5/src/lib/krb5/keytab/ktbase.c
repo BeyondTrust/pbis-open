@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/keytab/ktbase.c - Registration functions for keytab */
 /*
+ * lib/krb5/keytab/ktbase.c
+ *
  * Copyright 1990,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,8 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-/*
+ *
+ *
  * Copyright 2007 by Secure Endpoints Inc.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -45,6 +46,8 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
+ * Registration functions for keytab.
  */
 
 #include "k5-int.h"
@@ -224,15 +227,15 @@ cleanup:
 
 /*
  * Routines to deal with externalizingt krb5_keytab.
- *      keytab_size();
- *      keytab_externalize();
- *      keytab_internalize();
+ *      krb5_keytab_size();
+ *      krb5_keytab_externalize();
+ *      krb5_keytab_internalize();
  */
-static krb5_error_code keytab_size
+static krb5_error_code krb5_keytab_size
 (krb5_context, krb5_pointer, size_t *);
-static krb5_error_code keytab_externalize
+static krb5_error_code krb5_keytab_externalize
 (krb5_context, krb5_pointer, krb5_octet **, size_t *);
-static krb5_error_code keytab_internalize
+static krb5_error_code krb5_keytab_internalize
 (krb5_context,krb5_pointer *, krb5_octet **, size_t *);
 
 /*
@@ -240,13 +243,13 @@ static krb5_error_code keytab_internalize
  */
 static const krb5_ser_entry krb5_keytab_ser_entry = {
     KV5M_KEYTAB,                        /* Type                 */
-    keytab_size,                   /* Sizer routine        */
-    keytab_externalize,            /* Externalize routine  */
-    keytab_internalize             /* Internalize routine  */
+    krb5_keytab_size,                   /* Sizer routine        */
+    krb5_keytab_externalize,            /* Externalize routine  */
+    krb5_keytab_internalize             /* Internalize routine  */
 };
 
 static krb5_error_code
-keytab_size(krb5_context kcontext, krb5_pointer arg, size_t *sizep)
+krb5_keytab_size(krb5_context kcontext, krb5_pointer arg, size_t *sizep)
 {
     krb5_error_code     kret;
     krb5_keytab         keytab;
@@ -262,8 +265,7 @@ keytab_size(krb5_context kcontext, krb5_pointer arg, size_t *sizep)
 }
 
 static krb5_error_code
-keytab_externalize(krb5_context kcontext, krb5_pointer arg,
-                   krb5_octet **buffer, size_t *lenremain)
+krb5_keytab_externalize(krb5_context kcontext, krb5_pointer arg, krb5_octet **buffer, size_t *lenremain)
 {
     krb5_error_code     kret;
     krb5_keytab         keytab;
@@ -279,8 +281,7 @@ keytab_externalize(krb5_context kcontext, krb5_pointer arg,
 }
 
 static krb5_error_code
-keytab_internalize(krb5_context kcontext, krb5_pointer *argp,
-                   krb5_octet **buffer, size_t *lenremain)
+krb5_keytab_internalize(krb5_context kcontext, krb5_pointer *argp, krb5_octet **buffer, size_t *lenremain)
 {
     krb5_error_code     kret;
     krb5_ser_handle     shandle;

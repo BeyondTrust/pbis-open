@@ -12,6 +12,10 @@
 #include "k5-platform.h"
 #include "supp-int.h"
 
+#ifdef USE_KIM
+#include "kim_string_private.h"
+#endif
+
 /* It would be nice to just use error_message() always.  Pity that
    it's defined in a library that depends on this one, and we're not
    allowed to make circular dependencies.  */
@@ -65,6 +69,13 @@ krb5int_vset_error_fl (struct errinfo *ep, long code,
 {
     va_list args2;
     char *str = NULL, *str2, *slash;
+#ifdef USE_KIM
+    kim_string loc_fmt = NULL;
+
+    /* Try to localize the format string */
+    if (kim_os_string_create_localized(&loc_fmt, fmt) == KIM_NO_ERROR)
+        fmt = loc_fmt;
+#endif
 
     /* try vasprintf first */
     va_copy(args2, args);
@@ -97,6 +108,10 @@ krb5int_vset_error_fl (struct errinfo *ep, long code,
     }
     ep->code = code;
     ep->msg = str ? str : ep->scratch_buf;
+
+#ifdef USE_KIM
+    kim_string_free(&loc_fmt);
+#endif
 }
 
 const char *
@@ -157,10 +172,6 @@ krb5int_get_error (struct errinfo *ep, long code)
         return ep->scratch_buf;
     }
     r = fptr(code);
-#ifndef HAVE_COM_ERR_INTL
-    /* Translate com_err results here if libcom_err won't do it. */
-    r = _(r);
-#endif
     if (r == NULL) {
         unlock();
         goto format_number;

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/alt_prof.c */
 /*
+ * lib/kadm/alt_prof.c
+ *
  * Copyright 1995,2001,2008,2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,13 +23,16 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 /*
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
-/* Implement alternate profile file handling. */
+/*
+ * alt_prof.c - Implement alternate profile file handling.
+ */
 #include "fake-addrinfo.h"
 #include "k5-int.h"
 #include <kadm5/admin.h>
@@ -616,6 +620,17 @@ krb5_error_code kadm5_get_config_params(context, use_kdc_config,
     GET_STRING_PARAM(dbname, KADM5_CONFIG_DBNAME, KRB5_CONF_DATABASE_NAME,
                      DEFAULT_KDB_FILE);
 
+    /* Get the value for the admin (policy) database lock file*/
+    if (!GET_STRING_PARAM(admin_keytab, KADM5_CONFIG_ADMIN_KEYTAB,
+                          KRB5_CONF_ADMIN_KEYTAB, NULL)) {
+        const char *s = getenv("KRB5_KTNAME");
+        if (s == NULL)
+            s = DEFAULT_KADM5_KEYTAB;
+        params.admin_keytab = strdup(s);
+        if (params.admin_keytab)
+            params.mask |= KADM5_CONFIG_ADMIN_KEYTAB;
+    }
+
     /* Get the name of the acl file */
     GET_STRING_PARAM(acl_file, KADM5_CONFIG_ACL_FILE, KRB5_CONF_ACL_FILE,
                      DEFAULT_KADM5_ACL_FILE);
@@ -802,10 +817,6 @@ krb5_error_code kadm5_get_config_params(context, use_kdc_config,
     GET_PORT_PARAM(iprop_port, KADM5_CONFIG_IPROP_PORT,
                    KRB5_CONF_IPROP_PORT, 0);
 
-    /* 5 min for large KDBs */
-    GET_DELTAT_PARAM(iprop_resync_timeout, KADM5_CONFIG_IPROP_RESYNC_TIMEOUT,
-                     KRB5_CONF_IPROP_RESYNC_TIMEOUT, 60 * 5);
-
     hierarchy[2] = KRB5_CONF_IPROP_MASTER_ULOGSIZE;
 
     params.iprop_ulogsize = DEF_ULOGENTRIES;
@@ -817,7 +828,9 @@ krb5_error_code kadm5_get_config_params(context, use_kdc_config,
     } else {
         if (aprofile && !krb5_aprof_get_int32(aprofile, hierarchy,
                                               TRUE, &ivalue)) {
-            if (ivalue <= 0)
+            if (ivalue > MAX_ULOGENTRIES)
+                params.iprop_ulogsize = MAX_ULOGENTRIES;
+            else if (ivalue <= 0)
                 params.iprop_ulogsize = DEF_ULOGENTRIES;
             else
                 params.iprop_ulogsize = ivalue;
@@ -853,6 +866,7 @@ kadm5_free_config_params(context, params)
         free(params->stash_file);
         free(params->keysalts);
         free(params->admin_server);
+        free(params->admin_keytab);
         free(params->dict_file);
         free(params->acl_file);
         free(params->realm);
@@ -887,14 +901,14 @@ kadm5_get_admin_service_name(krb5_context ctx,
     }
 
     memset(&hint, 0, sizeof(hint));
-    hint.ai_flags = AI_CANONNAME | AI_ADDRCONFIG;
+    hint.ai_flags = AI_CANONNAME;
     err = getaddrinfo(params_out.admin_server, NULL, &hint, &ai);
     if (err != 0) {
         ret = KADM5_CANT_RESOLVE;
         krb5_set_error_message(ctx, ret,
-                               _("Cannot resolve address of admin server "
-                                 "\"%s\" for realm \"%s\""),
-                               params_out.admin_server, realm_in);
+                               "Cannot resolve address of admin server \"%s\" "
+                               "for realm \"%s\"", params_out.admin_server,
+                               realm_in);
         goto err_params;
     }
     if (strlen(ai->ai_canonname) + sizeof("kadmin/") > maxlen) {
@@ -1050,12 +1064,6 @@ krb5_read_realm_params(kcontext, realm, rparamp)
         rparams->realm_restrict_anon_valid = 1;
     }
 
-    hierarchy[2] = KRB5_CONF_ASSUME_DES_CRC_SESSION;
-    if (!krb5_aprof_get_boolean(aprofile, hierarchy, TRUE, &bvalue)) {
-        rparams->realm_assume_des_crc_sess = bvalue;
-        rparams->realm_assume_des_crc_sess_valid = 1;
-    }
-
     hierarchy[2] = KRB5_CONF_NO_HOST_REFERRAL;
     if (!krb5_aprof_get_string_all(aprofile, hierarchy, &no_refrls))
         rparams->realm_no_host_referral = no_refrls;
@@ -1157,11 +1165,9 @@ krb5_match_config_pattern(const char *string, const char *pattern)
     int len = strlen(pattern);
 
     for (ptr = strstr(string,pattern); ptr != 0; ptr = strstr(ptr+len,pattern)) {
-        if (ptr == string
-            || isspace((unsigned char)*(ptr-1))
-            || *(ptr-1) ==',') {
+        if (ptr == string || isspace(*(ptr-1)) || *(ptr-1) ==',') {
             next = *(ptr + len);
-            if (next == '\0' || isspace((unsigned char)next) || next ==',') {
+            if (next == '\0' || isspace(next) || next ==',') {
                 return TRUE;
             }
         }

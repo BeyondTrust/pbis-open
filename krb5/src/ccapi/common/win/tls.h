@@ -1,5 +1,6 @@
-/* ccapi/common/win/tls.h */
 /*
+ * $Header$
+ *
  * Copyright 2008 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -41,7 +42,6 @@
  */
 
 struct tspdata {
-    BOOL                _listening;
     BOOL                _CCAPI_Connected;
     RPC_ASYNC_STATE*    _rpcState;
     HANDLE              _replyEvent;
@@ -50,7 +50,9 @@ struct tspdata {
     char                _uuid[UUID_SIZE];
     };
 
-void            tspdata_setListening (struct tspdata* p, BOOL b);
+struct tspdata* new_tspdata          (char* uuid, time_t sst);
+void            delete_tspdata       (struct tspdata* p);
+
 void            tspdata_setConnected (struct tspdata* p, BOOL b);
 void            tspdata_setReplyEvent(struct tspdata* p, HANDLE h);
 void            tspdata_setRpcAState (struct tspdata* p, RPC_ASYNC_STATE* rpcState);
@@ -59,13 +61,13 @@ void            tspdata_setStream    (struct tspdata* p, k5_ipc_stream s);
 void            tspdata_setUUID      (struct tspdata* p, unsigned char __RPC_FAR* uuidString);
 HANDLE          tspdata_getReplyEvent(const struct tspdata* p);
 
-BOOL             tspdata_getListening(const struct tspdata* p);
 BOOL             tspdata_getConnected(const struct tspdata* p);
 RPC_ASYNC_STATE* tspdata_getRpcAState(const struct tspdata* p);
 time_t           tspdata_getSST      (const struct tspdata* p);
 k5_ipc_stream     tspdata_getStream   (const struct tspdata* p);
 char*            tspdata_getUUID     (const struct tspdata* p);
 
+BOOL WINAPI PutTspData(DWORD tlsIndex, struct tspdata*  dw);
 BOOL WINAPI GetTspData(DWORD tlsIndex, struct tspdata** pdw);
 
 #endif _tls_h

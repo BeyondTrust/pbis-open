@@ -86,6 +86,7 @@ static struct flagval config_mask_flags[] = {
     {"KADM5_CONFIG_MAX_RLIFE", KADM5_CONFIG_MAX_RLIFE},
     {"KADM5_CONFIG_EXPIRATION", KADM5_CONFIG_EXPIRATION},
     {"KADM5_CONFIG_FLAGS", KADM5_CONFIG_FLAGS},
+    {"KADM5_CONFIG_ADMIN_KEYTAB", KADM5_CONFIG_ADMIN_KEYTAB},
     {"KADM5_CONFIG_STASH_FILE", KADM5_CONFIG_STASH_FILE},
     {"KADM5_CONFIG_ENCTYPE", KADM5_CONFIG_ENCTYPE},
     {"KADM5_CONFIG_ADBNAME", KADM5_CONFIG_ADBNAME},
@@ -1032,7 +1033,11 @@ static int parse_config_params(Tcl_Interp *interp, char *list,
     }
     /* Ignore argv[5], which used to set the admin_dbname field.  */
     /* Ignore argv[6], which used to set the admin_lockfile field.  */
-    /* Ignore argv[7], which used to set the admin_keytab field.  */
+    if ((retcode = parse_str(interp, argv[7], &params->admin_keytab)) != TCL_OK) {
+        Tcl_AppendElement(interp, "while parsing admin_keytab name");
+        retcode = TCL_ERROR;
+        goto finished;
+    }
     if ((retcode = parse_str(interp, argv[8], &params->acl_file)) != TCL_OK) {
         Tcl_AppendElement(interp, "while parsing acl_file name");
         retcode = TCL_ERROR;
@@ -2528,8 +2533,6 @@ void Tcl_kadm5_init(Tcl_Interp *interp)
     Tcl_SetVar(interp, "KADM5_API_VERSION_2", buf, TCL_GLOBAL_ONLY);
     (void) sprintf(buf, "%d", KADM5_API_VERSION_3);
     Tcl_SetVar(interp, "KADM5_API_VERSION_3", buf, TCL_GLOBAL_ONLY);
-    (void) sprintf(buf, "%d", KADM5_API_VERSION_4);
-    Tcl_SetVar(interp, "KADM5_API_VERSION_4", buf, TCL_GLOBAL_ONLY);
     (void) sprintf(buf, "%d", KADM5_API_VERSION_MASK);
     Tcl_SetVar(interp, "KADM5_API_VERSION_MASK", buf, TCL_GLOBAL_ONLY);
     (void) sprintf(buf, "%d", KADM5_STRUCT_VERSION_MASK);

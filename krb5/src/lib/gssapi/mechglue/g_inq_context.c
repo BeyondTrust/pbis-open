@@ -86,7 +86,6 @@ gss_inquire_context(
     gss_union_ctx_id_t	ctx;
     gss_mechanism	mech;
     OM_uint32		status, temp_minor;
-    gss_OID		actual_mech;
     gss_name_t localTargName = NULL, localSourceName = NULL;
 
     status = val_inq_ctx_args(minor_status,
@@ -117,7 +116,7 @@ gss_inquire_context(
 			(src_name ? &localSourceName : NULL),
 			(targ_name ? &localTargName : NULL),
 			lifetime_rec,
-			&actual_mech,
+			mech_type,
 			ctx_flags,
 			locally_initiated,
 			opened);
@@ -157,9 +156,6 @@ gss_inquire_context(
             *targ_name = GSS_C_NO_NAME;
         }
     }
-
-    if (mech_type)
-	*mech_type = gssint_get_public_oid(actual_mech);
 
     return(GSS_S_COMPLETE);
 }

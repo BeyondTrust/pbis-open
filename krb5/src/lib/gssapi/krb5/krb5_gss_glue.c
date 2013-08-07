@@ -49,7 +49,7 @@
  */
 
 /*
- * $Id$
+ * $Id: krb5_gss_glue.c 24553 2010-12-03 00:05:44Z tlyu $
  */
 
 #include "gssapiP_krb5.h"
@@ -196,7 +196,7 @@ gss_krb5_export_lucid_sec_context(OM_uint32 *minor_status,
     /* Clean up the context state (it is an error for
      * someone to attempt to use this context again)
      */
-    (void)gss_delete_sec_context(minor_status, context_handle, NULL);
+    (void)krb5_gss_delete_sec_context(minor_status, context_handle, NULL);
     *context_handle = GSS_C_NO_CONTEXT;
 
     generic_gss_release_buffer_set(&minor, &data_set);
@@ -336,7 +336,7 @@ krb5_gss_use_kdc_context(void)
  */
 OM_uint32 KRB5_CALLCONV
 gsskrb5_extract_authz_data_from_sec_context(OM_uint32 *minor_status,
-                                            const gss_ctx_id_t context_handle,
+                                            gss_ctx_id_t context_handle,
                                             int ad_type,
                                             gss_buffer_t ad_data)
 {
@@ -443,3 +443,4 @@ gsskrb5_extract_authtime_from_sec_context(OM_uint32 *minor_status,
 
     return GSS_S_COMPLETE;
 }
+

@@ -142,6 +142,10 @@ top_srcdir = @top_srcdir@
 VPATH = @srcdir@
 CONFIG_RELTOPDIR = @CONFIG_RELTOPDIR@
 
+FAKEDEST=$(BUILDTOP)/util/fakedest
+FAKEPREFIX=$(FAKEDEST)/$(prefix)
+FAKELIBDIR=$(FAKEPREFIX)/lib
+
 # DEFS		set by configure
 # DEFINES	set by local Makefile.in
 # LOCALINCLUDES	set by local Makefile.in
@@ -152,11 +156,9 @@ CONFIG_RELTOPDIR = @CONFIG_RELTOPDIR@
 #		don't pull the pthreads library into shared libraries
 ALL_CFLAGS = $(DEFS) $(DEFINES) $(KRB_INCLUDES) $(LOCALINCLUDES) \
 	-DKRB5_DEPRECATED=1 \
-	-DKRB5_PRIVATE \
 	$(CPPFLAGS) $(CFLAGS) $(WARN_CFLAGS) $(PTHREAD_CFLAGS)
 ALL_CXXFLAGS = $(DEFS) $(DEFINES) $(KRB_INCLUDES) $(LOCALINCLUDES) \
 	-DKRB5_DEPRECATED=1 \
-	-DKRB5_PRIVATE \
 	$(CPPFLAGS) $(CXXFLAGS) $(WARN_CXXFLAGS) $(PTHREAD_CFLAGS)
 
 CFLAGS = @CFLAGS@
@@ -172,7 +174,7 @@ CC = @CC@
 CXX = @CXX@
 LD = $(PURE) @LD@
 DEPLIBS = @DEPLIBS@
-KRB_INCLUDES = -I$(BUILDTOP)/include -I$(top_srcdir)/include
+KRB_INCLUDES = -I$(BUILDTOP)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib
 LDFLAGS = @LDFLAGS@
 LD_UNRESOLVED_PREFIX = @LD_UNRESOLVED_PREFIX@
 LD_SHLIBDIR_PREFIX = @LD_SHLIBDIR_PREFIX@
@@ -186,6 +188,7 @@ INSTALL_SCRIPT=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_SHLIB=@INSTALL_SHLIB@
 INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root
+INSTALL_SETUID_USER=$(INSTALL) $(INSTALL_STRIP) -m 4755
 ## This is needed because autoconf will sometimes define @exec_prefix@ to be
 ## ${prefix}.
 prefix=@prefix@
@@ -206,10 +209,6 @@ ADMIN_MANDIR = $(KRB5MANROOT)/man8
 SERVER_MANDIR = $(KRB5MANROOT)/man8
 CLIENT_MANDIR = $(KRB5MANROOT)/man1
 FILE_MANDIR = $(KRB5MANROOT)/man5
-ADMIN_CATDIR = $(KRB5MANROOT)/cat8
-SERVER_CATDIR = $(KRB5MANROOT)/cat8
-CLIENT_CATDIR = $(KRB5MANROOT)/cat1
-FILE_CATDIR = $(KRB5MANROOT)/cat5
 KRB5_LIBDIR = @libdir@
 KRB5_SHLIBDIR = @libdir@$(SHLIB_TAIL_COMP)
 KRB5_INCDIR = @includedir@
@@ -218,7 +217,6 @@ KRB5_DB_MODULE_DIR = $(MODULE_DIR)/kdb
 KRB5_PA_MODULE_DIR = $(MODULE_DIR)/preauth
 KRB5_AD_MODULE_DIR = $(MODULE_DIR)/authdata
 KRB5_LIBKRB5_MODULE_DIR = $(MODULE_DIR)/libkrb5
-KRB5_LOCALEDIR = @localedir@
 GSS_MODULE_DIR = @libdir@/gss
 KRB5_INCSUBDIRS = \
 	$(KRB5_INCDIR)/kadm5 \
@@ -264,11 +262,11 @@ transform = @program_transform_name@
 RM = rm -f
 CP = cp
 MV = mv -f
-LN = ln
 CHMOD=chmod
 RANLIB = @RANLIB@
 ARCHIVE = @ARCHIVE@
 ARADD = @ARADD@
+LN = @LN_S@
 AWK = @AWK@
 LEX = @LEX@
 LEXLIB = @LEXLIB@
@@ -332,7 +330,6 @@ KRB5_DEPLIB	= $(TOPLIBD)/libkrb5$(DEPLIBEXT)
 CRYPTO_DEPLIB	= $(TOPLIBD)/libk5crypto$(DEPLIBEXT)
 COM_ERR_DEPLIB	= $(COM_ERR_DEPLIB-@COM_ERR_VERSION@)
 COM_ERR_DEPLIB-sys = # empty
-COM_ERR_DEPLIB-intlsys = # empty
 COM_ERR_DEPLIB-k5 = $(TOPLIBD)/libcom_err$(DEPLIBEXT)
 SUPPORT_LIBNAME=krb5support
 SUPPORT_DEPLIB	= $(TOPLIBD)/lib$(SUPPORT_LIBNAME)$(DEPLIBEXT)
@@ -359,40 +356,23 @@ KADMCLNT_DEPLIBS	= $(KADMCLNT_DEPLIB) $(KADM_COMM_DEPLIBS)
 COM_ERR_VERSION = @COM_ERR_VERSION@
 COM_ERR_DEPS	= $(COM_ERR_DEPS-@COM_ERR_VERSION@)
 COM_ERR_DEPS-sys =
-COM_ERR_DEPS-intlsys =
 COM_ERR_DEPS-k5	= $(BUILDTOP)/include/com_err.h
 SS_VERSION	= @SS_VERSION@
 SS_DEPS		= $(SS_DEPS-@SS_VERSION@)
 SS_DEPS-sys	=
 SS_DEPS-k5	= $(BUILDTOP)/include/ss/ss.h $(BUILDTOP)/include/ss/ss_err.h
-VERTO_VERSION	= @VERTO_VERSION@
-VERTO_DEPS	= $(VERTO_DEPS-@VERTO_VERSION@)
-VERTO_DEPS-sys	=
-VERTO_DEPS-k5	= $(BUILDTOP)/include/verto.h
 
 # LIBS gets substituted in... e.g. -lnsl -lsocket
 
 # GEN_LIB is -lgen if needed for regexp
 GEN_LIB		= @GEN_LIB@
 
-# Editline or readline flags and libraries.
-RL_CFLAGS	= @RL_CFLAGS@
-RL_LIBS		= @RL_LIBS@
-
 SS_LIB		= $(SS_LIB-@SS_VERSION@)
 SS_LIB-sys	= @SS_LIB@
-SS_LIB-k5	= $(TOPLIBD)/libss.a $(RL_LIBS)
+SS_LIB-k5	= $(TOPLIBD)/libss.a
 KDB5_LIB	= -lkdb5 $(KDB5_PLUGIN_LIBS)
 
-VERTO_DEPLIB	= $(VERTO_DEPLIB-@VERTO_VERSION@)
-VERTO_DEPLIB-sys = # empty
-VERTO_DEPLIB-k5	= $(TOPLIBD)/libverto$(DEPLIBEXT)
-VERTO_CFLAGS	= @VERTO_CFLAGS@
-VERTO_LIBS	= @VERTO_LIBS@
-
 DL_LIB		= @DL_LIB@
-
-LDAP_LIBS	= @LDAP_LIBS@
 
 KRB5_LIB			= -lkrb5
 K5CRYPTO_LIB			= -lk5crypto
@@ -436,19 +416,12 @@ TCL_INCLUDES	= @TCL_INCLUDES@
 CRYPTO_IMPL	= @CRYPTO_IMPL@
 PRNG_ALG	= @PRNG_ALG@
 
-# Crypto back-end selection and flags for PKINIT
-PKINIT_CRYPTO_IMPL		= @PKINIT_CRYPTO_IMPL@
-PKINIT_CRYPTO_IMPL_CFLAGS	= @PKINIT_CRYPTO_IMPL_CFLAGS@
-PKINIT_CRYPTO_IMPL_LIBS		= @PKINIT_CRYPTO_IMPL_LIBS@
-
 # error table rules
 #
 ### /* these are invoked as $(...) foo.et, which works, but could be better */
 COMPILE_ET= $(COMPILE_ET-@COM_ERR_VERSION@)
 COMPILE_ET-sys= compile_et
-COMPILE_ET-intlsys= compile_et --textdomain mit-krb5
-COMPILE_ET-k5= $(BUILDTOP)/util/et/compile_et -d $(top_srcdir)/util/et \
-	--textdomain mit-krb5
+COMPILE_ET-k5= $(BUILDTOP)/util/et/compile_et -d $(top_srcdir)/util/et
 
 .SUFFIXES:  .h .c .et .ct
 
@@ -598,7 +571,7 @@ VALGRIND=
 # Need absolute paths here because under kshd or ftpd we may run programs
 # while in other directories.
 VALGRIND_LOGDIR = `cd $(BUILDTOP)&&pwd`
-VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg.%p --trace-children=yes --leak-check=yes --suppressions=`cd $(top_srcdir)&&pwd`/util/valgrind-suppressions
+VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg.%p --trace-children=yes -v --leak-check=yes --suppressions=`cd $(top_srcdir)&&pwd`/util/valgrind-suppressions
 
 # Set OFFLINE=yes to disable tests that assume network connectivity.
 # (Specifically, this concerns the ability to fetch DNS data for

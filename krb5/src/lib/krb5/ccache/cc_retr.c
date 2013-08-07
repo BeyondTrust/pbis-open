@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/ccache/cc_retr.c */
 /*
+ * lib/krb5/ccache/cc_retr.c
+ *
  * Copyright 1990,1991,1999,2007,2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
  */
 
 #include "k5-int.h"
@@ -217,8 +220,14 @@ krb5_cc_retrieve_cred_seq (krb5_context context, krb5_ccache id,
     kret = krb5_cc_get_flags(context, id, &oflags);
     if (kret != KRB5_OK)
         return kret;
+   /* Clearing KRB5_TC_OPENCLOSE causes krb5_cc_store_cred to fail, and
+      read operations still succeed if the flag is set. So the flag
+      was cleared in original source code as an optimization.
+    */
+#if 0
     if (oflags & KRB5_TC_OPENCLOSE)
         (void) krb5_cc_set_flags(context, id, oflags & ~KRB5_TC_OPENCLOSE);
+#endif
     kret = krb5_cc_start_seq_get(context, id, &cursor);
     if (kret != KRB5_OK) {
         if (oflags & KRB5_TC_OPENCLOSE)
@@ -277,7 +286,7 @@ krb5_cc_retrieve_cred_default (krb5_context context, krb5_ccache id, krb5_flags 
         ret = krb5_get_tgs_ktypes (context, mcreds->server, &ktypes);
         if (ret)
             return ret;
-        nktypes = k5_count_etypes (ktypes);
+        nktypes = krb5int_count_etypes (ktypes);
 
         ret = krb5_cc_retrieve_cred_seq (context, id, flags, mcreds, creds,
                                          nktypes, ktypes);

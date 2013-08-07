@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/srv/kadm5_hook.c */
 /*
+ * lib/kadm5/srv/kadm5_hook.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -116,8 +117,10 @@ log_failure(krb5_context context,
 {
     const char *e = krb5_get_error_message(context, ret);
 
-    krb5_klog_syslog(LOG_ERR, _("kadm5_hook %s failed postcommit %s: %s"),
-                     name, function, e);
+    if (e) {
+        krb5_klog_syslog(LOG_ERR, "kadm5_hook %s failed postcommit %s: %s",
+                         name, function, e);
+    }
     krb5_free_error_message(context, e);
 }
 

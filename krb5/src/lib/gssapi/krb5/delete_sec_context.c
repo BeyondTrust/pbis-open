@@ -24,10 +24,10 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id$
+ * $Id: delete_sec_context.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 krb5_gss_delete_sec_context(minor_status, context_handle, output_token)
     OM_uint32 *minor_status;
     gss_ctx_id_t *context_handle;
@@ -45,6 +45,13 @@ krb5_gss_delete_sec_context(minor_status, context_handle, output_token)
     if (*context_handle == GSS_C_NO_CONTEXT) {
         *minor_status = 0;
         return(GSS_S_COMPLETE);
+    }
+
+    /*SUPPRESS 29*/
+    /* validate the context handle */
+    if (! kg_validate_ctx_id(*context_handle)) {
+        *minor_status = (OM_uint32) G_VALIDATE_FAILED;
+        return(GSS_S_NO_CONTEXT);
     }
 
     ctx = (krb5_gss_ctx_id_t) *context_handle;
@@ -65,6 +72,10 @@ krb5_gss_delete_sec_context(minor_status, context_handle, output_token)
         }
     }
 
+    /* invalidate the context handle */
+
+    (void)kg_delete_ctx_id(*context_handle);
+
     /* free all the context state */
 
     if (ctx->seqstate)
@@ -77,9 +88,9 @@ krb5_gss_delete_sec_context(minor_status, context_handle, output_token)
         krb5_k_free_key(context, ctx->seq);
 
     if (ctx->here)
-        kg_release_name(context, &ctx->here);
+        kg_release_name(context, 0, &ctx->here);
     if (ctx->there)
-        kg_release_name(context, &ctx->there);
+        kg_release_name(context, 0, &ctx->there);
     if (ctx->subkey)
         krb5_k_free_key(context, ctx->subkey);
     if (ctx->acceptor_subkey)

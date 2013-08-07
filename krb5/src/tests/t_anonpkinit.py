@@ -3,7 +3,7 @@ from k5test import *
 
 # Skip this test if pkinit wasn't built.
 if not os.path.exists(os.path.join(plugins, 'preauth', 'pkinit.so')):
-    success('Warning: not testing pkinit because it is not built')
+    success('Warning: not testing pkinit because it is not built.')
     exit(0)
 
 # Construct a krb5.conf fragment configuring pkinit.
@@ -42,8 +42,6 @@ realm = K5Realm(krb5_conf=pkinit_krb5_conf, kdc_conf=restrictive_kdc_conf,
                 create_user=False)
 realm.addprinc('WELLKNOWN/ANONYMOUS')
 realm.kinit('@%s' % realm.realm, flags=['-n'])
-# now try FAST
-realm.kinit('@%s' % realm.realm, flags=['-n', '-T', realm.ccache])
 realm.run_as_client([kvno, realm.host_princ], expected_code=1)
 
-success('Anonymous PKINIT')
+success('Anonymous PKINIT.')

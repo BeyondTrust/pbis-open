@@ -193,7 +193,7 @@ profile_make_prf_data(const char *filename)
 }
 
 errcode_t profile_open_file(const_profile_filespec_t filespec,
-                            prf_file_t *ret_prof, char **ret_modspec)
+                            prf_file_t *ret_prof)
 {
     prf_file_t      prf;
     errcode_t       retval;
@@ -256,17 +256,12 @@ errcode_t profile_open_file(const_profile_filespec_t filespec,
     if (data) {
         data->refcount++;
         (void) k5_mutex_unlock(&g_shared_trees_mutex);
-        retval = profile_update_file_data(data, NULL);
+        retval = profile_update_file_data(data);
         free(expanded_filename);
-        if (retval) {
-            profile_dereference_data(data);
-            free(prf);
-            return retval;
-        }
         prf->data = data;
         *ret_prof = prf;
         scan_shared_trees_unlocked();
-        return 0;
+        return retval;
     }
     (void) k5_mutex_unlock(&g_shared_trees_mutex);
     data = profile_make_prf_data(expanded_filename);
@@ -285,7 +280,7 @@ errcode_t profile_open_file(const_profile_filespec_t filespec,
         return retval;
     }
 
-    retval = profile_update_file(prf, ret_modspec);
+    retval = profile_update_file(prf);
     if (retval) {
         profile_close_file(prf);
         return retval;
@@ -308,7 +303,7 @@ errcode_t profile_open_file(const_profile_filespec_t filespec,
     return 0;
 }
 
-errcode_t profile_update_file_data_locked(prf_data_t data, char **ret_modspec)
+errcode_t profile_update_file_data_locked(prf_data_t data)
 {
     errcode_t retval;
 #ifdef HAVE_STAT
@@ -366,7 +361,7 @@ errcode_t profile_update_file_data_locked(prf_data_t data, char **ret_modspec)
     set_cloexec_file(f);
     data->upd_serial++;
     data->flags &= PROFILE_FILE_SHARED;  /* FIXME same as '=' operator */
-    retval = profile_parse_file(f, &data->root, ret_modspec);
+    retval = profile_parse_file(f, &data->root);
     fclose(f);
     if (retval) {
         return retval;
@@ -379,14 +374,14 @@ errcode_t profile_update_file_data_locked(prf_data_t data, char **ret_modspec)
     return 0;
 }
 
-errcode_t profile_update_file_data(prf_data_t data, char **ret_modspec)
+errcode_t profile_update_file_data(prf_data_t data)
 {
     errcode_t retval, retval2;
 
     retval = k5_mutex_lock(&data->lock);
     if (retval)
         return retval;
-    retval = profile_update_file_data_locked(data, ret_modspec);
+    retval = profile_update_file_data_locked(data);
     retval2 = k5_mutex_unlock(&data->lock);
     return retval ? retval : retval2;
 }

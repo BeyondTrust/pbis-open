@@ -1,5 +1,5 @@
-/* lib/crypto/builtin/camellia/camellia.h - Camellia version 1.2.0 */
-/*
+/* camellia.h ver 1.2.0
+ *
  * Copyright (c) 2006,2007,2009
  * NTT (Nippon Telegraph and Telephone Corporation) . All rights reserved.
  *
@@ -47,18 +47,6 @@ typedef unsigned int KEY_TABLE_TYPE[CAMELLIA_TABLE_WORD_LEN];
 /* u32 must be 32bit word */
 typedef uint32_t u32;
 typedef uint8_t u8;
-
-/* For the Kerberos 5 tree, hide the Camellia symbol names. */
-#define camellia_setup128      k5_camellia_setup128
-#define camellia_setup192      k5_camellia_setup192
-#define camellia_setup256      k5_camellia_setup256
-#define camellia_encrypt128    k5_camellia_encrypt128
-#define camellia_decrypt128    k5_camellia_decrypt128
-#define camellia_encrypt256    k5_camellia_encrypt256
-#define camellia_decrypt256    k5_camellia_decrypt256
-#define Camellia_Ekeygen       k5_Camellia_Ekeygen
-#define Camellia_EncryptBlock  k5_Camellia_EncryptBlock
-#define Camellia_DecryptBlock  k5_Camellia_DecryptBlock
 
 void camellia_setup128(const unsigned char *key, u32 *subkey);
 void camellia_setup192(const unsigned char *key, u32 *subkey);

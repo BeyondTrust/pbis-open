@@ -25,7 +25,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "aead.h"
 
 /*
  * Because our built-in HMAC implementation doesn't need to invoke any

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/srv/pwqual_dict.c */
 /*
+ * lib/kadm5/srv/pwqual_dict.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -22,12 +23,15 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-/*
+ *
+ * Dictionary initialization and lookup code is (see top-level NOTICE file for
+ * license):
+ *
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved
+ *
+ *
+ * Password quality module to look up passwords within the realm dictionary.
  */
-
-/* Password quality module to look up passwords within the realm dictionary. */
 
 #include "k5-platform.h"
 #include <krb5/pwqual_plugin.h>
@@ -102,16 +106,15 @@ init_dict(dict_moddata dict, const char *dict_file)
     struct stat sb;
 
     if (dict_file == NULL) {
-        krb5_klog_syslog(LOG_INFO,
-                         _("No dictionary file specified, continuing without "
-                           "one."));
+        krb5_klog_syslog(LOG_INFO, "No dictionary file specified, continuing "
+                         "without one.");
         return KADM5_OK;
     }
     if ((fd = open(dict_file, O_RDONLY)) == -1) {
         if (errno == ENOENT) {
             krb5_klog_syslog(LOG_ERR,
-                             _("WARNING!  Cannot find dictionary file %s, "
-                               "continuing without one."), dict_file);
+                             "WARNING!  Cannot find dictionary file %s, "
+                             "continuing without one.", dict_file);
             return KADM5_OK;
         } else
             return errno;

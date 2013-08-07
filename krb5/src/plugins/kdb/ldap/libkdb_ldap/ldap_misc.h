@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* plugins/kdb/ldap/libkdb_ldap/ldap_misc.h */
 /*
+ * lib/kdb/kdb_ldap/ldap_misc.h
+ *
  * Copyright (c) 2004-2005, Novell, Inc.
  * All rights reserved.
  *
@@ -35,6 +36,8 @@
 
 #ifndef _HAVE_LDAP_MISC_H
 #define _HAVE_LDAP_MISC_H 1
+
+#include "ldap_services.h"
 
 /* misc functions */
 

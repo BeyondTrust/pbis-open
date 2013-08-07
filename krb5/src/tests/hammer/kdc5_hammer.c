@@ -1,5 +1,6 @@
-/* tests/hammer/kdc5_hammer.c */
 /*
+ * tests/hammer/kdc5_hammer.c
+ *
  * Copyright 1990,1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -21,6 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Initialize a credentials cache.
  */
 
 #include <stdio.h>

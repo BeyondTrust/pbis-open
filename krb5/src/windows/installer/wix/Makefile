@@ -27,7 +27,6 @@ WIXINCLUDES= \
 	features.wxi \
 	files.wxi \
 	property.wxi \
-	runtime.wxi \
 	site-local.wxi \
 	lang\strings_$(LANG).wxl \
 	lang\ui_$(LANG).wxi \
@@ -45,7 +44,7 @@ $(OBJFILE): kfw.wxs $(WIXINCLUDES)
 
 $(MSIFILE): $(OBJFILE) $(CUSTOMDLL)
 	$(LIGHT) -out $@ $(OBJFILE) \
-		-loc lang\strings_$(LANG).wxl -ext WixUtilExtension.dll
+		-loc lang\strings_$(LANG).wxl
 
 $(CUSTOMDLL): custom\custom.cpp
 	$(CD) custom

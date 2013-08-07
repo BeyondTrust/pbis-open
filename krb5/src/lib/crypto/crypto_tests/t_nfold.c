@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/crypto_tests/t_nfold.c - Test nfold implementation correctness */
 /*
+ * lib/crypto/t_nfold.c
+ *
  * Copyright 1988, 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,14 +23,19 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Program to test the correctness of nfold implementation.
+ *
+ * exit returns  0 ==> success
+ *              -1 ==> error
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "crypto_int.h"
+#include "k5-int.h"
 
 #define ASIZE(ARRAY) (sizeof(ARRAY)/sizeof(ARRAY[0]))
 
@@ -45,7 +51,7 @@ static void printstringhex (const unsigned char *p) {
 
 static void rfc_tests ()
 {
-    unsigned i;
+    int i;
     struct {
         char *input;
         unsigned int n;
@@ -95,7 +101,7 @@ static void rfc_tests ()
 static void fold_kerberos(unsigned int nbytes)
 {
     unsigned char cipher_text[300];
-    unsigned int j;
+    int j;
 
     if (nbytes > 300)
         abort();
@@ -130,7 +136,7 @@ main(argc, argv)
     char *argv[];
 {
     unsigned char cipher_text[64];
-    unsigned int i, j;
+    int i, j;
 
     printf("N-fold\n");
     for (i=0; i<sizeof(nfold_in)/sizeof(char *); i++) {

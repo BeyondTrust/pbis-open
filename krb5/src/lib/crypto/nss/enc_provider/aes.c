@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/nss/enc_provider/aes.c */
-/*
+/* lib/crypto/nss/enc_provider/aes.c
+ *
  * Copyright (c) 2010 Red Hat, Inc.
  * All Rights Reserved.
  *
@@ -33,8 +33,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "enc_provider.h"
+#include "rand2key.h"
+#include "aead.h"
 #include "nss_gen.h"
+
 
 krb5_error_code
 krb5int_aes_encrypt(krb5_key key, const krb5_data *ivec,
@@ -83,6 +87,7 @@ const struct krb5_enc_provider krb5int_enc_aes128 = {
     krb5int_aes_encrypt,
     krb5int_aes_decrypt,
     NULL,
+    krb5int_aes_make_key,
     aes_init_state,
     krb5int_default_free_state,
 };
@@ -93,6 +98,7 @@ const struct krb5_enc_provider krb5int_enc_aes256 = {
     krb5int_aes_encrypt,
     krb5int_aes_decrypt,
     NULL,
+    krb5int_aes_make_key,
     aes_init_state,
     krb5int_default_free_state,
     k5_nss_gen_cleanup

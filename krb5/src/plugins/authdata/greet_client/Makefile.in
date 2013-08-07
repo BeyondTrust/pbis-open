@@ -24,7 +24,7 @@ STLIBOBJS= greet.o
 
 SRCS=	greet.c
 
-all-unix:: all-libs
+all-unix:: all-liblinks
 install-unix:: install-libs
 clean-unix:: clean-libs clean-libobjs
 

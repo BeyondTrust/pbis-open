@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/builtin/des/weak_key.c */
 /*
+ * lib/crypto/des/weak_key.c
+ *
  * Copyright 1989,1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * Under U.S. law, this software may not be exported outside the US
  * without license from the U.S. Commerce department.
  *

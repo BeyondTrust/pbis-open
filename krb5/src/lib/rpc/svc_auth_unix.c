@@ -66,7 +66,8 @@ gssrpc__svcauth_unix(
 		char area_machname[MAX_MACHINE_NAME+1];
 		int area_gids[NGRPS];
 	} *area;
-	u_int auth_len, str_len, gid_len, i;
+	u_int auth_len, str_len, gid_len;
+	register int i;
 
 	rqst->rq_xprt->xp_auth = &svc_auth_none;
 

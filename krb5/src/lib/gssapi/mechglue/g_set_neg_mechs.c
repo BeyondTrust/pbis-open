@@ -1,5 +1,6 @@
-/* lib/gssapi/mechglue/g_set_neg_mechs.c - Glue for gss_set_neg_mechs */
 /*
+ * lib/gssapi/mechglue/g_set_neg_mechs.c
+ *
  * Copyright (C) 2010 by the Massachusetts Institute of Technology.
  * All rights reserved.
  *
@@ -21,6 +22,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Glue routine for gss_set_neg_mechs.
  */
 
 #include "mglueP.h"

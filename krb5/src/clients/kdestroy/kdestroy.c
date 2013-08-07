@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* clients/kdestroy/kdestroy.c - Destroy contents of credential cache */
 /*
+ * clients/kdestroy/kdestroy.c
+ *
  * Copyright 1990 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,19 +23,18 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Destroy the contents of your credential cache.
  */
 
-#include "k5-platform.h"
+#include "autoconf.h"
 #include <krb5.h>
 #include <com_err.h>
-#include <locale.h>
 #include <string.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef _WIN32
-#include <getopt.h>
 #endif
 
 #ifdef __STDC__
@@ -59,10 +59,9 @@ static void usage()
 {
 #define KRB_AVAIL_STRING(x) ((x)?"available":"not available")
 
-    fprintf(stderr, _("Usage: %s [-A] [-q] [-c cache_name]\n"), progname);
-    fprintf(stderr, _("\t-A destroy all credential caches in collection\n"));
-    fprintf(stderr, _("\t-q quiet mode\n"));
-    fprintf(stderr, _("\t-c specify name of credentials cache\n"));
+    fprintf(stderr, "Usage: %s [-q] [-c cache_name]\n", progname);
+    fprintf(stderr, "\t-q quiet mode\n");
+    fprintf(stderr, "\t-c specify name of credentials cache\n");
     exit(2);
 }
 
@@ -75,34 +74,28 @@ main(argc, argv)
     krb5_error_code retval;
     int c;
     krb5_ccache cache = NULL;
-    krb5_cccol_cursor cursor;
     char *cache_name = NULL;
     int code = 0;
     int errflg = 0;
     int quiet = 0;
-    int all = 0;
 
-    setlocale(LC_ALL, "");
     progname = GET_PROGNAME(argv[0]);
 
-    while ((c = getopt(argc, argv, "54Aqc:")) != -1) {
+    while ((c = getopt(argc, argv, "54qc:")) != -1) {
         switch (c) {
-        case 'A':
-            all = 1;
-            break;
         case 'q':
             quiet = 1;
             break;
         case 'c':
             if (cache_name) {
-                fprintf(stderr, _("Only one -c option allowed\n"));
+                fprintf(stderr, "Only one -c option allowed\n");
                 errflg++;
             } else {
                 cache_name = optarg;
             }
             break;
         case '4':
-            fprintf(stderr, _("Kerberos 4 is no longer supported\n"));
+            fprintf(stderr, "Kerberos 4 is no longer supported\n");
             exit(3);
             break;
         case '5':
@@ -123,56 +116,32 @@ main(argc, argv)
 
     retval = krb5_init_context(&kcontext);
     if (retval) {
-        com_err(progname, retval, _("while initializing krb5"));
+        com_err(progname, retval, "while initializing krb5");
         exit(1);
-    }
-
-    if (all) {
-        code = krb5_cccol_cursor_new(kcontext, &cursor);
-        if (code) {
-            com_err(progname, code, _("while listing credential caches"));
-            exit(1);
-        }
-        while ((code = krb5_cccol_cursor_next(kcontext, cursor,
-                                              &cache)) == 0 && cache != NULL) {
-            code = krb5_cc_get_full_name(kcontext, cache, &cache_name);
-            if (code) {
-                com_err(progname, code, _("composing ccache name"));
-                exit(1);
-            }
-            code = krb5_cc_destroy(kcontext, cache);
-            if (code && code != KRB5_FCC_NOFILE) {
-                com_err(progname, code, _("while destroying cache %s"),
-                        cache_name);
-            }
-            krb5_free_string(kcontext, cache_name);
-        }
-        krb5_cccol_cursor_free(kcontext, &cursor);
-        return 0;
     }
 
     if (cache_name) {
         code = krb5_cc_resolve (kcontext, cache_name, &cache);
         if (code != 0) {
-            com_err(progname, code, _("while resolving %s"), cache_name);
+            com_err (progname, code, "while resolving %s", cache_name);
             exit(1);
         }
     } else {
         code = krb5_cc_default(kcontext, &cache);
         if (code) {
-            com_err(progname, code, _("while getting default ccache"));
+            com_err(progname, code, "while getting default ccache");
             exit(1);
         }
     }
 
     code = krb5_cc_destroy (kcontext, cache);
     if (code != 0) {
-        com_err (progname, code, _("while destroying cache"));
+        com_err (progname, code, "while destroying cache");
         if (code != KRB5_FCC_NOFILE) {
             if (quiet)
-                fprintf(stderr, _("Ticket cache NOT destroyed!\n"));
+                fprintf(stderr, "Ticket cache NOT destroyed!\n");
             else {
-                fprintf(stderr, _("Ticket cache %cNOT%c destroyed!\n"),
+                fprintf(stderr, "Ticket cache %cNOT%c destroyed!\n",
                         BELL_CHAR, BELL_CHAR);
             }
             errflg = 1;

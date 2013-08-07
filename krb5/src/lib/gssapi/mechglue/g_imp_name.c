@@ -65,19 +65,15 @@ val_imp_name_args(
     if (input_name_buffer == GSS_C_NO_BUFFER)
 	return (GSS_S_CALL_INACCESSIBLE_READ | GSS_S_BAD_NAME);
 
-    if (input_name_type == GSS_C_NO_OID ||
-	!g_OID_equal(input_name_type, GSS_C_NT_ANONYMOUS)) {
-	if (input_name_buffer->length == 0)
-	    return (GSS_S_BAD_NAME);
+    if (input_name_buffer->length == 0)
+	return GSS_S_BAD_NAME;
 
-	if (input_name_buffer->value == NULL)
-	    return (GSS_S_CALL_INACCESSIBLE_READ | GSS_S_BAD_NAME);
-    }
+    if (input_name_buffer->value == NULL)
+	return (GSS_S_CALL_INACCESSIBLE_READ | GSS_S_BAD_NAME);
 
     return (GSS_S_COMPLETE);
 }
 
-static gss_buffer_desc emptyNameBuffer;
 
 OM_uint32 KRB5_CALLCONV
 gss_import_name(minor_status,
@@ -93,9 +89,6 @@ gss_name_t *		output_name;
 {
     gss_union_name_t	union_name;
     OM_uint32		tmp, major_status = GSS_S_FAILURE;
-
-    if (input_name_buffer == GSS_C_NO_BUFFER)
-	input_name_buffer = &emptyNameBuffer;
 
     major_status = val_imp_name_args(minor_status,
 				     input_name_buffer, input_name_type,
@@ -209,7 +202,7 @@ importExportName(minor, unionName)
     buf = (unsigned char *)expName.value;
     if (buf[0] != 0x04)
 	return (GSS_S_DEFECTIVE_TOKEN);
-    if (buf[1] != 0x01 && buf[1] != 0x02) /* allow composite names */
+    if (buf[1] != 0x01 && buf[1] != 0x02)
 	return (GSS_S_DEFECTIVE_TOKEN);
 
     buf += expNameTokIdLen;
@@ -250,8 +243,7 @@ importExportName(minor, unionName)
     if ((mech = gssint_get_mechanism(&mechOid)) == NULL)
 	return (GSS_S_BAD_MECH);
 
-    if (mech->gssspi_import_name_by_mech == NULL &&
-	mech->gss_import_name == NULL)
+    if (mech->gss_import_name == NULL)
 	return (GSS_S_UNAVAILABLE);
 
     /*
@@ -261,15 +253,9 @@ importExportName(minor, unionName)
      * have created it.
      */
     if (mech->gss_export_name) {
-	if (mech->gssspi_import_name_by_mech) {
-	    major = mech->gssspi_import_name_by_mech(minor, &mechOid, &expName,
-						     GSS_C_NT_EXPORT_NAME,
-						     &unionName->mech_name);
-	} else {
-	    major = mech->gss_import_name(minor, &expName,
-					  GSS_C_NT_EXPORT_NAME,
-					  &unionName->mech_name);
-	}
+	major = mech->gss_import_name(minor,
+				      &expName, (gss_OID)GSS_C_NT_EXPORT_NAME,
+				      &unionName->mech_name);
 	if (major != GSS_S_COMPLETE)
 	    map_error(minor, mech);
 	else {
@@ -365,14 +351,8 @@ importExportName(minor, unionName)
      */
     expName.length = nameLen;
     expName.value = nameLen ? (void *)buf : NULL;
-    if (mech->gssspi_import_name_by_mech) {
-	major = mech->gssspi_import_name_by_mech(minor, &mechOid, &expName,
-						 GSS_C_NULL_OID,
-						 &unionName->mech_name);
-    } else {
-	major = mech->gss_import_name(minor, &expName,
-				      GSS_C_NULL_OID, &unionName->mech_name);
-    }
+    major = mech->gss_import_name(minor, &expName,
+				  GSS_C_NULL_OID, &unionName->mech_name);
     if (major != GSS_S_COMPLETE) {
 	map_error(minor, mech);
 	return (major);

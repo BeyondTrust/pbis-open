@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/crypto/crypto_tests/t_cmac.c */
 /*
+ * lib/crypto/t_cmac.c
+ *
  * Copyright 2010 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,9 +23,8 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- */
-
-/*
+ *
+ *
  * Test vectors for CMAC.  Inputs are taken from RFC 4493 section 4.  Outputs
  * are changed for the use of Camellia-128 in place of AES-128.
  *
@@ -38,7 +38,11 @@
  * krb5int_cmac_checksum.
  */
 
-#include "crypto_int.h"
+#include "k5-int.h"
+#include "enc_provider.h"
+#include "cksumtypes.h"
+
+#ifdef CAMELLIA
 
 /* All examples use the following Camellia-128 key. */
 static unsigned char keybytes[] = {
@@ -96,9 +100,12 @@ check_result(const char *name, const unsigned char *result,
     }
 }
 
+#endif /* CAMELLIA */
+
 int
 main(int argc, char **argv)
 {
+#ifdef CAMELLIA
     krb5_context context = NULL;
     krb5_keyblock keyblock;
     krb5_key key;
@@ -137,5 +144,6 @@ main(int argc, char **argv)
 
     printf("All CMAC tests passed.\n");
     krb5_k_free_key(context, key);
+#endif /* CAMELLIA */
     return 0;
 }

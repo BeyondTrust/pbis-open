@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/bld_princ.c - Build a principal from a list of strings */
 /*
+ * lib/krb5/krb/bld_princ.c
+ *
  * Copyright 1991 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,14 +23,23 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
+ *
+ * Build a principal from a list of strings
  */
 
 #include <stdarg.h>
 #include "k5-int.h"
 
+/* Takes first component as argument for KIM API,
+ * which does not allow realms with zero components */
 static krb5_error_code
-build_principal_va(krb5_context context, krb5_principal princ,
-                   unsigned int rlen, const char *realm, va_list ap)
+krb5int_build_principal_va(krb5_context context,
+                           krb5_principal princ,
+                           unsigned int rlen,
+                           const char *realm,
+                           const char *first,
+                           va_list ap)
 {
     krb5_error_code retval = 0;
     char *r = NULL;
@@ -46,24 +56,32 @@ build_principal_va(krb5_context context, krb5_principal princ,
         if (!r) { retval = ENOMEM; }
     }
 
-    while (!retval && (component = va_arg(ap, char *))) {
-        if (count == size) {
-            krb5_data *new_data = NULL;
+    if (!retval && first) {
+        data[0].length = strlen(first);
+        data[0].data = strdup(first);
+        if (!data[0].data) { retval = ENOMEM; }
+        count++;
 
-            size *= 2;
-            new_data = realloc(data, size * sizeof(krb5_data));
-            if (new_data) {
-                data = new_data;
-            } else {
-                retval = ENOMEM;
+        /* ap is only valid if first is non-NULL */
+        while (!retval && (component = va_arg(ap, char *))) {
+            if (count == size) {
+                krb5_data *new_data = NULL;
+
+                size *= 2;
+                new_data = realloc ((char *) data, sizeof(krb5_data) * size);
+                if (new_data) {
+                    data = new_data;
+                } else {
+                    retval = ENOMEM;
+                }
             }
-        }
 
-        if (!retval) {
-            data[count].length = strlen(component);
-            data[count].data = strdup(component);
-            if (!data[count].data) { retval = ENOMEM; }
-            count++;
+            if (!retval) {
+                data[count].length = strlen(component);
+                data[count].data = strdup(component);
+                if (!data[count].data) { retval = ENOMEM; }
+                count++;
+            }
         }
     }
 
@@ -96,7 +114,37 @@ krb5_build_principal_va(krb5_context context,
                         const char *realm,
                         va_list ap)
 {
-    return build_principal_va(context, princ, rlen, realm, ap);
+    char *first = va_arg(ap, char *);
+
+    return krb5int_build_principal_va(context, princ, rlen, realm, first, ap);
+}
+
+/* Takes first component as argument for KIM API,
+ * which does not allow realms with zero components */
+krb5_error_code KRB5_CALLCONV
+krb5int_build_principal_alloc_va(krb5_context context,
+                                 krb5_principal *princ,
+                                 unsigned int rlen,
+                                 const char *realm,
+                                 const char *first,
+                                 va_list ap)
+{
+    krb5_error_code retval = 0;
+
+    krb5_principal p = malloc(sizeof(krb5_principal_data));
+    if (!p) { retval = ENOMEM; }
+
+    if (!retval) {
+        retval = krb5int_build_principal_va(context, p, rlen, realm, first, ap);
+    }
+
+    if (!retval) {
+        *princ = p;
+    } else {
+        free(p);
+    }
+
+    return retval;
 }
 
 krb5_error_code KRB5_CALLCONV
@@ -107,20 +155,21 @@ krb5_build_principal_alloc_va(krb5_context context,
                               va_list ap)
 {
     krb5_error_code retval = 0;
-    krb5_principal p;
 
-    p = malloc(sizeof(krb5_principal_data));
-    if (p == NULL)
-        return ENOMEM;
+    krb5_principal p = malloc(sizeof(krb5_principal_data));
+    if (!p) { retval = ENOMEM; }
 
-    retval = build_principal_va(context, p, rlen, realm, ap);
-    if (retval) {
-        free(p);
-        return retval;
+    if (!retval) {
+        retval = krb5_build_principal_va(context, p, rlen, realm, ap);
     }
 
-    *princ = p;
-    return 0;
+    if (!retval) {
+        *princ = p;
+    } else {
+        free(p);
+    }
+
+    return retval;
 }
 
 krb5_error_code KRB5_CALLCONV_C

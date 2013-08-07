@@ -1,5 +1,6 @@
-/* ccapi/server/ccs_os_server.h */
 /*
+ * $Header$
+ *
  * Copyright 2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
  *

@@ -27,7 +27,7 @@ IROOT=$TOP/..
 ADMIN=$TOP/dbutil
 BIN=$IROOT/bin
 ETC=$IROOT/etc
-MODDIR=$TOP/../plugins/kdb
+MODDIR=$TOP/../util/fakedest$libdir/krb5/plugins/kdb
 SBIN=$TOP/keytab:$TOP/server
 DUMMY=${REALM=SECURE-TEST.OV.COM}; export REALM
 
@@ -223,7 +223,6 @@ cat > $K5ROOT/setup.csh <<EOF
 setenv KRB5_CONFIG $KRB5_CONFIG
 setenv KRB5_KDC_PROFILE $KRB5_KDC_PROFILE
 setenv KRB5_KTNAME $KRB5_KTNAME
-setenv KRB5_CLIENT_KTNAME $KRB5_CLIENT_KTNAME
 $KRB5_RUN_ENV_CSH
 EOF
 

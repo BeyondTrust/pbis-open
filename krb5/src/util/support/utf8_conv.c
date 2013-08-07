@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* util/support/utf8_conv.c */
 /*
+ * util/support/utf8_conv.c
+ *
  * Copyright 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -23,7 +24,8 @@
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
  */
-/*
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
  * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
@@ -35,7 +37,7 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/* Copyright (C) 1999, 2000 Novell, Inc. All Rights Reserved.
+/* Portions Copyright (C) 1999, 2000 Novell, Inc. All Rights Reserved.
  *
  * THIS WORK IS SUBJECT TO U.S. AND INTERNATIONAL COPYRIGHT LAWS AND
  * TREATIES. USE, MODIFICATION, AND REDISTRIBUTION OF THIS WORK IS SUBJECT
@@ -46,8 +48,6 @@
  * PUBLIC LICENSE, OR OTHER PRIOR WRITTEN CONSENT FROM NOVELL, COULD SUBJECT
  * THE PERPETRATOR TO CRIMINAL AND CIVIL LIABILITY.
  */
-
-/* This work is part of OpenLDAP Software <http://www.openldap.org/>. */
 
 /*
  * UTF-8 Conversion Routines

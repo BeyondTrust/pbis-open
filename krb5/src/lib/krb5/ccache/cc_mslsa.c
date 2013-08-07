@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/ccache/cc_mslsa.c */
 /*
+ * lib/krb5/ccache/cc_mslsa.c
+ *
  * Copyright 2007 Secure Endpoints Inc.
  *
  * Copyright 2003,2004 by the Massachusetts Institute of Technology.
@@ -53,8 +54,6 @@
 #define UNICODE
 #define _UNICODE
 
-#include <ntstatus.h>
-#define WIN32_NO_STATUS
 #include "k5-int.h"
 #include "com_err.h"
 #include "cc-int.h"
@@ -72,6 +71,7 @@
 #endif
 #define _WIN32_WINNT 0x0600
 #include <ntsecapi.h>
+#include <ntstatus.h>
 
 
 /* The following two features can only be built using the version of the
@@ -170,6 +170,37 @@ is_windows_vista (void)
     }
 
     return fIsVista;
+}
+
+static BOOL
+is_process_uac_limited (void)
+{
+    static BOOL fChecked = FALSE;
+    static BOOL fIsUAC = FALSE;
+
+    if (!fChecked)
+    {
+        NTSTATUS Status = 0;
+        HANDLE  TokenHandle;
+        DWORD   ElevationLevel;
+        DWORD   ReqLen;
+        BOOL    Success;
+
+        if (is_windows_vista()) {
+            Success = OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &TokenHandle );
+            if ( Success ) {
+                Success = GetTokenInformation( TokenHandle,
+                                               TokenOrigin+1 /* ElevationLevel */,
+                                               &ElevationLevel, sizeof(DWORD), &ReqLen );
+                CloseHandle( TokenHandle );
+                if ( Success && ElevationLevel == 3 /* Limited */ )
+                    fIsUAC = TRUE;
+            }
+        }
+        fChecked = TRUE;
+    }
+    return fIsUAC;
+
 }
 
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -306,15 +337,23 @@ UnicodeToANSI(LPTSTR lpInputString, LPSTR lpszOutputString, int nOutStringLen)
 
 static VOID
 WINAPI
-ANSIToUnicode(LPCSTR lpInputString, LPWSTR lpszOutputString, int nOutStringLen)
+ANSIToUnicode(LPSTR lpInputString, LPTSTR lpszOutputString, int nOutStringLen)
 {
 
     CPINFO CodePageInfo;
 
+    lstrcpy(lpszOutputString, (LPTSTR) lpInputString);
+
     GetCPInfo(CP_ACP, &CodePageInfo);
 
-    MultiByteToWideChar(CP_ACP, 0, lpInputString, -1,
-                        lpszOutputString, nOutStringLen);
+    if (CodePageInfo.MaxCharSize > 1 || ((LPBYTE) lpInputString)[1] != '\0')
+    {
+        // Looks like ANSI or MultiByte, better translate it
+        MultiByteToWideChar(CP_ACP, 0, (LPCSTR) lpInputString, -1,
+                            (LPWSTR) lpszOutputString, nOutStringLen);
+    }
+    else
+        lstrcpy(lpszOutputString, (LPTSTR) lpInputString);
 }  // ANSIToUnicode
 
 
@@ -413,6 +452,9 @@ static BOOL
 IsMSSessionKeyNull(KERB_CRYPTO_KEY *mskey)
 {
     DWORD i;
+
+    if (is_process_uac_limited())
+        return TRUE;
 
     if (mskey->KeyType == KERB_ETYPE_NULL)
         return TRUE;
@@ -627,7 +669,7 @@ does_retrieve_ticket_cache_ticket (void)
 
         pTicketRequest = (PKERB_RETRIEVE_TKT_REQUEST) LocalAlloc(LMEM_ZEROINIT, RequestSize);
         if (!pTicketRequest) {
-            LsaDeregisterLogonProcess(LogonHandle);
+            CloseHandle(LogonHandle);
             return FALSE;
         }
 
@@ -652,11 +694,10 @@ does_retrieve_ticket_cache_ticket (void)
         );
 
         LocalFree(pTicketRequest);
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
 
         if (FAILED(Status) || FAILED(SubStatus)) {
-            if (SubStatus == STATUS_NOT_SUPPORTED ||
-                SubStatus == SEC_E_NO_CREDENTIALS)
+            if ( SubStatus == STATUS_NOT_SUPPORTED )
                 /* The combination of the two CacheOption flags
                  * is not supported; therefore, the new flag is supported
                  */
@@ -693,7 +734,7 @@ does_query_ticket_cache_ex2 (void)
 
         pCacheRequest = (PKERB_QUERY_TKT_CACHE_REQUEST) LocalAlloc(LMEM_ZEROINIT, RequestSize);
         if (!pCacheRequest) {
-            LsaDeregisterLogonProcess(LogonHandle);
+            CloseHandle(LogonHandle);
             return FALSE;
         }
 
@@ -711,7 +752,7 @@ does_query_ticket_cache_ex2 (void)
         );
 
         LocalFree(pCacheRequest);
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
 
         if (!(FAILED(Status) || FAILED(SubStatus))) {
             LsaFreeReturnBuffer(pCacheResponse);
@@ -1219,10 +1260,6 @@ krb5_is_permitted_tgs_enctype(krb5_context context, krb5_const_principal princ, 
 // tickets.  This is safe to do because the LSA purges its cache when it
 // retrieves a new TGT (ms calls this renew) but not when it renews the TGT
 // (ms calls this refresh).
-// UAC-limited processes are not allowed to obtain a copy of the MSTGT
-// session key.  We used to check for UAC-limited processes and refuse all
-// access to the TGT, but this makes the MSLSA ccache completely unusable.
-// Instead we ought to just flag that the tgt session key is not valid.
 
 static BOOL
 GetMSTGT(krb5_context context, HANDLE LogonHandle, ULONG PackageId, KERB_EXTERNAL_TICKET **ticket, BOOL enforce_tgs_enctypes)
@@ -1249,6 +1286,11 @@ GetMSTGT(krb5_context context, HANDLE LogonHandle, ULONG PackageId, KERB_EXTERNA
 #endif /* ENABLE_PURGING */
     int    ignore_cache = 0;
     krb5_enctype *etype_list = NULL, *ptr = NULL, etype = 0;
+
+    if (is_process_uac_limited()) {
+        Status = STATUS_ACCESS_DENIED;
+        goto cleanup;
+    }
 
     memset(&CacheRequest, 0, sizeof(KERB_QUERY_TKT_CACHE_REQUEST));
     CacheRequest.MessageType = KerbRetrieveTicketMessage;
@@ -2007,7 +2049,7 @@ krb5_lcc_resolve (krb5_context context, krb5_ccache *id, const char *residual)
 
     lid = (krb5_ccache) malloc(sizeof(struct _krb5_ccache));
     if (lid == NULL) {
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
         return KRB5_CC_NOMEM;
     }
 
@@ -2016,7 +2058,7 @@ krb5_lcc_resolve (krb5_context context, krb5_ccache *id, const char *residual)
     lid->data = (krb5_pointer) malloc(sizeof(krb5_lcc_data));
     if (lid->data == NULL) {
         free(lid);
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
         return KRB5_CC_NOMEM;
     }
 
@@ -2030,7 +2072,7 @@ krb5_lcc_resolve (krb5_context context, krb5_ccache *id, const char *residual)
     if (data->cc_name == NULL) {
         free(lid->data);
         free(lid);
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
         return KRB5_CC_NOMEM;
     }
     strcpy(data->cc_name, residual);
@@ -2052,7 +2094,7 @@ krb5_lcc_resolve (krb5_context context, krb5_ccache *id, const char *residual)
         free(data->cc_name);
         free(lid->data);
         free(lid);
-        LsaDeregisterLogonProcess(LogonHandle);
+        CloseHandle(LogonHandle);
         return KRB5_FCC_NOFILE;
     }
 
@@ -2127,9 +2169,7 @@ krb5_lcc_close(krb5_context context, krb5_ccache id)
         data = (krb5_lcc_data *) id->data;
 
         if (data) {
-            LsaDeregisterLogonProcess(data->LogonHandle);
-            if (data->cc_name)
-                free(data->cc_name);
+            CloseHandle(data->LogonHandle);
             free(data);
         }
         free(id);
@@ -2489,8 +2529,7 @@ krb5_lcc_retrieve(krb5_context context, krb5_ccache id, krb5_flags whichfields,
 
     /* first try to find out if we have an existing ticket which meets the requirements */
     kret = krb5_cc_retrieve_cred_default (context, id, whichfields, mcreds, creds);
-    /* This sometimes returns a zero-length ticket; work around it. */
-    if ( !kret && creds->ticket.length > 0 )
+    if ( !kret )
         return KRB5_OK;
 
     /* if not, we must try to get a ticket without specifying any flags or etypes */
@@ -2507,8 +2546,7 @@ krb5_lcc_retrieve(krb5_context context, krb5_ccache id, krb5_flags whichfields,
 
     /* try again to find out if we have an existing ticket which meets the requirements */
     kret = krb5_cc_retrieve_cred_default (context, id, whichfields, mcreds, creds);
-    /* This sometimes returns a zero-length ticket; work around it. */
-    if ( !kret && creds->ticket.length > 0 )
+    if ( !kret )
         goto cleanup;
 
     /* if not, obtain a ticket using the request flags and enctype even though it may not
@@ -2611,15 +2649,6 @@ krb5_lcc_store(krb5_context context, krb5_ccache id, krb5_creds *creds)
     if (!is_windows_2000())
         return KRB5_FCC_NOFILE;
 
-    if (krb5_is_config_principal(context, creds->server)) {
-        /* mslsa cannot store config creds, so we have to bail.
-         * The 'right' thing to do would be to return an appropriate error,
-         * but that would require modifying the calling code to check
-         * for that error and ignore it.
-         */
-        return KRB5_OK;
-    }
-
 #ifdef KERB_SUBMIT_TICKET
     /* we can use the new KerbSubmitTicketMessage to store the ticket */
     if (KerbSubmitTicket( data->LogonHandle, data->PackageId, context, creds ))
@@ -2706,48 +2735,6 @@ krb5_lcc_get_flags(krb5_context context, krb5_ccache id, krb5_flags *flags)
     return KRB5_OK;
 }
 
-static krb5_error_code KRB5_CALLCONV
-krb5_lcc_ptcursor_new(krb5_context context, krb5_cc_ptcursor *cursor)
-{
-    krb5_cc_ptcursor new_cursor = (krb5_cc_ptcursor )malloc(sizeof(*new_cursor));
-    if (!new_cursor)
-        return ENOMEM;
-    new_cursor->ops = &krb5_lcc_ops;
-    new_cursor->data = (krb5_pointer)(1);
-    *cursor = new_cursor;
-    new_cursor = NULL;
-    return 0;
-}
-
-static krb5_error_code KRB5_CALLCONV
-krb5_lcc_ptcursor_next(krb5_context context, krb5_cc_ptcursor cursor, krb5_ccache *ccache)
-{
-    krb5_error_code code = 0;
-    *ccache = 0;
-    if (cursor->data == NULL)
-        return 0;
-
-    cursor->data = NULL;
-    if ((code = krb5_lcc_resolve(context, ccache, ""))) {
-        if (code != KRB5_FCC_NOFILE)
-            /* Note that we only want to return serious errors.
-             * Any non-zero return code will prevent the cccol iterator
-             * from advancing to the next ccache collection. */
-            return code;
-    }
-    return 0;
-}
-
-static krb5_error_code KRB5_CALLCONV
-krb5_lcc_ptcursor_free(krb5_context context, krb5_cc_ptcursor *cursor)
-{
-    if (*cursor) {
-        free(*cursor);
-        *cursor = NULL;
-    }
-    return 0;
-}
-
 const krb5_cc_ops krb5_lcc_ops = {
     0,
     "MSLSA",
@@ -2766,14 +2753,11 @@ const krb5_cc_ops krb5_lcc_ops = {
     krb5_lcc_remove_cred,
     krb5_lcc_set_flags,
     krb5_lcc_get_flags,
-    krb5_lcc_ptcursor_new,
-    krb5_lcc_ptcursor_next,
-    krb5_lcc_ptcursor_free,
-    NULL, /* move */
-    NULL, /* lastchange */
-    NULL, /* wasdefault */
-    NULL, /* lock */
-    NULL, /* unlock */
-    NULL, /* switch_to */
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 #endif /* _WIN32 */

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/krb5/krb/ser_cksum.c - Serialize krb5_checksum structure */
 /*
+ * lib/krb5/krb/ser_cksum.c
+ *
  * Copyright 1995, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,8 +23,12 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
+/*
+ * ser_cksum.c - Serialize a krb5_checksum structure.
+ */
 #include "k5-int.h"
 #include "int-proto.h"
 

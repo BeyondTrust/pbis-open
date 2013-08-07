@@ -631,7 +631,6 @@ DSTcorrect(time_t Start, time_t Future, int *error)
 	return -1;
     }
     FutureDay = (tm->tm_hour + 1) % 24;
-    *error = 0;
     return (Future - Start) + (StartDay - FutureDay) * 60L * 60L;
 }
 
@@ -874,7 +873,7 @@ get_date(char *p)
     time_t		Start;
     time_t		tod;
     time_t		delta;
-    int			error;
+    int			error = 0;
 
     yyInput = p;
     if (now == NULL) {

@@ -1,6 +1,7 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* lib/kadm5/logger.c */
 /*
+ * lib/kadm/logger.c
+ *
  * Copyright 1995, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
@@ -22,6 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
+ *
  */
 
 /* KADM5 wants non-syslog log files to contain syslog-like entries */
@@ -53,19 +55,19 @@
 #define LOG_ERR         0
 #endif  /* LOG_ERR */
 
-#define lspec_parse_err_1       _("%s: cannot parse <%s>\n")
-#define lspec_parse_err_2       _("%s: warning - logging entry syntax error\n")
-#define log_file_err            _("%s: error writing to %s\n")
-#define log_device_err          _("%s: error writing to %s device\n")
+#define lspec_parse_err_1       "%s: cannot parse <%s>\n"
+#define lspec_parse_err_2       "%s: warning - logging entry syntax error\n"
+#define log_file_err            "%s: error writing to %s\n"
+#define log_device_err          "%s: error writing to %s device\n"
 #define log_ufo_string          "?\?\?" /* nb: avoid trigraphs */
-#define log_emerg_string        _("EMERGENCY")
-#define log_alert_string        _("ALERT")
-#define log_crit_string         _("CRITICAL")
-#define log_err_string          _("Error")
-#define log_warning_string      _("Warning")
-#define log_notice_string       _("Notice")
-#define log_info_string         _("info")
-#define log_debug_string        _("debug")
+#define log_emerg_string        "EMERGENCY"
+#define log_alert_string        "ALERT"
+#define log_crit_string         "CRITICAL"
+#define log_err_string          "Error"
+#define log_warning_string      "Warning"
+#define log_notice_string       "Notice"
+#define log_info_string         "info"
+#define log_debug_string        "debug"
 
 /*
  * Output logging.
@@ -200,7 +202,7 @@ klog_com_err_proc(const char *whoami, long int code, const char *format, va_list
 
     /* If reporting an error message, separate it. */
     if (code) {
-        const char *emsg;
+        char *emsg;
         outbuf[sizeof(outbuf) - 1] = '\0';
 
         emsg = krb5_get_error_message (err_context, code);
@@ -964,7 +966,7 @@ krb5_klog_reopen(krb5_context kcontext)
                 set_cloexec_file(f);
                 log_control.log_entries[lindex].lfu_filep = f;
             } else {
-                fprintf(stderr, _("Couldn't open log file %s: %s\n"),
+                fprintf(stderr, "Couldn't open log file %s: %s\n",
                         log_control.log_entries[lindex].lfu_fname,
                         error_message(errno));
             }
