@@ -818,7 +818,13 @@ sub runTool($$$) {
     my $tool = shift || confess "no tool to run passed to runTool!\n";
 
     logDebug("Attempting to run $tool");
-    my $data=`$info->{lw}->{path}/$tool 2>&1`;
+    my $cmd="";
+    if (! -x $tool) {
+        $cmd = "$info->{lw}->{path}/$tool 2>&1";
+    } else {
+        $cmd = "$tool 2>&1";
+    }
+    my $data=`$cmd`;
     if ($?) {
         $gRetval |= ERR_SYSTEM_CALL;
         logError("Error running $tool!");
@@ -1524,7 +1530,43 @@ sub getLikewiseVersion($) {
         }
     }
     my $gporefresh = findInPath("gporefresh", ["/opt/centeris/bin/", "/usr/centeris/bin", "/opt/likewise/bin", "/opt/pbis/bin"]);
-    if ($info->{lw}->{version}=~/^7\.\d+\./) {
+    if ($info->{lw}->{version}=~/^8\.\d+\./) {
+        $info->{lw}->{base} = "/opt/pbis";
+        $info->{lw}->{path} = "/opt/pbis/bin";
+        $info->{lw}->{daemons}->{smbdaemon} = "lwio";
+        $info->{lw}->{daemons}->{authdaemon} = "lsass";
+        $info->{lw}->{daemons}->{gpdaemon} = "gpagent" if (defined($gporefresh->{path}));
+        $info->{lw}->{daemons}->{dcedaemon} = "dcerpc";
+        $info->{lw}->{daemons}->{netdaemon} = "netlogon";
+        $info->{lw}->{daemons}->{eventlogd} = "eventlog";
+        $info->{lw}->{daemons}->{eventfwdd} = "eventfwd";
+        $info->{lw}->{daemons}->{syslogreaper} = "reapsysl";
+        $info->{lw}->{daemons}->{registry} = "lwreg";
+        $info->{lw}->{daemons}->{lwsm} = "lwsm";
+        $info->{lw}->{daemons}->{usermonitor} = "usermonitor";
+        $info->{lw}->{daemons}->{smartcard} = "lwsc";
+        $info->{lw}->{daemons}->{pkcs11} = "lwpkcs11";
+        $info->{lw}->{logging}->{command} = "lwsm set-log-level";
+        $info->{lw}->{logging}->{tapcommand} = "lwsm tap-log";
+        $info->{lw}->{logging}->{registry} = "";
+        $info->{lwsm}->{control}="lwsm";
+        $info->{lwsm}->{type}="container";
+        $info->{lwsm}->{initname}="pbis";
+        $info->{lw}->{tools}->{findsid} = "find-objects --by-sid";
+        $info->{lw}->{tools}->{userlist} = "enum-users --level 2";
+        $info->{lw}->{tools}->{grouplist} = "enum-groups --level 1";
+        $info->{lw}->{tools}->{userbyname} = "find-objects --user --by-name";
+        $info->{lw}->{tools}->{userbyid} = "find-objects --user --by-unix-id";
+        $info->{lw}->{tools}->{groupbyname} = "find-objects --group --by-name";
+        $info->{lw}->{tools}->{groupbyid} = "find-objects --group --by-unix-id";
+        $info->{lw}->{tools}->{groupsforuser} = "list-groups-for-user --show-sid";
+        $info->{lw}->{tools}->{groupsforuid} = "list-groups-for-user --show-sid --uid";
+        $info->{lw}->{tools}->{dctime} = "get-dc-time";
+        $info->{lw}->{tools}->{config} = "config --dump";
+        $info->{lw}->{tools}->{status} = "get-status";
+        $info->{lw}->{tools}->{regshell} = "regshell";
+        logData("PBIS Version $info->{lw}->{version} installed");
+    }  elsif ($info->{lw}->{version}=~/^7\.\d+\./) {
         $info->{lw}->{base} = "/opt/pbis";
         $info->{lw}->{path} = "/opt/pbis/bin";
         $info->{lw}->{daemons}->{smbdaemon} = "lwio";
