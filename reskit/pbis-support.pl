@@ -36,6 +36,7 @@
 # v2.0.2b 2011-04-13 RCA - Mac restart issue fixes
 # v2.5.0  2013-02-11 RCA PBIS 7.0 (container) support
 # v2.5.1  2013-06-13 RCA config dump, code cleanup, logfile locations.
+# v2.5.2  2013-08-12 RCA fix up DNS, runTool for large environments using open() rather than ``
 #
 # Data structures explained at bottom of file
 #
@@ -58,7 +59,7 @@ use FindBin;
 use Config;
 
 # Define global variables
-my $gVer = "2.5.1";
+my $gVer = "2.5.2";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -384,13 +385,16 @@ sub daemonContainerStart($$) {
     }
     return $result;
 }
-sub dnsSrvLookup($) {
+
+sub dnsLookup($$) {
     my $query = shift || confess "No name to lookup passed to dnsSrvLookup()!";
+    my $type = shift || confess "No Query Type passed to dnsLookup()!";
+    my @results;
 
     my $lookup = {};
     foreach (("dig", "nslookup")) {
         $lookup = findInPath("dig", ["/sbin", "/usr/sbin", "/bin", "/usr/bin", "/usr/local/sbin", "/usr/local/bin"]);
-        last if ($lookup->{path});
+        last if ($lookup->{path} and ($lookup->{perm}=~/x/));
     }
     unless ($lookup->{path}) {
         $gRetval |= ERR_FILE_ACCESS;
@@ -398,29 +402,51 @@ sub dnsSrvLookup($) {
         logError("Could not find 'dig' or 'nslookup' - unable to do any network tests!");
         return;
     }
-    my @records;
     if ($lookup->{name} == "dig") {
-        logVerbose("Performing DNS lookup: '$lookup->{path} SRV $query'.");
-        my @dclist=`$lookup->{path} SRV $query`;
-        foreach my $dc (@dclist) {
-            next unless ($dc =~ /^$query\./);
-            logDebug("Looking at DNS Record: $dc");
-            $dc =~ /([^\s]+)\.$/;
-            push(@records, $1); # if ($1 =~ /^[a-zA-Z0-9\-\.]$/);
+        logVerbose("Performing DNS dig: '$lookup->{path} $type $query'.");
+        open(NS, "$lookup->{path} $type $query |");
+        while (<NS>) {
+            next if (/^;/);
+            next if (/^\s*$/);
+            push(@results, $_);
         }
+        close NS;
 
     } elsif ($lookup->{name} == "nslookup") {
-        logVerbose("Performing DNS lookup: '$lookup->{path} SRV $query'.");
-        my @dclist = `$lookup->{path} -query=SRV $query`;
-        foreach my $dc (@dclist) {
-            next unless ($dc =~ /(^$query\.|Host:)/);
-            logDebug("Looking at DNS Record: $dc");
-            $dc =~ /([^\s]+)\.$/;
-            push(@records, $1) if ($1 =~ /^[a-zA-Z0-9\-\.]+$/);
+        my $line="";
+        logVerbose("Performing DNS nslookup: '$lookup->{path} -query=$type $query'.");
+        open(NS, "$lookup->{path} -query=$type $query |");
+        while (<NS>) {
+            chomp;
+            my ($p1, $p2) = split(/\s+/, $_, 2);
+            if ($p1 =~ /Name:/) {
+                $line=$p2;
+                logDebug("Matched a server name in nslookup: $p2");
+            }
+            if ($p1 =~ /Address:/ and $line) {
+                push(@results, $line."     $p2");
+                logDebug("Matched a server address in nslookup: $line is $p2");
+                $line="";
+            }
         }
     }
+    return @results;
+}
+sub dnsSrvLookup($) {
+    my $query = shift || confess "No name to lookup passed to dnsSrvLookup()!";
+
+    my @records;
+    logVerbose("Performing DNS lookup: 'dnsLookup() SRV $query'.");
+    my @dclist = dnsLookup($query, "SRV");
+    foreach my $dc (@dclist) {
+        next unless ($dc =~ /^$query\./);
+        logDebug("Looking at DNS Record: $dc");
+        $dc =~ /([^\s]+)\.$/;
+        push(@records, $1); # if ($1 =~ /^[a-zA-Z0-9\-\.]$/);
+    }
+
     foreach (@records) {
-        logDebug("Returning '$_'");
+        logVerbose("Returning '$_'");
     }
     return @records;
 }
@@ -527,20 +553,22 @@ sub getUserInfo($$$) {
     my $name = shift;
     my ($data, $error);
     if (not defined($name)) {
-        logError("No username passed for user info lookup!");
-        $gRetval |= ERR_DATA_INPUT;
-        return $gRetval;
+        if (not defined($info->{name})) {
+            logError("No username passed for user info lookup!");
+            $gRetval |= ERR_DATA_INPUT;
+            return $gRetval;
+        } else {
+            $name=$info->{name};
+        }
     }
     logData("getent passwd $name: ");
     logData(join(":", getpwnam($name)));
     logData("");
     return 0 if ($name=~/root/i);  #no need to do AD lookups for root
     logData("PBIS direct lookup:");
-    $data = runTool($info, $opt, "$info->{lw}->{tools}->{userbyname} $name");
-    logData($data);
+    runTool($info, $opt, "$info->{lw}->{tools}->{userbyname} $name", "print");
     logData("User Group Membership:");
-    $data = runTool($info, $opt, "$info->{lw}->{tools}->{groupsforuser} $name");
-    logData($data);
+    runTool($info, $opt, "$info->{lw}->{tools}->{groupsforuser} $name", "print");
 
     return 0;
 }
@@ -562,13 +590,14 @@ sub findInPath($$) {
     foreach my $path (@$paths) {
         if (-e "$path/$filename") {
             $file->{info} = stat(_);
+            $file->{perm} = "";
             $file->{path} = "$path/$filename";
             $file->{type} = "d" if (-d _);
             $file->{type} = "f" if (-f _);
             $file->{type} = "c" if (-c _);
-            $file->{perm} = "r" if (-r _);
-            $file->{perm} = "x" if (-x _);
-            $file->{perm} = "w" if (-w _);
+            $file->{perm} .= "r" if (-r _);
+            $file->{perm} .= "x" if (-x _);
+            $file->{perm} .= "w" if (-w _);
             $file->{name} = $filename;
             $file->{dir} = $path;
             last;
@@ -584,7 +613,7 @@ sub lineDelete($$) {
     my $file = shift || confess "ERROR: No file hash to delete line from!\n";
     my $line = shift || confess "ERROR: no line to delete from $file!\n";
     my $error;
-    if ($file->{perm} ne "w") {
+    if ($file->{perm}!~/w/) {
         $gRetval |= ERR_FILE_ACCESS;
         logError("could not read from $file->{path} to see if '$line' already exists");
         return $gRetval;
@@ -618,7 +647,7 @@ sub lineInsert($$) {
     my $file = shift || confess "ERROR: No file hash to insert line into!\n";
     my $line = shift || confess "ERROR: no line to insert into $file!\n";
     my $error;
-    if ($file->{perm} ne "w") {
+    if ($file->{perm}!~/w/) {
         $gRetval |= ERR_FILE_ACCESS;
         logError("could not read from $file->{path} to see if '$line' already exists");
         return $gRetval;
@@ -812,19 +841,48 @@ sub readFile($$) {
 
 }
 
-sub runTool($$$) {
+sub runTool($$$$;$) {
     my $info = shift || confess "no info hash passed to runTool!\n";
     my $opt = shift || confess "no opt hash passed to runTool!\n";
     my $tool = shift || confess "no tool to run passed to runTool!\n";
+    my $action = shift || confess "no action passed to runTool!\n";
+    my $filter = shift;
 
     logDebug("Attempting to run $tool");
     my $cmd="";
+    my $data="";
     if (! -x $tool) {
         $cmd = "$info->{lw}->{path}/$tool 2>&1";
     } else {
         $cmd = "$tool 2>&1";
     }
-    my $data=`$cmd`;
+    if ($action eq "bury") {
+        $data=`$cmd 2>&1`;
+        $data="" unless ($?);
+    } elsif ($action eq "print") {
+        open(RT, "$cmd |");
+        while (<RT>) {
+            logData("$_");
+        }
+        close RT;
+        $data="";
+    } elsif ($action eq "grep") {
+        open(RT, "$cmd | ");
+        my @results;
+        while (<RT>) {
+            if ($_=~/$filter/) {
+                if ($1) {
+                    push(@results, $1);
+                } else {
+                    push(@results, $_);
+                }
+            }
+        }
+        close RT;
+        $data=join("\n", @results);
+    } else { # ($action eq "return") 
+        $data=`$cmd`;
+    }
     if ($?) {
         $gRetval |= ERR_SYSTEM_CALL;
         logError("Error running $tool!");
@@ -1067,14 +1125,14 @@ sub changeLoggingBySyslog($$$) {
             logWarning("Removing debug logging from syslog.conf");
             lineDelete($info->{logedit}->{file}, $info->{logedit}->{line});
             logWarning("Changing log levels for PBIS daemons to $state");
-            runTool($info, $opt, "$info->{lw}->{logging}->{netdaemon} error") if ($opt->{netlogond} and defined($info->{lw}->{logging}->{netdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{smbdaemon} error") if ($opt->{lwiod} and defined($info->{lw}->{logging}->{smbdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{authdaemon} error") if ($opt->{lsassd} and defined($info->{lw}->{logging}->{authdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{eventlogd} error") if ($opt->{eventlogd} and defined($info->{lw}->{logging}->{eventlogd}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{eventfwdd} error") if ($opt->{eventfwdd} and defined($info->{lw}->{logging}->{eventfwdd}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} error") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} error") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} error") if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{netdaemon} error", "bury") if ($opt->{netlogond} and defined($info->{lw}->{logging}->{netdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{smbdaemon} error", "bury") if ($opt->{lwiod} and defined($info->{lw}->{logging}->{smbdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{authdaemon} error", "bury") if ($opt->{lsassd} and defined($info->{lw}->{logging}->{authdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{eventlogd} error", "bury") if ($opt->{eventlogd} and defined($info->{lw}->{logging}->{eventlogd}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{eventfwdd} error", "bury") if ($opt->{eventfwdd} and defined($info->{lw}->{logging}->{eventfwdd}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} error", "bury") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} error", "bury") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} error", "bury") if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent}));
 #TODO Put in changes for lw 4.1
         } else {
 # Force the "messages" option on, since that's where we'll gather data from
@@ -1082,19 +1140,24 @@ sub changeLoggingBySyslog($$$) {
             logWarning("system has syslog.conf, editing to capture debug logs");
             lineInsert($info->{logedit}->{file}, $info->{logedit}->{line});
             logWarning("Changing log levels for PBIS daemons to $state");
-            runTool($info, $opt, "$info->{lw}->{logging}->{netdaemon} $state") if ($opt->{netlogond} and defined($info->{lw}->{logging}->{netdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{smbdaemon} $state") if ($opt->{lwiod} and defined($info->{lw}->{logging}->{smbdaemon}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{authdaemon} $state") if ($opt->{lsassd} and defined($info->{lw}->{logging}->{authdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{netdaemon} $state", "bury") if ($opt->{netlogond} and defined($info->{lw}->{logging}->{netdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{smbdaemon} $state", "bury") if ($opt->{lwiod} and defined($info->{lw}->{logging}->{smbdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{authdaemon} $state", "bury") if ($opt->{lsassd} and defined($info->{lw}->{logging}->{authdaemon}));
             if ($info->{OStype} eq "darwin" and $opt->{lsassd}) {
-                killProc("DirectoryService", "USR1", $info);
+                my $odutil = findInPath("odutil", ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]);
+                if ($odutil->{perm}=~/x/) {
+                    runTool($info, $opt, "$odutil->{path} set log debug", "bury");                    
+                } else {
+                    killProc("DirectoryService", "USR1", $info);
+                }
             }
-            runTool($info, $opt, "$info->{lw}->{logging}->{eventlogd} $state") if ($opt->{eventlogd} and defined($info->{lw}->{logging}->{eventlogd}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{eventfwdd} $state") if ($opt->{eventfwdd} and defined($info->{lw}->{logging}->{eventfwdd}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} $state") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
-            runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} $state") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{eventlogd} $state", "bury") if ($opt->{eventlogd} and defined($info->{lw}->{logging}->{eventlogd}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{eventfwdd} $state", "bury") if ($opt->{eventfwdd} and defined($info->{lw}->{logging}->{eventfwdd}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} $state", "bury") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
+            runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} $state", "bury") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
             if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent})) {
                 $state="verbose" if ($state eq "debug"); #TODO: 6.0.217 doesn't support "debug" with gp-set-log-level
-                runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} $state");
+                runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} $state", "bury");
             }
         }
         killProc("syslog", 1, $info);
@@ -1274,7 +1337,7 @@ sub determineOS($) {
     if ($^O eq "linux") {
         foreach my $i (("rpm", "dpkg")) {
             $file=findInPath($i, ["/sbin", "/usr/sbin", "/usr/bin", "/bin", "/usr/local/bin", "/usr/local/sbin"]);
-            if ((defined($file->{path}))) { # && $file->{perm} eq "x") {
+            if ((defined($file->{path}))) { # && $file->{perm}=~/x/) {
                 $info->{OStype} = "linux-$i";
                 logVerbose("System is $info->{OStype}");
             } 
@@ -2056,60 +2119,66 @@ sub runTests($$) {
 # Run tests that run every time no matter what
 
     sectionBreak("lw-get-status");
-    $data = runTool($info, $opt, "$info->{lw}->{tools}->{status}");
-    logData($data);
+    runTool($info, $opt, "$info->{lw}->{tools}->{status}", "print");
 
     sectionBreak("configuration");
-    $data = runTool($info, $opt, "$info->{lw}->{tools}->{config}");
-    logData($data);
+    runTool($info, $opt, "$info->{lw}->{tools}->{config}", "print");
 
     sectionBreak("Running User");
     getUserInfo($info, $opt, $info->{logon});
 
     sectionBreak("DC Times");
-    my $status = runTool($info, $opt, "$info->{lw}->{tools}->{status}");
+    my $status = runTool($info, $opt, "$info->{lw}->{tools}->{status}", "grep", "Domain:");
+    chomp $status;
     my @domains;
     while ($status =~ /DNS Domain:\s+(.*)/g) {
         my $domain=$1;
         sectionBreak("Current DC Time for $domain.");
         $domain=~/[^\s]+$/;
-        $data = runTool($info, $opt, "$info->{lw}->{tools}->{dctime} $domain");
-        logData($data);
+        runTool($info, $opt, "$info->{lw}->{tools}->{dctime} $domain", "print");
         push(@domains, $domain);
     }
 # run optional tests
 
     if ($opt->{dns}) {
-        my $site = runTool($info, $opt, "$info->{lw}->{tools}->{status} | sed -n '/Site:/p'");
-        $status =~ /Site:\s+(.*)/;
-        foreach my $site (1..$#-) {
+        sectionBreak("DNS Tests");
+        my $site = runTool($info, $opt, "$info->{lw}->{tools}->{status}", "grep", 'Site:\s+(.*)');
+        my @status = split(/\s+/, $site);
+        my %dclist;
+        foreach my $site (@status) {
             logInfo("We are in site: $site.");
             foreach my $domain (@domains) {
-                sectionBreak("DNS Info for $domain.");
+                sectionBreak("DNS Info for $site in $domain.");
                 foreach my $search (("_ldap._tcp", "_gc._tcp", "_kerberos._tcp", "_kerberos._udp")) {
                     logData("Results for $search.$domain:");
                     my @records = dnsSrvLookup("$search.$domain");
                     foreach (@records) {
                         logData("  $_");
+                        $dclist{$_}=1;
                     }
                     logData("Results for $search.$site._sites.$domain:");
                     @records = dnsSrvLookup("$search.$site._sites.$domain");
                     foreach (@records) {
                         logData("  $_");
+                        $dclist{$_}=1;
                     }                
                 }
+            }
+        }
+        foreach my $dc (sort(keys(%dclist))) {
+            foreach (dnsLookup($dc, "A")) {
+                chomp;
+                logData($_);
             }
         }
     }
     if ($opt->{users}) {
         sectionBreak("Enum Users");
-        $data = runTool($info, $opt, "$info->{lw}->{tools}->{userlist}");
-        logData($data) if ($data);
+        runTool($info, $opt, "$info->{lw}->{tools}->{userlist}", "print");
     }
     if ($opt->{groups}) {
         sectionBreak("Enum Groups");
-        $data = runTool($info, $opt, "$info->{lw}->{tools}->{grouplist}");
-        logData($data) if ($data);
+        runTool($info, $opt, "$info->{lw}->{tools}->{grouplist}", "print");
     }
 
     if ($opt->{ssh}) {
@@ -2156,7 +2225,7 @@ sub runTests($$) {
     if ($opt->{gpo}) {
         sectionBreak("GPO Tests");
         $opt->{dns} = 1; #do dns tests as well if we're testing GPO, they often are related
-        logData(runTool($info, $opt, "gporefresh"));
+        runTool($info, $opt, "gporefresh", "print");
     }
 
     if ($opt->{smb}) {
@@ -2215,7 +2284,7 @@ sub runTests($$) {
             }
         }
         foreach my $sid (sort(keys(%sids))) {
-            $data=runTool($info, $opt, "$info->{lw}->{tools}->{findsid} $sid");
+            $data=runTool($info, $opt, "$info->{lw}->{tools}->{findsid} $sid", "return");
             if ($data) {
                 logData($data);
                 $error = 1;
