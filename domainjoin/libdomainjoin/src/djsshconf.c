@@ -626,7 +626,16 @@ BOOLEAN FindSshAndConfig(
         }
     }
 
-    if ((foundConfigCount | foundBinaryCount) > 0 && foundConfigCount != foundBinaryCount)
+    if (foundConfigCount == 1 && foundBinaryCount == 1)
+    {
+        DJ_LOG_INFO("Found config file %s", ppFoundConfigs[0]);
+        *ppSshConfig = ppFoundConfigs[0];
+        ppFoundConfigs[0] = NULL;
+        DJ_LOG_INFO("Found binary %s", ppFoundBinaries[0]);
+        *ppSshBinary = ppFoundBinaries[0];
+        ppFoundBinaries[0] = NULL;
+    }
+    else
     {
         ceError = CombinePaths(
                         foundConfigCount,
@@ -651,24 +660,11 @@ BOOLEAN FindSshAndConfig(
 
         LW_RAISE_EX(ppExc, ceError,
                 "Unable to find ssh binary",
-"A %s config file was at %s, and a %s binary file was found at %s. Exactly one config file and one binary must exist on the system in a standard location. Uninstall any unused copies of ssh.",
+"A %s config file was at %s, and a %s binary file was found at %s. Exactly one config file and one binary must exist on the system in a standard location. Uninstall any unused copies of ssh.\nPlease see the documentation related to sshd configuration options required and re-attempt the join with \"domainjoin-cli join --ignore ssh <domain> <username>\"",
                 pSshOrSshd,
                 pFoundConfigList,
                 pSshOrSshd,
                 pFoundBinaryList);
-    }
-
-    if (foundConfigCount == 1)
-    {
-        DJ_LOG_INFO("Found config file %s", ppFoundConfigs[0]);
-        *ppSshConfig = ppFoundConfigs[0];
-        ppFoundConfigs[0] = NULL;
-    }
-    if (foundBinaryCount == 1)
-    {
-        DJ_LOG_INFO("Found binary %s", ppFoundBinaries[0]);
-        *ppSshBinary = ppFoundBinaries[0];
-        ppFoundBinaries[0] = NULL;
     }
 
 cleanup:
