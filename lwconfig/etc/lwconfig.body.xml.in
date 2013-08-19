@@ -30,7 +30,7 @@
 
     <capability>
         <name>AllowWriteTo</name>
-        <description>Allowed users that can delete entries from log</description>
+        <description>Allowed users that can write entries to log</description>
         <registry type="string"
             lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\AllowWriteTo"
             gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\AllowWriteTo" >
