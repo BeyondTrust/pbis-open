@@ -144,6 +144,12 @@ determine_upgrade_type()
         if [ -n "`grep '^VERSION=6.5' $VERSIONFILE`" ]; then
             UPGRADING_FROM_6_5=1
             log "Upgrading PowerBroker Identity Services Open 6.5."
+        elif [ -n "`grep '^VERSION=7.0' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_7_0=1
+            log "Upgrading PowerBroker Identity Services Open 7.0."
+        elif [ -n "`grep '^VERSION=7.1' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_7_1=1
+            log "Upgrading PowerBroker Identity Services Open 7.1."
         fi
     fi
 }
