@@ -740,7 +740,7 @@ package_purge_solaris()
 
 remove_extra_files()
 {
-    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
+    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/lib/likewise.old /var/lib/lwidentity /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
         if [ -d "$file" ]; then
             echo "Removing directory $file"
             /bin/rm -rf "$file"
