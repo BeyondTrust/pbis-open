@@ -1327,8 +1327,9 @@ sub changeLoggingWithLwSm($$$) {
     sleep 5;
 }
 
-sub determineOS($) {
+sub determineOS($$) {
     my $info = shift || confess "no info hash passed";
+    my $opt = shift || confess "no opt hash passed to determineOS!";
     logDebug("Determining OS Type...");
     my $file={};
     my $uname;
@@ -1348,7 +1349,7 @@ sub determineOS($) {
             logWarning("Could not determine Linux subtype");
             $info->{OStype} = "linux-unknown";
         } elsif ($info->{OStype} eq "linux-dpkg") {
-            $info->{OStype} = "linux-deb";
+            $info->{OStype} = "linux-deb"; #for consistency with other unrelated code in this project
             $info->{timezonefile} = "/etc/timezone";
         }
         logVerbose("Setting Linux paths");
@@ -1517,9 +1518,17 @@ sub determineOS($) {
     $info->{logon} = getlogin();
     $info->{name} = getpwuid($<);
     $info->{uid} = getpwnam($info->{name});
-    logInfo("Currently running as: $info->{name} with effective UID: $info->{uid}");
-    logInfo("Run under sudo from $info->{logon}") if ($info->{logon} ne $info->{name});
-    logInfo("Gathered at: ".scalar(localtime));
+    logData("Currently running as: $info->{name} with effective UID: $info->{uid}");
+    logData("Run under sudo from $info->{logon}") if ($info->{logon} ne $info->{name});
+    logData("Gathered at: ".scalar(localtime));
+    foreach my $i (("getrunmode", "getenforce")) {
+        my $file = findInPath($i, ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]);
+        logDebug("Looking for $i in $file->{path}...");
+        if (defined($file->{path})) {
+            logData("$i status is:"); 
+            runTool($info, $opt, $file->{path}, "print");
+        }
+    }
     $info->{sshd} = findProcess("/sshd", $info);
     $info->{sshd_config} = findInPath("sshd_config", ["/etc/ssh", "/opt/ssh/etc", "/usr/local/etc", "/etc", "/etc/openssh", "/usr/openssh/etc", "/opt/csw/etc", "/services/ssh/etc/"]);
     $info->{krb5conf} = findInPath("krb5.conf", ["/etc/krb5", "/opt/krb5/etc", "/usr/local/etc", "/usr/local/etc/krb5", "/etc", "/opt/csw/etc"]);
@@ -1995,7 +2004,7 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{netdaemon}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
-        if ($opt->{gpagentd}) {
+        if ($opt->{gpagentd} and defined($info->{lw}->{daemons}->{gpdaemon})) {
             logInfo("Adding gpagentd log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{gpdaemon}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
@@ -2005,7 +2014,7 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{eventlogd}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
-        if ($opt->{eventfwdd}) {
+        if ($opt->{eventfwdd} and defined($info->{lw}->{daemons}->{eventfwd})) {
             logInfo("Adding eventfwdd log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{eventfwdd}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
@@ -2020,13 +2029,19 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{lwsm}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
-        if ($opt->{reapsysld}) {
+        if ($opt->{reapsysld} and defined($info->{lw}->{daemons}->{syslogreaper})) {
             logInfo("Adding syslog reaper log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{syslogreaper}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
+        if ($opt->{usermonitor} and defined($info->{lw}->{daemons}->{usermonitor})) {
+            logInfo("Adding usermonitor log");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{usermonitor}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
     }
     tarFiles($info, $opt, $tarballfile, "/Library/Logs/DirectoryService/DirectoryService.debug.log") if ($info->{OStype} eq "darwin");
+    tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert/*") if ($info->{OStype} eq "aix");
     if ($opt->{messages}) {
         logInfo("Adding $info->{logpath}/$info->{logfile}");
         $appendfile = $info->{logpath}."/".$info->{logfile};
@@ -2367,8 +2382,9 @@ sub main() {
         'lwregd|regdaemon!',
         'lwsmd|svcctl|lwsm|svcctld!',
         'reapsysld|syslogreaper|reaper!',
-        'lwscd|smartcard|lwsc',
-        'lwpcks11d|lwpcks11',
+        'lwscd|smartcard|lwsc!',
+        'lwpcks11d|lwpcks11!',
+        'usermonitor!',
         'messages!',
         'sambalogs!',
         'restart|r!',
@@ -2467,7 +2483,7 @@ sub main() {
 
     sectionBreak("OS Information");
     logDebug("Determining OS info");
-    determineOS($info);
+    determineOS($info, $opt);
     
     sectionBreak("PBIS Version");
     logDebug("Determining PBIS version");
