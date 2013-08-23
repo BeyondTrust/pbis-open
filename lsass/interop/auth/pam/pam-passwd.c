@@ -509,7 +509,7 @@ LsaPamGetCurrentPassword(
 
        dwError = LsaPamConverse(
                         pamh,
-                        pcszPasswordPrompt,
+                        strcmp(pcszPasswordPrompt, "") == 0 ? "Password:" : pcszPasswordPrompt,
                         PAM_PROMPT_ECHO_OFF,
                         &pszPassword);
        BAIL_ON_LSA_ERROR(dwError);

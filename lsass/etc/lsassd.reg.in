@@ -112,15 +112,15 @@
     doc = ""
 }
 "ActiveDirectoryPasswordPrompt" = {
-    default = "Password: "
+    default = ""
     doc = "Password prompt for ActiveDirectory users"
 }
 "LocalPasswordPrompt" = {
-    default = "Password: "
+    default = ""
     doc = "Password prompt for local users"
 }
 "OtherPasswordPrompt" = {
-    default = "Password: "
+    default = ""
     doc = "Password prompt for non-local, non-ActiveDirectory users"
 }
 
