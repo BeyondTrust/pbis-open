@@ -286,7 +286,7 @@ make()
     OPEN_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @popt @sqlite \
         @libuuid @openssl @curl @libxml2 @libedit \
-        @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
+        @libtdb @opensoap @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
         @lwio @libschannel @dcerpc @centutils @lwsm @lwadtool \
         @eventlog @lsass @reapsysl @lwdns @lwnetapi \
         @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
