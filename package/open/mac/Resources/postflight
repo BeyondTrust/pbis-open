@@ -488,6 +488,47 @@ restore_7_1_configuration()
     run_quiet rm -r "${UPGRADEDIR}"
 }
 
+restore_7_5_configuration()
+{
+    if [ -z "$UPGRADING_FROM_7_5" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
+        if [ -f "$cache" ]; then
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        fi
+    done
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/regshell'
@@ -532,6 +573,9 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=7.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_7_1=1
             log 'Upgrading from PowerBroker Identity Services Open 7.1'
+        elif [ -n "`grep '^VERSION=7.5' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_7_5=1
+            log 'Upgrading from PowerBroker Identity Services Open 7.5'
         fi
     fi
 }
@@ -674,6 +718,8 @@ restore_6_5_configuration
 restore_7_0_configuration
 
 restore_7_1_configuration
+
+restore_7_5_configuration
 
 run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
