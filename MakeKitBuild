@@ -155,7 +155,6 @@ configure()
             mk_skip_subdir lwupgrade
             mk_skip_subdir usermonitor
             mk_skip_subdir net-snmp
-            mk_skip_subdir lwautoenroll
             LW_DEVICE_PROFILE="full"
             ;;
         oem17)
@@ -165,7 +164,6 @@ configure()
             mk_skip_subdir lwupgrade
             mk_skip_subdir domainjoin
             mk_skip_subdir centutils
-            mk_skip_subdir lwautoenroll
             LW_DEVICE_PROFILE="embedded"
             ;;
     esac

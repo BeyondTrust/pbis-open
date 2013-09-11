@@ -3,7 +3,7 @@
 # From SMakefile in Cyrus SASL source repository
 
 rm -f aclocal.m4
-libtoolize -fic || exit $?
+libtoolize -f || exit $?
 aclocal --force -I cmulocal -I config || exit $?
 echo "cyrus after aclocal"
 if type stat >/dev/null 2>&1; then
@@ -32,7 +32,7 @@ fi
 
 cd saslauthd || exit $?
 rm -f aclocal.m4
-libtoolize -fic || exit $?
+libtoolize -f || exit $?
 aclocal --force -I ../cmulocal -I ../config || exit $?
 echo "cyrus after aclocal2"
 if type stat >/dev/null 2>&1; then
