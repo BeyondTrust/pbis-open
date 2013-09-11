@@ -3,7 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl libxml2 \
-                libedit libtdb opensoap"
+                libedit libtdb"
 
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
@@ -43,7 +43,7 @@ option()
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2 opensoap"
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2"
             if [ "$MK_PACKAGE_RPM" = "yes" ]
             then
                 default_selinux="yes"
