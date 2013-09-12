@@ -5,10 +5,12 @@ make()
         ipc_client.c \
         krb5env.c"
 
-    mk_library \
-        LIB=lwnetclientapi \
-        SOURCES="$CLIENT_SOURCES" \
-        INCLUDEDIRS=". ../include" \
-        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
-        LIBDEPS="lwnetcommon lwbase lwbase_nothr lwmsg lwmsg_nothr $LIB_PTHREAD"
+    mk_multiarch_do
+        mk_library \
+            LIB=lwnetclientapi \
+            SOURCES="$CLIENT_SOURCES" \
+            INCLUDEDIRS=". ../include" \
+            HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
+            LIBDEPS="lwnetcommon lwbase lwbase_nothr lwmsg lwmsg_nothr $LIB_PTHREAD"
+    mk_multiarch_done
 }
