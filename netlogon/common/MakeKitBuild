@@ -4,5 +4,5 @@ make()
         mk_library \
             LIB=lwnetcommon \
             GROUPS="../utils/utils ../ipc/ipc"
-    mk_multiarch_do
+    mk_multiarch_done
 }
