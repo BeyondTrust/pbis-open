@@ -11,6 +11,8 @@ make()
             SOURCES="$CLIENT_SOURCES" \
             INCLUDEDIRS=". ../include" \
             HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
-            LIBDEPS="lwnetcommon lwbase lwbase_nothr lwmsg lwmsg_nothr $LIB_PTHREAD"
+            mk_check_libraries \
+                LIBDEPS="lwnetcommon lwbase lwbase_nothr lwmsg lwmsg_nothr $LIB_PTHREAD"
     mk_multiarch_done
+         
 }
