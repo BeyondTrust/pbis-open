@@ -51,6 +51,13 @@
 
 #include <lsa/lsapstore-types.h>
 
+
+#define PSTOREDB_REGISTRY_TRUSTENUMERATIONWAIT_VALUE \
+    "TrustEnumerationWait"
+#define PSTOREDB_REGISTRY_TRUSTENUMERATIONWAITSECONDS_VALUE \
+    "TrustEnumerationWaitSeconds"
+
+
 //
 // From lsapstore-backend-legacy-internal.c
 //
@@ -109,6 +116,31 @@ VOID
 LwpsLegacyFreeStringArray(
     IN PSTR* ppszDomainList,
     IN DWORD dwCount
+    );
+
+typedef struct _LSA_PSTORE_BACKEND_STATE {
+    PLWPS_LEGACY_STATE OldStoreHandle;
+} LSA_PSTORE_BACKEND_STATE;
+
+
+DWORD
+LwpsLegacySetJoinedDomainTrustEnumerationWaitTime(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN OPTIONAL PCSTR pszDomainName
+    );
+
+DWORD
+LwpsLegacyGetJoinedDomainTrustEnumerationWaitTime(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN OPTIONAL PCSTR pszDomain,
+    OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+    OUT PDWORD* ppdwTrustEnumerationWaitEnabled
+    );
+
+DWORD
+LwpsLegacyDeleteTrustEnumerationWaitInfo(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN PCSTR pszDomainName
     );
 
 #endif

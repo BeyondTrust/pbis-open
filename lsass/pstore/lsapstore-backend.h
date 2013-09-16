@@ -122,4 +122,24 @@ LsaPstorepBackendGetJoinedDomainsW(
     OUT PDWORD Count
     );
 
+DWORD
+LsaPstorepBackendGetDomainTrustEnumerationWaitTime(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN OPTIONAL PCWSTR pwszDnsDomainName,
+    OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+    OUT PDWORD* ppdwTrustEnumerationWaitEnabled
+    );
+
+DWORD
+LsaPstoreBackendSetDomainWTrustEnumerationWaitTime(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    );
+
+DWORD
+LsaPstoreBackendDeleteTrustEnumerationWaitInfo(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN PCWSTR pwszDnsDomainName
+    );
+
 #endif /* __LSA_PSTORE_BACKEND_H__ */
