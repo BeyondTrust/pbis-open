@@ -103,7 +103,7 @@ enable_service_configurations_or_init_d_symlinks()
         log 'Importing service configurations'
         import_service_configuration lwsmd
 
-        run /usr/sbin/svcadm enable lwsmd
+        run /usr/sbin/svcadm enable -s lwsmd
     else
         if [ -f "@LW_INITDIR@/lwsmd" ]; then
             run rm -f '@LW_INITDIR@/lwsmd'
