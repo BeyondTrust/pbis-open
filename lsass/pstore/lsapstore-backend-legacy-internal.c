@@ -1171,3 +1171,171 @@ cleanup:
     return 0;
 }
 
+DWORD
+LwpsLegacySetJoinedDomainTrustEnumerationWaitTime(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN OPTIONAL PCSTR pszDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR pszRegistryPath = NULL;
+    DWORD dwValue = 0;
+    
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s",
+                  PSTOREDB_REGISTRY_AD_KEY,
+                  pszDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        dwError = RegUtilSetValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAIT_VALUE,
+                      REG_DWORD,
+                      (PVOID)&dwValue,
+                      sizeof(dwValue));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        dwError = RegUtilSetValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAITSECONDS_VALUE,
+                      REG_DWORD,
+                      (PVOID)&dwValue,
+                      sizeof(dwValue));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    }
+
+cleanup:
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LwpsLegacyGetJoinedDomainTrustEnumerationWaitTime(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN OPTIONAL PCSTR pszDomainName,
+    OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+    OUT PDWORD* ppdwTrustEnumerationWaitEnabled    
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR pszRegistryPath = NULL;
+    PVOID dwValue = NULL;
+    PVOID dwValue1 = NULL;
+    REG_DATA_TYPE readType = 0;
+    DWORD dwValueSize = 0;
+    DWORD dwValueSize1 = 0;
+
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s",
+                  PSTOREDB_REGISTRY_AD_KEY,
+                  pszDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        dwError = RegUtilGetValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAIT_VALUE,
+                      &readType,
+                      &dwValue,
+                      &dwValueSize);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        dwError = RegUtilGetValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAITSECONDS_VALUE,
+                      &readType,
+                      &dwValue1,
+                      &dwValueSize1);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        *ppdwTrustEnumerationWaitSeconds = (PDWORD) dwValue1;
+        *ppdwTrustEnumerationWaitEnabled = (PDWORD) dwValue;      
+    }
+
+cleanup:
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LwpsLegacyDeleteTrustEnumerationWaitInfo(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN PCSTR pszDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR pszRegistryPath = NULL;
+    DWORD dwSubKeysCount = 0;
+    DWORD dwValuesCount = 0;
+    
+    if(pszDomainName)
+    { 
+        dwError = LwAllocateStringPrintf(
+                      &pszRegistryPath,
+                      "%s\\%s",
+                      PSTOREDB_REGISTRY_AD_KEY,
+                      pszDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        dwError = RegUtilDeleteValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAIT_VALUE);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+  
+        dwError = RegUtilDeleteValue(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      PSTOREDB_REGISTRY_TRUSTENUMERATIONWAITSECONDS_VALUE);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+ 
+        /* Delete domain key only if empty */
+        dwError = RegUtilGetKeyObjectCounts(
+                      pContext->hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      &dwSubKeysCount,
+                      &dwValuesCount);
+        if (dwError)
+        {
+            dwError = 0;
+        }
+        else if (!dwSubKeysCount && !dwValuesCount)
+        {
+            RegUtilDeleteKey(
+                pContext->hReg,
+                HKEY_THIS_MACHINE,
+                pszRegistryPath,
+                NULL);
+        }
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pszRegistryPath);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}

@@ -66,6 +66,26 @@
 // on bail macros for now.
 //
 
+#define TRUST_ENUMERATIONWAIT_MAXLIMIT 3600
+#define TRUST_ENUMERATIONWAIT_DEFAULTVALUE 300
+
+DWORD
+LsaPstoreSetDomainWTrustEnumerationWaitTime(
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    );
+
+DWORD
+LsaPstoreGetDomainTrustEnumerationWaitTime(
+   IN OPTIONAL PCSTR pszDnsDomainName,
+   OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+   OUT PDWORD* ppdwTrustEnumerationWaitEnabled
+   );
+
+DWORD
+LsaPstoreDeleteTrustEnumerationWaitInfo(
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    );  
+
 VOID
 LsaPstoreInitializeLibrary(
     VOID
