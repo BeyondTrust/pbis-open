@@ -350,3 +350,104 @@ cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
+
+DWORD
+LsaPstoreSetDomainWTrustEnumerationWaitTime(
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
+
+    if (pwszDnsDomainName && !LsaPstorepWC16StringIsUpcase(pwszDnsDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+    dwError = LsaPstorepEnsureInitialized(&backendState);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    LSA_PSTOREP_LOCK(&isLocked);
+
+    dwError = LsaPstoreBackendSetDomainWTrustEnumerationWaitTime(backendState, pwszDnsDomainName);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstoreGetDomainTrustEnumerationWaitTime(
+    IN PCSTR pszDnsDomainName,
+    OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+    OUT PDWORD* ppdwTrustEnumerationWaitEnabled
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
+    PDWORD pdwTrustEnumerationWaitSecondsValue = NULL;
+    PDWORD pdwTrustEnumerationWaitEnabledValue = NULL;
+    PWSTR pwszDomainName = NULL;     
+
+    dwError = LsaPstorepEnsureInitialized(&backendState);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
+
+    dwError = LwRtlWC16StringAllocateFromCString(&pwszDomainName, pszDnsDomainName);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);  
+    dwError = LsaPstorepBackendGetDomainTrustEnumerationWaitTime(
+                    backendState,
+                    pwszDomainName, &pdwTrustEnumerationWaitSecondsValue, &pdwTrustEnumerationWaitEnabledValue);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    *ppdwTrustEnumerationWaitSeconds = (PDWORD) pdwTrustEnumerationWaitSecondsValue;
+    *ppdwTrustEnumerationWaitEnabled = (PDWORD) pdwTrustEnumerationWaitEnabledValue;
+
+cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstoreDeleteTrustEnumerationWaitInfo(
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    PWSTR pwszdefaultDnsDomainName = NULL;
+    PCWSTR pwszactualDnsDomainName = NULL;
+
+    dwError = LsaPstorepEnsureInitialized(&backendState);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstoreGetDefaultDomainW(&pwszdefaultDnsDomainName);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    pwszactualDnsDomainName = pwszDnsDomainName ? pwszDnsDomainName : pwszdefaultDnsDomainName;
+
+    if (pwszactualDnsDomainName)
+    {
+        dwError = LsaPstoreBackendDeleteTrustEnumerationWaitInfo(
+                            backendState,
+                            pwszactualDnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+cleanup:
+    LW_RTL_FREE(&pwszdefaultDnsDomainName);
+   
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}

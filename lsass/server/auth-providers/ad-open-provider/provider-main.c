@@ -52,6 +52,63 @@
 #include <lsa/lsapstore-api.h>
 #include <dce/rpc.h>
 
+
+static
+DWORD
+LsaGetTrustEnumerationValue(
+    IN PSTR* pszDomainList,
+    IN DWORD dwDomainCount,
+    OUT PDWORD* pdwTrustEnumerationWaitEnabled,
+    OUT PDWORD* pdwTrustEnumerationWaitSeconds,
+    OUT PDWORD pdwTrustEnumerationWaitSecondsMaxValue,
+    OUT PDWORD dwTrustEnumerationWait
+    );
+
+static
+DWORD
+LsaStartupThreadInfoCreate(
+    IN PDWORD pdwWaitTimeForTrustEnumeration,
+    IN PLSA_AD_PROVIDER_STATE pLsaAdProviderState,
+    IN BOOLEAN bSignalThread,
+    OUT PLSA_STARTUP_THREAD_INFO* ppInfo
+    );
+
+static
+VOID
+LsaStartupThreadAcquireMutex(
+    IN pthread_mutex_t* pMutex
+    );
+
+static
+VOID
+LsaStartupThreadReleaseMutex(
+    IN pthread_mutex_t* pMutex
+    );
+
+static
+VOID
+LsaStartupThreadDestroyMutex(
+    IN OUT pthread_mutex_t** ppMutex
+    );
+
+static
+DWORD
+LsaStartupThreadCreateCond(
+    OUT pthread_cond_t** ppCond
+    );
+
+static
+VOID
+LsaStartupThreadDestroyCond(
+    IN OUT pthread_cond_t** ppCond
+    );
+
+static
+VOID
+LsaStartupThreadInfoDestroy(
+    PLSA_STARTUP_THREAD_INFO* ppInfo
+    );
+
 static
 DWORD
 LsaAdProviderStateCreate(
@@ -879,12 +936,22 @@ AD_InitializeProvider(
     LSA_AD_CONFIG config = {0};
     DWORD dwIndex = 0;
     DWORD dwDomainCount = 0;
-    PSTR* ppszDomainList = NULL;;
+    PSTR* ppszDomainList = NULL;
     pthread_t startThread;
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
     PSTR pszDefaultDomain = NULL;
     BOOLEAN bFoundDefault = FALSE;
     BOOLEAN bIsPstoreInitialized = FALSE;
+  
+    int iError = 0;
+    BOOLEAN bSignalThread = FALSE;
+    PDWORD pdwTrustEnumerationWaitSeconds = NULL;
+    PDWORD pdwTrustEnumerationWaitEnabled = NULL;
+    BOOLEAN bTrustEnumerationIsDone = FALSE;
+    BOOLEAN bTrustEnumerationWait = FALSE;
+    DWORD dwTrustEnumerationWaitSecondsMaxValue = 0;
+    PLSA_STARTUP_THREAD_INFO  pStartupThreadInfo = NULL;
+    PLSA_STARTUP_THREAD_INFO pStartupThreadInfo1 = NULL;
 
     LsaPstoreInitializeLibrary();
     bIsPstoreInitialized = TRUE;
@@ -941,7 +1008,13 @@ AD_InitializeProvider(
                         &dwDomainCount);
         BAIL_ON_LSA_ERROR(dwError);
     }
-
+    
+    if(dwDomainCount > 0)
+    {
+        LsaGetTrustEnumerationValue(ppszDomainList,dwDomainCount, (PDWORD*)&pdwTrustEnumerationWaitEnabled,
+                          (PDWORD*)&pdwTrustEnumerationWaitSeconds, &dwTrustEnumerationWaitSecondsMaxValue, (PDWORD)&bTrustEnumerationWait);
+    }
+     
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
         BOOLEAN bIsDefault = FALSE;
@@ -980,11 +1053,39 @@ AD_InitializeProvider(
         dwError = AD_AddStateToList(pStateMinimal);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LwMapErrnoToLwError(pthread_create(
+        if( !bSignalThread && pdwTrustEnumerationWaitEnabled[dwIndex] &&
+            ((pdwTrustEnumerationWaitSeconds[dwIndex] == dwTrustEnumerationWaitSecondsMaxValue) ||
+            ((signed)pdwTrustEnumerationWaitSeconds[dwIndex] <= 0)))
+        {
+           // Flag used to identify the thread which has to signal lsass startup
+           bSignalThread = 1;
+
+           dwError = LsaStartupThreadInfoCreate(
+                    &pdwTrustEnumerationWaitSeconds[dwIndex],
+                    pStateMinimal,
+                    TRUE,
+                    &pStartupThreadInfo1);
+            BAIL_ON_LSA_ERROR(dwError);
+            dwError = LwMapErrnoToLwError(pthread_create(
                                           &startThread,
                                           NULL,
                                           LsaAdStartupThread,
-                                          pStateMinimal));
+                                          pStartupThreadInfo1));
+        }
+        else {
+
+             dwError = LsaStartupThreadInfoCreate(
+                       &pdwTrustEnumerationWaitSeconds[dwIndex],
+                       pStateMinimal, 
+                       FALSE,
+                       &pStartupThreadInfo);
+             BAIL_ON_LSA_ERROR(dwError);
+             dwError = LwMapErrnoToLwError(pthread_create(
+                                          &startThread,
+                                          NULL,
+                                          LsaAdStartupThread,
+                                          pStartupThreadInfo));
+        }
         BAIL_ON_LSA_ERROR(dwError);
 
         // The startup thread will free this when it
@@ -998,6 +1099,41 @@ AD_InitializeProvider(
         pStateMinimal = NULL;
     }
 
+   if(pStartupThreadInfo1 && pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex  && pStartupThreadInfo1->Thread_Info.pTrustEnumerationCondition) {
+       while (bTrustEnumerationWait)
+       {
+           LSA_LOG_DEBUG("AD Provider: Waiting for trust enumeration to complete.");
+           LsaStartupThreadAcquireMutex(pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex);
+           bTrustEnumerationIsDone = pStartupThreadInfo1->Thread_Info.bTrustEnumerationIsDone;
+           if (!bTrustEnumerationIsDone)
+           {
+               iError = pthread_cond_timedwait(
+                          pStartupThreadInfo1->Thread_Info.pTrustEnumerationCondition,
+                          pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex,
+                          &pStartupThreadInfo1->Thread_Info.waitTime);
+               bTrustEnumerationIsDone = pStartupThreadInfo1->Thread_Info.bTrustEnumerationIsDone;
+           }
+           LsaStartupThreadReleaseMutex(
+                    pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex);
+      
+           if (bTrustEnumerationIsDone)
+           {  
+                LSA_LOG_DEBUG("AD Provider: Trust enumeration complete.");
+                break;
+           }
+           if (ETIMEDOUT == iError)
+           {
+               iError = 0;
+
+               if (time(NULL) >= pStartupThreadInfo1->Thread_Info.waitTime.tv_sec)
+               {
+                   LSA_LOG_DEBUG("AD Provider: Aborting wait for trust enumeration");
+                   break;
+               }
+           }  
+       } 
+    }
+
     *ppszProviderName = gpszADProviderName;
     *ppFunctionTable = &gADProviderAPITable;
 
@@ -1007,6 +1143,18 @@ cleanup:
     AD_FreeConfigContents(&config);
     LsaPstoreFreeStringArrayA(ppszDomainList, dwDomainCount);
     AD_DereferenceProviderState(pStateMinimal);
+
+    if(pStartupThreadInfo1){
+        LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);       
+    }
+    if(pdwTrustEnumerationWaitSeconds) {
+       LwFreeMemory(pdwTrustEnumerationWaitSeconds);
+       pdwTrustEnumerationWaitSeconds = NULL;
+    }
+    if(pdwTrustEnumerationWaitEnabled) {
+       LwFreeMemory(pdwTrustEnumerationWaitEnabled);
+       pdwTrustEnumerationWaitEnabled = NULL;
+    }
 
     return dwError;
 
@@ -1030,7 +1178,8 @@ LsaAdStartupThread(
     )
 {
     DWORD dwError = 0;
-    PLSA_AD_PROVIDER_STATE pStateMinimal = (PLSA_AD_PROVIDER_STATE)pData;
+    PLSA_STARTUP_THREAD_INFO pInfo = (PLSA_STARTUP_THREAD_INFO) pData;
+    PLSA_AD_PROVIDER_STATE pStateMinimal = pInfo->pLsaAdProviderState;
     PLSA_AD_PROVIDER_STATE pState = NULL;
     BOOLEAN bRemoveFromList = TRUE;
 
@@ -1041,9 +1190,16 @@ LsaAdStartupThread(
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    // Replace the minimal state with the fully
-    // initialized state.  
+    if(pInfo && pInfo->bSignalThread)
+    {
+        pInfo->Thread_Info.bTrustEnumerationIsDone = TRUE;
+        if(pInfo->Thread_Info.pTrustEnumerationCondition) {
+            pthread_cond_signal(pInfo->Thread_Info.pTrustEnumerationCondition);
+        }
+    }
 
+    // Replace the minimal state with the fully
+    // initialized state. 
     dwError = AD_ReplaceStateInList(pState);
     BAIL_ON_LSA_ERROR(dwError);
     bRemoveFromList = FALSE;
@@ -1059,6 +1215,11 @@ error:
 
     AD_DereferenceProviderState(pStateMinimal);
     AD_DereferenceProviderState(pState);
+
+    if(pInfo && !pInfo->bSignalThread) {
+        LwFreeMemory(pInfo);
+        pInfo = NULL;
+    }
 
     return NULL;
 }
@@ -5845,6 +6006,282 @@ LsaInitializeProvider(
 {
     return AD_InitializeProvider(ppszProviderName, ppFunctionTable);
 }
+
+static
+DWORD
+LsaStartupThreadCreateMutex(
+    OUT pthread_mutex_t** ppMutex
+    )
+{
+    DWORD dwError = 0;
+    int iError = 0;
+    pthread_mutex_t* pMutex = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pMutex), (PVOID*)&pMutex);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    iError = pthread_mutex_init(pMutex, NULL);
+    dwError = LwMapErrnoToLwError(iError);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    *ppMutex = pMutex;
+    return dwError;
+
+error:
+    // We do not need to destroy as we failed to init.
+    LW_SAFE_FREE_MEMORY(pMutex);
+    goto cleanup;
+}
+
+
+static
+VOID
+LsaStartupThreadAcquireMutex(
+    IN pthread_mutex_t* pMutex
+    )
+{
+    int iError = 0;
+
+    iError = pthread_mutex_lock(pMutex);
+    if (iError)
+    {
+        LSA_LOG_ERROR("pthread_mutex_lock() failed: %d", iError);
+    }
+}
+static
+VOID
+LsaStartupThreadReleaseMutex(
+    IN pthread_mutex_t* pMutex
+    )
+{
+    int iError = 0;
+    iError = pthread_mutex_unlock(pMutex);
+    if (iError)
+    {
+        LSA_LOG_ERROR("pthread_mutex_unlock() failed: %d", iError);
+    }
+}
+
+static
+VOID
+LsaStartupThreadDestroyMutex(
+    IN OUT pthread_mutex_t** ppMutex
+    )
+{
+    if (*ppMutex)
+    {
+        pthread_mutex_destroy(*ppMutex);
+        LwFreeMemory(*ppMutex);
+        *ppMutex = NULL;
+    }
+}
+
+static
+DWORD
+LsaStartupThreadCreateCond(
+    OUT pthread_cond_t** ppCond
+    )
+{
+    DWORD dwError = 0;
+    pthread_cond_t* pCond = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pCond), (PVOID*)&pCond);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = pthread_cond_init(pCond, NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    *ppCond = pCond;
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pCond);
+    goto cleanup;
+}
+
+static
+VOID
+LsaStartupThreadDestroyCond(
+    IN OUT pthread_cond_t** ppCond
+    )
+{
+    if (*ppCond)
+    {
+        pthread_cond_destroy(*ppCond);
+        LwFreeMemory(*ppCond);
+        *ppCond = NULL;
+    }
+}
+
+static
+VOID
+LsaStartupThreadInfoDestroy(
+    PLSA_STARTUP_THREAD_INFO* ppInfo
+    )
+{
+    if (*ppInfo)
+    {
+        LsaStartupThreadDestroyCond(&(*ppInfo)->Thread_Info.pTrustEnumerationCondition);
+        LsaStartupThreadDestroyMutex(&(*ppInfo)->Thread_Info.pTrustEnumerationMutex);
+        LwFreeMemory(*ppInfo);
+        *ppInfo = NULL;
+    }
+}
+
+static
+DWORD
+LsaStartupThreadInfoCreate(
+    IN DWORD* pdwWaitTimeForTrustEnumeration,
+    IN PLSA_AD_PROVIDER_STATE pLsaAdProviderState,
+    IN BOOLEAN bSignalThread,
+    OUT PLSA_STARTUP_THREAD_INFO* ppInfo 
+    )
+{
+    DWORD dwError = 0;
+    PLSA_STARTUP_THREAD_INFO pInfo = NULL;
+    struct timeval now;
+
+    dwError = LwAllocateMemory(sizeof(*pInfo), (PVOID*) &pInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+   
+    if(pLsaAdProviderState) {
+        pInfo->pLsaAdProviderState = pLsaAdProviderState;
+    }
+        
+    pInfo->bSignalThread = bSignalThread;
+    pInfo->Thread_Info.pTrustEnumerationMutex = NULL;
+    pInfo->Thread_Info.pTrustEnumerationCondition = NULL;
+    
+    if(pInfo->bSignalThread)
+    {
+       dwError = LsaStartupThreadCreateMutex(&pInfo->Thread_Info.pTrustEnumerationMutex);
+       BAIL_ON_LSA_ERROR(dwError);
+
+       dwError = LsaStartupThreadCreateCond(&pInfo->Thread_Info.pTrustEnumerationCondition);
+       BAIL_ON_LSA_ERROR(dwError);
+    
+       pInfo->Thread_Info.bTrustEnumerationIsDone = FALSE;
+
+       if (gettimeofday(&now, NULL) < 0)
+       {
+          dwError = LwMapErrnoToLwError(errno);
+          BAIL_ON_LSA_ERROR(dwError);
+       }
+       if((signed)*pdwWaitTimeForTrustEnumeration <= 0)
+       {
+          pInfo->Thread_Info.waitTime.tv_sec = now.tv_sec + TRUST_ENUMERATIONWAIT_DEFAULTVALUE;
+       }
+       else
+       {
+          pInfo->Thread_Info.waitTime.tv_sec = now.tv_sec + *pdwWaitTimeForTrustEnumeration;
+       }
+       pInfo->Thread_Info.waitTime.tv_nsec = now.tv_usec * 1000;
+    }
+
+cleanup:
+    *ppInfo = pInfo;
+    return dwError;
+
+error:
+    if(pInfo->bSignalThread) {
+       LsaStartupThreadInfoDestroy(&pInfo);
+    }
+    else {
+       LwFreeMemory(pInfo);
+       pInfo = NULL;         
+    }
+    goto cleanup;
+}
+
+
+static
+DWORD
+LsaGetTrustEnumerationValue(
+    IN PSTR* ppszDomainList,
+    IN DWORD dwDomainCount,
+    OUT PDWORD* pdwTrustEnumerationWaitEnabled,
+    OUT PDWORD* pdwTrustEnumerationWaitSeconds,
+    OUT PDWORD pdwTrustEnumerationWaitSecondsMaxValue,
+    OUT PDWORD pdwTrustEnumerationWait
+    )
+{
+   int iIndex = 0;
+   DWORD dwError = 0;
+   DWORD dwTrustEnumerationWaitSecondsMaxValue = 0;
+   PDWORD pdwTrustEnumerationWaitSeconds1 = NULL;
+   PDWORD pdwTrustEnumerationWaitEnabled1 = NULL;
+   
+   dwError = LW_RTL_ALLOCATE_ARRAY_AUTO(&pdwTrustEnumerationWaitSeconds1, dwDomainCount);
+   BAIL_ON_LSA_ERROR(dwError); 
+   dwError = LW_RTL_ALLOCATE_ARRAY_AUTO(&pdwTrustEnumerationWaitEnabled1, dwDomainCount);
+   BAIL_ON_LSA_ERROR(dwError);
+
+    for (iIndex = 0 ; iIndex < dwDomainCount ; iIndex++)
+    {
+        if (!gbMultiTenancyEnabled && iIndex > 0)
+        {
+            break;
+        }
+
+        dwError = LsaPstoreGetDomainTrustEnumerationWaitTime(
+                          ppszDomainList[iIndex],
+                          (PDWORD*)&pdwTrustEnumerationWaitSeconds1[iIndex],
+                          (PDWORD*)&pdwTrustEnumerationWaitEnabled1[iIndex]);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    for(iIndex = 0; iIndex < dwDomainCount; iIndex++)
+    {
+         if(pdwTrustEnumerationWaitEnabled1[iIndex]) {
+             *pdwTrustEnumerationWait = 1;
+         }
+
+         // Condition to retrieve the MaxValue for TrustEnumerationWait 
+         if(pdwTrustEnumerationWaitEnabled1[iIndex] !=0  &&
+             (((signed)pdwTrustEnumerationWaitSeconds1[iIndex] > 0) &&
+             ((signed)pdwTrustEnumerationWaitSeconds1[iIndex] < TRUST_ENUMERATIONWAIT_MAXLIMIT))) {
+             if((signed)dwTrustEnumerationWaitSecondsMaxValue < pdwTrustEnumerationWaitSeconds1[iIndex]) {
+                 dwTrustEnumerationWaitSecondsMaxValue = pdwTrustEnumerationWaitSeconds1[iIndex];
+             } 
+        }
+     }
+     /* Setting Default Value of 300sec  for TrustEnumerationWait 
+            if TrustEnumerationWaitSeconds is less than or equal to 0 */
+     for(iIndex = 0; iIndex < dwDomainCount; iIndex++) {
+        if(pdwTrustEnumerationWaitEnabled1[iIndex] && (signed)pdwTrustEnumerationWaitSeconds1[iIndex] <= 0 && 
+           (signed) dwTrustEnumerationWaitSecondsMaxValue < TRUST_ENUMERATIONWAIT_DEFAULTVALUE) {
+            dwTrustEnumerationWaitSecondsMaxValue = TRUST_ENUMERATIONWAIT_DEFAULTVALUE;
+            break;
+        }
+    }
+    if(pdwTrustEnumerationWaitSecondsMaxValue) {
+        *pdwTrustEnumerationWaitSecondsMaxValue = dwTrustEnumerationWaitSecondsMaxValue;
+    }
+    if(pdwTrustEnumerationWaitSeconds) {
+        *pdwTrustEnumerationWaitSeconds = (PDWORD)pdwTrustEnumerationWaitSeconds1;
+    }
+    if(pdwTrustEnumerationWaitEnabled) { 
+        *pdwTrustEnumerationWaitEnabled = (PDWORD)pdwTrustEnumerationWaitEnabled1;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+    if(pdwTrustEnumerationWaitSeconds1) {
+       LwFreeMemory(pdwTrustEnumerationWaitSeconds1);
+    }
+    if(pdwTrustEnumerationWaitEnabled1) {
+       LwFreeMemory(pdwTrustEnumerationWaitEnabled1);
+    }
+    
+    goto cleanup;
+
+}
+
 
 /*
 local variables:

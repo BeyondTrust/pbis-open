@@ -117,6 +117,9 @@ LsaLeaveDomain2(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    dwError = LsaPstoreDeleteTrustEnumerationWaitInfo(pwszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaPstoreDeletePasswordInfoW(pwszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 

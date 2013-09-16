@@ -245,5 +245,18 @@ typedef struct __AD_ENUM_HANDLE
     PAD_PROVIDER_CONTEXT pProviderContext;
 } AD_ENUM_HANDLE, *PAD_ENUM_HANDLE;
 
+typedef struct _LSA_STARTUP_THREAD_INFO
+{
+    BOOLEAN bSignalThread;
+    PLSA_AD_PROVIDER_STATE pLsaAdProviderState;
+    struct 
+    {
+         pthread_mutex_t* pTrustEnumerationMutex;
+         pthread_cond_t* pTrustEnumerationCondition;
+         BOOLEAN bTrustEnumerationIsDone;
+         struct timespec waitTime;
+    }Thread_Info;
+} LSA_STARTUP_THREAD_INFO, *PLSA_STARTUP_THREAD_INFO;
+
 #endif /* __AD_STRUCT_H__ */
 

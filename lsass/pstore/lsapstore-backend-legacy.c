@@ -47,10 +47,6 @@
 #include "lsapstore-backend.h"
 #include "lsapstore-backend-legacy.h"
 
-typedef struct _LSA_PSTORE_BACKEND_STATE {
-    PLWPS_LEGACY_STATE OldStoreHandle;
-} LSA_PSTORE_BACKEND_STATE;
-
 //
 // Functions
 //
@@ -326,6 +322,105 @@ cleanup:
 
     *DnsDomainNames = dnsDomainNames;
     *Count = count;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstoreBackendSetDomainWTrustEnumerationWaitTime(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN OPTIONAL PCWSTR pwszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR pszdnsDomainNameA = NULL;
+
+    if (pwszDnsDomainName)
+    {
+        dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                        &pszdnsDomainNameA,
+                        pwszDnsDomainName));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    dwError = LwpsLegacySetJoinedDomainTrustEnumerationWaitTime(
+                    State->OldStoreHandle,
+                    pszdnsDomainNameA);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    LW_RTL_FREE(&pszdnsDomainNameA);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstorepBackendGetDomainTrustEnumerationWaitTime(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN OPTIONAL PCWSTR pwszDnsDomainName,
+    OUT PDWORD* ppdwTrustEnumerationWaitSeconds,
+    OUT PDWORD* ppdwTrustEnumerationWaitEnabled
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PDWORD pdwTrustEnumerationWaitSecondsValue = NULL;
+    PDWORD pdwTrustEnumerationWaitEnabledValue = NULL;
+    PSTR pszdnsDomainNameA = NULL;
+ 
+    if (pwszDnsDomainName)
+    {
+        dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                        &pszdnsDomainNameA,
+                        pwszDnsDomainName));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        dwError = LwpsLegacyGetJoinedDomainTrustEnumerationWaitTime(
+                        State->OldStoreHandle,
+                        pszdnsDomainNameA,
+                        &pdwTrustEnumerationWaitSecondsValue, &pdwTrustEnumerationWaitEnabledValue);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    *ppdwTrustEnumerationWaitSeconds = (PDWORD) pdwTrustEnumerationWaitSecondsValue;
+    *ppdwTrustEnumerationWaitEnabled = (PDWORD) pdwTrustEnumerationWaitEnabledValue;
+
+cleanup:
+    LW_RTL_FREE(&pszdnsDomainNameA);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstoreBackendDeleteTrustEnumerationWaitInfo(
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN PCWSTR pwszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR pszdnsDomainNameA = NULL;
+
+    if(pwszDnsDomainName)
+    {
+        dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                        &pszdnsDomainNameA,
+                        pwszDnsDomainName));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    
+        dwError = LwpsLegacyDeleteTrustEnumerationWaitInfo(
+                        State->OldStoreHandle,
+                        pszdnsDomainNameA);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+cleanup:
+
+    LW_RTL_FREE(&pszdnsDomainNameA);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
