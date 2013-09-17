@@ -10,7 +10,7 @@ SUBDIRS="$LW_ALL_BUNDLED \
          lwio libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
          lwnetapi lwadtool domainjoin lwconfig lwupgrade samba-interop \
          mod_auth_kerb krb5_plugins config docs reskit usermonitor \
-         package installer qatools gssapps lwsecurity opensoap"
+         package installer qatools gssapps lwsecurity"
 
 
 defaults()
