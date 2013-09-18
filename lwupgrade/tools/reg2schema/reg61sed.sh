@@ -132,6 +132,14 @@ get_host_dns_domain()
        tr -d '\r'
 }
 
+get_dns_domain()
+{
+  infile=$1
+  grep '^"DomainDnsName"=' $infile | \
+       sed -e 's|DomainDnsName.*=||' -e 's|"||g' | \
+       tr -d '\r'
+}
+
 get_hostname()
 {
   infile=$1
@@ -150,13 +158,15 @@ main()
   infile="$1"
   shift
 
-  DOMAIN_NAME_LC=`get_host_dns_domain $infile`
+  DOMAIN_NAME_LC=`get_dns_domain $infile`
   DOMAIN_NAME=`echo $DOMAIN_NAME_LC | tr '[a-z]' '[A-Z]'`
+  
+  HOST_DOMAIN_NAME_LC=`get_host_dns_domain $infile`
 
   HOSTNAME=`get_hostname $infile`
   HOSTNAME_LC=`echo $HOSTNAME | tr '[A-Z]' '[a-z]'`
 
-  FQDN="${HOSTNAME_LC}.${DOMAIN_NAME_LC}"
+  FQDN="${HOSTNAME_LC}.${HOST_DOMAIN_NAME_LC}"  
 
 #echo DOMAIN_NAME_LC=$DOMAIN_NAME_LC 1>&2
 #echo DOMAIN_NAME=$DOMAIN_NAME 1>&2
