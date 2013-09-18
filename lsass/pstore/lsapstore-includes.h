@@ -58,9 +58,6 @@
 #include <pthread.h>
 #include <assert.h>
 
-#define PSTOREDB_REGISTRY_AD_KEY \
-  "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\DomainJoin"
-
 #if PTHREAD_ONCE_INIT_BROKEN
 #define ONCE_INIT {PTHREAD_ONCE_INIT}
 #else

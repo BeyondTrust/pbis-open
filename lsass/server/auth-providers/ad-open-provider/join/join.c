@@ -376,9 +376,6 @@ LsaJoinDomainUac(
             pwszOSServicePack);
     BAIL_ON_LSA_ERROR(dwError);
 
-   dwError = LsaPstoreSetDomainWTrustEnumerationWaitTime(pwszDomain);
-   BAIL_ON_LSA_ERROR(dwError);
-
 cleanup:
 
     LsaFreeSMBCreds(&pAccessInfo);
