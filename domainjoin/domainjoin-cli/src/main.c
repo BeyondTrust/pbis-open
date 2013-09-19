@@ -334,7 +334,13 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         }
         else if(!strcmp(argv[0], "--disable"))
         {
-            LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR), &argv[1], 1));
+            if(!strcmp(argv[1], "ssh")){
+                options.ignoreSsh = TRUE;
+            }
+            else {
+                options.ignoreSsh = FALSE;
+                LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR), &argv[1], 1));
+            }
             argv++;
             argc--;
         }
@@ -595,7 +601,13 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
         }
         else if(!strcmp(argv[0], "--disable"))
         {
-            LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR *), &argv[1], 1));
+            if(!strcmp(argv[1], "ssh")){
+                options.ignoreSsh = TRUE;
+            }
+            else {
+                options.ignoreSsh = FALSE;
+                LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR *), &argv[1], 1));
+            }
             argv++;
             argc--;
         }

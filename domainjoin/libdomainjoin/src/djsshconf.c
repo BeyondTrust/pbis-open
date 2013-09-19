@@ -660,7 +660,7 @@ BOOLEAN FindSshAndConfig(
 
         LW_RAISE_EX(ppExc, ceError,
                 "Unable to find ssh binary",
-"A %s config file was at %s, and a %s binary file was found at %s. Exactly one config file and one binary must exist on the system in a standard location. Uninstall any unused copies of ssh.\nPlease see the documentation related to sshd configuration options required and re-attempt the join with \"domainjoin-cli join --ignore ssh <domain> <username>\"",
+"A %s config file was at %s, and a %s binary file was found at %s. Exactly one config file and one binary must exist on the system in a standard location. Uninstall any unused copies of ssh.\nPlease see the documentation related to sshd configuration options required and re-attempt the join with \"domainjoin-cli join/leave --disable ssh <domain> <username>\"",
                 pSshOrSshd,
                 pFoundConfigList,
                 pSshOrSshd,
@@ -1246,6 +1246,12 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
     QueryResult result1 = FullyConfigured, result2 = FullyConfigured;
 
     memset(&conf, 0, sizeof(conf));
+
+    if(options->ignoreSsh)
+    {
+        result1 = NotApplicable;
+        goto cleanup;
+    }
 
     if(options->enableMultipleJoins)
     {
