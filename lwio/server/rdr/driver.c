@@ -752,7 +752,7 @@ RdrReadConfig(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSmb2Enabled,
+            &pConfig->bSigningEnabled,
             NULL
         },
         {
@@ -762,7 +762,7 @@ RdrReadConfig(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSmb2Enabled,
+            &pConfig->bSigningRequired,
             NULL
         },
         {
