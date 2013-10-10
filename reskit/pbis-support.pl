@@ -1521,12 +1521,14 @@ sub determineOS($$) {
     logData("Currently running as: $info->{name} with effective UID: $info->{uid}");
     logData("Run under sudo from $info->{logon}") if ($info->{logon} ne $info->{name});
     logData("Gathered at: ".scalar(localtime));
-    foreach my $i (("getrunmode", "getenforce")) {
+    foreach my $i (("getrunmode", "sestatus")) {
+        logVerbose("Looking for $i...");
         my $file = findInPath($i, ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]);
-        logDebug("Looking for $i in $file->{path}...");
         if (defined($file->{path})) {
-            logData("$i status is:"); 
+            logData("---");
+            logData("$i output is:"); 
             runTool($info, $opt, $file->{path}, "print");
+            logData("---");
         }
     }
     $info->{sshd} = findProcess("/sshd", $info);
