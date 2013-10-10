@@ -749,6 +749,7 @@ typedef struct
 {
     PSTR shortName;
     PSTR longName;
+    PSTR forestName;
 } DomainMapping;
 
 static DWORD GetEscapedDomainName(const char *input, char **result)
@@ -849,6 +850,7 @@ static void FreeDomainMappings(DynamicArray *mappings)
         DomainMapping *current = ((DomainMapping *)mappings->data) + i;
         CT_SAFE_FREE_STRING(current->shortName);
         CT_SAFE_FREE_STRING(current->longName);
+        CT_SAFE_FREE_STRING(current->forestName);
     }
     CTArrayFree(mappings);
 }
@@ -857,7 +859,8 @@ static DWORD
 GatherDomainMappings(
     DynamicArray *mappings,
     PCSTR pszShortDomainName,
-    PCSTR pszDomainName)
+    PCSTR pszDomainName,
+    PSTR *pszJoinForest)
 {
     DWORD ceError = ERROR_SUCCESS;
     DomainMapping add;
@@ -865,6 +868,7 @@ GatherDomainMappings(
     PLSASTATUS pStatus = NULL;
     size_t providerIndex = 0;
     size_t domainIndex = 0;
+    PSTR pszForestName = NULL;
 
     memset(mappings, 0, sizeof(*mappings));
     memset(&add, 0, sizeof(add));
@@ -896,11 +900,24 @@ GatherDomainMappings(
                                 pTrustedDomainInfoArray[domainIndex].
                                 pszNetbiosDomain,
                             &add.shortName));
+                if(provider->pTrustedDomainInfoArray[domainIndex].pszForestName)
+                {
+                    if( !strcasecmp(add.longName,pszDomainName) )
+                    {
+                        GCE(ceError = CTStrdup(provider->
+                                pTrustedDomainInfoArray[domainIndex].pszForestName,
+                                &pszForestName));
+                    }
+                    GCE(ceError = CTStrdup(provider->
+                                 pTrustedDomainInfoArray[domainIndex].pszForestName,
+                                 &add.forestName));
+                }
                 GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
                 memset(&add, 0, sizeof(add));
             }
         }
     }
+    *pszJoinForest = pszForestName;
     
     if (mappings->size == 0)
     {
@@ -916,6 +933,7 @@ cleanup:
         FreeDomainMappings(mappings);
     CT_SAFE_FREE_STRING(add.shortName);
     CT_SAFE_FREE_STRING(add.longName);
+    CT_SAFE_FREE_STRING(add.forestName);
     if (pStatus)
     {
         LsaFreeStatus(pStatus);
@@ -1025,13 +1043,41 @@ Krb5LeaveDomain(Krb5Entry *conf)
 {
     DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *libdefaults;
+    Krb5Entry *capaths = NULL;
     GCE(ceError = EnsureStanzaNode(conf, "libdefaults", &libdefaults));
     GCE(ceError = DeleteChildNode(libdefaults, "default_realm", NULL));
 
+    GCE(ceError = EnsureStanzaNode(conf, "capaths", &capaths));
+    DeleteAllChildren(capaths);
     /* Revert changes needed for SSO support for Mac platforms */
     GCE(ceError = RestoreMacKeberosFile());
 
 cleanup:
+    return ceError;
+}
+
+static DWORD 
+getTail(PSTR inputDN, PSTR *tail)
+{
+    DWORD ceError = ERROR_SUCCESS;
+    PSTR ch = NULL, dn = NULL;
+    PSTR pszTail = NULL;
+    size_t length=0;
+    dn=inputDN;
+    length = strlen(dn);
+    for(ch = &dn[length-1]; ch>dn; ch--)
+    {
+        if(*ch == '.')
+        {
+	    ch++;
+            GCE(ceError = CTStrdup(ch, &pszTail));
+	    break;
+	}
+    }
+    *tail = pszTail; 
+cleanup:
+    if(ceError)
+        CT_SAFE_FREE_STRING(pszTail);
     return ceError;
 }
 
@@ -1053,10 +1099,19 @@ Krb5JoinDomain(
     Krb5Entry *domainGroup = NULL;
     Krb5Entry *addNode = NULL;
     char *domainUpper = NULL;
+    Krb5Entry *capaths = NULL;
+    Krb5Entry *capathsGroup = NULL;
     char *domainLower = NULL;
     DynamicArray trusts;
     char *mappingString = NULL;
-    size_t i;
+    size_t i,length=0;
+    PSTR pszJoinDomain = NULL;
+    PSTR pszJoinForest = NULL;
+    PSTR pszforestUpper = NULL;
+    PSTR pszLongNameUpper = NULL;
+    PSTR ch = NULL, dn = NULL;
+    PSTR pszParentDomain = NULL;
+    PSTR pszTail = NULL;
     const char *wantEncTypes[] = {
         "AES256-CTS",
         "AES128-CTS",
@@ -1074,7 +1129,7 @@ Krb5JoinDomain(
     }
 
     GCE(ceError = GatherDomainMappings( &trusts,
-                pszShortDomainName, pszDomainName));
+                pszShortDomainName, pszDomainName, &pszJoinForest));
 
     GCE(ceError = EnsureStanzaNode(conf, "libdefaults", &libdefaults));
     GCE(ceError = CTStrdup(pszDomainName, &mappingString));
@@ -1112,6 +1167,10 @@ Krb5JoinDomain(
     /* Enable SSO for Mac platforms, by creating a suitable /Library/Preferences/edu.mit.Kerberos file */
     GCE(ceError = CreateMacKeberosFile(pszDomainName, domainUpper));
 
+    GCE(ceError = EnsureStanzaNode(conf, "capaths", &capaths));
+    DeleteAllChildren(capaths);
+    GCE(ceError = CTStrdup(domainUpper, &pszJoinDomain));
+    CTStrToUpper(pszJoinForest);
     for(i = 0; i < trusts.size; i++)
     {
         DomainMapping *current = ((DomainMapping *)trusts.data) + i;
@@ -1135,6 +1194,78 @@ Krb5JoinDomain(
                 &domainLower, ".%s", current->longName));
         CTStrToLower(domainLower);
         GCE(ceError = SetNodeValue(domain_realm, domainLower, domainUpper));
+
+        /* For [capaths] stanza  */
+        CT_SAFE_FREE_STRING(pszLongNameUpper);
+        GCE(ceError = CTStrdup(current->longName, &pszLongNameUpper));
+        CTStrToUpper(pszLongNameUpper);
+        if(pszJoinForest && current->forestName)
+        {
+            CT_SAFE_FREE_STRING(pszforestUpper);
+            GCE(ceError = CTStrdup(current->forestName, &pszforestUpper));
+            CTStrToUpper(pszforestUpper);
+            if(strcmp(pszforestUpper,pszJoinForest)  &&
+	          (strcmp(pszLongNameUpper, pszforestUpper) ||
+                   strcmp(pszJoinDomain, pszJoinForest)))  
+            {
+                GCE(ceError = EnsureGroupNode(capaths, pszLongNameUpper, &capathsGroup));
+                if(strcmp(pszJoinDomain,pszJoinForest))
+                {
+                    GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszJoinForest, &addNode));
+                    GCE(ceError = AddChildNode(capathsGroup, addNode));
+                    addNode = NULL;
+                }
+                if(strcmp(pszLongNameUpper, pszforestUpper))
+                {
+                    GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszforestUpper, &addNode));
+                    GCE(ceError = AddChildNode(capathsGroup, addNode));
+                    addNode = NULL;
+                }
+                length = strlen(pszLongNameUpper);
+                CT_SAFE_FREE_STRING(pszTail);
+                GCE(ceError = getTail(pszLongNameUpper, &pszTail));
+                for( dn = pszLongNameUpper; dn < &pszLongNameUpper[length]; dn++)
+                {
+                    if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue; 
+                    ch = &dn[1];
+                    if( !strcmp(ch,pszforestUpper) || 
+                        !strcmp(ch,pszTail)) 
+                    {
+                        break;
+                    }
+                    CT_SAFE_FREE_STRING(pszParentDomain);
+                    GCE(ceError = CTStrdup(ch, &pszParentDomain));
+                    if(strcmp(pszParentDomain,pszforestUpper))
+                    {
+                        GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
+                        GCE(ceError = AddChildNode(capathsGroup, addNode));
+                        addNode = NULL;
+                    }
+                }
+                CT_SAFE_FREE_STRING(pszTail);
+                GCE(ceError = getTail(pszJoinDomain, &pszTail));
+                length = strlen(pszJoinDomain);
+                for( dn = pszJoinDomain; dn < &pszJoinDomain[length]; dn++)
+                {
+                    if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue; 
+                    ch = &dn[1];
+                    if( !strcmp(ch,pszforestUpper) || 
+                        !strcmp(ch,pszTail)) 
+                    {
+                        break;
+                    }
+                    CT_SAFE_FREE_STRING(pszParentDomain);
+                    GCE(ceError = CTStrdup(ch, &pszParentDomain));
+                    if(strcmp(pszParentDomain,pszforestUpper))
+                    {
+                        GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
+                        GCE(ceError = AddChildNode(capathsGroup, addNode));
+                        addNode = NULL;
+                    }
+                }
+                
+            }
+        }
     }
     GCE(ceError = CreateValueNode(conf, 3, "auth_to_local", "DEFAULT", &addNode));
     GCE(ceError = AddChildNode(domainGroup, addNode));
@@ -1166,6 +1297,12 @@ cleanup:
     CT_SAFE_FREE_STRING(domainLower);
     CT_SAFE_FREE_STRING(mappingString);
     CT_SAFE_FREE_STRING(domainUpper);
+    CT_SAFE_FREE_STRING(pszforestUpper);
+    CT_SAFE_FREE_STRING(pszLongNameUpper);
+    CT_SAFE_FREE_STRING(pszJoinDomain);
+    CT_SAFE_FREE_STRING(pszJoinForest);
+    CT_SAFE_FREE_STRING(pszParentDomain);
+    CT_SAFE_FREE_STRING(pszTail);
     FreeDomainMappings(&trusts);
     FreeKrb5Entry(&domainGroup);
     FreeKrb5Entry(&addNode);
