@@ -544,16 +544,6 @@ pam_sm_authenticate(
         }
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (pInfo && !pInfo->bOnlineLogon)
-        {
-            pPamContext->bOnlineLogon = FALSE;
-        }
-        else
-        {
-            // Assume online if no pInfo returned
-            pPamContext->bOnlineLogon = TRUE;
-        }
-
         if (!pPamContext->pamOptions.bNoRequireMembership)
         {
             dwError = LsaCheckUserInList(
