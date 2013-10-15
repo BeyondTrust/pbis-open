@@ -325,6 +325,12 @@ remove_dcerpc_dependencies()
    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\dcerpc]'  'Arguments' ''
 }
 
+remove_TrustEnumerationWaitSettingFromADPath()
+{
+    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' 'TrustEnumerationWait'
+    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'  'TrustEnumerationWaitSeconds'
+}
+
 fix_60_registry()
 {
     REGSHELL='@MK_BINDIR@/regshell'
@@ -389,6 +395,8 @@ postinstall()
     fix_60_registry
 
     cleanup_registry
+
+    remove_TrustEnumerationWaitSettingFromADPath
 
     remove_npfs_dependencies
 
