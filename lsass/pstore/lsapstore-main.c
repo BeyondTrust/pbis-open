@@ -413,7 +413,7 @@ LsaPstoreGetDomainTrustEnumerationWaitTime(
 cleanup:
     LSA_PSTOREP_UNLOCK(&isLocked);
 
-
+    LSA_PSTORE_FREE(&pwszDomainName);
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
