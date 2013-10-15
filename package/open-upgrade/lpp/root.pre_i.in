@@ -178,6 +178,27 @@ determine_join_status()
     fi
 }
 
+add_TrustEnumerationWaitSetting()
+{
+    if [ -d /opt/pbis/bin ]; then
+        regshell=/opt/pbis/bin/regshell
+    elif [ -d /opt/likewise/bin ]; then
+        regshell=/opt/likewise/bin/lwregshell
+    else
+        regshell=/usr/bin/lwregshell
+    fi
+    if [ -n "$STATUS_JOINED" ]; then
+         if [ -n "$UPGRADING_FROM_6_1" -o -n "$UPGRADING_PBIS" ]; then
+            domain_list=`$regshell list_keys '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainJoin]'`
+            for KEYS in $domain_list
+            do
+                run_quiet $regshell add_value "$KEYS" "TrustEnumerationWait" "REG_DWORD" '0'
+                run_quiet $regshell add_value "$KEYS" "TrustEnumerationWaitSeconds" "REG_DWORD" '0'
+            done
+         fi
+    fi
+}
+
 preserve_join_status()
 {
     if [ -n "$STATUS_JOINED" ]; then
@@ -294,6 +315,8 @@ postinstall()
     determine_upgrade_type
 
     determine_join_status
+
+    add_TrustEnumerationWaitSetting
 
     # Try to deconfigure pam/nsswitch
     if [ -x @MK_BINDIR@/domainjoin-cli ]; then

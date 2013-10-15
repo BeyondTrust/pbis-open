@@ -63,6 +63,19 @@ write_sed_script()
 }
 
 #
+# Move TrustEnumerationWait feature settings under joined DOMAIN_FQDN
+#
+/\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory\]/,/^/{
+ s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME]/
+
+    /^"[A-S].*/d 
+    /^"Tri.*/d 
+    /^"[U-Z].*/d
+
+  /[^]/p
+} 
+
+#
 # Move Pstore machine password under the subkey of the default joined domain
 #
 /\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default.MachinePassword\]/,/^/{
