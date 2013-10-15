@@ -1148,11 +1148,11 @@ cleanup:
         LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);       
     }
     if(pdwTrustEnumerationWaitSeconds) {
-       LwFreeMemory(pdwTrustEnumerationWaitSeconds);
+       free(pdwTrustEnumerationWaitSeconds);
        pdwTrustEnumerationWaitSeconds = NULL;
     }
     if(pdwTrustEnumerationWaitEnabled) {
-       LwFreeMemory(pdwTrustEnumerationWaitEnabled);
+       free(pdwTrustEnumerationWaitEnabled);
        pdwTrustEnumerationWaitEnabled = NULL;
     }
 
@@ -6208,49 +6208,54 @@ LsaGetTrustEnumerationValue(
     OUT PDWORD pdwTrustEnumerationWait
     )
 {
-   int iIndex = 0;
+   DWORD dwIndex = 0;
    DWORD dwError = 0;
    DWORD dwTrustEnumerationWaitSecondsMaxValue = 0;
    PDWORD pdwTrustEnumerationWaitSeconds1 = NULL;
    PDWORD pdwTrustEnumerationWaitEnabled1 = NULL;
-   
-   dwError = LW_RTL_ALLOCATE_ARRAY_AUTO(&pdwTrustEnumerationWaitSeconds1, dwDomainCount);
-   BAIL_ON_LSA_ERROR(dwError); 
-   dwError = LW_RTL_ALLOCATE_ARRAY_AUTO(&pdwTrustEnumerationWaitEnabled1, dwDomainCount);
+
+   pdwTrustEnumerationWaitSeconds1 = (PDWORD)malloc(dwDomainCount * sizeof(pdwTrustEnumerationWaitSeconds1));
+   dwError = pdwTrustEnumerationWaitSeconds1 ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES;
+   BAIL_ON_LSA_ERROR(dwError);
+   pdwTrustEnumerationWaitEnabled1 = (PDWORD)malloc(dwDomainCount * sizeof(pdwTrustEnumerationWaitEnabled1));
+   dwError = pdwTrustEnumerationWaitEnabled1 ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES;
    BAIL_ON_LSA_ERROR(dwError);
 
-    for (iIndex = 0 ; iIndex < dwDomainCount ; iIndex++)
+   memset(pdwTrustEnumerationWaitSeconds1, 0, sizeof(pdwTrustEnumerationWaitSeconds1));
+   memset(pdwTrustEnumerationWaitEnabled1, 0, sizeof(pdwTrustEnumerationWaitEnabled1));   
+
+    for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
-        if (!gbMultiTenancyEnabled && iIndex > 0)
+        if (!gbMultiTenancyEnabled && dwIndex > 0)
         {
             break;
         }
 
         dwError = LsaPstoreGetDomainTrustEnumerationWaitTime(
-                          ppszDomainList[iIndex],
-                          (PDWORD*)&pdwTrustEnumerationWaitSeconds1[iIndex],
-                          (PDWORD*)&pdwTrustEnumerationWaitEnabled1[iIndex]);
+                          ppszDomainList[dwIndex],
+                          (PDWORD*)&pdwTrustEnumerationWaitSeconds1[dwIndex],
+                          (PDWORD*)&pdwTrustEnumerationWaitEnabled1[dwIndex]);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    for(iIndex = 0; iIndex < dwDomainCount; iIndex++)
+    for(dwIndex = 0; dwIndex < dwDomainCount; dwIndex++)
     {
-         if(pdwTrustEnumerationWaitEnabled1[iIndex]) {
+         if(pdwTrustEnumerationWaitEnabled1[dwIndex]) {
              *pdwTrustEnumerationWait = 1;
          }
 
          // Condition to retrieve the MaxValue for TrustEnumerationWait 
-         if(pdwTrustEnumerationWaitEnabled1[iIndex] !=0  &&
-             (((signed)pdwTrustEnumerationWaitSeconds1[iIndex] > 0) &&
-             ((signed)pdwTrustEnumerationWaitSeconds1[iIndex] < TRUST_ENUMERATIONWAIT_MAXLIMIT))) {
-             if((signed)dwTrustEnumerationWaitSecondsMaxValue < pdwTrustEnumerationWaitSeconds1[iIndex]) {
-                 dwTrustEnumerationWaitSecondsMaxValue = pdwTrustEnumerationWaitSeconds1[iIndex];
+         if(pdwTrustEnumerationWaitEnabled1[dwIndex] !=0  &&
+             (((signed)pdwTrustEnumerationWaitSeconds1[dwIndex] > 0) &&
+             ((signed)pdwTrustEnumerationWaitSeconds1[dwIndex] < TRUST_ENUMERATIONWAIT_MAXLIMIT))) {
+             if((signed)dwTrustEnumerationWaitSecondsMaxValue < pdwTrustEnumerationWaitSeconds1[dwIndex]) {
+                 dwTrustEnumerationWaitSecondsMaxValue = pdwTrustEnumerationWaitSeconds1[dwIndex];
              } 
         }
      }
      /* Setting Default Value of 300sec  for TrustEnumerationWait 
             if TrustEnumerationWaitSeconds is less than or equal to 0 */
-     for(iIndex = 0; iIndex < dwDomainCount; iIndex++) {
-        if(pdwTrustEnumerationWaitEnabled1[iIndex] && (signed)pdwTrustEnumerationWaitSeconds1[iIndex] <= 0 && 
+     for(dwIndex = 0; dwIndex < dwDomainCount; dwIndex++) {
+        if(pdwTrustEnumerationWaitEnabled1[dwIndex] && (signed)pdwTrustEnumerationWaitSeconds1[dwIndex] <= 0 && 
            (signed) dwTrustEnumerationWaitSecondsMaxValue < TRUST_ENUMERATIONWAIT_DEFAULTVALUE) {
             dwTrustEnumerationWaitSecondsMaxValue = TRUST_ENUMERATIONWAIT_DEFAULTVALUE;
             break;
@@ -6272,10 +6277,12 @@ cleanup:
 
 error:
     if(pdwTrustEnumerationWaitSeconds1) {
-       LwFreeMemory(pdwTrustEnumerationWaitSeconds1);
+       free(pdwTrustEnumerationWaitSeconds1);
+       pdwTrustEnumerationWaitSeconds1 = NULL;
     }
     if(pdwTrustEnumerationWaitEnabled1) {
-       LwFreeMemory(pdwTrustEnumerationWaitEnabled1);
+       free(pdwTrustEnumerationWaitEnabled1);
+       pdwTrustEnumerationWaitEnabled1 = NULL;
     }
     
     goto cleanup;

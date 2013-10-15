@@ -1269,6 +1269,8 @@ LwpsLegacyGetJoinedDomainTrustEnumerationWaitTime(
     }
 
 cleanup:
+   
+    LW_SAFE_FREE_MEMORY(pszRegistryPath);
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
