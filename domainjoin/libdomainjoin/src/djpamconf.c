@@ -423,6 +423,7 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
     const char *pos = linestr;
     const char *token_start = NULL;
     DynamicArray tokens;
+	CTParseToken token;
 
     memset(&tokens, 0, sizeof(tokens));
     memset(lineObj, 0, sizeof(*lineObj));
@@ -440,7 +441,9 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
      */
     while(!IsWhitespace(pos) && *pos != '\0' && *pos != '#')
     {
-        CTParseToken token;
+//		  CTParseToken token;
+        token.value = NULL;
+        token.trailingSeparator = NULL;
         token_start = pos;
         while(!IsWhitespace(pos) && *pos != '\0' && *pos != '#')
         {
@@ -519,6 +522,7 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
     return ceError;
 
 error:
+	CTFreeParseTokenContents(&token);
     FreePamLineContents(lineObj);
     if(tokens.data != NULL)
     {
@@ -3792,7 +3796,7 @@ void DJUpdatePamConf(const char *testPrefix,
 cleanup:
     LW_HANDLE(&nestedException);
     DJFreeDistroInfo(&distro);
-    if(services == NULL)
+    if(services != NULL)
         FreeServicesList(services);
     CT_SAFE_FREE_STRING(pam_lwidentity);
     CT_SAFE_FREE_STRING(pam_lwipasspolicy);

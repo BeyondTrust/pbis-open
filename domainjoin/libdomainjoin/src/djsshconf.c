@@ -381,6 +381,7 @@ static DWORD ReadSshFile(struct SshConf *conf, const char *rootPrefix, const cha
             break;
         BAIL_ON_CENTERIS_ERROR(ceError = AddFormattedLine(conf, filename, buffer, NULL));
     }
+	CT_SAFE_FREE_STRING(buffer);
     BAIL_ON_CENTERIS_ERROR(ceError = CTCloseFile(file));
     file = NULL;
 
@@ -1294,8 +1295,11 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
 
         FreeSshConfContents(&conf);
     }
-
-    exists = FindSshAndConfig("ssh",
+	
+	CT_SAFE_FREE_STRING(configPath);
+    CT_SAFE_FREE_STRING(binaryPath);
+    
+	exists = FindSshAndConfig("ssh",
         &binaryPath, &configPath, &caught);
     if(caught != NULL && caught->code == ERROR_FILE_NOT_FOUND)
     {

@@ -1280,6 +1280,7 @@ cleanup:
     }
 
     CT_SAFE_FREE_STRING(likewiseProduct);
+	CT_SAFE_FREE_STRING(osName);
     CT_SAFE_FREE_STRING(likewiseVersion);
     CT_SAFE_FREE_STRING(likewiseBuild);
     CT_SAFE_FREE_STRING(likewiseRevision);

@@ -2011,6 +2011,9 @@ CTCopyDirectory(
             !strcmp(pDirEntry->d_name, "."))
             continue;
 
+        CT_SAFE_FREE_STRING(srcPath);
+        CT_SAFE_FREE_STRING(destPath);
+
         GCE(ceError = CTAllocateStringPrintf(&srcPath, "%s/%s", source,
                     pDirEntry->d_name));
         GCE(ceError = CTAllocateStringPrintf(&destPath, "%s/%s", dest,

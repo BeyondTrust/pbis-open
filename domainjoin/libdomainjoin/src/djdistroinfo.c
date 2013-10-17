@@ -881,6 +881,7 @@ DJGetLikewiseVersion(
 
     while (TRUE)
     {
+		CT_SAFE_FREE_STRING(line);
         GCE(ceError = CTReadNextLine(versionFile, &line, &isEndOfFile));
         if (isEndOfFile)
             break;

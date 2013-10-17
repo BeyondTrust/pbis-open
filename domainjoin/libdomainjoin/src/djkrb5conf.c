@@ -392,6 +392,7 @@ static DWORD ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entr
     GCE(ceError = CTOpenFile(fullPath, "r", &file));
     while(TRUE)
     {
+		CT_SAFE_FREE_STRING(buffer);
         GCE(ceError = CTReadNextLine(file, &buffer, &endOfFile));
         if(endOfFile)
             break;
@@ -658,6 +659,8 @@ DWORD DeleteChildNode(Krb5Entry *parent, const char *name, size_t *removed)
         ssize_t index = FindNodeIndex(parent, 0, name);
         if(index == -1)
             break;
+        Krb5Entry *child = GetChild(parent, index);
+        FreeKrb5Entry(&child);
 
         GCE(ceError = CTArrayRemove(&parent->subelements, index,
                         sizeof(Krb5Entry *), 1));

@@ -1078,7 +1078,7 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
 
     LW_CLEANUP_CTERR(exc, CTStrdup("", &required));
     LW_CLEANUP_CTERR(exc, CTStrdup("", &optional));
-    LW_CLEANUP_CTERR(exc, CTStrdup("", &both));
+//    LW_CLEANUP_CTERR(exc, CTStrdup("", &both));
 
     LW_CLEANUP_CTERR(exc, DJGetFQDN(&oldShortHostname, &oldFqdnHostname));
     CTStrToLower(oldShortHostname);

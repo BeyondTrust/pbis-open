@@ -297,7 +297,7 @@ LwFindFilesInPaths(
 
     for (dwIndex = 0; ppszSearchPaths[dwIndex]; dwIndex++)
     {
-        LW_SAFE_FREE_STRING(pszTestPath);
+//        LW_SAFE_FREE_STRING(pszTestPath);
 
         dwError = LwAllocateStringPrintf(
                         &pszTestPath,
@@ -325,8 +325,8 @@ LwFindFilesInPaths(
             pszTestPath = NULL;
             dwFoundCount++;
         }
+		LW_SAFE_FREE_STRING(pszTestPath);
     }
-
     *pdwFoundCount = dwFoundCount;
     *pppszFoundPaths = ppszFoundPaths;
     

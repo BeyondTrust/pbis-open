@@ -91,6 +91,8 @@ static void FreeNsswitchConfContents(NsswitchConf *conf)
     {
         FreeNsswitchEntryContents(((NsswitchEntry *)conf->lines.data) + i);
     }
+	CT_SAFE_FREE_STRING(conf->filename);
+    CTArrayFree(&conf->lines);
 }
 
 /* Get the printed form of a line from the parsed form by concatenating all of the strings together */
