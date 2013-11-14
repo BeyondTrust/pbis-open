@@ -7,6 +7,6 @@ if test ! -d config; then mkdir config; fi
 #libtoolize --force --copy
 libtoolize -fic || exit $?
 aclocal  --force || exit $?
-autoheader -f || exit $?
+autoheader || exit $?
 automake --foreign --add-missing --copy
-autoconf -f  || exit $?
+autoconf  || exit $?
