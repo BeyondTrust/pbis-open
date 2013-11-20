@@ -297,6 +297,24 @@ GPNotifyLogin(
     dwError = GPInitLibrary();
     BAIL_ON_LSA_ERROR(dwError);
 
+    //
+    // RALI TEMPORARY START. In solaris11, function gp_pam_process_login() in gppamsupp.c invokes 
+    // GPOClientOpenContext() to send a  msg to gpagent.  However this call hangs because of a 
+    // bad file descriptor.  By-pass this notification for now until it can be fixed in gppamsupp.c.
+    //
+       struct utsname unameStruct;
+       memset(&unameStruct, '\0', sizeof(struct utsname));
+       uname(&unameStruct);
+       if (!strcmp(unameStruct.sysname, "SunOS"))
+       {
+           if(!strcmp(unameStruct.version, "11.0") || !strcmp(unameStruct.version, "11.1"))
+              goto cleanup;
+       }
+    //
+    // RALI TEMPORARY END
+    //
+
+
     if (gpGPLibHandle && gpfnGPPamProcessLogin)
     {
         ret = gpfnGPPamProcessLogin((void*) NULL,
@@ -330,6 +348,23 @@ GPNotifyLogout(
 
     dwError = GPInitLibrary();
     BAIL_ON_LSA_ERROR(dwError);
+
+    //
+    // RALI TEMPORARY START. In solaris11, function gp_pam_process_logout() in gppamsupp.c invokes 
+    // GPOClientOpenContext() to send a  msg to gpagent.  However this call hangs because of a 
+    // bad file descriptor.  By-pass this notification for now until it can be fixed in gppamsupp.c.
+    //  
+       struct utsname unameStruct;
+       memset(&unameStruct, '\0', sizeof(struct utsname));
+       uname(&unameStruct);
+       if (!strcmp(unameStruct.sysname, "SunOS"))
+       {
+           if(!strcmp(unameStruct.version, "11.0") || !strcmp(unameStruct.version, "11.1"))
+              goto cleanup;
+       }
+    // 
+    // RALI TEMPORARY END
+    //
 
     if (gpGPLibHandle && gpfnGPPamProcessLogout)
     {
