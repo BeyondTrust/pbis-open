@@ -178,8 +178,8 @@ enable_plugin()
     run_or_fail mkdir -p "$LIBRARY_DS_DIR"
     run_or_fail cp -r "$SRC_DIR/$PLUGIN_DIR" "$LIBRARY_DS_DIR/$PLUGIN_DIR"
 
-    if [ -f /usr/bin/setfile ]; then
-        run_or_fail /usr/bin/setfile -a V /opt
+    if [ -f /usr/bin/chflags ]; then
+        run_or_fail /usr/bin/chflags hidden /opt
     else
         grep opt /.hidden > /dev/null
         if [ $? -ne 0 ]; then
