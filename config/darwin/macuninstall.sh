@@ -278,6 +278,13 @@ usage()
 
 main()
 {
+    id=/usr/bin/id
+
+    if [ `"$id" -u` != 0 ]; then
+      echo "ERROR: Root privileges are required to uninstall this software. Try running this uninstaller with sudo."
+      exit 1
+    fi
+
     RUN=""
     case "$1" in
         '')
