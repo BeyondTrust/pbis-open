@@ -810,6 +810,9 @@ EOF
     unset startup_dir
 fi
 
+run_quiet chmod 700 /opt/pbis/bin/macuninstall.sh
+run_quiet chown 0:80 /opt/pbis/bin/macuninstall.sh
+
 # Create Global Login Item entry for PBIS Logon Message.app
 # to display licensing and password expiration warning messages on
 # user logon activity.
