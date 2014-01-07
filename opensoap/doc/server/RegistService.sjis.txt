@@ -1,0 +1,44 @@
+[[ API を使って作成したサービスの登録方法 ]]
+※SSMLファイルにおいて，接続方法に<socket>を選択した場合は以下の手順に従ってサービス登録を行ってください．（SSML_Readme.txt参照）
+
+ポート番号・ユーザー名・サービス名・サービスプログラムへのパスは、
+適宜読み変えてください。
+
+==================================================
+[1] inetd を使用している場合。
+
+(1) /etc/services に以下の行を追加。
+
+calc-service     8765/tcp
+
+(2) /etc/inetd.conf に以下の行を追加。
+
+calc-service    stream  tcp     nowait  foo /usr/local/opensoap/services/CalcService CalcService
+
+(3) inetd の再起動。
+
+# kill -HUP `head -1 /var/run/inetd.pid`
+
+==================================================
+[2] xinetd を使用している場合。
+
+(1) /etc/services に以下の行を追加。
+
+calc-service     8765/tcp
+
+(2) /etc/xinetd/calc-service を作成し、以下の内容を書き込む。
+
+service calc-service
+{
+       socket_type         = stream
+       protocol		   = tcp
+       wait                = no
+       user                = foo
+       server              = /usr/local/opensoap/services/CalcService
+}
+
+(3) inetd の再起動。
+
+# /etc/inint.d/xinetd restart
+
+==================================================

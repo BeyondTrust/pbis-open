@@ -1,0 +1,123 @@
+/*
+ * 
+ * (c) Copyright 1993 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1993 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1993 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      ncastat.idl
+**
+**  FACILITY:
+**
+**      Network Computing Architecture (NCA)
+**
+**  ABSTRACT:
+**
+**  NCA-defined status codes.
+**
+**
+*/
+
+interface nca_status
+
+{
+
+/*
+ * NCA-defined status codes.  These codes are "well-known" and part of
+ * the NCA/RPC protocols (i.e., they are sent back by servers in the body
+ * of NCA/RPC/DG's "reject" messages and in the status field of the header
+ * of NCA/RPC/CN's "fault" packets.)
+ * 
+ * For historical reasons, the first few status codes are derived from
+ * status codes use by NCS, the Apollo implementation of NCA.
+ * 
+ * There is some confusion surrounding which errors are part of the NCA
+ * RPC request/response protocol(s) proper and which are defined by NIDL
+ * and the presentation protocol (e.g., NDR) in use.  Errors like "unknown
+ * interface" are in the former category.  Application errors (like
+ * divide-by-zero) are in the latter category.  (In NCA/RPC/DG and
+ * NCA/RPC/CN, application errors are indicated in the body of "fault"
+ * packets; the contents of these bodies are untouched by the RPC protocol
+ * proper and are simply conveyed from server to client application.)
+ * 
+ * This interface defines errors code in both categories.  The application
+ * ones are strictly speaking part of NIDL/NDR and are named
+ * "nca_s_fault_..." to distinguish them.
+ */
+
+const long  nca_s_comm_failure              = 0x1C010001;  /* unable to get response from server */
+const long  nca_s_op_rng_error              = 0x1C010002;  /* bad operation number in call */
+const long  nca_s_unk_if                    = 0x1C010003;  /* unknown interface */
+const long  nca_s_wrong_boot_time           = 0x1C010006;  /* client passed server wrong server boot time */
+const long  nca_s_you_crashed               = 0x1C010009;  /* a restarted server called back a client */
+const long  nca_s_proto_error               = 0x1C01000B;  /* someone messed up the protocol */
+const long  nca_s_out_args_too_big          = 0x1C010013;  /* output args too big */
+const long  nca_s_server_too_busy           = 0x1C010014;  /* server is too busy to handle call */
+const long  nca_s_fault_string_too_long     = 0x1C010015;  /* string parameter longer than declared max len */
+const long  nca_s_unsupported_type          = 0x1C010017;  /* no implementation of generic operation for object */
+                                    /* NO NEW 1C01xxxx STATUS CODES HERE! */
+
+const long  nca_s_fault_int_div_by_zero     = 0x1C000001;
+const long  nca_s_fault_addr_error          = 0x1C000002;
+const long  nca_s_fault_fp_div_zero         = 0x1C000003;
+const long  nca_s_fault_fp_underflow        = 0x1C000004;
+const long  nca_s_fault_fp_overflow         = 0x1C000005;
+const long  nca_s_fault_invalid_tag         = 0x1C000006;
+const long  nca_s_fault_invalid_bound       = 0x1C000007;
+const long  nca_s_rpc_version_mismatch      = 0x1C000008;
+const long  nca_s_unspec_reject             = 0x1C000009;  /* call rejected, but no more detail */
+const long  nca_s_bad_actid                 = 0x1C00000A;
+const long  nca_s_who_are_you_failed        = 0x1C00000B;
+const long  nca_s_manager_not_entered       = 0x1C00000C;
+const long  nca_s_fault_cancel              = 0x1C00000D;
+const long  nca_s_fault_ill_inst            = 0x1C00000E;
+const long  nca_s_fault_fp_error            = 0x1C00000F;
+const long  nca_s_fault_int_overflow        = 0x1C000010;
+/*                                            0x1C000011; not in use */
+const long  nca_s_fault_unspec              = 0x1C000012;
+const long  nca_s_fault_remote_comm_failure = 0x1C000013;
+const long  nca_s_fault_pipe_empty          = 0x1C000014;
+const long  nca_s_fault_pipe_closed         = 0x1C000015;
+const long  nca_s_fault_pipe_order          = 0x1C000016;
+const long  nca_s_fault_pipe_discipline     = 0x1C000017;
+const long  nca_s_fault_pipe_comm_error     = 0x1C000018;
+const long  nca_s_fault_pipe_memory         = 0x1C000019;
+const long  nca_s_fault_context_mismatch    = 0x1C00001A;
+const long  nca_s_fault_remote_no_memory    = 0x1C00001B;
+const long  nca_s_invalid_pres_context_id   = 0x1C00001C;
+const long  nca_s_unsupported_authn_level   = 0x1C00001D;
+const long  nca_s_invalid_checksum          = 0x1C00001F;
+const long  nca_s_invalid_crc               = 0x1C000020;
+const long  nca_s_fault_user_defined        = 0x1C000021;
+const long  nca_s_fault_tx_open_failed      = 0x1C000022;
+const long  nca_s_fault_codeset_conv_error  = 0x1C000023;
+
+        /*
+         * Add new codes above this comment.  Use "nca_s_fault_..." for
+         * errors defined by NIDL/NDR; leave out "_fault" for errors
+         * defined by NCA/RPC request/response protocol.
+         */
+const long  nca_s_fault_access_denied       = 0x00000005;
+const long  ncs_s_fault_ndr                 = 0x000006f7;
+const long  nca_s_fault_cant_perform        = 0x000006d8;
+
+}

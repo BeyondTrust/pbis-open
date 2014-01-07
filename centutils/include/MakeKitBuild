@@ -1,0 +1,10 @@
+make()
+{
+    mk_headers \
+        HEADERDEPS="lw/base.h lwadvapi.h" \
+        MASTER=ctbase.h \
+        ctarray.h ctdef.h ctexec.h ctfileutils.h \
+        cthash.h ctmem.h ctprocutils.h ctrwlock.h \
+        ctshell.h ctstrutils.h ctsys.h cttext.h \
+        ctuser.h lwexc.h ctsysfuncs.h
+}

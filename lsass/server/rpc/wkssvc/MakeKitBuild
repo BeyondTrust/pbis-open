@@ -1,0 +1,43 @@
+make()
+{
+    WKSSVC_SOURCES="\
+        globals.c                   \
+	wkssvc.c                    \
+	wkss_cfg.c                  \
+	wkss_srv.c                  \
+	wkss_memory.c               \
+	wkss_accesstoken.c          \
+	wkss_crypto.c               \
+	wkss_security.c             \
+	netr_wkstagetinfo.c         \
+	netr_wkstauserenum.c        \
+	netr_joindomain2.c          \
+	netr_unjoindomain2.c"
+    
+
+    lw_dceidl \
+	IDL=../../../idl/wkssvc.idl \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADER="wkssvc_h.h" \
+	SSTUB="wkssvc_sstub.c" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=wkssvc_stub \
+	SOURCES="wkssvc_sstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_dlo \
+	DLO=wkssvc \
+        INSTALLDIR="${rpcserverdir}" \
+	SOURCES="$WKSSVC_SOURCES" \
+	GROUPS="wkssvc_stub" \
+	INCLUDEDIRS=". ../../include ../../api ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h openssl/md5.h" \
+        LIBDEPS="lsaserverapi" \
+	DEPS="wkssvc_h.h"
+}

@@ -1,0 +1,9 @@
+# The PAM configuration file for the Shadow 'useradd' service
+#
+
+# This allows local users to access the service without a password
+auth		sufficient	pam_console.so
+auth		required	pam_deny.so
+
+# checks for account validity
+account	required	pam_permit.so

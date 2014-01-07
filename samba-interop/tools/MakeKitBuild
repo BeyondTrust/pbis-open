@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+        PROGRAM=samba-interop-install \
+        GROUPS="../pstore-plugin/samba-pstore-plugin" \
+        SOURCES="samba-interop-install.c" \
+        INCLUDEDIRS=". ../include ../pstore-plugin" \
+        HEADERDEPS="lsa/lsa.h lsa/ad.h lwdef.h reg/regutil.h" \
+        LIBDEPS="lsaclient lwadvapi lwadvapi_nothr lwbase_nothr regclient"
+}

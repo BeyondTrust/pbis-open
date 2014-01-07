@@ -1,0 +1,76 @@
+[HKEY_THIS_MACHINE\Services\rdr]
+"Description" = { 
+    default = "PBIS CIFS Redirector driver" 
+    doc = "" 
+}
+"Path" = { 
+    value = "@providerdir@/rdr@MOD_EXT@" 
+    default = "@providerdir@/rdr@MOD_EXT@" 
+    doc = "" 
+}
+"Arguments" = { 
+    value = "rdr" 
+    default = "rdr" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    value = "lwio" 
+    default = "lwio" 
+    doc = "" 
+}
+"Type" = { 
+    value = dword:00000003 
+    default = dword:00000003 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\rdr]
+"Path" = { 
+    value = "@providerdir@/rdr@MOD_EXT@" 
+    default = "@providerdir@/rdr@MOD_EXT@" 
+    doc = "" 
+}
+
+"Smb2Enabled" = {
+	default = dword:00000001
+	doc = "Enable SMB2 support"
+}
+
+"SigningEnabled" = {
+	default = dword:00000001
+	doc = "Enable signing support"
+}
+
+"SigningRequired" = {
+	default = dword:00000000
+	doc = "Require server to sign"
+}
+
+"IdleTimeout" = {
+	default = dword:0000000A
+	doc = "Time before closing unused tree, session, or connection"
+}
+
+"ResponseTimeout" = {
+	default = dword:00000014
+	doc = "Time before sending echo request when request is outstanding"
+}
+
+"EchoTimeout" = {
+	default = dword:0000000A
+	doc = "Time before disconnecting server when echo request is outstanding"
+}
+
+"EchoInterval" = {
+	default = dword:0000012C
+	doc = "Time between keep-alive requests when connection is idle"
+}
+
+"MinCreditReserve" = {
+	default = dword:0000000A
+	doc = "(SMB2) Minimum number of credits to attempt to keep available"
+}

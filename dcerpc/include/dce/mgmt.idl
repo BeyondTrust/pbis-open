@@ -1,0 +1,114 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      mgmt.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Management Remote Interface (IDL)
+**
+**  This interface defines procedures that provide remote access to
+**  management operations in the RPC runtime.
+**  
+**
+*/
+
+[uuid(afa8bd80-7d8a-11c9-bef4-08002b102989), version(1)] 
+
+interface mgmt
+{
+import "dce/rpctypes.idl";
+
+/*
+ * R P C _ _ M G M T _ I N Q _ I F _ I D S
+ */
+
+[idempotent]
+void rpc__mgmt_inq_if_ids
+(
+    [in]        handle_t                binding_handle,
+    [out]       rpc_if_id_vector_p_t    *if_id_vector,
+    [out]       error_status_t          *status
+);
+
+
+/*
+ * R P C _ _ M G M T _ I N Q _ S T A T S
+ */
+
+[idempotent]
+void rpc__mgmt_inq_stats
+(
+    [in]        handle_t                binding_handle,
+    [in, out]   unsigned32              *count,
+    [out, size_is (*count)] unsigned32  statistics[*],
+    [out]       error_status_t          *status
+);
+
+
+/*
+ * R P C _ _ M G M T _ I S _ S E R V E R _ L I S T E N I N G
+ */
+
+[idempotent]
+boolean32 rpc__mgmt_is_server_listening
+(
+    [in]        handle_t                binding_handle,
+    [out]       error_status_t          *status
+);
+
+
+/*
+ * R P C _ _ M G M T _ S T O P _ S E R V E R _ L I S T E N I N G
+ */
+
+void rpc__mgmt_stop_server_listening
+(
+    [in]        handle_t                binding_handle,
+    [out]       error_status_t          *status
+);
+
+
+/*
+ * R P C _ _ M G M T _ I N Q _ P R I N C _ N A M E
+ */
+
+[idempotent]
+void rpc__mgmt_inq_princ_name
+(
+    [in]        handle_t                binding_handle,
+    [in]        unsigned32              authn_proto,
+    [in]        unsigned32              princ_name_size,
+    [out, string, size_is(princ_name_size)]       
+                char                    princ_name[],
+    [out]       error_status_t          *status
+);
+
+}

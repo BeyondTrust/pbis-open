@@ -1,0 +1,35 @@
+make()
+{
+    mk_program \
+        PROGRAM=nbquery \
+        SOURCES="nbquery.c" \
+        INSTALLDIR="$LW_TOOL_DIR/netlogon" \
+        INCLUDEDIRS="../.. ../../include ../../server/api" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+        LIBDEPS="lwnetclientapi" \
+        GROUPS="../../server/api/api ../../server/ipc/ipc"
+
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=nbname1 \
+        SOURCES="nbname1.c" \
+        INSTALLDIR="$LW_TOOL_DIR/netlogon" \
+        INCLUDEDIRS="../.. ../../include ../../server/api" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+        LIBDEPS="lwnetclientapi" \
+        GROUPS="../../server/api/api ../../server/ipc/ipc"
+
+    lw_add_tool_target "$result"
+
+    mk_program \
+        PROGRAM=nbname2 \
+        SOURCES="nbname2.c" \
+        INSTALLDIR="$LW_TOOL_DIR/netlogon" \
+        INCLUDEDIRS="../.. ../../include ../../server/api" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+        LIBDEPS="lwnetclientapi" \
+        GROUPS="../../server/api/api ../../server/ipc/ipc"
+
+    lw_add_tool_target "$result"
+}

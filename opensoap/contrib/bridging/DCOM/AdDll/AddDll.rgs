@@ -1,0 +1,26 @@
+HKCR
+{
+	AdDll.AddDll.1 = s 'AddDll Class'
+	{
+		CLSID = s '{9422BEA4-2572-42FA-A5A3-B8D0B73D8292}'
+	}
+	AdDll.AddDll = s 'AddDll Class'
+	{
+		CLSID = s '{9422BEA4-2572-42FA-A5A3-B8D0B73D8292}'
+		CurVer = s 'AdDll.AddDll.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {9422BEA4-2572-42FA-A5A3-B8D0B73D8292} = s 'AddDll Class'
+		{
+			ProgID = s 'AdDll.AddDll.1'
+			VersionIndependentProgID = s 'AdDll.AddDll'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '{BA4D154E-98C3-4aa5-9381-7E9282A881E4}'
+			'TypeLib' = s '{3CD578EB-D794-416F-BA10-8585E9C0560D}'
+		}
+	}
+}

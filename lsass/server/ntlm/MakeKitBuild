@@ -1,0 +1,29 @@
+make()
+{
+    NTLM_SOURCES="\
+	acceptsecctxt.c \
+	acquirecreds.c \
+	context.c \
+	crc32.c \
+	credentials.c \
+	decryptmsg.c \
+	encryptmsg.c \
+	expimpsecctxt.c \
+	freecreds.c \
+	globals.c \
+	initsecctxt.c \
+	ipc_dispatch.c \
+	makesign.c \
+	querycreds.c \
+	queryctxt.c \
+	setcreds.c \
+	cfg.c \
+	verifysign.c"
+    
+    mk_library \
+	LIB=ntlmserver \
+	SOURCES="$NTLM_SOURCES" \
+	INCLUDEDIRS=". ../include ../../include" \
+	HEADERDEPS="openssl/md5.h lwadvapi.h wc16str.h uuid/uuid.h lwio/lwio.h" \
+	LIBDEPS="lsacommon lsaserverapi lsarpc lwmsg crypto krb5 lwadvapi"
+}

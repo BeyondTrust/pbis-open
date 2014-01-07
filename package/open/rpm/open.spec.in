@@ -1,0 +1,869 @@
+# ex: set tabstop=4 expandtab shiftwidth=4:
+
+Name: 		@PKG_OPEN_RPM_NAME@
+Summary: 	Identity Services for authenticating with Active Directory domains
+Version: 	@PKG_RPM_VERSION@
+Release: 	@PKG_RPM_RELEASE@
+License: 	Likewise Proprietary
+URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+Group: 		System Environment/Daemons
+Prereq: grep, sh-utils, @PKG_OPEN_UPGRADE_RPM_NAME@
+Conflicts:  winbind 
+Obsoletes: likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
+Provides: @PKG_OPEN_RPM_NAME@ , likewise-open
+AutoReq: no
+AutoProv: no
+
+%description
+PowerBroker Identity Services Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
+
+%package devel
+Summary: PowerBroker Identity Services Open (development)
+Group: Development/Libraries
+Requires: @PKG_OPEN_RPM_NAME@
+
+
+%description devel
+The @PKG_OPEN_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
+
+%define AdProviderPath @PRIMARY_LIBDIR@/lsa-provider/ad_open.so
+%post
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
+
+UPGRADEDIR=/var/lib/pbis-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
+
+LOG=/var/log/pbis-open-install.log
+
+# Display to screen and log file with a blank line between entries.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log "$tlog"
+        _log
+    fi
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    echo "$tlog" >> $LOG
+    echo >> $LOG
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log "$tlog"
+        _log
+        exit 1
+    fi
+    return $err
+}
+
+import_registry_configurations()
+{
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    log 'Importing registry...'
+    for i in "@LW_CONFIGDIR@/"*.reg
+    do
+        run_or_fail "$REGSHELL" import "$i"
+    done
+}
+
+determine_os_version()
+{
+    PBIS_DISTRO=unknown
+    PBIS_DISTRO_VERSION=unknown
+
+    if [ -f '/etc/centos-release' ]; then
+        PBIS_DISTRO=centos
+        if [ -n "`grep '^CentOS release 6' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^CentOS Linux release 6' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^CentOS release 5' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=5.0
+        fi
+    elif [ -f '/etc/fedora-release' ]; then
+        PBIS_DISTRO=fedora
+        if [ -n "`grep '^Fedora release 18 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=18
+        elif [ -n "`grep '^Fedora release 17 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=17
+        elif [ -n "`grep '^Fedora release 16 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=16
+        elif [ -n "`grep '^Fedora release 15 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=15
+        elif [ -n "`grep '^Fedora release 14 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=14
+        elif [ -n "`grep '^Fedora release 13 ' '/etc/fedora-release'`" ]; then
+            PBIS_DISTRO_VERSION=13
+        fi
+    elif [ -f '/etc/redhat-release' ]; then
+        if [ -n "`grep '^CentOS release 5' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=centos
+            PBIS_DISTRO_VERSION=5.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 5' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=5.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 6' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 6' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux release 6' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=6.0
+        fi
+    fi
+}
+
+setup_selinux_policy_module()
+{
+    DISTRO=$PBIS_DISTRO
+    VERSION=$PBIS_DISTRO_VERSION
+
+    # CentOS uses the same policy as RedHat Enterprise
+    if [ "$DISTRO" = "centos" ]; then
+        DISTRO="rhel"
+    fi
+
+    logfile "DISTRO=$DISTRO VERSION=$PBIS_DISTRO_VERSION"
+    if [ ! -x "/usr/sbin/semodule" ]; then
+        logfile "/usr/sbin/semodule not present."
+        return;
+    fi
+
+    if [ "$DISTRO" = "rhel" -a "$VERSION" = "5.0" ]; then
+        log 'SELinux Policy Module not required.'
+    elif [ -f "@MK_DATADIR@/pbis.pp" ]; then
+        log 'Setting up SELinux Policy Module using @MK_DATADIR@/pbis.pp'
+        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
+        run_quiet /sbin/fixfiles -R pbis-open restore
+    elif [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
+        log 'Setting up SELinux Policy Module'
+        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
+        run_quiet /sbin/fixfiles -R pbis-open restore
+    else
+      log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package.
+You may provide a policy at @MK_DATADIR@/pbis.pp"
+      if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
+        logfile "/usr/sbin/selinuxenabled and /usr/sbin/getenforce are present"
+        if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
+            logfile "selinuxenabled indicates SELinux is enabled"
+            if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
+                if [ -f /etc/selinux/config ]; then                 
+                    log "SELinux found to be present, enabled, and enforcing.
+You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
+SELinux must be disabled or set to permissive mode by editing the file
+/etc/selinux/config and rebooting.
+For instructions on how to edit the file to disable SELinux, see the SELinux man page."
+                else
+                    log "SELinux found to be present, enabled, and enforcing.
+You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
+SELinux must be disabled or set to permissive mode.
+Check your system's documentation for details."
+                fi
+                log 'PowerBroker Identity Services will not install without an appropriate policy for SELinux.'
+                exit 1
+            else
+                logfile "getenforce indicates permissive (which is ok)"
+            fi
+        else
+            logfile "selinuxenabled indicates SELinux is not enabled"
+        fi
+      fi
+    fi
+}
+
+determine_upgrade_type()
+{
+    PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
+
+    if [ -f "$PRESERVEDVERSIONFILE" ]; then
+        run_or_fail cat "$PRESERVEDVERSIONFILE"
+        if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.0'
+        elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.1'
+        elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.2'
+        elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.3'
+        elif [ -n "`grep '^VERSION=5.4' $PRESERVEDVERSIONFILE`" ]; then
+            # 5.4 not released but used by OEMs.
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.4'
+        elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_0=1
+            log 'Upgrading from Likewise Open 6.0'
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log 'Upgrading from Likewise Open 6.1'
+        elif [ -n "`grep '^VERSION=6.5' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_5=1
+            log 'Upgrading from PowerBroker Identity Services Open 6.5'
+        fi
+    fi
+}
+
+determine_join_status()
+{
+    STATUSFILE="${UPGRADEDIR}/status.txt"
+
+    if [ -f "${UPGRADEDIR}/status.txt" ]; then
+        run_or_fail cat "$STATUSFILE"
+
+        domain=`cat $STATUSFILE 2>/dev/null | grep '^STATUS_JOINED=' | sed -e 's/STATUS_JOINED=//'`
+
+        if [ -n "$domain" ]; then
+            logfile "Found domain $domain in status file."
+            result=$domain
+        else
+            result=""
+        fi
+    fi
+
+    if [ -z "$result" ]; then
+        domain=`@MK_BINDIR@/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+        if [ -n "$domain" ]; then
+            logfile "Found domain $domain using ad-get-machine account"
+            result=$domain
+        else
+            result=""
+        fi
+    fi
+}
+
+import_5_0123_file()
+{
+    CONVERT='@MK_LIBEXECDIR@/conf2reg'
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
+
+    if [ -f "$SOURCE" ]; then
+        run_quiet "$CONVERT" "$COMMAND" "$SOURCE" $DEST
+        if [ $? -ne 0 ]; then
+            log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            run_quiet "$REGSHELL" import "$DEST"
+            if [ $? -ne 0 ]; then
+                log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
+                return 1
+            fi
+        fi
+    fi
+    return 0
+}
+
+restore_5_0123_configuration()
+{
+    if [ -z "$UPGRADING_FROM_5_0123" ]; then
+        return 0
+    fi
+
+    import_5_0123_file --lsass "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
+
+    import_5_0123_file --netlogon "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file --eventlog "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file --pstore-sqlite "${UPGRADEDIR}/pstore.db"
+}
+
+restore_6_0_configuration()
+{
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 644 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
+        determine_join_status
+        if [ -n "$result" ]; then
+            DOMAIN="$result"
+            run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" "@LW_CACHEDIR@/db/lsass-adcache.filedb.${DOMAIN}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/lsass-adcache.filedb.${DOMAIN}"
+        else
+            run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+            run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        fi
+    fi
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
+restore_6_1_configuration()
+{
+    if [ -z "$UPGRADING_FROM_6_1" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 644 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
+        if [ -f "$cache" ]; then
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        fi
+    done
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
+remove_old_init_symlinks()
+{
+    for daemon in dcerpcd netlogond eventlogd lwiod lsassd gpagentd; do
+        rm -f /etc/rc?.d/*"$daemon"
+    done
+}
+
+relocate_domain_separator()
+{
+    DomainSeparator=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
+        fi
+
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+    fi
+}
+
+relocate_space_replacement()
+{
+    SpaceReplacement=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${SpaceReplacement}" ]; then
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
+remove_npfs_dependencies()
+{
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+}
+
+remove_dcerpc_dependencies()
+{
+   run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\eventlog]' 'Dependencies' ''
+   run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\dcerpc]'  'Autostart'
+   run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\dcerpc]'  'Arguments' ''
+}
+
+remove_TrustEnumerationWaitSettingFromADPath()
+{
+    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' 'TrustEnumerationWait'
+    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'  'TrustEnumerationWaitSeconds'
+}
+
+fix_60_registry()
+{
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
+    fi
+
+    # Migrate pstore entries from default to joined domain
+    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
+
+    # Migrate some other entries
+    relocate_domain_separator
+    relocate_space_replacement
+
+}
+
+cleanup_registry()
+{
+    for i in "@LW_CONFIGDIR@/"*.reg
+    do
+        run_or_fail "${REGSHELL}" cleanup "$i"
+    done
+}
+
+switch_to_open_provider()
+{
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='%{AdProviderPath}'
+
+    run_quiet '@MK_BINDIR@/regshell' set_value "$_value" Path "$_path"
+}
+
+execute_auxiliary_scripts()
+{
+    # The system administrator may have configured these during a previous
+    # install
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
+}
+
+postinstall()
+{
+    logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+
+    determine_os_version
+
+    setup_selinux_policy_module
+
+    determine_upgrade_type
+
+    restore_6_0_configuration
+
+    restore_6_1_configuration
+
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
+
+    restore_5_0123_configuration
+
+    import_registry_configurations
+
+    fix_60_registry
+
+    cleanup_registry
+
+    remove_TrustEnumerationWaitSettingFromADPath
+
+    remove_npfs_dependencies
+
+	remove_dcerpc_dependencies
+
+    switch_to_open_provider
+
+    run_or_fail '@MK_BINDIR@/lwsm' shutdown
+
+    if [ -f "@LW_INITDIR@/lwsmd" ]; then
+        run rm -f '@LW_INITDIR@/lwsmd'
+    fi
+
+    if [ -f /etc/redhat-release ]; then
+        run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
+    else
+        run ln -s '@MK_SYSCONFDIR@/suse/lwsmd' '@LW_INITDIR@/lwsmd'
+    fi
+
+    remove_old_init_symlinks
+
+    run /sbin/chkconfig --add lwsmd
+
+
+    if [ -x /sbin/service ]
+    then
+        run /sbin/service lwsmd start
+    else
+        run '@LW_INITDIR@/lwsmd' start
+    fi
+
+    determine_join_status
+    if [ -n "$result" ]; then
+        if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
+            run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+            run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+        fi
+    else
+        if [ -x '@MK_BINDIR@/domainjoin-cli' ]; then
+            LOAD_ORDER=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]' |grep 'LoadOrder.*Local'`
+            if [ -n "${LOAD_ORDER}" ]; then
+
+                run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+                run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+            fi
+        fi
+    fi
+
+    run_quiet mv /var/lib/likewise /var/lib/likewise.old
+    run_quiet rm -rf "${UPGRADEDIR}"
+
+    execute_auxiliary_scripts
+
+    logfile "Package: PowerBroker Identity Services Open postinstall finished"
+    exit 0
+}
+
+postinstall
+
+%pre
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+
+UPGRADEDIR=/var/lib/pbis-upgrade
+
+LOG=/var/log/pbis-open-install.log
+
+PKG_ARCH="__PKG_ARCH"
+
+# Display to screen and log file with a blank line between entries.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log "$tlog"
+        _log
+    fi
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    echo "$tlog" >> $LOG
+    echo >> $LOG
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log "$tlog"
+        _log
+        exit 1
+    fi
+    return $err
+}
+
+pre_upgrade()
+{
+    logfile "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
+
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet /etc/init.d/lwsmd stop
+    fi
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        run_quiet pkill -KILL -x $daemon
+    done
+
+    logfile "Package: PowerBroker Identity Services Open [pre upgrade] finished"
+}
+
+pre_install()
+{
+    logfile "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
+
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet /etc/init.d/lwsmd stop
+    fi
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        run_quiet pkill -KILL -x $daemon
+    done
+
+    logfile "Package: PowerBroker Identity Services Open [pre install] finished"
+    exit 0
+}
+
+if [ $1 -eq 1 ]; then
+    pre_install
+else
+    pre_upgrade
+    pre_install
+fi
+
+%preun
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+
+UPGRADEDIR=/var/lib/pbis-upgrade
+
+LOG=/var/log/pbis-open-install.log
+
+PKG_ARCH="__PKG_ARCH"
+
+# Display to screen and log file with a blank line between entries.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log "$tlog"
+        _log
+    fi
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    echo "$tlog" >> $LOG
+    echo >> $LOG
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    tlog=$("$@" 2>&1)
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        echo "$tlog" >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log "$tlog"
+        _log
+        exit 1
+    fi
+    return $err
+}
+
+execute_auxiliary_scripts()
+{
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
+    fi
+}
+
+preuninstall_remove()
+{
+    logfile "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
+
+    execute_auxiliary_scripts
+
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+    if [ -x /sbin/service ]
+    then
+        run_quiet /sbin/service lwsmd stop
+    else
+        run_quiet '@LW_INITDIR@/lwsmd' stop
+    fi
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        run_quiet pkill -KILL -x $daemon
+    done
+
+    run_quiet /sbin/chkconfig --del lwsmd
+
+    run_quiet rm -f '@LW_INITDIR@/lwsmd'
+
+    logfile "Package: PowerBroker Identity Services Open [preun remove] finished"
+    exit 0
+}
+
+if [ $1 -eq 0 ]; then
+    preuninstall_remove
+fi
+exit 0

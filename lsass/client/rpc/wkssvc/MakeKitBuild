@@ -1,0 +1,37 @@
+make()
+{
+    WKSSVC_SOURCES="\
+        globals.c                \
+        wkss_binding.c           \
+        wkss_memory.c            \
+        wkss_stubmemory.c        \
+        netr_wkstauserenum.c     \
+        netr_wkstagetinfo.c      \
+        netr_joindomain2.c       \
+        netr_unjoindomain2.c"
+
+    lw_dceidl \
+	IDL="../../../idl/wkssvc.idl" \
+	CSTUB="wkssvc_cstub.c" \
+	HEADER="wkssvc_h.h" \
+	INCLUDEDIRS=". ../../../include" \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=wkssvc_cstub \
+	SOURCES="wkssvc_cstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_group \
+	GROUP=wkssvc \
+	SOURCES="$WKSSVC_SOURCES" \
+	GROUPDEPS="wkssvc_cstub" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
+	LIBDEPS="lwbase dcerpc" \
+	DEPS="wkssvc_h.h"
+}

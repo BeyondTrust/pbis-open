@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwio-tool \
+        SOURCES="lwparseargs.c lwio-tool.c iotest.c srvtest.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwioclient lwiocommon lwbase lwbase_nothr"
+}

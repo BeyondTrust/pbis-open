@@ -1,0 +1,8 @@
+make()
+{
+    mk_dlo \
+        DLO=lwicompat_v4 \
+        SOURCES="lwicompat_v4.c" \
+        INCLUDEDIRS=". ../include ../wbclient" \
+        LIBDEPS="wbclient"
+}

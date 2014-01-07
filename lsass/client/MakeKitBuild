@@ -1,0 +1,16 @@
+SUBDIRS="api ad privilege ntlm rpc"
+
+make()
+{
+    mk_multiarch_do
+        mk_library \
+	    LIB="lsaclient" \
+	    GROUPS="api/api ad/ad privilege/privilege"
+    mk_multiarch_done
+
+    mk_library \
+        LIB="lsaclientthr" \
+        GROUPS="api/api_thr" \
+        LIBDEPS="lsaclient"
+}
+

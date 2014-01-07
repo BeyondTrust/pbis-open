@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=confpstore-sqlite \
+        SOURCES="pstore-sqlite.c" \
+        INCLUDEDIRS="../../../../include" \
+        HEADERDEPS="sqlite3.h lsa/lsapstore-api.h lwmem.h lwstr.h lwerror.h" \
+        LIBDEPS=""
+}

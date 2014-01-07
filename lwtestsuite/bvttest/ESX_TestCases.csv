@@ -1,0 +1,28 @@
+#ID,Description,Platforms,Command1,Expected1,Command2,Expected2,Command3,Expected3,Command4,Expected4
+1,Verifying nsswitch.conf file,all,cat /etc/nsswitch.conf,passwd: lsass files & group: lsass files & shadow: lsass files
+2,Verifying ssh_config file,all,cat /etc/ssh/ssh_config,GSSAPIAuthentication yes
+3,Verifying likewise folder created in /etc,all, ls /etc,likewise
+4,Verifying files in /etc/likewise,all,ls /etc/likewise/,lsassd.conf & krb5-affinity.conf & netlogon.conf & lwiod.conf
+5,Verifying likewise daemons created in /etc/init.d,all,ls /etc/init.d/,lsassd & lwiod & netlogond
+6,Verifying netlogond status,all,/etc/init.d/netlogond status,running
+7,Verify domain user login,all,userlogin(unprv\\unprv1||span1234$),,echo $SHELL,/bin/ash,id,uid=1807221842(UNPRV\unprv1) gid=1807221249(UNPRV\domain^users) groups=1807221249(UNPRV\domain^users),groups,UNPRV\domain^users
+8,Verifying ad-cache --enum-users,all,lw-lsa ad-cache --enum-users,"TotalNumUsersFound:      5"
+9,Verifying ad-cache --enum-groups,all,lw-lsa ad-cache --enum-groups,"TotalNumGroupsFound:      16"
+10,Verifying ad-cache --delete-all,all,lw-lsa ad-cache --delete-all,"The cache has been emptied successfully"
+11,Verifying ad-cache --enum-users,all,lw-lsa ad-cache --enum-users,"TotalNumUsersFound:      0"
+12,Verifying ad-cache --enum-groups,all,lw-lsa ad-cache --enum-groups,"TotalNumGroupsFound:      0"
+13,Verifying enum-groups,all,lw-lsa enum-groups,"TotalNumGroupsFound:      16"
+14,Verifying enum-users,all,lw-lsa enum-users,"TotalNumUsersFound:      1016"
+15,Verifying find-by-sid,all,lw-lsa find-by-sid S-1-5-21-171365797-315018402-205579121-2203,"Name:     UNPROVISIONED\esxtestgroup"
+16,Verifying find-group-by-id,all,lw-lsa find-group-by-id 366479515,"SID:  S-1-5-21-171365797-315018402-205579121-2203"
+17,Verifying find-group-by-name,all,lw-lsa find-group-by-name UNPROVISIONED\\esxtestgroup,"SID:  S-1-5-21-171365797-315018402-205579121-2203"
+18,Verifying find-user-by-id,all,lw-lsa find-user-by-id --level 2 366478435,"Name:                       UNPROVISIONED\testuser1"
+19,Verifying find-user-by-name,all,lw-lsa find-user-by-name --level 2 unprovisioned\\testuser1,"UPN:                        testuser1@UNPROVISIONED.LIKEWISEQA.COM"
+20,Verifying get-log-info,all,lw-lsa get-log-info,"LSA Server is logging to syslog"
+21,Verifying get-metrics,all,lw-lsa get-metrics,"Unauthorized access attempts"
+22,Verifying get-status,all,lw-lsa get-status,"Trustee DNS name: UNPROVISIONED.LIKEWISEQA.COM"
+23,Verifying list-groups-for-user,all,lw-lsa list-groups-for-user S-1-5-21-171365797-315018402-205579121-1002,"Number of groups found for user 'S-1-5-21-171365797-315018402-205579121-1002' : 0"
+24,Verifying ypcat,all,lw-lsa ypcat -d unprovisioned\\testuser1 -c  group.byname,"UNPROVISIONED\unprovgrp::366478423:UNPROVISIONED\bvtuser1003,UNPROVISIONED\bvtuser1002"
+25,Verifying refresh-configuration,all,lw-lsa refresh-configuration,"Configuration successfully loaded from disk"
+26,Verifying set-log-level,all,lw-lsa set-log-level info,"The log level was set successfully"
+27,Verifying trace-info,all,lw-lsa trace-info,

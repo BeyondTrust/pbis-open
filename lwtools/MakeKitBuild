@@ -1,0 +1,16 @@
+SUBDIRS="net"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_check_headers \
+	stdlib.h sys/varargs.h time.h sys/time.h strings.h stdbool.h \
+	unistd.h
+
+    mk_check_headers \
+	FAIL=yes \
+	wc16str.h
+}

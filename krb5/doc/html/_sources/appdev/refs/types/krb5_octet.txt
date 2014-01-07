@@ -1,0 +1,20 @@
+.. highlightlang:: c
+
+.. _krb5-octet-struct:
+
+krb5_octet
+==========
+
+..
+.. c:type:: krb5_octet
+..
+
+
+
+
+Declaration
+------------
+
+typedef unsigned char krb5_octet
+
+

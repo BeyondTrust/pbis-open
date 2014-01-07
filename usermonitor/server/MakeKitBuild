@@ -1,0 +1,2 @@
+SUBDIRS='etc poller daemon'
+

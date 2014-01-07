@@ -1,0 +1,30 @@
+make()
+{
+    SAMDB_SOURCES="\
+        samdbadd.c        \
+        samdbattrlookup.c \
+        samdbbind.c       \
+        samdbclose.c      \
+        samdbcontext.c    \
+        samdbcounter.c    \
+        samdbdel.c        \
+        samdbdn.c         \
+        samdbglobals.c    \
+        samdbgroup.c      \
+        samdbinit.c       \
+        samdbmisc.c       \
+        samdbmodify.c     \
+        samdbopen.c       \
+        samdbschema.c     \
+        samdbsearch.c     \
+        samdbtrans.c      \
+        samdbuser.c       \
+        samdbsecurity.c"
+
+    mk_group \
+	GROUP=samdb \
+	SOURCES="$SAMDB_SOURCES" \
+	INCLUDEDIRS=". ../include ../../include ../../../include" \
+	HEADERDEPS="sqlite3.h openssl/md4.h uuid/uuid.h lw/base.h lwio/lwio.h lwadvapi.h" \
+	LIBDEPS="uuid lwbase sqlite3 crypto"
+}

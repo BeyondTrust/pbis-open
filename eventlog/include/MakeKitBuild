@@ -1,0 +1,5 @@
+make()
+{
+    mk_headers \
+	HEADERS="eventlog.h eventlog-record.h"
+}

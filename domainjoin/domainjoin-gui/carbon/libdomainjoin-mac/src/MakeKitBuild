@@ -1,0 +1,10 @@
+make()
+{
+    mk_dlo \
+        DLO=libdomainjoin-mac \
+        SOURCES="djitf.c globals.c" \
+        INCLUDEDIRS=". ../include ../../../../include ../../../../libdomainjoin/include" \
+        CPPFLAGS="-DSCRIPTDIR=\"$MK_LIBEXECDIR\" -DLIBDIR=\"$MK_LIBDIR\" -DSYSCONFDIR=\"$MK_SYSCONFDIR\"" \
+        HEADERDEPS="ctbase.h" \
+        LIBDEPS="domainjoin"
+}

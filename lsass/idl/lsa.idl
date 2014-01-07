@@ -1,0 +1,315 @@
+[
+uuid(12345778-1234-abcd-ef00-0123456789ab),
+version(0.0),
+endpoint("ncacn_np:[\\pipe\\lsarpc], ncacn_np:[\\pipe\\netlogon], ncacn_np:[\\pipe\\lsass]"),
+pointer_default(unique)
+]
+interface lsa
+{
+
+cpp_quote("#ifdef DCERPC_STUB_BUILD")
+
+#include <lw/security-types.h>
+#include <lw/rpc/lsa.h>
+
+    /* LsaPolicyInformation union returned from LsaQueryInfoPolicy */
+    typedef [switch_type(UINT16)] union lsa_policy_information {
+        [case(LSA_POLICY_INFO_AUDIT_LOG)]        AuditLogInfo        audit_log;
+        [case(LSA_POLICY_INFO_AUDIT_EVENTS)]     AuditEventsInfo     audit_events;
+        [case(LSA_POLICY_INFO_DOMAIN)]           LsaDomainInfo       domain;
+        [case(LSA_POLICY_INFO_PD)]               PDAccountInfo       pd;
+        [case(LSA_POLICY_INFO_ACCOUNT_DOMAIN)]   LsaDomainInfo       account_domain;
+        [case(LSA_POLICY_INFO_ROLE)]             ServerRole          role;
+        [case(LSA_POLICY_INFO_REPLICA)]          ReplicaSourceInfo   replica;
+        [case(LSA_POLICY_INFO_QUOTA)]            DefaultQuotaInfo    quota;
+        [case(LSA_POLICY_INFO_DB)]               ModificationInfo    db;
+        [case(LSA_POLICY_INFO_AUDIT_FULL_SET)]   AuditFullSetInfo    audit_set;
+        [case(LSA_POLICY_INFO_AUDIT_FULL_QUERY)] AuditFullQueryInfo  audit_query;
+        [case(LSA_POLICY_INFO_DNS)]              DnsDomainInfo       dns;
+    } LsaPolicyInformation;
+
+cpp_quote("#endif")
+
+
+	/* function 0x00 */
+    NTSTATUS LsaClose(
+        [in,out,context_handle] void **phInOut
+        );
+
+    NTSTATUS lsa_Function01();
+
+    /* function 0x02 */
+    NTSTATUS LsaEnumPrivileges(
+        [in] POLICY_HANDLE hPolicy,
+        [in,out,ref] UINT32 *pResume,
+        [in] UINT32 PreferredMaxSize,
+        [out,ref] LSA_PRIVILEGE_ENUM_BUFFER *pBuffer
+        );
+
+    /* function 0x03 */
+    NTSTATUS LsaQuerySecurity(
+        [in,context_handle] void *hObject,
+        [in] UINT32 SecurityInformation,
+        [out] PLSA_SECURITY_DESCRIPTOR_BUFFER *ppSecurityDesc
+        );
+    
+    /* function 0x04 */
+    NTSTATUS LsaSetSecurity(
+        [in,context_handle] void *hObject,
+        [in] UINT32 SecurityInformation,
+        [in] LSA_SECURITY_DESCRIPTOR_BUFFER *pSecurityDesc
+        );
+
+    NTSTATUS lsa_Function05();
+    NTSTATUS lsa_Function06();
+
+	/* function 0x07 */
+    NTSTATUS LsaQueryInfoPolicy(
+        [in] POLICY_HANDLE hPolicy,
+        [in] UINT16 level,
+        [out,switch_is(level)] LsaPolicyInformation **info
+        );
+
+    NTSTATUS lsa_Function08();
+    NTSTATUS lsa_Function09();
+
+    /* function 0x0a */
+    NTSTATUS LsaCreateAccount(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT32 AccessMask,
+        [out] LSAR_ACCOUNT_HANDLE *phAccount
+        );
+
+    /* function 0x0b */
+    NTSTATUS LsaEnumAccounts(
+        [in] POLICY_HANDLE hPolicy,
+        [in,out,ref] UINT32 *Resume,
+        [out,ref] LSA_ACCOUNT_ENUM_BUFFER *pAccounts,
+        [in] UINT32 PrefMaxSize
+        );
+
+    NTSTATUS lsa_Function0c();
+    NTSTATUS lsa_Function0d();
+
+	/* function 0x0e */
+    NTSTATUS LsaLookupNames(
+        [in] POLICY_HANDLE hPolicy,
+        [in,range(0,1000)] UINT32 num_names,
+        [in,size_is(num_names)] UNICODE_STRING *pNames,
+        [out] RefDomainList **domains,
+        [in,out] TranslatedSidArray *sids,
+        [in] UINT16 level,
+        [in,out] UINT32 *count
+        );
+
+	/* function 0x0f */
+    NTSTATUS LsaLookupSids(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID_ARRAY *pSids,
+        [out] RefDomainList **domains,
+        [in,out] TranslatedNameArray *names,
+        [in] UINT16 level,
+        [in,out] UINT32 *count
+        );
+
+    NTSTATUS lsa_Function10();
+
+    /* function 0x11 */
+    NTSTATUS LsaOpenAccount(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT32 AccessMask,
+        [out] LSAR_ACCOUNT_HANDLE *phAccount
+        );
+
+    /* function 0x12 */
+    NTSTATUS LsaEnumPrivilegesAccount(
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
+        [out] PRIVILEGE_SET **Privileges
+        );
+
+    /* function 0x13 */
+    NTSTATUS LsaAddPrivilegesToAccount(
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
+        [in,ref] PRIVILEGE_SET *pPrivileges
+        );
+
+    /* function 0x14 */
+    NTSTATUS LsaRemovePrivilegesFromAccount(
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
+        [in] UINT8 AllPrivileges,
+        [in,unique] PRIVILEGE_SET *pPrivileges
+        );
+
+    NTSTATUS lsa_Function15();
+    NTSTATUS lsa_Function16();
+
+    /* function 0x17 */
+    NTSTATUS LsaGetSystemAccessAccount(
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
+        [out,ref] UINT32* SystemAccess
+        );
+
+    /* function 0x18 */
+    NTSTATUS LsaSetSystemAccessAccount(
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
+        [in] UINT32 SystemAccess
+        );
+
+    NTSTATUS lsa_Function19();
+    NTSTATUS lsa_Function1a();
+    NTSTATUS lsa_Function1b();
+    NTSTATUS lsa_Function1c();
+    NTSTATUS lsa_Function1d();
+    NTSTATUS lsa_Function1e();
+
+    /* function 0x1f */
+    NTSTATUS LsaLookupPrivilegeValue(
+        [in] POLICY_HANDLE hPolicy,
+        [in,ref] UNICODE_STRING *pName,
+        [out,ref] LUID *pValue
+        );
+
+    /* function 0x20 */
+    NTSTATUS LsaLookupPrivilegeName(
+        [in] POLICY_HANDLE hPolicy,
+        [in,ref] LUID *pValue,
+        [out,ref] UNICODE_STRING **ppName
+        );
+
+    /* function 0x21 */
+    NTSTATUS LsaLookupPrivilegeDisplayName(
+        [in] POLICY_HANDLE hPolicy,
+        [in] UNICODE_STRING *pName,
+        [in] INT16 ClientLang,
+        [in] INT16 ClientSystemLanguage,
+        [out] UNICODE_STRING **ppDisplayName,
+        [out] UINT16 *pLanguage
+        );
+
+    /* function 0x22 */
+    NTSTATUS LsaDeleteObject(
+        [in,out,context_handle] void **phObject
+        );
+
+    /* function 0x23 */
+    NTSTATUS LsaEnumAccountsWithUserRight(
+        [in] POLICY_HANDLE hPolicy,
+        [in,unique] UNICODE_STRING *pName,
+        [out] LSA_ACCOUNT_ENUM_BUFFER *pAccounts
+        );
+
+    /* function 0x24 */
+    NTSTATUS LsaEnumAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [out,ref] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
+    /* function 0x25 */
+    NTSTATUS LsaAddAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
+    /* function 0x26 */
+    NTSTATUS LsaRemoveAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT8 RemoveAll,
+        [in] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
+    NTSTATUS lsa_Function27();
+    NTSTATUS lsa_Function28();
+    NTSTATUS lsa_Function29();
+    NTSTATUS lsa_Function2a();
+    NTSTATUS lsa_Function2b();
+
+	/* function 0x2c */
+    NTSTATUS LsaOpenPolicy2(
+        [in,string,unique] wchar16_t *system_name,
+        [in] ObjectAttribute *attrib,
+        [in] UINT32 access_mask,
+        [out] POLICY_HANDLE *phPolicy
+        );
+
+    NTSTATUS lsa_Function2d();
+
+	/* function 0x2e */
+    NTSTATUS LsaQueryInfoPolicy2(
+        [in] POLICY_HANDLE hPolicy,
+        [in] UINT16 level,
+        [out,switch_is(level)] LsaPolicyInformation **info
+        );
+
+    NTSTATUS lsa_Function2f();
+    NTSTATUS lsa_Function30();
+    NTSTATUS lsa_Function31();
+    NTSTATUS lsa_Function32();
+    NTSTATUS lsa_Function33();
+    NTSTATUS lsa_Function34();
+    NTSTATUS lsa_Function35();
+    NTSTATUS lsa_Function36();
+    NTSTATUS lsa_Function37();
+    NTSTATUS lsa_Function38();
+
+    /* function 0x39 */
+    NTSTATUS LsaLookupSids2(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID_ARRAY *sids,
+        [out] RefDomainList **domains,
+        [in,out] TranslatedNameArray2 *names,
+        [in] UINT16 level,
+        [in,out] UINT32 *count,
+        [in] UINT32 unknown1,
+        [in] UINT32 unknown2
+        );
+
+	/* function 0x3a */
+    NTSTATUS LsaLookupNames2(
+        [in] POLICY_HANDLE hPolicy,
+        [in,range(0,1000)] UINT32 num_names,
+        [in,size_is(num_names)] UNICODE_STRING *pNames,
+        [out] RefDomainList **domains,
+        [in,out] TranslatedSidArray2 *sids,
+        [in] UINT16 level,
+        [in,out] UINT32 *count,
+        [in] UINT32 unknown1,
+        [in] UINT32 unknown2
+        );
+
+    NTSTATUS lsa_Function3b();
+    NTSTATUS lsa_Function3c();
+    NTSTATUS lsa_Function3d();
+    NTSTATUS lsa_Function3e();
+    NTSTATUS lsa_Function3f();
+    NTSTATUS lsa_Function40();
+    NTSTATUS lsa_Function41();
+    NTSTATUS lsa_Function42();
+    NTSTATUS lsa_Function43();
+
+    NTSTATUS LsaLookupNames3(
+        [in] POLICY_HANDLE hPolicy,
+        [in,range(0,1000)] UINT32 num_names,
+        [in,size_is(num_names)] UNICODE_STRING *pNames,
+        [out] RefDomainList **domains,
+        [in,out] TranslatedSidArray3 *sids,
+        [in] UINT16 level,
+        [in,out] UINT32 *count,
+        [in] UINT32 unknown1,
+        [in] UINT32 unknown2
+        );
+}
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

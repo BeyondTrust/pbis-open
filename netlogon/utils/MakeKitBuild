@@ -1,0 +1,20 @@
+make()
+{
+    UTIL_SOURCES="\
+        globals.c           \
+        lwnet-dns.c         \
+        lwnet-futils.c      \
+        lwnet-info.c        \
+        lwnet-mem.c         \
+        lwnet-paths.c       \
+        lwnet-stack.c       \
+        lwnet-time.c        \
+        lwnet-sysfuncs.c"
+
+    mk_group \
+        GROUP=utils \
+        SOURCES="$UTIL_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwadvapi.h reg/lwreg.h" \
+        LIBDEPS="lwadvapi_nothr regclient $LIB_RT $LIB_RESOLV"
+}

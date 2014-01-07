@@ -1,0 +1,27 @@
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
+        VERSION="$LW_VERSION" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+}
+
+make()
+{
+
+    mk_target \
+        TARGET="${MK_BINDIR}/PBIS Domain Join.app" \
+        DEPS="'PBIS Domain Join.app'" \
+            _rsync_file '$<' '$@'
+    mk_add_all_target "$result"
+}
+
+_rsync_file()
+{
+    rsync -a --exclude=.svn "$1/" "$2"
+}

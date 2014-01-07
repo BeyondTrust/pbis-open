@@ -1,0 +1,10 @@
+make()
+{
+    lw_service \
+        SERVICE="usermonitor" \
+        INCLUDEDIRS=". ../../include ../../server/include" \
+        HEADERDEPS="lw/base.h lwnet.h wc16str.h lwerror.h" \
+        SOURCES="config.c globals.c main-svcm.c" \
+        GROUPS="../poller/usermonitorserverpoller" \
+        LIBDEPS="lwbase_nothr lwadvapi_nothr lwnetclientapi $LIB_RT $LIB_PTHREAD"
+}

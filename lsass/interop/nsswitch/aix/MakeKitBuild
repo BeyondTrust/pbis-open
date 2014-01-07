@@ -1,0 +1,44 @@
+make()
+{
+    LAM_SOURCES="\
+	lam-main.c \
+	lam-group.c \
+	lam-user.c \
+	lam-auth.c \
+	globals.c"
+
+    NETSVC_SOURCES="netsvc-netgrp.c globals.c"
+
+    mk_multiarch_do
+        case "$MK_ISA" in
+            ppc32)
+                LAM_NAME="LSASS"
+                NETSVC_NAME="lsass"
+                ;;
+            ppc64)
+                LAM_NAME="LSASS_64"
+                NETSVC_NAME="lsass_64"
+                ;;
+        esac
+        
+        mk_dlo \
+            DLO="$LAM_NAME" \
+            EXT="" \
+            INSTALLDIR="$NSSDIR" \
+            SOURCES="$LAM_SOURCES" \
+            GROUPS="../common/common" \
+            INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
+            LDFLAGS="-Wl,-eLsaNssInitialize" \
+            LIBDEPS="lsaauth lsaclient"
+        
+        mk_dlo \
+            DLO="$NETSVC_NAME" \
+            INSTALLDIR="/usr/lib/netsvc/dynload" \
+            SOURCES="$NETSVC_SOURCES" \
+            GROUPS="../common/common" \
+            INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
+            LIBDEPS="lsaauth lsaclient"
+    mk_multiarch_done
+}

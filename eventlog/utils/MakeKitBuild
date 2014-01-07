@@ -1,0 +1,15 @@
+make()
+{
+    UTILS_SOURCES="\
+	evtfutils.c \
+	evtrpcmem.c \
+	globals.c   \
+	sysfuncs.c"
+
+    mk_library \
+	LIB=eventlogutils \
+	SOURCES="$UTILS_SOURCES" \
+	INCLUDEDIRS="../include" \
+	HEADERDEPS="dce/rpc.h reg/lwreg.h lwmem.h lwstr.h" \
+	LIBDEPS="dcerpc regclient lwadvapi_nothr"
+}

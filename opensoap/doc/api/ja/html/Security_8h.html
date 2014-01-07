@@ -1,0 +1,2107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: Security.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>Security.h</h1>OpenSOAP API セキュリティ処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;stdio.h&gt;</code><br>
+<code>#include &lt;<a class="el" href="Envelope_8h-source.html">OpenSOAP/Envelope.h</a>&gt;</code><br>
+
+<p>
+<a href="Security_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>マクロ定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a0">OPENSOAP_HA_MD2</a>&nbsp;&nbsp;&nbsp;(1)  /* MD2 */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">MD2ハッシュアルゴリズム定義.  <a href="#a0"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a1">OPENSOAP_HA_MD4</a>&nbsp;&nbsp;&nbsp;(2)  /* MD4 */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">MD4ハッシュアルゴリズム定義.  <a href="#a1"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a2">OPENSOAP_HA_MD5</a>&nbsp;&nbsp;&nbsp;(3)  /* MD5 */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">MD5ハッシュアルゴリズム定義.  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a3">OPENSOAP_HA_MDC2</a>&nbsp;&nbsp;&nbsp;(4)  /* MDC2 */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">MDC2ハッシュアルゴリズム定義.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a4">OPENSOAP_HA_RIPEMD</a>&nbsp;&nbsp;&nbsp;(5)  /* RIPEMD */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">RIPEMD160ハッシュアルゴリズム定義.  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a5">OPENSOAP_HA_SHA</a>&nbsp;&nbsp;&nbsp;(6)  /* SHA */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SHAハッシュアルゴリズム定義.  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a6">OPENSOAP_CA_OWNER_LEN</a>&nbsp;&nbsp;&nbsp;(1024)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">認証局データベースにおける所有者名の最大長さ.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a7">OPENSOAP_CERT_DATE_LEN</a>&nbsp;&nbsp;&nbsp;(14)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">電子証明書の長さ.  <a href="#a7"></a><br><br></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a8" doxytag="Security.h::OpenSOAPSecCert" ></a>
+typedef tagOpenSOAPSecCert&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a8">OpenSOAPSecCert</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPSecCert 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a9" doxytag="Security.h::OpenSOAPSecCertPtr" ></a>
+typedef <a class="el" href="Security_8h.html#a8">OpenSOAPSecCert</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPSecCert ポインタ型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a10" doxytag="Security.h::OpenSOAPCARec" ></a>
+typedef tagOpenSOAPCARec&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a10">OpenSOAPCARec</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPCARec 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a11" doxytag="Security.h::OpenSOAPCARecPtr" ></a>
+typedef <a class="el" href="Security_8h.html#a10">OpenSOAPCARec</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPCARec ポインタ型定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a12">OpenSOAPSecGenerateRSAKeys</a> (const unsigned char *szSeedPhrase, FILE *fpPrivKey, FILE *fpPubKey)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">秘密鍵と公開鍵のペアを作成し、秘密鍵を fpPrivKey に、公開鍵を fpPubKey に書き込みます。.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a13">OpenSOAPSecGenerateRSAKeysToFile</a> (const unsigned char *szSeedPhrase, const char *szPrivKeyFileName, const char *szPubKeyFileName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">秘密鍵と公開鍵のペアを作成し、秘密鍵を szPrivKeyFileNameに, 公開鍵を szPubKeyFileName で示すファイルに書き込みます。.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a14">OpenSOAPSecEncWithStream</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, FILE *fpPubKey)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Body内の下記条件に該当する属性を持つ要素全てに対し、その値をfpPubKeyにて与えられるRSA公開鍵を用いて暗号化します。.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a15">OpenSOAPSecEncWithFile</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, const char *szPubKName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">公開鍵の指定を szPubKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a14">OpenSOAPSecEncWithStream()</a> と同様です。  <a href="#a15"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a16">OpenSOAPSecDecWithStream</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, FILE *fpPrivKey)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Body内の下記条件に該当する属性を持つ要素全てに対し、その値をfpPrivKeyにて与えられるRSA秘密鍵を用いて復号化します。.  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a17">OpenSOAPSecDecWithFile</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, const char *szPrivKName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">秘密鍵の指定を szPrivKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a16">OpenSOAPSecDecWithStream()</a> と同様です。.  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a18">OpenSOAPSecAddSignWithStream</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, int iType, FILE *fpPrivKey, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> name)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Body部全体に対するRSA電子署名を作成し、ヘッダ部に付加します。署名作成に当たっては、fpPrivKey で与えれる秘密鍵を利用します。.  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a19">OpenSOAPSecAddSignWithFile</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, int iType, const char *szPrivKName, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> name)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">秘密鍵の指定を szPrivKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a18">OpenSOAPSecAddSignWithStream()</a> と同様です。.  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a20">OpenSOAPSecCntSign</a> (const <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, int *pnSig)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">envにて与えられるエンベロープに対し、現在付加されている署名の数を取得し、pnSigが指す領域に格納します。  <a href="#a20"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a21">OpenSOAPSecGetSignedByList</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, int nCntMax, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> list[], int *pnCntPacked)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">署名者リストを取得します。呼出側がnCntMax 個だけ list で示す結果格納領域を準備します。pnCntPackedで示した領域に取得した個数が格納されます。(最大で nCntMax 個)  <a href="#a21"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a22">OpenSOAPSecVerifySignWithStream</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, FILE *fpPubKey)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Body部全体に対するRSA電子署名を検証します。.  <a href="#a22"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a23">OpenSOAPSecVerifySignWithFile</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env, const char *szPubKName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">公開鍵の指定を szPubKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a22">OpenSOAPSecVerifySignWithStream()</a> と同様です。  <a href="#a23"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a24">OpenSOAPSecCertCreateWithStream</a> (const char *szPublish, FILE *fpPrivKey, int iHashType, const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec, FILE *fpCert)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">電子証明書を作成する。.  <a href="#a24"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a25">OpenSOAPSecCertCreateWithFile</a> (const char *szPublish, const char *szPrivKeyFile, int iHashType, const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec, const char *szCertName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">秘密鍵と電子証明書をそれぞれファイル名指定とする(szPrivKeyFile, szCertName)点を除いてOpenSOAPSecCertCreateWithStream() と同様です。.  <a href="#a25"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a26">OpenSOAPSecCertLoadFromMem</a> (size_t sizArea, const unsigned char *pucArea, <a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> *ppCert)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pucArea で示された sizArea の領域から電子証明書をロードし、ppCert の指す領域に格納します。  <a href="#a26"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a27">OpenSOAPSecCertLoad</a> (const char *szName, <a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> *ppCert)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ロード元が szName で示される領域である点を除いて、 <a class="el" href="Security_8h.html#a26">OpenSOAPSecCertLoadFromMem()</a> と同様です。  <a href="#a27"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a28">OpenSOAPSecCertFree</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> ppCert)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pCertで与えられた電子証明書の領域を開放します。  <a href="#a28"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a29">OpenSOAPSecCertVerifyWithStream</a> (FILE *fpCert, FILE *fpPubKey)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">指定された公開鍵を利用して、電子証明書の署名を検証します。  <a href="#a29"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a30">OpenSOAPSecCertVerifyWithFile</a> (const char *szCertName, const char *szPubKeyName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">指定された公開鍵を利用して、電子証明書の署名を検証します。  <a href="#a30"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a31">OpenSOAPSecCertGetPublisherName</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert, char **pszName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">発行者名を pszName が指す領域に設定します。.  <a href="#a31"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a32">OpenSOAPSecCertGetSerialNo</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert, unsigned long *pulSerial)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">シリアル番号を pulSerial が指す領域に格納します。  <a href="#a32"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a33">OpenSOAPSecCertGetOwnerName</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert, char **pszName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">所有者の名前を取得します。  <a href="#a33"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a34">OpenSOAPSecCertGetEndDate</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert, char **pszDate)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">証明書の有効期限を、年月日時分秒の順に、年のみ4桁、その他2桁とした文字列で pszDate が示す領域に設定します。  <a href="#a34"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a35">OpenSOAPSecCertGetPubKey</a> (<a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert, const char *szSaveName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">電子証明書内の公開鍵を取得し、 szSaveName で示すファイルに格納します。.  <a href="#a35"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a36">OpenSOAPSecDecodeKeyFile</a> (FILE *fp, unsigned long *pulLenOut, unsigned char **ppucDecode)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">fpにて与えられる鍵ファイルをバイナリ化します。  <a href="#a36"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a37">OpenSOAPSecCABrowseRec</a> (const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec, FILE *fpOut)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="Security_8h.html#a38">OpenSOAPSecCABrowse()</a>を、対象を１レコードとしたものです。.  <a href="#a37"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a38">OpenSOAPSecCABrowse</a> (FILE *fpOut)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在のCA-DBの全内容をfpOutに対しブラウズ出力します。１行に対し、１レコード分出力します。  <a href="#a38"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a39">OpenSOAPSecCARegist</a> (const char *szNameOwner, const char *szTermDate, size_t sizPubkey, const unsigned char *szPubKey, unsigned long *pulSerialNo)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">公開鍵を登録します。以下に示す値を設定します。  <a href="#a39"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a40">OpenSOAPSecCAInvalidate</a> (const char *szNameOwner, unsigned long ulSerial)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">所有者名が szNameOwner で、シリアル番号が ulSerial であるレコードを失効とします。  <a href="#a40"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a41">OpenSOAPSecCASearchRecords</a> (const char *szNameOwner, int *pnRec, long **pplIdxs)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">szNameOwner で指定した所有者名に該当する全てのレコードを検索し、その数を pnRec が指す領域に格納します。  <a href="#a41"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a42">OpenSOAPSecCASearchOneRecord</a> (const char *szNameOwner, <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> *ppRec)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">szNameOwner で指定した所有者名に該当するレコードを１個検索し、 ppRec が指す領域に格納します。  <a href="#a42"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a43">OpenSOAPSecCAGetRecord</a> (long lIdx, <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> *ppRec)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">lIdxで示したレコードを取得し、 ppRec が指す領域に格納します。  <a href="#a43"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a44">OpenSOAPSecCAFreeRecord</a> (<a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pRecで与えられたレコードの領域を開放する。  <a href="#a44"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Security_8h.html#a45">OpenSOAPSecCARemoveRecord</a> (unsigned long ulSerial)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">シリアル番号 ulSerial を持つレコードをデータベースから完全に削除します。  <a href="#a45"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API セキュリティ処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>マクロ定義</h2>
+<a class="anchor" name="a6" doxytag="Security.h::OPENSOAP_CA_OWNER_LEN" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_CA_OWNER_LEN&nbsp;&nbsp;&nbsp;(1024)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+認証局データベースにおける所有者名の最大長さ. 
+<p>
+(1024)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="Security.h::OPENSOAP_CERT_DATE_LEN" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_CERT_DATE_LEN&nbsp;&nbsp;&nbsp;(14)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+電子証明書の長さ. 
+<p>
+(14)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a0" doxytag="Security.h::OPENSOAP_HA_MD2" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_MD2&nbsp;&nbsp;&nbsp;(1)  /* MD2 */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+MD2ハッシュアルゴリズム定義. 
+<p>
+(1)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a1" doxytag="Security.h::OPENSOAP_HA_MD4" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_MD4&nbsp;&nbsp;&nbsp;(2)  /* MD4 */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+MD4ハッシュアルゴリズム定義. 
+<p>
+(2)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a2" doxytag="Security.h::OPENSOAP_HA_MD5" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_MD5&nbsp;&nbsp;&nbsp;(3)  /* MD5 */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+MD5ハッシュアルゴリズム定義. 
+<p>
+(3)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="Security.h::OPENSOAP_HA_MDC2" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_MDC2&nbsp;&nbsp;&nbsp;(4)  /* MDC2 */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+MDC2ハッシュアルゴリズム定義. 
+<p>
+(4)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="Security.h::OPENSOAP_HA_RIPEMD" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_RIPEMD&nbsp;&nbsp;&nbsp;(5)  /* RIPEMD */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+RIPEMD160ハッシュアルゴリズム定義. 
+<p>
+(5)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="Security.h::OPENSOAP_HA_SHA" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_HA_SHA&nbsp;&nbsp;&nbsp;(6)  /* SHA */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SHAハッシュアルゴリズム定義. 
+<p>
+(6)     </td>
+  </tr>
+</table>
+<hr><h2>関数</h2>
+<a class="anchor" name="a19" doxytag="Security.h::OpenSOAPSecAddSignWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecAddSignWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>iType</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPrivKName</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>name</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+秘密鍵の指定を szPrivKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a18">OpenSOAPSecAddSignWithStream()</a> と同様です。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>iType</em>&nbsp;</td><td>int [in] ((|iType|)) ハッシュアルゴリズム (OPENSOAP_HA_*) </td></tr>
+    <tr><td valign=top><em>szPrivKName</em>&nbsp;</td><td>const char * [in] ((|szPrivKName|)) 秘密鍵 File Name </td></tr>
+    <tr><td valign=top><em>name</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|name|)) 署名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a18" doxytag="Security.h::OpenSOAPSecAddSignWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecAddSignWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>iType</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPrivKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>name</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Body部全体に対するRSA電子署名を作成し、ヘッダ部に付加します。署名作成に当たっては、fpPrivKey で与えれる秘密鍵を利用します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>iType</em>&nbsp;</td><td>int [in] ((|iType|)) ハッシュアルゴリズム (OPENSOAP_HA_*) </td></tr>
+    <tr><td valign=top><em>fpPrivKey</em>&nbsp;</td><td>FILE * [in] ((|fpPrivKey|)) 秘密鍵 File Stream </td></tr>
+    <tr><td valign=top><em>name</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|name|)) 署名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a38" doxytag="Security.h::OpenSOAPSecCABrowse" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCABrowse </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">FILE *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>fpOut</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在のCA-DBの全内容をfpOutに対しブラウズ出力します。１行に対し、１レコード分出力します。 
+<p>
+１行には次の情報群が順に出力されます。<br>
+ (a)シリアル番号<br>
+ 10進数10桁で表示される。シリアル番号はDB内でユニークな数値であり、一旦登録されると以降変更されることは無い。<br>
+ (b)失効情報<br>
+ そのレコードが失効している場合は、文字'*'が出力され、そうでない場合はスペースが出力される。<br>
+ (c)所有者名称<br>
+ 括弧("[]")で囲まれた文字列として出力される。<br>
+ (d)有効期限<br>
+ 年月日時分秒の順に、年のみ4桁、その他2桁で出力される。<br>
+ <br>
+ &lt;失効データの例&gt;<br>
+ 0000000002*[Juventus] 20020211120000<br>
+ &lt;通常データの例&gt;<br>
+ 0000000003 [A.C.Milan] 20020201120000 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>fpOut</em>&nbsp;</td><td>FILE * [in] ((|fpOut|)) Output Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a37" doxytag="Security.h::OpenSOAPSecCABrowseRec" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCABrowseRec </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pRec</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpOut</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<a class="el" href="Security_8h.html#a38">OpenSOAPSecCABrowse()</a>を、対象を１レコードとしたものです。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pRec</em>&nbsp;</td><td>const OpenSOAPCARecPtr [in] ((|pRec|)) レコード </td></tr>
+    <tr><td valign=top><em>fpOut</em>&nbsp;</td><td>FILE * [in] ((|fpOut|)) Output Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a44" doxytag="Security.h::OpenSOAPSecCAFreeRecord" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCAFreeRecord </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>pRec</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+pRecで与えられたレコードの領域を開放する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pRec</em>&nbsp;</td><td>OpenSOAPCARecPtr [in] ((|pRec|)) レコード </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a43" doxytag="Security.h::OpenSOAPSecCAGetRecord" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCAGetRecord </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">long&nbsp;</td>
+          <td class="mdname" nowrap> <em>lIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ppRec</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+lIdxで示したレコードを取得し、 ppRec が指す領域に格納します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>lIdx</em>&nbsp;</td><td>long [in] ((|lIdx|)) Index </td></tr>
+    <tr><td valign=top><em>ppRec</em>&nbsp;</td><td>OpenSOAPCARecPtr * [out] ((|ppRec|)) レコード </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>取得したレコードは、使用後 <a class="el" href="Security_8h.html#a44">OpenSOAPSecCAFreeRecord()</a> を用いて開放すること。 </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a40" doxytag="Security.h::OpenSOAPSecCAInvalidate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCAInvalidate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szNameOwner</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned long&nbsp;</td>
+          <td class="mdname" nowrap> <em>ulSerial</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+所有者名が szNameOwner で、シリアル番号が ulSerial であるレコードを失効とします。 
+<p>
+本処理では、レコードの削除までは行わず、失効されたレコード自体はデータベースに残ります。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szNameOwner</em>&nbsp;</td><td>const char * [in] ((|szNameOwner|)) 所有者名 </td></tr>
+    <tr><td valign=top><em>ulSerial</em>&nbsp;</td><td>unsigned long [in] ((|ulSerial|)) シリアル番号 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a39" doxytag="Security.h::OpenSOAPSecCARegist" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCARegist </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szNameOwner</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szTermDate</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>sizPubkey</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPubKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned long *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pulSerialNo</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+公開鍵を登録します。以下に示す値を設定します。 
+<p>
+(a)szNameOwner<br>
+ 鍵の所有者名称(文字列)。文字列長は、最大 OPENSOAP_CA_OWNER_LEN - 1 とすること。<br>
+ (b)szTermDate<br>
+ 有効期限を、年月日時分秒の順に、年のみ4桁、その他2桁とした文字列で指定する(例："20020211120000")。<br>
+ 文字列長は14桁固定、末尾はNULL文字で終了すること。<br>
+ (c)sizPubKey<br>
+ 公開鍵のデータ長(バイト数)。OpenSOAPSecDecodeKeyFile()を用いて、バイナリ化した後のデータに対する値とする。<br>
+ (d)szPubKey<br>
+ 公開鍵データ(バイナリ)。<br>
+ <br>
+ 本関数が成功すると、pulSerialNoで示す領域に登録されたシリアル番号が返される。<br>
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szNameOwner</em>&nbsp;</td><td>const char * [in] ((|szNameOwner|)) 所有者名 </td></tr>
+    <tr><td valign=top><em>szTermDate</em>&nbsp;</td><td>const char * [in] ((|szTermDate|)) 有効期限 ("YYYYMMDDHHMMSS") </td></tr>
+    <tr><td valign=top><em>sizPubkey</em>&nbsp;</td><td>size_t [in] ((|sizPubkey|)) 公開鍵のサイズ </td></tr>
+    <tr><td valign=top><em>szPubKey</em>&nbsp;</td><td>const unsigned char * [in] ((|szPubKey|)) 公開鍵 </td></tr>
+    <tr><td valign=top><em>pulSerialNo</em>&nbsp;</td><td>unsigned long * [out] ((pulSerialNo|)) シリアル番号 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a45" doxytag="Security.h::OpenSOAPSecCARemoveRecord" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCARemoveRecord </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">unsigned long&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>ulSerial</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+シリアル番号 ulSerial を持つレコードをデータベースから完全に削除します。 
+<p>
+本関数は、レコード自体は残される <a class="el" href="Security_8h.html#a40">OpenSOAPSecCAInvalidate()</a> とは異なることに注意のこと。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ulSerial</em>&nbsp;</td><td>unsigned long [in] ((|ulSerial|)) シリアル番号 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a42" doxytag="Security.h::OpenSOAPSecCASearchOneRecord" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCASearchOneRecord </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szNameOwner</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ppRec</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+szNameOwner で指定した所有者名に該当するレコードを１個検索し、 ppRec が指す領域に格納します。 
+<p>
+同一所有者のレコードが複数存在する場合は、最も有効期限が遅いレコードを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szNameOwner</em>&nbsp;</td><td>const char * [in] ((|szNameOwner|)) 所有者名 </td></tr>
+    <tr><td valign=top><em>ppRec</em>&nbsp;</td><td>OpenSOAPCARecPtr * [out] ((|ppRec|)) レコード </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>取得したレコードは、使用後 <a class="el" href="Security_8h.html#a44">OpenSOAPSecCAFreeRecord()</a> を用いて開放すること。 </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a41" doxytag="Security.h::OpenSOAPSecCASearchRecords" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCASearchRecords </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szNameOwner</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pnRec</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>long **&nbsp;</td>
+          <td class="mdname" nowrap> <em>pplIdxs</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+szNameOwner で指定した所有者名に該当する全てのレコードを検索し、その数を pnRec が指す領域に格納します。 
+<p>
+また、pplIdxs が指す領域には、その数分のインデックス群(シリアル番号ではない)を格納する領域を確保し、<br>
+ インデックス群を格納します。このそれぞれのインデックスから、OpenSOAPSecCAGetRecord() を利用することによって<br>
+ 実際のレコードを取得することが可能となります。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szNameOwner</em>&nbsp;</td><td>const char * [in] ((|szNameOwner|)) 所有者名 </td></tr>
+    <tr><td valign=top><em>pnRec</em>&nbsp;</td><td>int * [out] ((|pnRec|)) レコード数 </td></tr>
+    <tr><td valign=top><em>pplIdxs</em>&nbsp;</td><td>lomg ** [out] ((|pplIdxs|)) インデックス番号 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>インデックス群の領域は、利用後 free() によって開放すること。 </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a25" doxytag="Security.h::OpenSOAPSecCertCreateWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertCreateWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPublish</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPrivKeyFile</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>iHashType</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pRec</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szCertName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+秘密鍵と電子証明書をそれぞれファイル名指定とする(szPrivKeyFile, szCertName)点を除いてOpenSOAPSecCertCreateWithStream() と同様です。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szPublish</em>&nbsp;</td><td>const char * [in] ((|szPublish|)) 発行者名 </td></tr>
+    <tr><td valign=top><em>szPrivKeyFile</em>&nbsp;</td><td>const char * [in] ((|szPrivKeyFile|)) 秘密鍵ファイル名(発行者） </td></tr>
+    <tr><td valign=top><em>iHashType</em>&nbsp;</td><td>int [in] ((|iHashType|)) ハッシュアルゴリズム (OPENSOAP_HA_*) </td></tr>
+    <tr><td valign=top><em>pRec</em>&nbsp;</td><td>const OpenSOAPCARecPtr [in] ((|pRec|)) 認証局レコード </td></tr>
+    <tr><td valign=top><em>szCertName</em>&nbsp;</td><td>const char * [in] ((|szCertName|)) 電子証明書ファイル名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a24" doxytag="Security.h::OpenSOAPSecCertCreateWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertCreateWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPublish</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPrivKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>iHashType</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const <a class="el" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pRec</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpCert</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+電子証明書を作成する。. 
+<p>
+以下のデータを受けて電子証明書を fpCert に書き込む。<br>
+ <br>
+ (a) szPublish : 発行者名<br>
+ (b) fpPrivKey : 発行者の秘密鍵ファイルのストリーム<br>
+ (c) iHashType : 署名の際のハッシュアルゴリズム。以下から選択する<br>
+ OPENSOAP_HA_MD5 : MD5アルゴリズム<br>
+ OPENSOAP_HA_RIPEMD : RIPEMD160アルゴリズム<br>
+ OPENSOAP_HA_SHA : SHAアルゴリズム<br>
+ (d) pRec : 認証局データベースのレコード <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szPublish</em>&nbsp;</td><td>const char * [in] ((|szPublish|)) 発行者名 </td></tr>
+    <tr><td valign=top><em>fpPrivKey</em>&nbsp;</td><td>FILE * [in] ((|fpPrivKey|)) 秘密鍵(発行者） </td></tr>
+    <tr><td valign=top><em>iHashType</em>&nbsp;</td><td>int [in] ((|iHashType|)) ハッシュアルゴリズム (OPENSOAP_HA_*) </td></tr>
+    <tr><td valign=top><em>pRec</em>&nbsp;</td><td>const OpenSOAPRecPtr [in] ((|pRec|)) 認証局レコード </td></tr>
+    <tr><td valign=top><em>fpCert</em>&nbsp;</td><td>FILE * [out] ((|fpCert|)) 電子証明書ファイル名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a28" doxytag="Security.h::OpenSOAPSecCertFree" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertFree </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>ppCert</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+pCertで与えられた電子証明書の領域を開放します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ppCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr * [in] ((|ppCert|)) Certificate </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a34" doxytag="Security.h::OpenSOAPSecCertGetEndDate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertGetEndDate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>pszDate</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+証明書の有効期限を、年月日時分秒の順に、年のみ4桁、その他2桁とした文字列で pszDate が示す領域に設定します。 
+<p>
+(例："20020211120000")　この領域は電子証明書内の領域を指すので開放しないこと。<br>
+ またNULL文字で終了していないことに注意のこと(文字列長は14桁固定です)。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr [in] ((|pCert|)) 電子証明書 </td></tr>
+    <tr><td valign=top><em>pszDate</em>&nbsp;</td><td>char ** [out] ((|pszDate|)) 日付 (内部領域) </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a33" doxytag="Security.h::OpenSOAPSecCertGetOwnerName" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertGetOwnerName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>pszName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+所有者の名前を取得します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr [in] ((|pCert|)) 電子証明書 </td></tr>
+    <tr><td valign=top><em>pszName</em>&nbsp;</td><td>char ** [out] ((|pszName|)) 所有者名 (内部領域) </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a35" doxytag="Security.h::OpenSOAPSecCertGetPubKey" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertGetPubKey </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szSaveName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+電子証明書内の公開鍵を取得し、 szSaveName で示すファイルに格納します。. 
+<p>
+この公開鍵はASCII化されたものであって、本ライブラリで通常利用する公開鍵と同一の書式です。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr [in] ((|pCert|)) 電子証明書ポインタ </td></tr>
+    <tr><td valign=top><em>szSaveName</em>&nbsp;</td><td>const char * [in] ((|szSaveName|)) 公開鍵ファイル名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a31" doxytag="Security.h::OpenSOAPSecCertGetPublisherName" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertGetPublisherName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>pszName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+発行者名を pszName が指す領域に設定します。. 
+<p>
+この領域は電子証明書内の領域を指すので開放しないこと。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr [in] ((|pCert|)) 電子証明書 </td></tr>
+    <tr><td valign=top><em>pszName</em>&nbsp;</td><td>char ** [out] ((|pszName|)) 発行者名 (内部領域) </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a32" doxytag="Security.h::OpenSOAPSecCertGetSerialNo" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertGetSerialNo </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>pCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned long *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pulSerial</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+シリアル番号を pulSerial が指す領域に格納します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>pCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr [in] ((|pCert|)) 電子証明書 </td></tr>
+    <tr><td valign=top><em>pulSerial</em>&nbsp;</td><td>unsigned long * [out] ((|pulSerial|)) シリアル番号 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a27" doxytag="Security.h::OpenSOAPSecCertLoad" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertLoad </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szName</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ppCert</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ロード元が szName で示される領域である点を除いて、 <a class="el" href="Security_8h.html#a26">OpenSOAPSecCertLoadFromMem()</a> と同様です。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szName</em>&nbsp;</td><td>const char * [in] ((|szName|)) ファイル名 </td></tr>
+    <tr><td valign=top><em>ppCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr * [out] ((|ppCert|)) 電子証明書 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a26" doxytag="Security.h::OpenSOAPSecCertLoadFromMem" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertLoadFromMem </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>sizArea</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pucArea</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ppCert</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+pucArea で示された sizArea の領域から電子証明書をロードし、ppCert の指す領域に格納します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>sizArea</em>&nbsp;</td><td>size_t [in] ((|sizArea|)) Input 領域サイズ </td></tr>
+    <tr><td valign=top><em>pucArea</em>&nbsp;</td><td>const unsigned char * [in] ((|pucArea|)) Input 領域ポインタ </td></tr>
+    <tr><td valign=top><em>ppCert</em>&nbsp;</td><td>OpenSOAPSecCertPtr * [out] ((|ppCert|)) 電子証明書 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a30" doxytag="Security.h::OpenSOAPSecCertVerifyWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertVerifyWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szCertName</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPubKeyName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+指定された公開鍵を利用して、電子証明書の署名を検証します。 
+<p>
+電子証明書、公開鍵にそれぞれ szCertName, szPubKeyName で示されるファイル名を与えます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szCertName</em>&nbsp;</td><td>const char * [in] ((|szCertName|)) 電子証明書 File Name </td></tr>
+    <tr><td valign=top><em>szPubKeyName</em>&nbsp;</td><td>const char * [in] ((|szPubKeyName|)) 公開鍵 File Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a29" doxytag="Security.h::OpenSOAPSecCertVerifyWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCertVerifyWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpCert</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPubKey</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+指定された公開鍵を利用して、電子証明書の署名を検証します。 
+<p>
+電子証明書、公開鍵にそれぞれ fpCert, fpPubKey で示されるファイルポインタを与えます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>fpCert</em>&nbsp;</td><td>FILE * [in] ((|fpCert|)) 電子証明書 File Stream </td></tr>
+    <tr><td valign=top><em>fpPubKey</em>&nbsp;</td><td>FILE * [in] ((|fpPubKey|)) 公開鍵 File Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="Security.h::OpenSOAPSecCntSign" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecCntSign </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pnSig</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+envにて与えられるエンベロープに対し、現在付加されている署名の数を取得し、pnSigが指す領域に格納します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>const OpenSOAPEnvelopePtr [in] ((|env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>pnSig</em>&nbsp;</td><td>int * [out] ((|pnSig|)) 署名数 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a36" doxytag="Security.h::OpenSOAPSecDecodeKeyFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecDecodeKeyFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fp</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned long *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pulLenOut</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>ppucDecode</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+fpにて与えられる鍵ファイルをバイナリ化します。 
+<p>
+バイナリ化後のデータサイズは pulLenOutの指す領域に書き込まれます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>fp</em>&nbsp;</td><td>FILE * [in] ((|fp|)) File Stream </td></tr>
+    <tr><td valign=top><em>pulLenOut</em>&nbsp;</td><td>unsigned long * [out] ((|pulLenOut|)) 出力データの長さ </td></tr>
+    <tr><td valign=top><em>ppucDecode</em>&nbsp;</td><td>unsigned char ** [out] ((|ppucDecode|)) バイナリ化データ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>バイナリ化されたデータは ppucDecode の指す領域に書き込まれます。バイナリ化されたデータは、利用後 free()をコールして開放すること。 </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="Security.h::OpenSOAPSecDecWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecDecWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPrivKName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+秘密鍵の指定を szPrivKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a16">OpenSOAPSecDecWithStream()</a> と同様です。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>szPrivKName</em>&nbsp;</td><td>const char * [in] ((|szPrivKName|)) 秘密鍵 File Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a16" doxytag="Security.h::OpenSOAPSecDecWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecDecWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPrivKey</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Body内の下記条件に該当する属性を持つ要素全てに対し、その値をfpPrivKeyにて与えられるRSA秘密鍵を用いて復号化します。. 
+<p>
+・属性名 : encrypt<br>
+ ・namespace: <a href="http://opensoap.jp/auth/">http://opensoap.jp/auth/</a><br>
+ ・値 : True (boolean) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>fpPrivKey</em>&nbsp;</td><td>FILE * [in] ((|fpPrivKey|)) 秘密鍵 File Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="Security.h::OpenSOAPSecEncWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecEncWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPubKName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+公開鍵の指定を szPubKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a14">OpenSOAPSecEncWithStream()</a> と同様です。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>szPubKName</em>&nbsp;</td><td>const char * [in] ((|szPubKName|)) 公開鍵 File Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="Security.h::OpenSOAPSecEncWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecEncWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPubKey</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Body内の下記条件に該当する属性を持つ要素全てに対し、その値をfpPubKeyにて与えられるRSA公開鍵を用いて暗号化します。. 
+<p>
+・属性名 : encrypt<br>
+ ・namespace: <a href="http://opensoap.jp/auth/">http://opensoap.jp/auth/</a><br>
+ ・値 : True (boolean) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope </td></tr>
+    <tr><td valign=top><em>fpPubKey</em>&nbsp;</td><td>FILE * [in] ((|fpPubKey|)) 公開鍵 File Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="Security.h::OpenSOAPSecGenerateRSAKeys" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecGenerateRSAKeys </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szSeedPhrase</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPrivKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPubKey</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+秘密鍵と公開鍵のペアを作成し、秘密鍵を fpPrivKey に、公開鍵を fpPubKey に書き込みます。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szSeedPhrase</em>&nbsp;</td><td>const unsigned char * [in] ((|szSeedPhrase|)) 鍵生成の際に内部的にランダム値を生成利用するための文字列 </td></tr>
+    <tr><td valign=top><em>fpPrivKey</em>&nbsp;</td><td>FILE * [in] ((|fpPrivKey|)) RSA 秘密鍵 File Stream </td></tr>
+    <tr><td valign=top><em>fpPubKey</em>&nbsp;</td><td>FILE * [in] ((|fpPubKey|)) RSA 公開鍵 File Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="Security.h::OpenSOAPSecGenerateRSAKeysToFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecGenerateRSAKeysToFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szSeedPhrase</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPrivKeyFileName</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPubKeyFileName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+秘密鍵と公開鍵のペアを作成し、秘密鍵を szPrivKeyFileNameに, 公開鍵を szPubKeyFileName で示すファイルに書き込みます。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>szSeedPhrase</em>&nbsp;</td><td>const unsigned char * [in] ((|szSeedPhrase|)) 鍵生成の際に内部的にランダム値を生成利用するための文字列 </td></tr>
+    <tr><td valign=top><em>szPrivKeyFileName</em>&nbsp;</td><td>const char * [in] ((|szPrivKeyFileName\)) 秘密鍵 File Name </td></tr>
+    <tr><td valign=top><em>szPubKeyFileName</em>&nbsp;</td><td>const char * [in] ((|szPrivKeyFileName\)) 公開鍵 File Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a21" doxytag="Security.h::OpenSOAPSecGetSignedByList" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecGetSignedByList </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>nCntMax</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>list</em>[], </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>pnCntPacked</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+署名者リストを取得します。呼出側がnCntMax 個だけ list で示す結果格納領域を準備します。pnCntPackedで示した領域に取得した個数が格納されます。(最大で nCntMax 個) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>nCntMax</em>&nbsp;</td><td>int [in] ((|nCntMax|)) 最大数 </td></tr>
+    <tr><td valign=top><em>list[]</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|list[]|)) 署名者リスト格納バッファ </td></tr>
+    <tr><td valign=top><em>pnCntPacked</em>&nbsp;</td><td>int * [out] ((|pnCntPacked|)) 個数格納バッファ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a23" doxytag="Security.h::OpenSOAPSecVerifySignWithFile" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecVerifySignWithFile </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>szPubKName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+公開鍵の指定を szPubKName で示されるファイル名とする点を除いて <a class="el" href="Security_8h.html#a22">OpenSOAPSecVerifySignWithStream()</a> と同様です。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>szPubKName</em>&nbsp;</td><td>const char * [in] ((|szPubKName||) 公開鍵 File Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a22" doxytag="Security.h::OpenSOAPSecVerifySignWithStream" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPSecVerifySignWithStream </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>FILE *&nbsp;</td>
+          <td class="mdname" nowrap> <em>fpPubKey</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Body部全体に対するRSA電子署名を検証します。. 
+<p>
+署名検証に当たっては、 fpPubKey で与えられる公開鍵を利用します。署名が複数ある場合は、最低１個が検証OKとなればOKとしています。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in, out] ((|env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>fpPubKey</em>&nbsp;</td><td>FILE * [in] ((|fpPubKey|)) 公開鍵 File Stream </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

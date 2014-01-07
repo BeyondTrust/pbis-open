@@ -1,0 +1,22 @@
+!include "c:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include/win32.mak"
+
+# Sadly, there appears to be a capitalization issue in win32.mak...
+COMPATDIR=../..
+CFLAGS=$(cflags) -DHAVE_GETOPT_H -I. -I$(COMPATDIR)/include
+
+all: echon_server.exe echon_client.exe
+
+echon_server.exe: echon_s.obj echon_server.obj misc.obj getopt.obj
+	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
+
+echon_client.exe: echon_c.obj echon_client.obj misc.obj getopt.obj
+	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
+
+echon_server.c: echon.h misc.h $(COMPATDIR)/include/compat/dcerpc.h
+echon_client.c: echon.h misc.h $(COMPATDIR)/include/compat/dcerpc.h
+
+echo.h echon_s.c echon_c.c: echon.idl
+	midl /I../../include echon.idl
+
+clean:
+	del *.obj *.exe echo.h echon_s.c echon_c.c

@@ -1,0 +1,3 @@
+Follow the install documentation for SASL.  (saslauthd will install as 
+a part of the regular Cyrus SASL distribution as long as you configure
+SASL with --with-saslauthd)

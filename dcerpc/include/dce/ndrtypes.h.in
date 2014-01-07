@@ -1,0 +1,25 @@
+/* pull in the header as determined for this platform at configure time */
+#ifdef __APPLE__
+#if defined(__i386__)
+#include <dce/i386/ndrtypes.h>
+#elif defined(__x86_64__)
+#include <dce/x86_64/ndrtypes.h>
+#elif defined(__ppc__)
+#include <dce/powerpc/ndrtypes.h>
+#elif defined(__ppc64__)
+#include <dce/powerpc64/ndrtypes.h>
+#endif
+#else
+#include <dce/@target_cpu@/ndrtypes.h>
+#endif
+
+/* HACK */
+@BROKEN_ONCE_INIT@
+
+#ifndef __LW_BROKEN_ONCE_INIT
+#if defined(sun) || defined(_AIX)
+#  define __LW_BROKEN_ONCE_INIT 1
+#else
+#  define __LW_BROKEN_ONCE_INIT 0
+#endif
+#endif

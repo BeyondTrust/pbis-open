@@ -1,0 +1,35 @@
+#!/bin/sh
+SUBDIRS="lib tools ticketcopy"
+
+configure()
+{
+    mk_set AUTH_MECHANISM_DIR "${MK_LIBDIR}/AuthMechanisms"
+    mk_define AUTH_MECHANISM_DIR "\"${AUTH_MECHANISM_DIR}\""
+}
+
+make()
+{
+    BUNDLE_DIR="${MK_LIBDIR}/SecurityAgentPlugins/com.likewise.bundle"
+    CONTENTS_DIR="${BUNDLE_DIR}/Contents"
+    MACOS_DIR="${CONTENTS_DIR}/MacOS"
+
+    LWAUTHPLUGIN_SOURCES="\
+        AuthPlugin.c"
+
+    mk_dlo \
+        DLO="com.likewise" \
+        EXT="" \
+        INSTALLDIR="${MACOS_DIR}" \
+        SOURCES="$LWAUTHPLUGIN_SOURCES" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="lwadvapi.h lwerror.h lwmem.h lwstr.h" \
+        LIBDEPS="authplugin lwadvapi lsaclient ${LIB_DL}" \
+        LDFLAGS="-framework CoreFoundation"
+
+    mk_target \
+        TARGET="${CONTENTS_DIR}/Info.plist" \
+        DEPS="Info.plist.in ../dsplugin/process-info-plist.pl" \
+        mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
+        mk_msg_format "generate" "${CONTENTS_DIR}/Info.plist" '%;' \
+        "&../dsplugin/process-info-plist.pl" -v "$LW_VERSION" -o '$@' '&Info.plist.in'
+}

@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-GET-FROM-TYPED-DATA-data:
+
+KRB5_PADATA_GET_FROM_TYPED_DATA
+===============================
+
+..
+.. data:: KRB5_PADATA_GET_FROM_TYPED_DATA
+..
+
+
+
+
+====================================== ======================
+``KRB5_PADATA_GET_FROM_TYPED_DATA``       ``22``
+====================================== ======================

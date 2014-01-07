@@ -1,0 +1,157 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
+/*
+ * Copyright Likewise Software    2004-2008
+ * All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the license, or (at
+ * your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.  You should have received a copy
+ * of the GNU Lesser General Public License along with this program.  If
+ * not, see <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+
+
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        lsaipc-common.h
+ *
+ * Abstract:
+ *
+ *        Likewise Security and Authentication Subsystem (LSASS) Interprocess Communication
+ *
+ * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *
+ */
+#ifndef __LSAIPC_COMMON_H__
+#define __LSAIPC_COMMON_H__
+
+#include <lwmsg/lwmsg.h>
+#include <lsa/lsa.h>
+
+typedef enum __LSA_IPC_TAG
+{
+    // See lsaipc.h for corresponding message structures
+    LSA_Q_AUTH_USER_PAM,
+    LSA_R_AUTH_USER_PAM_SUCCESS,
+    LSA_R_AUTH_USER_PAM_FAILURE,
+    LSA_Q_VALIDATE_USER,
+    LSA_R_VALIDATE_USER_SUCCESS,
+    LSA_R_VALIDATE_USER_FAILURE,
+    LSA_Q_CHANGE_PASSWORD,
+    LSA_R_CHANGE_PASSWORD_SUCCESS,
+    LSA_R_CHANGE_PASSWORD_FAILURE,
+    LSA_Q_SET_PASSWORD,
+    LSA_R_SET_PASSWORD_SUCCESS,
+    LSA_R_SET_PASSWORD_FAILURE,
+    LSA_Q_OPEN_SESSION,
+    LSA_R_OPEN_SESSION_SUCCESS,
+    LSA_R_OPEN_SESSION_FAILURE,
+    LSA_Q_CLOSE_SESSION,
+    LSA_R_CLOSE_SESSION_SUCCESS,
+    LSA_R_CLOSE_SESSION_FAILURE,
+    LSA_Q_AUTH_USER_EX,
+    LSA_R_AUTH_USER_EX_SUCCESS,
+    LSA_R_AUTH_USER_EX_FAILURE,
+    LSA_Q_GET_METRICS,
+    LSA_R_GET_METRICS_SUCCESS,
+    LSA_R_GET_METRICS_FAILURE,
+    LSA_Q_GET_STATUS,
+    LSA_R_GET_STATUS_SUCCESS,
+    LSA_R_GET_STATUS_FAILURE,
+    LSA_Q_CHECK_USER_IN_LIST,
+    LSA_R_CHECK_USER_IN_LIST_SUCCESS,
+    LSA_R_CHECK_USER_IN_LIST_FAILURE,
+    LSA_Q_BEGIN_ENUM_NSS_ARTEFACTS,
+    LSA_R_BEGIN_ENUM_NSS_ARTEFACTS_SUCCESS,
+    LSA_R_BEGIN_ENUM_NSS_ARTEFACTS_FAILURE,
+    LSA_Q_ENUM_NSS_ARTEFACTS,
+    LSA_R_ENUM_NSS_ARTEFACTS_SUCCESS,
+    LSA_R_ENUM_NSS_ARTEFACTS_FAILURE,
+    LSA_Q_END_ENUM_NSS_ARTEFACTS,
+    LSA_R_END_ENUM_NSS_ARTEFACTS_SUCCESS,
+    LSA_R_END_ENUM_NSS_ARTEFACTS_FAILURE,
+    LSA_Q_FIND_NSS_ARTEFACT_BY_KEY,
+    LSA_R_FIND_NSS_ARTEFACT_BY_KEY_SUCCESS,
+    LSA_R_FIND_NSS_ARTEFACT_BY_KEY_FAILURE,
+    LSA_Q_SET_TRACE_INFO,
+    LSA_R_SET_TRACE_INFO_SUCCESS,
+    LSA_R_SET_TRACE_INFO_FAILURE,
+    LSA_Q_GET_TRACE_INFO,
+    LSA_R_GET_TRACE_INFO_SUCCESS,
+    LSA_R_GET_TRACE_INFO_FAILURE,
+    LSA_Q_ENUM_TRACE_INFO,
+    LSA_R_ENUM_TRACE_INFO_SUCCESS,
+    LSA_R_ENUM_TRACE_INFO_FAILURE,
+    LSA_Q_PROVIDER_IO_CONTROL,
+    LSA_R_PROVIDER_IO_CONTROL_SUCCESS,
+    LSA_R_PROVIDER_IO_CONTROL_SUCCESS_DATA,
+    LSA_R_PROVIDER_IO_CONTROL_FAILURE,
+    LSA_Q_GET_PAM_CONFIG,
+    LSA_R_GET_PAM_CONFIG_SUCCESS,
+    LSA_R_GET_PAM_CONFIG_FAILURE,
+    LSA2_R_ERROR,
+    LSA2_Q_FIND_OBJECTS,
+    LSA2_R_FIND_OBJECTS,
+    LSA2_Q_OPEN_ENUM_OBJECTS,
+    LSA2_R_OPEN_ENUM_OBJECTS,
+    LSA2_Q_ENUM_OBJECTS,
+    LSA2_R_ENUM_OBJECTS,
+    LSA2_Q_OPEN_ENUM_MEMBERS,
+    LSA2_R_OPEN_ENUM_MEMBERS,
+    LSA2_Q_ENUM_MEMBERS,
+    LSA2_R_ENUM_MEMBERS,
+    LSA2_Q_CLOSE_ENUM,
+    LSA2_R_CLOSE_ENUM,
+    LSA2_Q_QUERY_MEMBER_OF,
+    LSA2_R_QUERY_MEMBER_OF,
+    LSA2_Q_FIND_GROUP_AND_EXPANDED_MEMBERS,
+    LSA2_R_FIND_GROUP_AND_EXPANDED_MEMBERS,
+    LSA2_Q_ADD_GROUP,
+    LSA2_R_ADD_GROUP,
+    LSA2_Q_ADD_USER,
+    LSA2_R_ADD_USER,
+    LSA2_Q_MODIFY_USER,
+    LSA2_R_MODIFY_USER,
+    LSA2_Q_MODIFY_GROUP,
+    LSA2_R_MODIFY_GROUP,
+    LSA2_Q_DELETE_OBJECT,
+    LSA2_R_DELETE_OBJECT,
+    LSA2_Q_GET_SMARTCARD_USER_OBJECT,
+    LSA2_R_GET_SMARTCARD_USER_OBJECT,
+
+    // See lsaprivilege.h for corresponding message structures
+    LSA_PRIVS_Q_ENUM_PRIVILEGES_SIDS,
+    LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS,
+    LSA_PRIVS_Q_ADD_ACCOUNT_RIGHTS,
+    LSA_PRIVS_R_ADD_ACCOUNT_RIGHTS,
+    LSA_PRIVS_Q_REMOVE_ACCOUNT_RIGHTS,
+    LSA_PRIVS_R_REMOVE_ACCOUNT_RIGHTS,
+    LSA_PRIVS_Q_ENUM_ACCOUNT_RIGHTS,
+    LSA_PRIVS_R_ENUM_ACCOUNT_RIGHTS
+} LSA_IPC_TAG;
+
+
+#endif /*__LSAIPC_COMMON_H__*/

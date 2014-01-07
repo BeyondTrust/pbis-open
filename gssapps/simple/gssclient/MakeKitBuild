@@ -1,0 +1,12 @@
+make()
+{
+    mk_program \
+        PROGRAM=gsssimple-client \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="gss-client.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h krb5.h gssapi.h ntlm/sspintlm.h" \
+        LIBDEPS="lwbase_nothr gssapi_krb5 krb5 k5crypto $LIB_SOCKET $LIB_NSL"
+
+    lw_add_tool_target "$result"
+}

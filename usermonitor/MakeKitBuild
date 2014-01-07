@@ -1,0 +1,51 @@
+SUBDIRS="encoding server"
+
+configure()
+{
+    mk_config_header 'include/config.h'
+
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+
+    mk_declare -o \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        MOD_EXT="${MK_DLO_EXT}"
+
+    mk_define EFD_CACHE_DIR "\"$LW_CACHEDIR\""
+
+    mk_check_endian
+
+    case "$ENDIANNESS" in
+        big)
+           mk_define WORDS_BIGENDIAN
+           mk_define LW_BIG_ENDIAN
+           ;;
+        little)
+           mk_define WORDS_LITTLEENDIAN
+           mk_define LW_LITTLE_ENDIAN
+           ;;
+    esac
+
+    mk_check_headers FAIL=yes \
+        eventlog.h lwerror.h \
+        lw/rtlmemory.h lw/rtlstring.h reg/lwreg.h
+
+    mk_check_headers \
+        inttypes.h \
+        socket.h \
+        sys/socket.h \
+        stdbool.h \
+        wc16str.h
+
+    mk_check_libraries FAIL=yes \
+        lwbase lwadvapi lsaclient \
+        eventlog regclient
+
+    mk_check_libraries \
+        pthread rt
+
+    mk_output_file server/etc/usermonitor.reg
+}

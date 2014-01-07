@@ -1,0 +1,33 @@
+make()
+{
+    FUSE_SOURCES="\
+	common.c          \
+	init.c            \
+	getattr.c         \
+	statfs.c          \
+	readdir.c         \
+	open.c            \
+	release.c         \
+	read.c            \
+	write.c           \
+	truncate.c        \
+	mknod.c           \
+	create.c          \
+	unlink.c          \
+	mkdir.c           \
+	rmdir.c           \
+	rename.c          \
+	chmod.c           \
+	chown.c           \
+	utimens.c         \
+	entrypoint.c      \
+	main.c"
+
+    mk_program \
+        PROGRAM=lwio-fuse-mount \
+        SOURCES="$FUSE_SOURCES" \
+        CPPFLAGS="-D_FILE_OFFSET_BITS=64" \
+        INCLUDEDIRS="../include" \
+        HEADERDEPS="lw/base.h fuse.h" \
+        LIBDEPS="lwbase lwbase_nothr lwioclient fuse"
+}

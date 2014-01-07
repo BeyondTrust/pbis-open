@@ -1,0 +1,368 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\reapsysl]
+"Description" = {
+    value = "System Log Reaper"
+    default = "System Log Reaper"
+    doc = ""
+}
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/reapsysl@MOD_EXT@" 
+    default = "@LIBDIR@/lw-svcm/reapsysl@MOD_EXT@" 
+    doc = ""
+}
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
+}
+"Environment" = {
+    default = ""
+    doc = ""
+}
+"Dependencies" = {
+    value = "netlogon lwio lwreg eventlog"
+    default = "netlogon lwio lwreg eventlog"
+    doc = ""
+}
+"Type" = {
+    value = dword:00000002
+    default = dword:00000002
+    doc = ""
+}
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
+"CoreSize" = {
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)"
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters]
+"EscrowMicroseconds" = {
+    default = dword:000F4240
+    doc = ""
+}
+"LogUnmatchedErrorEvents" = {
+    default = dword:00000000
+    doc = ""
+}
+"LogUnmatchedWarningEvents" = {
+    default = dword:00000000
+    doc = ""
+}
+"LogUnmatchedInfoEvents" = {
+    default = dword:00000000
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern]
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event1]
+"Event" = {
+    default = dword:00000001
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (FAILED LOGIN [[:digit:]]+ FROM \\(.*\\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000003
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event2a]
+"Event" = {
+    default = dword:00000002
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? LOGIN ON [^ ]+ BY (.*)$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000002
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event2b]
+"Event" = {
+    default = dword:00000002
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (.*) LOGIN (/dev/console|ON tty.)$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000002
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event3]
+"Event" = {
+    default = dword:00000003
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive(/pam)?|password)) for (invalid user )?(.*) from .*"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000007
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event4]
+"Event" = {
+    default = dword:00000004
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000002
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event5]
+"Event" = {
+    default = dword:00000005
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: [[:digit:]]+ incorrect password attempts? ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000003
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000000
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event6]
+"Event" = {
+    default = dword:00000006
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: (command not allowed|user NOT in sudoers) ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000003
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000000
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event7]
+"Event" = {
+    default = dword:00000007
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000003
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000000
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event8]
+"Event" = {
+    default = dword:00000008
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive(/pam)?|password)) for (invalid user )?(.*) from .*"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000007
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000001
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event9]
+"Event" = {
+    default = dword:00000009
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000002
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000001
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event10]
+"Event" = {
+    default = dword:0000000A
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (FAILED LOGIN [[:digit:]]+ FROM \\(.*\\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000003
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000001
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event11]
+"Event" = {
+    default = dword:0000000B
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? LOGIN ON [^ ]+ BY (.*)$"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000002
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000001
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event12]
+"Event" = { 
+    default = dword:0000000C
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* [a-z]dm(-password|)\\[[[:digit:]]+\\]: pam_unix\\(([a-z]dm(-password|):auth)\\): authentication failure; .* user=(.*)"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000004
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event13]
+"Event" = {
+    default = dword:0000000D
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* [a-z]dm(-password|)\\[[[:digit:]]+\\]: pam_unix\\(([a-z]dm(-password|):session)\\): session opened for user (.*) by .*"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000004
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}

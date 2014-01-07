@@ -1,0 +1,22 @@
+make()
+{
+    LWMSG_HEADERS="\
+        lwmsg/call.h \
+        lwmsg/message.h \
+        lwmsg/data.h \
+        lwmsg/assoc.h \
+        lwmsg/context.h \
+        lwmsg/time.h \
+        lwmsg/buffer.h \
+        lwmsg/connection.h \
+        lwmsg/protocol.h \
+        lwmsg/status.h \
+        lwmsg/type.h \
+        lwmsg/peer.h \
+        lwmsg/security.h \
+        lwmsg/common.h \
+        lwmsg/session.h \
+        lwmsg/archive.h"
+
+    mk_headers HEADERS="$LWMSG_HEADERS" MASTER="lwmsg/lwmsg.h"
+}

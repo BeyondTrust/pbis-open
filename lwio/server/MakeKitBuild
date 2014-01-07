@@ -1,0 +1,10 @@
+DRIVERS="rdr"
+SUBDIRS="iomgr smbcommon $DRIVERS lwiod "
+
+configure()
+{
+    for _driver in ${DRIVERS}
+    do
+        lwio_driver_enabled "$_driver" || mk_skip_subdir "$_driver"
+    done
+}
