@@ -10,3 +10,5 @@ aclocal  --force || exit $?
 autoheader -f || exit $?
 automake --foreign --add-missing --copy
 autoconf -f  || exit $?
+chmod 777 autom4te.cache
+chmod 666 autom4te.cache/requests
