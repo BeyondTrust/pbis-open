@@ -316,6 +316,11 @@ long PlugInShell_Initialize(void)
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
         }
+        else if (strstr(pszVersion, "10.9.") == pszVersion)
+        {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
+        }
         else
         {
             isUnsupported = true;
@@ -364,7 +369,7 @@ long PlugInShell_Initialize(void)
     {
         pszVersionName = "unsupported";
     }
-    LOG("Starting up Likewise - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
+    LOG("Starting up PBIS - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
             pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
     if (isUnsupported)
     {
@@ -928,6 +933,7 @@ long PlugInShell_PeriodicTask(void)
 
     // No enter/leave logging since function is called every 30 seconds
     // or so (on Mac OS X 10.4.7).
+    //
 
     // Get some information that might take a while before locking
     // GlobalState.
@@ -1188,6 +1194,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszAllowAdministrationBy);
     LW_SAFE_FREE_STRING(pszDomain);
     GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
+
 
     return macError;
 }
