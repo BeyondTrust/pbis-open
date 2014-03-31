@@ -449,7 +449,7 @@ long PlugInShell_Initialize(void)
         {
             if (macError == eDSAuthUnknownUser)
             {
-                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", pszAllowAdministrationBy);
+                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszAllowAdministrationBy);
             }
             else
             {
@@ -1002,7 +1002,7 @@ long PlugInShell_PeriodicTask(void)
             {
                 if (macError == eDSAuthUnknownUser)
                 {
-                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", pszCurrentAllowedAdminsList);
+                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszCurrentAllowedAdminsList);
                 }
                 else
                 {
