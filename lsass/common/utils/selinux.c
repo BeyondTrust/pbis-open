@@ -53,7 +53,7 @@ SELinuxCreate(
 
     if (bFileExists == FALSE)
     {
-        LSA_LOG_DEBUG("Could not find " LIBSELINUX "");
+        LSA_LOG_DEBUG("Could not find %s", LIBSELINUX);
         *ppSELinux = NULL;
         goto cleanup;
     }
