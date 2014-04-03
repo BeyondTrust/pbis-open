@@ -858,6 +858,17 @@ LwSELinuxCreate(
 {
     DWORD dwError = 0;
     PLW_SELINUX pSELinux = NULL;
+    BOOLEAN bFileExists = FALSE;
+
+    dwError = LwCheckFileExists(LIBSELINUX, &bFileExists);
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (bFileExists == FALSE)
+    {
+        LW_RTL_LOG_VERBOSE("Could not find " LIBSELINUX "");
+        *ppSELinux = NULL;
+        goto cleanup;
+    }
 
     dwError = LwAllocateMemory(sizeof(LW_SELINUX), (PVOID*)&pSELinux);
     BAIL_ON_LW_ERROR(dwError);
