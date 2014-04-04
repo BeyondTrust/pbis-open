@@ -46,7 +46,6 @@ SELinuxCreate(
 {
     DWORD dwError = 0;
     PSELINUX pSELinux = NULL;
-    BOOLEAN bFileExists = FALSE;
  
     dwError = LwAllocateMemory(sizeof(SELINUX), (PVOID*)&pSELinux);
     BAIL_ON_LSA_ERROR(dwError);
@@ -54,6 +53,8 @@ SELinuxCreate(
     pSELinux->bEnabled = FALSE;
 
 #if ENABLE_SELINUX
+    BOOLEAN bFileExists = FALSE;
+
     dwError = LsaCheckFileExists(LIBSELINUX, &bFileExists);
     BAIL_ON_LSA_ERROR(dwError);
 
