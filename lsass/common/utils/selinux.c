@@ -48,22 +48,21 @@ SELinuxCreate(
     PSELINUX pSELinux = NULL;
     BOOLEAN bFileExists = FALSE;
  
-    dwError = LsaCheckFileExists(LIBSELINUX, &bFileExists);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (bFileExists == FALSE)
-    {
-        LSA_LOG_DEBUG("Could not find %s", LIBSELINUX);
-        *ppSELinux = NULL;
-        goto cleanup;
-    }
-
     dwError = LwAllocateMemory(sizeof(SELINUX), (PVOID*)&pSELinux);
     BAIL_ON_LSA_ERROR(dwError);
 
     pSELinux->bEnabled = FALSE;
 
 #if ENABLE_SELINUX
+    dwError = LsaCheckFileExists(LIBSELINUX, &bFileExists);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bFileExists == FALSE)
+    {
+        LSA_LOG_DEBUG("Could not find %s", LIBSELINUX);
+        goto error;
+    }
+
     pSELinux->dlhandle = dlopen(LIBSELINUX, RTLD_LAZY | RTLD_LOCAL);
     if (pSELinux->dlhandle == NULL)
     {
