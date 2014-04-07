@@ -189,6 +189,11 @@ setup_selinux_policy_module()
         return;
     fi
 
+    if [ ! -d "/etc/selinux/targeted/policy" ]; then
+        logfile "/etc/selinux/targeted/policy not present."
+        return;
+    fi
+
     if [ "$DISTRO" = "rhel" -a "$VERSION" = "5.0" ]; then
         log 'SELinux Policy Module not required.'
     elif [ -f "@MK_DATADIR@/pbis.pp" ]; then
