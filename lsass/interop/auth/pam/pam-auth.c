@@ -75,13 +75,10 @@ pam_sm_authenticate(
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
-    LSA_LOG_PAM_ERROR("RALI: pam_sm_authenticate enter");
-
     dwError = LsaPamGetConfig(&pConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaPamSetLogLevel(pConfig->dwLogLevel);
-    LSA_LOG_PAM_ERROR("RALI: pam_sm_authenticate dwLogLevel=%d", pConfig->dwLogLevel);
 
     dwError = LsaPamGetContext(
                     pamh,
@@ -89,14 +86,12 @@ pam_sm_authenticate(
                     argc,
                     argv,
                     &pPamContext);
-    LSA_LOG_PAM_ERROR("RALI: pam_sm_authenticate here1 dwError=%d", dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* If we are just overriding the default repository
        (Solaris), only do that */
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
-        LSA_LOG_PAM_ERROR("RALI here2 dwError=%d", dwError);
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
         BOOLEAN bChangeRepository = FALSE;
         struct pam_repository *currentRepository = NULL;
@@ -149,7 +144,6 @@ pam_sm_authenticate(
                     dwError = 0;
                 }
             }
-        LSA_LOG_PAM_ERROR("RALI here3 dwError=%d", dwError);
         }
         if (bChangeRepository)
         {
@@ -162,12 +156,10 @@ pam_sm_authenticate(
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
-        LSA_LOG_PAM_ERROR("RALI here4 dwError=%d", dwError);
 
         /* This gets mapped to PAM_IGNORE */
         dwError = LW_ERROR_NOT_HANDLED;
 #else
-        LSA_LOG_PAM_ERROR("RALI here5 dwError=%d", dwError);
         dwError = LW_ERROR_INTERNAL;
         BAIL_ON_LSA_ERROR(dwError);
 #endif
@@ -189,7 +181,6 @@ pam_sm_authenticate(
         DWORD i;
         int bCheckForSmartCard = 0;
 
-        LSA_LOG_PAM_ERROR("RALI here6 dwError=%d", dwError);
         /*
          * Clear any previous SMART_CARD_PIN and SMART_CARD_READER values.
          * Failure probably indicates memory allocation failed.
@@ -200,7 +191,6 @@ pam_sm_authenticate(
             NULL,
             NULL);
         dwError = LsaPamUnmapErrorCode(iPamError);
-        LSA_LOG_PAM_ERROR("RALI here7 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
 
         iPamError = pam_set_data(
@@ -209,7 +199,6 @@ pam_sm_authenticate(
             NULL,
             NULL);
         dwError = LsaPamUnmapErrorCode(iPamError);
-        LSA_LOG_PAM_ERROR("RALI here8 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
 
         iPamError = pam_get_item(
@@ -222,7 +211,6 @@ pam_sm_authenticate(
             params.pszPamSource = NULL;
         }
         dwError = LsaPamUnmapErrorCode(iPamError);
-        LSA_LOG_PAM_ERROR("RALI here9 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
 
         for (i = 0; i < pConfig->dwNumSmartCardServices; ++i)
@@ -236,15 +224,12 @@ pam_sm_authenticate(
             }
         }
 
-        LSA_LOG_PAM_ERROR("RALI here10 dwError=%d", dwError);
 
         if (bCheckForSmartCard)
         {
             LSA_LOG_PAM_DEBUG("Checking for smartcard");
-            LSA_LOG_PAM_ERROR("RALI here11 dwError=%d", dwError);
 
             dwError = LsaOpenServer(&hLsaConnection);
-            LSA_LOG_PAM_ERROR("RALI here12 dwError=%d", dwError);
 
             if (dwError == LW_ERROR_SUCCESS)
             {
@@ -252,7 +237,6 @@ pam_sm_authenticate(
                                 hLsaConnection,
                                 &pObject,
                                 &pszSmartCardReader);
-                LSA_LOG_PAM_ERROR("RALI here13 dwError=%d", dwError);
                 if (dwError == LW_ERROR_SUCCESS)
                 {
                     LSA_LOG_PAM_DEBUG(
@@ -281,14 +265,12 @@ pam_sm_authenticate(
                 }
                 else
                 {
-                    LSA_LOG_PAM_ERROR("RALI here14 dwError=%d", dwError);
                     LSA_LOG_PAM_DEBUG("No smartcard user found");
                 }
             }
         }
         else
         {
-            LSA_LOG_PAM_ERROR("RALI here15 dwError=%d", dwError);
             LSA_LOG_PAM_DEBUG(
                 "Service '%s' is not on the SmartCardServices list; "
                 "not checking for smartcard.",
@@ -300,7 +282,6 @@ pam_sm_authenticate(
             /* SmartCard user found. */
             int bPromptGecos = 0;
 
-            LSA_LOG_PAM_ERROR("RALI here16 dwError=%d", dwError);
 
             for (i = 0; i < pConfig->dwNumSmartCardPromptGecos; ++i)
             {
@@ -345,8 +326,6 @@ pam_sm_authenticate(
                     &pszPassword);
                 BAIL_ON_LSA_ERROR(dwError);
             }
-
-            LSA_LOG_PAM_ERROR("RALI here17 dwError=%d", dwError);
 
             iPamError = pam_set_item(
                 pamh,
@@ -396,22 +375,9 @@ pam_sm_authenticate(
                 pPamContext,
                 &pszLoginId,
                 TRUE);
-            LSA_LOG_PAM_ERROR("RALI here18 dwError=%d", dwError);
             BAIL_ON_LSA_ERROR(dwError);
 
-
-            /*  RALI
-            if (LsaShouldIgnoreUser(pszLoginId))
-            {
-                LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-                dwError = LW_ERROR_NOT_HANDLED;
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-            RALI */
-
-
             dwError = LsaOpenServer(&hLsaConnection);
-            LSA_LOG_PAM_ERROR("RALI here19 dwError=%d", dwError);
             BAIL_ON_LSA_ERROR(dwError);
         
             /* avoid the extra Lsa call if all the prompts are the same, just choose
@@ -429,8 +395,6 @@ pam_sm_authenticate(
                         (PVOID*)&pUserInfo);     
             }
 
-            LSA_LOG_PAM_ERROR("RALI here20 dwError=%d", dwError);
-            
             if(dwError == 0)
             {
                 dwError = LsaPamGetCurrentPassword(
@@ -456,8 +420,6 @@ pam_sm_authenticate(
                 &pszPassword);
             }
 
-            
-            LSA_LOG_PAM_ERROR("RALI here21 dwError=%d", dwError);
             BAIL_ON_LSA_ERROR(dwError);
 
 #if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
@@ -475,24 +437,20 @@ pam_sm_authenticate(
     /* Otherwise, proceed with usual authentication */
     else
     {
-        LSA_LOG_PAM_ERROR("RALI here22 dwError=%d", dwError);
         dwError = LsaPamGetLoginId(
             pamh,
             pPamContext,
             &pszLoginId,
             TRUE);
-        LSA_LOG_PAM_ERROR("RALI here23 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaOpenServer(&hLsaConnection);
-        LSA_LOG_PAM_ERROR("RALI here24 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
         
         if (LsaShouldIgnoreUser(pszLoginId))
         {
             LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
             dwError = LW_ERROR_NOT_HANDLED;
-            LSA_LOG_PAM_ERROR("RALI here25 dwError=%d", dwError);
             BAIL_ON_LSA_ERROR(dwError);
         }
         
@@ -501,7 +459,6 @@ pam_sm_authenticate(
                         pszLoginId,
                         dwUserInfoLevel,
                         (PVOID*)&pUserInfo);
-        LSA_LOG_PAM_ERROR("RALI here26 dwError=%d", dwError);
                               
         if(dwError == 0)
         {
@@ -528,7 +485,6 @@ pam_sm_authenticate(
             &pszPassword);
         }
         
-        LSA_LOG_PAM_ERROR("RALI here27 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
                 
         iPamError = pam_get_item(
@@ -563,7 +519,6 @@ pam_sm_authenticate(
             hLsaConnection,
             &params,
             &pInfo);
-        LSA_LOG_PAM_ERROR("RALI here28 dwError=%d", dwError);
         if (pInfo && pInfo->pszMessage)
         {
             LsaPamConverse(pamh,
@@ -571,7 +526,6 @@ pam_sm_authenticate(
                            PAM_TEXT_INFO,
                            NULL);
         }
-        LSA_LOG_PAM_ERROR("RALI here29 dwError=%d", dwError);
         if (dwError == LW_ERROR_PASSWORD_EXPIRED)
         {
             if (pPamContext->pamOptions.bDisablePasswordChange)
@@ -590,7 +544,6 @@ pam_sm_authenticate(
                 dwError = 0;
             }
         }
-        LSA_LOG_PAM_ERROR("RALI here30 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!pPamContext->pamOptions.bNoRequireMembership)
@@ -623,7 +576,6 @@ pam_sm_authenticate(
          * their password matches the AD user's password. At this point, it
          * is very unlikely that we will mangle a local username. 
          */       
-        LSA_LOG_PAM_ERROR("RALI here31 dwError=%d", dwError);
         if (strcmp(pszLoginId, pUserInfo->pszName))
         {
             LSA_LOG_PAM_INFO("Canonicalizing pam username from '%s' to '%s'\n",
@@ -635,7 +587,6 @@ pam_sm_authenticate(
             dwError = LsaPamUnmapErrorCode(iPamError);
             BAIL_ON_LSA_ERROR(dwError);
         }
-        LSA_LOG_PAM_ERROR("RALI here32 dwError=%d", dwError);
 
 #if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
         /*
@@ -648,7 +599,6 @@ pam_sm_authenticate(
          */
         dwError = LsaOpenSession(hLsaConnection,
                                  pszLoginId);
-        LSA_LOG_PAM_ERROR("RALI here33 dwError=%d", dwError);
         BAIL_ON_LSA_ERROR(dwError);
         dwError = LsaCloseSession(hLsaConnection,
                                   pszLoginId);
@@ -698,14 +648,12 @@ cleanup:
     }
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::end");
-    LSA_LOG_PAM_ERROR("RALI here34 dwError=%d", dwError);
 
     return LsaPamOpenPamFilterAuthenticate(
                             LsaPamMapErrorCode(dwError, pPamContext));
 
 error:
 
-    LSA_LOG_PAM_ERROR("RALI here35 dwError=%d", dwError);
     if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
     {
         LSA_LOG_PAM_WARNING("pam_sm_authenticate error [login:%s][error code:%u]",
