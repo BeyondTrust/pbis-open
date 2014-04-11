@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright 2008-2011 Likewise Software, 2011-2013 BeyondTrust Software
+# Copyright 2008-2011 Likewise Software, 2011-2014 BeyondTrust Software
 # by Robert Auch
 # gather information for emailing to support.
 #
@@ -37,6 +37,9 @@
 # v2.5.0  2013-02-11 RCA PBIS 7.0 (container) support
 # v2.5.1  2013-06-13 RCA config dump, code cleanup, logfile locations.
 # v2.5.2  2013-08-12 RCA fix up DNS, runTool for large environments using open() rather than ``
+# v2.5.3  2013-10-15 RCA - add new "action" command to runTool() solves "out of memory" error during enum-users
+# v2.5.4  2013-12-12 RCA fix up SELinux breakage, capture selinux audit log for Permissive/Enforcing environments
+# v2.6.0  2014-04-11 RCA add -dj option and cleanups for different domainjoin-cli commands
 #
 # Data structures explained at bottom of file
 #
@@ -57,9 +60,10 @@ use File::Basename;
 use Carp;
 use FindBin;
 use Config;
+use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.5.2";
+my $gVer = "2.6.0";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -101,7 +105,7 @@ sub usage($$)
 
     my $helplines = "
 $scriptName version $gVer
-(C)2008-2011, Likewise Software, 2011-2013 BeyondTrust Software
+(C)2008-2011, Likewise Software, 2011-2014 BeyondTrust Software
 
 usage: $scriptName [tests] [log choices] [options]
 
@@ -139,6 +143,17 @@ Tests to be performed:
         Pause the script for $opt->{delaytime} seconds to gather logging
         data, for example from GUI logons.
     -dt --delaytime <seconds> (default = $opt->{delaytime})
+    -dj --domainjoin (default = ".&getOnOff($opt->{domainjoin}).")
+        Set flags for attempting to join AD, then launch the join interactively
+        --djcommand
+            command for domainjoin-cli, such as 'join', 'query', 'leave'
+        --djoptions
+            Enter domainjoin args such as '--disable hostname --ou AZ/Phoenix/Server'
+        --djdomain
+            Name of domain to attempt to join
+        --djlog (default = $opt->{djlog})
+            Path of the domainjoin log.
+        Use '--sshuser' for the domainjoin username, or be prompted
 
 Log choices: 
 
@@ -974,6 +989,11 @@ sub tarFiles($$$$) {
     my $opt = shift || confess "no options hash passed to tar appender!\n";
     my $tar = shift || confess "no tar file passed to tar appender!\n";
     my $file = shift || confess "no append file passed to tar appender!\n";
+    
+    if (! -e $file) {
+        logWarning("Not adding $file to $tar - $file doesn't exist");
+        return;
+    }
 
     logInfo("Adding file $file to $tar");
     my $error;
@@ -1503,6 +1523,7 @@ sub determineOS($$) {
     $info->{platform}=~s/-.*$//;
     $info->{osversion} = `uname -r`;
     $info->{uname} = `uname -a`;
+    $info->{hostname} = hostname();
     logData("Version: $info->{osversion}");
     logData("Platform: $info->{platform}");
     logData("Full Uname: $info->{uname}");
@@ -1521,6 +1542,9 @@ sub determineOS($$) {
     logData("Currently running as: $info->{name} with effective UID: $info->{uid}");
     logData("Run under sudo from $info->{logon}") if ($info->{logon} ne $info->{name});
     logData("Gathered at: ".scalar(localtime));
+    
+    # set this for all OSes as false, so that future tests can have a value known to exist
+    $info->{selinux} = 0;
     foreach my $i (("getrunmode", "sestatus")) {
         logVerbose("Looking for $i...");
         my $file = findInPath($i, ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]);
@@ -1529,6 +1553,16 @@ sub determineOS($$) {
             logData("$i output is:"); 
             runTool($info, $opt, $file->{path}, "print");
             logData("---");
+            if ($i eq "sestatus") {
+                my $getenforce = findInPath("getenforce", ["/usr/sbin", "/sbin", "/usr/bin", "/bin"]);
+                my @output = runTool($info, $opt, $getenforce->{path}, "return");
+                chomp $output[0];
+                logInfo("SELinux is in $output[0] mode.");
+                if ($output[0]=~/nforcing/) {
+                    $info->{selinux} = 1;
+                    logVerbose("Restart is disabled for SELinux in enforcing mode - tool will exit if --restart is chosen.")
+                }
+            }
         }
     }
     $info->{sshd} = findProcess("/sshd", $info);
@@ -1639,6 +1673,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{config} = "config --dump";
         $info->{lw}->{tools}->{status} = "get-status";
         $info->{lw}->{tools}->{regshell} = "regshell";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("PBIS Version $info->{lw}->{version} installed");
     }  elsif ($info->{lw}->{version}=~/^7\.\d+\./) {
         $info->{lw}->{base} = "/opt/pbis";
@@ -1675,6 +1710,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{config} = "config --dump";
         $info->{lw}->{tools}->{status} = "get-status";
         $info->{lw}->{tools}->{regshell} = "regshell";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("PBIS Version $info->{lw}->{version} installed");
     } elsif ($info->{lw}->{version}=~/^6\.5\./) {
         $info->{lw}->{base} = "/opt/pbis";
@@ -1711,6 +1747,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{config} = "config --dump";
         $info->{lw}->{tools}->{status} = "get-status";
         $info->{lw}->{tools}->{regshell} = "regshell";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("PBIS Version 6.5 installed");
     } elsif ($info->{lw}->{version} == "6.0.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1749,6 +1786,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{status} = "lw-get-status";
         $info->{lw}->{tools}->{config} = "lwconfig --dump";
         $info->{lw}->{tools}->{regshell} = "lwregshell";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 6.0 installed");
     } elsif ($info->{lw}->{version} == "5.4.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1785,6 +1823,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{config} = "lwconfig --dump";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 5.4 installed");
     } elsif ($info->{lw}->{version} == "5.3.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1832,6 +1871,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 5.3 installed");
     } elsif ($info->{lw}->{version} == "5.2.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1859,6 +1899,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 5.2 installed");
     } elsif ($info->{lw}->{version} == "5.1.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1884,6 +1925,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 5.1 installed");
     } elsif ($info->{lw}->{version} == "5.0.0") {
         $info->{lw}->{base} = "/opt/likewise";
@@ -1908,6 +1950,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{dctime} = "lw-get-dc-time";
         $info->{lw}->{tools}->{config} = "cat /etc/likewise/lsassd.conf";
         $info->{lw}->{tools}->{status} = "lw-get-status";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 5.0 installed");
     } elsif ($info->{lw}->{version} == "4.1") {
         if ($info->{OStype}=~/linux/) {
@@ -1932,6 +1975,7 @@ sub getLikewiseVersion($) {
         $info->{lw}->{tools}->{groupbyid} = "lwiinfo --gid-info";
         $info->{lw}->{tools}->{status} = "lwiinfo -pmt";
         $info->{lw}->{tools}->{config} = "cat /etc/centeris/lwiauthd.conf";
+        $info->{lw}->{tools}->{domainjoin} = "domainjoin-cli";
         logData("Likewise Version 4.1 installed");
     }
     readFile($info, $versionFile->{path});
@@ -2049,20 +2093,20 @@ sub outputReport($$) {
         $appendfile = $info->{logpath}."/".$info->{logfile};
         tarFiles($info, $opt, $tarballfile, $appendfile);
     }
+    if ($opt->{domainjoin}) {
+        tarFiles($info, $opt, $tarballfile, $opt->{djlog});
+    }
     if ($opt->{automounts}) {
         logInfo("Adding autofs files from PBIS GPO");
         tarFiles($info, $opt, $tarballfile, "/etc/lwi_automount/*");
-        logInfo("Now adding /etc/auto* as well");
         tarFiles($info, $opt, $tarballfile, "/etc/auto*");
     }
     if ($opt->{sambalogs}) {
-        logInfo("Adding files from $info->{logpath}/samba");
         tarFiles($info, $opt, $tarballfile, "$info->{logpath}/samba/*");
         if ($info->{logpath} ne "/var/log") {
             logDebug("Adding files from /var/log/samba also");
             tarFiles($info, $opt, $tarballfile, "/var/log/samba/*");
         }
-        logInfo("Adding samba configuration files");
         tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}/*"); 
     }
     if ($opt->{ssh}) {
@@ -2071,24 +2115,16 @@ sub outputReport($$) {
         logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
         tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
     }
-    logInfo("Adding pam files");
     tarFiles($info, $opt, $tarballfile, $info->{pampath});
-    logInfo("Adding krb5.conf");
     tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
     logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
     if ($opt->{sudo}) {
-        logInfo("Adding sudoers");
         tarFiles($info, $opt, $tarballfile, $info->{sudoers}->{path}) if ($info->{sudoers}->{path});
         logError("Can't find sudoers to add to tarball!") unless ($info->{sudoers}->{path});
     }
     if ($opt->{tcpdump}) {
-        logInfo("Adding tcpdump capture...");
         tarFiles($info, $opt, $tarballfile, $opt->{capturefile});
     }
-# Files to add under all circumstances
-    logInfo("Adding PBIS Configuration...");
-    tarFiles($info, $opt, $tarballfile, "/etc/likewise");
-    tarFiles($info, $opt, $tarballfile, "/etc/pbis");
     if (defined($opt->{gatherdb}) and $opt->{gatherdb} = 1) {
         logInfo("Adding Likewise DB folder (this may take a while if the eventlog is large)...");
         tarFiles($info, $opt, $tarballfile, "/var/lib/likewise/db");
@@ -2099,15 +2135,32 @@ sub outputReport($$) {
         tarFiles($info, $opt, $tarballfile, "/var/lib/likewise/grouppolicy");
         tarFiles($info, $opt, $tarballfile, "/var/lib/pbis/grouppolicy");
     }
+
+# Files to add under all circumstances
+    logInfo("Adding PBIS Configuration...");
+    tarFiles($info, $opt, $tarballfile, "/etc/likewise");
+    tarFiles($info, $opt, $tarballfile, "/etc/pbis");
     tarFiles($info, $opt, $tarballfile, $info->{nsfile});
     tarFiles($info, $opt, $tarballfile, $info->{timezonefile});
     if (defined($info->{hostsfile}->{path})) {
-        logInfo("Adding $info->{hostsfile}->{path}...");
         tarFiles($info, $opt, $tarballfile, $info->{hostsfile}->{path});
     }
     if (defined($info->{resolvconf}->{path})) {
-        logInfo("Adding $info->{resolvconf}->{path}...");
         tarFiles($info, $opt, $tarballfile, $info->{resolvconf}->{path});
+    }
+    if (-e "$info->{logpath}/pbis-enterprise-install.log") {
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/pbis-enterprise-install.log");
+    }
+    if (-e "$info->{logpath}/pbis-open-install.log") {
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/pbis-enterprise-install.log");
+    }
+    if (-e "$info->{logpath}/$info->{hostname}-likewise-install-results.out") {
+        logInfo("Adding ProServe install logfile $info->{hostname}-likewise-install-results.out");
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/$info->{hostname}-likewise-install-results.out");
+    }
+    if (-e "$info->{logpath}/$info->{hostname}-pbis-install-results.out") {
+        logInfo("Adding ProServe install logfile $info->{hostname}-pbis-install-results.out");
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/$info->{hostname}-pbis-install-results.out");
     }
     logInfo("Finished adding files, now for our output");
     if ($opt->{logfile} eq "-") {
@@ -2133,6 +2186,77 @@ sub runTests($$) {
     my $info = shift || confess "no info hash passed to test runner!\n";
     my $opt = shift || confess "no options hash passed to test runner!\n";
     my $data;
+
+# It makes no sense to run most of the below tests if you're not joined, so... let's do that test first
+    if ($opt->{domainjoin}) {
+        sectionBreak("domainjoin");
+        my ($djoptions, $djcommand, $domain, $user, $djlog);
+        if ($opt->{djcommand}) {
+            $djcommand = $opt->{djcommand};
+            logDebug("Domainjoin command is $djcommand");
+        }
+        if ($opt->{djlog}) {
+            $djlog = $opt->{djlog};
+            logDebug("Domainjoin log is $djlog");
+        }
+        while (not $djcommand) {
+            logData("Please enter the domainjoin command below.");
+            logData("Likely commands may be: 'join', 'configure', 'query', or 'leave'.");
+            $djcommand = <STDIN>;
+            chomp $djcommand;
+            if ($djcommand=~/^\bhelp\b$/i) {
+                runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} --$djcommand", "print");
+                $djcommand = "";
+            }
+            $opt->{djcommand} = $djcommand;
+            if ($djcommand!~/^(join|query|configure|leave|fixfqdn|setname)$/i) {
+                $djcommand = "";
+                LogData("Invalid domainjoin command, please try again.");
+            }
+        }
+        if ($djcommand!~/(leave|query)/) {
+            if ($opt->{djoptions}) {
+                $djoptions = $opt->{djoptions};
+            }
+            while (not $djoptions) {
+                logData("Please enter the domainjoin args below.");
+                logData("Likely args may be: '--notimesync --disable hostname --ou Company/Location'.");
+                logData("If you want the help statement, type 'help', and if you want no args, type a space:");
+                $djoptions = <STDIN>;
+                chomp $djoptions;
+                if ($djoptions=~/^\bhelp\b$/i) {
+                    runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} --help", "print");
+                    $djoptions = "";
+                }
+                $opt->{djoptions} = $djoptions;
+            }
+        }
+        if ($djcommand=~/\bjoin\b/) {
+            if ($opt->{djdomain}) {
+                $domain= $opt->{djdomain};
+            }
+            while (not $domain) {
+                logData("Please enter the domain to join below.");
+                $domain= <STDIN>;
+                chomp $domain;
+                $opt->{djdomain} = $domain;
+            }
+            if ($opt->{sshuser}) {
+                $user = $opt->{sshuser};
+            } else {
+                logData("Please enter a user to join the domain with here:");
+                $user = <STDIN>;
+                chomp $user;
+                $opt->{sshuser} = $user;
+            }
+            logData("This tool will now run the following command:");
+            logData("$info->{lw}->{tools}->{domainjoin} --loglevel verbose --logfile $djlog $djcommand $djoptions $domain $user");
+            logData(" ");
+            logData("You will see 2 lines, followed by a blank and a cursor. Please input your password at that point:");
+            logData(" ");
+        }
+        runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} --loglevel verbose --logfile $djlog $djcommand $djoptions $domain $user", "print");
+    }
 # Run tests that run every time no matter what
 
     sectionBreak("lw-get-status");
@@ -2355,6 +2479,7 @@ sub main() {
         delaytime => 180,
         gatherdb => 1,
         psoutput => 1,
+        djlog => "/var/log/domainjoin-verbose.log",
     };
 
     my $ok = GetOptions($opt,
@@ -2374,6 +2499,11 @@ sub main() {
         'tcpdump|capture|snoop|iptrace|nettl|c!',
         'capturefile=s',
         'othertests|other|o!',
+        'domainjoin|dj!',
+        'djcommand=s',
+        'djoptions=s',
+        'djdomain=s',
+        'djlog=s',
         'lsassd|winbindd!',
         'lwiod|lwrdrd|npcmuxd!',
         'netlogond!',
@@ -2402,6 +2532,12 @@ sub main() {
     );
     my $more = shift @ARGV;
     my $errors;
+    
+    if ($opt->{domainjoin}) {
+        $opt->{restart} = 1;
+        $opt->{other} = 1;
+        $opt->{tcpdump} =1;
+    }
 
     if (not defined $opt->{restart}) {
         $opt->{restart} = 1 if not $opt->{syslog};
@@ -2496,6 +2632,17 @@ sub main() {
     foreach my $el (keys(%{$opt})) {
         logData("$el = ".&getOnOff($opt->{$el}));
     }
+    
+    #TODO support SELinux in Enforcing mode with secontext switches.
+    if ((defined $opt->{restart} && $opt->{restart}) && $info->{selinux}) {
+        logError("SELinux enforcing mode is *NOT* compatible with the '--restart' option.");
+        logError("  Please run 'setenforce 0' before running this tool with the '--restart' option");
+        logError("  This tool choses not to run this command for you, to avoid conflicting with corporate policy.");
+        logError("  Support may accept the results of this tool with the '--syslog' option instead, which is compatible with Enforcing mode.");
+        $gRetval |= ERR_OPTIONS;
+        $gRetval |= ERR_OS_INFO;
+        exit $gRetval;
+    }
 
     if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
         sectionBreak("Starting tcpdump");
@@ -2573,7 +2720,18 @@ usage: pbis-support.pl [tests] [log choices] [options]
     --(no)delay (default = off)
     Pause the script for 90 seconds to gather logging
     data, for example from GUI logons.
-    -dt --delaytime <seconds> (default = 90)
+    -dt --delaytime <seconds> (default = 180)
+    -dj --domainjoin (default = on)
+        Set flags for attempting to join AD, then launch the join interactively
+        --djcommand
+            command for domainjoin-cli, such as 'join', 'query', 'leave'
+        --djoptions
+            Enter domainjoin args such as '--disable hostname --ou AZ/Phoenix/Server'
+        --djdomain
+            Name of domain to attempt to join
+        --djlog (default = /var/log/domainjoin-verbose.log)
+            Path of the domainjoin log.
+        Use '--sshuser' for the domainjoin username, or be prompted
 
     Log choices: 
 
@@ -2691,7 +2849,12 @@ readFile($info, $filename) reads $filename, print to screen and log, parse if ne
 
 runTests($info, $opt) - runs the actual tests based on flags
 
-runTool($info, $opt, $tool) - runs $tool from /opt/pbis/bin directory, capturing output and error state, printing to log/screen
+runTool($info, $opt, $tool, $action: $filter) - runs $tool from /opt/pbis/bin directory, performing one of several "actions":
+    bury: used to run a tool for its action, rather than its output
+    print: used to print a tool's output to screen/log, such as enum-users. Avoids OOM errors for 20k+ user environments.
+    return: captures output in an array which is returned to the caller - can generate OOM errors if output is too large.
+    grep: search the output for lines which match $filter, returning only those matches in the passed-back array.
+        If $filter includes grouping, each line that matches $1 will be returned, rather than the full line
 
 safeRegex($regex) - escape handling for safe regular expression matching in user-input strings.
 
@@ -2741,6 +2904,11 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         othertests
         delay
         authtest
+        domainjoin
+        djoptions (string)
+        djdomain (string)
+        djcommand (string)
+        djlog (string)
     (Group: Extra Info to gather)
         automounts
         tcpdump
@@ -2776,6 +2944,7 @@ $info is a hash reference, with keys as below. This is a multi-level hash as des
     timezonefile (string: path to system's timezone information)
     platform (string: like "i386" or similar, removes anything after a "-" as returned from Config{platform})
     osversion (string: "uname -r" output)
+    hostname (string: Sys::Hostname::hostname() output)
     uname (string: "uname" output)
     logon (string: login name of user who called the tool (sudo does not mask this))
     name (string: real name of user program is running under (root under sudo))
