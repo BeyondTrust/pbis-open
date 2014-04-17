@@ -80,13 +80,25 @@ make()
 	dcethread_frame_push.c \
 	dcethread_frame_pop.c"
 
+    case "${MK_OS}-${MK_ISA}" in
+        hpux-ia64_32)
+            TMP_CFLAGS="-Wall"
+            ;;
+        hpux-ia64_64)
+            TMP_CFLAGS="-Wall"
+            ;;
+        *)
+            TMP_CFLAGS="-Wall -Werror"
+            ;;
+    esac
+
     mk_group \
         GROUP="dcethread" \
         SOURCES="$API_FILES" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="$LIB_PTHREAD $LIB_RT" \
         CPPFLAGS="-DAPI" \
-        CFLAGS="-Wall -Werror"
+        CFLAGS="$TMP_CFLAGS"
 
     mk_have_moonunit && mk_moonunit \
         DLO="dcethread_mu" \
