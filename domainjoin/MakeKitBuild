@@ -16,7 +16,15 @@ configure()
     
     lw_define_feature_macros
 
-    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    case "${MK_OS}-${MK_ISA}" in
+        hpux-ia64_32)
+            ;;
+        hpux-ia64_64)
+            ;;
+        *)
+            MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+            ;;
+    esac
     
     mk_define LOCALSTATEDIR "\"$MK_LOCALSTATEDIR\""
     mk_define BINDIR "\"$MK_BINDIR\""
