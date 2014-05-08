@@ -912,6 +912,28 @@ LWIDirNodeQuery::DoDirNodeAuth(
                     }
                 }
             }
+            else
+            {
+               //Take care of the situation, the last AD user was removed from
+               //pAllowAdminCheckData, thus making pAllowAdminCheckData NULL.
+               // If the user is in the local admin group, but because 
+               // AllowAdminCheckData is null, then if the user is an AD 
+               // user it should be removed from the local admin group.
+               BOOLEAN bIsInAdminGroup = LWIsUserInLocalGroup(username, "admin");
+               if (bIsInAdminGroup)
+               {
+                  if (!(Flags & LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS))
+                  {
+                     macError = LWRemoveUserFromLocalGroup(username, "admin");
+                     if (macError)
+                     {
+                        LOG("Failed to remove user (%s) from admin group with error: %d", username, macError);
+                        macError = eDSNoErr;
+                     }
+
+                  }
+               }
+            }
 
             /* Add user to the local staff group also, if not already a member */
             if (!LWIsUserInLocalGroup(username, "staff"))
