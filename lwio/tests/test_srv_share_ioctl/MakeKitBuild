@@ -1,0 +1,14 @@
+make()
+{
+    TEST_IOCTL_SOURCES="main.c"
+
+    mk_program \
+        PROGRAM=test_srv_share_ioctl \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="$TEST_IOCTL_SOURCES" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h lwio/srvshareapi.h" \
+        LIBDEPS="lwioclient lwbase lwbase_nothr $LIB_PTHREAD"
+
+    lw_add_tool_target "$result"
+}

@@ -1,0 +1,53 @@
+make()
+{
+    IDL_FILES="\
+        codesets.idl conv.idl convc.idl ep.idl \
+        iovector.idl lbase.idl mgmt.idl nbase.idl ncastat.idl \
+        ndrold.idl rpc.idl rpcbase.idl rpcpvt.idl rpcsts.idl rpctypes.idl \
+        twr.idl uuid.idl id_base.idl \
+        schannel.idl smb.idl lrpc.idl"
+
+    PLAIN_HEADERS="codesets_stub.h stubbase.h idl_es.h idlbase.h idlddefs.h \
+        rpcexc.h dce_utils.h sec_authn.h dce.h dce_error.h marshall.h ndr_rep.h ndrtypes.h \
+        dcethread.h"
+
+    PLAT_HEADERS="$target_os/dce_error.h $target_os/dce.h"
+    
+    for cpu in ${target_cpu}
+    do
+        PLAT_HEADERS="$PLAT_HEADERS $cpu/ndrtypes.h $cpu/ndr_rep.h $cpu/marshall.h"
+    done
+
+    COMMON_IDL="codesets.idl conv.idl convc.idl ep.idl \
+	iovector.idl lbase.idl mgmt.idl nbase.idl ncastat.idl \
+	ndrold.idl rpc.idl rpcbase.idl rpcpvt.idl rpcsts.idl rpctypes.idl \
+	twr.idl uuid.idl id_base.idl"
+
+    IDL_HEADERS=""
+
+    for _idl in ${IDL_FILES}
+    do
+        _idl_header="${_idl%.idl}.h"
+
+        if [ "$_idl_header" != "rpc.h" ]
+        then
+            IDL_HEADERS="$IDL_HEADERS $_idl_header"
+        fi
+
+        lw_dceidl \
+            IDL="$_idl" \
+            HEADER="$_idl_header" \
+            INCLUDEDIRS=". .." \
+            IDLFLAGS="-cepv $IDL_CFLAGS" \
+            HEADERDEPS="lw/base.h"
+    done
+
+    mk_headers \
+        INSTALLDIR="${MK_INCLUDEDIR}/dce" \
+        MASTER="rpc.h" \
+        HEADERS="$PLAIN_HEADERS $PLAT_HEADERS $IDL_HEADERS"
+
+    mk_headers \
+	INSTALLDIR="${MK_INCLUDEDIR}/dce" \
+	HEADERS="$COMMON_IDL"
+}

@@ -1,0 +1,8 @@
+//
+// Prefix header for all source files of the 'UserMigrate' target in the 'UserMigrate' project.
+//
+
+#include <Carbon/Carbon.h>
+#include "HIFramework.h"
+#include "TApplication.h"
+#include "TWindow.h"

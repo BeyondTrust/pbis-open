@@ -1,0 +1,88 @@
+SUBDIRS="include utils ipc common client parse shellutil server shell test"
+
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_backend="memory"
+            ;;
+        *)
+            _default_backend="sqlite"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=registry-backend \
+        PARAM='value' \
+        VAR=LWREG_REGISTRY_BACKEND \
+        DEFAULT="$_default_backend" \
+        HELP="Registry backend (sqlite | memory)"
+}
+
+
+configure()
+{
+    mk_config_header 'include/config.h'
+
+    mk_declare -o \
+        MOD_EXT="${MK_DLO_EXT}" \
+        LIBDIR="${MK_LIBDIR}" \
+        BINDIR="${MK_BINDIR}" \
+        SBINDIR="${MK_SBINDIR}" \
+        CACHEDIR="$LW_CACHEDIR"
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    lw_define_feature_macros
+
+    mk_multiarch_do
+        mk_check_endian
+    
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+    mk_multiarch_done
+
+    mk_check_headers \
+        stdlib.h \
+        sys/varargs.h \
+        time.h \
+        sys/time.h \
+        stdbool.h \
+        unistd.h \
+        sys/systeminfo.h \
+        sys/utsname.h \
+        sys/socket.h \
+        wc16str.h \
+        sys/pstat.h \
+        procfs.h \
+        sys/procfs.h \
+        sys/param.h \
+        inttypes.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h sys/param.h" \
+        sys/sysctl.h sys/user.h
+
+    mk_check_functions \
+        HEADERDEPS='ctype.h stdlib.h inttypes.h' \
+        isblank strtoll __strtoll strtoull __strtoull
+
+    lw_check_iconv
+
+    mk_check_headers \
+        FAIL=yes \
+        sqlite3.h uuid/uuid.h histedit.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        sqlite3 uuid edit
+
+    mk_check_libraries pthread
+
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
+
+    mk_output_file server/lwregd/lwreg.reg
+    mk_output_file shell/lw-edit-reg.sh
+}

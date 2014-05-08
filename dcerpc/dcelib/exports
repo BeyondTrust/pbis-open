@@ -1,0 +1,7 @@
+DCERPC_1.0 {
+global:
+	*;
+#local:
+#	*;
+};
+

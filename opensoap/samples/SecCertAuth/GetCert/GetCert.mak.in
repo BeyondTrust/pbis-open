@@ -1,0 +1,288 @@
+# -*- mode: makefile; -*-
+# -----------------------------------------------------------------------------
+#  $RCSfile: GetCert.mak.in,v $
+# 
+#  See Copyright for the status of this software.
+# 
+#  The OpenSOAP Project
+#  http://opensoap.jp/
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME = GetCert
+
+#
+console_client_PROGRAMFILES = GetCertClient
+
+#
+cgi_service_PROGRAMFILES = GetCertService.cgi
+#
+stdio_service_PROGRAMFILES = GetCertService
+
+SSML_IN_FILES = ${SERVICE_NAME}.ssml.in
+SSML_FILES = ${SSML_IN_FILES:.in=}
+
+#
+RPATH_COPTION = @RPATH_COPTION@
+#
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+sysconfdir = @sysconfdir@
+localstatedir = @localstatedir@
+includedir = @includedir@
+libdir = @libdir@
+
+# OpenSOAP conf and data directory
+OPENSOAP_SYSCONFDIR = @sysconfdir@
+OPENSOAP_LOCALSTATEDIR = @localstatedir@
+OPENSOAP_SERVICE_LOCALSTATEDIR = ${OPENSOAP_LOCALSTATEDIR}/services
+SSML_DIR=${OPENSOAP_SYSCONFDIR}/ssml
+
+#
+SERVICE_DIR = @servicesdir@/${SERVICE_NAME}
+SERVICE_LOCALSTATEDIR = ${OPENSOAP_SERVICE_LOCALSTATEDIR}/${SERVICE_NAME}
+
+#
+CGI_BIN_DIR = @CGI_BIN_DIR@
+
+#
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+
+# libiconv
+ICONV_LIBS = @ICONV_LIBS@
+# libxml2 libs
+XML2_LIBS = @XML2_LIBS@
+# ssl libs
+SSL_LIB_DIR = @SSL_LIB_DIR@
+SSL_LIBS = @SSL_LIBS@
+SSL_LDFLAGS = -L${SSL_LIB_DIR} ${RPATH_COPTION}${SSL_LIB_DIR}
+#SSL_LIBS = 
+#SSL_LDFLAGS =
+#
+LIBS = @LIBS@
+CC = @CC@
+
+#
+COMMON_LIBS=${XML2_LIBS} ${ICONV_LIBS} ${SSL_LIBS} ${LIBS}
+
+#
+# DEBUG_CFLAGS = -g
+CFLAGS = ${DEBUG_CFLAGS} -Wall -I${includedir} \
+	-DOPENSOAP_SYSCONFDIR=\"${OPENSOAP_SYSCONFDIR}\" \
+	-DSERVICE_DIR=\"${SERVICE_DIR}\" \
+	-DSERVICE_LOCALSTATEDIR=\"${SERVICE_LOCALSTATEDIR}\"
+#	-DSERVICE_NAME=\"${SERVICE_NAME}\"
+CGI_CFLAGS = ${CFLAGS} -DCONNECT_TYPE=\"cgi\"
+CGI_CLIENT_CFLAGS = ${CFLAGS} -DCLIENT_CGI
+CGI_SERVICE_CFLAGS = ${CFLAGS} -DCONNECT_TYPE_CGI
+
+#
+COMMON_LDFLAGS = -L${libdir} ${RPATH_COPTION}${libdir} ${SSL_LDFLAGS}
+
+#
+SECURITY_LIBS = -lOpenSOAPSecurity
+CLIENT_LIBS = ${SECURITY_LIBS} -lOpenSOAPClient
+SERVICE_LIBS = -lOpenSOAPService ${CLIENT_LIBS}
+CLIENT_LDFLAGS = ${COMMON_LDFLAGS} ${CLIENT_LIBS} ${COMMON_LIBS}
+SERVICE_LDFLAGS = ${COMMON_LDFLAGS} ${SERVICE_LIBS} ${COMMON_LIBS}
+
+#
+SOURCES = \
+	GetCertClient.c \
+	GetCertService.c \
+	DBrefer.c
+
+OBJS=${SOURCES:.c=.o} GetCertService.cgi.o
+
+#
+service_support_PROGRAMFILES = CA_Refer
+service_support_PROGRAMFILES_MODE = 4755
+#
+cgi_service_PROGRAMFILES = GetCertService.cgi
+
+#
+servicedatadir=${SERVICE_LOCALSTATEDIR}
+service_DATAFILES = \
+	CA.db \
+	CA.db_sno
+
+service_DATAFILES_MODE = 0666
+
+#
+stdio_service_PROGRAMFILES = GetCertService
+
+#
+PROGRAMS = \
+	${console_client_PROGRAMFILES} \
+	${service_support_PROGRAMFILES} \
+	${stdio_service_PROGRAMFILES} \
+	${cgi_service_PROGRAMFILES}
+
+all: ${PROGRAMS} ${SSML_FILES}
+
+## Make SSML files
+${SSML_FILES}: ${SSML_IN_FILES} GetCert.mak
+	@for i in ${SSML_IN_FILES}; do \
+		s=`echo $$i | sed 's/\.in$$//'`; \
+		sed "s%\@servicesdir\@%@servicesdir@%g" > $$s < $$i; \
+	done
+
+## Make Client Programs
+
+GetCertClient: GetCertClient.o
+	${CC}  -o $@ $^ ${CLIENT_LDFLAGS}
+
+## Make Service Programs
+
+## Service support program
+CA_Refer: DBrefer.o
+	${CC}  -o $@ $^ ${CLIENT_LDFLAGS}
+
+GetCertService: GetCertService.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+GetCertService.cgi: GetCertService.cgi.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+GetCertService.cgi.o: GetCertService.c
+	${CC} ${CGI_CFLAGS} -c -o $@ $<
+
+
+## Install Client Programs
+
+#
+console-client-install: ${console_client_PROGRAMFILES}
+	@if test -d ${DESTDIR}${bindir}; then \
+		echo "${DESTDIR}${bindir} exist."; \
+	else \
+		echo "${DESTDIR}${bindir} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${bindir}."; \
+		mkdir -p ${DESTDIR}${bindir}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${bindir}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${bindir}/$$f; \
+	done
+#
+client-install: console-client-install
+
+## Install Service Programs
+
+#
+service-support-install: ${service_support_PROGRAMFILES}
+	@if test -d ${DESTDIR}${SERVICE_DIR}; then \
+		echo "${DESTDIR}${SERVICE_DIR} exist."; \
+	else \
+		echo "${DESTDIR}${SERVICE_DIR} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${SERVICE_DIR}."; \
+		mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL} -m ${service_support_PROGRAMFILES_MODE} \
+			$$f ${DESTDIR}${SERVICE_DIR}; \
+	done
+
+#
+service-datas-install: ${service_DATAFILES}
+	@if test -d ${DESTDIR}${servicedatadir}; then \
+		echo "${DESTDIR}${servicedatadir} exist."; \
+	else \
+		echo "mkdir -m 777 -p ${DESTDIR}${servicedatadir}."; \
+		mkdir -m 777 -p ${DESTDIR}${servicedatadir}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${servicedatadir}."; \
+		${INSTALL} -m ${service_DATAFILES_MODE} \
+			$$f ${DESTDIR}${servicedatadir}/$$f; \
+	done
+
+service-common-install: service-support-install service-datas-install
+
+#
+ssml-install: ${SSML_FILES}
+	@if test -d ${DESTDIR}${SSML_DIR}; then \
+		echo "${DESTDIR}${SSML_DIR} exist."; \
+	else \
+		echo "mkdir -p ${DESTDIR}${SSML_DIR}."; \
+		mkdir -p ${DESTDIR}${SSML_DIR}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${SSML_DIR}."; \
+		${INSTALL_DATA} \
+			$$f ${DESTDIR}${SSML_DIR}/$$f; \
+	done
+
+stdio-service-programs-install: ${stdio_service_PROGRAMFILES}
+	@if test -d ${DESTDIR}${SERVICE_DIR}; then \
+		echo "${DESTDIR}${SERVICE_DIR} exist."; \
+	else \
+		echo "${DESTDIR}${SERVICE_DIR} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${SERVICE_DIR}."; \
+		mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${SERVICE_DIR}; \
+	done
+
+stdio-service-install: \
+	service-common-install \
+	stdio-service-programs-install \
+	ssml-install
+
+#
+cgi-service-programs-install: ${cgi_service_PROGRAMFILES}
+	@if test -d ${DESTDIR}${CGI_BIN_DIR}; then \
+		echo "${DESTDIR}${CGI_BIN_DIR} exist."; \
+	else \
+		echo "${DESTDIR}${CGI_BIN_DIR} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${CGI_BIN_DIR}."; \
+		mkdir -p ${DESTDIR}${CGI_BIN_DIR}; \
+	fi
+	for f in $^ ; do \
+		echo "$$f install to ${CGI_BIN_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${CGI_BIN_DIR}/$$f; \
+	done
+
+cgi-service-install: \
+	service-common-install \
+	cgi-service-programs-install
+
+#
+service-install: cgi-service-install stdio-service-install
+
+#
+install-samples: client-install service-install
+
+# 
+install: service-install
+
+## 
+clean: 
+	rm -f ${OBJS} ${PROGRAMS} *~ core pubKey_res.pem result.cert
+
+
+## Test Client-Service (or Client-Server-Service) Hookups
+
+ctest1:
+	./GetCertClient "David Beckham" \
+	&& cmp pubKey_res.pem pubKey_Beckham.pem
+
+ctest2:
+	./GetCertClient "Alessandro Del Piero" \
+	&& cmp pubKey_res.pem pubKey_DelPiero.pem
+
+ctest3:
+	./GetCertClient "OpenSOAP-SAMPLE-CA" \
+	&& cmp pubKey_res.pem pubKey_CA.pem
+
+ctest4:
+	./GetCertClient "nobody"

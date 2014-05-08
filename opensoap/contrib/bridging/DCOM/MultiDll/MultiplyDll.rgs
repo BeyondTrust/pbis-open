@@ -1,0 +1,26 @@
+HKCR
+{
+	MultiDll.MultiplyDll.1 = s 'MultiplyDll Class'
+	{
+		CLSID = s '{5A231398-BFF1-43DA-8E38-502F7161830E}'
+	}
+	MultiDll.MultiplyDll = s 'MultiplyDll Class'
+	{
+		CLSID = s '{5A231398-BFF1-43DA-8E38-502F7161830E}'
+		CurVer = s 'MultiDll.MultiplyDll.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {5A231398-BFF1-43DA-8E38-502F7161830E} = s 'MultiplyDll Class'
+		{
+			ProgID = s 'MultiDll.MultiplyDll.1'
+			VersionIndependentProgID = s 'MultiDll.MultiplyDll'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '{8394891A-E3AA-4840-8125-DAA85FE9AAC6}'
+			'TypeLib' = s '{81C5EBD4-AD45-40AE-AC50-1DB388118ABE}'
+		}
+	}
+}

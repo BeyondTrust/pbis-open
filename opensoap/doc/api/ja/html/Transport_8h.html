@@ -1,0 +1,1360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: Transport.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>Transport.h</h1>OpenSOAP API トランスポート処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="ByteArray_8h-source.html">OpenSOAP/ByteArray.h</a>&gt;</code><br>
+<code>#include &lt;<a class="el" href="Envelope_8h-source.html">OpenSOAP/Envelope.h</a>&gt;</code><br>
+<code>#include &lt;<a class="el" href="Stream_8h-source.html">OpenSOAP/Stream.h</a>&gt;</code><br>
+
+<p>
+<a href="Transport_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>マクロ定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a0">OPENSOAP_AUTH_TYPE_BASIC</a>&nbsp;&nbsp;&nbsp;(1)  /* BASIC */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポートにおけるベーシック認証  <a href="#a0"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a1">OPENSOAP_AUTH_TYPE_DIGEST</a>&nbsp;&nbsp;&nbsp;(2)  /* DIGEST */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポートにおけるダイジェスト認証  <a href="#a1"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a2">OPENSOAP_AUTH_TYPE_ANY</a>&nbsp;&nbsp;&nbsp;(0)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポートにおける認証でサポートするものなら何でも  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a3">OPENSOAP_SSL_VER_SSL2</a>&nbsp;&nbsp;&nbsp;(1)  /* SSL_V2.0 ONLY */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL バージョン SSL2.0のみ.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a4">OPENSOAP_SSL_VER_SSL3</a>&nbsp;&nbsp;&nbsp;(2)  /* SSL_V3.0 ONLY */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL バージョン SSL3.0のみ.  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a5">OPENSOAP_SSL_VER_TLS1</a>&nbsp;&nbsp;&nbsp;(4)  /* TLS_V1.0 ONLY */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL バージョン TLS1.0のみ.  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a6">OPENSOAP_SSL_VER_ALL</a>&nbsp;&nbsp;&nbsp;(0) /* SSL all version */</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL バージョン サポートするもの全て(SSLv2/SSLv3/TLSv1).  <a href="#a6"></a><br><br></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a7" doxytag="Transport.h::OpenSOAPTransport" ></a>
+typedef tagOpenSOAPTransport&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a7">OpenSOAPTransport</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPTransport 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a8" doxytag="Transport.h::OpenSOAPTransportPtr" ></a>
+typedef <a class="el" href="Transport_8h.html#a7">OpenSOAPTransport</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPTransport ポインタ定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a9">OpenSOAPTransportCreate</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> *t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポートの生成  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a10">OpenSOAPTransportRelease</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポートの開放  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a11">OpenSOAPTransportSend</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SOAPメッセージをByteArrayとして送信します。.  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a12">OpenSOAPTransportReceive</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soap_env)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SOAPメッセージ受信.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a13">OpenSOAPTransportConnect</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">End Point への接続.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a14">OpenSOAPTransportDisconnect</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">End Point からの切断.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a15" doxytag="Transport.h::OpenSOAPTransportInvokeStream" ></a>
+int&nbsp;</td><td class="memItemRight" valign=bottom><b>OpenSOAPTransportInvokeStream</b> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, <a class="el" href="Stream_8h.html#a1">OpenSOAPStreamPtr</a> stream, int input_size, int *tp_status)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a16">OpenSOAPTransportInvokeByteArray</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> request, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> response, int *tp_status)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPByteArray による SOAP 呼出.  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a17">OpenSOAPTransportInvoke</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> request, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *response)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SOAP呼出.  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a18">OpenSOAPTransportSetSOAPAction</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *soap_action)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SOAP-Action設定(Some-URI).  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a19">OpenSOAPTransportSetURL</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *url)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">リクエストURL設定  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a20">OpenSOAPTransportSetHeader</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *header_name, const char *header_value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダー設定  <a href="#a20"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a21">OpenSOAPTransportGetHeader</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *header_name, char **header_value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">レスポンスヘッダーの値の入手  <a href="#a21"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a22">OpenSOAPTransportSetCharset</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *charset)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">キャラクタセット設定  <a href="#a22"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a23">OpenSOAPTransportSetContentType</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *content_type)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">コンテントタイプ(Content-Type)設定 (<a class="el" href="Transport_8h.html#a22">OpenSOAPTransportSetCharset()</a>での指定を上書き)  <a href="#a23"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a24">OpenSOAPTransportSMTPSetHostname</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> s)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SMTPホスト名設定.  <a href="#a24"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a25">OpenSOAPTransportSMTPSetFrom</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SMTP送信者設定.  <a href="#a25"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a26">OpenSOAPTransportSMTPSetTo</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SMTP宛て先設定.  <a href="#a26"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a27">OpenSOAPTransportSetAuthUserPass</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *user, const char *passwd)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">認証用のユーザ／パスワードを設定.  <a href="#a27"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a28">OpenSOAPTransportSetAuthType</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, int auth_type)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">認証の方法を設定.  <a href="#a28"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a29">OpenSOAPTransportSetProxy</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *host, int port, const char *user, const char *passwd, int auth_type)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">プロキシー・サーバに関する設定  <a href="#a29"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a30">OpenSOAPTransportSetSSLVersion</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, int ssl_version)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">許可するSSLバージョンを設定  <a href="#a30"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Transport_8h.html#a31">OpenSOAPTransportSetSSLCert</a> (<a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> t, const char *ca_file, const char *ca_dir, const char *certchain_file, const char *privkey_file, int verify_level)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL 認証用証明書ファイルの設定.  <a href="#a31"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API トランスポート処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>マクロ定義</h2>
+<a class="anchor" name="a2" doxytag="Transport.h::OPENSOAP_AUTH_TYPE_ANY" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_AUTH_TYPE_ANY&nbsp;&nbsp;&nbsp;(0)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポートにおける認証でサポートするものなら何でも 
+<p>
+(0)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a0" doxytag="Transport.h::OPENSOAP_AUTH_TYPE_BASIC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_AUTH_TYPE_BASIC&nbsp;&nbsp;&nbsp;(1)  /* BASIC */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポートにおけるベーシック認証 
+<p>
+(1)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a1" doxytag="Transport.h::OPENSOAP_AUTH_TYPE_DIGEST" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_AUTH_TYPE_DIGEST&nbsp;&nbsp;&nbsp;(2)  /* DIGEST */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポートにおけるダイジェスト認証 
+<p>
+(2)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="Transport.h::OPENSOAP_SSL_VER_ALL" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SSL_VER_ALL&nbsp;&nbsp;&nbsp;(0) /* SSL all version */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL バージョン サポートするもの全て(SSLv2/SSLv3/TLSv1). 
+<p>
+(0)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="Transport.h::OPENSOAP_SSL_VER_SSL2" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SSL_VER_SSL2&nbsp;&nbsp;&nbsp;(1)  /* SSL_V2.0 ONLY */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL バージョン SSL2.0のみ. 
+<p>
+(1)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="Transport.h::OPENSOAP_SSL_VER_SSL3" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SSL_VER_SSL3&nbsp;&nbsp;&nbsp;(2)  /* SSL_V3.0 ONLY */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL バージョン SSL3.0のみ. 
+<p>
+(2)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="Transport.h::OPENSOAP_SSL_VER_TLS1" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SSL_VER_TLS1&nbsp;&nbsp;&nbsp;(4)  /* TLS_V1.0 ONLY */
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL バージョン TLS1.0のみ. 
+<p>
+(4)     </td>
+  </tr>
+</table>
+<hr><h2>関数</h2>
+<a class="anchor" name="a13" doxytag="Transport.h::OpenSOAPTransportConnect" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportConnect </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+End Point への接続. 
+<p>
+End Point への接続を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="Transport.h::OpenSOAPTransportCreate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportCreate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポートの生成 
+<p>
+トランスポートを生成します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr * [out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="Transport.h::OpenSOAPTransportDisconnect" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportDisconnect </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+End Point からの切断. 
+<p>
+End Point から切断します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a21" doxytag="Transport.h::OpenSOAPTransportGetHeader" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportGetHeader </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>header_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>header_value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+レスポンスヘッダーの値の入手 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>header_name</em>&nbsp;</td><td>const char * [in] ((|header_name|)) トランスポートレスポンスヘッダ名 </td></tr>
+    <tr><td valign=top><em>header_value</em>&nbsp;</td><td>char ** [out] ((|header_value|)) ヘッダ値ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="Transport.h::OpenSOAPTransportInvoke" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportInvoke </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>request</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>response</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SOAP呼出. 
+<p>
+SOAP呼出を行います。返信メッセージをEnveropeポインタに格納します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>request</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|request|)) OpenSOAP 要求 </td></tr>
+    <tr><td valign=top><em>response</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [in, out] ((|response|))OpenSOAP レスポンス Envelope ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a16" doxytag="Transport.h::OpenSOAPTransportInvokeByteArray" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportInvokeByteArray </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>request</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>response</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>tp_status</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAPByteArray による SOAP 呼出. 
+<p>
+OpenSOAPByteArray による SOAP 呼出を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>request</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|request|)) OpenSOAP 要求 </td></tr>
+    <tr><td valign=top><em>response</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|response|)) OpenSOAP レスポンス </td></tr>
+    <tr><td valign=top><em>tp_status</em>&nbsp;</td><td>int * [out] ((|tp_status|)) トランスポートステータス値ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="Transport.h::OpenSOAPTransportReceive" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportReceive </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SOAPメッセージ受信. 
+<p>
+SOAPメッセージの受信を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [in, out] ((|soap_env|)) OpenSOAP Envelope ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="Transport.h::OpenSOAPTransportRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポートの開放 
+<p>
+トランスポートを開放します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="Transport.h::OpenSOAPTransportSend" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSend </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SOAPメッセージをByteArrayとして送信します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a28" doxytag="Transport.h::OpenSOAPTransportSetAuthType" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetAuthType </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>auth_type</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+認証の方法を設定. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>auth_type</em>&nbsp;</td><td>int [in] ((|auth_type|)) 使用する認証方法 (次のいずれか) OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST | OPENSOAP_AUTH_TYPE_ANY もし OPENSOAP_AUTH_TYPE_BASICのみが指定された場合、 1回目のリクエストで直接ユーザ・パスワードが送信されます。 (それ以外は、要求された場合のみ) </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a27" doxytag="Transport.h::OpenSOAPTransportSetAuthUserPass" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetAuthUserPass </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>user</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>passwd</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+認証用のユーザ／パスワードを設定. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>user</em>&nbsp;</td><td>const char * [in] ((|user|)) ユーザ名 </td></tr>
+    <tr><td valign=top><em>passwd</em>&nbsp;</td><td>const char * [in] ((|passwd|)) パスワード </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a22" doxytag="Transport.h::OpenSOAPTransportSetCharset" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetCharset </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>charset</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+キャラクタセット設定 
+<p>
+キャラクタセットを設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>charset</em>&nbsp;</td><td>const char * [in] ((|charset|)) キャラクタセットポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a23" doxytag="Transport.h::OpenSOAPTransportSetContentType" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetContentType </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>content_type</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+コンテントタイプ(Content-Type)設定 (<a class="el" href="Transport_8h.html#a22">OpenSOAPTransportSetCharset()</a>での指定を上書き) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>content_type</em>&nbsp;</td><td>const char * [in] ((|content_type|)) コンテントタイプ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="Transport.h::OpenSOAPTransportSetHeader" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetHeader </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>header_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>header_value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダー設定 
+<p>
+任意のヘッダーを設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>header_name</em>&nbsp;</td><td>const char * [in] ((|header_name|)) トランスポートヘッダ名 </td></tr>
+    <tr><td valign=top><em>header_value</em>&nbsp;</td><td>const char * [in] ((|header_value|)) ヘッダ値ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a29" doxytag="Transport.h::OpenSOAPTransportSetProxy" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetProxy </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>host</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>port</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>user</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>passwd</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>auth_type</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+プロキシー・サーバに関する設定 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>host</em>&nbsp;</td><td>const char * [in] ((|host|)) プロキシー・サーバのホスト名 </td></tr>
+    <tr><td valign=top><em>port</em>&nbsp;</td><td>int [in] ((|port|)) プロキシー・サーバのポート番号 </td></tr>
+    <tr><td valign=top><em>user</em>&nbsp;</td><td>const char * [in] ((|user|)) プロキシー・サーバ用のユーザ名 (NULLなら認証なし) </td></tr>
+    <tr><td valign=top><em>passwd</em>&nbsp;</td><td>const char * [in] ((|passwd|)) プロキシー・サーバ用のパスワード </td></tr>
+    <tr><td valign=top><em>auth_type</em>&nbsp;</td><td>int [in] ((|auth_type|)) 使用する認証方法 (次のいずれか) OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST | OPENSOAP_AUTH_TYPE_ANY </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a18" doxytag="Transport.h::OpenSOAPTransportSetSOAPAction" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetSOAPAction </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_action</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SOAP-Action設定(Some-URI). 
+<p>
+SOAP-Action設定(Some-URI)を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>soap_action</em>&nbsp;</td><td>const char * [in] ((|soap_action|)) soap-action ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a31" doxytag="Transport.h::OpenSOAPTransportSetSSLCert" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetSSLCert </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ca_file</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ca_dir</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>certchain_file</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>privkey_file</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>verify_level</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL 認証用証明書ファイルの設定. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>ca_file</em>&nbsp;</td><td>const char * [in] ((|ca_file|)) 接続先認証用の認証局の証明書ファイル名 (NULLなら認証なし) </td></tr>
+    <tr><td valign=top><em>ca_dir</em>&nbsp;</td><td>const char * [in] ((|ca_dir|)) 認証局の証明書が含まれるディレクトリ名(NULLならディレクトリを見ない) </td></tr>
+    <tr><td valign=top><em>certchain_file</em>&nbsp;</td><td>const char * [in] ((|certchain_file|)) ローカルの証明書チェーンファイル名(NULLならローカルの認証なし) </td></tr>
+    <tr><td valign=top><em>privkey_file</em>&nbsp;</td><td>const char * [in] ((|privkey_file|)) ローカル認証用証明書のペアとなる秘密鍵のファイル名。(NULLならローカルの認証なし) </td></tr>
+    <tr><td valign=top><em>verify_level</em>&nbsp;</td><td>int [in] ((|verify_level|)) 接続先の証明書の確認レベル。</td></tr>
+  </table>
+</dl>
+0(デフォルト)ならば証明書が不正でも継続。 1ならば、中断して失敗とする。 <dl compact><dt><b>戻り値:</b></dt><dd>Error Code </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a30" doxytag="Transport.h::OpenSOAPTransportSetSSLVersion" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetSSLVersion </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>ssl_version</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+許可するSSLバージョンを設定 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>ssl_version</em>&nbsp;</td><td>int [in] ((|ssl_version|)) SSL バージョン。次のいずれか (OPENSOAP_SSL_VER_SSL2 | OPENSOAP_SSL_VER_SSL3 | OPENSOAP_SSL_VER_TLS1 | OPENSOAP_SSL_VER_ALL) </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a19" doxytag="Transport.h::OpenSOAPTransportSetURL" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSetURL </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>url</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+リクエストURL設定 
+<p>
+リクエストURL設定 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+    <tr><td valign=top><em>url</em>&nbsp;</td><td>const char * [in] ((|url|)) URL </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a25" doxytag="Transport.h::OpenSOAPTransportSMTPSetFrom" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSMTPSetFrom </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SMTP送信者設定. 
+<p>
+SMTP送信者を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a24" doxytag="Transport.h::OpenSOAPTransportSMTPSetHostname" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSMTPSetHostname </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>s</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SMTPホスト名設定. 
+<p>
+SMTPホスト名を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>s</em>&nbsp;</td><td>OpenSOAPTransportPtr [out] ((|s|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a26" doxytag="Transport.h::OpenSOAPTransportSMTPSetTo" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPTransportSMTPSetTo </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Transport_8h.html#a8">OpenSOAPTransportPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>t</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SMTP宛て先設定. 
+<p>
+SMTP宛て先を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>t</em>&nbsp;</td><td>OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP トランスポートポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:48 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

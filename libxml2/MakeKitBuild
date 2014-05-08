@@ -1,0 +1,72 @@
+make()
+{
+    # libxml2 likes to put headers in weird places
+    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
+
+    XML_HEADERS="\
+        ${XML_INCDIR}/libxml/xmlmodule.h \
+        ${XML_INCDIR}/libxml/entities.h \
+        ${XML_INCDIR}/libxml/parser.h \
+        ${XML_INCDIR}/libxml/xmlexports.h \
+        ${XML_INCDIR}/libxml/encoding.h \
+        ${XML_INCDIR}/libxml/xmlmemory.h \
+        ${XML_INCDIR}/libxml/debugXML.h \
+        ${XML_INCDIR}/libxml/nanohttp.h \
+        ${XML_INCDIR}/libxml/schemasInternals.h \
+        ${XML_INCDIR}/libxml/threads.h \
+        ${XML_INCDIR}/libxml/schematron.h \
+        ${XML_INCDIR}/libxml/dict.h \
+        ${XML_INCDIR}/libxml/xlink.h \
+        ${XML_INCDIR}/libxml/xmlregexp.h \
+        ${XML_INCDIR}/libxml/xmlunicode.h \
+        ${XML_INCDIR}/libxml/valid.h \
+        ${XML_INCDIR}/libxml/xpointer.h \
+        ${XML_INCDIR}/libxml/xmlwriter.h \
+        ${XML_INCDIR}/libxml/DOCBparser.h \
+        ${XML_INCDIR}/libxml/HTMLtree.h \
+        ${XML_INCDIR}/libxml/xpathInternals.h \
+        ${XML_INCDIR}/libxml/xmlschemastypes.h \
+        ${XML_INCDIR}/libxml/uri.h \
+        ${XML_INCDIR}/libxml/catalog.h \
+        ${XML_INCDIR}/libxml/hash.h \
+        ${XML_INCDIR}/libxml/xmlschemas.h \
+        ${XML_INCDIR}/libxml/xmlIO.h \
+        ${XML_INCDIR}/libxml/xinclude.h \
+        ${XML_INCDIR}/libxml/xpath.h \
+        ${XML_INCDIR}/libxml/list.h \
+        ${XML_INCDIR}/libxml/globals.h \
+        ${XML_INCDIR}/libxml/relaxng.h \
+        ${XML_INCDIR}/libxml/xmlautomata.h \
+        ${XML_INCDIR}/libxml/xmlversion.h \
+        ${XML_INCDIR}/libxml/SAX2.h \
+        ${XML_INCDIR}/libxml/chvalid.h \
+        ${XML_INCDIR}/libxml/SAX.h \
+        ${XML_INCDIR}/libxml/xmlsave.h \
+        ${XML_INCDIR}/libxml/nanoftp.h \
+        ${XML_INCDIR}/libxml/pattern.h \
+        ${XML_INCDIR}/libxml/xmlreader.h \
+        ${XML_INCDIR}/libxml/parserInternals.h \
+        ${XML_INCDIR}/libxml/xmlerror.h \
+        ${XML_INCDIR}/libxml/HTMLparser.h \
+        ${XML_INCDIR}/libxml/tree.h \
+        ${XML_INCDIR}/libxml/xmlstring.h \
+        ${XML_INCDIR}/libxml/c14n.h"
+
+    mk_autotools \
+        HEADERS="$XML_HEADERS" \
+        LIBS="xml2:8:29:6" \
+        INSTALL_PRE=xml2_pre \
+        -- \
+        --with-iconv=no \
+        --with-zlib=no \
+        --with-http=no \
+        --with-ftp=no \
+        --enable-ipv6=no \
+        --with-python=no
+}
+
+xml2_pre()
+{
+    mk_mkdir "$1${MK_INCLUDEDIR}/libxml2/libxml"
+    mk_mkdir "$1${MK_LIBDIR}"
+}

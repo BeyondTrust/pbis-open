@@ -1,0 +1,13 @@
+make()
+{
+    COMMON_SOURCES="globals.c listener.c"
+    NETLOGON_SOURCES="$COMMON_SOURCES main-svcm.c"
+
+    lw_service \
+        SERVICE="netlogon" \
+        SOURCES="$NETLOGON_SOURCES" \
+        GROUPS="../ipc/ipc ../api/api" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="lw/base.h lwadvapi.h" \
+	LIBDEPS="lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr"
+}

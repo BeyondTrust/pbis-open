@@ -1,0 +1,53 @@
+make()
+{
+    mk_headers \
+	MASTER="lsa/lsa.h" \
+        HEADERDEPS="lwerror.h" \
+        lsa/provider.h
+
+    mk_headers \
+        MASTER="lsa/lsapstore-api.h" \
+        lsa/lsapstore-types.h \
+        lsa/lsapstore-plugin.h
+
+    mk_headers \
+        MASTER="lsa/ad.h" \
+        HEADERDEPS="lsa/lsa.h lsa/lsapstore-types.h" \
+        lsa/ad-types.h
+
+    mk_headers \
+        MASTER="lsa/privilege.h" \
+        HEADERDEPS="lsa/lsa.h"
+
+    mk_headers \
+        HEADERDEPS="gssapi.h" \
+        ntlm/gssntlm.h \
+        ntlm/sspintlm.h
+
+    mk_headers \
+	lw/rpc/common.h          \
+	lw/rpc/lsa.h             \
+	lw/rpc/samr.h            \
+	lw/rpc/netlogon.h        \
+	lw/rpc/dssetup.h         \
+	lw/rpc/krb5pac.h         \
+	lw/rpc/wkssvc.h
+
+    mk_headers \
+	INSTALLDIR="${MK_INCLUDEDIR}/lsa/internal" \
+	lsaadprovider.h         \
+	lsalocalprovider.h      \
+	lsadatablob.h           \
+	lsadef.h                \
+        lsaipc-common.h         \
+	lsaipc.h                \
+        lsaipc-privilege.h      \
+        lsaprivilege-internal.h \
+	lsalist.h               \
+	lsasrvcred.h            \
+	lsasystem.h             \
+	lsautils.h              \
+	lwsecurityidentifier.h  \
+	machinepwdinfo-impl.h   \
+	xpg_socket.h
+}

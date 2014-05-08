@@ -1,0 +1,578 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: XMLAttr.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>XMLAttr.h</h1>OpenSOAP API XML 属性処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="XMLNamespace_8h-source.html">OpenSOAP/XMLNamespace.h</a>&gt;</code><br>
+
+<p>
+<a href="XMLAttr_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a0" doxytag="XMLAttr.h::OpenSOAPXMLAttr" ></a>
+typedef tagOpenSOAPXMLAttr&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a0">OpenSOAPXMLAttr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLAttr 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="XMLAttr.h::OpenSOAPXMLAttrPtr" ></a>
+typedef <a class="el" href="XMLAttr_8h.html#a0">OpenSOAPXMLAttr</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLAttr ポインタ定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a2">OpenSOAPXMLAttrCreateMB</a> (const char *attr_name, <a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP XML 属性 インスタンス生成(MB).  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a3">OpenSOAPXMLAttrCreateWC</a> (const wchar_t *attr_name, <a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP XML 属性 インスタンス生成(WC).  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a4">OpenSOAPXMLAttrSetNamespaceMB</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const char *ns_uri, const char *ns_prefix)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性のNamespaceの設定(MB).  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a5">OpenSOAPXMLAttrSetNamespaceWC</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const wchar_t *ns_uri, const wchar_t *ns_prefix)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性のNamespaceの設定(WC).  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a6">OpenSOAPXMLAttrGetNamespace</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, <a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性のNamespaceの取得.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a7">OpenSOAPXMLAttrGetValueMB</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const char *type_name, void *value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性の値の取得(MB).  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a8">OpenSOAPXMLAttrGetValueWC</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const wchar_t *type_name, void *value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性の値の取得(WC).  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a9">OpenSOAPXMLAttrSetValueMB</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const char *type_name, void *value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性の値の設定(MB).  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a10">OpenSOAPXMLAttrSetValueWC</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> elm, const wchar_t *type_name, void *value)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性の値の設定(WC).  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLAttr_8h.html#a11">OpenSOAPXMLAttrGetName</a> (<a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> attr, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *name)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">属性名の取得.  <a href="#a11"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API XML 属性処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>関数</h2>
+<a class="anchor" name="a2" doxytag="XMLAttr.h::OpenSOAPXMLAttrCreateMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrCreateMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>attr_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>attr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP XML 属性 インスタンス生成(MB). 
+<p>
+OpenSOAP XML Attribute のインスタンスを生成します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>attr_name</em>&nbsp;</td><td>const char * [in] ((|attr_name|)) OpenSOAP XML 属性名 </td></tr>
+    <tr><td valign=top><em>attr</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML 属性ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="XMLAttr.h::OpenSOAPXMLAttrCreateWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrCreateWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>attr_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>attr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP XML 属性 インスタンス生成(WC). 
+<p>
+OpenSOAP XML Attribute のインスタンスを生成します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>attr_name</em>&nbsp;</td><td>const wchar_t * [in] ((|attr_name|)) OpenSOAP XML 属性名 </td></tr>
+    <tr><td valign=top><em>attr</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML 属性ポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="XMLAttr.h::OpenSOAPXMLAttrGetName" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrGetName </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>attr</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>name</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性名の取得. 
+<p>
+属性ポインタから属性の名前を取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>attr</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in] ((|attr|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>name</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|name|)) OpenSOAP 属性名 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="XMLAttr.h::OpenSOAPXMLAttrGetNamespace" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrGetNamespace </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性のNamespaceの取得. 
+<p>
+属性のNamespaceを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="XMLAttr.h::OpenSOAPXMLAttrGetValueMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrGetValueMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>type_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性の値の取得(MB). 
+<p>
+属性の値を取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>type_name</em>&nbsp;</td><td>const char * [in] ((|type_name|)) タイプ名 </td></tr>
+    <tr><td valign=top><em>value</em>&nbsp;</td><td>void * [out] ((|value|)) 値格納バッファへのポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="XMLAttr.h::OpenSOAPXMLAttrGetValueWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrGetValueWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>type_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性の値の取得(WC). 
+<p>
+属性の値を取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>type_name</em>&nbsp;</td><td>const wchar_t * [in] ((|type_name|)) タイプ名 </td></tr>
+    <tr><td valign=top><em>value</em>&nbsp;</td><td>void * [out] ((|value|)) 値格納バッファへのポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="XMLAttr.h::OpenSOAPXMLAttrSetNamespaceMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrSetNamespaceMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_uri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_prefix</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性のNamespaceの設定(MB). 
+<p>
+属性にNamespaceを設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>ns_uri</em>&nbsp;</td><td>const char * [in] ((|ns_uri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>ns_prefix</em>&nbsp;</td><td>const char * [in] ((|ns_prefix|)) Namespace Prefix </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="XMLAttr.h::OpenSOAPXMLAttrSetNamespaceWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrSetNamespaceWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_uri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_prefix</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性のNamespaceの設定(WC). 
+<p>
+属性にNamespaceを設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>ns_uri</em>&nbsp;</td><td>const wchar_t * [in] ((|ns_uri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>ns_prefix</em>&nbsp;</td><td>const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="XMLAttr.h::OpenSOAPXMLAttrSetValueMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrSetValueMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>type_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性の値の設定(MB). 
+<p>
+属性の値を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>type_name</em>&nbsp;</td><td>const char * [in] ((|type_name|)) タイプ名 </td></tr>
+    <tr><td valign=top><em>value</em>&nbsp;</td><td>void * [in] ((|value|)) 値格納バッファへのポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="XMLAttr.h::OpenSOAPXMLAttrSetValueWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLAttrSetValueWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>type_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>value</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+属性の値の設定(WC). 
+<p>
+属性の値を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性 </td></tr>
+    <tr><td valign=top><em>type_name</em>&nbsp;</td><td>const wchar_t * [in] ((|type_name|)) タイプ名 </td></tr>
+    <tr><td valign=top><em>value</em>&nbsp;</td><td>void * [in] ((|value|)) 値格納バッファへのポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:48 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

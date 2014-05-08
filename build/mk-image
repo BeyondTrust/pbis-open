@@ -1,0 +1,103 @@
+#!/bin/bash
+
+set -e
+
+fail()
+{
+    echo "$@"
+    exit 1
+}
+
+read_line()
+{
+    _IFS="$IFS"
+    IFS=""
+    read -r LINE
+    RES="$?"
+    IFS="$_IFS"
+    return "$RES"
+}
+
+rewrite_la()
+{
+    LA="$1"
+
+    echo "rewriting $LA"
+    . "$LA"
+
+    set -- ${dependency_libs}
+    dependency_libs="-L$(cd $(dirname $LA) && pwd)"
+    for lib
+    do
+        case "$lib" in
+            -L*)
+                continue
+                ;;
+            *.la)
+                lib="${lib##*/lib}"
+                lib="${lib%.la}"
+                dependency_libs="$dependency_libs -l$lib"
+                ;;
+            *)
+                dependency_libs="$dependency_libs $lib"
+                ;;
+        esac
+    done
+
+    sed \
+        -e "s:^installed=.*\$:installed=no:" \
+        -e "s:^dependency_libs=.*\$:dependency_libs='$dependency_libs':" \
+        < "$LA" > "$LA.new"
+    
+    mv "$LA.new" "$LA"
+}
+
+print_help()
+{
+    echo "Usage: mk-image [ image_dir ]"
+    echo ""
+    echo "If not using buildenv, run this from your MakeKit build directory"
+    echo "If image_dir is not specified, ../Platform.image will be used"
+    
+    exit
+}
+
+IMAGE=""
+
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        -h|--help) print_help;;
+        *) IMAGE="$1"; break;;
+    esac
+    
+    shift
+done
+
+[ -z "$IMAGE" ] && IMAGE="../Platform.image"
+
+if [ -n "${BUILD_MKOUT_ROOT}" ]
+then
+    if [ -n "${BUILD_DEBUG}" ]
+    then
+        TYPE=debug
+    else
+        TYPE=release
+    fi
+    BUILD_DIR="$BUILD_MKOUT_ROOT/$TYPE"
+else
+    BUILD_DIR="`pwd`"
+fi
+
+[ -f "$BUILD_DIR/Makefile" ] || fail "Please run from your MakeKit build directory or set BUILD_MKOUT_ROOT"
+
+mkdir -p "$IMAGE/install"
+
+DESTDIR=`cd "$IMAGE/install" && pwd`
+
+( cd "$BUILD_DIR" && make DESTDIR="$DESTDIR" install )
+
+find "$IMAGE/install" -name '*.la' | while read_line
+do
+    rewrite_la "$LINE"
+done

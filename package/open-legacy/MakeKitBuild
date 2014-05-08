@@ -1,0 +1,157 @@
+MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot package-mac"
+
+configure()
+{
+    mk_declare -o \
+        MK_BINDIR \
+        MK_SBINDIR \
+        MK_PREFIX \
+        MK_DATADIR \
+        MK_LIBEXECDIR \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        MK_HOST_ARCH \
+        MK_SYSCONFDIR \
+        LW_CACHEDIR \
+        LW_CONFIGDIR \
+        LW_INITDIR \
+        PRIMARY_LIBDIR="$MK_LIBDIR" \
+        MK_PACKAGE_DEBUG
+
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_OPEN_LEGACY_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/changelog.in deb/control.in deb/rules.in"
+
+        open_legacy_files
+
+    mk_deb_done
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_OPEN_LEGACY_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/open-legacy.spec.in"
+
+        open_legacy_files
+    mk_rpm_done
+}
+
+package_freebsd()
+{
+    mk_freebsd_do \
+        PACKAGE="$PKG_OPEN_LEGACY_FREEBSD_NAME" \
+        VERSION="$PKG_FREEBSD_VERSION" \
+        SHORT="-PowerBroker Identity Services Open Legacy" \
+        LONG="-Supports scripts depending on old binary locations and names"
+
+        open_legacy_files
+
+    mk_freebsd_done
+}
+
+package_pkg()
+{
+    mk_pkg_do \
+        PACKAGE="$PKG_OPEN_LEGACY_PKG_NAME" \
+        VERSION="$PKG_PKG_VERSION"
+
+        mk_pkg_sub_do \
+            SUBPACKAGE="PBISopenl" \
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in"
+
+            open_legacy_files_prefix
+
+            mk_package_dirs \
+                /opt/likewise \
+                /opt/likewise/bin
+
+        mk_pkg_sub_done
+    mk_pkg_done
+}
+
+package_lpp()
+{
+    mk_lpp_do \
+        PACKAGE="${PKG_OPEN_LEGACY_LPP_NAME}" \
+        VERSION="${PKG_LPP_VERSION}"
+
+        mk_lpp_sub_do \
+            SUBPACKAGE="-" \
+            REQUISITES="lpp/requisites.in"
+
+        open_legacy_files
+
+        mk_package_dirs \
+            /opt/likewise \
+            /opt/likewise/bin
+        mk_lpp_sub_done
+
+    mk_lpp_done
+}
+
+package_depot()
+{
+    mk_depot_do \
+        PACKAGE="$PKG_OPEN_LEGACY_DEPOT_NAME" \
+        VERSION="$PKG_DEPOT_VERSION" \
+        PSF="depot/open-legacy.psf.in" \
+        CONTROLFILES="depot/copyright.in depot/depend.in"
+
+        mk_depot_sub_do SUBPACKAGE="prefix"
+            open_legacy_files_prefix
+        mk_depot_sub_done
+
+    mk_depot_done
+}
+
+package_mac()
+{
+    mk_macpkg_do \
+        PACKAGE="${PKG_OPEN_LEGACY_MACPKG_NAME}" \
+        VERSION="${PKG_MACPKG_VERSION}" \
+        PMDOC="mac/pmdoc" \
+        RESOURCES="mac/Resources/postflight \
+                   mac/Resources/preflight \
+                   mac/Resources/English.lproj/Welcome.txt" \
+        BINRESOURCES="mac/Resources/English.lproj/background.gif"
+
+        mk_macpkg_sub_do SUBPACKAGE=image
+            open_legacy_files
+        mk_macpkg_sub_done
+
+    mk_macpkg_done
+}
+
+
+make()
+{
+    OPEN_SUBDIRS="@lwupgrade"
+
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+    mk_freebsd_enabled && package_freebsd
+    mk_pkg_enabled && package_pkg
+    mk_lpp_enabled && package_lpp
+    mk_depot_enabled && package_depot
+    mk_macpkg_enabled && package_mac
+}
+
+open_legacy_files()
+{
+    open_legacy_files_prefix
+}
+
+open_legacy_files_prefix()
+{
+    mk_package_patterns SUBDIRS="$OPEN_SUBDIRS" "/opt/likewise/bin/*"
+
+    mk_package_dirs "/opt/likewise" "/opt/likewise/bin"
+}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="EUC-JP"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP-ENV:Header>
+    <SOAP-SEC:Signature xmlns:SOAP-SEC="http://schemas.xmlsoap.org/soap/security/2000-12" actor="some-URI" mustUnderstand="1">
+      <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+          <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2000/CR-xml-c14n-20001026"/>
+          <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+          <Reference URI="#Body">
+            <Transforms>
+              <Transform Algorithm="http://www.w3.org/TR/2000/CR-xml-c14n-20001026"/>
+            </Transforms>
+            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <DigestValue>I6lhk5BwxC8Bn11cstENCti9FAs=</DigestValue>
+          </Reference>
+        </SignedInfo>
+        <SignatureValue>mmJAsDy9DJFAiazcFznzXd8HuYxTGhQMneKF9XsFuDx0MOjvaEcXTckD6oB+oUWXxifzEvAInZR8qxvR4DX/TJ6wbgCCAFUTcubCkBRFBynn8Cw7cVQTTf7LEH7wA2ei9tjiaxwixRFLblPpFVkBV6CfxpXCMyBSBVuz6UrN9hQ=</SignatureValue>
+      </ds:Signature>
+    </SOAP-SEC:Signature>
+  </SOAP-ENV:Header>
+  <SOAP-ENV:Body>
+    <m:PlaceOrder xmlns:m="http://services.opensoap.jp/samples/ShoppingSec/">
+      <code xmlns:s="http://security.opensoap.jp/1.0/" s:encrypt="true">GQJO1IhZ0QezCuXV9Z3zVG0VaD5UHnbViMViMWO13PLxgUPwpvc3sci7hHd73Kr00Snnaz89sncLuGPZN9vJuIPpjhIJd3cJ41UlEUq7pDOIXFNFF2NZ1By1FK5JObcQh/m3U707JUIFkiyypqqfUQL5Cem0eVXAMadxdbtE/hY=</code>
+      <qty xmlns:s="http://security.opensoap.jp/1.0/" s:encrypt="true">VEDMqA2EJzbDMFtQ9q1db/v37Ey5qaGO8DucjJkM3xzMEV8KdLMvUubKp+5RxR9u3nWbsSUATPYzaT5MBcfNsKJ8NOBvdjLehAK2RTFCU2zlCdqbOMfQgIS888fk3zljzcx6U+4yJ15yePS+7NvwWNTWKd/efD550WeXjMgYcRc=</qty>
+    </m:PlaceOrder>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

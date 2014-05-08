@@ -1,0 +1,57 @@
+About lwtest
+===============
+The Likewise Test Suite (lwtest) validates the proper operation of the LSA APIs.
+
+Validation is performed by exporting information from a domain (either by
+scripts or by hand) into a comma-separated-value (CSV) file in the appropriate
+format. This file is loaded by the various test tools and used as both input to
+the LSA APIs and to check responses from those APIs.
+
+Note that not every user in the domain must be in this file, but only those
+found in the file will be used to drive the tests. Some APIs operate over all
+users in the domain and so those tests may take a while if you have very many
+users.
+
+
+BASIC SETUP
+
+1.      SETUP A DOMAIN
+Set up a domain with some users and groups. It is suggested that this domain
+be purely for testing so that exposed user and administrative passwords are not
+a problem. If you wish to use a live domain, you should edit the script
+lwtest.sh to not perform a join (which generally requires the Administrator
+password).
+
+It is also suggested that user names be evocative of properties of that user to
+make trends easier to spot: AliasUser0001, ExpiredUser0001, DisabledUser0001 for
+users that have an alias, expired password or disabled account, respectively.
+
+2.      DATA PREPARATION
+
+Create two CSV files (one for users and one for groups) in the lwtest format.
+
+You may use the ExportCsv.vbs script (run as an administrator on a DC) to
+extract user and group information from the domain into the appropriate CSV
+format. Note that this script does not do all the work necessary for preparing
+the CSV data files. ***You must verify what the script generates.***
+
+For example, in the User CSV file You will need to put in the proper passwords,
+UnixUid, UnixGid, UnixGecos, UnixLoginShell,UnixHomeDirectory.  [Passwords are
+never stored on the DC and so are not available for export. The Unix*
+information is a core part of the test process and Likewise product and we have
+yet to agree on a robust method of automatically deducing this information that
+does not compromise the tests.]
+
+Additionally, aliased users are not written with the proper name by the scripts.
+
+3.      TEST PREPARATION
+Create a test description file 'mytests.lwtest' which describes how to join the
+domain, where test results should be saved, and what CSV files are to be loaded.
+
+An example is 'lwtest/scripts/example.lwtest'.
+
+4.      TEST EXECUTION
+Execute 'sudo /opt/likewise/bin/lwtest.sh mytests.lwtest'.
+A summary will be printed to the screen and a more detailed report where
+in the path specified by example.lwtest:$LWT_LOG_FILE.
+

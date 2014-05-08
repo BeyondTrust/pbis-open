@@ -1,0 +1,6 @@
+make()
+{
+    mk_stage \
+        SOURCE="reapsysl.reg" \
+        DESTDIR="${LW_CONFIGDIR}"
+}

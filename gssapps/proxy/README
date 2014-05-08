@@ -1,0 +1,264 @@
+--------------------------------------------------------------------------
+General information:
+
+These sample programs can do Kerberos, SPNEGO, and NTLM.  There are both
+GSS and SSPI samples.  The GSS samples are based on the MIT Kerberos 1.3.6
+sample pprograms which interoperate with the SSPI samples.  See each set
+of samples for copyright notices.  The samples have been altered
+significantly and do not interoperate with the originals.
+
+Getting the configuration and the command lines right can be a bit tricky.
+I recommend running the client and server against each other on a single
+host for every host you plan to use first.  Next try the client and server
+against each other on different hosts, both directions, using every pair
+of hosts you plan to use.  Last try adding the proxy.  Doing things in
+this order helps to identify configuration issues. 
+
+The readme in the SSPI set has useful information on configuration for
+using both sets of programs with Active Directory.
+
+--------------------------------------------------------------------------
+Instructions for configuring and running the clients and servers using
+Kerberos:
+
+I configured both domain members to use the DNS server on the AD domain
+controller as their DNS server.  For the Windows domain member, I joined
+it to the domain and created the service account as per the instructions
+in the SSPI readme.  For the linux domain member, I installed Likewise
+Open, joined the domain, and ran /opt/likewise/bin/lw-update-dns.  That
+allowed me to skip the linux configuration steps in the SSPI readme and to
+use the machine account and key table that domainjoin created for the
+linux server program.  Below are various configuration values and the
+exact command lines I used to run the sample programs.
+
+	Windows domain:                   LWTEST.CORP
+	Windows domain member:            member-xp.lwtest.corp
+	Linux domain member:              member-linux01.lwtest.corp
+
+	Windows service account name:       gssserv1
+	Windows service account password:   password
+	Windows service account principal:  gssserv1/member-xp.lwtest.corp
+
+server on linux (run as root):
+
+	./gssproxy-server -verbose host@member-linux01.lwtest.corp
+
+client on linux (run as domain user):
+
+	./gssproxy-client -seq member-xp.lwtest.corp
+		gssserv1@member-xp.lwtest.corp "test message"
+or
+	./gssproxy-client -seq member-linux01.lwtest.corp
+		host@member-linux01.lwtest.corp "test message"
+
+server on windows (run as domain user):
+
+	gssserver gssserv1@member-xp.lwtest.corp password
+		LWTEST.CORP
+
+client on windows (run as domain user):
+
+	gssclient member-linux01.lwtest.corp
+		host/member-linux01.lwtest.corp "test message"
+or
+	gssclient member-xp.lwtest.corp
+		gssserv1/member-xp.lwtest.corp "test message"
+
+Note that the linux server (and the proxy) loops indefinitely but will
+stop gracefully if sent the message ”stop”.
+
+--------------------------------------------------------------------------
+Additional instructions for using the SSPI sample client with NTLM or
+SPNEGO:
+
+The SSPI samples have a -mech option.  Specify krb5, spnego, or ntlm as
+described in the usage statements. 
+
+When using NTLM or SPNEGO the server name argument can be anything.
+However, if it is some form of an account name (ex. LW\member-linux01,
+LW\member-linux01$, member-linux01, member-linux01$), then the server’s
+account will be identified and the credentials it obtains for SPNEGO will
+support Kerberos as well as NTLM.  For example:
+
+	gssclient –mech ntlm member-linux01.lwtest.corp
+		member-linux01 "test message"
+
+where the first argument is the FQDN for the server.  
+
+--------------------------------------------------------------------------
+Additional instructions for using the GSS sample client with NTLM and
+SPNEGO:
+
+The client has an existing option “-mech oidstring” which can be used to
+specify the mechanism.  The default is kerberos.  The OID strings are:
+
+	SPNEGO              1.3.6.1.5.5.2
+	NTLM                1.3.6.1.4.1.311.2.2.10
+	Kerberos            1.2.840.113554.1.2.2
+
+The client has a new option “-ntlmcred name password domain” to specify
+NTLM credentials.  If you are signed on as a domain user the user’s NTLM
+credentials are available and the –ntlmcred option is not needed but if
+you are signed on as a local user then you must specify NTLM credentials
+using this option.  Some examples:
+
+	./gssproxy-client –mech 1.3.6.1.5.5.2 -seq
+		member-xp.lwtest.corp host@member-linux01.lwtest.corp
+		"test message proxy"
+
+	./gssproxy-client –mech 1.3.6.1.5.5.2 –ntlmcred user01
+		Password1 lwtest.corp -seq member-linux01.lwtest.corp
+		host@member-linux01.lwtest.corp "test message proxy"
+
+The client has a few changes to work around a couple of inquiries that are
+not currently supported by NTLM.  You’ll see some error messages when
+using NTLM but the client will not stop for these errors.
+
+--------------------------------------------------------------------------
+Instructions for using the sample proxy:
+
+The proxy is essentially a combination of the client and server.  When
+troubleshooting it is usually easier to use the client and server to test
+configuration.  Instead of running the proxy try running the client and
+server on the proxy host with the client and server you plan to use.
+
+I used member-linux02.lwtest.corp for the proxy.  I installed Likewise
+Open, joined the domain, and ran /opt/likewise/bin/lw-update-dns the same
+as I did for the server.  That allowed me to use the machine account and
+key table that domainjoin created for the linux proxy program.
+
+I created two domain user accounts using Active Directory Users and
+Computers.  I set up user01 as a normal domain user.  I set up membersrv
+as a service account and used the Windows ktpass utility to apply a
+service principal:
+
+	ktpass –out keytab –princ
+		s4u/member-linux02.lwtest.corp@LWTEST.CORP
+		-rndpass–mapuser membersrv –crypto RC4-HMAC-NT
+
+I copied the keytab to member-linux02 and used /opt/likewise/bin/ktutil to
+merge it with /etc/krb5.keytab.
+
+I edited both the membersrv account and the computer account for
+member-linux02.  On the Delegation tab in ADUC, I selected “Trust this
+user for delegation to specified services only”, chose “Use any
+authentication protocol”, and added all of available services for the
+computer account for member-linux01.
+
+The GSS proxy requires both client and server credentials so it needs both
+a TGT and a keytab entry for the same account.  On member-linux02 as root,
+I acquired a TGT for the proxy:
+
+	/opt/likewise/bin/kinit -k
+		s4u/member-linux02.lwtest.corp@LWTEST.CORP
+or
+	/opt/likewise/bin/kinit -k
+		MEMBER-T-3I4Y4L\$/member-linux02.lwtest.corp@LWTEST.CORP
+
+MEMBER-T-3I4Y4L$ is the machine account name for the computer account for
+member-linux02.  You see it with “/opt/likewise/bin/lw-dump-machine-acct
+domain”.  The GSS proxy will use these credentials, for its connection to
+the GSS server.  It will use whichever account it has a TGT for.  Next,
+still as root, I started the GSS proxy:
+
+	./gssproxy-proxy -verbose member-linux01.lwtest.corp
+		host@member-linux01.lwtest.corp
+
+Then I ran the GSS client:
+
+	./gssproxy-client -seq member-linux02.lwtest.corp
+		host@member-linux02.lwtest.corp "test message proxy"
+or
+	./gssproxy-client -seq member-linux02.lwtest.corp
+		s4u@member-linux02.lwtest.corp "test message proxy"
+
+You can mix and match the accounts you use for the GSS proxy.  You can get
+a TGT for the machine account but have the client use the service account
+to connect to it and vice versa.  The proxy will accept a connection using
+whichever account the client requests and it will use whichever TGT it has
+available in its credentials cache to impersonate the user.
+
+The proxy has code which converts the client’s name.  Search for
+NTLM_OID_STRING to find it.  The name will have the form DOMAIN\user and
+could have any valid value for the domain, ex. LW\user01,
+LWTEST.CORP\user01, and lwtest.corp\user01, but will most likely be the
+first one (LW is the domain’s netbios name).  The proxy simply takes the
+user name portion and imports it assuming the default domain is to be used
+when acquiring impersonation credentials.  In a multiple domain
+environment you will need to convert the domain to the actual Kerberos
+realm “LWTEST.CORP” and use it when importing the name, ex.
+“user01@LWTEST.CORP”
+
+--------------------------------------------------------------------------
+Additional instructions for restricting the mechanisms used by the proxy
+to accept a connection from a client:
+
+The proxy has an option “-forceclientmech oidstring”.  When this option is
+set the proxy will acquire credentials for the specified mechanism and use
+them when accepting a connection from the client.  This restricts the
+available mechanisms when using SPNEGO.  For example:
+
+	./gssproxy-proxy –forceclientmech 1.3.6.1.4.1.311.2.2.10
+		-verbose member-linux01.lwtest.corp
+		host@member-linux01.lwtest.corp
+
+Note that the means of doing this may be changing in the future as MIT
+opted not to take one of our SPNEGO patches and implemented
+gss_set_neg_mechs() instead.
+
+--------------------------------------------------------------------------
+Additional instructions for using the proxy with an alternate joined
+domain (multi-tenancy):
+
+For this scenario I use two machines.  I run the client and server on one
+and I run the proxy on the other.  I join the client/server host to
+lwtest.corp and I join the proxy host to parent1.likewise.com (default
+joined domain) and lwtest.corp.
+
+The proxy has an option “-domain domainFQDN”.  When this option is set the
+proxy will acquire credentials which it will use when accepting a client
+connection and set the specified joined domain for NTLM.  For example:
+
+	./gssproxy-proxy –forceclientmech 1.3.6.1.4.1.311.2.2.10
+		–domain lwtest.corp -verbose member-linux01.lwtest.corp
+		host@member-linux01.lwtest.corp
+
+--------------------------------------------------------------------------
+Instructions for using multiple messages (gss_wrap_iov and
+gss_unwrap_iov):
+
+Only the clients and servers have support for gss_wrap_iov and
+gss_unwrap_iov; the proxy does not.  A few options are not supported when
+using mutliple messages.  I have tried it with a single encrypt buffer,
+two encrypt buffers, a sign only and an encrypt buffer, and three buffers
+consisting of a sign only buffer, an encrypt buffer, and a sign only
+buffer.
+
+The SSPI and GSS clients have a –iov option which is a string of ‘s’ for
+sign and ‘e’ for encrypt, ex. “se”, and which needs to match up with one
+or more text buffers that are the last command line arguments.  Some
+example commands for SSPI are:
+
+	gssserver –mech ntlm –verbose –confidentiality
+		membersrv@member-xp.lwtest.corp password LWTEST.CORP
+
+	gssclient –mech ntlm –confidentiality –iov “se”
+		member-linux01.lwtest.corp host/member-linux01.lwtest.corp
+		“test message 1” “test message 2”
+
+	gssclient –mech ntlm –confidentiality –iov “ses”
+		member-linux01.lwtest.corp host/member-linux01.lwtest.corp
+		“test message 1” “test message 2” “test message 3”
+
+Some example commands for Linux:
+
+	./gssproxy-server -verbose host@member-linux01.lwtest.corp
+
+	./gssproxy-client –mech 1.3.6.1.4.1.311.2.2.10 –iov “se” -seq
+		member-xp.lwtest.corp membersrv@member-xp.lwtest.corp
+		"test message 1” “test message  2”
+
+	./gssproxy-client –mech 1.3.6.1.4.1.311.2.2.10 –iov “ses” -seq
+		member-xp.lwtest.corp membersrv@member-xp.lwtest.corp
+		"test message 1” “test message 2” “test message 3”
+

@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: String.h Source File</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>String.h</h1><a href="String_8h.html">説明を見る。</a><div class="fragment"><pre>00001 <span class="comment">/* -*- mode: c++; -*-</span>
+00002 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00003 <span class="comment"> * $RCSfile: String.h,v $</span>
+00004 <span class="comment"> *</span>
+00005 <span class="comment"> * See Copyright for the status of this software.</span>
+00006 <span class="comment"> *</span>
+00007 <span class="comment"> * The OpenSOAP Project</span>
+00008 <span class="comment"> * http://opensoap.jp/</span>
+00009 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00010 <span class="comment"> */</span> <span class="keywordtype">void</span> *opt, <span class="keywordtype">wchar_t</span> c, <span class="keywordtype">int</span> *judge)
+00359       * @brief Find String Function Pointer Type Definition
+00360       * @param
+00361       *    opt <span class="keywordtype">void</span> * [in] Find Function Option 
+00362       * @param
+00363       *    c <span class="keywordtype">wchar_t</span> [in] 
+00364       * @param
+00365       *    judge <span class="keywordtype">int</span> * [out] Result
+00366       * @<span class="keywordflow">return</span>
+00367       *    エラーコード
+00368       */
+00531 <span class="preprocessor">#ifndef OpenSOAP_String_H</span>
+00532 <span class="preprocessor"></span><span class="preprocessor">#define OpenSOAP_String_H</span>
+00533 <span class="preprocessor"></span>
+00534 <span class="preprocessor">#include &lt;<a class="code" href="ByteArray_8h.html">OpenSOAP/ByteArray.h</a>&gt;</span>
+00535 <span class="preprocessor">#include &lt;stdarg.h&gt;</span>
+00536 
+00537 <span class="preprocessor">#ifdef __cplusplus</span>
+00538 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">"C"</span> {
+00539 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00540 
+<a name="l00541"></a><a class="code" href="String_8h.html#a0">00541</a>     <span class="keyword">typedef</span> <span class="keyword">struct </span>tagOpenSOAPString <a class="code" href="String_8h.html#a0">OpenSOAPString</a>;
+00542 
+<a name="l00543"></a><a class="code" href="String_8h.html#a1">00543</a>     <span class="keyword">typedef</span> <a class="code" href="String_8h.html#a0">OpenSOAPString</a>    *<a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a>;
+00544 
+00545 
+00546     <span class="keywordtype">int</span>
+00547     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00548     <a class="code" href="String_8h.html#a3">OpenSOAPStringCreate</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr *str);
+00549     
+00550     <span class="keywordtype">int</span>
+00551     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00552     <a class="code" href="String_8h.html#a4">OpenSOAPStringCreateWithMB</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *mb_str,
+00553                                <span class="comment">/* [out] */</span> OpenSOAPStringPtr *str);
+00554 
+00555     <span class="keywordtype">int</span>
+00556     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00557     <a class="code" href="String_8h.html#a5">OpenSOAPStringCreateWithWC</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *wc_str,
+00558                                <span class="comment">/* [out] */</span> OpenSOAPStringPtr *str);
+00559 
+00560     <span class="keywordtype">int</span>
+00561     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00562     <a class="code" href="String_8h.html#a6">OpenSOAPStringCreateWithCharEncodingString</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> * char_enc,
+00563                                                <span class="comment">/* [in]  */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> char_enc_str,
+00564                                                <span class="comment">/* [out] */</span> OpenSOAPStringPtr *str);
+00565 
+00566     <span class="keywordtype">int</span>
+00567     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00568     <a class="code" href="String_8h.html#a7">OpenSOAPStringCreateWithUTF8</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *utf8Str,
+00569                                  <span class="comment">/* [out] */</span> OpenSOAPStringPtr *str);
+00570 
+00571     <span class="keywordtype">int</span>
+00572     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00573     <a class="code" href="String_8h.html#a8">OpenSOAPStringRetain</a>(<span class="comment">/* [in] */</span> OpenSOAPStringPtr str);
+00574 
+00575     <span class="keywordtype">int</span>
+00576     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00577     <a class="code" href="String_8h.html#a9">OpenSOAPStringRelease</a>(<span class="comment">/* [in] */</span> OpenSOAPStringPtr str);
+00578 
+00579     <span class="keywordtype">int</span>
+00580     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00581     <a class="code" href="String_8h.html#a10">OpenSOAPStringGetLengthMB</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00582                               <span class="comment">/* [out] */</span> size_t *len);
+00583         
+00584     <span class="keywordtype">int</span>
+00585     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00586     <a class="code" href="String_8h.html#a11">OpenSOAPStringGetLengthWC</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00587                               <span class="comment">/* [out] */</span> size_t *len);
+00588 
+00589     <span class="keywordtype">int</span>
+00590     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00591     <a class="code" href="String_8h.html#a12">OpenSOAPStringGetStringMBWithAllocator</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00592                                            <span class="comment">/* [in]  */</span> <span class="keywordtype">char</span> * (*memAllocator)(size_t),
+00593                                            <span class="comment">/* [out] */</span> size_t *len,
+00594                                            <span class="comment">/* [out] */</span> <span class="keywordtype">char</span> **mbStr);
+00595 
+00596     <span class="keywordtype">int</span>
+00597     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00598     <a class="code" href="String_8h.html#a13">OpenSOAPStringGetStringWCWithAllocator</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00599                                            <span class="comment">/* [in]  */</span> <span class="keywordtype">wchar_t</span> * (*memAllocator)(size_t),
+00600                                            <span class="comment">/* [out] */</span> size_t *len,
+00601                                            <span class="comment">/* [out] */</span> <span class="keywordtype">wchar_t</span> **wcStr);
+00602 
+00603     <span class="keywordtype">int</span>
+00604     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00605     <a class="code" href="String_8h.html#a14">OpenSOAPStringGetStringUTF8WithAllocator</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00606                                              <span class="comment">/* [in]  */</span> <span class="keywordtype">char</span> * (*memAllocator)(size_t),
+00607                                              <span class="comment">/* [out] */</span> size_t *len,
+00608                                              <span class="comment">/* [out] */</span> <span class="keywordtype">char</span> **utf8Str);
+00609 
+00610     <span class="keywordtype">int</span>
+00611     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00612     <a class="code" href="String_8h.html#a15">OpenSOAPStringGetStringMB</a>(<span class="comment">/* [in]      */</span> OpenSOAPStringPtr str,
+00613                               <span class="comment">/* [in, out] */</span> size_t *len,
+00614                               <span class="comment">/* [out]     */</span> <span class="keywordtype">char</span> * mb_Str);
+00615         
+00616     <span class="keywordtype">int</span>
+00617     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00618     <a class="code" href="String_8h.html#a16">OpenSOAPStringGetStringWC</a>(<span class="comment">/* [in]      */</span> OpenSOAPStringPtr str,
+00619                               <span class="comment">/* [in, out] */</span> size_t *len,
+00620                               <span class="comment">/* [out]     */</span> <span class="keywordtype">wchar_t</span> *wc_str);
+00621 
+00622     <span class="keywordtype">int</span>
+00623     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00624     <a class="code" href="String_8h.html#a17">OpenSOAPStringGetCharEncodingString</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00625                                         <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *char_enc,
+00626                                         <span class="comment">/* [out] */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> char_enc_str);
+00627     
+00628     <span class="keywordtype">int</span>
+00629     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00630     <a class="code" href="String_8h.html#a18">OpenSOAPStringSetStringMB</a>(<span class="comment">/* [in] */</span> OpenSOAPStringPtr str,
+00631                               <span class="comment">/* [in] */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *mb_str);
+00632         
+00633     <span class="keywordtype">int</span>
+00634     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00635     <a class="code" href="String_8h.html#a19">OpenSOAPStringSetStringWC</a>(<span class="comment">/* [in] */</span> OpenSOAPStringPtr str,
+00636                               <span class="comment">/* [in] */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *wc_str);
+00637 
+00638     <span class="keywordtype">int</span>
+00639     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00640     <a class="code" href="String_8h.html#a20">OpenSOAPStringSetCharEncodingString</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00641                                         <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *char_enc,
+00642                                         <span class="comment">/* [in]  */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> charEncStr);
+00643 
+00644     <span class="keywordtype">int</span>
+00645     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00646     <a class="code" href="String_8h.html#a21">OpenSOAPStringSetStringUTF8</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00647                                 <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *utf8Str);
+00648 
+00649     <span class="keywordtype">int</span>
+00650     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00651     <a class="code" href="String_8h.html#a22">OpenSOAPStringFormatMB</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00652                            <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *format, ...);
+00653 
+00654     <span class="keywordtype">int</span>
+00655     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00656     <a class="code" href="String_8h.html#a23">OpenSOAPStringFormatWC</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00657                            <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *format, ...);
+00658 
+00659     <span class="keywordtype">int</span>
+00660     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00661     <a class="code" href="String_8h.html#a24">OpenSOAPStringVFormatMB</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00662                                                         <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *format,
+00663                                                         <span class="comment">/* [in]  */</span> va_list ap);
+00664 
+00665     <span class="keywordtype">int</span>
+00666     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00667     <a class="code" href="String_8h.html#a25">OpenSOAPStringVFormatWC</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00668                                                         <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *format,
+00669                                                         <span class="comment">/* [in]  */</span> va_list ap);
+00670 
+00671     <span class="keywordtype">int</span>
+00672     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00673     <a class="code" href="String_8h.html#a26">OpenSOAPStringCompareMB</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00674                             <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *cmp_str,
+00675                             <span class="comment">/* [out] */</span> <span class="keywordtype">int</span> *cmp_rslt);
+00676 
+00677     <span class="keywordtype">int</span>
+00678     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+<a name="l00679"></a><a class="code" href="String_8h.html#a2">00679</a>     <a class="code" href="String_8h.html#a27">OpenSOAPStringCompareWC</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00680                             <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *cmp_str,
+00681                             <span class="comment">/* [out] */</span> <span class="keywordtype">int</span> *cmp_rslt);
+00682 
+00683     <span class="keywordtype">int</span>
+00684     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00685     <a class="code" href="String_8h.html#a28">OpenSOAPStringCompare</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00686                           <span class="comment">/* [in]  */</span> OpenSOAPStringPtr cmp_str,
+00687                           <span class="comment">/* [out] */</span> <span class="keywordtype">int</span> *cmp_rslt);
+00688 
+00689     <span class="keywordtype">int</span>
+00690     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00691     <a class="code" href="String_8h.html#a29">OpenSOAPStringFindStringMB</a>(<span class="comment">/* [in]      */</span> OpenSOAPStringPtr str,
+00692                                <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *find_str,
+00693                                <span class="comment">/* [in, out] */</span> size_t *idx);
+00694 
+00695     <span class="keywordtype">int</span>
+00696     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00697     <a class="code" href="String_8h.html#a30">OpenSOAPStringFindStringWC</a>(<span class="comment">/* [in]      */</span> OpenSOAPStringPtr str,
+00698                                <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *find_str,
+00699                                <span class="comment">/* [in, out] */</span> size_t *idx);
+00700 
+00701     <span class="keywordtype">int</span>
+00702     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00703     <a class="code" href="String_8h.html#a31">OpenSOAPStringFindString</a>(<span class="comment">/* [in]      */</span> OpenSOAPStringPtr str,
+00704                              <span class="comment">/* [in]      */</span> OpenSOAPStringPtr find_str,
+00705                              <span class="comment">/* [in, out] */</span> size_t *idx);
+00706 
+00707     <span class="keyword">typedef</span> <span class="keywordtype">int</span>
+00708     (*OpenSOAPStringFindIfFunc)(<span class="comment">/* [in, out] */</span> <span class="keywordtype">void</span> *opt,
+00709                                 <span class="comment">/* [in]      */</span> <span class="keywordtype">wchar_t</span> c,
+00710                                 <span class="comment">/* [out]     */</span> <span class="keywordtype">int</span> *judge);
+00711         
+00712     <span class="keyword">extern</span>
+00713     <span class="keywordtype">int</span>
+00714     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00715     <a class="code" href="String_8h.html#a32">OpenSOAPStringFindIfStringIndex</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00716                                     <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a2">OpenSOAPStringFindIfFunc</a> find_func,
+00717                                     <span class="comment">/* [in]  */</span> <span class="keywordtype">void</span> *find_func_opt,
+00718                                     <span class="comment">/* [in, out] */</span> size_t *idx);
+00719     <span class="keywordtype">int</span>
+00720     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00721     <a class="code" href="String_8h.html#a33">OpenSOAPStringReplaceStringMB</a>(<span class="comment">/* [in, out] */</span> OpenSOAPStringPtr str,
+00722                                   <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *find_str,
+00723                                   <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *rplc_str,
+00724                                   <span class="comment">/* [in, out] */</span> size_t *idx);
+00725     
+00726     <span class="keywordtype">int</span>
+00727     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00728     <a class="code" href="String_8h.html#a34">OpenSOAPStringReplaceStringWC</a>(<span class="comment">/* [in, out] */</span> OpenSOAPStringPtr str,
+00729                                   <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *find_str,
+00730                                   <span class="comment">/* [in]      */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *rplc_str,
+00731                                   <span class="comment">/* [in, out] */</span> size_t *idx);
+00732     
+00733     <span class="keywordtype">int</span>
+00734     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00735     <a class="code" href="String_8h.html#a35">OpenSOAPStringReplaceString</a>(<span class="comment">/* [in, out] */</span> OpenSOAPStringPtr str,
+00736                                 <span class="comment">/* [in]      */</span> OpenSOAPStringPtr find_str,
+00737                                 <span class="comment">/* [in]      */</span> OpenSOAPStringPtr rplc_str,
+00738                                 <span class="comment">/* [in, out] */</span> size_t *idx);
+00739     
+00740     <span class="keywordtype">int</span>
+00741     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00742     <a class="code" href="String_8h.html#a36">OpenSOAPStringClear</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str);
+00743 
+00744     <span class="keywordtype">int</span>
+00745     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00746     <a class="code" href="String_8h.html#a37">OpenSOAPStringAppendMB</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00747                            <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *mb_str,
+00748                            <span class="comment">/* [in]  */</span> size_t mb_len);
+00749 
+00750     <span class="keywordtype">int</span>
+00751     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00752     <a class="code" href="String_8h.html#a38">OpenSOAPStringAppendWC</a>(<span class="comment">/* [out] */</span> OpenSOAPStringPtr str,
+00753                            <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *wc_str,
+00754                            <span class="comment">/* [in]  */</span> size_t wc_len);
+00755 
+00756     <span class="keywordtype">int</span>
+00757     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00758     <a class="code" href="String_8h.html#a39">OpenSOAPStringDuplicate</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00759                             <span class="comment">/* [out] */</span> OpenSOAPStringPtr *dup_str);
+00760 
+00761     <span class="keywordtype">int</span>
+00762     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00763     <a class="code" href="String_8h.html#a40">OpenSOAPStringGetSubstring</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00764                                <span class="comment">/* [in]  */</span> size_t   beg,
+00765                                <span class="comment">/* [in]  */</span> size_t   len,
+00766                                <span class="comment">/* [out] */</span> OpenSOAPStringPtr *sub_str);
+00767 
+00768     <span class="keywordtype">int</span>
+00769     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00770     <a class="code" href="String_8h.html#a41">OpenSOAPStringConvertCharEncoding</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *from_enc,
+00771                                       <span class="comment">/* [in]  */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> from_str,
+00772                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *to_enc,
+00773                                       <span class="comment">/* [out] */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> to_str);
+00774 
+00775     <span class="keywordtype">int</span>
+00776     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00777     <a class="code" href="String_8h.html#a42">OpenSOAPStringConvertXMLCharRefToUTF8</a>(<span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *utf8Beg,
+00778                                           <span class="comment">/* [out] */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> utf8BAry);
+00779     <span class="keywordtype">int</span>
+00780     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00781     <a class="code" href="String_8h.html#a43">OpenSOAPStringGetStringUSASCII</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00782                                    <span class="comment">/* [out] */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> charEncStr);
+00783 
+00784     <span class="keywordtype">int</span>
+00785     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00786     <a class="code" href="String_8h.html#a44">OpenSOAPStringIterateProc</a>(<span class="comment">/* [in]  */</span> OpenSOAPStringPtr str,
+00787                               <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> (*iterateProc)(<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> c, size_t idx, size_t len, <span class="keywordtype">void</span> *opt),
+00788                               <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> (*beforeProc)(size_t len, <span class="keywordtype">void</span> *opt),
+00789                               <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> (*afterProc)(size_t len, <span class="keywordtype">void</span> *opt),
+00790                               <span class="comment">/* [in, out] */</span> <span class="keywordtype">void</span> *opt);
+00791         
+00792 <span class="preprocessor">#ifdef __cplusplus</span>
+00793 <span class="preprocessor"></span>}
+00794 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00795 
+00796 <span class="preprocessor">#endif </span><span class="comment">/* OpenSOAP_String_H */</span>
+</pre></div><hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

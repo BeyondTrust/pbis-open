@@ -1,0 +1,58 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="domainjoin-cli">
+
+  <refmeta>
+    <refentrytitle>Likewise Open</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname>likewise-open</refname>
+    <refpurpose>A suite of tools and services for joining
+      Linux, Unix, and OS X clients to Active Directory domains</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      Likewise Open is a set of tools and services to enable joining
+      hosts to an Active DIrectory (AD) domain in a single step.  The
+      software performs all the necessary system management
+      configuration to enable PAM aware host services to authenticate
+      AD domain users and honor the user's existing set of domain
+      group memberships.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Support</title>
+
+    <para>
+      Likewise Open is a open source initiate of Likewise Software and
+      is open for full community involvement.  More information about
+      Likewise Open and Likewise Software can be found
+      at <ulink url="http://www.likewisesoftware.com/community/">http://www.likewisesoftware.com/community/</ulink>.  
+      You may subscribe to the Likewise Open project mailing lists at
+      <ulink url="http://lists.likewisesoftware.com/">http://lists.likewisesoftware.com/</ulink>.
+    </para>
+  </refsect1>
+
+
+  <refsect1>
+    <title>See Also</title>
+
+    <para>
+      <command>domainjoin-cli(8)</command>, <command>domainjoin-gui(8)</command>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Version</title>
+
+    <para>
+      This man page is correct for Likewise Open version 4.1.
+    </para>
+  </refsect1>
+
+</refentry>

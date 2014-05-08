@@ -1,0 +1,410 @@
+.TH "ByteArray.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ByteArray.h \- OpenSOAP API ByteArray Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <OpenSOAP/Defines.h>\fP
+.br
+\fC#include <OpenSOAP/ErrorCode.h>\fP
+.br
+
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBOpenSOAPByteArrayCreateWithSize\fP(sz, b_ary)   OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))"
+.br
+.RI "\fI\fBOpenSOAPByteArrayCreateWithSize()\fP Function Definition. \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPByteArray \fBOpenSOAPByteArray\fP"
+.br
+.RI "\fIOpenSOAPByteArray Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPByteArray\fP * \fBOpenSOAPByteArrayPtr\fP"
+.br
+.RI "\fIOpenSOAPByteArray Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayCreate\fP (\fBOpenSOAPByteArrayPtr\fP *b_ary)"
+.br
+.RI "\fICreate a variable size Byte(unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayCreateWithData\fP (const unsigned char *data, size_t sz, \fBOpenSOAPByteArrayPtr\fP *b_ary)"
+.br
+.RI "\fICreate OpenSOAPByteArray with initial data. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayAppendRef\fP (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fIUse OpenSOAPByteArray Resource declare. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayRelease\fP (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fIRelease OpenSOAPByteArray Resource. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayGetSize\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, size_t *sz)"
+.br
+.RI "\fIGet size of variable size Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayBeginConst\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char **beg)"
+.br
+.RI "\fIGet const pointer to head of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayEndConst\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char **ed)"
+.br
+.RI "\fIGet const pointer to tail of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayGetBeginSizeConst\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char **beg, size_t *sz)"
+.br
+.RI "\fIGet const pointer to head of variable Byte (unsigned char) Array and size. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayGetBeginEndConst\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char **beg, const unsigned char **ed)"
+.br
+.RI "\fIGet const pointer to head and tail of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayBegin\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char **beg)"
+.br
+.RI "\fIGet pointer to head of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayEnd\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char **ed)"
+.br
+.RI "\fIGet pointer to tail of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayGetBeginSize\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char **beg, size_t *sz)"
+.br
+.RI "\fIGet pointer to head of variable Byte (unsigned char) Array and size. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayGetBeginEnd\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char **beg, unsigned char **ed)"
+.br
+.RI "\fIGet pointer to head and tail of variable Byte (unsigned char) Array. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayClear\fP (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fIClear OpenSOAPByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArraySetData\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char *data, size_t sz)"
+.br
+.RI "\fISet data of OpenSOAPByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayAppend\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char *dat, size_t dat_len)"
+.br
+.RI "\fIAppend Byte data to OpenSOAPByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayResize\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, size_t new_size)"
+.br
+.RI "\fIResize OpenSOAPByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPByteArrayDuplicate\fP (\fBOpenSOAPByteArrayPtr\fP b_ary, \fBOpenSOAPByteArrayPtr\fP *dup_b_ary)"
+.br
+.RI "\fIDuplicate OpenSOAPByteArray. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API ByteArray Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Define Documentation"
+.PP 
+.SS "#define OpenSOAPByteArrayCreateWithSize(sz, b_ary)   OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))"
+.PP
+\fBOpenSOAPByteArrayCreateWithSize()\fP Function Definition. OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary)) 
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPByteArrayAppend (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char * dat, size_t dat_len)"
+.PP
+Append Byte data to OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIdat\fP const unsigned char * [in] ((|dat|)) Pointer to head of Append data. If NULL, 0 fill. 
+.br
+\fIdat_len\fP size_t [in] dat_sz Append data size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayAppendRef (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Use OpenSOAPByteArray Resource declare. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayBegin (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char ** beg)"
+.PP
+Get pointer to head of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayBeginConst (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char ** beg)"
+.PP
+Get const pointer to head of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP const unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayClear (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Clear OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayCreate (\fBOpenSOAPByteArrayPtr\fP * b_ary)"
+.PP
+Create a variable size Byte(unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayCreateWithData (const unsigned char * data, size_t sz, \fBOpenSOAPByteArrayPtr\fP * b_ary)"
+.PP
+Create OpenSOAPByteArray with initial data. \fBParameters:\fP
+.RS 4
+\fIdata\fP const unsigned char * [in] ((|data|)) Initial data. If NULL, allocate ((|sz|)) space, and 0 fill. 
+.br
+\fIsz\fP size_t [in] ((|sz|)) Initial data size. 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayDuplicate (\fBOpenSOAPByteArrayPtr\fP b_ary, \fBOpenSOAPByteArrayPtr\fP * dup_b_ary)"
+.PP
+Duplicate OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr [in] ((|b_ary|)) ByteArray 
+.br
+\fIdup_b_ary\fP OpenSOAPByteArrayPtr * [out] ((|new_size|)) Duplicate ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayEnd (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char ** ed)"
+.PP
+Get pointer to tail of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIed\fP unsigned char ** [out] ((|ed|)) Pointer to tail of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayEndConst (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char ** ed)"
+.PP
+Get const pointer to tail of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIed\fP const unsigned char ** [out] ((|ed|)) Pointer to tail of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayGetBeginEnd (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char ** beg, unsigned char ** ed)"
+.PP
+Get pointer to head and tail of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.br
+\fIed\fP unsigned char ** [out] ((|ed|)) Pointer to tail of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayGetBeginEndConst (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char ** beg, const unsigned char ** ed)"
+.PP
+Get const pointer to head and tail of variable Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP const unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.br
+\fIed\fP const unsigned char ** [out] ((|ed|)) Pointer to tail of ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayGetBeginSize (\fBOpenSOAPByteArrayPtr\fP b_ary, unsigned char ** beg, size_t * sz)"
+.PP
+Get pointer to head of variable Byte (unsigned char) Array and size. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.br
+\fIsz\fP size_t * [out] ((|sz|)) size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayGetBeginSizeConst (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char ** beg, size_t * sz)"
+.PP
+Get const pointer to head of variable Byte (unsigned char) Array and size. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIbeg\fP const unsigned char ** [out] ((|beg|)) Pointer to head of ByteArray 
+.br
+\fIsz\fP size_t * [out] ((|sz|)) size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayGetSize (\fBOpenSOAPByteArrayPtr\fP b_ary, size_t * sz)"
+.PP
+Get size of variable size Byte (unsigned char) Array. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIsz\fP size_t * [out] ((|sz|)) size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayRelease (\fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Release OpenSOAPByteArray Resource. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArrayResize (\fBOpenSOAPByteArrayPtr\fP b_ary, size_t new_size)"
+.PP
+Resize OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr [in, out] ((|b_ary|)) ByteArray 
+.br
+\fInew_size\fP size_t [in] ((|new_size|)) New size. If the new size is greater than the current size, 0 fill the extra area. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPByteArraySetData (\fBOpenSOAPByteArrayPtr\fP b_ary, const unsigned char * data, size_t sz)"
+.PP
+Set data of OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIb_ary\fP OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray 
+.br
+\fIdata\fP unsigned char * [in] ((|data|)) data 
+.br
+\fIsz\fP size_t [in] ((|sz|)) data size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

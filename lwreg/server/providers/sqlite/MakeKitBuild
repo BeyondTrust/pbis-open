@@ -1,0 +1,22 @@
+make()
+{
+    PROVIDER_SOURCES="\
+        sqliteapi.c    \
+        sqliteacl.c   \
+        sqliteapi_p.c    \
+        sqldb.c     \
+        sqldb_schema.c     \
+        sqldb_p.c     \
+        sqlitecache.c     \
+        regsqlite.c    \
+        regschema.c    \
+        globals.c \
+        sqlitehelper.c"   
+
+    mk_group \
+        GROUP="provider-sqlite" \
+        SOURCES="$PROVIDER_SOURCES" \
+        INCLUDEDIRS=". ../../include ../../../include" \
+        LIBDEPS="sqlite3 uuid lwbase lwbase_nothr $LIB_PTHREAD" \
+        HEADERDEPS="uuid/uuid.h lw/base.h lwmsg/lwmsg.h sqlite3.h"
+}

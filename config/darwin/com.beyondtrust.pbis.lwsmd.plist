@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+	"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.beyondtrust.pbis.lwsmd</string>
+        <key>OnDemand</key>
+        <true/>
+        <key>RunAtLoad</key>
+        <true/>
+	<key>ProgramArguments</key>
+	<array>
+            <string>/opt/pbis/libexec/startup</string>
+	</array>
+        <key>EnvironmentVariables</key>
+            <dict>
+                <key>LC_MONETARY</key>
+                <string>en_US.utf-8</string>
+                <key>LC_NUMERIC</key>
+                <string>en_US.utf-8</string>
+                <key>LC_ALL</key>
+                <string>en_US.UTF-8</string>
+                <key>LC_MESSAGES</key>
+                <string>en_US.utf-8</string>
+                <key>LC_COLLATE</key>
+                <string>en_US.utf-8</string>
+                <key>LC_CTYPE</key>
+                <string>en_US.utf-8</string>
+                <key>LC_TIME</key>
+                <string>en_US.utf-8</string>
+                <key>LD_LIBRARY_PATH</key>
+                <string></string>
+            </dict>
+</dict>
+</plist>

@@ -1,0 +1,11 @@
+make()
+{
+    _regs="lwiod.reg"
+
+    for _driver in ${LWIO_DRIVERS}
+    do
+        _regs="${_regs} ${_driver}.reg"
+    done
+
+    mk_stage DESTDIR="${LW_CONFIGDIR}" ${_regs}
+}

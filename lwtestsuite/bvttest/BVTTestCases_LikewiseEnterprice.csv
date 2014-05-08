@@ -1,0 +1,219 @@
+#ID,Description,Platforms,Command1,Expecited1,Command2,Expected2,Command3,Expected3,Command4,Expected4,,,,
+1,Verify nsswitch.conf file,all,cat /etc/nsswitch.conf,not(lsass),,,,,,,,,,
+2,Verify ssh_config file,all,cat /etc/ssh/ssh_config, GSSAPIAuthentication no & GSSAPIDelegateCredentials no,,,,,,,,,,
+3,Verify sshd_config file,all,cat /etc/ssh/sshd_config, not(GSSAPIDelegateCredentials yes),,,,,,,,,,
+4,Verify product download and installation,all,install(smbclient \\\\10.10.60.5\\share -U administrator centeris||Release_builds\Lwidentity-5.3\7728\LWISE\||/root/),Install complete,,,,,,,,,,
+#5,Verify License,all,,,,,,,,,,,,
+5,Verify nsswitch.conf file,all,cat /etc/nsswitch.conf,not(lsass),,,,,,,,,,
+6,Verify ssh_config file,all,cat /etc/ssh/ssh_config,not(GSSAPIDelegateCredentials yes),,,,,,,,,,
+7,Verify sshd_config file,all,cat /etc/ssh/sshd_config, not(GSSAPIDelegateCredentials yes),,,,,,,,,,
+8,Verify that 'likewise' directory is created in /opt,all,ls /opt/,likewise,,,,,,,,,,
+9,Verify that /opt/likewise tree is created,all,ls /opt/likewise/,bin & data & lib & sbin & share,,,,,,,,,,
+10,Verify that 'likewise' directory is created in /etc,all,ls /etc/,likewise,,,,,,,,,,
+11,Verify that /etc/likewise tree is created,all,ls /etc/likewise/,eventlogd.reg & eventlogd.reg & gpagentd.reg & grouppolicy.reg & lsassd.reg & lwiod.reg & lwreg.reg & netlogond.reg & srvsvcd.reg,,,,,,,,,,
+#12,Verify that /etc/security/pam_lwidentity.conf is created,all,ls /etc/security/,pam_lwidentity.conf,,,,,,,,,,
+12,Verify that Daemon files are created in /etc/init.d,all,ls /etc/init.d/,lsassd & lwiod & lwregd & netlogond & dcerpcd & eventlogd & eventfwdd & lwsmd & gpagentd,,,,,,,,,,
+13,Verify that lwregd process is started,"sunos,linux",/etc/init.d/lwregd status,running,,,,,,,,,,
+14,Verify that netlogond process is started,"sunos,linux",/etc/init.d/netlogond status,running,,,,,,,,,,
+15,Verify that lwiod process is started,"sunos,linux",/etc/init.d/lwiod status,running,,,,,,,,,,
+16,Verify product uninstall,linux,uninstall(),Success,,,,,,,,,,
+17,Verify /opt/likewise tree is removed,all,ls /opt/,not(likewise),,,,,,,,,,
+#18,Verify pam_lwidentity.conf file is removed,all,ls /etc/security/,not(pam_lwidentity.conf),,,,,,,,,,
+18,Verify /etc/likewise tree is removed,all,ls /etc/,likewise,,,,,,,,,,
+19,Verify likewise daemon processes are removed from /etc/init.d,all,ls /etc/init.d/,not(lsassd) & not(lwiod) & not(lwregd) & not(netlogond) & not(dcerpcd) & not(eventlogd) & not(eventfwdd) & not(lwsmd) & not(gpagentd),,,,,,,,,,
+20,Verify /var/lib/likewise tree is removed,all,ls /var/lib/,likewise,,,,,,,,,,
+21,Create local user,all,useradd(localuser||span1234),successfully|Password changed,,,,,,,,,,
+22,Verify local user login,all,userlogin(localuser||span1234),,pwd,/home/localuser,,,,,,,,
+23,Install,all,install(),Install complete,,,,,,,,,,
+24, domainjoin-cli command with a non-exist(tgp) OU specified for --ou option ,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou tgp childa.parent2.likewiseqa.com administrator || centeris),The OU is invalid,,,,,,,,,,
+25, domainjoin-cli command with a non-exist user account(user7),all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou testgp childa.parent2.likewiseqa.com user7 || centeris),The user account is invalid,,,,,,,,,,
+26, domainjoin-cli command with a non-exist domain name,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou testgp nonexist.likewiseqa.com user7 || centeris),The user account is invalid,,,,,,,,,,
+27, domainjoin-cli command with a non-exist domain name,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ov testgp nonexist.likewiseqa.com user7 || centeris),LW_ERROR_FAILED_TO_LOOKUP_DC,,,,,,,,,,
+28, domainjoin-cli command with a invalid sub-command(leavee) ,all,domainleave(/opt/likewise/bin/domainjoin-cli leavee administrator ||centeris),usage: domainjoin-cli [options] command [args...],,,,,,,,,,
+29, domainjoin-cli command with a bad password for a given user account,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ov testgp nonexist.likewiseqa.com user7 || badpassword),The password is incorrect for the given username,,,,,,,,,,
+30," domainjoin-cli command with the option ""enable"", and try to enable a invalid module",all,domainjoin(/opt/likewise/bin/domainjoin-cli join --enable invalidmodule --ou testgp childa.parent2.likewiseqa.com testuser || centeris),Error: Unable to enable/disable module [code 0x00000057],,,,,,,,,,
+31," domainjoin-cli  with the command ""setname""  along with the value ""…""",all,/opt/likewise/bin/domainjoin-cli setname ... ,expected like Invalid host name,,,,,,,,,,
+32, domainjoin-cli with commands get_distro and get_distro_version,all,/opt/likewise/bin/domainjoin-cli get_distro get_distro_version,usage: domainjoin-cli [options] command [args...],,,,,,,,,,
+33," domainjoin-cli command with ""leave"" command",all,domainleave(/opt/likewise/bin/domainjoin-cli leave invalidacct|| centeris),The user account is invalid,,,,,,,,,,
+34," domainjoin-cli command with ""leave"" command with bad password",all,domainleave(/opt/likewise/bin/domainjoin-cli leave administrator|| badpassword),The password is incorrect for the given username,,,,,,,,,,
+35," domainjoin-cli leave command with option ""details"" having a invalid module name as input",all,domainleave(/opt/likewise/bin/domainjoin-cli leave --details asd),Please check the spelling of 'add'. This module cannot be found,,,,,,,,,,
+36,"domainjoin-cli join command option  ""log"" having a invalid directory path as its input value 
+note: here the directory ""tt"" is not exists",all,domainleave(/opt/likewise/bin/domainjoin-cli leave --loglevel verbose --log /root/tt/dj.log administrator|| centeris),Please Verify the logfile path,,,,,,,,,,
+37,"domainjoin-cli join command option  ""loglevel"" having a invalid loglevel  as its input value
+note: here the loglevel ""debug"" is not allowed",all,domainleave(/opt/likewise/bin/domainjoin-cli leave --loglevel debug --log /root/dj.log administrator|| centeris),Please verify the loglevel,,,,,,,,,,
+38,domainjoin-cli join command with a user account who do not have delete rights in the AD,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou testgp childa.parent2.likewiseqa.com siva || centeris),User do not have necessary privileges,,,,,,,,,,
+39,"domainjoin-cli command with ""leave"" command ",all,domainleave(/opt/likewise/bin/domainjoin-cli leave administrator|| centeris),The password is incorrect for the given username,,,,,,,,,,
+40,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"not(""DC=com"")",,,,,,,,,,
+41,Verifying domain is alive,all,ping parent2.likewiseqa.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+42,Verify domain join to Computers OU in PARENT2.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers parent2.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+43,Verify nsswitch.conf file,all,cat /etc/nsswitch.conf,lsass,,,,,,,,,,
+44,Verify ssh_config file,all,cat /etc/ssh/ssh_config,GSSAPIAuthentication yes & GSSAPIDelegateCredentials yes,,,,,,,,,,
+45,Verify sshd_config file,all,cat /etc/ssh/sshd_config,ChallengeResponseAuthentication yes,,,,,,,,,,
+#46,Verify lsassd is running,aix,/etc/rc.d/init.d/lsassd status,running,,,,,,,,,,
+#46,Verify lsassd is running,hp-ux,/sbin/init.d/lsassd status,running,,,,,,,,,,
+47,Verify lsassd is running,"sunos,linux",/etc/init.d/lsassd status,running,,,,,,,,,,
+48,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=computers,DC=parent2,DC=likewiseqa,DC=com",,,,,,,,,,
+49,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181778(PARENT2\defuser) gid=1137181185(PARENT2\domain^users),pwd,/home/PARENT2/defuser,groups,PARENT2\domain^users,passwd(span1234||span1234),Success
+50,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+51,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+52,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=182977618(CHILDA\defuser) gid=182977025(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+53,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+54,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=1530397785(PARENT30\bvtuser1001) gid=1530397185(PARENT30\domain^users),pwd,/home/PARENT30/bvtuser1001,groups,PARENT30\domain^users,passwd(span1234||span1234),Success
+55,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+56,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=2032665681(CHILDB\bvtuser1001) gid=2032665089(CHILDB\domain^users),pwd,/home/CHILDB/bvtuser1001,groups,CHILDB\domain^users,passwd(span1234||span1234),Success
+57,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+58,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+59,Verify domain join to BVTOU in PARENT2.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou parent2.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+60,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=BVTOU,DC=parent2,DC=likewiseqa,DC=com",,,,,,,,,,
+61,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181779(PARENT2\nduser) gid=1137181185(PARENT2\domain^users),pwd,/home/PARENT2/nduser,groups,PARENT2\domain^users PARENT2\parent2gp,passwd(span1234||span1234),Success
+62,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+63,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+64,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=182977619(CHILDA\nduser) gid=182977620(CHILDA\bvtgrp),pwd,/home/CHILDA/nduser,groups,CHILDA\bvtgrp,passwd(span1234||span1234),Success
+65,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+66,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=1530397788(PARENT30\bvtuser1003) gid=1530397787(PARENT30\parent3gp),pwd,/home/PARENT30/bvtuser1003,groups,PARENT30\parent3gp,passwd(span1234||span1234),Success
+67,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+68,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=2032665684(CHILDB\bvtuser1003) gid=2032665683(CHILDB\childbgp),pwd,/home/CHILDB/bvtuser1003,groups,CHILDB\childbgp,passwd(span1234||span1234),Success
+69,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+70,Verify Parent4 Domain (one-way trust) SSH Logon,all,userlogin(parent4\\bvtuser||span1234),,echo $SHELL,/bin/bash,id,uid=901776470(PARENT4\bvtuser) gid=901776473(PARENT4\bvtgroup),pwd,/home/PARENT4/bvtuser,groups,PARENT4\bvtgroup,passwd(span1234||span1234),Success
+71,Verify Parent4 Domain (one-way trust) SSH Logon password change,all,userlogin(parent4\\bvtuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+72,Verify Unprovisioned Domain (one-way trust) SSH Logon,all,userlogin(unprv\\bvtuser||span1234),,echo $SHELL,/bin/bash,id,uid=987235407(UNPRV\bvtuser) gid=987235408(UNPRV\unprvgrp),pwd,/home/UNPRV/bvtuser,groups,UNPRV\unprvgrp,passwd(span1234||span1234),Success
+73,Verify Unprovisioned Domain (one-way trust) SSH Logon password change,all,userlogin(unprv\\bvtuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+74,Verify Schema Domain (two-way trust) SSH Logon,all,userlogin(schema\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1162871891(SCHEMA\nduser) gid=1162871892(SCHEMA\schemagrp),pwd,/home/SCHEMA/nduser,groups,SCHEMA\schemagrp,passwd(span1234||span1234),Success
+75,Verify Schema Domain (two-way trust) SSH Logon password change,all,userlogin(schema\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+76,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+77,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"not(""DC=com"")",,,,,,,,,,
+78,Verifying domain is alive,all,ping childa.parent2.likewiseqa.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+79,Verify domain join to Computers OU in CHILDA.PARENT2.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers childa.parent2.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+80,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=computers,DC=childa,DC=parent2,DC=likewiseqa,DC=com",,,,,,,,,,
+81,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181778(PARENT2\defuser) gid=1137181185(PARENT2\domain^users),pwd,/home/PARENT2/defuser,groups,PARENT2\domain^users,passwd(span1234||span1234),Success
+82,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+83,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+84,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=182977618(CHILDA\defuser) gid=182977025(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+85,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+86,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=1530397785(PARENT30\bvtuser1001) gid=1530397185(PARENT30\domain^users),pwd,/home/PARENT30/bvtuser1001,groups,PARENT30\domain^users,passwd(span1234||span1234),Success
+87,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+88,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=2032665681(CHILDB\bvtuser1001) gid=2032665089(CHILDB\domain^users),pwd,/home/CHILDB/bvtuser1001,groups,CHILDB\domain^users,passwd(span1234||span1234),Success
+89,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+90,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+91,Verify domain join to BVTOU OU in CHILDA.PARENT2.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou childa.parent2.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+92,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=BVTOU,DC=childa,DC=parent2,DC=likewiseqa,DC=com",,,,,,,,,,
+93,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181779(PARENT2\nduser) gid=1137181780(PARENT2\parent2gp),pwd,/home/PARENT2/nduser,groups,PARENT2\parent2gp,passwd(span1234||span1234),Success
+94,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+95,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+96,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=182977619(CHILDA\nduser) gid=182977025(CHILDA\domain^users),pwd,/home/CHILDA/nduser,groups,CHILDA\domain^users bvtgrp,passwd(span1234||span1234),Success
+97,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+98,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=1530397788(PARENT30\bvtuser1003) gid=1530397787(PARENT30\parent3gp),pwd,/home/PARENT30/bvtuser1003,groups,PARENT30\parent3gp,passwd(span1234||span1234),Success
+99,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+100,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=2032665684(CHILDB\bvtuser1003) gid=2032665683(CHILDB\childbgp),pwd,/home/CHILDB/bvtuser1003,groups,CHILDB\childbgp,passwd(span1234||span1234),Success
+101,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+102,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+103,Verifying domain is alive,all,ping parent3.likewiseqa.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+104,Verify domain join to Computers OU in PARENT3.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers parent3.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+105,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=Computers,DC=parent3,DC=likewiseqa,DC=com",,,,,,,,,,
+106,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181778(PARENT2\defuser) gid=1137181185(PARENT2\domain^users),pwd,/home/PARENT2/defuser,groups,PARENT2\domain^users,passwd(span1234||span1234),Success
+107,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+108,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+109,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=835191890(CHILDA\defuser) gid=835191297(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+110,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+111,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=1530397785(PARENT30\bvtuser1001) gid=1530397185(PARENT30\domain^users),pwd,/home/PARENT30/bvtuser1001,groups,PARENT30\domain^users,passwd(span1234||span1234),Success
+112,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+113,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=2032665681(CHILDB\bvtuser1001) gid=2032665089(CHILDB\domain^users),pwd,/home/CHILDB/bvtuser1001,groups,CHILDB\domain^users,passwd(span1234||span1234),Success
+114,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+115,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+116,Verify domain join to BVTOU in PARENT3.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou parent3.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+117,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=bvtou,DC=parent3,DC=likewiseqa,DC=com",,,,,,,,,,
+118,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181779(PARENT2\nduser) gid=1137181780(PARENT2\parent2gp),pwd,/home/PARENT2/nduser,groups,PARENT2\parent2gp,passwd(span1234||span1234),Success
+119,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+120,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+121,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=835191890(CHILDA\defuser) gid=835191297(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+122,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+123,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=1530397788(PARENT30\bvtuser1003) gid=1530397185(PARENT30\domain^users),pwd,/home/PARENT30/bvtuser1003,groups,PARENT30\domain^users PARENT30\parent3gp,passwd(span1234||span1234),Success
+124,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+125,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=2032665684(CHILDB\bvtuser1003) gid=2032665683(CHILDB\childbgp),pwd,/home/CHILDB/bvtuser1003,groups,CHILDB\childbgp,passwd(span1234||span1234),Success
+126,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+127,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+128,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"not(""DC=com"")",,,,,,,,,,
+129,Verifying domain is alive,all,ping childb.parent3.likewiseqa.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+130,Verify domain join to Computers OU in CHILDB.PARENT3.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers childb.parent3.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+131,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=Computers,DC=childb,DC=parent3,DC=likewiseqa,DC=com",,,,,,,,,,
+132,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181778(PARENT2\defuser) gid=1137181185(PARENT2\domain^users),pwd,/home/PARENT2/defuser,groups,PARENT2\domain^users,passwd(span1234||span1234),Success
+133,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+134,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+135,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=835191890(CHILDA\defuser) gid=835191297(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+136,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+137,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=1530397785(PARENT30\bvtuser1001) gid=1530397185(PARENT30\domain^users),pwd,/home/PARENT30/bvtuser1001,groups,PARENT30\domain^users,passwd(span1234||span1234),Success
+138,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+139,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1001||span1234),,echo $SHELL,/bin/bash,id,uid=2032665681(CHILDB\bvtuser1001) gid=2032665089(CHILDB\domain^users),pwd,/home/CHILDB/bvtuser1001,groups,CHILDB\domain^users,passwd(span1234||span1234),Success
+140,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1001||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+141,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+142,Verify domain join to BVTOU OU in CHILDB.PARENT3.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou childb.parent3.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+143,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=bvtou,DC=childb,DC=parent3,DC=likewiseqa,DC=com",,,,,,,,,,
+144,Verify Parent2 Domain SSH Logon,all,userlogin(parent2\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181779(PARENT2\nduser) gid=1137181780(PARENT2\parent2gp),pwd,/home/PARENT2/nduser,groups,PARENT2\parent2gp,passwd(span1234||span1234),Success
+145,Verify Parent2 Domain SSH password change,all,userlogin(parent2\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+146,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+147,Verify Childa.Parent2 Domain SSH Logon,all,userlogin(childa\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=835191890(CHILDA\defuser) gid=835191297(CHILDA\domain^users),pwd,/home/CHILDA/defuser,groups,CHILDA\domain^users,passwd(span1234||span1234),Success
+148,Verify Childa.Parent2 Domain SSH password change,all,userlogin(childa\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+149,Verify Parent3 Domain SSH Logon,all,userlogin(parent30\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=1530397788(PARENT30\bvtuser1003) gid=1530397787(PARENT30\parent3gp),pwd,/home/PARENT30/bvtuser1003,groups,PARENT30\parent3gp,passwd(span1234||span1234),Success
+150,Verify Parent3 Domain SSH Logon password change,all,userlogin(parent30\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+151,Verify Childb.Parent3 Domain SSH Logon,all,userlogin(childb\\bvtuser1003||span1234),,echo $SHELL,/bin/bash,id,uid=2032665684(CHILDB\bvtuser1003) gid=2032665089(CHILDB\domain^users),pwd,/home/CHILDB/bvtuser1003,groups,CHILDB\domain^users,passwd(span1234||span1234),Success
+152,Verify Childb.Parent3 Domain SSH Logon password change,all,userlogin(childb\\bvtuser1003||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+153,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+154,Verify lsassd is not running,"sunos,linux",/etc/init.d/lsassd status,running,,,,,,,,,,
+155,Verifying domain is alive,all,ping -c 1 parent4.likewiseqa.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+156,Verify domain join to Computers OU in PARENT4.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers parent4.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+157,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=Computers,DC=parent4,DC=likewiseqa,DC=com",,,,,,,,,,
+158,Verify Parent4 Domain SSH Logon,all,userlogin(parent4\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=901776474(PARENT4\defuser) gid=901775873(PARENT4\domain^users),pwd,/home/PARENT4/defuser,groups,PARENT4\domain^users,passwd(span1234||span1234),Success
+159,Verify Parent4 Domain SSH password change,all,userlogin(parent4\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+160,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+161,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+162,Verify domain join to BVTOU in PARENT4.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou parent4.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+163,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=BVTOU,DC=parent4,DC=likewiseqa,DC=com",,,,,,,,,,
+164,Verify Parent4 Domain (one-way trust) SSH Logon,all,userlogin(parent4\\bvtuser||span1234),,echo $SHELL,/bin/bash,id,uid=901776470(PARENT4\bvtuser) gid=901776473(PARENT4\bvtgroup),pwd,/home/PARENT4/bvtuser,groups,PARENT4\bvtgroup PARENT4\domain^users,passwd(span1234||span1234),Success
+165,Verify Parent4 Domain (one-way trust) SSH Logon password change,all,userlogin(parent4\\bvtuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+166,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+167,Verifying domain is alive,all,ping -c 1 unprv.likewise.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+168,Verify domain join to Computers OU in UNPRV.LIKEWISE.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers unprv.likewise.com administrator || centeris),SUCCESS,,,,,,,,,,
+169,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=Computers,DC=unprv,DC=likewise,DC=com",,,,,,,,,,
+170,Verify Unprovisioned Domain SSH Logon,all,userlogin(unprv\\defuser||span1234),,echo $SHELL,/bin/sh,id,uid=987235411(UNPRV\defuser) gid=987234817(UNPRV\domain^users),pwd,/home/local/UNPRV/defuser,groups,UNPRV\domain^users,passwd(span1234||span1234),Success
+171,Verify Unprovisioned Domain SSH Logon password change,all,userlogin(unprv\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+172,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+173,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+174,Verify domain join to BVTOU OU in UNPRV.LIKEWISE.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou unprv.likewise.com administrator || centeris),SUCCESS,,,,,,,,,,
+175,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=BVTOU,DC=unprv,DC=likewise,DC=com",,,,,,,,,,
+176,Verify Unprovisioned Domain SSH Logon,all,userlogin(unprv\\bvtuser||span1234),,echo $SHELL,/bin/sh,id,uid=987235407(UNPRV\bvtuser) gid=987234817(UNPRV\domain^users),pwd,/home/local/UNPRV/bvtuser,groups,UNPRV\domain^users UNPRV\unprvgrp,passwd(span1234||span1234),Success
+177,Verify Unprovisioned Domain SSH Logon password change,all,userlogin(unprv\\bvtuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+178,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+179,Verifying domain is alive,all,ping -c 1 schema.likewise.com,0% packet loss & not(100% packet loss),,,,,,,,,,
+180,Verify domain join to Computers OU in SCHEMA.LIKEWISE.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers schema.likewise.com administrator || centeris),SUCCESS,,,,,,,,,,
+181,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"CN=Computers,DC=schema,DC=likewise,DC=com",,,,,,,,,,
+182,Verify Schema Domain SSH Logon,all,userlogin(schema\\defuser||span1234),,echo $SHELL,/bin/bash,id,uid=1162871890(SCHEMA\defuser) gid=1162871297(SCHEMA\domain^users),pwd,/home/SCHEMA/defuser,groups,SCHEMA\domain^users,passwd(span1234||span1234),Success
+183,Verify Schema Domain SSH password change,all,userlogin(schema\\defuser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+184,Verify ssh with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+185,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+186,Verify domain join to BVTOU in SCHEMA.LIKEWISE.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou bvtou schema.likewise.com administrator || centeris),SUCCESS,,,,,,,,,,
+187,Verify Domain join Query,all,/opt/likewise/bin/domainjoin-cli query,"OU=BVTOU,DC=schema,DC=likewise,DC=com",,,,,,,,,,
+188,Verify Schema Domain  SSH Logon,all,userlogin(schema\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1162871891(SCHEMA\nduser) gid=1162871297(SCHEMA\domain^users),pwd,/home/SCHEMA/nduser,groups,SCHEMA\domain^users SCHEMA\schemagrp,passwd(span1234||span1234),Success
+189,Verify Schema Domain  SSH Logon password change,all,userlogin(schema\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+190,Verify Parent2 Domain (two-way trust) SSH Logon,all,userlogin(parent2\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1137181779(PARENT2\nduser) gid=1137181780(PARENT2\parent2gp),pwd,/home/PARENT2/nduser,groups,PARENT2\parent2gp,passwd(span1234||span1234),Success
+191,Verify Parent2 Domain (two-way trust) SSH Logon password change,all,userlogin(parent2\\nduser||span1234),,passwd(span1234||span1234),Success,,,,,,,,
+192,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave),SUCCESS,,,,,,,,,,
+193,remove home directory,all,rm -rf /home/CHILDA,,,,,,,,,,,
+#194,reboot check,all,reboot,reboot NOW!,,,,,,,,,,
+#195,Verify console login,all,systemlogin(10),,,,,,,,,,,
+196,Verify Schema Domain  SSH Logon,all,userlogin(schema\\nduser||span1234),,echo $SHELL,/bin/bash,id,uid=1162871891(SCHEMA\nduser) gid=1162871297(SCHEMA\domain^users),pwd,/home/SCHEMA/nduser,groups,SCHEMA\domain^users SCHEMA\schemagrp,passwd(span1234||span1234),Success
+197,SSH into box with local user credentials,all,userlogin(systemuser||span1234),,pwd,/home/systemuser,,,,,,,,
+198,Leave domain,all,domainleave(/opt/likewise/bin/domainjoin-cli leave administrator centeris),SUCCESS,,,,,,,,,,
+199,Verify that domain users can no longer be resolved,all,id schema\\nduser,No such user,,,,,,,,,,
+200,Verify lsassd is not running,"sunos,linux",/etc/init.d/lsassd status,running,,,,,,,,,,
+201,Adding user,all,useradd(localuser||span1234),successfully|Password changed,,,,,,,,,,
+202,Verify Uninstall,linux,uninstall(),Success,,,,,,,,,,
+203,Verify nsswitch.conf file,all,cat /etc/nsswitch.conf,not(lsass),,,,,,,,,,
+204,Verify ssh_config file,all,cat /etc/ssh/ssh_config,not(GSSAPIDelegateCredentials yes),,,,,,,,,,
+205,Verify sshd_config file,all,cat /etc/ssh/sshd_config,ChallengeResponseAuthentication no & not(KbdInteractiveAuthentication,,,,,,,,,,
+206,Verify /opt/likewise tree is removed,all,ls /opt/,not(likewise),,,,,,,,,,
+207,Verify pam_lwidentity.conf file is removed,all,ls /etc/security/,not(pam_lwidentity.conf),,,,,,,,,,
+208,Verify /etc/likewise tree is removed,all,ls /etc/,likewise,,,,,,,,,,
+209,Verify likewise daemon processes are removed from /etc/init.d,all,ls /etc/init.d/,not(lsassd) & not(lwiod) & not(lwregd) & not(netlogond) & not(dcerpcd) & not(eventlogd) & not(eventfwdd) & not(gpagentd) & not(lwsmd),,,,,,,,,,
+210,Verify /var/lib/likewise tree is removed,all,ls /var/lib/,likewise,,,,,,,,,,
+211,Verify local user login,all,userlogin(localuser||span1234),,pwd,/home/localuser,,,,,,,,
+212,Remove likewise build,all,rm -rf /root/Likewise*,,,,,,,,,,,

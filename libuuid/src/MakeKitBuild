@@ -1,0 +1,22 @@
+make()
+{
+    UUID_SOURCES="\
+        clear.c \
+        copy.c \
+        pack.c \
+        unparse.c \
+        compare.c \
+        gen_uuid.c \
+        isnull.c \
+        parse.c \
+        unpack.c \
+        uuid_time.c"
+
+    mk_multiarch_do
+        mk_library \
+            LIB="uuid" \
+            SOURCES="$UUID_SOURCES" \
+            INCLUDEDIRS=". ../include ../include/uuid" \
+            LIBDEPS="$LIB_SOCKET"
+    mk_multiarch_done
+}

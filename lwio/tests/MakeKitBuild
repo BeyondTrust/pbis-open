@@ -1,0 +1,5 @@
+SUBDIRS="\
+    test_srv_share_ioctl \
+    test_load \
+    test_pvfs"
+

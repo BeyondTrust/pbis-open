@@ -1,0 +1,13 @@
+The memory allocation and string functions are used by eventcltr in Windows. In general, most changes to these functions will be portable, however be aware that:
+
+* The following declarations are not available on Windows, so they are redefined in compat.h
+va_copy
+strncasecmp
+
+* Any changes to configure.ac that end up propagating to config.h through autoheader need to be manually done in include/win32/config.h.
+
+* Any new lwbase function that is used by another windows binary must be listed in the exports table in the module .def.
+
+To use lwbase in a new project, the following files may be included:
+#include <lw/rtlmemory.h>
+#include <lw/rtlstring.h>

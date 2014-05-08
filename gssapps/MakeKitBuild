@@ -1,0 +1,21 @@
+SUBDIRS="simple proxy"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
+    lw_define_feature_macros
+
+    mk_check_headers \
+        FAIL=yes \
+        stdlib.h string.h unistd.h sys/time.h \
+        lw/base.h krb5.h gssapi.h ntlm/sspintlm.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        lwbase_nothr gssapi_krb5 krb5 k5crypto krb5support com_err
+
+    mk_check_libraries socket nsl
+}

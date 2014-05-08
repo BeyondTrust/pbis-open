@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{83F8410A-CB68-455F-804E-61FB7AB3666E} = s 'SubExe'
+		'SubExe.EXE'
+		{
+			val AppID = s {83F8410A-CB68-455F-804E-61FB7AB3666E}
+		}
+	}
+}

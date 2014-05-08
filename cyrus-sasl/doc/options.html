@@ -1,0 +1,340 @@
+<HTML><HEAD>
+<title>Options for Cyrus SASL</title>
+<!-- $Id: options.html,v 1.30 2005/02/16 20:52:05 shadow Exp $ -->
+</HEAD>
+<BODY>
+<h1>Options for Cyrus SASL</h1>
+
+<p>This document contains information on what options are used by the
+Cyrus SASL library and bundled mechanisms.  The most commonly used
+options (and those that are therefore most commonly misunderstood
+are <b>pwcheck_method</b> and <b>auxprop_plugin</b>.  Please ensure
+that you have configured these correctly if things don't seem to
+be working right.  Additionally, <b>mech_list</b> can be an easy
+way to limit what mechanisms a given application will use.</p>
+
+<TABLE BORDER WIDTH=95%>
+<TR><TH>Option</TH><TH>Used By</TH><TH>Description</TH><TH>Default</TH></TR>
+<TR>
+<TD>authdaemond_path</TD><TD>SASL Library</TD> 
+<TD>Path to Courier-IMAP authdaemond's unix socket.
+Only applicable when pwcheck_method is set to authdaemond.</TD><TD>/dev/null</TD>
+</TR>
+<TR>
+<TD>auto_transition</TD><TD>SASL Library</TD> 
+<TD>When set to 'yes' or 'noplain',
+and when using an auxprop plugin, automatically transition
+users to other mechs when they do a successful plaintext
+authentication.  When set to 'noplain', only non-plaintext secrets 
+will be written.  <I>Note that the only mechs (as currently
+implemented) which don't use plaintext secrets are
+OTP and SRP.</I></TD><TD>no</TD>
+</TR>
+<TR>
+<TD>auxprop_plugin</TD><TD>Auxiliary Property Plugin</TD>
+<TD>Name of auxiliary plugin to use, you may specify a space-separated
+list of plugin names, and the plugins will be queried in order</TD>
+<TD>(null) - querys all plugins</TD>
+</TR>
+<TR>
+<TD>canon_user_plugin</TD><TD>SASL Library</TD>
+<TD>Name of canon_user plugin to use</TD><TD>INTERNAL</TD>
+</TR>
+<TR>
+<TD>keytab</TD><TD>GSSAPI</TD> <TD>Location of keytab
+file</TD><TD><tt>/etc/krb5.keytab</tt> (system dependant)</TD>
+</TR>
+<TR>
+<TD>ldapdb_uri</TD><TD>LDAPDB plugin</TD>
+<TD>ldap server uri, you can specify a space-separated list of URIs - 
+ldapi:// or ldaps://ldap1/ ldaps://ldap2/</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>ldapdb_id</TD><TD>LDAPDB plugin</TD>
+<TD>ldap SASL authentication id</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>ldapdb_mech</TD><TD>LDAPDB plugin</TD>
+<TD>ldap SASL mechanism for authentication</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>ldapdb_pw</TD><TD>LDAPDB plugin</TD>
+<TD>ldap password for SASL authentication id</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>ldapdb_rc</TD><TD>LDAPDB plugin</TD>
+<TD>The filename specified here will be put into the server's LDAPRC
+environment variable, and libldap-specific config options may be set
+in that ldaprc file.  The main purpose behind this option is to allow
+a client TLS certificate to be configured, so that SASL/EXTERNAL may
+be used between the SASL server and the LDAP server. This is the most
+optimal way to use this plugin when the servers are on separate machines.</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>ldapdb_starttls</TD><TD>LDAPDB plugin</TD>
+<TD>Use StartTLS.  This option may be set to 'try' or 'demand'.  
+When set to "try" any failure in StartTLS is ignored. 
+When set to "demand" then any failure aborts the connection.</TD>
+<TD>none</TD>
+</TR>
+<TR>
+<TD>log_level</TD><TD>SASL Library</TD>
+<TD><b>Numeric</b> Logging Level (see <TT>SASL_LOG_*</TT> in <tt>sasl.h</tt>
+for values and descriptions</TD>
+<TD>1 (SASL_LOG_ERR)</TD>
+</TR>
+<TR>
+<TD>mech_list</TD><TD>SASL Library</TD>
+<TD>Whitespace separated list of mechanisms to allow (e.g. 'plain
+otp').  Used to restrict the mechanisms to a subset of the installed
+plugins.</TD><TD>(use all available plugins)</TD>
+</TR>
+<TR>
+<TD>ntlm_server</TD><TD>NTLM (server)</TD>
+<TD>Name of server (WinNT, Win2K, Samba, etc) to which authentication
+will be proxied.</TD>
+<TD>(null) - perform authentication internally</TD>
+</TR>
+<TR>
+<TD>ntlm_v2</TD><TD>NTLM (client)</TD>
+<TD>Send NTLMv2 responses to the server.</TD>
+<TD>no (send NTLMv1)</TD>
+</TR>
+<TR>
+<TD>opiekeys</TD><TD>OTP (with OPIE)</TD>
+<TD>Location of the opiekeys file</TD><TD><tt>/etc/opiekeys</tt></TD>
+</TR>
+<TR>
+<TD>otp_mda</TD><TD>OTP (w/o OPIE)</TD>
+<TD>Message digest algorithm for one-time passwords, used by sasl_setpass
+(possible values: 'md4', 'md5', 'sha1')</TD><TD><tt>md5</tt></TD>
+</TR>
+<TR>
+<TD>plugin_list</TD><TD>SASL Library</TD>
+<TD>Location of Plugin list (Unsupported)</TD><TD><i>none</i></TD>
+</TR>
+<TR>
+<TD>pwcheck_method</TD><TD>SASL Library</TD>
+<TD>Whitespace separated list of mechanisms used to verify passwords,
+used by sasl_checkpass (possible values: 'auxprop', 'saslauthd',
+'pwcheck', 'authdaemond' [if compiled with <tt>--with-authdaemond</tt>])
+and 'alwaystrue' [if compiled with <tt>--enable-alwaystrue</tt>])
+</TD><TD>auxprop</TD>
+</TR>
+<TR>
+<TD>reauth_timeout</TD><TD>DIGEST-MD5</TD>
+<TD>Length in time (in minutes) that authentication info will be
+cached for a fast reauth.  A value of 0 will disable reauth.</TD>
+<TD>0</TD>
+</TR>
+<TR>
+<TD>saslauthd_path</TD><TD>SASL Library</TD>
+<TD>Path to saslauthd run directory (<b>including</b> the "/mux" named pipe)</TD>
+<TD>system dependant (generally won't need to be changed)</TD>
+</TR>
+<TR>
+<TD>sasldb_path</TD><TD>sasldb plugin</TD>
+<TD>Path to sasldb file</TD><TD><tt>/etc/sasldb2</tt> (system dependant)</TD>
+<TR>
+<TD>sql_engine</TD><TD>SQL plugin</TD>
+<TD>Name of SQL engine to use (possible values: 'mysql', 'pgsql', 'sqlite').</TD>
+<TD><tt>mysql</tt></TD>
+</TR>
+<TR>
+<TD>sql_hostnames</TD><TD>SQL plugin</TD>
+<TD>Comma separated list of SQL servers (in host[:port] format).</TD>
+<TD><i>none</i> (engine dependent)</TD>
+</TR>
+<TR>
+<TD>sql_user</TD><TD>SQL plugin</TD>
+<TD>Username to use for authentication to the SQL server.</TD>
+<TD><i>none</i> (engine dependent)</TD>
+</TR>
+<TR>
+<TD>sql_passwd</TD><TD>SQL plugin</TD>
+<TD>Password to use for authentication to the SQL server.</TD>
+<TD><i>none</i> (engine dependent)</TD>
+</TR>
+<TR>
+<TD>sql_database</TD><TD>SQL plugin</TD>
+<TD>Name of the database which contains the auxiliary properties.</TD>
+<TD><i>none</i> (engine dependent)</TD>
+</TR>
+<TR>
+<TD>sql_select</TD><TD>SQL plugin</TD>
+<TD>SELECT statement to use for fetching properties.  This option is
+<b>required</b> in order to use the SQL plugin.</TD>
+<TD><i>none</i></TD>
+</TR>
+<TR>
+<TD>sql_insert</TD><TD>SQL plugin</TD>
+<TD>INSERT statement to use for creating properties for new users.</TD>
+<TD><i>none</i></TD>
+</TR>
+<TR>
+<TD>sql_update</TD><TD>SQL plugin</TD>
+<TD>UPDATE statement to use for modifying properties.</TD>
+<TD><i>none</i></TD>
+</TR>
+<TR>
+<TD>sql_usessl</TD><TD>SQL plugin</TD>
+<TD>When set to 'yes', 'on', '1' or 'true', a secure connection will
+be made to the SQL server.</TD>
+<TD><tt>no</tt></TD>
+</TR>
+<TR>
+<TD>srp_mda</TD><TD>SRP</TD>
+<TD>Message digest algorithm for SRP calculations
+(possible values: 'md5', 'sha1', 'rmd160')</TD><TD><tt>sha1</tt></TD>
+</TR>
+<TR>
+<TD>srvtab</TD><TD>KERBEROS_V4</TD>
+<TD>Location of the srvtab file</TD><TD><tt>/etc/srvtab</tt> (system
+dependant)</TD>
+</TR>
+</TABLE>
+
+<h2>Notes on SQL auxprop options</h2>
+
+<p>The <tt>sql_insert</tt> and <tt>sql_update</tt> options are
+optional and are only needed if you wish to allow the SASL library
+(e.g., saslpasswd2) and plugins (e.g., OTP) to write properties to the
+SQL server.  If used, both statements MUST be provided so that
+properties can be added, changed and deleted.
+<font color=red>NOTE: The columns for writable properites MUST accept NULL values.</font>
+
+<p>The SQL statements provided in the <tt>sql_select</tt>,
+<tt>sql_insert</tt> and <tt>sql_update</tt> options can contain
+arguments which will be substituted with the appropriate values.  The
+valid arguments are:
+
+<DL compact>
+<DT><tt>%u</tt> <DD>Username whose properties are being fetched/stored.
+
+<DT><tt>%p</tt> <DD>Name of the property being fetched/stored.  This could
+     technically be anything, but SASL authentication will try
+     userPassword and cmusaslsecretMECHNAME (where MECHNAME is the
+     name of a SASL mechanism).
+
+<DT><tt>%r</tt> <DD>Realm to which the user belongs.  This could be the
+     kerberos realm, the FQDN of the computer the SASL application is
+     running on or whatever is after the @ on a username.  (read the
+     realm documentation).
+
+<DT><tt>%v</tt> <DD>Value of the property being stored (INSERT or
+     UPDATE only!). This could technically be anything depending on
+     the property itself, but is generally a userPassword.
+</DL>
+
+<font color=red>NOTE: DO NOT put quotes around the entire SQL
+statement, but each individual %u, %r and %v argument MUST be
+quoted.</font>
+
+
+<h3>Examples:</h3>
+
+<pre>
+     <tt>sql_select: SELECT %p FROM user_table WHERE username = '%u' and realm = '%r'</tt>
+</pre>
+
+     would send the following statement to SQL for user "bovik" and
+     the default realm for the machine "madoka.surf.org.uk":
+
+<pre>
+     <tt>SELECT userPassword FROM user_table WHERE username = 'bovik' and
+     realm = 'madoka.surf.org.uk';</tt>
+
+
+</pre>
+
+<pre>
+     <tt>sql_insert: INSERT INTO user_table (username, realm, %p) VALUES ('%u', '%r', '%v')</tt>
+
+</pre>
+
+   would generate the following statement to SQL for user "bovik" in
+   realm "madoka.surf.org.uk" with userPassword "wert":
+
+<pre>
+     <tt>INSERT INTO user_table (username, realm, userPassword) VALUES
+     ('bovik', 'madoka.surf.org.uk', 'wert');</tt>
+
+
+</pre>
+
+<p>Note that all substitutions do not have to be used. For instance,
+<pre>
+     <tt>SELECT password FROM auth WHERE username = '%u'</tt>
+</pre>
+is a valid value for <tt>sql_select</tt>.
+
+<h2>Notes on LDAPDB auxprop options</h2>
+
+<p>
+</p>
+
+<p>Unlike other LDAP-enabled plugins for other services that are common
+on the web, this plugin does not require you to configure DN search
+patterns to map usernames to LDAP DNs. This plugin requires SASL name
+mapping to be configured on the target slapd. This approach keeps the
+LDAP-specific configuration details in one place, the slapd.conf, and
+makes the configuration of remote services much simpler.</p>
+
+<p>This plugin is not for use with slapd itself. When OpenLDAP is
+built with SASL support, slapd uses its own internal auxprop module.
+By default, without configuring anything else, slapd will fail to load
+the ldapdb module when it's present. This is as it should be. If you
+don't like the "auxpropfunc: error -7" message that is sent to syslog
+by slapd, you can stop it by creating /usr/lib/sasl2/slapd.conf with:
+
+    <pre>auxprop_plugin: slapd</pre>
+
+which will force the SASL library to ignore all other auxprop modules.</p>
+
+<h3>Examples:</h3>
+
+<pre>
+ldapdb_uri: ldap://ldap.example.com
+ldapdb_id: root
+ldapdb_pw: secret
+ldapdb_mech: DIGEST-MD5
+</pre>
+
+<p>The LDAP server must be configured to map the SASL authcId "root" into a DN
+that has proxy authorization privileges to every account that is allowed to
+login to this server. (See the OpenLDAP Admin Guide section 10 for
+details.)</p>
+
+<pre>
+ldapdb_uri: ldapi://
+ldapdb_mech: EXTERNAL
+</pre>
+
+<p>This configuration assumes an LDAP server is on the same server that is
+using SASL and the underlying OS is *NIX based (ldapi:// requires UNIX domain
+sockets).  This is fast and secure, and needs no username or password to be
+stored.  The slapd.conf will need to map these usernames to LDAP DNs:
+
+<pre>
+sasl-regexp uidNumber=(.*)\\+gidNumber=(.*),cn=peercred,cn=external,cn=auth
+    ldap:///dc=example,dc=com??sub?(&(uidNumber=$1)(gidNumber=$2))
+</pre>
+
+<pre>
+sasl-regexp uid=(.*),cn=external,cn=auth
+    ldap:///dc=example,dc=com??sub?(uid=$1)
+</pre>
+
+</p>
+
+<hr>
+Back to the <A href=index.html>index</a>
+
+</body>
+</html>
+

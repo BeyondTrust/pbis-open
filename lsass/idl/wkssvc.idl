@@ -1,0 +1,125 @@
+[
+uuid(6bffd098-a112-3610-9833-46c3f87e345a),
+pointer_default(unique),
+version(1.0)
+] 
+interface wkssvc
+{
+cpp_quote("#ifdef DCERPC_STUB_BUILD")
+
+#include <lw/security-types.h>
+#include <lw/rpc/wkssvc.h>
+
+    typedef [switch_type(UINT32)] union _NETR_WKSTA_INFO
+    {
+        [case(100)]    WKSTA_INFO_100 *pInfo100;
+        [case(101)]    WKSTA_INFO_101 *pInfo101;
+        [case(102)]    WKSTA_INFO_102 *pInfo102;
+    } NETR_WKSTA_INFO;
+
+    typedef [switch_type(UINT32)] union _NETR_WKSTA_USER_INFO_CTR
+    {
+        [case(0)]  NETR_WKSTA_USER_INFO_CTR_0  *pInfo0;
+        [case(1)]  NETR_WKSTA_USER_INFO_CTR_1  *pInfo1;
+    } NETR_WKSTA_USER_INFO_CTR;
+
+    typedef struct _NETR_WKSTA_USER_INFO
+    {
+        DWORD  dwLevel;
+        [switch_is(dwLevel)] NETR_WKSTA_USER_INFO_CTR Ctr;
+    } NETR_WKSTA_USER_INFO;
+
+cpp_quote("#endif /* DCERPC_STUB_BUILD */") 
+
+
+    /* Function 0x00 */
+    WINERROR NetrWkstaGetInfo(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in] DWORD dwLevel,
+        [out,ref,switch_is(dwLevel)] NETR_WKSTA_INFO *pInfo
+        );
+
+    WINERROR wkssvc_Function0x01();
+
+    /* Function 0x02 */
+    WINERROR NetrWkstaUserEnum(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,out,ref] NETR_WKSTA_USER_INFO  *pInfo,
+        [in] DWORD dwPrefMaxLen,
+        [out,ref] DWORD *pdwNumEntries,
+        [in,out,unique] DWORD *pdwResume
+        );
+
+    WINERROR wkssvc_Function0x03();
+    WINERROR wkssvc_Function0x04();
+    WINERROR wkssvc_Function0x05();
+    WINERROR wkssvc_Function0x06();
+    WINERROR wkssvc_Function0x07();
+    WINERROR wkssvc_Function0x08();
+    WINERROR wkssvc_Function0x09();
+    WINERROR wkssvc_Function0x0a();
+    WINERROR wkssvc_Function0x0b();
+    WINERROR wkssvc_Function0x0c();
+    WINERROR wkssvc_Function0x0d();
+    WINERROR wkssvc_Function0x0e();
+    WINERROR wkssvc_Function0x0f();
+
+    /* Function 0x10 */
+    WINERROR NetrJoinDomain(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,ref] wchar16_t *pwszDomainName,
+        [in,string,unique] wchar16_t *pwszAccountOu,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,string,unique] wchar16_t *pwszPassword,
+        [in] DWORD dwJoinFlags
+    );
+
+    /* Function 0x11 */
+    WINERROR NetrUnjoinDomain(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,string,unique] wchar16_t *pwszPassword,
+        [in] DWORD dwUnjoinFlags
+    );
+
+    WINERROR wkssvc_Function0x12();
+    WINERROR wkssvc_Function0x13();
+    WINERROR wkssvc_Function0x14();
+    WINERROR wkssvc_Function0x15();
+
+    /* Function 0x16 */
+    WINERROR NetrJoinDomain2(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,ref] wchar16_t *pwszDomainName,
+        [in,string,unique] wchar16_t *pwszAccountOu,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,unique] ENC_JOIN_PASSWORD_BUFFER *pPassword,
+        [in] DWORD dwJoinFlags
+    );
+
+    /* Function 0x17 */
+    WINERROR NetrUnjoinDomain2(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,unique] ENC_JOIN_PASSWORD_BUFFER *pPassword,
+        [in] DWORD dwUnjoinFlags
+    );
+
+    WINERROR wkssvc_Function0x18();
+    WINERROR wkssvc_Function0x19();
+    WINERROR wkssvc_Function0x1a();
+    WINERROR wkssvc_Function0x1b();
+    WINERROR wkssvc_Function0x1c();
+    WINERROR wkssvc_Function0x1d();
+    WINERROR wkssvc_Function0x1e();
+}
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

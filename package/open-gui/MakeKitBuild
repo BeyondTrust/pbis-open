@@ -1,0 +1,71 @@
+MODULES="package-deb package-rpm package-freebsd"
+
+configure()
+{
+    mk_declare -o \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR
+
+    if mk_rpm_enabled
+    then
+        PKG_RPM_COMPAT="0"
+
+        mk_compat_do
+            PKG_RPM_COMPAT="1"
+        mk_compat_done
+
+        mk_declare -o PKG_RPM_COMPAT
+    fi
+
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_OPEN_GUI_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/open-gui.spec.in"
+        
+        gui_files
+
+    mk_rpm_done
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_OPEN_GUI_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
+        
+        gui_files
+    
+    mk_deb_done   
+}
+
+package_freebsd()
+{
+    mk_freebsd_do \
+        PACKAGE="$PKG_OPEN_GUI_FREEBSD_NAME" \
+        VERSION="$PKG_FREEBSD_VERSION" \
+        SHORT="-PowerBroker Identity Services Open Graphical Interface $PKG_FREEBSD_VERSION" \
+        LONG="-Allows you to join Active Directory using a graphical interface"
+
+        gui_files
+    
+    mk_freebsd_done   
+}
+
+
+make()
+{
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+    mk_freebsd_enabled && package_freebsd
+}
+
+gui_files()
+{
+    mk_package_patterns SUBDIRS="@domainjoin/domainjoin-gui" '*'
+}

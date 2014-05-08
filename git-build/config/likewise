@@ -1,0 +1,36 @@
+#! /bin/sh
+# ex: set tabstop=4 expandtab shiftwidth=4:
+#
+# Copyright (c) Likewise Software.  All rights reserved.
+#
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT# chkconfig: 35 21 9
+#LWI_STARTUP_TYPE_REDHAT# description: Start Likewise Open services
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT#
+#LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_SUSE# Provides: likewise
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $remote_fs lwsmd
+#LWI_STARTUP_TYPE_SUSE# Required-Stop:
+#LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
+#LWI_STARTUP_TYPE_SUSE# Default-Stop:
+#LWI_STARTUP_TYPE_SUSE# Description: Start Likewise Open services
+#LWI_STARTUP_TYPE_SUSE### END INIT INFO
+#LWI_STARTUP_TYPE_DEBIAN### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_DEBIAN# Provides: likewise
+#LWI_STARTUP_TYPE_DEBIAN# Required-Start: $network $remote_fs $syslog lwsmd
+#LWI_STARTUP_TYPE_DEBIAN# Required-Stop:
+#LWI_STARTUP_TYPE_DEBIAN# X-Start-Before: cron
+#LWI_STARTUP_TYPE_DEBIAN# X-Start-After:
+#LWI_STARTUP_TYPE_DEBIAN# Default-Start: 2 3 4 5
+#LWI_STARTUP_TYPE_DEBIAN# Default-Stop:
+#LWI_STARTUP_TYPE_DEBIAN# Description: Start Likewise Open services
+#LWI_STARTUP_TYPE_DEBIAN### END INIT INFO
+#LWI_STARTUP_TYPE_FREEBSD# PROVIDE: likewise
+#LWI_STARTUP_TYPE_FREEBSD# REQUIRE: NETWORKING lwsmd
+#LWI_STARTUP_TYPE_FREEBSD# BEFORE: LOGIN
+
+PREFIX="PREFIX_DIR"
+SERVICE_NAME="likewise"
+
+. LIBEXECDIR/init-likewise.sh

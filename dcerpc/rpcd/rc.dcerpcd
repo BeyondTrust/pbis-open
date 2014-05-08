@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Startup script for DCE RPC endpoint mapper daemon
+#
+# jrd@bu.edu 08-30-1998
+#
+#
+
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+#
+# Make sure local dir is in place
+#
+
+if [ ! -d /opt/dcelocal/var/rpc/ ]; then
+    mkdir -p /opt/dcelocal/var/rpc
+    chmod 700 /opt/dcelocal/var/rpc
+fi;
+
+# See how we were called.
+case "$1" in
+  start)
+        echo -n "Starting DCE RPC portmapper: "
+	/opt/dce-1.1/bin/rpcd
+        ;;
+  stop)
+        echo -n "Stopping DCE RPC portmapper: "
+	killproc rpcd >/dev/null 2>&1 
+	;;
+  status)
+        status dce.rpcd
+        ;;
+  restart)
+	echo -n "Restarting DCE RPC portmapper: "
+        $0 stop
+        $0 start
+        ;;                         
+  *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+
+exit 0                        

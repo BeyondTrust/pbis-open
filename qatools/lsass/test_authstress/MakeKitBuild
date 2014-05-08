@@ -1,0 +1,12 @@
+make()
+{
+    mk_program \
+        PROGRAM=test_authstress \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lsa/lsa.h lwadvapi.h" \
+        LIBDEPS="lwadvapi_nothr lwadvapi lsaclient"
+
+    lw_add_tool_target "$result"
+}

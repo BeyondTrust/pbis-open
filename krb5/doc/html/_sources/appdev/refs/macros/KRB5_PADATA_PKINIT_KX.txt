@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-PKINIT-KX-data:
+
+KRB5_PADATA_PKINIT_KX
+=====================
+
+..
+.. data:: KRB5_PADATA_PKINIT_KX
+..
+
+
+
+
+============================ ======================
+``KRB5_PADATA_PKINIT_KX``       ``147``
+============================ ======================

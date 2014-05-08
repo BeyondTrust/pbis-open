@@ -1,0 +1,23 @@
+mydir=lib$(S)crypto$(S)openssl$(S)sha2
+BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+DEFS=
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+
+STLIBOBJS= sha256.o
+
+OBJS= $(OUTPRE)sha256.$(OBJEXT) 
+
+SRCS= $(srcdir)/sha256.c
+
+all-unix:: all-libobjs
+
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+@libobj_frag@
+

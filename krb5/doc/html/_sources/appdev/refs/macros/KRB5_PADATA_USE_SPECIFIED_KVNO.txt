@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-USE-SPECIFIED-KVNO-data:
+
+KRB5_PADATA_USE_SPECIFIED_KVNO
+==============================
+
+..
+.. data:: KRB5_PADATA_USE_SPECIFIED_KVNO
+..
+
+
+
+
+===================================== ======================
+``KRB5_PADATA_USE_SPECIFIED_KVNO``       ``20``
+===================================== ======================

@@ -1,0 +1,122 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: CStdio.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/CStdio.h
+ * @brief OpenSOAP API CStdio 処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPCStdio OpenSOAPCStdio
+     * @brief OpenSOAPCStdio 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPCStdio    *OpenSOAPCStdioPtr
+     * @brief OpenSOAPCStdio ポインタ型定義
+     */
+    /**
+      * @fn int OpenSOAPCStdioCreate(OpenSOAPCStdioPtr *s)
+      * @brief OpenSOAP CStdio のインスタンスを生成します。
+      * @param
+      *    s OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioCreateWithFILEPtr(FILE *is, FILE *os, OpenSOAPCStdioPtr *s)
+      * @brief ファイルポインタによる OpenSOAP CStdio のインスタンスを生成します。
+      * @param
+      *    is FILE * [in] ((|is|)) FILE pointer
+      * @param
+      *    os FILE * [in] ((|os|)) FILE pointer
+      * @param
+      *    s OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioCreateForStdio(OpenSOAPCStdioPtr *s)
+      * @brief Stdio 用 OpenSOAP CStdio インスタンス生成
+      * @param
+      *    s OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioClose(OpenSOAPCStdioPtr s)
+      * @brief OpenSOAP CStdio をクローズし、接続も切断します。
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioRelease(OpenSOAPCStdioPtr s)
+      * @brief OpenSOAP CStdio を開放
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioSetBinaryMode(OpenSOAPCStdioPtr s)
+      * @brief OpenSOAP CStdio のストリームをバイナリモードにセットする
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioSetTextMode(OpenSOAPCStdioPtr s)
+      * @brief OpenSOAP CStdio のストリームをテキストモードにセットする
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioRead(OpenSOAPCStdioPtr s, unsigned char *buf, size_t *buf_sz)
+      * @brief OpenSOAP CStdio Stream から読み込む
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @param
+      *    buf unsigned char * [out] ((|buf|)) 読み込むバッファ
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) [in] 読み込むバッファサイズ; [out] 読み込んだサイズ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioWrite(OpenSOAPCStdioPtr s, const unsigned char *buf, size_t *buf_sz)
+      * @brief OpenSOAP CStdio Stream へ書き込む
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @param
+      *    buf const unsigned char * [in] ((|buf|)) 書き込むバッファ
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) [in] 書き込むバッファサイズ; [out] 書き込んだサイズ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPCStdioReadToDelm(OpenSOAPCStdioPtr s, const unsigned char *delm, size_t delm_sz, OpenSOAPByteArrayPtr buf)
+      * @brief デリミタまで OpenSOAP CStdio Stream から読み込む
+      * @param
+      *    s OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio
+      * @param
+      *    delm const unsigned char * [in] ((|delm|)) デリミタ文字列
+      * @param
+      *    delm_sz size_t [in] ((|delm_sz|)) デリミタ長さ
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込むバッファ
+      * @return
+      *    エラーコード
+      */

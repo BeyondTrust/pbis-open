@@ -1,0 +1,33 @@
+[
+	explicit_handle
+]
+interface lsa
+{
+	[enable_allocate] LsaClose();
+	[enable_allocate] LsaQuerySecurity();
+	[enable_allocate] LsaSetSecurity();
+	[enable_allocate] LsaEnumPrivileges();
+	[enable_allocate] LsaQueryInfoPolicy();
+	[enable_allocate] LsaCreateAccount();
+	[enable_allocate] LsaEnumAccounts();
+	[enable_allocate] LsaLookupNames();
+	[enable_allocate] LsaLookupSids();
+	[enable_allocate] LsaOpenAccount();
+	[enable_allocate] LsaEnumPrivilegesAccount();
+	[enable_allocate] LsaAddPrivilegesToAccount();
+	[enable_allocate] LsaRemovePrivilegesFromAccount();
+	[enable_allocate] LsaGetSystemAccessAccount();
+	[enable_allocate] LsaSetSystemAccessAccount();
+	[enable_allocate] LsaLookupPrivilegeValue();
+	[enable_allocate] LsaLookupPrivilegeName();
+	[enable_allocate] LsaDeleteObject();
+	[enable_allocate] LsaEnumAccountsWithUserRight();
+	[enable_allocate] LsaEnumAccountRights();
+	[enable_allocate] LsaAddAccountRights();
+	[enable_allocate] LsaRemoveAccountRights();
+	[enable_allocate] LsaOpenPolicy2();
+	[enable_allocate] LsaQueryInfoPolicy2();
+	[enable_allocate] LsaLookupNames2();
+	[enable_allocate] LsaLookupSids2();
+	[enable_allocate] LsaLookupNames3();
+}

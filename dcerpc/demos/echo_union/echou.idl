@@ -1,0 +1,22 @@
+[ uuid(db7e03ba-5bdb-11dc-9f61-00023f108d6c),
+  version(1.0),
+  pointer_default(unique)
+]
+
+interface echou {
+    
+    typedef [switch_type(long int)] union
+    {
+        [case(1)] long int integer;
+        [case(2)] float fp;
+        [case(3),string] char *str;
+    } EchoUnion;
+
+    boolean ReplyBack(	
+        [in] handle_t h,
+        [in] long int in_type,
+        [in, switch_is(in_type), unique] EchoUnion* in_value,
+        [out, switch_is(in_type)] EchoUnion** out_value,
+        [out, ref] error_status_t *	status
+        );
+}

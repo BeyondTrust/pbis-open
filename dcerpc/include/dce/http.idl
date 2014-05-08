@@ -1,0 +1,62 @@
+/*
+**
+**  NAME:
+**
+**      http.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  HTTP (ncacn_http) transport-specific functions
+**
+**
+*/
+
+[local] interface http
+{
+
+    import "dce/lbase.idl";
+    import "dce/rpcbase.idl";
+    
+    void rpc_http_transport_info_create(
+        [out] rpc_transport_info_handle_t* info,
+        [out] unsigned32 *st
+        );
+
+    void rpc_http_transport_info_free(
+        [in] rpc_transport_info_handle_t info
+        );
+
+    void rpc_http_transport_info_set_use_tls(
+        [in] rpc_transport_info_handle_t info,
+        [in] boolean use_tls
+        );
+
+    void rpc_http_transport_info_set_tls_verify_peer(
+        [in] rpc_transport_info_handle_t info,
+        [in] boolean verify_peer
+        );
+
+    void rpc_http_transport_info_set_tls_verify_name(
+        [in] rpc_transport_info_handle_t info,
+        [in] boolean verify_name
+        );
+
+    void rpc_http_transport_info_set_tls_cert(
+        [in] rpc_transport_info_handle_t info,
+        [in,string] char* path
+        );
+
+    void rpc_http_transport_info_set_tls_cert_type(
+        [in] rpc_transport_info_handle_t info,
+        [in,string] char* type
+        );
+
+    void rpc_http_transport_info_set_tls_ca_file(
+        [in] rpc_transport_info_handle_t info,
+        [in,string] char* path
+        );
+}

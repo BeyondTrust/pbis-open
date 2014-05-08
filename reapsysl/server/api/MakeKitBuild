@@ -1,0 +1,13 @@
+make()
+{
+    API_SOURCES="\
+       config.c          \
+       globals.c"
+
+    mk_group \
+        GROUP=api \
+        SOURCES="$API_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
+        LIBDEPS="regclient rsutils lwmsg lwadvapi $LIB_PTHREAD $LIB_DL"
+}

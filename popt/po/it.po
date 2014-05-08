@@ -1,0 +1,139 @@
+# ITALIAN TRANSLATION OF POPT-1.14
+# This file is put in the public domain.
+#
+# Sandro Bonazzola <sandro.bonazzola@gmail.com>, 2007
+# Vincenzo Campanella <vinz65@gmail.com>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: popt-1.14\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2008-11-28 15:32+0100\n"
+"Last-Translator: Vincenzo Campanella <vinz65@gmail.com>\n"
+"Language-Team: Italian <tp@lists.linux.it>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"First-Translator: Sandro Bonazzola <sandro.bonazzola@gmail.com>\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "errno sconosciuto"
+
+#: popt.c:1031
+#, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "tipo di opzione (%u) non implementato in popt\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "argomento mancante"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "opzione sconosciuta"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "richieste operazioni logiche reciprocamente esclusive"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr "opt->arg non dovrebbe essere NULL"
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "alias nidificati troppo in profondità"
+
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "errore nel quoting del parametro"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "valore numerico non valido"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "numero troppo grande o troppo piccolo"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr "allocazione di memoria fallita"
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "errore sconosciuto"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "Mostra questo messaggio di aiuto"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "Mostra un breve messaggio di utilizzo"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr "Mostra le opzioni predefinite nel messaggio"
+
+#: popthelp.c:92
+msgid "Terminate options"
+msgstr "Opzioni di terminazione"
+
+#: popthelp.c:191
+msgid "Help options:"
+msgstr "Opzioni di aiuto:"
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr "Opzioni implementate tramite alias/exec di popt:"
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "NONE"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "VAL"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "INT"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "LONG"
+
+#: popthelp.c:208
+msgid "LONGLONG"
+msgstr "LONGLONG"
+
+#: popthelp.c:209
+msgid "STRING"
+msgstr "STRING"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "FLOAT"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "DOUBLE"
+
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ARG"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "Uso:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[OPZIONE...]"

@@ -1,0 +1,68 @@
+configure()
+{
+    mk_declare -o SVCM_DIR="$MK_LIBDIR/lw-svcm"
+    mk_declare -o INIT_DIR="$LW_INITDIR"
+    mk_declare -o BIN_DIR="$MK_BINDIR"
+    mk_output_file lwreg-backend
+}
+
+make()
+{
+    COMMON_SOURCES="globals.c listener.c"
+    LWREG_SOURCES="$COMMON_SOURCES main-svcm.c"
+
+    case "$LW_DEVICE_PROFILE" in
+        "embedded")
+            lw_service \
+                SERVICE="lwreg" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
+            ;;
+
+        *)
+            lw_service \
+                SERVICE="lwreg-sqlite" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-sql ../providers/sqlite/provider-sqlite" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
+
+            lw_service \
+                SERVICE="lwreg-memory" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
+
+            case $LWREG_REGISTRY_BACKEND in
+                "memory")
+                    mk_symlink \
+                        LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
+                        TARGET="lwreg-memory${MK_DLO_EXT}"
+                    ;;
+
+                *)
+                    mk_symlink \
+                        LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
+                        TARGET="lwreg-sqlite${MK_DLO_EXT}"
+                    ;;
+            esac
+
+            mk_stage \
+                SOURCE="lwreg-backend" \
+                DESTDIR="${LW_TOOL_DIR}"
+            lw_add_tool_target "$result"
+    esac
+
+    mk_stage \
+        SOURCE=lwreg.reg \
+        DESTDIR="${LW_CONFIGDIR}"
+}

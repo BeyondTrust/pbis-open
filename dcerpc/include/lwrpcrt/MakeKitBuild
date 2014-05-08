@@ -1,0 +1,7 @@
+make()
+{
+    mk_headers \
+	INSTALLDIR="${MK_INCLUDEDIR}/lwrpcrt" \
+	HEADERS="lwrpcrt.h" \
+        HEADERDEPS="dce/rpc.h"
+}
