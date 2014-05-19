@@ -1095,7 +1095,7 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
         CT_SAFE_FREE_STRING(required);
         required = newValue;
     }
-    
+
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newFqdn,
                 "%s.%s", options->computerName,
             options->domainName));
@@ -1115,6 +1115,15 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
     else if(strcmp(newFqdn, oldFqdnHostname))
     {
         //The current fqdn does not match our ideal fqdn
+#if defined(__LWI_DARWIN__)
+        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newValue,
+"%s\n"
+"\tChange the fqdn from '%s' to '%s'. This could be done via DNS, but this program will do it with the following steps:\n"
+"\t\t* Making sure local comes before bind in nsswitch\n"
+"\t\t* Adding the fqdn before all entries in /etc/hosts that contain the short hostname and removing the old fqdn if it appears on the line\n"
+"\t\t* Sending hang-up command to mDNSResponder to flush the DNS cache",
+            optional, oldFqdnHostname, newFqdn));
+#else
         LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newValue,
 "%s\n"
 "\tChange the fqdn from '%s' to '%s'. This could be done via DNS, but this program will do it with the following steps:\n"
@@ -1122,6 +1131,7 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
 "\t\t* Adding the fqdn before all entries in /etc/hosts that contain the short hostname and removing the old fqdn if it appears on the line\n"
 "\t\t* Restart nscd (if running) to flush the DNS cache",
             optional, oldFqdnHostname, newFqdn));
+#endif
         CT_SAFE_FREE_STRING(optional);
         optional = newValue;
         describedFqdn = TRUE;

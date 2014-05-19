@@ -70,17 +70,12 @@ cleanup:
 
 static
 void
-KickLookupd(
-    )
+MacDnsCacheFlush()
 {
     DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     char stopCommand[] = "/usr/bin/killall";
-    PSTR stopArgs[3] = { stopCommand, "lookupd" };
-#if 0
-    char startCommand[] = "/usr/sbin/lookupd";
-    PSTR startArgs[2] = { startCommand };
-#endif
+    PSTR stopArgs[3] = { "-HUP", "mDNSResponder", NULL };
     LONG status = 0;
 
     ceError = RunSilentWithStatus(stopCommand, stopArgs, &status);
@@ -91,19 +86,8 @@ KickLookupd(
         goto cleanup;
     }
 
-    // We do not technically need to restart it since it will restart on
-    // demand.
-#if 0
-    ceError = RunSilentWithStatus(startCommand, startArgs, &status);
-    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
-    if (status != 0)
-    {
-        DJ_LOG_ERROR("%s failed [Status code: %d]", startCommand, status);
-    }
-#endif
-
 cleanup:
-    DJ_LOG_VERBOSE("KickLookupd LEAVE -> 0x%08x (EE = %d)", ceError, EE);
+    DJ_LOG_VERBOSE("MacDnsCacheFlush LEAVE -> 0x%08x (EE = %d)", ceError, EE);
 }
 #endif
 
@@ -588,9 +572,7 @@ DJWriteHostsFileIfModified(
         BAIL_ON_CENTERIS_ERROR(ceError);
 
 #if defined(__LWI_DARWIN__)
-        // Work around Mac bug where lookupd sometimes fails to pick up
-        // changes in /etc/hosts, even with -flushcache.
-        KickLookupd();
+        MacDnsCacheFlush();
 #endif
 
         bRemoveFile = FALSE;
