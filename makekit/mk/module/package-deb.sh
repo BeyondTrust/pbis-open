@@ -51,11 +51,21 @@ option()
         PARAM="path" \
         DEFAULT="$MK_PACKAGE_DIR/deb" \
         HELP="Subdirectory for built deb packages"
+
+    default_gpg_key_sign_deb="no"
+    mk_option \
+        OPTION=gpg-key-sign-deb \
+        PARAM="yes|no" \
+        VAR="MK_GPG_KEY_SIGN_DEB" \
+        DEFAULT="$default_gpg_key_sign_deb" \
+        HELP="Sign Debian packages"
+
 }
 
 configure()
 {
     mk_declare -e MK_PACKAGE_DEB_DIR
+    mk_declare -e MK_GPG_KEY_SIGN_DEB
 
     if mk_check_program PROGRAM=dpkg-buildpackage &&
        [ "$MK_PACKAGE_DEB" = "yes" ]
@@ -262,6 +272,10 @@ _mk_build_deb()
     mk_mkdir "${MK_ROOT_DIR}/${MK_PACKAGE_DEB_DIR}/${1}"
     for i in ../*.deb
     do
+        if [ "${MK_GPG_KEY_SIGN_DEB}" = "yes" ] 
+        then
+           mk_run_or_fail dpkg-sig -s builder -k C9CEECEF --passphrase-file /home/builder/.gnupg/passphrase-file "$i" 
+        fi
         mk_run_or_fail mv -f "$i" "${MK_ROOT_DIR}/${MK_PACKAGE_DEB_DIR}/${1}"
         mk_msg "built ${i##*/}"
     done
