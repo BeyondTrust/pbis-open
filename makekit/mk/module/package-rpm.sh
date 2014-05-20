@@ -51,11 +51,20 @@ option()
         PARAM="path" \
         DEFAULT="$MK_PACKAGE_DIR/rpm" \
         HELP="Subdirectory for built RPM packages"
+
+    default_gpg_key_sign_rpm="no"
+    mk_option \
+        OPTION=gpg-key-sign-rpm \
+        PARAM="yes|no" \
+        VAR="MK_GPG_KEY_SIGN_RPM" \
+        DEFAULT="$default_gpg_key_sign_rpm" \
+        HELP="Sign RPM packages"
 }
 
 configure()
 {
     mk_declare -e MK_PACKAGE_RPM_DIR
+    mk_declare -e MK_GPG_KEY_SIGN_RPM
 
     if mk_check_program PROGRAM=rpmbuild && [ "$MK_PACKAGE_RPM" = "yes" ]
     then
@@ -289,6 +298,10 @@ _mk_build_rpm()
     mk_run_or_fail mv "${2}/RPMS"/*/*.rpm "${MK_PACKAGE_RPM_DIR}/$1/."
     for i in "${MK_PACKAGE_RPM_DIR}/$1"/*.rpm
     do
+        if [ "${MK_GPG_KEY_SIGN_RPM}" = "yes" ]
+        then
+           mk_run_or_fail "${MK_SOURCE_DIR}"/mk/module/rpm-sign.exp "$i"
+        fi
         mk_msg "built ${i##*/}"
     done
     mk_msg "end $1"
