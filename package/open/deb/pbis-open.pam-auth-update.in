@@ -13,7 +13,7 @@ Account:
 	[success=end new_authtok_reqd=done default=ignore]	pam_lsass.so
 Session-Type: Additional
 Session:
-	sufficient	pam_lsass.so
+	optional	pam_lsass.so
 Password-Type: Primary
 Password:
 	[success=end default=ignore]	pam_lsass.so use_authtok try_first_pass
