@@ -3,10 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl libxml2 \
-                libedit libtdb"
-
-# Removed opensoap from LW_ALL_BUNDLED. opensoap is trying to write the
-# output of configuration to read-only file system src-buildserver.
+                libedit libtdb opensoap"
 
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
