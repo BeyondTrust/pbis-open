@@ -114,6 +114,7 @@ pam_sm_authenticate(
                                 TRUE);
                 BAIL_ON_LSA_ERROR(dwError);
 
+
                 dwError = LsaOpenServer(&hLsaConnection);
 
                 if (dwError == ERROR_SUCCESS)
@@ -370,6 +371,7 @@ pam_sm_authenticate(
              * or use_first_pass if no earlier module
              * prompted for the password.
              */
+
             dwError = LsaPamGetLoginId(
                 pamh,
                 pPamContext,
@@ -379,21 +381,18 @@ pam_sm_authenticate(
 
             dwError = LsaOpenServer(&hLsaConnection);
             BAIL_ON_LSA_ERROR(dwError);
-        
-            /* avoid the extra Lsa call if all the prompts are the same, just choose
-            the first one
-             */
-            if(!(strcmp(pConfig->pszActiveDirectoryPasswordPrompt, 
-                    pConfig->pszLocalPasswordPrompt) == 0 && 
-                strcmp(pConfig->pszLocalPasswordPrompt, 
-                    pConfig->pszOtherPasswordPrompt) == 0))
+
+            if (LsaShouldIgnoreUser(pszLoginId))
             {
-                dwError = LsaFindUserByName(
+                dwError = LW_ERROR_NOT_HANDLED;
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+
+            dwError = LsaFindUserByName(
                         hLsaConnection,
                         pszLoginId,
                         dwUserInfoLevel,
                         (PVOID*)&pUserInfo);     
-            }
 
             if(dwError == 0)
             {
