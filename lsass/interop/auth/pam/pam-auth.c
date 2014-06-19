@@ -382,11 +382,13 @@ pam_sm_authenticate(
             dwError = LsaOpenServer(&hLsaConnection);
             BAIL_ON_LSA_ERROR(dwError);
 
+            /*RALI  Back out changes for BMW
             if (LsaShouldIgnoreUser(pszLoginId))
             {
                 dwError = LW_ERROR_NOT_HANDLED;
                 BAIL_ON_LSA_ERROR(dwError);
             }
+            */
 
             dwError = LsaFindUserByName(
                         hLsaConnection,
