@@ -1128,6 +1128,7 @@ void DJCreateComputerAccount(
     PSTR likewiseVersion = NULL;
     PSTR likewiseBuild = NULL;
     PSTR likewiseRevision = NULL;
+    CHAR duplicateSPNErrorMsg[2048];
 
     PSTR likewiseOSServicePack = NULL;
     HANDLE lsa = NULL;
@@ -1241,6 +1242,14 @@ void DJCreateComputerAccount(
                 break;
             case ERROR_NOT_ENOUGH_QUOTA:
                 LW_RAISE_EX(exc, ERROR_NOT_ENOUGH_QUOTA, "Lsass Error", "The account's computer join limit has been exceeded. Talk to your Windows administrators about the limits assigned to your account.");
+                break;
+            case LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN:
+                
+                sprintf(duplicateSPNErrorMsg, "The computer failed to join the domain \"%s\". \
+Please contact your domain administrator and indicate that the computer failed to update \
+the dnsHostName and/or servicePrincipalName(SPN) attribute in its Active Directory computer account. \
+Once the problem is resolved, you may join the computer to the \"%s\" domain.\n", options->domainName, options->domainName);
+                LW_RAISE_EX(exc, LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN, "Lsass Error", duplicateSPNErrorMsg);
                 break;
             default:
                 LW_RAISE_LSERR(exc, dwError);

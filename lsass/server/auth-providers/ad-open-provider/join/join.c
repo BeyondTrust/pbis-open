@@ -700,6 +700,10 @@ LsaJoinDomainInternal(
 
             dwError = LsaMachAcctSetAttribute(pLdap, pwszDn, pwszSpnAttrName,
                                               (const wchar16_t**)pwszSpnAttrVal, 0);
+            if (dwError == LW_ERROR_LDAP_CONSTRAINT_VIOLATION)
+            {
+                dwError = LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN;
+            }
             BAIL_ON_LSA_ERROR(dwError);
         }
 

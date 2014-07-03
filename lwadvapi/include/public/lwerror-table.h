@@ -48,6 +48,8 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_TIME_CONVERSION, -1, "Failed to
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_INVALID_SID, -1, "The security identifier (SID) is invalid" )
 // Triggered by passing a bad password for a valid username to domainjoin
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_PASSWORD_MISMATCH, -1, "The password is incorrect for the given account" )
+// Triggered by passing a bad password for a valid username to domainjoin
+S ( LW_ERROR_LDAP_CONSTRAINT_VIOLATION, LW_ERROR_PASSWORD_MISMATCH, -1, "Constraint?" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_UNEXPECTED_DB_RESULT, -1, "Unexpected cached data found" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_PASSWORD_EXPIRED, -1, "Password expired" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_ACCOUNT_EXPIRED, -1, "Account expired" )
