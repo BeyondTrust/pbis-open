@@ -385,6 +385,8 @@
 #define LW_ERROR_LDAP_TOO_LATE                             40351
 #define LW_ERROR_LDAP_CANNOT_CANCEL                        40352
 #define LW_ERROR_LDAP_ASSERTION_FAILED                     40353
+#define LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN             40354
+
 
 #define LW_ERROR_UID_TOO_LOW                               40400
 #define LW_ERROR_UID_TOO_HIGH                              40401
