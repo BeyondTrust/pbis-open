@@ -79,8 +79,6 @@ SELinuxCreate(
         pSELinux->setfilecon= dlsym(pSELinux->dlhandle, "setfilecon");
         pSELinux->freecon = dlsym(pSELinux->dlhandle, "freecon");
         if (!pSELinux->is_selinux_enabled ||
-            !pSELinux->matchpathcon_init ||
-            !pSELinux->matchpathcon_fini ||
             !pSELinux->matchpathcon ||
             !pSELinux->setfilecon ||
             !pSELinux->freecon)

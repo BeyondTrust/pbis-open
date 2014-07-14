@@ -889,9 +889,7 @@ LwSELinuxCreate(
         pSELinux->matchpathcon = dlsym(pSELinux->dlhandle, "matchpathcon");
         pSELinux->setfilecon= dlsym(pSELinux->dlhandle, "setfilecon");
         pSELinux->freecon = dlsym(pSELinux->dlhandle, "freecon");
-        if (!pSELinux->is_selinux_enabled ||
-            !pSELinux->matchpathcon_init ||
-            !pSELinux->matchpathcon_fini ||
+        if (!pSELinux->is_selinux_enabled ||            
             !pSELinux->matchpathcon ||
             !pSELinux->setfilecon ||
             !pSELinux->freecon)
@@ -904,7 +902,11 @@ LwSELinuxCreate(
         if (pSELinux->is_selinux_enabled() == 1)
         {
             LW_RTL_LOG_DEBUG("SELinux is enabled.");
-            pSELinux->matchpathcon_init(NULL);
+            if(pSELinux->matchpathcon_init != NULL)
+            {
+                pSELinux->matchpathcon_init(NULL);
+            }
+
             pSELinux->bEnabled = TRUE;
         }
     }
@@ -929,7 +931,10 @@ LwSELinuxFree(
     {
         if (pSELinux->bEnabled)
         {
-            pSELinux->matchpathcon_fini();
+            if(pSELinux->matchpathcon_fini != NULL)
+            {
+                pSELinux->matchpathcon_fini();
+            }           
         }
 
         if (pSELinux->dlhandle)
