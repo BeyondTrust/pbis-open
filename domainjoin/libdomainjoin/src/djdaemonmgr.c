@@ -315,8 +315,10 @@ DJManageDaemons(
     else
     {
         dwError = SetBooleanRegistryValue("Services\\gpagent", "Autostart", FALSE);
-
         dwError = DJStopService("gpagent");
+
+        dwError = SetBooleanRegistryValue("Services\\autoenroll", "Autostart", FALSE);
+        dwError = DJStopService("autoenroll");
     }
 
 cleanup:
