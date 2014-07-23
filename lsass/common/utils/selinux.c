@@ -91,7 +91,10 @@ SELinuxCreate(
         if (pSELinux->is_selinux_enabled() == 1)
         {
             LSA_LOG_DEBUG("SELinux is enabled.");
-            pSELinux->matchpathcon_init(NULL);
+            if(pSELinux->matchpathcon_init != NULL)
+            {
+                pSELinux->matchpathcon_init(NULL);
+            }            
             pSELinux->bEnabled = TRUE;
         }
     }
@@ -157,7 +160,10 @@ SELinuxFree(
 #if ENABLE_SELINUX
         if (pSELinux->bEnabled)
         {
-            pSELinux->matchpathcon_fini();
+            if(pSELinux->matchpathcon_fini != NULL)
+            {
+                pSELinux->matchpathcon_fini();
+            }            
         }
         if (pSELinux->dlhandle)
             dlclose(pSELinux->dlhandle);
