@@ -569,14 +569,20 @@ postinstall()
     fi
 
     if [ -f /etc/redhat-release ]; then
-        run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
+	if [ ! -f /usr/bin/systemctl ]; then
+            run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
+	fi
     else
         run ln -s '@MK_SYSCONFDIR@/suse/lwsmd' '@LW_INITDIR@/lwsmd'
     fi
 
     remove_old_init_symlinks
 
-    run /sbin/chkconfig --add lwsmd
+    if [ -f /usr/bin/systemctl ]; then
+	run /usr/bin/systemctl enable '@MK_SYSCONFDIR@/redhat/lwsmd.service'
+    else
+        run /sbin/chkconfig --add lwsmd
+    fi
 
 
     if [ -x /sbin/service ]
