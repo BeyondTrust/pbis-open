@@ -335,6 +335,7 @@ open_files_prefix()
         "${MK_DATADIR}/pbis.pam-auth-update" \
         "${MK_DATADIR}/rhel/*" \
         "${MK_DATADIR}/rhel/6.0/*" \
+        "${MK_DATADIR}/rhel/7.0/*" \
         "${MK_DATADIR}/fedora/*" \
         "${MK_DATADIR}/fedora/18/*" \
         "${MK_DATADIR}/fedora/17/*" \

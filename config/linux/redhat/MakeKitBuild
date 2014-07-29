@@ -11,12 +11,14 @@ configure()
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file lwsmd
+    mk_output_file lwsmd.service
 }
 
 make()
 {
     # Works for many different RedHat products
     mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd" MODE=0755 SOURCE="lwsmd"
+    mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd.service" MODE=0755 SOURCE="lwsmd.service"
 
     #### SELINUX ####
 
@@ -25,7 +27,7 @@ make()
     # - Executing 'make -f /usr/share/selinux/devel/Makefile' in that directory.
 
     # SELinux policy for RedHat Enterprise/CentOS 6.x
-    for distro in 'rhel/6.0' 'fedora/18' 'fedora/17' 'fedora/16' 'fedora/15' 'fedora/14' 'fedora/13'
+    for distro in 'rhel/7.0' 'rhel/6.0' 'fedora/18' 'fedora/17' 'fedora/16' 'fedora/15' 'fedora/14' 'fedora/13'
     do
         mk_stage MODE=644 \
             DEST="${MK_DATADIR}/$distro/pbis.te" SOURCE="$distro/pbis.te"

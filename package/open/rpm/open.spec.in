@@ -1,5 +1,3 @@
-# ex: set tabstop=4 expandtab shiftwidth=4:
-
 Name: 		@PKG_OPEN_RPM_NAME@
 Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
@@ -169,6 +167,15 @@ determine_os_version()
         elif [ -n "`grep '^Red Hat Enterprise Linux release 6' '/etc/redhat-release'`" ]; then
             PBIS_DISTRO=rhel
             PBIS_DISTRO_VERSION=6.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux release 7' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 7' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 7' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=7.0
         fi
     fi
 }
@@ -536,7 +543,7 @@ postinstall()
     restore_6_0_configuration
 
     restore_6_1_configuration
-
+ 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
@@ -551,7 +558,7 @@ postinstall()
 
     remove_npfs_dependencies
 
-	remove_dcerpc_dependencies
+    remove_dcerpc_dependencies
 
     switch_to_open_provider
 
