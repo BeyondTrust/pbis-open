@@ -30,6 +30,16 @@ allow pbis_t self:udp_socket create_socket_perms;
 allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource setuid setgid };
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
+require {
+        type passwd_file_t;
+        type pbis_t;
+        class file read;
+        class capability2 block_suspend;
+}
+allow pbis_t passwd_file_t:file open;
+allow pbis_t passwd_file_t:file read;
+allow pbis_t self:capability2 block_suspend;
+
 admin_pattern(pbis_t, pbis_var_lib_t)
 stream_connect_pattern(pbis_t, pbis_var_lib_t, pbis_var_lib_t, pbis_t)
 
