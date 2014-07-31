@@ -971,6 +971,8 @@ FixNetworkInterfaces(
             // ESX 3.5 and 4.0 use
             // /etc/sysconfig/network-scripts/ifcfg-vswif<number>
             {"/etc/sysconfig/network-scripts", "ifcfg-vswif[^.]*$"},
+            // RHEL 7: network interface naming seems to be ensXX or enoXXXX, etc.
+            {"/etc/sysconfig/network-scripts", "ifcfg-en[^.]*$"},
             {NULL, NULL}
         };
 
