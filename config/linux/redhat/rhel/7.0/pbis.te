@@ -31,11 +31,14 @@ allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_res
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
 require {
-        type passwd_file_t;
+	type var_t;
         type pbis_t;
-        class file read;
+        type passwd_file_t;
+        class file { read getattr open} ;
+	class dir create;
         class capability2 block_suspend;
 }
+allow pbis_t passwd_file_t:file getattr;
 allow pbis_t passwd_file_t:file open;
 allow pbis_t passwd_file_t:file read;
 allow pbis_t self:capability2 block_suspend;
@@ -143,7 +146,7 @@ allow pbis_t crond_t:process signal;
 allow pbis_t system_cronjob_t:process signal;
 role system_r types crontab_t;
 
-allow pbis_t var_t:dir { read write remove_name add_name };
+allow pbis_t var_t:dir { create read write remove_name add_name };
 allow pbis_t var_t:file { open create read getattr append rename unlink };
 
 selinux_get_fs_mount(pbis_t)
