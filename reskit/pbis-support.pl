@@ -40,6 +40,7 @@
 # v2.5.3  2013-10-15 RCA - add new "action" command to runTool() solves "out of memory" error during enum-users
 # v2.5.4  2013-12-12 RCA fix up SELinux breakage, capture selinux audit log for Permissive/Enforcing environments
 # v2.6.0  2014-04-11 RCA add -dj option and cleanups for different domainjoin-cli commands
+# v2.6.1  2014-08-07 RCA selinux bugfix for Deb-based systems
 #
 # Data structures explained at bottom of file
 #
@@ -63,7 +64,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.6.0";
+my $gVer = "2.6.1";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -1133,6 +1134,7 @@ sub changeLoggingBySyslog($$$) {
             $info->{logedit}->{file} = findInPath("rsyslog.conf", ["/etc", "/etc/syslog", "/opt/etc/", "/usr/local/etc/", "/etc/rsyslog/"]);
         }
         if (not defined($info->{logedit}->{file}->{path})) {
+            $info->{logedit}->{file} = findInPath("syslog-ng.conf", ["/etc", "/etc/syslog", "/opt/etc/", "/usr/local/etc/", "/etc/syslog-ng/"]);
             logError("Couldn't find syslog.conf or rsyslog.conf, and we don't support syslog-ng. Choose a different logging option!");
         }
     }
@@ -1555,12 +1557,14 @@ sub determineOS($$) {
             logData("---");
             if ($i eq "sestatus") {
                 my $getenforce = findInPath("getenforce", ["/usr/sbin", "/sbin", "/usr/bin", "/bin"]);
-                my @output = runTool($info, $opt, $getenforce->{path}, "return");
-                chomp $output[0];
-                logInfo("SELinux is in $output[0] mode.");
-                if ($output[0]=~/nforcing/) {
-                    $info->{selinux} = 1;
-                    logVerbose("Restart is disabled for SELinux in enforcing mode - tool will exit if --restart is chosen.")
+                if (defined($getenforce->{path})) {
+                    my @output = runTool($info, $opt, $getenforce->{path}, "return");
+                    chomp $output[0];
+                    logInfo("SELinux is in $output[0] mode.");
+                    if ($output[0]=~/nforcing/) {
+                        $info->{selinux} = 1;
+                        logVerbose("Restart is disabled for SELinux in enforcing mode - tool will exit if --restart is chosen.")
+                    }
                 }
             }
         }
@@ -2117,6 +2121,7 @@ sub outputReport($$) {
     }
     tarFiles($info, $opt, $tarballfile, $info->{pampath});
     tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
+    tarFiles($info, $opt, $tarballfile, $info->{logedit}->{path}) if ($info->{logedit}->{path});
     logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
     if ($opt->{sudo}) {
         tarFiles($info, $opt, $tarballfile, $info->{sudoers}->{path}) if ($info->{sudoers}->{path});
