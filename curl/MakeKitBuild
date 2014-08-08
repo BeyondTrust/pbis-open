@@ -16,12 +16,16 @@ make()
     mk_autotools \
         HEADERS="$CURL_HEADERS" \
         LIBS="curl:6:0:2" \
-        HEADERDEPS="openssl/ssl.h" \
-        LIBDEPS="ssl crypto" \
+        HEADERDEPS="openssl/ssl.h gssapi.h gssapi_krb5.h" \
+        CFLAGS="-DHAVE_GSSAPI -DHAVE_GSSMIT" \
+        LIBDEPS="ssl crypto gssapi_krb5" \
         --without-libidn --without-zlib --without-libssh2 \
         --disable-ldap --disable-ldaps --disable-ftp \
         --disable-rtsp --disable-dict --disable-telnet \
         --disable-tftp --disable-pop3 --disable-imap \
-        --disable-smtp --with-ssl="${MK_ROOT_DIR}/${MK_STAGE_DIR}${MK_PREFIX}"  
+        --disable-smtp --with-ssl="${MK_ROOT_DIR}/${MK_STAGE_DIR}${MK_PREFIX}"  \
+        --with-gssapi-includes="${MK_ROOT_DIR}/${MK_STAGE_DIR}/opt/pbis/include/gssapi" \
+        --with-gssapi-libs="${MK_ROOT_DIR}/${MK_STAGE_DIR}/opt/pbis/lib" \
+        --with-gssapi="${MK_ROOT_DIR}/${MK_STAGE_DIR}${MK_PREFIX}/opt/pbis"
 }
 

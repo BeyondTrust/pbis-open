@@ -1206,15 +1206,15 @@ if test x"$want_gss" = xyes; then
            LIBS="$LIBS $gss_libs"
         elif test "$GSSAPI_ROOT" != "yes"; then
            LDFLAGS="$LDFLAGS -L$GSSAPI_ROOT/lib$libsuff"
-           LIBS="$LIBS -lgssapi"
+           LIBS="$LIBS -lgssapi_krb5"
         else
-           LIBS="$LIBS -lgssapi"
+           LIBS="$LIBS -lgssapi_krb5"
         fi
         ;;
      esac
   else
      LDFLAGS="$LDFLAGS $GSSAPI_LIB_DIR"
-     LIBS="$LIBS -lgssapi"
+     LIBS="$LIBS -lgssapi_krb5"
   fi
 else
   CPPFLAGS="$save_CPPFLAGS"
