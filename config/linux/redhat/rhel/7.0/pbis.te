@@ -31,6 +31,57 @@ allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_res
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
 require {
+        type automount_unit_file_t;
+        type automount_t;
+        type pbis_t;
+        type pbis_var_lib_t;
+        class service { status start };
+        class file { read open };
+}
+
+require {
+        type systemd_systemctl_exec_t;
+        type pbis_t;
+        type init_t;
+        class unix_stream_socket connectto;
+        class file { read getattr open execute execute_no_trans };
+}
+
+require {
+        type bin_t;
+        type pbis_t;
+        class file { relabelfrom relabelto unlink setattr };
+}
+
+require {
+        type pbis_t;
+        type systemd_systemctl_exec_t;
+        class file {read execute getattr open execute_no_trans };
+}
+
+require {
+        type bin_t;
+        type pbis_t;
+        class file { relabelto unlink setattr};
+}
+
+#============= automount_t ==============
+allow automount_t pbis_var_lib_t:file read;
+allow automount_t pbis_var_lib_t:file open;
+
+#============= pbis_t ==============
+allow pbis_t automount_unit_file_t:service start;
+allow pbis_t automount_unit_file_t:service status;
+
+allow pbis_t init_t:unix_stream_socket connectto;
+allow pbis_t systemd_systemctl_exec_t:file open;
+allow pbis_t systemd_systemctl_exec_t:file { open read getattr execute execute_no_trans };
+allow pbis_t bin_t:file { relabelto relabelfrom unlink setattr };
+
+allow pbis_t bin_t:file { relabelto unlink };
+allow pbis_t bin_t:file setattr;
+
+require {
 	type var_t;
         type pbis_t;
         type passwd_file_t;
