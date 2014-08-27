@@ -31,6 +31,36 @@ allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_res
 allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
 
 require {
+        type user_home_t;
+        type xdm_t;
+        class dir create;
+}
+
+require {
+        type rhsmcertd_t;
+        type rpm_var_lib_t;
+        class dir { write add_name };
+        class file create;
+}
+
+require {
+        type pbis_t;
+        type colord_t;
+        type pbis_var_lib_t;
+        class sock_file write;
+        class unix_stream_socket connectto;
+}
+
+require {
+        type systemd_logind_t;
+        type pbis_t;
+        type pbis_var_lib_t;
+        class sock_file write;
+        class unix_stream_socket connectto;
+        class dir search;
+}
+
+require {
         type automount_unit_file_t;
         type automount_t;
         type pbis_t;
@@ -64,6 +94,26 @@ require {
         type pbis_t;
         class file { relabelto unlink setattr};
 }
+
+#============= xdm_t ==============
+
+#!!!! This avc can be allowed using the boolean 'polyinstantiation_enabled'
+allow xdm_t user_home_t:dir create;
+
+#============= rhsmcertd_t ==============
+allow rhsmcertd_t rpm_var_lib_t:dir { write add_name };
+allow rhsmcertd_t rpm_var_lib_t:file create;
+
+#============= colord_t ==============
+#!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
+allow colord_t pbis_t:unix_stream_socket connectto;
+allow colord_t pbis_var_lib_t:sock_file write;
+
+#============= systemd_logind_t ==============
+allow systemd_logind_t pbis_var_lib_t:dir search;
+allow systemd_logind_t pbis_t:unix_stream_socket connectto;
+allow systemd_logind_t pbis_var_lib_t:sock_file write;
+
 
 #============= automount_t ==============
 allow automount_t pbis_var_lib_t:file read;
