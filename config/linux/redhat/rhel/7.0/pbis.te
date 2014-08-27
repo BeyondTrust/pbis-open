@@ -628,3 +628,6 @@ pbis_client(xdm_t)
 pbis_client(xdm_dbusd_t)
 pbis_client(xserver_t)
 pbis_client(zos_remote_t)
+
+#Allow socket access so that xdm can log in via the GUI.
+allow pbis_t xdm_t:unix_stream_socket { read write getattr };
