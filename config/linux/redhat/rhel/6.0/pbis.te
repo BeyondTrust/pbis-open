@@ -46,6 +46,15 @@ logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
 
 require {
+        type pbis_t;
+        type sshd_t;
+        class unix_stream_socket getattr;
+}
+
+#============= pbis_t ==============
+allow pbis_t sshd_t:unix_stream_socket getattr;
+
+require {
         type var_lock_t;
         type pbis_t;
         class dir { write search };
