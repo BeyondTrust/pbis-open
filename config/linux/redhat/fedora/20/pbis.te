@@ -48,6 +48,74 @@ logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
 
 cron_admin_role(system_r, pbis_t)
+
+require {
+        type var_t;
+        type pbis_t;
+        type bin_t;
+        class file rename;
+        class dir { write create };
+}
+
+#============= pbis_t ==============
+allow pbis_t bin_t:file rename;
+allow pbis_t var_t:dir create;
+
+require {
+        type var_t;
+        type pbis_t;
+        class dir { write create };
+}
+
+#============= pbis_t ==============
+allow pbis_t var_t:dir create;
+
+require {
+        type syslog_conf_t;
+        type etc_t;
+        type var_t;
+        type pbis_t;
+        type bin_t;
+        class dir { read write add_name remove_name };
+        class file { rename setattr relabelfrom create read getattr relabelto unlink open append };
+}
+
+#============= pbis_t ==============
+allow pbis_t bin_t:file { relabelfrom relabelto unlink setattr };
+
+require {
+        type automount_unit_file_t;
+        type automount_t;
+        type pbis_t;
+        type pbis_var_lib_t;
+        class service { status start };
+        class file { read getattr open };
+}
+
+#============= automount_t ==============
+allow automount_t pbis_var_lib_t:file { read getattr open };
+
+#============= pbis_t ==============
+allow pbis_t automount_unit_file_t:service { status start };
+
+require {
+        type syslog_conf_t;
+        type etc_t;
+        type var_t;
+        type pbis_t;
+        class dir { read write add_name remove_name };
+        class file { rename relabelfrom create read getattr relabelto unlink open append };
+}
+
+#============= pbis_t ==============
+allow pbis_t etc_t:file relabelfrom;
+
+#!!!! This avc is allowed in the current policy
+allow pbis_t etc_t:file relabelto;
+allow pbis_t syslog_conf_t:file relabelfrom;
+allow pbis_t var_t:dir { read write add_name remove_name };
+allow pbis_t var_t:file { rename getattr read create unlink open append };
+
 require {
     type system_cron_spool_t;
 }
