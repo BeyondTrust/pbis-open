@@ -49,23 +49,7 @@ logging_send_syslog_msg(pbis_t)
 
 cron_admin_role(system_r, pbis_t)
 
-require {
-        type var_t;
-        type pbis_t;
-        type bin_t;
-        class file rename;
-        class dir { write create };
-}
 
-#============= pbis_t ==============
-allow pbis_t bin_t:file rename;
-allow pbis_t var_t:dir create;
-
-require {
-        type var_t;
-        type pbis_t;
-        class dir { write create };
-}
 
 #============= pbis_t ==============
 allow pbis_t var_t:dir create;
@@ -441,6 +425,18 @@ require {
     type xserver_t;
     type zos_remote_t;
 }
+
+#============= pbis_t ==============
+require {
+        type var_t;
+        type pbis_t;
+	type bin_t;
+	class file rename;
+        class dir { write create };
+}
+
+allow pbis_t bin_t:file rename;
+allow pbis_t var_t:dir create;
 
 pbis_client(accountsd_t)
 pbis_client(abrt_t)
