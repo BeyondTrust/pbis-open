@@ -118,6 +118,7 @@ import_registry_configurations()
     log 'Importing registry...'
     for i in "@LW_CONFIGDIR@/"*.reg
     do
+echo $i
         run_or_fail "$REGSHELL" import "$i"
     done
 }
@@ -129,7 +130,11 @@ determine_os_version()
 
     if [ -f '/etc/centos-release' ]; then
         PBIS_DISTRO=centos
-        if [ -n "`grep '^CentOS release 6' '/etc/centos-release'`" ]; then
+        if [ -n "`grep '^CentOS release 7' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^CentOS Linux release 7' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^CentOS release 6' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=6.0
         elif [ -n "`grep '^CentOS Linux release 6' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=6.0
