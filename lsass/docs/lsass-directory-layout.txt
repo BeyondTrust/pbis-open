@@ -1,0 +1,116 @@
+                            LSASS Directory Layout
+                            ----------------------
+
+INTRODUCTION:
+------------
+
+This document describes the desired directory layout (and componentization)
+inside lsass.
+
+TERMINOLOGY:
+-----------
+
+The following terminology is used in the LAYOUT section below.
+
+utility library - in effect, a static library that is pulled into some other
+    shared object or binary.  Note that a utility library should never be
+    included in two shared objects or binaries that can be loaded in the same
+    address space.
+
+shared object - shared library
+
+binary - an executable
+
+LAYOUT:
+------
+
+- client (1 shared object) [1]
+  + api (1 utility library)
+  + ad (1 utility library)
+  + local (1 utility library)
+  + ntlm (1 utility library) [1]
+- common (1 utility library used by client & server)
+  + ipc
+    - api
+    - ad
+    - local
+    - ntlm 
+  + utils
+  + lsaunistr [3]
+  + lwunistr [3]
+- docs
+- etc
+- include (shared headers)
+  - lsa (public client header -- lsa.h)
+- interop (several shared objects, only consumed externally)
+  + auth [4]
+  + nsswitch [4]
+  + wbclient
+  + lwicompat
+  + lwmapsecurity (dlopen plugin for lwmapsecurity)
+  + access (dlopen by eventlog) [5]
+  + gssntlm (gssapi layer for NTLM)
+- join [7]
+- logging_r [6]
+- lsaunistr [6]
+- m4 (for autotools)
+- scripts [6]
+- server (1 binary and 3 shared objects + store + rpc + ntlm shared objects)
+  + include (shared server-only headers)
+  + logging_r (1 utility library)
+  + api (1 shared object)
+  + providers (2 shared objects)
+    - local (1 shared object)
+    - ad (1 shared object)
+  + lsassd (1 binary)
+  + ntlm (1 shared object – new code, currently unused)
+  + rpc (currently various shared objects) [2]
+    - idl
+    - include
+    - samr
+    - lsa
+    - dssetup
+  + store (2 shared objects used by local provider and rpc)
+    - include
+    - dsapi (1 shared object)
+    - samdb (1 shared object)
+- tests?
+- tools
+
+IMPORTANT:
+---------
+
+In general, server-side code should not call client-side APIs.  One potential
+exception might be for server-side code that cannot be invoked via IPC (e.g.,
+RPC servers).
+
+NOTES:
+-----
+
+[1] client/ntlm currently produces a separate shared object because
+    it needs to link to pthreads.  We need to revisit this.
+
+[2] rpc will need to become a single shared object.
+
+[3] lsaunistr and lwunistr will eventually be modified, merged, and moved into
+    separate advapi component
+
+[4] auth contains PAM and authentication code used by the LAM module that
+    currently resides in nsswitch/aix.  It may be desirable refactor a little
+    so that PAM is at interop/pam and perhaps LAM is at interop/lam.
+
+[5] access should eventually go away after switching eventlog to use a model
+    based on security descriptors and access tokens (using lwmapsecurity).
+
+[6] these should go away
+
+[7] join is currently 1 shared object used by AD provider and domain join that
+    contains 3 pieces: (1) LDAP wrapper, (2) KRB5 wrapper, and (3) domain join
+    helper code.  It will later be split into advapi and domainjoin components.
+
+BUILDS FOR EMBEDDED SYSTEMS:
+---------------------------
+
+Note that a minimal build (for embedded systems) will collapse some of the
+shared objects to create a monolithic client API shared object and server
+daemon.

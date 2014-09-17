@@ -1,0 +1,106 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mk_resolve_target">
+  <refmeta>
+    <refentrytitle>mk_resolve_target</refentrytitle>
+    <manvolnum>3mk</manvolnum>
+    <refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>mk_resolve_target</refname>
+    <refpurpose>Resolve target to fully-qualified form</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>mk_resolve_target</command>
+      <arg choice="plain" rep="norepeat"><replaceable class="parameter">target</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+  <refsection><info><title>Description</title></info>
+    
+    <para>
+      <command>mk_resolve_target</command> resolves a target in MakeKit target notation
+      to a fully-qualified form which always identifies a unique resource on the filesystem.
+      A fully-qualified target is always of the form <literal>@</literal><replaceable>path</replaceable>
+      where <replaceable>path</replaceable> indicates the path of the resource on the filesystem,
+      usually relative to the root build directory.
+    </para>
+    <para>
+      Resolution is performed according to the form of <replaceable>target</replaceable> as follows:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><literal>@</literal><replaceable>path</replaceable></term>
+        <listitem>
+          <para>
+	    <replaceable>target</replaceable> is already fully-qualified and is returned
+	    verbatim by <command>mk_resolve_target</command>.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>/</literal><replaceable>file</replaceable></term>
+        <listitem>
+          <para>
+	    When <replaceable>target</replaceable> is an absolute path, it designates a final build
+	    product which is placed in the stage directory while building.  The qualified form is obtained by
+	    prepending <code>@${MK_STAGE_DIR}/</code> to <replaceable>file</replaceable>.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal/><replaceable>file</replaceable></term>
+        <listitem>
+          <para>
+	    When <replaceable>target</replaceable> is a relative path, it designates a file either in
+	    the source directory hierarchy or object directory hierarchy, depending on whether
+	    <replaceable>file</replaceable> designates a source file or an intermediate build product.
+	    The file is taken to be relative to the directory containing the <literal>MakeKitBuild</literal>
+	    which specifies it.  If the file exists in the source directory, the qualified form is obtained
+	    by prepending <code>@${MK_SOURCE_DIR}${MK_SUBDIR}/</code> to <replaceable>file</replaceable>.
+	    Otherwise, the qualified form is obtained by prepending <code>@${MK_OBJECT_DIR}${MK_SUBDIR}/</code>.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+  
+  <refsection><info><title>Parameters</title></info>
+    
+    <variablelist>
+      <varlistentry>
+        <term><replaceable>target</replaceable></term>
+        <listitem>
+          <para>
+	    The target to resolve.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+  <refsection><info><title>Result</title></info>
+    
+    <para>
+      <command>mk_resolve_target</command> returns 0 on success and sets <literal>result</literal>
+      to the fully-qualified target.
+    </para>
+  </refsection>
+  <refsection><info><title>Examples</title></info>
+    <programlisting>
+      # For the following examples, let:
+      # MK_SOURCE_DIR=source
+      # MK_OBJECT_DIR=object
+      # MK_BINDIR=/usr/bin
+      #
+      # Assume our MakeKitBuild file is in source/foobar, which also contains foo.c
+      
+      # Example result: @source/foobar/foo.c
+      mk_resolve_target "foo.c"
+
+      # Example result: @object/foobar/foo.o
+      mk_resolve_target "foo.o"
+
+      # Example result: @stage/usr/bin/foobar
+      mk_resolve_target "${MK_BINDIR}/foobar"
+    </programlisting>
+  </refsection>
+</refentry>

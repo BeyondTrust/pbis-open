@@ -1,0 +1,18 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-AFS3-SALT-data:
+
+KRB5_PADATA_AFS3_SALT
+=====================
+
+..
+.. data:: KRB5_PADATA_AFS3_SALT
+..
+
+Cygnus.
+
+
+
+============================ ======================
+``KRB5_PADATA_AFS3_SALT``       ``10``
+============================ ======================

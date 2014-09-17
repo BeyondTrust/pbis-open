@@ -1,0 +1,102 @@
+MODULES="package-deb package-rpm package-freebsd"
+
+configure()
+{
+    mk_declare -o \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        MK_BINDIR \
+        MK_SBINDIR \
+        MK_PREFIX \
+        MK_SYSCONFDIR \
+        MK_LOCALSTATEDIR
+
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_OPEN_UPGRADE_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/open-upgrade.spec.in"
+
+    mk_rpm_done
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_OPEN_UPGRADE_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/pbis-open-upgrade.preinst.in deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
+
+    mk_deb_done   
+}
+
+package_freebsd()
+{
+    mk_freebsd_do \
+        PACKAGE="$PKG_OPEN_UPGRADE_FREEBSD_NAME" \
+        VERSION="$PKG_FREEBSD_VERSION" \
+        SHORT="-PowerBroker Identity Services Open Upgrade Helper" \
+        LONG="-Aids in upgrading between versions of PowerBroker Identity Services Open" \
+        PREINST="freebsd/preinstall.in" \
+        POSTINST="freebsd/postinstall.in"
+
+    mk_freebsd_done
+}
+
+package_pkg()
+{
+    mk_pkg_do \
+        PACKAGE="$PKG_OPEN_UPGRADE_PKG_NAME" \
+        VERSION="$PKG_PKG_VERSION"
+
+        mk_pkg_sub_do \
+            SUBPACKAGE="PBISopeng" \
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in"
+
+        mk_pkg_sub_done
+    mk_pkg_done
+}
+
+package_lpp()
+{
+    mk_lpp_do \
+        PACKAGE="${PKG_OPEN_UPGRADE_LPP_NAME}" \
+        VERSION="${PKG_LPP_VERSION}"
+
+        mk_lpp_sub_do \
+            SUBPACKAGE="-" \
+            PREIN="lpp/root.pre_i.in" \
+            REQUISITES="lpp/requisites.in"
+
+        mk_lpp_sub_done
+
+    mk_lpp_done
+}
+
+package_depot()
+{
+    mk_depot_do \
+        PACKAGE="$PKG_OPEN_UPGRADE_DEPOT_NAME" \
+        VERSION="$PKG_DEPOT_VERSION" \
+        PSF="depot/open-upgrade.psf.in" \
+        CONTROLFILES="depot/copyright.in depot/postinstall.in depot/depend.in"
+
+        mk_depot_sub_do SUBPACKAGE="prefix"
+        mk_depot_sub_done
+            
+    mk_depot_done
+}
+
+make()
+{
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+    mk_freebsd_enabled && package_freebsd
+    mk_pkg_enabled && package_pkg
+    mk_lpp_enabled && package_lpp
+    mk_depot_enabled && package_depot
+}

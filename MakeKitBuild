@@ -1,0 +1,318 @@
+PROJECT_NAME="platform"
+MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
+
+LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
+                libuuid sqlite curl libxml2 \
+                libedit libtdb opensoap"
+
+SUBDIRS="$LW_ALL_BUNDLED \
+         lwbase lwmsg lwreg lwadvapi netlogon \
+         lwio libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
+         lwnetapi lwadtool domainjoin lwconfig lwupgrade samba-interop \
+         mod_auth_kerb krb5_plugins config docs reskit usermonitor \
+         package installer qatools gssapps lwsecurity"
+
+
+defaults()
+{
+    PREFIX="/opt/pbis"
+    SYSCONFDIR="/etc/pbis"
+    LOCALSTATEDIR="/var"
+    DATADIR="/opt/pbis/share"
+    DOCDIR="/opt/pbis/docs"
+    MANDIR="/usr/share/man"
+
+    if [ "`uname`" = "Darwin" ]
+    then
+        LOCALSTATEDIR="/private/var"
+        SYSCONFDIR="/private/etc/pbis"
+    fi
+    
+    # Fail on warnings
+    MK_FAIL_ON_WARN=yes
+}
+
+option()
+{
+    default_samba_interop="yes"
+    default_selinux="no"
+
+    case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
+        *-auth)
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite popt libedit"
+            default_samba_interop="no"
+            ;;
+        linux-*)
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2 opensoap"
+            if [ "$MK_PACKAGE_RPM" = "yes" ]
+            then
+                default_selinux="yes"
+            fi
+            ;;
+        darwin-*)
+            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            ;;
+        *)
+            default_bundled="libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=samba-interop \
+        PARAM="yes|no" \
+        VAR="LW_SAMBA_INTEROP" \
+        DEFAULT="$default_samba_interop" \
+        HELP="Build samba interop libraries"
+
+    mk_option \
+        OPTION="selinux" \
+        PARAM="yes|no" \
+        VAR="LW_SELINUX" \
+        DEFAULT="$default_selinux" \
+        HELP="Attempt loading and using libselinux.so.1"
+
+    mk_option \
+        OPTION=lw-bundled-libs \
+        PARAM='...' \
+        VAR=LW_BUNDLED \
+        DEFAULT="$default_bundled" \
+        HELP="Use bundled libraries"
+
+    mk_option \
+        OPTION=oem \
+        PARAM='...' \
+        VAR=LW_OEM_PROFILE \
+        DEFAULT="" \
+        HELP="Build an OEM Profile default option set"
+
+    _LW_BUNDLED="$LW_BUNDLED"
+
+    unset LW_BUNDLED
+    
+    for i in ${_LW_BUNDLED}
+    do
+        case "$i" in
+            +*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i#+}"
+                ;;
+            -*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                lw_filter_bundled "${i#-}"
+                ;;
+            *)
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+                ;;
+        esac
+    done
+
+    mk_option \
+        OPTION="application-integration" \
+        PARAM="yes|no" \
+        VAR="LW_APPLICATION_INTEGRATION" \
+        DEFAULT="no" \
+        HELP="Build application integration? Requires Java/ant."
+
+    mk_option \
+        OPTION="build-revision" \
+        PARAM="rev" \
+        VAR="LW_BUILD_REVISION" \
+        DEFAULT="" \
+        HELP="Official build revision"
+
+    mk_option \
+        OPTION="build-id" \
+        PARAM="id" \
+        VAR="LW_BUILD_ID" \
+        DEFAULT="" \
+        HELP="Official build id"
+}
+
+configure()
+{
+    LW_VENDOR="pbis"
+    LW_PRODUCT="platform"
+    LW_PRODUCT_VERSION=8.2
+#   Update LW_PRODUCT_QFE with each release, resetting to zero when the
+#   LW_PRODUCT_VERSION changes.
+    LW_PRODUCT_QFE=0
+    LW_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}.${LW_BUILD_ID:-0}"
+
+    case "$LW_OEM_PROFILE" in
+        oem15)
+            mk_msg "Building OEM $LW_OEM_PROFILE configuration"
+            LW_APPLICATION_INTEGRATION="no"
+            LW_SAMBA_INTEROP="no"
+            mk_skip_subdir gssapps
+            mk_skip_subdir docs
+            mk_skip_subdir lwupgrade
+            LW_DEVICE_PROFILE="embedded"
+            ;;
+        oem16)
+            LW_SAMBA_INTEROP="no"
+            LW_APPLICATION_INTEGRATION="yes"
+            mk_skip_subdir reapsysl
+            mk_skip_subdir lwupgrade
+            mk_skip_subdir usermonitor
+            mk_skip_subdir net-snmp
+            LW_DEVICE_PROFILE="full"
+            ;;
+        oem17)
+            mk_msg "Building OEM $LW_OEM_PROFILE configuration"
+            LW_APPLICATION_INTEGRATION="no"
+            LW_SAMBA_INTEROP="no"
+            mk_skip_subdir lwupgrade
+            mk_skip_subdir domainjoin
+            mk_skip_subdir centutils
+            LW_DEVICE_PROFILE="embedded"
+            ;;
+    esac
+
+    mk_msg "configuring $LW_VENDOR $LW_OEM_PROFILE $LW_PRODUCT $LW_VERSION"
+    mk_msg "using bundled libraries: $LW_BUNDLED"
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" || mk_skip_subdir "$comp"
+    done
+
+    [ "$LW_SAMBA_INTEROP" = "yes" ] || mk_skip_subdir "samba-interop"
+    [ "$LW_APPLICATION_INTEGRATION" = "yes" ] || mk_skip_subdir "lwsecurity"
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_skip_subdir libschannel
+            mk_skip_subdir lwnetapi
+            mk_skip_subdir lwadtool
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            # mk_skip_subdir eventlog
+            # turning "eventlog" building back on, since lsass requires it in 7.x - bug 14311
+            mk_skip_subdir reapsysl
+            mk_skip_subdir lwconfig
+            mk_skip_subdir usermonitor
+            mk_skip_subdir net-snmp
+            ;;
+    esac
+
+}
+
+make()
+{
+
+    bundled_targets=""
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
+    done
+            
+    mk_target \
+        TARGET="@bundled" \
+        DEPS="$bundled_targets"
+
+    mk_add_phony_target "$result"
+
+    case "$MK_HOST_OS:$MK_HOST_ARCH" in
+        hpux:ia64|solaris:x86)
+            # Add target to build everything without attempting to
+            # unpack staging archive from other build machine
+
+            _local_targets=""
+            mk_unquote_list "$SUBDIRS"
+            for subdir
+            do
+                [ "$subdir" != "package" -a "$subdir" != "installer" ] &&
+                    _local_targets="$_local_targets @$subdir"
+            done
+            
+            mk_target \
+                TARGET="@all-local" \
+                DEPS="$_local_targets"
+
+            mk_add_phony_target "$result"
+            ;;
+        solaris:x86_64)
+            # Add target to build only compat bits
+            mk_target \
+                TARGET="@compat" \
+                DEPS="/usr/lib/amd64/nss_lsass.la /usr/lib/security/amd64/pam_lsass.la"
+
+            mk_add_phony_target "$result"
+            ;;
+    esac
+
+    lw_print_features
+}
+
+lw_filter_bundled()
+{
+    __needle="$1"
+    set -- ${LW_BUNDLED}
+    unset LW_BUNDLED
+    for i
+    do
+        if [ "$i" != "$__needle" ]
+        then
+            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+        fi
+    done
+}
+
+
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
+lw_print_feature()
+{
+    printf "%-30s%s\n" "$1:" "$2"
+}
+
+lw_print_features()
+{
+    printf -- "\n---\nConfiguration summary\n---\n\n"
+
+    set -- ${MK_HOST_ISAS}
+    
+    if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
+    then
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
+    else
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
+    fi
+
+    lw_print_feature "Device profile" "$LW_DEVICE_PROFILE"
+    lw_print_feature "Feature level" "$LW_FEATURE_LEVEL"
+    lw_print_feature "Bundled libraries" "$LW_BUNDLED"
+    lw_print_feature "Threadpool backend" "$LWBASE_THREADPOOL_BACKEND"
+
+    if [ "$LW_FEATURE_LEVEL" != "auth" ]
+    then
+        lw_print_feature "FUSE support" "$LWIO_FUSE_ENABLED"
+        lw_print_feature "EA support" "$LWIO_EA_ENABLED"
+        lw_print_feature "Domain join GUI" "$DJ_GUI_INTERFACE"
+    fi
+
+    lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"
+
+    lw_print_feature "SELinux support" "$LW_SELINUX"
+
+    types=""
+
+    mk_rpm_enabled && types="$types rpm"
+    mk_deb_enabled && types="$types deb"
+
+    [ -z "$types" ] && types="none"
+
+    lw_print_feature "Package types" "${types# }"
+}

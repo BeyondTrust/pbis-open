@@ -1,0 +1,6 @@
+make()
+{
+    mk_stage \
+        DESTDIR="$LW_CONFIGDIR" \
+        usermonitor.reg
+}

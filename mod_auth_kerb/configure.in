@@ -1,0 +1,345 @@
+# Process this file with autoconf to produce a configure script.
+AC_REVISION($Revision: 1.35.2.1 $)
+AC_PREREQ(2.57)
+AC_INIT(mod_auth_kerb, 5.3, modauthkerb-developers@lists.sourceforge.net)
+AC_CONFIG_SRCDIR([src/mod_auth_kerb.c])
+AC_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_MAKE_SET
+
+# Checks for libraries.
+# FIXME: Replace `main' with a function in `-lresolv':
+LIB_resolv=""
+AC_CHECK_LIB([resolv], [main], [LIB_resolv=-lresolv])
+AC_SUBST(LIB_resolv)
+
+# Checks for libraries.
+# FIXME: Replace `main' with a function in `-ldl':
+LIB_dl=""
+AC_CHECK_LIB([dl], [main], [LIB_dl=-ldl])
+AC_SUBST(LIB_dl)
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([limits.h netdb.h stddef.h stdlib.h string.h unistd.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+#AC_C_CONST
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+
+# Checks for library functions.
+#AC_FUNC_MALLOC
+#AC_FUNC_MEMCMP
+#AC_CHECK_FUNCS([gethostbyname memset putenv strcasecmp strchr strdup strerror])
+
+#
+# kerberos5 enviroment
+#
+krb5_config_command=krb5-config
+SPNEGO_SRCS=""
+
+AC_ARG_WITH(krb5,
+  AC_HELP_STRING([--with-krb5=dir],[use krb5 in dir]),
+  [ with_krb5="$withval" ])
+
+if test "x$with_krb5" != "xno" ; then
+  krb5_config_command="$with_krb5/bin/krb5-config"
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+  ac_save_LIBS="$LIBS"
+  
+  dnl
+  dnl find header files
+  dnl
+
+  if test -z "$KRB5_CPPFLAGS"; then
+     TMP_KRB5_CPPFLAGS=""
+     if test -z "$TMP_KRB5_CPPFLAGS"; then
+        TMP_KRB5_CPPFLAGS="-I$with_krb5/include"
+     fi
+     CPPFLAGS="$CPPFLAGS $TMP_KRB5_CPPFLAGS"
+     AC_CHECK_HEADERS(gssapi.h, 
+                      [ KRB5_CPPFLAGS="$TMP_KRB5_CPPFLAGS" ])
+     if test -z "$KRB5_CPPFLAGS"; then
+        AC_CHECK_HEADERS(gssapi/gssapi.h, 
+                         [ KRB5_CPPFLAGS="$TMP_KRB5_CPPFLAGS" ])
+     fi
+     CPPFLAGS="$ac_save_CPPFLAGS" 
+  fi
+
+  dnl
+  dnl find libraries
+  dnl
+
+  if test -z "$KRB5_LIBDIR"; then
+     KRB5_LIBDIR="lib"
+  fi
+
+  if test -z "$KRB5_LDFLAGS"; then
+     #try MIT
+     if test -n "$krb5_config_command"; then
+         CONFIG_KRB5_LDFLAGS=`CFLAGS= $krb5_config_command --libs gssapi 2>/dev/null`
+     fi
+     if test "x$with_krb5" != "xno" ; then
+         TMP_KRB5_LDFLAGS="-L$with_krb5/$KRB5_LIBDIR -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err $LIB_dl"
+         if test -n "$CONFIG_KRB5_LDFLAGS"; then
+             NEW_KRB5_LDFLAGS="-L$with_krb5/$KRB5_LIBDIR $CONFIG_KRB5_LDFLAGS"
+         else
+             NEW_KRB5_LDFLAGS="-L$with_krb5/$KRB5_LIBDIR -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err $LIB_dl"
+         fi
+     else
+         if test -n "$CONFIG_KRB5_LDFLAGS"; then
+             TMP_KRB5_LDFLAGS="$CONFIG_KRB5_LDFLAGS"
+             NEW_KRB5_LDFLAGS="$CONFIG_KRB5_LDFLAGS"
+         fi
+     fi
+     if test -n "$TMP_KRB5_LDFLAGS"; then
+         LIBS="$LIBS $TMP_KRB5_LDFLAGS $LIB_resolv"
+         AC_CHECK_LIB(krb5, krb5_init_context, [ KRB5_LDFLAGS="$NEW_KRB5_LDFLAGS" ])
+         LIBS="$ac_save_LIBS"
+     fi
+  fi
+
+  if test -z "$KRB5_LDFLAGS"; then
+     #Try Heimdal
+     TMP_KRB5_LDFLAGS="-L$with_krb5/lib -lgssapi -lkrb5 -lasn1 -lcrypto -lroken -lcrypt"
+     LIBS="$LIBS $TMP_KRB5_LDFLAGS $LIB_resolv"
+     AC_CHECK_LIB(krb5, krb5_init_context, [ KRB5_LDFLAGS="$TMP_KRB5_LDFLAGS" ])
+     LIBS="$ac_save_LIBS"
+  fi
+
+  if test -z "$KRB5_LDFLAGS"; then
+     #Try Heimdal on OpenBSD
+     TMP_KRB5_LDFLAGS="-L$with_krb5/lib -lgssapi -lkrb5 -lasn1 -ldes -lcrypto"
+     LIBS="$LIBS $TMP_KRB5_LDFLAGS $LIB_resolv"
+     AC_CHECK_LIB(krb5, krb5_init_context, [ KRB5_LDFLAGS="$TMP_KRB5_LDFLAGS" ])
+     LIBS="$ac_save_LIBS"
+  fi
+
+  if test -z "$KRB5_LDFLAGS"; then
+     with_krb5=no
+  else
+     with_krb5=yes
+     AC_DEFINE(KRB5)
+
+     # check for Heimdal
+     have_heimdal=""
+     AC_MSG_CHECKING(whether we are using Heimdal)
+     ac_save_CFLAGS="$CFLAGS"
+     CFLAGS="$KRB5_CPPFLAGS"
+     AC_TRY_COMPILE([#include <krb5.h>],
+		    [ char *tmp = heimdal_version; ],
+		    [ AC_MSG_RESULT(yes)
+		      AC_DEFINE(HEIMDAL)
+		      have_heimdal=yes ],
+		    [ AC_MSG_RESULT(no) ])
+     CFLAGS="$ac_save_CFLAGS"
+
+# If SPNEGO is supported by the gssapi libraries, we shouln't build our support.
+# SPNEGO is supported as of Heimdal 0.7, and MIT 1.5.
+     gssapi_supports_spnego=""
+     AC_MSG_CHECKING(whether the GSSAPI libraries support SPNEGO)
+
+     ac_save_CFLAGS="$CFLAGS"
+     CFLAGS="$KRB5_CPPFLAGS"
+     ac_save_LDFLAGS="$LDFLAGS"
+     if test "x$with_krb5" != "xno" ; then
+         if test -n "$TMP_KRB5_LDFLAGS"; then
+             LDFLAGS="$ac_save_LDFLAGS $TMP_KRB5_LDFLAGS"
+         else
+             LDFLAGS="$ac_save_LDFLAGS $KRB5_LDFLAGS"
+         fi
+     else
+         LDFLAGS="$ac_save_LDFLAGS $KRB5_LDFLAGS"
+     fi
+
+     AC_TRY_RUN([
+#include <string.h>
+#include <krb5.h>
+#ifdef HEIMDAL
+#include <gssapi.h>
+#else
+#include <gssapi/gssapi.h>
+#endif
+int main(int argc, char** argv)
+{
+       OM_uint32 major_status, minor_status;
+       gss_OID_set mech_set;
+       gss_OID_desc spnego_oid_desc = {6, (void *)"\x2b\x06\x01\x05\x05\x02"};
+       int SPNEGO = 0;
+                                                                               
+       major_status = gss_indicate_mechs(&minor_status, &mech_set);
+       if (GSS_ERROR(major_status))
+               return 1;
+       else {
+               unsigned int i;
+               for (i=0; i < mech_set->count && !SPNEGO; i++) {
+                       gss_OID tmp_oid = &mech_set->elements[i];
+                      if (tmp_oid->length == spnego_oid_desc.length &&
+                           !memcmp(tmp_oid->elements, spnego_oid_desc.elements, 
+                                   tmp_oid->length)) {
+                               SPNEGO = 1;
+                               break;
+                       }
+               }
+               gss_release_oid_set(&minor_status, &mech_set);
+               return (!SPNEGO);
+       }
+}],
+                [ if test $? -eq 0; then 
+                     AC_MSG_RESULT(yes)
+                     AC_DEFINE(GSSAPI_SUPPORTS_SPNEGO)
+                     gssapi_supports_spnego=yes 
+                  else
+                     AC_MSG_RESULT(no)
+                  fi],
+                [AC_MSG_RESULT(no)])
+
+     CFLAGS="$ac_save_CFLAGS"
+     LDFLAGS="$ac_save_LDFLAGS"
+
+     if test -z "$gssapi_supports_spnego"; then
+     	if test -n "$have_heimdal"; then SPNEGO_SRCS="\
+		spnegokrb5/asn1_MechType.c	   \
+		spnegokrb5/asn1_MechTypeList.c	   \
+		spnegokrb5/asn1_ContextFlags.c     \
+		spnegokrb5/asn1_NegTokenInit.c	   \
+		spnegokrb5/asn1_NegTokenTarg.c	   \
+		spnegokrb5/init_sec_context.c      \
+		spnegokrb5/accept_sec_context.c    \
+		spnegokrb5/encapsulate.c           \
+		spnegokrb5/decapsulate.c           \
+		spnegokrb5/external.c"
+     	else SPNEGO_SRCS="\
+		spnegokrb5/asn1_MechType.c         \
+        	spnegokrb5/asn1_MechTypeList.c     \
+        	spnegokrb5/asn1_ContextFlags.c     \
+        	spnegokrb5/asn1_NegTokenInit.c     \
+        	spnegokrb5/asn1_NegTokenTarg.c     \
+        	spnegokrb5/der_get.c               \
+        	spnegokrb5/der_put.c               \
+        	spnegokrb5/der_free.c              \
+        	spnegokrb5/der_length.c            \
+        	spnegokrb5/der_copy.c              \
+        	spnegokrb5/timegm.c                \
+        	spnegokrb5/init_sec_context.c      \
+        	spnegokrb5/accept_sec_context.c    \
+        	spnegokrb5/encapsulate.c           \
+        	spnegokrb5/decapsulate.c           \
+        	spnegokrb5/external.c"
+     	fi
+     fi
+  fi
+fi
+AC_SUBST(KRB5_CPPFLAGS)
+AC_SUBST(KRB5_LDFLAGS)
+AC_SUBST(SPNEGO_SRCS)
+
+#
+# Kerberos4 enviroment
+#
+
+AC_ARG_WITH(krb4,
+  AC_HELP_STRING([--with-krb4=dir], [use krb4 in dir]),
+  [ with_krb4="$withval" ])
+
+if test "x$with_krb4" != "xno"; then
+  AC_MSG_CHECKING([for Kerberos4 installation])
+  if test "x$with_krb4" != "x"; then
+     if test -x "$with_krb4/bin/krb4-config"; then
+        KRB4_CPPFLAGS=`$with_krb4/bin/krb4-config --cflags krb4 2>/dev/null`
+        KRB4_LDFLAGS=`$with_krb4/bin/krb4-config --libs krb4 2>/dev/null`
+     elif test -x "$with_krb4/bin/krb5-config"; then
+        KRB4_CPPFLAGS=`$with_krb4/bin/krb5-config --cflags krb4 2>/dev/null`
+        KRB4_LDFLAGS=`$with_krb4/bin/krb5-config --libs krb4 2>/dev/null`
+     else
+        AC_MSG_ERROR([failed to find krb4-config or krb5-config in $with_krb4/bin])
+     fi
+  else
+     KRB4_CPPFLAGS=`krb4-config --cflags krb4 2>/dev/null`
+     KRB4_LDFLAGS=`krb4-config --libs krb4 2>/dev/null`
+     if test "x$KRB4_LDFLAGS" = "x" -a -n "$krb5_config_command"; then
+        KRB4_CPPFLAGS=`$krb5_config_command --cflags krb4 2>/dev/null`
+        KRB4_LDFLAGS=`$krb5_config_command --libs krb4 2>/dev/null`
+        if test $? -ne 0; then
+           KRB4_CPPFLAGS=""
+           KRB4_LDFLAGS=""
+        fi
+     fi
+  fi
+  if test "x$KRB4_LDFLAGS" = "x"; then
+     with_krb4=no
+     AC_MSG_RESULT(no)
+  else
+     AC_MSG_RESULT(yes)
+
+     ac_save_CFLAGS=$CFLAGS
+     ac_save_CPPFLAGS=$CPPFLAGS
+     ac_save_LDFLAGS=$LDFLAGS
+     ac_save_LIBS=$LIBS
+     CFLAGS="$CFLAGS $KRB4_CPPFLAGS"
+     CPPFLAGS="$CFLAGS $KRB4_CPPFLAGS"
+     LDFLAGS="$LDFLAGS $KRB4_LDFLAGS"
+     LIBS="$LIBS $LDFLAGS $LIB_resolv"
+
+#    if not found krb.h suppose it's in the kerberosIV subdirectory
+     AC_CHECK_HEADER(krb.h, , with_krb4=no)
+     if test "x$with_krb4" = "xno"; then
+         KRB4_CPPFLAGS="$KRB4_CPPFLAGS ${KRB4_CPPFLAGS}/kerberosIV"
+#        second run of AC_CHECK_HEADER for the same library returns the cached
+#        result created by previous run :-(
+         AC_CHECK_HEADER(kerberosIV/krb.h, with_krb4=yes,
+                         [  with_krb4=no
+                            KRB4_CPPFLAGS=""
+                            KRB4_LDFLAGS=""])
+     fi
+
+     if test "x$with_krb4" != "xno"; then
+        AC_CHECK_LIB(krb4, krb_get_pw_in_tkt, [], [with_krb4=no])
+        if test "x$with_krb4" = "xno"; then
+           AC_CHECK_LIB(krb, krb_get_pw_in_tkt, [with_krb4=yes], 
+                        [with_krb4=no
+                         KRB4_CPPFLAGS=""
+                         KRB4_LDFLAGS=""])
+        fi
+     fi
+
+     CFLAGS=$ac_save_CFLAGS
+     CPPFLAGS=$ac_save_CPPFLAGS
+     LDFLAGS=$ac_save_LDFLAGS
+     LIBS=$ac_save_LIBS
+
+     AC_DEFINE(KRB4)
+  fi
+fi
+AC_SUBST(KRB4_CPPFLAGS)
+AC_SUBST(KRB4_LDFLAGS)
+
+if test "x$with_krb5" = "xno" -a "x$with_krb4" = "xno"; then
+  AC_MSG_ERROR([No Kerberos enviroment found])
+fi
+
+#
+# Apache enviroment
+#
+AC_ARG_WITH(apache,
+  AC_HELP_STRING([--with-apache=dir],[use apache in dir]),
+  [ with_apache="$withval" ])
+
+AC_PATH_PROG([APXS], [apxs], [], [$with_apache/bin:$with_apache/sbin:$PATH])
+if test -z "$APXS"; then
+   AC_PATH_PROG([APXS], [apxs2], [], [$with_apache/bin:$with_apache/sbin:$PATH])
+   if test -z "$APXS"; then
+      AC_MSG_ERROR([failed to find apache apxs executable])
+   fi
+fi
+
+AC_SUBST(APXS)
+
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT

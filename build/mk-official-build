@@ -1,0 +1,201 @@
+#!/bin/bash
+
+set -e
+
+ORIG_PWD="${PWD}"
+CLEAN=""
+BOOTSTRAP=""
+JOBS="4"
+
+get()
+{
+    eval "result=\$$1"
+}
+
+fail()
+{
+    echo "$*" >&2
+    exit 1
+}
+
+show()
+{
+    echo "+ $*"
+    if [ -z "$SHOW" ]
+    then
+        time -p "$@"
+    fi
+}
+
+if type gmake >/dev/null 2>&1
+then
+    MAKE=gmake
+else
+    MAKE=make
+fi
+
+if type gtar >/dev/null 2>&1
+then
+    TAR=gtar
+else
+    TAR=tar
+fi
+
+check_params()
+{
+    for param
+    do
+        get "$param"
+        [ -n "$result" ] || fail "$param not specified"
+    done
+}
+
+usage()
+{
+    echo "usage: `basename $0` --source DIR --build DIR --dist DIR [OPTIONS]
+
+    --source DIR    -- source tree
+    --build DIR     -- build output directory
+    --dist DIR      -- \"final\" build output directory
+
+  where OPTIONS are:
+
+    --show          -- only show commands
+    --jobs N        -- pass -j N to make when building
+    --revision REV  -- source control revision (package name friendly form)
+    --id ID         -- build number
+    --config FILE   -- configuration file for MakeKit
+    --tools PATH    -- build tools prefix
+    --clean         -- clean the build output first
+    --bootstrap     -- just do bootstrapping (do not build)
+    --gpg-key-sign-rpm  -- sign RPM builds
+    --gpg-key-sign-deb  -- sign DEB builds
+"
+    exit 1
+}
+
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        --show) SHOW="1"; shift;;
+        --jobs) JOBS="$2"; shift 2;;
+        --source) SOURCE_DIR="$2"; shift 2;;
+        --build) BUILD_DIR="$2"; shift 2;;
+        --dist) DIST_DIR="$2"; shift 2;;
+        --revision) REVISION="$2"; shift 2;;
+        --id) ID="$2"; shift 2;;
+        --config) CONFIG="$2"; shift 2;;
+        --tools) TOOLS="$2"; shift 2;;
+        --java) JAVA="$2"; shift 2;;
+        --ant) ANT="$2"; shift 2;;
+        --archive) ARCHIVE="$2"; shift 2;;
+        --gpg-key-sign-rpm) GPG_KEY_SIGN_RPM="$2"; shift 2;;
+        --gpg-key-sign-deb) GPG_KEY_SIGN_DEB="$2"; shift 2;;
+        --application-integration) APPLICATION_INTEGRATION="1"; shift;;
+        --clean) CLEAN="1"; shift;;
+        --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
+        --help) usage;;
+        --) shift; break;;
+        *) break;;
+    esac
+done
+
+check_params SOURCE_DIR BUILD_DIR DIST_DIR
+
+if [ -n "$TOOLS" ]
+then
+    PATH="${TOOLS}/bin:$PATH"
+    EXTRA_CPPFLAGS="-I${TOOLS}/include"
+    EXTRA_LDFLAGS="-L$(dirname $(find "${TOOLS}" -name 'libmoonunit.la'))"
+
+    if [ -x "${TOOLS}/bin/dash" ]
+    then
+        MK_SHELL="${TOOLS}/bin/dash"
+        export MK_SHELL
+    fi
+
+    for ver in 2.0 2.2
+    do
+        [ -d "${TOOLS}/apache${ver}" ] && APACHE_PARAMS="$APACHE_PARAMS --apache${ver}-prefix=${TOOLS}/apache${ver}"
+    done
+fi
+ 
+if [ -n "$JAVA" ]
+then
+    PATH="${JAVA}/bin:$PATH"
+fi
+
+if [ -n "$ANT" ]
+then
+    PATH="${ANT}/bin:$PATH"
+fi
+
+export PATH
+
+echo "+ PATH=$PATH"
+
+[ -n "$CONFIG" ] && CONFIG_PARAM="@$SOURCE_DIR/build/mk-config/$CONFIG"
+[ -n "$REVISION" ] && REVISION_PARAM="--build-revision=$REVISION"
+[ -n "$ID" ] && ID_PARAM="--build-id=$ID"
+[ -n "$ARCHIVE" ] && ARCHIVE_PARAM="--unpack-archive=$ARCHIVE"
+[ -n "$APPLICATION_INTEGRATION" ] && APPLICATION_INTEGRATION_PARAM="--application-integration=yes"
+[ -n "$GPG_KEY_SIGN_RPM" ] && GPG_KEY_SIGN_RPM_PARAM="--gpg-key-sign-rpm=$GPG_KEY_SIGN_RPM"
+[ -n "$GPG_KEY_SIGN_DEB" ] && GPG_KEY_SIGN_DEB_PARAM="--gpg-key-sign-deb=$GPG_KEY_SIGN_DEB" 
+if [ -n "$CLEAN" -a -d "$BUILD_DIR" ]
+then
+    show rm -rf "$BUILD_DIR"
+fi
+
+if [ -n "$BOOTSTRAP" ]
+then
+    show cd "$SOURCE_DIR"
+    show ./build/mk-bootstrap
+    exit 0
+fi
+
+show mkdir -p "${BUILD_DIR}"
+show cd "$BUILD_DIR"
+
+if [ ! -f "Makefile" ]
+then
+    show "${SOURCE_DIR}/configure" \
+        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} ${APACHE_PARAMS} ${APPLICATION_INTEGRATION_PARAM} \
+        ${GPG_KEY_SIGN_RPM_PARAM} ${GPG_KEY_SIGN_DEB_PARAM} \
+        CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
+fi
+
+for target
+do
+    show ${MAKE} -j"$JOBS" "$target"
+done
+
+show mkdir -p "$DIST_DIR"
+
+if [ -d package ]
+then
+    show mkdir -p "$DIST_DIR/package"
+    show cp -r "package/"* "$DIST_DIR/package"
+fi
+
+if [ -d sfx ]
+then
+    show mkdir -p "$DIST_DIR/sfx"
+    show cp -r "sfx/"* "$DIST_DIR/sfx"
+fi
+
+if [ -d dmg ]
+then
+    show mkdir -p "$DIST_DIR/dmg"
+    show cp -r "dmg/"* "$DIST_DIR/dmg"
+fi
+  
+if [ -d tools ]
+then
+    show cd tools
+    tar cf - . | gzip > "$DIST_DIR/tools-${ID}-${REVISION}.tar.gz"
+    show cd ..
+fi
+
+show cp -f "config.log" "$DIST_DIR/config.log"
+show cd "stage"
+tar cf - . | gzip > "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz"

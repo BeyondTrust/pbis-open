@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		noRemove {506A445B-72C4-4475-B35D-4A827552B04B} = s 'ServerInfo'
+		'ServerInfo.dll'
+		{
+			val AppID = s {506A445B-72C4-4475-B35D-4A827552B04B}
+		}
+	}
+}

@@ -1,0 +1,39 @@
+// DivExe.idl : DivExe.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (DivExe.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(13736884-10E2-4B00-8297-A6F4E1856A33),
+	
+		helpstring("IDivideExe Interface"),
+		pointer_default(unique)
+	]
+	interface IDivideExe : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Divide")] HRESULT Divide([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(56B70072-D6B3-4CAA-9B06-2F48B5838036),
+	version(1.0),
+	helpstring("DivExe 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library DIVEXELib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(B3980D3B-02DD-4A30-9103-8B49E6618F30),
+		helpstring("DivideExe Class")
+	]
+	coclass DivideExe
+	{
+		[default] interface IDivideExe;
+	};
+};

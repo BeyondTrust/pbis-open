@@ -1,0 +1,231 @@
+ChangeHistory
+
+OpenSOAP package
+2.0 (2004/05/31) -> 2.0.1 (2004/10/18)
+
+Server
+ - 対応プラットフォームの追加
+ -- Linuxの他にFreeBSD(4.7),Solaris(8,9),MacOSX10.3などに対応
+ -- 移植性のための configureでの処理の強化
+ -- 他プラットフォーム対応のための子プロセス管理機能の強化
+ - 新バージョンへの移行に伴い不必要となったソースファイルを削除
+ - その他細かなバグ修正
+
+=====================================================
+1.0-20030903 (2003/09/03) -> 2.0 (2004/05/31)
+
+Server
+ - 大幅な機能拡張
+ -- トランスポートインターフェイスがApacheのDSOモジュールをサポート
+ -- 転送機能でDIME/MIME方式の添付メッセージに対する処理をサポート
+ -- 子プロセス管理を強化
+ -- トレースログ機能を追加
+ -- 転送や非同期のメッセージ処理機能を拡張
+ - Linuxプラットフォームのみの対応
+
+=====================================================
+1.0-20030903 (2003/09/03) -> 1.0-20031201 (2003/12/01)
+
+API
+ - Transport APIの大幅な拡張(以下全て)
+ - Transfer-Encoding: Chunked に対応。
+ - デフォルトのHTTPバージョンを1.1に変更。
+ - InvokeでHTTPエラー時はステータスコードを判別できるようにした。
+ - HTTP Basic User認証に対応。
+   認証用APIを追加。(OpenSOAPTransportSetAuthUserPass())
+   SetURLでの指定も可能。(例: "http://user:pass@host/location/")
+ - HTTPSに対応。SetURLの指定(https://)が可能。
+   SSL認証で使用する鍵を設定するAPIを追加。
+ - 関連してエラーコードをカテゴリに分けて追加。
+Server
+ - たくさんの細かなバグ修正。
+Tool
+ - Transport機能拡張によりsoapingのエラー表示が詳しくなった。
+Samples
+ - Echoサンプルを追加。
+Win32
+ - Serverでの子プロセスをTerminateする処理を改善。
+ - SoapingClientで送信する時間が負の値になるのを修正。
+
+=====================================================
+1.0-20030530 (2003/05/30) -> 1.0-20030903 (2003/09/03)
+
+Server
+ - HTTPのurl指定によるサービス呼出しのサポート。
+ - server.conf フォーマットの拡張・修正。
+ - トランスポート機能のOpenSOAP-API利用。
+ - サービス呼出し機能および転送機能の別プロセスをメッセージ処理プロセ
+   スに統合。(srvDrvCreator, fwderCreatorの廃止)
+ - 共通参照シンボルの宣言・定義の整理。
+ - 各種ロジックの見直し、バグ修正。
+API
+ - OpenSOAPXMLElmAddChildXMLDocument() 及び
+   OpenSOAPXMLElmSetChildValueXMLDocument() という、文字列をXMLの子要
+   素として直接追加する関数を作成。
+ - OpenSOAPInitialize() / Ultimate() の呼び出しの参照カウンタを追加。
+Win32
+ - Windows環境でのコンパイルに必要なマクロ定義用に win32config.h ファ
+   イルを追加。
+
+=====================================================
+1.0-20030331 (2003/03/31) -> 1.0-20030530 (2003/05/30)
+
+API
+ - 文字列マッチングルーチンの不具合を修正 (例: http:と https:)
+ - '&'記号が入った文字列をうまく扱えない問題を解決。
+ - HTTPヘッダに、User-Agent: OpenSOAP ${VERSION} を追加。
+Contrib
+ - cpplibサンプル辞書クライアントのプロジェクトファイルをリリースモー
+   ドでコンパイルできるように修正。
+Package/Samples
+ - "make install-samples" で、全てのサンプルをコンパイルとインストール
+   できるように改良。
+
+=====================================================
+1.0-20030228 (2003/02/28) -> 1.0-20030331 (2003/03/31)
+
+Package
+ - soapingとopensoap-server-ctlの日本語 man pageを作成。
+Contrib
+ - contribディレクトリを作成して、javaとbridingを移動。
+ - OpenSOAP APIのC++クラスライブラリを追加。
+
+=====================================================
+1.0-20030201 (2003/02/01) -> 1.0-20030228 (2003/02/28)
+
+Package
+ - specファイルを作成し、RPMパッケージを提供。
+ - soapingとopensoap-server-ctlの man pageを作成。
+ - Soapingと一部のサンプルサービスについてWSDLを作成。
+Server
+ - res_spool_tableファイルの出力先が server.confで指定されるディレクト
+   リになっていなかった問題を修正。
+ - Windows環境で一定サイズ以上のメッセージの扱いに失敗する問題を修正。
+ - forward_path の指定での処理が不完全であった問題を修正。
+ - 使われていなかったreloadSrvConfコマンドを廃止。
+API
+ - Solaris+gcc-3.2.1環境でうまくいかなかった socklen_t, sstream型につ
+   いて、configureとソースコード一部修正。
+ - autoconf-2.53でエラーになる LTLIBOBJSを外すため、AC_REPLACE_FUNCSを
+   使わないように修正。
+ - Windows版のマルチスレッド環境で起きていた不具合をなくすためロック処
+   理を追加。
+ - 最新版 doxygenに対応してコメント修正。Securityl APIも Referenceに含
+   める。
+Tool
+ - Soapingクライアントのコマンド名をsoapingに変更。
+
+=====================================================
+1.0-20030110 (2003/01/10) -> 1.0-20030201 (2003/02/01)
+
+Server
+ - opensoap-server-ctlスクリプトに、restart(再起動)コマンドを追加。
+API
+ - OpenSOAPXMLElmGetChildValue{MB,WC}()が適切なエラーコードを返すよう
+   に修正。
+ - OpenSOAPUltimate()での Serializerマップのメモリーリークを修正。
+Samples
+ - 全てのサンプルを新ディレクトリ構成を参照できるように修正。
+ - CalcAsyncHop/Pathを CalcAsyncに統合。
+ - CalcAsyncのCGI版Clientの機能強化(SOAPメッセージ表示、転送設定)。
+ - ShoppingSecの不具合を修正。
+ - TransactionサンプルのREADME追加。
+Win32
+ - ToolsとSamples用のインストールバッチファイルを追加。
+
+=====================================================
+1.0-20021130 (2002/11/30) -> 1.0-20030110 (2003/01/10)
+
+全体
+ - カスタマイズ可能な形でインストールディレクトリの構造を変更。
+   (/usr/local/opensoap/)
+Server
+ - 動作が不完全だった非同期転送処理を修正。
+API
+ - ネームスペースのプレフィックが無くても設定ができるように修正。
+   (XMLElmSetNameSpace, NamespaceIsSameString)
+Samples
+ - Hello他で、Buffer overflowの可能性のある問題を修正。
+Win32
+ - DSP内で間違っていたファイル(DLinkList.c)の指定を修正。
+
+=====================================================
+1.0-20021031 (2002/10/31) -> 1.0-20021130 (2002/11/30)
+
+Documentation
+ - ドキュメント類の大部分を英語に翻訳。
+ - DoxygenによるAPIリファレンスのソースコードからの自動生成。
+
+=====================================================
+1.0-20020930 (2002/09/30) -> 1.0-20021031 (2002/10/31)
+
+Server
+ - HopCount処理の修正。ただし非同期処理の場合まだ不完全。
+API
+ - include/ErrorCode.h: OPENSOAP_IO_READ_ERROR=0x00040001L
+ - SolarisでMIMEのcharset名を指定した文字エンコーディング変換ができな
+   い問題を修正。
+Tools
+ - 新カテゴリ Tools を作成。
+ - src/tools/の下にTransaction,SoaPING を移動。
+その他
+ - Windows Visual C++用プロジェクト構成の整理。
+ - ドキュメントの追加・修正。(英文など)
+
+=====================================================
+1.0pre3 (2002/08/27) -> 1.0-20020930 (2002/09/30)
+
+Server
+  - 読み書きエラー時のメッセージ修正。
+  - FileIDFuncの文字列処理を修正。
+  - クライアントから転送上限数を指定されたとき、自己サーバにサービスプ
+    ログラムが存在している場合は転送せずに処理するよう修正。
+  - UTF-16/UTF-32コードの文字列の扱いについての修正。
+
+API
+  - Wide Character <-> Multi Byte Character の相互変換ルーチンを修正。
+  - HTTP header処理を case-insensitive に修正。
+
+Samples
+  - 新サンプル(Soaping, SimpleCalc, HelloSec)の追加。
+  - CalcAsyncHop/Pathについて、
+    * getline()を使うのをやめて、Solaris, VC++等でもコンパイル可能に。
+    * async = false (同期)の場合もHop/Path処理されるように修正。
+    * サービス名がかわったので、namespace等修正。
+  - ShoppingSec について
+    * SampleMessages不足ファイルの追加、修正。
+    * Shopping{Sync,Async}.mak の修正。
+  - Calc ドキュメント修正、ssml, makファイル追加。
+  - SecCertAuth .makファイル修正、ssml追加。
+  - CalcAsyncClient メモリリークの修正。
+
+その他
+  - ドキュメント等の追加、修正。
+  - Windows VC++6.0対応の修正及び動作検証。
+
+=====================================================
+1.0pre2 (2002/04/02) -> 1.0pre3 (2002/08/27)
+
+Server
+  - OpenSOAPサーバ<->サービスプログラムの接続方式をStdIO（標準入出力)
+    に対応した。
+  - それにともないサンプルSSMLファイルの修正、SSML仕様ドキュメントの修
+    正、サンプル関係説明ドキュメントの修正。
+  - データ受け渡し処理に問題あり、4096Byte以上の文字列が通らなかった問
+    題を解決。
+  - 非同期処理の場合に署名をつけるとHeaderが二重になる問題を解決。
+
+API
+  - httpトランスポートをRFC2732 の IPv6 アドレスフォーマットに対応。
+  - 判明していたメモリーリークの修正。
+
+Samples
+  - Calc とまぎらわしかった CalcAsync のファイル名を修正。
+  - Shopping 改め ShoppingSec を含めた。
+  - Transaction のコード修正。
+  - SecCertAuth/GetCert を Solarisでコンパイルできるように修正。
+
+その他
+  - 細かなバグ、ドキュメント等の修正。
+
+=====================================================

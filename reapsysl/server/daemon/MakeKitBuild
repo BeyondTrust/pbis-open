@@ -1,0 +1,12 @@
+make()
+{
+    REAPSYSLD_SOURCES="main-svcm.c"
+
+    lw_service \
+	SERVICE="reapsysl" \
+	SOURCES="$REAPSYSLD_SOURCES" \
+	GROUPS="../api/api ../../utils/utils ../reader/reader" \
+	INCLUDEDIRS=". ../include ../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h" \
+	LIBDEPS="lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr"
+}

@@ -1,0 +1,20 @@
+[uuid(12345778-1234-abcd-0000-000000000000),
+  version(0.0),
+  pointer_default(unique)
+]
+interface krb5pac
+{
+
+#include <lw/security-types.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
+
+    void PAC_LOGON_INFO_Encode(
+            [in] handle_t h,
+            [in, unique] PAC_LOGON_INFO * logon_info);
+
+    void PAC_LOGON_INFO_Decode(
+            [in] handle_t h,
+            [out] PAC_LOGON_INFO **logon_info);
+}

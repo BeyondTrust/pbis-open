@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>MIT Kerberos features &mdash; MIT Kerberos Documentation</title>
+    
+    <link rel="stylesheet" href="_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/kerb.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.11.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="copyright" title="Copyright" href="copyright.html" />
+    <link rel="top" title="MIT Kerberos Documentation" href="index.html" />
+    <link rel="next" title="MIT Kerberos License information" href="mitK5license.html" />
+    <link rel="prev" title="Supported date and time formats" href="basic/date_format.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper">
+        <div class="header" style="padding-bottom: 0px;">
+            
+            
+                <h1><a href="index.html"
+                style="color: #5d1509; font-size: 120%;
+                padding-top: 10px;">MIT Kerberos Documentation</a></h1>
+            
+            <div class="rel">
+                    <a href="index.html"
+                    title="Full Table of Contents"
+                    accesskey="C">Contents</a>
+                     |
+                    <a href="basic/date_format.html"
+                    title="Supported date and time formats"
+                    accesskey="P">previous</a>
+                     |
+                    <a href="mitK5license.html"
+                    title="MIT Kerberos License information"
+                    accesskey="N">next</a>
+                     |
+                    <a href="genindex.html"
+                    title="General Index"
+                    accesskey="I">index</a>
+                     |
+                    <a href="search.html"
+                    title="Enter search criteria"
+                    accesskey="S">Search</a>
+                     |
+                <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__MIT Kerberos features">feedback</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="content">
+                <div class="sidebar"
+                    style="float: right; background: #F9F9F9">
+                    <h2>On this page </h2>
+                    <ul>
+<li><a class="reference internal" href="#">MIT Kerberos features</a><ul>
+<li><a class="reference internal" href="#quick-facts">Quick facts</a></li>
+<li><a class="reference internal" href="#interoperabiity">Interoperabiity</a><ul>
+<li><a class="reference internal" href="#microsoft">Microsoft</a></li>
+<li><a class="reference internal" href="#heimdal">Heimdal</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#feature-list">Feature list</a></li>
+</ul>
+</li>
+</ul>
+
+                    <br/>
+                    <h2>Table of contents</h2>
+                    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="user/index.html">For users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin/index.html">For administrators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appdev/index.html">For application developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugindev/index.html">For plugin module developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build/index.html">Building Kerberos V5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic/index.html">Kerberos V5 concepts</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">MIT Kerberos features</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="build_this.html">How to build this documentation from the source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">The Kerberos Documentation Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resources</a></li>
+</ul>
+
+                    <br/>
+                    <h4><a href="index.html">Full Table of Contents
+                    </a></h4>
+                    <h4>Search</h4>
+                    <form class="search" action="search.html" method="get">
+                        <input type="text" name="q" size="18" />
+                        <input type="submit" value="Go" />
+                        <input type="hidden" name="check_keywords" value="yes" />
+                        <input type="hidden" name="area" value="default" />
+                    </form>
+                </div>
+            <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="toctree-wrapper compound">
+</div>
+<div class="section" id="mit-kerberos-features">
+<span id="mitk5features"></span><h1>MIT Kerberos features<a class="headerlink" href="#mit-kerberos-features" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://web.mit.edu/kerberos">http://web.mit.edu/kerberos</a></p>
+<div class="section" id="quick-facts">
+<h2>Quick facts<a class="headerlink" href="#quick-facts" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="22%" />
+<col width="44%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>License</td>
+<td><a class="reference internal" href="mitK5license.html#mitk5license"><em>MIT Kerberos License information</em></a></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Latest stable  version</td>
+<td>&nbsp;</td>
+<td><a class="reference external" href="http://web.mit.edu/kerberos/krb5-1.10/">http://web.mit.edu/kerberos/krb5-1.10/</a></td>
+</tr>
+<tr class="row-odd"><td>Supported versions</td>
+<td>&nbsp;</td>
+<td><a class="reference external" href="http://web.mit.edu/kerberos/krb5-1.9/">http://web.mit.edu/kerberos/krb5-1.9/</a></td>
+</tr>
+<tr class="row-even"><td>Release cycle</td>
+<td>9&#8211;12 months</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Supported platforms / OS distributions</td>
+<td><dl class="first last docutils">
+<dt>Windows (KfW 4.0)</dt>
+<dd><ul class="first last simple">
+<li>Windows 7</li>
+<li>Vista</li>
+<li>XP</li>
+</ul>
+</dd>
+<dt>Solaris</dt>
+<dd><ul class="first last simple">
+<li>SPARC</li>
+<li>x86_64/x86</li>
+</ul>
+</dd>
+<dt>GNU/Linux</dt>
+<dd><ul class="first last simple">
+<li>Debian x86_64/x86</li>
+<li>Ubuntu x86_64/x86</li>
+<li>RedHat x86_64/x86</li>
+</ul>
+</dd>
+<dt>BSD</dt>
+<dd><ul class="first last simple">
+<li>NetBSD x86_64/x86</li>
+</ul>
+</dd>
+</dl>
+</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Crypto backends</td>
+<td><ul class="first last simple">
+<li>builtin</li>
+<li>OpenSSL 1.0+</li>
+<li>NSS 3.12.9+</li>
+</ul>
+</td>
+<td><ul class="first last simple">
+<li>MIT Kerberos native crypto library</li>
+<li><a class="reference external" href="http://www.openssl.org">http://www.openssl.org</a></li>
+<li>Mozilla&#8217;s Network Security Services <a class="reference external" href="http://www.mozilla.org/projects/security/pki/nss">http://www.mozilla.org/projects/security/pki/nss</a></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>Database backends</td>
+<td><ul class="first last simple">
+<li>LDAP</li>
+<li>DB2</li>
+</ul>
+</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>krb4 support</td>
+<td>&lt; 1.8</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>DES support</td>
+<td>configurable</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Disable_DES">http://k5wiki.kerberos.org/wiki/Projects/Disable_DES</a></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div>
+<div class="section" id="interoperabiity">
+<h2>Interoperabiity<a class="headerlink" href="#interoperabiity" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="microsoft">
+<h3>Microsoft<a class="headerlink" href="#microsoft" title="Permalink to this headline">¶</a></h3>
+<p>Starting from version 1.7:</p>
+<ul class="simple">
+<li>Follow client principal referrals in the client library when
+obtaining initial tickets.</li>
+<li>KDC can issue realm referrals for service principals based on domain names.</li>
+<li>Extensions supporting DCE RPC, including three-leg GSS context setup
+and unencapsulated GSS tokens inside SPNEGO.</li>
+<li>Microsoft GSS_WrapEX, implemented using the gss_iov API, which is
+similar to the equivalent SSPI functionality.  This is needed to
+support some instances of DCE RPC.</li>
+<li>NTLM recognition support in GSS-API, to facilitate dropping in an
+NTLM implementation for improved compatibility with older releases
+of Microsoft Windows.</li>
+<li>KDC support for principal aliases, if the back end supports them.
+Currently, only the LDAP back end supports aliases.</li>
+<li>Support Microsoft set/change password (RFC 3244) protocol in
+kadmind.</li>
+<li>Implement client and KDC support for GSS_C_DELEG_POLICY_FLAG, which
+allows a GSS application to request credential delegation only if
+permitted by KDC policy.</li>
+</ul>
+<p>Starting from version 1.8:</p>
+<ul class="simple">
+<li>Microsoft Services for User (S4U) compatibility</li>
+</ul>
+</div>
+<div class="section" id="heimdal">
+<h3>Heimdal<a class="headerlink" href="#heimdal" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Support for reading Heimdal database starting from version 1.8</li>
+</ul>
+</div>
+</div>
+<div class="section" id="feature-list">
+<h2>Feature list<a class="headerlink" href="#feature-list" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="6%" />
+<col width="55%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"></th>
+<th class="head">Available</th>
+<th class="head">Additional information</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Credentials delegation</td>
+<td>1.7</td>
+<td><span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc5896.html"><strong>RFC 5896</strong></a></td>
+</tr>
+<tr class="row-odd"><td>Cross-realm authentication and referrals</td>
+<td>1.7</td>
+<td><a class="reference external" href="http://tools.ietf.org/html/draft-ietf-krb-wg-kerberos-referrals-12">http://tools.ietf.org/html/draft-ietf-krb-wg-kerberos-referrals-12</a></td>
+</tr>
+<tr class="row-even"><td>Master key migration</td>
+<td>1.7</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Master_Key_Migration">http://k5wiki.kerberos.org/wiki/Projects/Master_Key_Migration</a></td>
+</tr>
+<tr class="row-odd"><td>PKINIT</td>
+<td>1.7</td>
+<td><span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4556.html"><strong>RFC 4556</strong></a></td>
+</tr>
+<tr class="row-even"><td>Anonymous PKINIT</td>
+<td>1.8</td>
+<td><span class="target" id="index-2"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6112.html"><strong>RFC 6112</strong></a> <a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Anonymous_pkinit">http://k5wiki.kerberos.org/wiki/Projects/Anonymous_pkinit</a></td>
+</tr>
+<tr class="row-odd"><td>Constrained delegation</td>
+<td>1.8</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/ConstrainedDelegation">http://k5wiki.kerberos.org/wiki/Projects/ConstrainedDelegation</a></td>
+</tr>
+<tr class="row-even"><td>IAKERB</td>
+<td>1.8</td>
+<td><a class="reference external" href="http://tools.ietf.org/html/draft-ietf-krb-wg-iakerb-02">http://tools.ietf.org/html/draft-ietf-krb-wg-iakerb-02</a></td>
+</tr>
+<tr class="row-odd"><td>Heimdal bridge plugin for KDC backend</td>
+<td>1.8</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>GSS-API S4U extensions</td>
+<td>1.8</td>
+<td><a class="reference external" href="http://msdn.microsoft.com/en-us/library/cc246071">http://msdn.microsoft.com/en-us/library/cc246071</a></td>
+</tr>
+<tr class="row-odd"><td>GSS-API naming extensions</td>
+<td>1.8</td>
+<td><span class="target" id="index-3"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6680.html"><strong>RFC 6680</strong></a></td>
+</tr>
+<tr class="row-even"><td>GSS-API extensions for storing delegated credentials</td>
+<td>1.8</td>
+<td><span class="target" id="index-4"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc5588.html"><strong>RFC 5588</strong></a></td>
+</tr>
+<tr class="row-odd"><td>Advance warning on password expiry</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Camellia encryption (CTS-CMAC mode)</td>
+<td>1.9</td>
+<td><span class="target" id="index-5"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6803.html"><strong>RFC 6803</strong></a></td>
+</tr>
+<tr class="row-odd"><td>KDC support for SecurID preauthentication</td>
+<td>1.9</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/SecurID_SAM_support">http://k5wiki.kerberos.org/wiki/Projects/SecurID_SAM_support</a></td>
+</tr>
+<tr class="row-even"><td>kadmin over IPv6</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Trace logging</td>
+<td>1.9</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Trace_logging">http://k5wiki.kerberos.org/wiki/Projects/Trace_logging</a></td>
+</tr>
+<tr class="row-even"><td>GSSAPI/KRB5 multi-realm support</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Plugin to test password quality</td>
+<td>1.9</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Password_quality_pluggable_interface">http://k5wiki.kerberos.org/wiki/Projects/Password_quality_pluggable_interface</a></td>
+</tr>
+<tr class="row-even"><td>Plugin to synchronize password changes</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Parallel KDC</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>GSS-API extentions for SASL GS2 bridge</td>
+<td>1.9</td>
+<td><span class="target" id="index-6"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc5801.html"><strong>RFC 5801</strong></a> <span class="target" id="index-7"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc5587.html"><strong>RFC 5587</strong></a> <a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/GS2">http://k5wiki.kerberos.org/wiki/Projects/GS2</a></td>
+</tr>
+<tr class="row-odd"><td>Purging old keys</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Naming extensions for delegation chain</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Password expiration API</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Windows client support   (build-only)</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Zero configuration</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>IPv6 support in iprop</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Plugin interface for configuration</td>
+<td>1.10</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Pluggable_configuration">http://k5wiki.kerberos.org/wiki/Projects/Pluggable_configuration</a></td>
+</tr>
+<tr class="row-even"><td>Credentials for multiple identities</td>
+<td>1.10</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Client_principal_selection">http://k5wiki.kerberos.org/wiki/Projects/Client_principal_selection</a></td>
+</tr>
+<tr class="row-odd"><td>Client support for FAST OTP</td>
+<td>1.11</td>
+<td><span class="target" id="index-8"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6560.html"><strong>RFC 6560</strong></a></td>
+</tr>
+<tr class="row-even"><td>GSS-API extensions for credential locations</td>
+<td>1.11</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Credential_Store_extensions">http://k5wiki.kerberos.org/wiki/Projects/Credential_Store_extensions</a></td>
+</tr>
+<tr class="row-odd"><td>Responder mechanism</td>
+<td>1.11</td>
+<td><a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Responder">http://k5wiki.kerberos.org/wiki/Projects/Responder</a> <a class="reference external" href="http://k5wiki.kerberos.org/wiki/Projects/Password_response_item">http://k5wiki.kerberos.org/wiki/Projects/Password_response_item</a></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<dl class="docutils">
+<dt></dt>
+<dd><p class="first">Pre-auth mechanisms</p>
+<table border="1" class="last docutils">
+<colgroup>
+<col width="33%" />
+<col width="8%" />
+<col width="59%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>PW-SALT</td>
+<td>&nbsp;</td>
+<td><span class="target" id="index-9"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4120.html#section-5.2.7.3"><strong>RFC 4120</strong></a></td>
+</tr>
+<tr class="row-even"><td>ENC-TIMESTAMP</td>
+<td>&nbsp;</td>
+<td><span class="target" id="index-10"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4120.html#section-5.2.7.2"><strong>RFC 4120</strong></a></td>
+</tr>
+<tr class="row-odd"><td>SAM-2</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>FAST negotiation framework</td>
+<td>1.8</td>
+<td><span class="target" id="index-11"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6113.html"><strong>RFC 6113</strong></a></td>
+</tr>
+<tr class="row-odd"><td>PKINIT with FAST on client</td>
+<td>1.10</td>
+<td><span class="target" id="index-12"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6113.html"><strong>RFC 6113</strong></a></td>
+</tr>
+<tr class="row-even"><td>PKINIT</td>
+<td>&nbsp;</td>
+<td><span class="target" id="index-13"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc4556.html"><strong>RFC 4556</strong></a></td>
+</tr>
+<tr class="row-odd"><td>FX-COOKIE</td>
+<td>&nbsp;</td>
+<td><span class="target" id="index-14"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc6113.html#section-5.2"><strong>RFC 6113</strong></a></td>
+</tr>
+<tr class="row-even"><td>S4U-X509-USER</td>
+<td>1.8</td>
+<td><a class="reference external" href="http://msdn.microsoft.com/en-us/library/cc246091">http://msdn.microsoft.com/en-us/library/cc246091</a></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="docutils">
+<dt></dt>
+<dd><p class="first">PRNG</p>
+<table border="1" class="last docutils">
+<colgroup>
+<col width="21%" />
+<col width="13%" />
+<col width="66%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>modularity</td>
+<td>1.9</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>Yarrow PRNG</td>
+<td>&lt; 1.10</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Fortuna PRNG</td>
+<td>1.9</td>
+<td><a class="reference external" href="http://www.schneier.com/book-practical.html">http://www.schneier.com/book-practical.html</a></td>
+</tr>
+<tr class="row-even"><td>OS PRNG</td>
+<td>1.10</td>
+<td>OS&#8217;s native PRNG</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+            </div>
+            <div class="clearer" ></div>
+        </div>
+    </div>
+ 
+    <div class="footer-wrapper" >
+        <div class="footer" >
+            <div class="right" ><i>Release: 1.11.3</i><br />
+                &copy; <a href="copyright.html">Copyright</a> 1985-2013, MIT.
+            </div>
+            <div class="left" >
+                    <a href="index.html"
+                    title="Full Table of Contents"
+                    >Contents</a>
+                     |
+                    <a href="basic/date_format.html"
+                    title="Supported date and time formats"
+                    >previous</a>
+                     |
+                    <a href="mitK5license.html"
+                    title="MIT Kerberos License information"
+                    >next</a>
+                     |
+                    <a href="genindex.html"
+                    title="General Index"
+                    >index</a>
+                     |
+                    <a href="search.html"
+                    title="Enter search criteria"
+                    >Search</a>
+                     |
+                    <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__MIT Kerberos features">feedback</a>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>

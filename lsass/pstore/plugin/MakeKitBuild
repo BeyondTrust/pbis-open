@@ -1,0 +1,11 @@
+make()
+{
+    mk_dlo \
+        DLO=test \
+        INSTALLDIR="${MK_LIBDIR}/lw-pstore" \
+        SOURCES="lsapstore-plugin-test.c" \
+        CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="lw/base.h lsa/lsapstore-plugin.h lwadvapi.h" \
+        LIBDEPS="lwbase_nothr lwadvapi_nothr"
+}

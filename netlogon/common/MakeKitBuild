@@ -1,0 +1,6 @@
+make()
+{
+    mk_library \
+        LIB=lwnetcommon \
+        GROUPS="../utils/utils ../ipc/ipc"
+}

@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+  
+### rpm-sign.exp -- Sign RPMs by sending the passphrase.
+
+set fp [open "/home/builder/.gnupg/passphrase-file" r]
+set data [read $fp]
+close $fp
+spawn rpm --resign $argv
+expect -exact "Enter pass phrase: "
+send -- "$data"
+expect eof
+  
+## end of rpm-sign.exp
+

@@ -1,0 +1,72 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/.. && pwd)`
+
+umask 022
+
+. ${BUILD_ROOT}/build/lib/VARS
+
+COMP_ALL="${__COMP_LIST}"
+SUPPORT_DIRS="git-build build config package mk makekit mklocal"
+SUPPORT_FILES="README LICENSE configure MakeKitBuild"
+
+DIRS="${COMP_ALL} ${SUPPORT_DIRS}"
+DIRS="`echo ${DIRS} | sed 's/libcrypto/openssl/g'`"
+FILES="${SUPPORT_FILES}"
+
+VERSION=$(LikewiseOpenVersion)
+TARGET=likewise-open-$VERSION
+
+[ -d $BUILD_ROOT/../${TARGET} ] && /bin/rm -rf $BUILD_ROOT/../${TARGET}
+mkdir $BUILD_ROOT/../${TARGET} || exit 1
+
+for dir in ${DIRS}; do
+    echo "Copying ${dir}..."
+    rsync -a --exclude=.git* --exclude=.svn --exclude=*~ --exclude=*bak \
+        ${BUILD_ROOT}/${dir} ${BUILD_ROOT}/../${TARGET}/ || exit 1
+done
+
+for file in ${FILES}; do
+    cp -p ${BUILD_ROOT}/${file} ${BUILD_ROOT}/../${TARGET}/ || exit 1
+done
+
+cd $BUILD_ROOT/..
+
+find ${TARGET} -name "*.sh" | xargs chmod u+x
+(
+    cd ${TARGET}
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+
+    for f in `find . -name autogen.sh | grep -v "packaging/scripts"`;
+    do
+        case $f in
+            */libiconv/*)
+                echo "Skipping autogen.sh for $f"
+                ;;
+            *)
+                echo "Running autogen.sh in `dirname $f`...";
+                (cd `dirname $f` && ./autogen.sh);
+                if [ $? -ne 0 ]; then
+                    exit 1
+                fi
+                echo " ";
+                ;;
+        esac
+    done
+)
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+(cd ${TARGET} && \
+    sed "s/^LIKEWISE_OPEN_REVISION=.*/LIKEWISE_OPEN_REVISION=${LIKEWISE_OPEN_REVISION}/g" build/lib/VARS > build/lib/VARS.new; \
+    /bin/mv -f build/lib/VARS.new build/lib/VARS \
+)
+
+find ${TARGET} -type d -name autom4te.cache | xargs /bin/rm -rf
+tar cf - ${TARGET} | gzip -9 > likewise-open-$VERSION.tar.gz
+[ "${TARGET}" != "/" ] && /bin/rm -rf ${TARGET}
+
+

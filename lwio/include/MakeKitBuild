@@ -1,0 +1,26 @@
+make()
+{
+    mk_headers \
+        MASTER="lwio/lwio.h" \
+        HEADERS="lwio/io-types.h \
+                 lwio/io-types-posix.h \
+                 lwio/iortl.h     \
+                 lwio/ntfileapi.h     \
+                 lwio/smbfileapi.h    \
+                 lwio/srvshareapi.h   \
+                 lwio/srvtransportapi.h \
+                 lwio/lmfile.h        \
+                 lwio/lmsession.h     \
+                 lwio/lmshare.h       \
+                 lwio/lmconnection.h \
+                 lwio/lwconnectioninfo.h \
+                 lwio/lwfileinfo.h    \
+                 lwio/lwiofsctl.h    \
+                 lwio/lwiodevctl.h    \
+                 lwio/lwsessioninfo.h \
+                 lwio/lwshareinfo.h \
+                 lwio/iodriver.h \
+                 lwio/ioapi.h \
+                 lwio/lwzct.h" \
+        HEADERDEPS="lw/base.h"
+}

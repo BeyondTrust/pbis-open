@@ -1,0 +1,39 @@
+// SubExe.idl : SubExe.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (SubExe.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(BB54CDDC-5F54-48C5-A952-B3AC363111B8),
+	
+		helpstring("ISubtractExe Interface"),
+		pointer_default(unique)
+	]
+	interface ISubtractExe : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Subtract")] HRESULT Subtract([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(06EDCEAF-1F2B-445E-82AD-A800969BD7BC),
+	version(1.0),
+	helpstring("SubExe 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library SUBEXELib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(AE1166EE-04DD-41DF-804C-54D82919A1C6),
+		helpstring("SubtractExe Class")
+	]
+	coclass SubtractExe
+	{
+		[default] interface ISubtractExe;
+	};
+};

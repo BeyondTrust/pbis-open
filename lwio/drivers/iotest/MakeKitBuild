@@ -1,0 +1,24 @@
+make()
+{
+    IOTEST_SOURCES="\
+        driver.c \
+        create.c \
+        readwrite.c \
+        flush.c \
+        iocontrol.c \
+        fscontrol.c \
+        qsinfo.c \
+        namedpipe.c \
+        ccb.c \
+        test.c \
+        workqueue.c \
+        irpcontext.c \
+        async.c"
+
+    mk_dlo \
+        DLO=libiotest.sys \
+        SOURCES="$IOTEST_SOURCES" \
+        INCLUDEDIRS=". ../../include ../../server/include" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="iomgr lwiocommon pthread"
+}

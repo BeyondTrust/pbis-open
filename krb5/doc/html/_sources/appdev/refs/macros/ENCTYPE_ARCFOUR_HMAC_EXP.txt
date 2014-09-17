@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _ENCTYPE-ARCFOUR-HMAC-EXP-data:
+
+ENCTYPE_ARCFOUR_HMAC_EXP
+========================
+
+..
+.. data:: ENCTYPE_ARCFOUR_HMAC_EXP
+..
+
+
+
+
+=============================== ======================
+``ENCTYPE_ARCFOUR_HMAC_EXP``       ``0x0018``
+=============================== ======================

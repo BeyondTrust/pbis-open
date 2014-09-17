@@ -1,0 +1,18 @@
+make()
+{
+    PROVIDER_SOURCES="\
+        globals.c \
+        memacl.c \
+        memapi.c \
+        memdb.c \
+        memschema.c \
+        memstore.c"
+
+    mk_group \
+        GROUP="provider-memory" \
+        SOURCES="$PROVIDER_SOURCES" \
+        INCLUDEDIRS=". ../../.. ../../../include ../../../server/include \
+            ../../../shellutil" \
+        LIBDEPS="uuid lwbase lwbase_nothr $LIB_PTHREAD rsutils regcommon" \
+        HEADERDEPS="uuid/uuid.h lw/base.h lwmsg/lwmsg.h iconv.h"
+}

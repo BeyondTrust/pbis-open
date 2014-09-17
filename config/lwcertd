@@ -1,0 +1,24 @@
+#! /bin/sh
+# ex: set tabstop=4 expandtab shiftwidth=4:
+#
+# Copyright (c) Likewise Corporation 2011
+# Author: Gerald Carter <jerry@likewise.com>
+#
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT# chkconfig: 35 21 9
+#LWI_STARTUP_TYPE_REDHAT# description: Start and Stop lwcertd
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT#
+#LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_SUSE# Provides: lwcertd
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $remote_fs lwsmd lsassd netlogond
+#LWI_STARTUP_TYPE_SUSE# Required-Stop: $network $remote_fs
+#LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
+#LWI_STARTUP_TYPE_SUSE# Default-Stop: 0 1 2 6
+#LWI_STARTUP_TYPE_SUSE# Description: Start and Stop lwcertd
+#LWI_STARTUP_TYPE_SUSE### END INIT INFO
+
+PREFIX="PREFIX_DIR"
+SERVICE_NAME="lwcert"
+
+. PREFIX_DIR/bin/init-lwsm.sh

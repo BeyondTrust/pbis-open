@@ -1,0 +1,20 @@
+configure()
+{
+    mk_check_headers \
+	    FAIL=yes \
+	    krb5/preauth_plugin.h
+    
+    mk_check_libraries FAIL=yes \
+        krb5
+}
+
+make()
+{
+    mk_dlo \
+	DLO=pacreq \
+    INSTALLDIR="${MK_LIBDIR}/krb5/plugins/preauth" \
+	SOURCES="pacrequest.c" \
+	HEADERDEPS="krb5/preauth_plugin.h" \
+    SYMFILE="pr.sym" \
+    LIBDEPS="krb5"
+}

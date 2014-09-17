@@ -1,0 +1,80 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     kdestroy - destroy Kerberos tickets
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>kdestroy</B> [<B>-q</B>] [<B>-c</B> <I>cache</I>_<I>name</I>]
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     The <I>kdestroy</I> utility destroys  the  user's  active  Kerberos
+     authorization  tickets  by  writing  zeros  to the specified
+     credentials cache that contains them.   If  the  credentials
+     cache  is  not  specified,  the default credentials cache is
+     destroyed.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     -<B>q</B>   Run quietly.  Normally <B>kdestroy</B> beeps if  it  fails  to
+          destroy  the  user's  tickets.   The -<B>q</B> flag suppresses
+          this behavior.
+
+     <B>-c</B> <I>cache</I>_<I>name</I>
+          use <I>cache</I>_<I>name</I> as the credentials (ticket)  cache  name
+          and  location;  if this option is not used, the default
+          cache name and location are used.
+
+          The default credentials cache may vary between systems.
+          If  the  KRB5CCNAME  environment  variable  is set, its
+          value is used to name the default ticket cache.
+
+     Most installations recommend that  you  place  the  <I>kdestroy</I>
+     command  in your .<I>logout</I> file, so that your tickets are des-
+     troyed automatically when you log out.
+
+
+</PRE>
+<H2>ENVIRONMENT</H2><PRE>
+     <B>Kdestroy</B> uses the following environment variables:
+
+     KRB5CCNAME      Location  of  the  Kerberos  5   credentials
+                     (ticket) cache.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+     /tmp/krb5cc_[uid]  default location of  Kerberos  5  creden-
+                        tials  cache ([uid] is the decimal UID of
+                        the user).
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>kinit(1)</B>, <B>klist(1)</B>, <B>krb5(3)</B>
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     Only the tickets in the specified credentials cache are des-
+     troyed.   Separate  ticket  caches  are  used  to  hold root
+     instance and password changing tickets.  These should  prob-
+     ably  be destroyed too, or all of a user's tickets kept in a
+     single credentials cache.
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

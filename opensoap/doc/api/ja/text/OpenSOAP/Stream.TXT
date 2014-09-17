@@ -1,0 +1,138 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Stream.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Stream.h
+ * @brief OpenSOAP API ストリーム処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPStream OpenSOAPStream
+     * @brief OPenSOAPStream 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPStream    *OpenSOAPStreamPtr
+     * @brief OpenSOAPStream ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPStreamRelease(OpenSOAPStreamPtr s)
+      * @brief OpenSOAP ストリームを開放
+      *
+      * OpenSOAP Stream を開放します。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStreamRead(OpenSOAPStreamPtr s, unsigned char * buf, size_t * buf_sz)
+      * @brief OpenSOAP ストリームから読み込む。
+      *
+      * OpenSOAP ストリームから読み込む。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    buf unsigned char * [out] ((|buf|)) 読み込みバッファの先頭ポインタ。
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) 読み込みバッファのサイズ。呼出後は読み込んだサイズを返す。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStreamWrite(OpenSOAPStreamPtr s, const unsigned char * buf, size_t * buf_sz)
+      * @brief OpenSOAP ストリームへ書き出す。
+      *
+      * OpenSOAP ストリームへ書き出す。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    buf const unsigned char * [in] ((|buf|)) 書き込みデータの先頭ポインタ。
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) 書き込みデータのサイズ。呼出後は書き込んだサイズを返す。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStreamReadToDelm(OpenSOAPStreamPtr s, const unsigned char * delm, size_t delm_sz, OpenSOAPByteArrayPtr buf)
+      * @brief OpenSOAP ストリームからデリミタまで読み込む。
+      *
+      * OpenSOAP ストリームからデリミタまで読み込む。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    delm const unsigned char * [in] ((|delm|)) デリミタデータ列。
+      * @param
+      *    delm_sz size_t [in] ((|delm_sz|)) デリミタデータ列長さ。
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込みバッファ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStreamReadChunkedDataStream(OpenSOAPStreamPtr s, OpenSOAPStreamPtr out)
+      * @brief ストリームからChunkedデータを読み込むんで、出力用ストリームに書き出す。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    out OpenSOAPStreamPtr [out] ((|buf|)) 出力用ストリーム
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPStreamReadChunkedData(OpenSOAPStreamPtr s, OpenSOAPByteArrayPtr buf)
+      * @brief ストリームからChunkedデータを読み込む。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込みバッファ。
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPStreamReadWithSize(OpenSOAPStreamPtr s, size_t sz, OpenSOAPByteArrayPtr buf)
+      * @brief OpenSOAP ストリームから指定サイズ読み込む。
+      *
+      * OpenSOAP ストリームから指定サイズ読み込む。sz が 0 の場合、読み込めるだけ読み込む。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    sz size_t [in] ((|sz|)) 読み込みサイズ。
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込みバッファ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStreamReadWithSizeStream(OpenSOAPStreamPtr s, size_t sz, OpenSOAPStreamPtr out)
+      * @brief OpenSOAP ストリームから指定サイズ読み込む。sz が 0 の場合、読み込めるだけ読み込む。
+      * @param
+      *    s OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    sz size_t [in] ((|sz|)) 読み込みサイズ。
+      * @param
+      *    out OpenSOAPStreamPtr [out] ((|out|)) 出力用ストリーム
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPStreamWriteByteArray(OpenSOAPStreamPtr s, OpenSOAPByteArrayPtr buf, size_t * write_sz)
+      * @brief OpenSOAP ストリームへ書き出す。
+      *
+      * OpenSOAP ストリームへ書き出す。
+      * @param
+      *    s OpenSOAPStreamPtr  [in] ((|s|)) OpenSOAP ストリーム
+      * @param
+      *    buf OpenSOAPByteArrayPtr [in] ((|buf|)) 書き込みデータ。
+      * @param
+      *    write_sz size_t * [out] ((|write_sz|)) 書き込みサイズ。
+      * @return
+      *    エラーコード
+      */

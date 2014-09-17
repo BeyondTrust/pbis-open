@@ -1,0 +1,25 @@
+mydir=lib$(S)crypto$(S)nss$(S)sha2
+BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+DEFS=
+CRYPTO_IMPL_CFLAGS=@CRYPTO_IMPL_CFLAGS@
+LOCALINCLUDES = -I$(srcdir)/.. $(CRYPTO_IMPL_CFLAGS)
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+
+STLIBOBJS= sha2.o
+
+OBJS= $(OUTPRE)sha2.$(OBJEXT) 
+
+SRCS= $(srcdir)/sha2.c
+
+all-unix:: all-libobjs
+
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+@libobj_frag@
+

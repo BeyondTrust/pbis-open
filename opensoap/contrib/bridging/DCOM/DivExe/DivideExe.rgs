@@ -1,0 +1,23 @@
+HKCR
+{
+	DivExe.DivideExe.1 = s 'DivideExe Class'
+	{
+		CLSID = s '{B3980D3B-02DD-4A30-9103-8B49E6618F30}'
+	}
+	DivExe.DivideExe = s 'DivideExe Class'
+	{
+		CLSID = s '{B3980D3B-02DD-4A30-9103-8B49E6618F30}'
+		CurVer = s 'DivExe.DivideExe.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {B3980D3B-02DD-4A30-9103-8B49E6618F30} = s 'DivideExe Class'
+		{
+			ProgID = s 'DivExe.DivideExe.1'
+			VersionIndependentProgID = s 'DivExe.DivideExe'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{987C8969-E429-4947-A18D-D27B9A5B19BA}'
+			'TypeLib' = s '{56B70072-D6B3-4CAA-9B06-2F48B5838036}'
+		}
+	}
+}

@@ -1,0 +1,25 @@
+# Path to the log file.
+LWT_LOG_FILE="$HOME/marketing.lwtest.txt"
+# Verbosity; Valid values are 0, 1, 2.
+LWT_LOG_LEVEL=1
+
+# Comment for the test logs.
+LWT_COMMENT="Join to the marketing organizational unit."
+
+# Full path to the Likewise binaries and scripts.
+LIKEWISE_BIN=/opt/likewise/bin
+
+# Execute unprivileged commands (everything but domainjoin-cli)
+# as this local user.
+LWT_USER=someuser
+
+# Use these domainjoin-cli arguments to connect.
+# Use --ou Computers for the default cell.
+# If you do not specify --out, the command will connect
+# to the OU last joined.
+LWT_JOIN_ARGUMENTS="--ou marketing EXAMPLE.COM Administrator Password"
+
+# These files are used for validating the responses.
+# If the name is empty, dependent tests will be skipped.
+LWT_FILE_USERS=$HOME/users.marketing.example.com.csv
+#LWT_FILE_GROUPS=

@@ -1,0 +1,170 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      uuid.idl
+**
+**  FACILITY:
+**
+**      UUID
+**
+**  ABSTRACT:
+**
+**      UUID Interface Definition
+**
+**
+*/
+
+[local] interface uuid
+{
+import  "dce/lbase.idl";
+/*************************************************************************/
+/*************************  Common definitions  **************************/
+/*************************************************************************/
+
+/*
+ * architectural version 1
+ */
+const long      uuid_c_version          = 1;
+const long      uuid_c_version_highest  = 2;
+
+/*
+ * A vector of UUIDs.
+ */
+typedef struct
+{
+    unsigned32              count;
+    dce_uuid_p_t                uuid[1];
+} uuid_vector_t, *uuid_vector_p_t;
+
+
+/*************************************************************************/
+/****************************  Status Codes  *****************************/
+/*************************************************************************/
+
+/* moved to rpcsts.msf. See dce_error.c */
+
+const long      uuid_s_ok                   = error_status_ok;
+
+/*
+ * U U I D _ C R E A T E
+ *
+ * Create a new UUID.
+ */
+void dce_uuid_create
+(
+    [out]   dce_uuid_t              *uuid,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _ C R E A T E _ N I L
+ *
+ * Create a 'nil' uuid
+ */
+void dce_uuid_create_nil
+(
+    [out]   dce_uuid_t              *uuid,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _ T O _ S T R I N G
+ *
+ * Convert a UUID in (non-human) UUID format to STRING format
+ */
+void dce_uuid_to_string
+(
+    [in]    dce_uuid_p_t            uuid,
+    [out]   unsigned_char_p_t   *uuid_string,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _  F R O M _ S T R I N G
+ *
+ * Convert a UUID in STRING format to a UUID in UUID format
+ */
+void dce_uuid_from_string
+(
+    [in]    unsigned_char_p_t   uuid_string,
+    [out]   dce_uuid_t              *uuid,
+    [out]   unsigned32          *status
+);
+ 
+
+/*
+ * U U I D _ E Q U A L
+ *
+ * Compare two UUIDs
+ */
+boolean32 dce_uuid_equal
+(
+    [in]    dce_uuid_p_t            uuid1,
+    [in]    dce_uuid_p_t            uuid2,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _ I S _ N I L
+ *
+ * Return boolean true if uuid is 'nil'
+ */
+boolean32 dce_uuid_is_nil
+(
+    [in]    dce_uuid_p_t            uuid,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _ C O M P A R E
+ *
+ * Compare two UUIDs "lexically"
+ */
+signed32 dce_uuid_compare
+(
+    [in]    dce_uuid_p_t            uuid1,
+    [in]    dce_uuid_p_t            uuid2,
+    [out]   unsigned32          *status
+);
+
+
+/*
+ * U U I D _ H A S H
+ *
+ * Create a hash value for a UUID
+ */
+unsigned16 dce_uuid_hash
+(
+    [in]    dce_uuid_p_t            uuid,
+    [out]   unsigned32          *status
+);
+
+}

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE SSML SYSTEM "ssml.dtd">
+<SSML name='SimpleCalc' xmlns="x-schema:ssmlSchema.xml">
+	<service name='SimpleCalc'
+	 nsuri='http://services.opensoap.jp/samples/SimpleCalc/'>
+	    <connection name='SimpleCalcStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/SimpleCalc/SimpleCalcService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+	    <operation type ='SimpleCalcStdio'>Add</operation>
+	    <operation type ='SimpleCalcStdio'>Subtract</operation>
+	    <operation type ='SimpleCalcStdio'>Multiply</operation>
+	    <operation type ='SimpleCalcStdio'>Divide</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>
