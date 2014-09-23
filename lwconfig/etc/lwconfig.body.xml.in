@@ -204,6 +204,7 @@
                 <value>warning</value>
                 <value>info</value>
                 <value>verbose</value>
+                <value>debug</value>
             </accept>
             <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
