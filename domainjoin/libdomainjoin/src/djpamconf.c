@@ -2595,6 +2595,46 @@ cleanup:
     ;
 }
 
+static void PamLwiModifySmartCardControl(struct PamConf *conf)
+{
+    const char *module = NULL;
+    const char *control = NULL;
+    int i = 0;
+
+    for(i = 0; i < conf->lineCount; i++)
+    {
+        struct PamLine *lineObj = &conf->lines[i];
+
+        if ((lineObj->service == NULL) || (lineObj->service->value == NULL))
+        {
+            continue;
+        }
+
+        if ((lineObj->phase == NULL) || (lineObj->phase->value == NULL))
+        {
+            continue;
+        }
+
+        GetModuleControl(lineObj, &module, &control);
+
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", lineObj->service->value, lineObj->phase->value, control, module);
+
+        if ( ( (!strcmp(lineObj->service->value, "password-auth-ac")) || 
+               (!strcmp(lineObj->service->value, "system-auth-ac"))) &&
+                    (!strcmp(module, "pam_lwidentity_smartcard_prompt")) &&
+                    (!strcmp(control, "requisite")) &&
+                    (!strcmp(lineObj->phase->value, "auth") ) )
+        {   
+           DJ_LOG_VERBOSE("Modifying control from requisite to sufficient.");
+        
+           CTStrdup("sufficient", &lineObj->control->value);
+        }    
+
+    }
+
+    return;
+}
+
 static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
     int prevLine = -1;
@@ -2839,6 +2879,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                     LW_CLEANUP_CTERR(exc, AddOption(conf, line, "use_authtok"));
                 }
             }
+
             state->configuredRequestedModule = TRUE;
             prevLine = line;
             line = NextLineForService(conf, line, service, phase);
@@ -2865,6 +2906,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             DJ_LOG_VERBOSE("The module prompts");
             state->sawPromptingModule = TRUE;
         }
+
 
         /* Ubuntu 8.10 has this configuration:
          * auth [success=1 default=ignore] pam_unix.so nullok_secure
@@ -3969,6 +4011,7 @@ DJAddMissingAIXServices(PCSTR rootPrefix)
     GCE(ceError = AddMissingAIXServices(&conf));
     if(conf.modified)
     {
+        PamLwiModifySmartCardControl(&conf);
         GCE(ceError = WritePamConfiguration(rootPrefix, &conf, NULL));
     }
 
@@ -4063,7 +4106,10 @@ void DJNewConfigurePamForADLogin(
             {
                 LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
                 if(conf.modified)
-                    LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+                {
+                   PamLwiModifySmartCardControl(&conf);
+                   LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+                 }
             }
             else
             {
@@ -4082,7 +4128,10 @@ void DJNewConfigurePamForADLogin(
         LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, enable, &LW_EXC));
 
         if(conf.modified)
+        {
+            PamLwiModifySmartCardControl(&conf);
             LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+        }
         else
             DJ_LOG_INFO("Pam configuration not modified");
     }
@@ -4447,7 +4496,10 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
         options->joiningDomain, &LW_EXC));
 
     if(conf.modified)
+    {
+        PamLwiModifySmartCardControl(&conf);
         WritePamConfiguration(tempDir, &conf, &diff);
+    }
 
     if(diff == NULL || strlen(diff) < 1)
     {
