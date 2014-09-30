@@ -119,7 +119,6 @@ allow pbis_t automount_initrc_exec_t:file { execute getattr read open ioctl exec
 allow pbis_t automount_t:process signal;
 allow pbis_t automount_var_run_t:fifo_file unlink;
 allow pbis_t automount_var_run_t:file { read getattr open ioctl };
-allow pbis_t root_t:dir { create rmdir mounton };
 allow pbis_t tmp_t:dir { create rmdir mounton };
 #!!!! The source type 'pbis_t' can write to a 'dir' of the following types:
 # selinux_config_t, user_home_dir_t, syslogd_var_lib_t, syslogd_var_run_t, tmp_t, var_t, etc_t, logfile, pbis_etc_t, pbis_tmp_t, var_lib_t, user_home_type, etc_runtime_t, pbis_var_lib_t, klogd_var_run_t, home_root_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, nfs_t, root_t
