@@ -27,6 +27,7 @@ gather_version_info()
     IS_10_7=
     IS_10_8=
     IS_10_9=
+    IS_10_10=
     HAVE_LAUNCHCTL_V2=
 
     _get_os_version=`uname -r`
@@ -58,6 +59,11 @@ gather_version_info()
         13.*)
             IS_10_9=1
             echo "This is a Mavericks (10.9) version of Mac OS X"
+            HAVE_LAUNCHCTL_V2=1
+            ;;
+        14.*)
+            IS_10_10=1
+            echo "This is a Yosemite (10.10) version of Mac OS X"
             HAVE_LAUNCHCTL_V2=1
             ;;
         *)

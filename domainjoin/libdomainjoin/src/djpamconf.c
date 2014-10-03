@@ -4046,6 +4046,7 @@ void DJNewConfigurePamForADLogin(
        configured in 10.6, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
     if (distro.os == OS_DARWIN && (
+            !strncmp(distro.version, "10.10", strlen("10.10")) ||
             !strncmp(distro.version, "10.9", strlen("10.9")) ||
             !strncmp(distro.version, "10.8", strlen("10.8")) ||
             !strncmp(distro.version, "10.7", strlen("10.7")) ||
@@ -4333,6 +4334,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
        configured in 10.5, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
     if (distro.os == OS_DARWIN && (
+            !strncmp(distro.version, "10.10", strlen("10.10")) ||
             !strncmp(distro.version, "10.9", strlen("10.9")) ||
             !strncmp(distro.version, "10.8", strlen("10.8")) ||
             !strncmp(distro.version, "10.7", strlen("10.7")) ||
