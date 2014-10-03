@@ -41,6 +41,7 @@
 # v2.5.4  2013-12-12 RCA fix up SELinux breakage, capture selinux audit log for Permissive/Enforcing environments
 # v2.6.0  2014-04-11 RCA add -dj option and cleanups for different domainjoin-cli commands
 # v2.6.1  2014-08-07 RCA selinux bugfix for Deb-based systems
+# v2.6.2  2014-10-03 RCA change which/when files added to tarball, changes to tcpdump options
 #
 # Data structures explained at bottom of file
 #
@@ -64,7 +65,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.6.1";
+my $gVer = "2.6.2";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -135,6 +136,7 @@ Tests to be performed:
         Capture network traffic using OS default tool
         (tcpdump, nettl, snoop, etc.)
     --capturefile <file> (default = $opt->{capturefile})
+    --captureiface <iface> (default = $opt->{captureiface})
     --(no)smb (default = ".&getOnOff($opt->{smb}).")
         run smbclient against local samba server
     -o --(no)othertests (--other) (default = ".&getOnOff($opt->{othertests}).")
@@ -1012,9 +1014,13 @@ sub tarFiles($$$$) {
 sub tcpdumpStart($$) {
     my $info = shift || confess "No info hash passed to tcpdump()!\n";
     my $opt = shift || confess "No options hash passed to tcpdump()!\n";
+    my $iface="";
 
     logInfo("starting tcpdump analogue for $info->{OStype}");
-    my $dumpcmd = "$info->{tcpdump}->{startcmd} $info->{tcpdump}->{args} $opt->{capturefile} $info->{tcpdump}->{filter}";
+    if ($opt->{captureiface}) {
+        $iface=$info->{tcpdump}->{ifaceflag}.$opt->{captureiface};
+    }
+    my $dumpcmd = "$info->{tcpdump}->{startcmd} $iface $info->{tcpdump}->{args} $opt->{capturefile} $info->{tcpdump}->{filter}";
     logVerbose("Trying to run: $dumpcmd");
     System("$dumpcmd &");
 }
@@ -1383,6 +1389,7 @@ sub determineOS($$) {
         $info->{svcctl}->{stop3} = " stop";
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "tcpdump";
+        $info->{tcpdump}->{ifaceflag} = "-i ";
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
@@ -1408,6 +1415,7 @@ sub determineOS($$) {
         $info->{svcctl}->{stop3} = " stop";
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "nettl -start; nettl";
+        $info->{tcpdump}->{ifaceflag} = "-card ";
         $info->{tcpdump}->{args} = "-traceon pduin pduout -e ns_ls_driver -file";
         $info->{tcpdump}->{stopcmd} = "nettl -traceoff\; nettl -stop";
         $info->{sshd}->{opts} = "-ddd -p 22226 ";
@@ -1447,6 +1455,7 @@ sub determineOS($$) {
         }
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "snoop";
+        $info->{tcpdump}->{ifaceflag} = "-d ";
         $info->{tcpdump}->{args} = "-s0 -o";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
@@ -1469,6 +1478,7 @@ sub determineOS($$) {
         $info->{svcctl}->{stop3} = " stop";
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "/usr/sbin/iptrace";
+        $info->{tcpdump}->{ifaceflag} = "-i";
         $info->{tcpdump}->{args} = "-a";
         $info->{tcpdump}->{stopcmd} = "kill";
         $info->{sshd}->{opts} = "-ddd -p 22226 ";
@@ -1488,6 +1498,7 @@ sub determineOS($$) {
         $info->{svcctl}->{stop3} = ' com.likewisesoftware.daemonname';
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "tcpdump";
+        $info->{tcpdump}->{ifaceflag} = "-i ";
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
@@ -1510,6 +1521,7 @@ sub determineOS($$) {
         $info->{svcctl}->{stop3} = " stop";
         $info->{svcctl}->{rcpath} = "/etc/rc.d";
         $info->{tcpdump}->{startcmd} = "tcpdump";
+        $info->{tcpdump}->{ifaceflag} = "-i ";
         $info->{tcpdump}->{args} = "-s0 -w";
         $info->{tcpdump}->{filter} = "not port 22";
         $info->{tcpdump}->{stopcmd} = "kill";
@@ -2113,12 +2125,10 @@ sub outputReport($$) {
         }
         tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}/*"); 
     }
-    if ($opt->{ssh}) {
-        logInfo("Adding sshd_config");
-        tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
-        logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
-        tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
-    }
+    logInfo("Adding sshd_config");
+    tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
+    logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
+    tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
     tarFiles($info, $opt, $tarballfile, $info->{pampath});
     tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
     tarFiles($info, $opt, $tarballfile, $info->{logedit}->{path}) if ($info->{logedit}->{path});
@@ -2503,6 +2513,8 @@ sub main() {
         'automounts|autofs!',
         'tcpdump|capture|snoop|iptrace|nettl|c!',
         'capturefile=s',
+        'captureiface=s',
+        'capturefilter=s',
         'othertests|other|o!',
         'domainjoin|dj!',
         'djcommand=s',
@@ -2627,6 +2639,10 @@ sub main() {
     sectionBreak("OS Information");
     logDebug("Determining OS info");
     determineOS($info, $opt);
+
+    if (defined($opt->{capturefilter})) {
+        $info->{tcpdump}->{filter} = $opt->{capturefilter};
+    }
     
     sectionBreak("PBIS Version");
     logDebug("Determining PBIS version");
@@ -2717,6 +2733,7 @@ usage: pbis-support.pl [tests] [log choices] [options]
     Capture network traffic using OS default tool
     (tcpdump, nettl, snoop, etc.)
     --capturefile <file> (default = /tmp/lw-cap)
+    --captureiface <iface> (default = "")
     --(no)smb (default = off)
     run smbclient against local samba server
     -o --(no)othertests (--other) (default = off)
@@ -2920,6 +2937,8 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         gatherdb
     (Group: file locations and options)
         capturefile (string)
+        captureiface (string)
+        capturefilter (string)
         loglevel (string or number)
         logfile (string - loglevel and logfile affect screen output, not commands to daemons)
         tarballdir (string)
