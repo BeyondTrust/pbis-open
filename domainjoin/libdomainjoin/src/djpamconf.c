@@ -2595,6 +2595,7 @@ cleanup:
     ;
 }
 
+/* RALI
 static void PamLwiModifySmartCardControl(struct PamConf *conf)
 {
     const char *module = NULL;
@@ -2634,6 +2635,7 @@ static void PamLwiModifySmartCardControl(struct PamConf *conf)
 
     return;
 }
+RALI */
 
 static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
