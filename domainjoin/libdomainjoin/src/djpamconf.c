@@ -2597,6 +2597,7 @@ cleanup:
     ;
 }
 
+/* RALI
 static void PamLwiModifySmartCardControl2(struct PamConf *conf, 
                                           const char *service, 
                                           const char *phase)
@@ -2655,6 +2656,7 @@ static void PamLwiModifySmartCardControl(struct PamConf *conf)
 
   return;
 }
+RALI */
 
 static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
@@ -4032,7 +4034,7 @@ DJAddMissingAIXServices(PCSTR rootPrefix)
     GCE(ceError = AddMissingAIXServices(&conf));
     if(conf.modified)
     {
-        PamLwiModifySmartCardControl(&conf);
+        // RALI PamLwiModifySmartCardControl(&conf);
         GCE(ceError = WritePamConfiguration(rootPrefix, &conf, NULL));
     }
 
@@ -4129,7 +4131,7 @@ void DJNewConfigurePamForADLogin(
                 LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
                 if(conf.modified)
                 {
-                   PamLwiModifySmartCardControl(&conf);
+                   // RALI PamLwiModifySmartCardControl(&conf);
                    LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
                  }
             }
@@ -4151,7 +4153,7 @@ void DJNewConfigurePamForADLogin(
 
         if(conf.modified)
         {
-            PamLwiModifySmartCardControl(&conf);
+            // RALI PamLwiModifySmartCardControl(&conf);
             LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
         }
         else
@@ -4520,7 +4522,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
 
     if(conf.modified)
     {
-        PamLwiModifySmartCardControl(&conf);
+        // RALI PamLwiModifySmartCardControl(&conf);
         WritePamConfiguration(tempDir, &conf, &diff);
     }
 
