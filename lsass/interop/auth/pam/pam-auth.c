@@ -72,6 +72,7 @@ pam_sm_authenticate(
     PLSA_SECURITY_OBJECT pObject = NULL;
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
+    BOOLEAN bUseRegularAuthentication = TRUE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -92,6 +93,7 @@ pam_sm_authenticate(
        (Solaris), only do that */
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
+        bUseRegularAuthentication = FALSE;
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
         BOOLEAN bChangeRepository = FALSE;
         struct pam_repository *currentRepository = NULL;
@@ -181,6 +183,8 @@ pam_sm_authenticate(
          */
         DWORD i;
         int bCheckForSmartCard = 0;
+
+        bUseRegularAuthentication = FALSE;
 
         /*
          * Clear any previous SMART_CARD_PIN and SMART_CARD_READER values.
@@ -372,72 +376,12 @@ pam_sm_authenticate(
              * prompted for the password.
              */
 
-            dwError = LsaPamGetLoginId(
-                pamh,
-                pPamContext,
-                &pszLoginId,
-                TRUE);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            dwError = LsaOpenServer(&hLsaConnection);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            /* RALI
-            if (LsaShouldIgnoreUser(pszLoginId))
-            {
-                LSA_LOG_PAM_DEBUG("SmartCard user not found. By passing lsassd for local account");
-                dwError = LW_ERROR_NOT_HANDLED;
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-            RALI */
-
-            dwError = LsaFindUserByName(
-                        hLsaConnection,
-                        pszLoginId,
-                        dwUserInfoLevel,
-                        (PVOID*)&pUserInfo);     
-
-            if(dwError == 0)
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszActiveDirectoryPasswordPrompt,
-                &pszPassword);
-            }
-            else if(getpwnam(pszLoginId) != NULL)
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszLocalPasswordPrompt,
-                &pszPassword);
-            }
-            else
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszOtherPasswordPrompt,
-                &pszPassword);
-            }
-
-            BAIL_ON_LSA_ERROR(dwError);
-
-#if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
-            /* On Solaris, we must save the user's password in
-               a custom location so that we can pull it out later
-               for password changes */
-            dwError = LsaPamSetDataString(
-                pamh,
-                PAM_LSASS_OLDAUTHTOK,
-                pszPassword);
-            BAIL_ON_LSA_ERROR(dwError);
-#endif
+            bUseRegularAuthentication = TRUE;
         }
     }
+
     /* Otherwise, proceed with usual authentication */
-    else
+    if (bUseRegularAuthentication)
     {
         dwError = LsaPamGetLoginId(
             pamh,
