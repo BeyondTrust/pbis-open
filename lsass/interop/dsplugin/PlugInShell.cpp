@@ -26,6 +26,7 @@
 #define MAC_OS_X_VERSION_NAME_10_7 "Lion"
 #define MAC_OS_X_VERSION_NAME_10_8 "Mountain Lion"
 #define MAC_OS_X_VERSION_NAME_10_9 "Mavericks"
+#define MAC_OS_X_VERSION_NAME_10_10 "Yosemite"
 
 // Local helper functions
 //
@@ -321,6 +322,11 @@ long PlugInShell_Initialize(void)
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
         }
+        else if (strstr(pszVersion, "10.10.") == pszVersion)
+        {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
+        }
         else
         {
             isUnsupported = true;
@@ -361,6 +367,9 @@ long PlugInShell_Initialize(void)
         } else if (strstr(pszVersion, "13.") == pszVersion) {
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
+        } else if (strstr(pszVersion, "14.") == pszVersion) {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
         } else {
             isUnsupported = true;
         }
