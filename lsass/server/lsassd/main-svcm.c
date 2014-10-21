@@ -51,6 +51,7 @@
 #include "lw/base.h"
 #include "lwdscache.h"
 #include "lsasrvutils.h"
+#include "openssl/crypto.h"
 
 #ifdef ENABLE_STATIC_PROVIDERS
 #ifdef ENABLE_AD
@@ -72,13 +73,49 @@ static LSA_STATIC_PROVIDER gStaticProviders[] =
 };
 #endif // ENABLE_STATIC_PROVIDERS
 
+static pthread_mutex_t *gmutex_buf = NULL;
+ 
+static void lsa_locking_function(int mode, int n, const char* file, int line) {
+    if (mode & CRYPTO_LOCK) {
+        pthread_mutex_lock(&gmutex_buf[n]);
+    } else if (mode & CRYPTO_UNLOCK) {
+        pthread_mutex_unlock(&gmutex_buf[n]);
+    } else {
+        LSA_LOG_ERROR("Unknown OpenSSL lock mode 0x%x", mode);
+    }
+}
+
+static unsigned long lsa_id_function(void) {
+    return (unsigned long) pthread_self();
+}
+
+
 NTSTATUS
 LsaSvcmInit(
     PCWSTR pServiceName,
     PLW_SVCM_INSTANCE pInstance
     )
 {
-    return STATUS_SUCCESS;
+    DWORD dwError = 0;
+    int num_locks = CRYPTO_num_locks();
+    int i;
+
+    gmutex_buf = calloc(num_locks, sizeof(pthread_mutex_t));
+    if (gmutex_buf == NULL) dwError = LW_ERROR_OUT_OF_MEMORY;
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (i=0; i<num_locks; i++) {
+        pthread_mutex_init(&gmutex_buf[i], NULL);
+    }
+
+    CRYPTO_set_id_callback(lsa_id_function);
+    CRYPTO_set_locking_callback(lsa_locking_function);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
 }
 
 VOID
