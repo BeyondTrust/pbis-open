@@ -255,8 +255,6 @@ unsigned char pkinit_4096_dhprime[4096/8] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-static int pkinit_oids_refs = 0;
-
 static int openssl_init(void);
 static void pkinit_terminate(void);
 static int fix_signeddata(unsigned char *data, unsigned int data_len,
@@ -410,65 +408,43 @@ pkinit_fini_req_crypto(pkinit_req_crypto_context req_cryptoctx)
 static krb5_error_code
 pkinit_init_pkinit_oids(pkinit_plg_crypto_context ctx)
 {
-    krb5_error_code retval = ENOMEM;
-    int nid = 0;
+    ctx->id_pkinit_san = OBJ_txt2obj("1.3.6.1.5.2.2", 1);
+    if (ctx->id_pkinit_san == NULL)
+        return ENOMEM;
 
-    /*
-     * If OpenSSL already knows about the OID, use the
-     * existing definition. Otherwise, create an OID object.
-     */
-#define CREATE_OBJ_IF_NEEDED(oid, vn, sn, ln)                           \
-    nid = OBJ_txt2nid(oid);                                             \
-    if (nid == NID_undef) {                                             \
-        nid = OBJ_create(oid, sn, ln);                                  \
-        if (nid == NID_undef) {                                         \
-            pkiDebug("Error creating oid object for '%s'\n", oid);      \
-            goto out;                                                   \
-        }                                                               \
-    }                                                                   \
-    ctx->vn = OBJ_nid2obj(nid);
+    ctx->id_pkinit_authData = OBJ_txt2obj("1.3.6.1.5.2.3.1", 1);
+    if (ctx->id_pkinit_authData == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.2", id_pkinit_san,
-                         "id-pkinit-san", "KRB5PrincipalName");
+    ctx->id_pkinit_DHKeyData = OBJ_txt2obj("1.3.6.1.5.2.3.2", 1);
+    if (ctx->id_pkinit_DHKeyData == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.3.1", id_pkinit_authData,
-                         "id-pkinit-authdata", "PKINIT signedAuthPack");
+    ctx->id_pkinit_rkeyData = OBJ_txt2obj("1.3.6.1.5.2.3.3", 1);
+    if (ctx->id_pkinit_rkeyData == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.3.2", id_pkinit_DHKeyData,
-                         "id-pkinit-DHKeyData", "PKINIT dhSignedData");
+    ctx->id_pkinit_KPClientAuth = OBJ_txt2obj("1.3.6.1.5.2.3.4", 1);
+    if (ctx->id_pkinit_KPClientAuth == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.3.3", id_pkinit_rkeyData,
-                         "id-pkinit-rkeyData", "PKINIT encKeyPack");
+    ctx->id_pkinit_KPKdc = OBJ_txt2obj("1.3.6.1.5.2.3.5", 1);
+    if (ctx->id_pkinit_KPKdc == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.3.4", id_pkinit_KPClientAuth,
-                         "id-pkinit-KPClientAuth", "PKINIT Client EKU");
+    ctx->id_ms_kp_sc_logon = OBJ_txt2obj("1.3.6.1.4.1.311.20.2.2", 1);
+    if (ctx->id_ms_kp_sc_logon == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.2.3.5", id_pkinit_KPKdc,
-                         "id-pkinit-KPKdc", "KDC EKU");
+    ctx->id_ms_san_upn = OBJ_txt2obj("1.3.6.1.4.1.311.20.2.3", 1);
+    if (ctx->id_ms_san_upn == NULL)
+        return ENOMEM;
 
-#if 0
-    CREATE_OBJ_IF_NEEDED("1.2.840.113549.1.7.1", id_pkinit_authData9,
-                         "id-pkcs7-data", "PKCS7 data");
-#else
-    /* See note in pkinit_pkcs7type2oid() */
-    ctx->id_pkinit_authData9 = NULL;
-#endif
+    ctx->id_kp_serverAuth = OBJ_txt2obj("1.3.6.1.5.5.7.3.1", 1);
+    if (ctx->id_kp_serverAuth == NULL)
+        return ENOMEM;
 
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.4.1.311.20.2.2", id_ms_kp_sc_logon,
-                         "id-ms-kp-sc-logon EKU", "Microsoft SmartCard Login EKU");
-
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.4.1.311.20.2.3", id_ms_san_upn,
-                         "id-ms-san-upn", "Microsoft Universal Principal Name");
-
-    CREATE_OBJ_IF_NEEDED("1.3.6.1.5.5.7.3.1", id_kp_serverAuth,
-                         "id-kp-serverAuth EKU", "Server Authentication EKU");
-
-    /* Success */
-    retval = 0;
-    pkinit_oids_refs++;
-
-out:
-    return retval;
+    return 0;
 }
 
 static krb5_error_code
@@ -547,10 +523,15 @@ pkinit_fini_pkinit_oids(pkinit_plg_crypto_context ctx)
 {
     if (ctx == NULL)
         return;
-
-    /* Only call OBJ_cleanup once! */
-    if (--pkinit_oids_refs == 0)
-        OBJ_cleanup();
+    ASN1_OBJECT_free(ctx->id_pkinit_san);
+    ASN1_OBJECT_free(ctx->id_pkinit_authData);
+    ASN1_OBJECT_free(ctx->id_pkinit_DHKeyData);
+    ASN1_OBJECT_free(ctx->id_pkinit_rkeyData);
+    ASN1_OBJECT_free(ctx->id_pkinit_KPClientAuth);
+    ASN1_OBJECT_free(ctx->id_pkinit_KPKdc);
+    ASN1_OBJECT_free(ctx->id_ms_kp_sc_logon);
+    ASN1_OBJECT_free(ctx->id_ms_san_upn);
+    ASN1_OBJECT_free(ctx->id_kp_serverAuth);
 }
 
 static krb5_error_code
@@ -765,7 +746,7 @@ cms_contentinfo_create(krb5_context context,                          /* IN */
                        unsigned char **out_data, unsigned int *out_data_len)
 {
     krb5_error_code retval = ENOMEM;
-    ASN1_OBJECT *oid = NULL;
+    ASN1_OBJECT *oid;
     PKCS7 *p7 = NULL;
     unsigned char *p;
 
@@ -804,8 +785,6 @@ cms_contentinfo_create(krb5_context context,                          /* IN */
 cleanup:
     if (p7)
         PKCS7_free(p7);
-    if (oid)
-        ASN1_OBJECT_free(oid);
     return retval;
 }
 
@@ -843,7 +822,7 @@ cms_signeddata_create(krb5_context context,
     unsigned int alg_len = 0, digest_len = 0;
     unsigned char *y = NULL, *alg_buf = NULL, *digest_buf = NULL;
     X509 *cert = NULL;
-    ASN1_OBJECT *oid = NULL;
+    ASN1_OBJECT *oid = NULL, *oid_copy;
 
     if (id_cryptoctx->my_certs == NULL) {
         krb5_set_error_message(context, EINVAL, "cms_signdata_create called "
@@ -965,8 +944,11 @@ cms_signeddata_create(krb5_context context,
                                    V_ASN1_OCTET_STRING, (char *) digest_attr);
 
         /* create a content-type attr */
+        oid_copy = OBJ_dup(oid);
+        if (oid_copy == NULL)
+            goto cleanup2;
         PKCS7_add_signed_attribute(p7si, NID_pkcs9_contentType,
-                                   V_ASN1_OBJECT, oid);
+                                   V_ASN1_OBJECT, oid_copy);
 
         /* create the signature over signed attributes. get DER encoded value */
         /* This is the place where smartcard signature needs to be calculated */
