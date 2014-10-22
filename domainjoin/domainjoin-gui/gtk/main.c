@@ -580,7 +580,7 @@ ensure_gtk_version(int major, int minor, int micro, LWException** exc)
     {
         LW_RAISE_EX(exc, ERROR_DLL_MIGHT_BE_INCOMPATIBLE,
             "Incompatible library detected", 
-            "%s.  Likewise does not support graphical domain joins on this platform.  "
+            "%s.  PBIS does not support graphical domain joins on this platform.  "
             "Please use the command-line domain join application instead.",
             msg);
     }

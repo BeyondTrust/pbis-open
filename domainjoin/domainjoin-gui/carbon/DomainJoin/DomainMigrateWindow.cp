@@ -456,7 +456,7 @@ DomainMigrateWindow::ShowMigrateCompleteDialog(const std::string& value)
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
     StandardAlert(kAlertNoteAlert,
-    "\pLikewise - Active Directory",
+    "\pPBIS - Active Directory",
     (StringPtr)msgStr,
     NULL,
     &outItemHit);
@@ -480,7 +480,7 @@ DomainMigrateWindow::ShowMigrateCompleteErrorDialog(
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 511, kCFStringEncodingASCII);
     StandardAlert(kAlertNoteAlert,
-                  "\pLikewise - Active Directory",
+                  "\pPBIS - Active Directory",
                   (StringPtr)msgStr,
                   NULL,
                   &outItemHit);
@@ -548,7 +548,7 @@ DomainMigrateWindow::ConfirmMigration(
     }
 
     err = CreateStandardAlert(kAlertStopAlert,
-                              CFSTR("Likewise Migrate User Profile"),
+                              CFSTR("PBIS Migrate User Profile"),
                               msgStrRef,
                               &params,
                               &dialog);
