@@ -1764,6 +1764,10 @@ static BOOLEAN PamModuleChecksCaller( const char * phase, const char * module)
     {
         return TRUE;
     }
+    if (!strcmp(buffer, "pam_tty_tickets"))
+    {
+        return TRUE;
+    }
     if (!strcmp(buffer, "pam_sunray_amgh"))
     {
         return TRUE;
