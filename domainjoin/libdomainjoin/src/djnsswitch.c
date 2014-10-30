@@ -877,7 +877,8 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     {
         CTCaptureOutput("uname -rv", &pOutput);
         CTStripWhitespace(pOutput);
-        if(!strcmp(pOutput, "5.11 11.0") || !strcmp(pOutput, "5.11 11.1"))
+        if(!strcmp(pOutput, "5.11 11.0") || !strcmp(pOutput, "5.11 11.1") ||
+           !strcmp(pOutput, "5.11 11.2"))
         {
             if(enable)
             {

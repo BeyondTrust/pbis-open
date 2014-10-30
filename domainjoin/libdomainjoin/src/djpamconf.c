@@ -1764,6 +1764,10 @@ static BOOLEAN PamModuleChecksCaller( const char * phase, const char * module)
     {
         return TRUE;
     }
+    if (!strcmp(buffer, "pam_tty_tickets"))
+    {
+        return TRUE;
+    }
     if (!strcmp(buffer, "pam_sunray_amgh"))
     {
         return TRUE;
@@ -2597,8 +2601,8 @@ cleanup:
     ;
 }
 
-static void PamLwiModifySmartCardServiceControl(struct PamConf *conf,
-                                          const char *service,
+static void PamLwiModifySmartCardServiceControl(struct PamConf *conf, 
+                                          const char *service, 
                                           const char *phase)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -2626,10 +2630,10 @@ static void PamLwiModifySmartCardServiceControl(struct PamConf *conf,
         else
         {
            if  (!strcmp(module, "pam_lwidentity_smartcard_prompt"))
-           {
+           {   
               DJ_LOG_VERBOSE("Modifying service:%s phase:%s module:%s control from requisite to sufficient.", lineObj->service->value, lineObj->phase->value, module);
               CTStrdup("sufficient", &lineObj->control->value);
-           }
+           }    
        }
 
        line = NextLineForService(conf, line, service, phase);
@@ -4131,7 +4135,7 @@ void DJNewConfigurePamForADLogin(
                 {
                    PamLwiModifySmartCardControl(&conf);
                    LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
-                }
+                 }
             }
             else
             {
