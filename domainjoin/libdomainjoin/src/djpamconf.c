@@ -1922,7 +1922,7 @@ static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char 
      * option. The man page also says it is not supported. No distros that use
      * pam_unix2 are currently known to suport it. */
     if (!strcmp(buffer, "pam_unix2"))
-        return FALSE;
+        return TRUE;
 
     if (!strcmp(buffer, "pam_boks"))
         return FALSE;
