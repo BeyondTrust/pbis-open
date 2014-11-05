@@ -958,6 +958,7 @@ FixNetworkInterfaces(
         } const searchPaths[] = {
             {"/etc/sysconfig/network", "ifcfg-eth-id-[^.]*$"},
             {"/etc/sysconfig/network", "ifcfg-eth0[^.]*$"},
+            {"/etc/sysconfig/network", "ifcfg-eth[^.]*$"},
             {"/etc/sysconfig/network", "ifcfg-eth-bus[^.]*$"},
             //SLES 10.1 on zSeries uses one of:
             //  /etc/sysconfig/network/ifcfg-qeth-bus-ccw-0.0.0500
