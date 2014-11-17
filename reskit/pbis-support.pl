@@ -42,6 +42,8 @@
 # v2.6.0  2014-04-11 RCA add -dj option and cleanups for different domainjoin-cli commands
 # v2.6.1  2014-08-07 RCA selinux bugfix for Deb-based systems
 # v2.6.2  2014-10-03 RCA change which/when files added to tarball, changes to tcpdump options
+# v2.6.3  2014-10-31 RCA more addtions to tarball.
+# v2.7    2014-11-03 RCA add --cleanup functionality
 #
 # Data structures explained at bottom of file
 #
@@ -65,7 +67,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.6.2";
+my $gVer = "2.7";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -113,8 +115,8 @@ usage: $scriptName [tests] [log choices] [options]
 
     This is the PBIS support tool.  It creates a log as specified by
     the options, and creates a gzipped tarball in:
-    $opt->{tarballdir}/$opt->{tarballfile}$opt->{tarballext}, for emailing to 
-    $info->{emailaddress} 
+    $opt->{tarballdir}/$opt->{tarballfile}$opt->{tarballext}, for emailing to
+    $info->{emailaddress}
 
 Tests to be performed:
 
@@ -158,7 +160,7 @@ Tests to be performed:
             Path of the domainjoin log.
         Use '--sshuser' for the domainjoin username, or be prompted
 
-Log choices: 
+Log choices:
 
     --(no)lsassd (--winbindd) (default = ".&getOnOff($opt->{lsassd}).")
         Gather lsassd debug logs
@@ -189,15 +191,19 @@ Log choices:
     -ps --(no)psoutput (default = ".&getOnOff($opt->{psoutput}).")
         Gathers full process list from this system
 
-Options: 
+Options:
 
     -r --(no)restart (default = ".&getOnOff($opt->{restart}).")
         Allow restart of the PBIS daemons to separate logs
     --(no)syslog (default = ".&getOnOff($opt->{syslog}).")
         Allow editing syslog.conf during the debug run if not
         restarting daemons (exclusive of -r)
+    --cleanup (default = ".&getOnOff($opt->{cleanup}).")
+        Run cleanup routines if tool gets cancelled in the middle
+        of running.
+        Will generate a tarball of output.
     -V --loglevel {error,warning,info,verbose,debug}
-        Changes the logging level. (default = $opt->{loglevel} )
+        Changes this tool's logging level. (default = $opt->{loglevel} )
     -l --log --logfile <path> (default = $opt->{logfile} )
         Choose the logfile to write data to.
     -t --tarballdir <path> (default = $opt->{tarballdir} )
@@ -216,9 +222,9 @@ Options:
 
 ######################################
 # Helper Functions Defined Below
-# 
+#
 # Used as shortcuts throughout the
-# other subroutines, or called in 
+# other subroutines, or called in
 # multiple "main" routines, or
 # just planned to be reused
 
@@ -619,7 +625,7 @@ sub findInPath($$) {
             $file->{name} = $filename;
             $file->{dir} = $path;
             last;
-        }        
+        }
     }
     if (not defined($file->{path})) {
         $file->{info} = [];
@@ -812,7 +818,7 @@ sub killProc2($$) {
         logError("$process is not a numeric PID, so we cannot kill it!");
         return $gRetval;
     }
-    foreach my $sig (sort(keys(%gSignals))) { 
+    foreach my $sig (sort(keys(%gSignals))) {
         if ($signal eq $sig) {
             $safesig = $signal;
             last;
@@ -865,6 +871,11 @@ sub runTool($$$$;$) {
     my $tool = shift || confess "no tool to run passed to runTool!\n";
     my $action = shift || confess "no action passed to runTool!\n";
     my $filter = shift;
+    # available actions:
+    #  bury (throws output away, useful for actually *doing* something, actually not memory-safe, since we store the output in case of error)
+    #  print (logs each line to the log as it comes up, memory-safe)
+    #  grep (greps each line for $filter, returns as a string. not memory-safe)
+    #  return (default, returns the lines as a string, not memory-safe)
 
     logDebug("Attempting to run $tool");
     my $cmd="";
@@ -898,7 +909,7 @@ sub runTool($$$$;$) {
         }
         close RT;
         $data=join("\n", @results);
-    } else { # ($action eq "return") 
+    } else { # ($action eq "return")
         $data=`$cmd`;
     }
     if ($?) {
@@ -992,7 +1003,7 @@ sub tarFiles($$$$) {
     my $opt = shift || confess "no options hash passed to tar appender!\n";
     my $tar = shift || confess "no tar file passed to tar appender!\n";
     my $file = shift || confess "no append file passed to tar appender!\n";
-    
+
     if (! -e $file) {
         logWarning("Not adding $file to $tar - $file doesn't exist");
         return;
@@ -1174,7 +1185,7 @@ sub changeLoggingBySyslog($$$) {
             if ($info->{OStype} eq "darwin" and $opt->{lsassd}) {
                 my $odutil = findInPath("odutil", ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]);
                 if ($odutil->{perm}=~/x/) {
-                    runTool($info, $opt, "$odutil->{path} set log debug", "bury");                    
+                    runTool($info, $opt, "$odutil->{path} set log debug", "bury");
                 } else {
                     killProc("DirectoryService", "USR1", $info);
                 }
@@ -1248,7 +1259,7 @@ sub changeLoggingStandalone($$$) {
         $options->{daemon} = $info->{lw}->{daemons}->{authdaemon};
         if ($info->{lw}->{version} eq "4.1") {
 #TODO add code to edit lwiauthd.conf
-        } 
+        }
         if ($info->{OStype} eq "darwin") {
             killProc("DirectoryService", "USR1", $info);
         }
@@ -1261,7 +1272,7 @@ sub changeLoggingStandalone($$$) {
             # not needed in LW 5.3.7724 and later
             $options->{loglevel} = 5 if ($options->{state} eq "debug");
             $options->{loglevel} = 4 if ($options->{state} eq "verbose");
-            $options->{loglevel} = 3 if ($options->{state} eq "info"); 
+            $options->{loglevel} = 3 if ($options->{state} eq "info");
             $options->{loglevel} = 2 if ($options->{state} eq "warning");
             $options->{loglevel} = 1 if ($options->{state} eq "error");
         }
@@ -1296,7 +1307,7 @@ sub changeLoggingWithContainer($$$) {
     my $options = shift;
     my ($startscript, $logopts, $result);
     $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
-    
+
     foreach my $daemonname (keys(%{$info->{lw}->{daemons}})) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
         logDebug("Checking if I need to restart $daemonname daemon $daemon...");
@@ -1355,6 +1366,54 @@ sub changeLoggingWithLwSm($$$) {
     sleep 5;
 }
 
+sub cleanupaftermyself {
+    my $info = shift || confess "no info hash passed to cleanup!";
+    my $opt = shift || confess "No opt hash passed to cleanup!";
+    if ($info->{uid} != 0) {
+        logError("can't restart daemons or make syslog.conf changes");
+        logError("This tool needs to be run as root for these options");
+        $gRetval |= ERR_SYSTEM_CALL;
+        return;
+    }
+    tcpdumpStop($info, $opt);
+    my $error;
+    my $process=findProcess("lwsm tap-log", $info);
+    while ((ref($process) eq "HASH") and $process->{pid}) {
+        $error=killProc($process->{pid}, 9, $info);
+        logError("Problem killing $process->{cmd} at pid $process->{pid}, Cleanup is unsuccessful!") if ($error);
+        undef $process unless ($error);
+        $process=findProcess("lwsm tap-log", $info);
+    }
+    if ($opt->{restart}) {
+        my $stopcmd = $info->{svccontrol}->{stop1}.$info->{svccontrol}->{stop2}.$info->{svccontrol}->{stop3};
+        $stopcmd=~s/daemonname/lwsmd/;
+        logVerbose("Attempting to stop lwsmd via: '$stopcmd', then waiting 30 seconds for full shutdown.");
+        System($stopcmd);
+        sleep 30;
+        logVerbose("Attempting to kill lwsmd, just in case");
+        KillProc("lwsmd", 9, $info);
+        foreach my $daemon (keys(%{$info->{lw}->{daemons}})) {
+            $error=KillProc($daemon, 9, $info);
+            logError("Problem killing '$daemon', Cleanup is unsuccessful!") if ($error);
+            $error=KillProc("lw-container $daemon", 9, $info);
+            logError("Problem killing 'lw-container $daemon', Cleanup is unsuccessful!") if ($error);
+        }
+        my $startcmd = $info->{svccontrol}->{start1}.$info->{svccontrol}->{start2}.$info->{svccontrol}->{start3};
+        if ($info->{lw}->{lwsm}->{control} eq "lwsm") {
+            $startcmd =~s/daemonname/lwsmd/;
+            logInfo("Attemping to start lwsmd via '$startcmd'");
+            System($startcmd);
+            runTool($info, $opt, "lwsm autostart", "bury");
+            waitForDomain($info, $opt);
+        } else {
+            my $options = { daemon => "",
+                loglevel => "error",
+            };
+            changeLoggingStandAlone($info, $opt, $options);
+        }
+    }
+}
+
 sub determineOS($$) {
     my $info = shift || confess "no info hash passed";
     my $opt = shift || confess "no opt hash passed to determineOS!";
@@ -1369,7 +1428,7 @@ sub determineOS($$) {
             if ((defined($file->{path}))) { # && $file->{perm}=~/x/) {
                 $info->{OStype} = "linux-$i";
                 logVerbose("System is $info->{OStype}");
-            } 
+            }
         }
         $info->{timezonefile} = "/etc/sysconfig/clock";
         if (not defined($info->{OStype})) {
@@ -1439,7 +1498,7 @@ sub determineOS($$) {
             $info->{zonename}=`zonename`;
             logData("Solaris 10 zonename is: ".$info->{zonename});
             if (`pkgcond is_global_zone;echo $?` == 0) {
-                logData("Solaris 10 zone type is global.") 
+                logData("Solaris 10 zone type is global.")
             } elsif (`pkgcond is_whole_root_nonglobal_zone;echo $?` == 0) {
                 logData("Solaris 10 zone type is whole root child zone.");
             } elsif (`pkgcond is_sparse_root_nonglobal_zone;echo $?` == 0) {
@@ -1556,7 +1615,7 @@ sub determineOS($$) {
     logData("Currently running as: $info->{name} with effective UID: $info->{uid}");
     logData("Run under sudo from $info->{logon}") if ($info->{logon} ne $info->{name});
     logData("Gathered at: ".scalar(localtime));
-    
+
     # set this for all OSes as false, so that future tests can have a value known to exist
     $info->{selinux} = 0;
     foreach my $i (("getrunmode", "sestatus")) {
@@ -1564,7 +1623,7 @@ sub determineOS($$) {
         my $file = findInPath($i, ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]);
         if (defined($file->{path})) {
             logData("---");
-            logData("$i output is:"); 
+            logData("$i output is:");
             runTool($info, $opt, $file->{path}, "print");
             logData("---");
             if ($i eq "sestatus") {
@@ -1608,13 +1667,14 @@ sub waitForDomain($$) {
     }
 }
 
-sub getLikewiseVersion($) {
+sub getLikewiseVersion($$) {
 
 # determine PBIS / Likewise version installed
 # look in reverse order, in case a bad upgrade was done
 # we can get the current running version
 
     my $info = shift;
+    my $opt = shift;
     my $error = 0;
     my $versionFile = findInPath("ENTERPRISE_VERSION", ["/opt/pbis/data", "/opt/likewise/data", "/usr/centeris/data", "/opt/centeris/data"]);
     $versionFile = findInPath("VERSION", ["/opt/pbis/data", "/opt/likewise/data", "/usr/centeris/data", "/opt/centeris/data"]) unless(defined($versionFile->{path}) && $versionFile->{path});
@@ -2011,7 +2071,10 @@ sub getLikewiseVersion($) {
         undef $info->{lw}->{daemons}->{eventfwd};
         undef $info->{lw}->{daemons}->{syslogreaper};
         undef $info->{lw}->{daemons}->{usermonitor};
-        $info->{emailaddress} = 'pbis-support@beyondtrust.com';
+        $info->{emailaddress} = 'openproject@beyondtrust.com';
+        #disable group policy tests, too.
+        $opt->{gpagentd}=0;
+        $opt->{gpo}=0;
     }
 }
 
@@ -2021,7 +2084,7 @@ sub outputReport($$) {
 
     sectionBreak("Gathering Logfiles");
     my ($tarballfile, $error, $appendfile);
-    if (-d $opt->{tarballdir} && (-w $opt->{tarballdir})) { 
+    if (-d $opt->{tarballdir} && (-w $opt->{tarballdir})) {
         $tarballfile = $opt->{tarballdir}."/".$opt->{tarballfile};
     } elsif (-w "./") {
         $tarballfile = "./".$opt->{tarballfile};
@@ -2123,13 +2186,17 @@ sub outputReport($$) {
             logDebug("Adding files from /var/log/samba also");
             tarFiles($info, $opt, $tarballfile, "/var/log/samba/*");
         }
-        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}/*"); 
+        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}/*");
     }
     logInfo("Adding sshd_config");
     tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
     logError("Can't find sshd_config to add to tarball!") unless ($info->{sshd_config}->{path});
     tarFiles($info, $opt, $tarballfile, $info->{logpath}."/sshd-pbis.log");
+    # 20141031 - RCA - Solaris 11 now uses pam.d as well as pam.conf
+    # so we'll grab everything. Keeping the old $info->{pampath} allows for REAL weidness if we find it later
     tarFiles($info, $opt, $tarballfile, $info->{pampath});
+    tarFiles($info, $opt, $tarballfile, "/etc/pam.conf");
+    tarFiles($info, $opt, $tarballfile, "/etc/pam.d");
     tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
     tarFiles($info, $opt, $tarballfile, $info->{logedit}->{path}) if ($info->{logedit}->{path});
     logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
@@ -2172,6 +2239,10 @@ sub outputReport($$) {
     if (-e "$info->{logpath}/$info->{hostname}-likewise-install-results.out") {
         logInfo("Adding ProServe install logfile $info->{hostname}-likewise-install-results.out");
         tarFiles($info, $opt, $tarballfile, "$info->{logpath}/$info->{hostname}-likewise-install-results.out");
+    }
+    if (-e "/var/log/pbislogs") {
+        logInfo("Adding ProServe install logfile directory /var/log/pbislogs");
+        tarFiles($info, $opt, $tarballfile, "/var/log/pbislogs");
     }
     if (-e "$info->{logpath}/$info->{hostname}-pbis-install-results.out") {
         logInfo("Adding ProServe install logfile $info->{hostname}-pbis-install-results.out");
@@ -2296,7 +2367,8 @@ sub runTests($$) {
     }
 # run optional tests
 
-    if ($opt->{dns}) {
+    if ($opt->{dns} or $opt->{gpo}) {
+        #gpo often breaks due to DNS, so do DNS tests, too
         sectionBreak("DNS Tests");
         my $site = runTool($info, $opt, "$info->{lw}->{tools}->{status}", "grep", 'Site:\s+(.*)');
         my @status = split(/\s+/, $site);
@@ -2317,7 +2389,7 @@ sub runTests($$) {
                     foreach (@records) {
                         logData("  $_");
                         $dclist{$_}=1;
-                    }                
+                    }
                 }
             }
         }
@@ -2369,8 +2441,8 @@ sub runTests($$) {
                 logError("Error running ssh as $user!");
             }
         }
-        
-        logData($data);
+
+        logData($data);...
     } elsif ($opt->{sshuser} || $info->{uid} ne "0") {
         my $user = $opt->{sshuser};
         $user = $info->{logon} if (not defined($opt->{sshuser}));
@@ -2380,8 +2452,12 @@ sub runTests($$) {
 
     if ($opt->{gpo}) {
         sectionBreak("GPO Tests");
-        $opt->{dns} = 1; #do dns tests as well if we're testing GPO, they often are related
+        $opt->{dns} = 1; #do dns tests as well if we're testing GPO, they often are related, useless to set here, but keeping for documentation
         runTool($info, $opt, "gporefresh", "print");
+        for (my $i = 60; $i<=0; $i-=15) {
+            logData("Sleeping $i seconds for full refresh to run...");
+            sleep 15;
+        }
     }
 
     if ($opt->{smb}) {
@@ -2546,10 +2622,11 @@ sub main() {
         'psoutput|ps!',
         'delay!',
         'delaytime|dt=s',
+        'cleanup!',
     );
     my $more = shift @ARGV;
     my $errors;
-    
+
     if ($opt->{domainjoin}) {
         $opt->{restart} = 1;
         $opt->{other} = 1;
@@ -2569,7 +2646,7 @@ sub main() {
         print usage($opt, $info);
     }
 
-    if ($opt->{sudo} or $opt->{ssh} or $opt->{other}) {
+    if ($opt->{sudo} or $opt->{ssh} or $opt->{other} or $opt->{delay}) {
         $opt->{authtest} = 1;
     }
 
@@ -2593,7 +2670,7 @@ sub main() {
         open(OUTPUT, ">$opt->{logfile}") || die "can't open logfile $opt->{logfile}\n";
         $gOutput = \*OUTPUT;
         logInfo("Initializing logfile $opt->{logfile}.");
-    } else { 
+    } else {
         $gOutput = \*STDOUT;
         logInfo("Logging to STDOUT.");
         logError("Will not be able to capture the output log! You should cancel and restart with a different logfile.");
@@ -2643,17 +2720,24 @@ sub main() {
     if (defined($opt->{capturefilter})) {
         $info->{tcpdump}->{filter} = $opt->{capturefilter};
     }
-    
+
     sectionBreak("PBIS Version");
     logDebug("Determining PBIS version");
-    getLikewiseVersion($info);
+    getLikewiseVersion($info, $opt);
+
+    if ($opt->{cleanup}) {
+        cleanupaftermyself($info, $opt);
+        outputReport($info, $opt);
+        exit $gRetval;
+    }
+
 
     sectionBreak("Options Passed");
     logData(fileparse($0)." version $gVer");
     foreach my $el (keys(%{$opt})) {
         logData("$el = ".&getOnOff($opt->{$el}));
     }
-    
+
     #TODO support SELinux in Enforcing mode with secontext switches.
     if ((defined $opt->{restart} && $opt->{restart}) && $info->{selinux}) {
         logError("SELinux enforcing mode is *NOT* compatible with the '--restart' option.");
@@ -2681,7 +2765,7 @@ sub main() {
     sectionBreak("Daemon restarts");
     logDebug("Turning logging levels back to normal");
     changeLogging($info, $opt, "normal");
-    
+
     if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
         sectionBreak("Stopping tcpdump");
         tcpdumpStop($info, $opt);
@@ -2697,7 +2781,7 @@ sub main() {
 usage: pbis-support.pl [tests] [log choices] [options]
 
   This is the BeyondTrust Software PBIS (Open/Enterprise) support tool.
-  It creates a log as specified by the options, and creates 
+  It creates a log as specified by the options, and creates
   a gzipped tarball in for emailing to the PBIS support team.
 
   The options are broken into three (3) groups: Tests, Logs,
@@ -2755,7 +2839,7 @@ usage: pbis-support.pl [tests] [log choices] [options]
             Path of the domainjoin log.
         Use '--sshuser' for the domainjoin username, or be prompted
 
-    Log choices: 
+    Log choices:
 
     --(no)lsassd (--winbindd) (default = on)
     Gather lsassd debug logs
@@ -2786,7 +2870,7 @@ usage: pbis-support.pl [tests] [log choices] [options]
     -ps --(no)psoutput (default = off)
     Gather's full process list from this system
 
-    Options: 
+    Options:
 
     -r --(no)restart (default = on)
     Allow restart of the PBIS daemons to separate logs
@@ -2812,7 +2896,7 @@ usage: pbis-support.pl [tests] [log choices] [options]
 
 =head2 Data Structures:
 
-$gRetval is a bitstring used to hold error values.  The small subs at the top ERR_XXX_XXX = { 2;} 
+$gRetval is a bitstring used to hold error values.  The small subs at the top ERR_XXX_XXX = { 2;}
 are combined with the existing value via bitwise OR operations. This gives us a cumulative count
 of the errors that have happened during the run of the program, and a good exit status if non-0
 
@@ -2917,6 +3001,7 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
     (Group: Restart Options)
         syslog
         restart
+        cleanup
     (Group: Tests to run)
         users
         groups
@@ -2949,7 +3034,7 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
     delaytime (number)
         help
 
-=head4 hash REF info 
+=head4 hash REF info
 
 $info is a hash reference, with keys as below. This is a multi-level hash as described below
     OStype (string describing OS: solaris, darwin, linux-rpm, etc.)
@@ -3032,10 +3117,10 @@ $info is a hash reference, with keys as below. This is a multi-level hash as des
             groupsforuser (string)
             groupsforuid (string)
             regshell (string)
-        daemons (hash ref: daemons which have been restarted in debug mode)
-            {daemonname} (hash ref: key name may be "netlogond", "lwiod", etc.)
-                pid (number: the PID of the daemon launched)
-                handle (anonymous ref to the handle used to launch the daemon)
+    daemons (hash ref: daemons which have been restarted in debug mode)
+        {daemonname} (hash ref: key name may be "netlogond", "lwiod", etc.)
+            pid (number: the PID of the daemon launched)
+            handle (anonymous ref to the handle used to launch the daemon)
     logedit (hash ref: the file changed if --restart was negated)
         file (findInPath() hash ref)
             info
