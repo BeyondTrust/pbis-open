@@ -1980,10 +1980,11 @@ cleanup:
     return ceError;
 }
 
-DWORD
-CTCopyDirectory(
+DWORD CTCopyDirectoryIgnoreErrors(
     PCSTR source,
-    PCSTR dest
+    PCSTR dest,
+    BOOLEAN bIgnoreMissingFiles,
+    PSTR* missingFiles
     )
 {
     uid_t uid;
@@ -2022,7 +2023,18 @@ CTCopyDirectory(
         memset(&statbuf, 0, sizeof(struct stat));
 
         if (stat(srcPath, &statbuf) < 0) {
-            GCE(ceError = LwMapErrnoToLwError(errno));
+            if(bIgnoreMissingFiles && errno == ENOENT)
+            {
+                ceError = CTAllocateString(srcPath, missingFiles);
+                GCE(ceError);
+                continue;
+            }
+            else
+            {
+                GCE(ceError = LwMapErrnoToLwError(errno));
+            }
+            
+            
         }
 
         if ((statbuf.st_mode & S_IFMT) == S_IFDIR) {
@@ -2044,6 +2056,15 @@ cleanup:
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
     return ceError;
+}
+
+DWORD
+CTCopyDirectory(
+    PCSTR source,
+    PCSTR dest
+    )
+{
+    return CTCopyDirectoryIgnoreErrors(source, dest, FALSE, NULL);
 }
 
 DWORD

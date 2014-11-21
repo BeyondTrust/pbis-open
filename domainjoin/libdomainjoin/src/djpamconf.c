@@ -3798,7 +3798,7 @@ void DJUpdatePamConf(const char *testPrefix,
              */
             DJ_LOG_WARNING("Ignoring pam service vmware-authd because 32bit pam libraries are not available on this system");
             continue;
-        }
+        }        
         for(j = 0; phases[j] != NULL; j++)
         {
             memset(&state, 0, sizeof(state));
@@ -4264,6 +4264,7 @@ DJCopyPamToRootDir(
     DWORD ceError = ERROR_SUCCESS;
     PSTR srcPath = NULL;
     PSTR destPath = NULL;
+    PSTR missingFile = NULL;
     BOOLEAN exists;
 
     if(srcPrefix == NULL)
@@ -4288,7 +4289,12 @@ DJCopyPamToRootDir(
     {
         CT_SAFE_FREE_STRING(destPath);
         GCE(ceError = CTAllocateStringPrintf(&destPath, "%s/etc/pam.d", destPrefix));
-        GCE(ceError = CTCopyDirectory(srcPath, destPath));
+        GCE(ceError = CTCopyDirectoryIgnoreErrors(srcPath, destPath, TRUE, &missingFile));
+        if(missingFile != NULL)
+        {
+             fprintf(stdout, "File not found ignoring: %s\n", missingFile);
+                
+        }
     }
 
     CT_SAFE_FREE_STRING(srcPath);
@@ -4304,6 +4310,7 @@ DJCopyPamToRootDir(
 cleanup:
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
+    CT_SAFE_FREE_STRING(missingFile);
     return ceError;
 }
 

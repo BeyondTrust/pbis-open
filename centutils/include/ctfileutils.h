@@ -204,6 +204,12 @@ CTCopyDirectory(
     PCSTR dest
     );
 
+DWORD CTCopyDirectoryIgnoreErrors(
+    PCSTR source,
+    PCSTR dest,
+    BOOLEAN bIgnoreFiles,
+    PSTR* missingFiles);
+
 /* Safely creates a temporary directory that is only accessible by the current
  * user and root.
  */
