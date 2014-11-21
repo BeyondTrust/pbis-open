@@ -1833,6 +1833,8 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_ldap"))
         return TRUE;
+    if(!strcmp(buffer, "pam_sss"))
+        return TRUE;
     // Part of freeradius. It authenticates the user by a radius server
     if (!strcmp(buffer, "pam_radius_auth"))
         return TRUE;
