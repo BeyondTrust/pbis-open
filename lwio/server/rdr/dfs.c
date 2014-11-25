@@ -602,6 +602,7 @@ cleanup:
 
     if (status != STATUS_PENDING)
     {
+        RTL_FREE(&pContext->State.DfsConnect.pwszNamespace);
         if (status != STATUS_SUCCESS)
         {
             RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);

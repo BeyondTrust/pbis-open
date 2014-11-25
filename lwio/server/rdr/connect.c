@@ -563,6 +563,9 @@ RdrNegotiateGssContextWorkItem(
     {
         pContext->Continue = RdrProcessSessionSetupResponse;
 
+        RdrFreePacket(pContext->State.TreeConnect.pPacket);
+        pContext->State.TreeConnect.pPacket = NULL;
+
         status = RdrTransceiveSessionSetup(
             pContext,
             pSession,
@@ -606,6 +609,8 @@ RdrNegotiateGssContextWorkItem(
         status = RdrSocketAddSessionByUID(pSocket, pSession);
         BAIL_ON_NT_STATUS(status);
         
+        RdrFreePacket(pContext->State.TreeConnect.pPacket);
+        pContext->State.TreeConnect.pPacket = NULL;
         pSession->state = RDR_SESSION_STATE_READY;
         
         RdrNotifyContextList(
