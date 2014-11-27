@@ -4292,11 +4292,7 @@ DJCopyPamToRootDir(
         CT_SAFE_FREE_STRING(destPath);
         GCE(ceError = CTAllocateStringPrintf(&destPath, "%s/etc/pam.d", destPrefix));
         GCE(ceError = CTCopyDirectoryIgnoreErrors(srcPath, destPath, TRUE, &missingFile));
-        if(missingFile != NULL)
-        {
-             fprintf(stdout, "File not found ignoring: %s\n", missingFile);
-                
-        }
+        
     }
 
     CT_SAFE_FREE_STRING(srcPath);
@@ -4310,6 +4306,10 @@ DJCopyPamToRootDir(
     }
 
 cleanup:
+    if(missingFile != NULL)
+    {
+        fprintf(stdout, "\nFile not found: %s", missingFile);               
+    }
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
     CT_SAFE_FREE_STRING(missingFile);
