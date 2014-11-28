@@ -4308,7 +4308,7 @@ DJCopyPamToRootDir(
 cleanup:
     if(missingFile != NULL)
     {
-        fprintf(stdout, "\nFile not found: %s", missingFile);               
+        fprintf(stdout, "\nFile not found: %s\n", missingFile);               
     }
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
