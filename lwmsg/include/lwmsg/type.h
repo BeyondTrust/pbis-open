@@ -121,6 +121,7 @@
 #ifndef DOXYGEN
 struct LWMsgDataContext;
 struct LWMsgContext;
+struct LWMsgType;
 
 typedef enum LWMsgKind
 {
