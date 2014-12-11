@@ -49,6 +49,18 @@ logging_send_syslog_msg(pbis_t)
 
 cron_admin_role(system_r, pbis_t)
 
+require {
+        type net_conf_t;
+        type var_t;
+        type pbis_t;
+        type bin_t;
+        class dir { write create };
+        class file { rename unlink };
+}
+
+#============= pbis_t ==============
+
+allow pbis_t net_conf_t:file { rename unlink };
 
 
 #============= pbis_t ==============

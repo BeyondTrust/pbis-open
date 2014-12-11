@@ -47,6 +47,23 @@ files_search_var_lib(pbis_t)
 logging_admin_syslog(pbis_t, system_r)
 logging_send_syslog_msg(pbis_t)
 
+require {
+        type syslog_conf_t;
+        type net_conf_t;
+        type etc_t;
+        type var_t;
+        type pbis_t;
+        class dir { write create add_name };
+        class file { relabelfrom rename unlink relabelto };
+}
+
+#============= pbis_t ==============
+allow pbis_t etc_t:file { relabelfrom relabelto };
+allow pbis_t net_conf_t:file { rename unlink };
+allow pbis_t syslog_conf_t:file relabelfrom;
+allow pbis_t var_t:dir { write create add_name };
+
+
 cron_admin_role(system_r, pbis_t)
 require {
     type system_cron_spool_t;
