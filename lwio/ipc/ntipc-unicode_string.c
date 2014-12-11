@@ -114,6 +114,7 @@ NtIpcpUnmarshalUnicodeString(
     return LWMSG_STATUS_SUCCESS;
 }
 
+/*
 static
 VOID
 NtIpcDestroyPresented(
@@ -127,6 +128,7 @@ NtIpcDestroyPresented(
     free(*p);
     *p = NULL;
 }
+*/
 
 
 
@@ -136,7 +138,7 @@ LWMsgTypeClass gNtIpcTypeClassUnicodeString =
     .transmit_type = gNtIpcTypeSpecTransmitUnicodeString,
     .marshal = NtIpcpMarshalUnicodeString,
     .unmarshal = NtIpcpUnmarshalUnicodeString,
-    .destroy_presented = NtIpcDestroyPresented, // No custom free needed for unmarshalled type
+    .destroy_presented = NULL,// No custom free neded for unmarshalled type
     .destroy_transmitted = NULL, // No custom free neded for marshalled type
     .print = NULL // Use standard print based on transmit type spec
 };
