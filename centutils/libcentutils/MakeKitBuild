@@ -1,3 +1,10 @@
+configure()
+{
+    mk_check_headers \
+        CoreFoundation/CoreFoundation.h
+}
+
+
 make()
 {
     mk_library \
