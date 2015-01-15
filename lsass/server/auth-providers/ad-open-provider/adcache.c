@@ -607,7 +607,7 @@ GetUidOverRide(const PSTR pcstrUPN)
     while((read = getline(&line, &linelength, file))!= -1)
     {
         userPrincipalName = strtok(line, "|");
-        if(strcmp(pcstrUPN, userPrincipalName) == 0)
+        if(strcasecmp(pcstrUPN, userPrincipalName) == 0)
         {
             char* uid = strtok(NULL, ":");
             overriddenUid =  atoi(uid);
