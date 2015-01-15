@@ -586,6 +586,43 @@ ADCacheSafeFreeObject(
         *ppObject = NULL;
     }
 }
+uid_t
+GetUidOverRide(const PSTR pcstrUPN)
+{
+    FILE* file = NULL;
+    char* line = NULL;
+    size_t linelength;
+    file = fopen("/tmp/override.txt", "r");
+    if(file == NULL)
+    {
+        return -1;
+    }
+    
+    //TODO : ignore comment character
+    //TODO : parse gecos primary groupID etc.
+    size_t read = 0;
+    char* userPrincipalName;
+    uid_t overriddenUid = -1;
+    
+    while((read = getline(&line, &linelength, file))!= -1)
+    {
+        userPrincipalName = strtok(line, "|");
+        if(strcmp(pcstrUPN, userPrincipalName) == 0)
+        {
+            char* uid = strtok(NULL, ":");
+            overriddenUid =  atoi(uid);
+            break;
+        }
+    }
+    if(line)
+    {
+        free(line);
+    }
+
+    fclose(file);
+    
+    return overriddenUid;
+}
 
 DWORD
 ADCacheDuplicateObject(
@@ -628,10 +665,16 @@ ADCacheDuplicateObject(
     pDest->type = pSrc->type;
 
     if (pDest->type == LSA_OBJECT_TYPE_USER)
-    {
+    {   
         pDest->userInfo.uid = pSrc->userInfo.uid;
         pDest->userInfo.gid = pSrc->userInfo.gid;
 
+        uid_t overRiddenUid = GetUidOverRide(pSrc->userInfo.pszUPN);
+        if(overRiddenUid != -1)
+        {
+            pDest->userInfo.uid = overRiddenUid;
+        }
+       
         dwError = LwStrDupOrNull(
                         pSrc->userInfo.pszPrimaryGroupSid,
                         &pDest->userInfo.pszPrimaryGroupSid);
