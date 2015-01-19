@@ -586,7 +586,7 @@ ADCacheSafeFreeObject(
         *ppObject = NULL;
     }
 }
-uid_t
+/*uid_t
 GetUidOverRide(const PSTR pcstrUPN)
 {
     FILE* file = NULL;
@@ -623,6 +623,7 @@ GetUidOverRide(const PSTR pcstrUPN)
     
     return overriddenUid;
 }
+*/
 
 DWORD
 ADCacheDuplicateObject(
@@ -669,12 +670,12 @@ ADCacheDuplicateObject(
         pDest->userInfo.uid = pSrc->userInfo.uid;
         pDest->userInfo.gid = pSrc->userInfo.gid;
 
-        uid_t overRiddenUid = GetUidOverRide(pSrc->userInfo.pszUPN);
+/*        uid_t overRiddenUid = GetUidOverRide(pSrc->userInfo.pszUPN);
         if(overRiddenUid != -1)
         {
             pDest->userInfo.uid = overRiddenUid;
         }
-       
+*/       
         dwError = LwStrDupOrNull(
                         pSrc->userInfo.pszPrimaryGroupSid,
                         &pDest->userInfo.pszPrimaryGroupSid);
