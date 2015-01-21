@@ -606,15 +606,6 @@ error:
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
-    else if (dwError == 2 )
-    {
-        // Handle situation when lsass is not available.
-        LSA_LOG_PAM_ERROR("pam_sm_authenticate lsass unavailable [login:%s][error code:%u]",
-                          LSA_SAFE_LOG_STRING(pszLoginId),
-                          dwError);
-        // Setting error code to zero allows of PAM to continue checking for local users such as root.
-        dwError = 0;
-    }
     else
     {
         LSA_LOG_PAM_ERROR("pam_sm_authenticate error [login:%s][error code:%u]",
