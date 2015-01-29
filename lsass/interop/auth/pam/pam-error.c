@@ -68,6 +68,9 @@ LsaPamMapErrorCode(
 
     switch(dwError)
     {
+        case LW_ERROR_IGNORE_THIS_USER:
+            ret =  PAM_IGNORE;
+            break;
         case LW_ERROR_NOT_HANDLED:
         case LW_ERROR_NO_SUCH_USER:
             if (pPamContext && (pPamContext->pamOptions.bUnknownOK ||
