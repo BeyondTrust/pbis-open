@@ -73,6 +73,7 @@ pam_sm_authenticate(
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
     BOOLEAN bUseRegularAuthentication = TRUE;
+    BOOLEAN bIsLocalUser = FALSE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -389,16 +390,16 @@ pam_sm_authenticate(
             &pszLoginId,
             TRUE);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
         
         if (LsaShouldIgnoreUser(pszLoginId))
         {
             LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-            dwError = LW_ERROR_NOT_HANDLED;
+            dwError = LW_ERROR_IGNORE_THIS_USER;
             BAIL_ON_LSA_ERROR(dwError);
         }
+
+        dwError = LsaOpenServer(&hLsaConnection);
+        BAIL_ON_LSA_ERROR(dwError);
         
         dwError = LsaFindUserByName(
                         hLsaConnection,
@@ -417,10 +418,11 @@ pam_sm_authenticate(
         else if(getpwnam(pszLoginId) != NULL)
         {
             dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            pConfig->pszLocalPasswordPrompt,
-            &pszPassword);
+                pamh,
+                pPamContext,
+                pConfig->pszLocalPasswordPrompt,
+                &pszPassword);
+            bIsLocalUser = TRUE;
         }
         else
         {
@@ -432,6 +434,12 @@ pam_sm_authenticate(
         }
         
         BAIL_ON_LSA_ERROR(dwError);
+
+        if (bIsLocalUser)
+        {
+           dwError = LW_ERROR_IGNORE_THIS_USER;
+           BAIL_ON_LSA_ERROR(dwError);
+        }
                 
         iPamError = pam_get_item(
                         pamh,
