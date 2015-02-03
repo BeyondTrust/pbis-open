@@ -852,11 +852,10 @@ LWRemoveUserFromLocalGroup(
         }
     } 
 
-    const char* baseCommand = "dscl . -delete /Groups/";
+    const char* baseCommand = "dseditgroup -o edit -d";
     char* command = NULL;
-    command = (char*)calloc(strlen(baseCommand) + strlen(pszEscapedUsername) + 1 + strlen(pszGroupname) + 1 + 15 + 1, sizeof(char));
-    sprintf(command, "%s%s GroupMembership %s", baseCommand, pszGroupname, pszEscapedUsername);
-
+    command = (char*)calloc(strlen(baseCommand) + 1 + strlen(pszGroupname) + 1 + 8 + strlen(pszEscapedUsername) + 1, sizeof(char));
+    sprintf(command, "%s %s -t user %s", baseCommand, pszEscapedUsername, pszGroupname);
     free(pszEscapedUsername);
 
     long result = system(command);
@@ -886,11 +885,10 @@ LWAddUserToLocalGroup(
             sprintf(pszEscapedUsername, "%s\%c", pszEscapedUsername, pszUsername[i]);
         }
     } 
-
-    const char* baseCommand = "dscl . -append /Groups/";
+    const char* baseCommand = "dseditgroup -o edit -a";
     char* command = NULL;
-    command = (char*)calloc(strlen(baseCommand) + strlen(pszEscapedUsername) + 1 + strlen(pszGroupname) + 1 + 15 + 1, sizeof(char));
-    sprintf(command, "%s%s GroupMembership %s", baseCommand, pszGroupname, pszEscapedUsername);
+    command = (char*)calloc(strlen(baseCommand) + 1 + strlen(pszGroupname) + 1 + 8 + strlen(pszEscapedUsername) + 1, sizeof(char));
+    sprintf(command, "%s %s -t user %s", baseCommand, pszEscapedUsername, pszGroupname);    
     
     free(pszEscapedUsername);
 
