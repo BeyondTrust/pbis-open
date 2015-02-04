@@ -393,6 +393,15 @@ pam_sm_authenticate(
         
         if (LsaShouldIgnoreUser(pszLoginId))
         {
+            // Get the password and store in pam context, for the 
+            // next module in the pam stack using try_first_pass or
+            // use_first_pass 
+            dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                "",
+                &pszPassword);
+
             LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
             dwError = LW_ERROR_IGNORE_THIS_USER;
             BAIL_ON_LSA_ERROR(dwError);
