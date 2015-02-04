@@ -47,6 +47,10 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#ifndef SIZE_MAX
+#define SIZE_MAX    ((size_t)-1)
+#endif
+
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 #ifdef __LWI_DARWIN__
