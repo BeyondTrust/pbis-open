@@ -408,8 +408,28 @@ pam_sm_authenticate(
         }
 
         dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (dwError)
+        {
+            // Lsass is unavailable. If it is a local user, then
+            // get the password and return PAM_IGNORE so that pam_unix
+            // can authenicate the password.
+            LSA_LOG_PAM_INFO("Lsass unavailable (%d)", dwError);
+            if(getpwnam(pszLoginId) != NULL)
+            {
+               dwError = LsaPamGetCurrentPassword(
+                   pamh,
+                   pPamContext,
+                   "",
+                   &pszPassword);
+              LSA_LOG_PAM_DEBUG("By passing lsass for local account");
+              dwError = LW_ERROR_IGNORE_THIS_USER;
+            }
+
+            BAIL_ON_LSA_ERROR(dwError);
+        }
         
+        // Lsass is up. Get the appropriate password prompt if 
+        // group policy is configured.
         dwError = LsaFindUserByName(
                         hLsaConnection,
                         pszLoginId,
@@ -431,7 +451,7 @@ pam_sm_authenticate(
                 pPamContext,
                 pConfig->pszLocalPasswordPrompt,
                 &pszPassword);
-            bIsLocalUser = TRUE;
+             bIsLocalUser = TRUE;
         }
         else
         {
@@ -444,12 +464,6 @@ pam_sm_authenticate(
         
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (bIsLocalUser)
-        {
-           dwError = LW_ERROR_IGNORE_THIS_USER;
-           BAIL_ON_LSA_ERROR(dwError);
-        }
-                
         iPamError = pam_get_item(
                         pamh,
                         PAM_SERVICE,
@@ -507,6 +521,17 @@ pam_sm_authenticate(
                 dwError = 0;
             }
         }
+
+        if (dwError == LW_ERROR_NOT_HANDLED)
+        {
+           if (bIsLocalUser)
+           {
+              // Lsass did not handle this user. If its a local user
+              // then return PAM_IGNORE and let pam_unix handle it.
+              dwError = LW_ERROR_IGNORE_THIS_USER;
+           }
+        }
+
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!pPamContext->pamOptions.bNoRequireMembership)
