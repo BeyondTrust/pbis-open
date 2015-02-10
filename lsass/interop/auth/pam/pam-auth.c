@@ -50,6 +50,8 @@
 #define PAM_BAD_ITEM PAM_SERVICE_ERR
 #endif
 
+static BOOLEAN IsLocalUser(PCSTR pszLoginId);
+
 int
 pam_sm_authenticate(
     pam_handle_t* pamh,
@@ -73,7 +75,6 @@ pam_sm_authenticate(
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
     BOOLEAN bUseRegularAuthentication = TRUE;
-    BOOLEAN bIsLocalUser = FALSE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -410,21 +411,15 @@ pam_sm_authenticate(
         dwError = LsaOpenServer(&hLsaConnection);
         if (dwError)
         {
-            // Lsass is unavailable. If it is a local user, then
-            // get the password and return PAM_IGNORE so that pam_unix
-            // can authenicate the password.
-            LSA_LOG_PAM_INFO("Lsass unavailable (%d)", dwError);
-            if(getpwnam(pszLoginId) != NULL)
-            {
-               dwError = LsaPamGetCurrentPassword(
+            // Lsass is unavailable. Get the password and return PAM_IGNORE
+            //  so that pam_unix or pam_ldap can authenicate the password.
+            dwError = LsaPamGetCurrentPassword(
                    pamh,
                    pPamContext,
                    "",
                    &pszPassword);
-              LSA_LOG_PAM_DEBUG("By passing lsass for local account");
-              dwError = LW_ERROR_IGNORE_THIS_USER;
-            }
-
+            LSA_LOG_PAM_DEBUG("Lsass unavailable. By passing lsass.");
+            dwError = LW_ERROR_IGNORE_THIS_USER;
             BAIL_ON_LSA_ERROR(dwError);
         }
         
@@ -444,22 +439,21 @@ pam_sm_authenticate(
             pConfig->pszActiveDirectoryPasswordPrompt,
             &pszPassword);
         }
-        else if(getpwnam(pszLoginId) != NULL)
+        else if(IsLocalUser(pszLoginId))
         {
             dwError = LsaPamGetCurrentPassword(
                 pamh,
                 pPamContext,
                 pConfig->pszLocalPasswordPrompt,
                 &pszPassword);
-             bIsLocalUser = TRUE;
         }
         else
         {
-            dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            pConfig->pszOtherPasswordPrompt,
-            &pszPassword);
+               dwError = LsaPamGetCurrentPassword(
+               pamh,
+               pPamContext,
+               pConfig->pszOtherPasswordPrompt,
+               &pszPassword);
         }
         
         BAIL_ON_LSA_ERROR(dwError);
@@ -524,12 +518,9 @@ pam_sm_authenticate(
 
         if (dwError == LW_ERROR_NOT_HANDLED)
         {
-           if (bIsLocalUser)
-           {
-              // Lsass did not handle this user. If its a local user
-              // then return PAM_IGNORE and let pam_unix handle it.
-              dwError = LW_ERROR_IGNORE_THIS_USER;
-           }
+            // Lsass did not handle this user. Return PAM_IGNORE
+            // and let pam_unix or pam_ldap handle it.
+            dwError = LW_ERROR_IGNORE_THIS_USER;
         }
 
         BAIL_ON_LSA_ERROR(dwError);
@@ -778,4 +769,40 @@ error:
                           dwError);
     }
     goto cleanup;
+}
+
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   BOOLEAN bFound = FALSE;
+   struct passwd  *pPwdEntry = NULL;
+   FILE *fp = NULL;
+
+   if (!pszLoginId)
+   {
+      BAIL_ON_LSA_ERROR(LW_ERROR_INTERNAL);
+   }
+
+   fp = fopen("/etc/passwd", "r");
+   if (fp == NULL)
+   {
+      BAIL_ON_LSA_ERROR(LwMapErrnoToLwError(errno));
+   }
+
+   pPwdEntry = fgetpwent(fp);
+   while ((pPwdEntry != NULL) && (!bFound))
+   {
+      if (strncmp(pszLoginId, pPwdEntry->pw_name, strlen(pPwdEntry->pw_name)) ==  0) 
+         bFound = TRUE;
+      pPwdEntry = fgetpwent(fp);
+   }
+
+cleanup:
+   if (fp)
+      fclose(fp);
+
+   return bFound;
+
+error:
+   goto cleanup;
 }
