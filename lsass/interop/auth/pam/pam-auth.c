@@ -774,32 +774,54 @@ error:
 static
 BOOLEAN IsLocalUser(PCSTR pszLoginId)
 {
+   DWORD dwError = LW_ERROR_SUCCESS;
    BOOLEAN bFound = FALSE;
-   struct passwd  *pPwdEntry = NULL;
-   FILE *fp = NULL;
+   struct stat statbuf;
+   char buffer[1024];
+   PSTR pUsername = NULL;
+   FILE *file = NULL;
 
    if (!pszLoginId)
-   {
       BAIL_ON_LSA_ERROR(LW_ERROR_INTERNAL);
+
+   
+   dwError = LwAllocateStringPrintf(&pUsername, "%s:", pszLoginId);
+   BAIL_ON_LSA_ERROR(dwError);
+
+   if (stat("/etc/passwd", &statbuf) < 0)
+   {
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
    }
 
-   fp = fopen("/etc/passwd", "r");
-   if (fp == NULL)
+   if (!S_ISREG(statbuf.st_mode))
    {
-      BAIL_ON_LSA_ERROR(LwMapErrnoToLwError(errno));
+       // File is not a regular file.
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
    }
 
-   pPwdEntry = fgetpwent(fp);
-   while ((pPwdEntry != NULL) && (!bFound))
+   file = fopen("/etc/passwd", "r");
+   if (!file)
    {
-      if (strncmp(pszLoginId, pPwdEntry->pw_name, strlen(pPwdEntry->pw_name)) ==  0) 
-         bFound = TRUE;
-      pPwdEntry = fgetpwent(fp);
+      dwError = ERROR_FILE_NOT_FOUND;
+      BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   while (!bFound)
+   {
+      memset(buffer, 0, 1024);
+      if (fgets(buffer, 1024, file) == NULL)
+         break;
+
+      if (strstr(buffer, pUsername)) 
+          bFound = TRUE;
    }
 
 cleanup:
-   if (fp)
-      fclose(fp);
+   LW_SAFE_FREE_STRING(pUsername);
+
+   fclose(file);
 
    return bFound;
 
