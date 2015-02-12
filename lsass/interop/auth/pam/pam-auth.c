@@ -771,6 +771,8 @@ error:
     goto cleanup;
 }
 
+
+#if !defined(__LWI_DARWIN__)
 static
 BOOLEAN IsLocalUser(PCSTR pszLoginId)
 {
@@ -828,3 +830,14 @@ cleanup:
 error:
    goto cleanup;
 }
+#else
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   // Temporary. Scheduled for a later release. On Mac systems, need to
+   // interface with OpenDirectory Services. The limitation is that 
+   // local users and other users with both show the local user password
+   // prompt if the group policy is provisioned.
+   return TRUE;
+}
+#endif
