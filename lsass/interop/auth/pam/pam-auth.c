@@ -50,6 +50,8 @@
 #define PAM_BAD_ITEM PAM_SERVICE_ERR
 #endif
 
+static BOOLEAN IsLocalUser(PCSTR pszLoginId);
+
 int
 pam_sm_authenticate(
     pam_handle_t* pamh,
@@ -73,7 +75,6 @@ pam_sm_authenticate(
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
     BOOLEAN bUseRegularAuthentication = TRUE;
-    BOOLEAN bIsLocalUser = FALSE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -410,21 +411,15 @@ pam_sm_authenticate(
         dwError = LsaOpenServer(&hLsaConnection);
         if (dwError)
         {
-            // Lsass is unavailable. If it is a local user, then
-            // get the password and return PAM_IGNORE so that pam_unix
-            // can authenicate the password.
-            LSA_LOG_PAM_INFO("Lsass unavailable (%d)", dwError);
-            if(getpwnam(pszLoginId) != NULL)
-            {
-               dwError = LsaPamGetCurrentPassword(
+            // Lsass is unavailable. Get the password and return PAM_IGNORE
+            //  so that pam_unix or pam_ldap can authenicate the password.
+            dwError = LsaPamGetCurrentPassword(
                    pamh,
                    pPamContext,
                    "",
                    &pszPassword);
-              LSA_LOG_PAM_DEBUG("By passing lsass for local account");
-              dwError = LW_ERROR_IGNORE_THIS_USER;
-            }
-
+            LSA_LOG_PAM_DEBUG("Lsass unavailable. By passing lsass.");
+            dwError = LW_ERROR_IGNORE_THIS_USER;
             BAIL_ON_LSA_ERROR(dwError);
         }
         
@@ -444,22 +439,21 @@ pam_sm_authenticate(
             pConfig->pszActiveDirectoryPasswordPrompt,
             &pszPassword);
         }
-        else if(getpwnam(pszLoginId) != NULL)
+        else if(IsLocalUser(pszLoginId))
         {
             dwError = LsaPamGetCurrentPassword(
                 pamh,
                 pPamContext,
                 pConfig->pszLocalPasswordPrompt,
                 &pszPassword);
-             bIsLocalUser = TRUE;
         }
         else
         {
-            dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            pConfig->pszOtherPasswordPrompt,
-            &pszPassword);
+               dwError = LsaPamGetCurrentPassword(
+               pamh,
+               pPamContext,
+               pConfig->pszOtherPasswordPrompt,
+               &pszPassword);
         }
         
         BAIL_ON_LSA_ERROR(dwError);
@@ -524,12 +518,9 @@ pam_sm_authenticate(
 
         if (dwError == LW_ERROR_NOT_HANDLED)
         {
-           if (bIsLocalUser)
-           {
-              // Lsass did not handle this user. If its a local user
-              // then return PAM_IGNORE and let pam_unix handle it.
-              dwError = LW_ERROR_IGNORE_THIS_USER;
-           }
+            // Lsass did not handle this user. Return PAM_IGNORE
+            // and let pam_unix or pam_ldap handle it.
+            dwError = LW_ERROR_IGNORE_THIS_USER;
         }
 
         BAIL_ON_LSA_ERROR(dwError);
@@ -779,3 +770,75 @@ error:
     }
     goto cleanup;
 }
+
+
+#if !defined(__LWI_DARWIN__)
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   BOOLEAN bFound = FALSE;
+   struct stat statbuf;
+   char buffer[1024];
+   PSTR pUsername = NULL;
+   FILE *file = NULL;
+
+   if (!pszLoginId)
+      BAIL_ON_LSA_ERROR(LW_ERROR_INTERNAL);
+
+   
+   // Append : delimiter since the first field in passwd file is "username:"
+   dwError = LwAllocateStringPrintf(&pUsername, "%s:", pszLoginId);
+   BAIL_ON_LSA_ERROR(dwError);
+
+   if (stat("/etc/passwd", &statbuf) < 0)
+   {
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   if (!S_ISREG(statbuf.st_mode))
+   {
+       // File is not a regular file.
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   file = fopen("/etc/passwd", "r");
+   if (!file)
+   {
+      dwError = ERROR_FILE_NOT_FOUND;
+      BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   while (!bFound)
+   {
+      memset(buffer, 0, 1024);
+      if (fgets(buffer, 1024, file) == NULL)
+         break;
+
+      if (strncmp(buffer, pUsername, strlen(pUsername)) == 0) 
+          bFound = TRUE;
+   }
+
+cleanup:
+   LW_SAFE_FREE_STRING(pUsername);
+
+   fclose(file);
+
+   return bFound;
+
+error:
+   goto cleanup;
+}
+#else
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   // Temporary. Scheduled for a later release. On Mac systems, need to
+   // interface with OpenDirectory Services. The limitation is that 
+   // local users and other users with both show the local user password
+   // prompt if the group policy is provisioned.
+   return TRUE;
+}
+#endif
