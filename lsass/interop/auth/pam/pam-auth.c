@@ -787,6 +787,7 @@ BOOLEAN IsLocalUser(PCSTR pszLoginId)
       BAIL_ON_LSA_ERROR(LW_ERROR_INTERNAL);
 
    
+   // Append : delimiter since the first field in passwd file is "username:"
    dwError = LwAllocateStringPrintf(&pUsername, "%s:", pszLoginId);
    BAIL_ON_LSA_ERROR(dwError);
 
@@ -816,7 +817,7 @@ BOOLEAN IsLocalUser(PCSTR pszLoginId)
       if (fgets(buffer, 1024, file) == NULL)
          break;
 
-      if (strstr(buffer, pUsername)) 
+      if (strncmp(buffer, pUsername, strlen(pUsername)) == 0) 
           bFound = TRUE;
    }
 
