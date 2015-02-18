@@ -2839,6 +2839,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                     LW_CLEANUP_CTERR(exc, AddOption(conf, line, "use_authtok"));
                 }
             }
+
             state->configuredRequestedModule = TRUE;
             prevLine = line;
             line = NextLineForService(conf, line, service, phase);
@@ -2865,6 +2866,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             DJ_LOG_VERBOSE("The module prompts");
             state->sawPromptingModule = TRUE;
         }
+
 
         /* Ubuntu 8.10 has this configuration:
          * auth [success=1 default=ignore] pam_unix.so nullok_secure
@@ -4063,7 +4065,9 @@ void DJNewConfigurePamForADLogin(
             {
                 LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
                 if(conf.modified)
-                    LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+                {
+                   LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+                 }
             }
             else
             {
@@ -4082,7 +4086,9 @@ void DJNewConfigurePamForADLogin(
         LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, enable, &LW_EXC));
 
         if(conf.modified)
+        {
             LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+        }
         else
             DJ_LOG_INFO("Pam configuration not modified");
     }
@@ -4447,7 +4453,9 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
         options->joiningDomain, &LW_EXC));
 
     if(conf.modified)
+    {
         WritePamConfiguration(tempDir, &conf, &diff);
+    }
 
     if(diff == NULL || strlen(diff) < 1)
     {

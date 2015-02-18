@@ -50,6 +50,8 @@
 #define PAM_BAD_ITEM PAM_SERVICE_ERR
 #endif
 
+static BOOLEAN IsLocalUser(PCSTR pszLoginId);
+
 int
 pam_sm_authenticate(
     pam_handle_t* pamh,
@@ -72,6 +74,7 @@ pam_sm_authenticate(
     PLSA_SECURITY_OBJECT pObject = NULL;
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
+    BOOLEAN bUseRegularAuthentication = TRUE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -92,6 +95,7 @@ pam_sm_authenticate(
        (Solaris), only do that */
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
+        bUseRegularAuthentication = FALSE;
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
         BOOLEAN bChangeRepository = FALSE;
         struct pam_repository *currentRepository = NULL;
@@ -113,6 +117,7 @@ pam_sm_authenticate(
                                 &pszLoginId,
                                 TRUE);
                 BAIL_ON_LSA_ERROR(dwError);
+
 
                 dwError = LsaOpenServer(&hLsaConnection);
 
@@ -180,6 +185,8 @@ pam_sm_authenticate(
          */
         DWORD i;
         int bCheckForSmartCard = 0;
+
+        bUseRegularAuthentication = FALSE;
 
         /*
          * Clear any previous SMART_CARD_PIN and SMART_CARD_READER values.
@@ -370,72 +377,13 @@ pam_sm_authenticate(
              * or use_first_pass if no earlier module
              * prompted for the password.
              */
-            dwError = LsaPamGetLoginId(
-                pamh,
-                pPamContext,
-                &pszLoginId,
-                TRUE);
-            BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LsaOpenServer(&hLsaConnection);
-            BAIL_ON_LSA_ERROR(dwError);
-        
-            /* avoid the extra Lsa call if all the prompts are the same, just choose
-            the first one
-             */
-            if(!(strcmp(pConfig->pszActiveDirectoryPasswordPrompt, 
-                    pConfig->pszLocalPasswordPrompt) == 0 && 
-                strcmp(pConfig->pszLocalPasswordPrompt, 
-                    pConfig->pszOtherPasswordPrompt) == 0))
-            {
-                dwError = LsaFindUserByName(
-                        hLsaConnection,
-                        pszLoginId,
-                        dwUserInfoLevel,
-                        (PVOID*)&pUserInfo);     
-            }
-
-            if(dwError == 0)
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszActiveDirectoryPasswordPrompt,
-                &pszPassword);
-            }
-            else if(getpwnam(pszLoginId) != NULL)
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszLocalPasswordPrompt,
-                &pszPassword);
-            }
-            else
-            {
-                dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                pConfig->pszOtherPasswordPrompt,
-                &pszPassword);
-            }
-
-            BAIL_ON_LSA_ERROR(dwError);
-
-#if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
-            /* On Solaris, we must save the user's password in
-               a custom location so that we can pull it out later
-               for password changes */
-            dwError = LsaPamSetDataString(
-                pamh,
-                PAM_LSASS_OLDAUTHTOK,
-                pszPassword);
-            BAIL_ON_LSA_ERROR(dwError);
-#endif
+            bUseRegularAuthentication = TRUE;
         }
     }
+
     /* Otherwise, proceed with usual authentication */
-    else
+    if (bUseRegularAuthentication)
     {
         dwError = LsaPamGetLoginId(
             pamh,
@@ -443,17 +391,40 @@ pam_sm_authenticate(
             &pszLoginId,
             TRUE);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
         
         if (LsaShouldIgnoreUser(pszLoginId))
         {
+            // Get the password and store in pam context, for the 
+            // next module in the pam stack using try_first_pass or
+            // use_first_pass 
+            dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                "",
+                &pszPassword);
+
             LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-            dwError = LW_ERROR_NOT_HANDLED;
+            dwError = LW_ERROR_IGNORE_THIS_USER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        dwError = LsaOpenServer(&hLsaConnection);
+        if (dwError)
+        {
+            // Lsass is unavailable. Get the password and return PAM_IGNORE
+            //  so that pam_unix or pam_ldap can authenicate the password.
+            dwError = LsaPamGetCurrentPassword(
+                   pamh,
+                   pPamContext,
+                   "",
+                   &pszPassword);
+            LSA_LOG_PAM_DEBUG("Lsass unavailable. By passing lsass.");
+            dwError = LW_ERROR_IGNORE_THIS_USER;
             BAIL_ON_LSA_ERROR(dwError);
         }
         
+        // Lsass is up. Get the appropriate password prompt if 
+        // group policy is configured.
         dwError = LsaFindUserByName(
                         hLsaConnection,
                         pszLoginId,
@@ -468,25 +439,25 @@ pam_sm_authenticate(
             pConfig->pszActiveDirectoryPasswordPrompt,
             &pszPassword);
         }
-        else if(getpwnam(pszLoginId) != NULL)
+        else if(IsLocalUser(pszLoginId))
         {
             dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            pConfig->pszLocalPasswordPrompt,
-            &pszPassword);
+                pamh,
+                pPamContext,
+                pConfig->pszLocalPasswordPrompt,
+                &pszPassword);
         }
         else
         {
-            dwError = LsaPamGetCurrentPassword(
-            pamh,
-            pPamContext,
-            pConfig->pszOtherPasswordPrompt,
-            &pszPassword);
+               dwError = LsaPamGetCurrentPassword(
+               pamh,
+               pPamContext,
+               pConfig->pszOtherPasswordPrompt,
+               &pszPassword);
         }
         
         BAIL_ON_LSA_ERROR(dwError);
-                
+
         iPamError = pam_get_item(
                         pamh,
                         PAM_SERVICE,
@@ -544,6 +515,14 @@ pam_sm_authenticate(
                 dwError = 0;
             }
         }
+
+        if (dwError == LW_ERROR_NOT_HANDLED)
+        {
+            // Lsass did not handle this user. Return PAM_IGNORE
+            // and let pam_unix or pam_ldap handle it.
+            dwError = LW_ERROR_IGNORE_THIS_USER;
+        }
+
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!pPamContext->pamOptions.bNoRequireMembership)
@@ -659,15 +638,6 @@ error:
         LSA_LOG_PAM_WARNING("pam_sm_authenticate error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
-    }
-    else if (dwError == 2 )
-    {
-        // Handle situation when lsass is not available.
-        LSA_LOG_PAM_ERROR("pam_sm_authenticate lsass unavailable [login:%s][error code:%u]",
-                          LSA_SAFE_LOG_STRING(pszLoginId),
-                          dwError);
-        // Setting error code to zero allows of PAM to continue checking for local users such as root.
-        dwError = 0;
     }
     else
     {
@@ -800,3 +770,75 @@ error:
     }
     goto cleanup;
 }
+
+
+#if !defined(__LWI_DARWIN__)
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   BOOLEAN bFound = FALSE;
+   struct stat statbuf;
+   char buffer[1024];
+   PSTR pUsername = NULL;
+   FILE *file = NULL;
+
+   if (!pszLoginId)
+      BAIL_ON_LSA_ERROR(LW_ERROR_INTERNAL);
+
+   
+   // Append : delimiter since the first field in passwd file is "username:"
+   dwError = LwAllocateStringPrintf(&pUsername, "%s:", pszLoginId);
+   BAIL_ON_LSA_ERROR(dwError);
+
+   if (stat("/etc/passwd", &statbuf) < 0)
+   {
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   if (!S_ISREG(statbuf.st_mode))
+   {
+       // File is not a regular file.
+       dwError = ERROR_FILE_NOT_FOUND;
+       BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   file = fopen("/etc/passwd", "r");
+   if (!file)
+   {
+      dwError = ERROR_FILE_NOT_FOUND;
+      BAIL_ON_LSA_ERROR(dwError);
+   }
+
+   while (!bFound)
+   {
+      memset(buffer, 0, 1024);
+      if (fgets(buffer, 1024, file) == NULL)
+         break;
+
+      if (strncmp(buffer, pUsername, strlen(pUsername)) == 0) 
+          bFound = TRUE;
+   }
+
+cleanup:
+   LW_SAFE_FREE_STRING(pUsername);
+
+   fclose(file);
+
+   return bFound;
+
+error:
+   goto cleanup;
+}
+#else
+static
+BOOLEAN IsLocalUser(PCSTR pszLoginId)
+{
+   // Temporary. Scheduled for a later release. On Mac systems, need to
+   // interface with OpenDirectory Services. The limitation is that 
+   // local users and other users with both show the local user password
+   // prompt if the group policy is provisioned.
+   return TRUE;
+}
+#endif
