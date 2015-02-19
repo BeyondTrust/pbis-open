@@ -195,6 +195,37 @@ allow pbis_t var_run_t:fifo_file { read write create unlink open };
 
 allow pbis_t var_run_t:file { read create getattr write ioctl link unlink open };
 
+### autoenroll block start
+require {
+        type net_conf_t;
+        type cert_t;
+        type proc_net_t;
+        type http_port_t;
+        type pbis_t;
+        class tcp_socket name_connect;
+        class lnk_file { read create };
+        class file { setattr read create write getattr open };
+        class dir { search setattr read create write getattr open add_name };
+}
+
+#============= pbis_t ==============
+#!!!! The source type 'pbis_t' can write to a 'dir' of the following types:
+# user_home_type, pbis_var_lib_t, klogd_var_run_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, user_home_dir_t, syslogd_var_lib_t, syslogd_var_run_t, nfs_t, cluster_conf_t
+
+allow pbis_t cert_t:dir { search setattr read create write getattr open add_name };
+#!!!! The source type 'pbis_t' can write to a 'file' of the following types:
+# pbis_etc_t, pbis_tmp_t, user_home_type, etc_runtime_t, pbis_var_lib_t, klogd_var_run_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, selinux_config_t, syslogd_var_lib_t, syslogd_var_run_t, etc_t, logfile, cluster_var_lib_t, cluster_var_run_t, root_t, nfs_t, cluster_conf_t
+
+allow pbis_t cert_t:file { write getattr setattr read create open };
+allow pbis_t cert_t:lnk_file { read create };
+allow pbis_t http_port_t:tcp_socket name_connect;
+#!!!! The source type 'pbis_t' can write to a 'dir' of the following types:
+# pbis_etc_t, pbis_tmp_t, var_lib_t, var_run_t, user_home_type, etc_runtime_t, pbis_var_lib_t, klogd_var_run_t, home_root_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, selinux_config_t, user_home_dir_t, syslogd_var_lib_t, syslogd_var_run_t, var_lock_t, mnt_t, autofs_t, tmp_t, var_t, etc_t, logfile, cluster_var_lib_t, cluster_var_run_t, root_t, nfs_t, cluster_conf_t
+
+allow pbis_t net_conf_t:dir { write add_name };
+allow pbis_t proc_net_t:file { read open };
+
+### autoenroll block end
 
 ### Don't know about this one
 require {
