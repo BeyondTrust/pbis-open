@@ -681,3 +681,67 @@ pbis_client(zos_remote_t)
 
 #Allow socket access so that xdm can log in via the GUI.
 allow pbis_t xdm_t:unix_stream_socket { read write getattr };
+
+### Autoenroll block start
+require {
+	type net_conf_t;
+	type policykit_auth_t;
+	type cert_t;
+	type firewalld_t;
+	type admin_home_t;
+	type NetworkManager_t;
+	type iptables_t;
+	type policykit_t;
+	type pbis_t;
+	type initrc_t;
+	type pbis_var_lib_t;
+	type sysstat_t;
+	type setroubleshootd_t;
+	type NetworkManager_var_run_t;
+	type dhcpc_t;
+	type proc_net_t;
+	type http_port_t;
+	type rpm_var_lib_t;
+	type system_dbusd_t;
+	class process { siginh noatsecure rlimitinh };
+	class unix_stream_socket connectto;
+	class tcp_socket name_connect;
+	class file { write getattr setattr read create open };
+	class sock_file write;
+	class lnk_file create;
+	class dir { write search setattr getattr create add_name };
+}
+
+#============= NetworkManager_t ==============
+allow NetworkManager_t dhcpc_t:process { siginh rlimitinh noatsecure };
+allow NetworkManager_t initrc_t:process { siginh rlimitinh noatsecure };
+allow NetworkManager_t pbis_var_lib_t:file { read getattr open };
+
+#============= firewalld_t ==============
+allow firewalld_t iptables_t:process { siginh rlimitinh noatsecure };
+
+#============= pbis_t ==============
+
+#!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
+allow pbis_t NetworkManager_t:unix_stream_socket connectto;
+allow pbis_t NetworkManager_var_run_t:dir search;
+allow pbis_t NetworkManager_var_run_t:sock_file write;
+allow pbis_t cert_t:dir { write create add_name setattr };
+allow pbis_t cert_t:file { write create setattr };
+allow pbis_t cert_t:lnk_file create;
+allow pbis_t http_port_t:tcp_socket name_connect;
+allow pbis_t net_conf_t:dir { write add_name };
+allow pbis_t proc_net_t:file { read open };
+
+#============= policykit_t ==============
+allow policykit_t policykit_auth_t:process { siginh rlimitinh noatsecure };
+
+#============= setroubleshootd_t ==============
+allow setroubleshootd_t rpm_var_lib_t:file write;
+
+#============= sysstat_t ==============
+allow sysstat_t admin_home_t:dir getattr;
+
+#============= system_dbusd_t ==============
+allow system_dbusd_t setroubleshootd_t:process { siginh rlimitinh noatsecure };
+### Autoenroll block end
