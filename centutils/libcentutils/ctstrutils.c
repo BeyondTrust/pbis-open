@@ -950,3 +950,23 @@ cleanup:
     CTStringBufferDestroy(&result);
     return ceError;
 }
+
+BOOLEAN CTParseLong(PCSTR str, long *val)
+{
+    
+    char *temp;
+    BOOLEAN rc = TRUE;
+    errno = 0;
+    
+    if(str == NULL)
+    {
+        return FALSE;
+    }
+    *val = strtol(str, &temp, 0);
+
+    if (temp == str || *temp != '\0' ||
+        ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+        rc = FALSE;
+
+    return rc;
+}
