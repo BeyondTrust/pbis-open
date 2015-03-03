@@ -951,7 +951,7 @@ cleanup:
     return ceError;
 }
 
-BOOLEAN CTParseLong(PCSTR str, long *val)
+BOOLEAN CTParseInt(PCSTR str, int *val)
 {
     
     char *temp;
@@ -961,11 +961,12 @@ BOOLEAN CTParseLong(PCSTR str, long *val)
     if(str == NULL)
     {
         return FALSE;
-    }
-    *val = strtol(str, &temp, 0);
+    }    
+    
+    *val = strtoimax(str, &temp, 0);
 
     if (temp == str || *temp != '\0' ||
-        ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+        ((*val == INTMAX_MIN || *val == INTMAX_MAX) && errno == ERANGE))
         rc = FALSE;
 
     return rc;

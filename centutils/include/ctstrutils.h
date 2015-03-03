@@ -251,6 +251,8 @@ DWORD CTWriteToken(FILE *file, CTParseToken *token);
 DWORD CTGetTerminalWidth(int terminalFid, int *width);
 DWORD CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns);
 
+BOOLEAN CTParseInt(PCSTR str, int *val);
+
 LW_END_EXTERN_C
 
 
