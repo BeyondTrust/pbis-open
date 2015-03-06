@@ -1069,7 +1069,14 @@ lwmsg_peer_task_dispatch_incoming_message(
        find it and complete it */
     if (task->incoming_message.flags & LWMSG_MESSAGE_FLAG_REPLY)
     {
-        lwmsg_peer_task_complete_call(task, task->incoming_message.cookie);
+        if ( (task->incoming_message.status == LWMSG_STATUS_ERROR) &&
+             (task->incoming_message.tag == -1))
+        {
+            lwmsg_peer_task_cancel_call(task, task->incoming_message.cookie);
+            lwmsg_assoc_destroy_message(task->assoc, &task->incoming_message);
+        }
+        else
+           lwmsg_peer_task_complete_call(task, task->incoming_message.cookie);
         goto error;
     }
     /* If the incoming message is a control message... */
