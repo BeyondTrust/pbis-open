@@ -953,21 +953,29 @@ cleanup:
 
 BOOLEAN CTParseInt(PCSTR str, int *val)
 {
-    
     char *temp;
     BOOLEAN rc = TRUE;
     errno = 0;
+    long lVal = 0;
     
     if(str == NULL)
     {
         return FALSE;
-    }    
-    
-    *val = strtoimax(str, &temp, 0);
+    }
+    lVal = strtol(str, &temp, 0);
 
     if (temp == str || *temp != '\0' ||
-        ((*val == INTMAX_MIN || *val == INTMAX_MAX) && errno == ERANGE))
+        ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE) ||
+            *val < INT_MIN || *val > INT_MAX)
+    {
         rc = FALSE;
+        *val = 0;
+    }
+    else
+    {
+      *val = lVal;  
+    }
 
     return rc;
+    
 }
