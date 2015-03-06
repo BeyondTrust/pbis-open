@@ -965,8 +965,8 @@ BOOLEAN CTParseInt(PCSTR str, int *val)
     lVal = strtol(str, &temp, 0);
 
     if (temp == str || *temp != '\0' ||
-        ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE) ||
-            *val < INT_MIN || *val > INT_MAX)
+        ((lVal == LONG_MIN || lVal == LONG_MAX) && errno == ERANGE) ||
+            lVal < INT_MIN || lVal > INT_MAX)
     {
         rc = FALSE;
         *val = 0;
