@@ -3397,6 +3397,13 @@ AD_EmptyCache(
 {
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
+    
+    PSTR* ppszDomainNames = NULL;
+    DWORD dwDomainCount = 0;
+    DWORD i = 0;
+    BOOLEAN bAllDomainsOnline = TRUE;
+    PLSA_DM_LDAP_CONNECTION pConn = NULL;
+
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3406,20 +3413,52 @@ AD_EmptyCache(
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
     }
-
-    if (peerUID)
+    
+    
+    dwError = LsaDmEnumDomainNames(
+                  pContext->pState->hDmState,
+                  NULL,
+                  NULL,
+                  &ppszDomainNames,
+                  &dwDomainCount);
+    BAIL_ON_LSA_ERROR(dwError);
+   
+    for(i = 0; i < dwDomainCount; i++)
     {
-        dwError = LW_ERROR_ACCESS_DENIED;
-        BAIL_ON_LSA_ERROR(dwError);
+        //poke the dc so we know if it's really online.
+        LsaDmLdapOpenDc(hProvider, ppszDomainNames[i], &pConn); 
+        if(pConn != NULL)
+        {
+            LsaDmpLdapReconnect(pConn);
+        }
+        
+        LsaDmLdapClose(pConn);
+
+        //this only checks the StateFlags so it might not be accurate.
+        if(LsaDmIsDomainOffline(pContext->pState->hDmState,ppszDomainNames[i]))
+        {
+            bAllDomainsOnline = FALSE;
+            dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+            break;
+        }
     }
 
-    dwError = ADCacheEmptyCache(
-                  pContext->pState->hCacheConnection);
+    if(bAllDomainsOnline)
+    {                  
+        if (peerUID)
+        {
+            dwError = LW_ERROR_ACCESS_DENIED;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        dwError = ADCacheEmptyCache(pContext->pState->hCacheConnection);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
     AD_ClearProviderState(pContext);
+    LwFreeStringArray(ppszDomainNames, dwDomainCount);
 
     return dwError;
 

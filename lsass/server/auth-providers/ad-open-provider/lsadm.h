@@ -629,6 +629,11 @@ LsaDmQueryIncludeTrusts(
     OUT PDWORD pdwTrustCount
     );
 
+DWORD
+LsaDmpLdapReconnect(
+    IN OUT PLSA_DM_LDAP_CONNECTION pLdap
+    );
+
 /// @} lsa_om
 
 #endif /* __LSA_DM_H__ */
