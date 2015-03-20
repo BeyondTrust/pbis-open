@@ -350,6 +350,92 @@ allow pbis_t selinux_config_t:dir { write remove_name add_name };
 allow pbis_t selinux_config_t:file { write rename create unlink setattr };
 allow pbis_t system_cron_spool_t:dir getattr;
 
+## Start autoenroll
+
+require {
+	type unconfined_t;
+	type net_conf_t;
+	type semanage_t;
+	type system_dbusd_var_run_t;
+	type cert_t;
+	type system_dbusd_t;
+	type admin_home_t;
+	type NetworkManager_t;
+	type kernel_t;
+	type setfiles_t;
+	type pbis_var_lib_t;
+	type load_policy_t;
+	type sysstat_t;
+	type bin_t;
+	type pbis_etc_t;
+	type rpm_t;
+	type pbis_t;
+	type var_t;
+	type http_port_t;
+	type proc_net_t;
+	class process { siginh noatsecure rlimitinh };
+	class unix_stream_socket connectto;
+	class dbus send_msg;
+	class system module_request;
+	class capability net_admin;
+	class tcp_socket name_connect;
+	class file { setattr read create write relabelfrom getattr relabelto open };
+	class sock_file write;
+	class lnk_file { read create };
+	class dir { search setattr read create write getattr open add_name };
+}
+
+#============= NetworkManager_t ==============
+allow NetworkManager_t pbis_t:dbus send_msg;
+allow NetworkManager_t pbis_var_lib_t:file { read getattr open };
+
+#============= pbis_t ==============
+allow pbis_t NetworkManager_t:dbus send_msg;
+#!!!! The source type 'pbis_t' can write to a 'dir' of the following types:
+# user_home_dir_t, syslogd_var_lib_t, syslogd_var_run_t, user_home_type, pbis_var_lib_t, klogd_var_run_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, nfs_t
+
+allow pbis_t cert_t:dir { search setattr read create write getattr open add_name };
+#!!!! The source type 'pbis_t' can write to a 'file' of the following types:
+# selinux_config_t, syslogd_var_lib_t, syslogd_var_run_t, logfile, etc_t, pbis_etc_t, user_home_type, pbis_tmp_t, pbis_var_lib_t, etc_runtime_t, klogd_var_run_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, root_t, nfs_t
+
+allow pbis_t cert_t:file { write getattr setattr read create open };
+allow pbis_t cert_t:lnk_file { read create };
+allow pbis_t http_port_t:tcp_socket name_connect;
+
+#!!!! This avc can be allowed using the boolean 'domain_kernel_load_modules'
+allow pbis_t kernel_t:system module_request;
+#!!!! The source type 'pbis_t' can write to a 'dir' of the following types:
+# mnt_t, tmp_t, var_t, selinux_config_t, user_home_dir_t, syslogd_var_lib_t, syslogd_var_run_t, logfile, autofs_t, etc_t, pbis_etc_t, var_lib_t, var_run_t, user_home_type, pbis_tmp_t, pbis_var_lib_t, home_root_t, etc_runtime_t, klogd_var_run_t, var_lock_t, klogd_tmp_t, syslog_conf_t, syslogd_tmp_t, root_t, nfs_t
+
+allow pbis_t net_conf_t:dir { write add_name };
+allow pbis_t pbis_etc_t:file { relabelfrom relabelto };
+allow pbis_t proc_net_t:file { read open };
+allow pbis_t self:capability net_admin;
+allow pbis_t system_dbusd_t:dbus send_msg;
+allow pbis_t system_dbusd_t:unix_stream_socket connectto;
+allow pbis_t system_dbusd_var_run_t:dir search;
+allow pbis_t system_dbusd_var_run_t:sock_file write;
+allow pbis_t unconfined_t:dbus send_msg;
+allow pbis_t var_t:dir create;
+
+#============= semanage_t ==============
+allow semanage_t load_policy_t:process { siginh rlimitinh noatsecure };
+allow semanage_t setfiles_t:process { siginh rlimitinh noatsecure };
+
+#============= setfiles_t ==============
+allow setfiles_t bin_t:lnk_file read;
+
+#============= sysstat_t ==============
+allow sysstat_t admin_home_t:dir { getattr search };
+
+#============= system_dbusd_t ==============
+allow system_dbusd_t rpm_t:process { siginh rlimitinh noatsecure };
+
+#============= unconfined_t ==============
+allow unconfined_t pbis_t:dbus send_msg;
+
+## End autoenroll
+
 require {
     type abrt_t;
     type accountsd_t;
