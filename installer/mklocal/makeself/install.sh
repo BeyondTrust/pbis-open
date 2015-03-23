@@ -1088,6 +1088,11 @@ do_purge()
 
     remove_extra_files
 
+    if [ "$PKGTYPE" = "linux_rpm" ]; then
+        semodule -r pbis
+    fi
+
+
     scrub_prefix
 
     log_info "Uninstall complete"
