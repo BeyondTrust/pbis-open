@@ -957,14 +957,30 @@ BOOLEAN CTParseInt(PCSTR str, int *val)
     BOOLEAN rc = TRUE;
     errno = 0;
     long lVal = 0;
+    PSTR sanitizedStr = NULL;
+    int iStrLen = 0;
     
     if(str == NULL)
     {
         return FALSE;
     }
-    lVal = strtol(str, &temp, 0);
+    
+    //strip precdeding '0' characters
+    iStrLen = strlen(str);
+    CTAllocateMemory((iStrLen +1 )* sizeof(char), (PVOID*)&sanitizedStr);
+    int i = 0;
+    for(i = 0; i < iStrLen; i++)
+    {
+        if(str[i] != '0')
+        {
+            break;
+        }
+    }
+    strcpy(sanitizedStr, str + i);
+    
+    lVal = strtol(sanitizedStr, &temp, 0);
 
-    if (temp == str || *temp != '\0' ||
+    if (temp == sanitizedStr || *temp != '\0' ||
         ((lVal == LONG_MIN || lVal == LONG_MAX) && errno == ERANGE) ||
             lVal < INT_MIN || lVal > INT_MAX)
     {
@@ -976,6 +992,8 @@ BOOLEAN CTParseInt(PCSTR str, int *val)
       *val = lVal;  
     }
 
+    CTFreeMemory(sanitizedStr);
+    
     return rc;
     
 }
