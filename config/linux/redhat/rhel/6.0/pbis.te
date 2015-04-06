@@ -434,6 +434,38 @@ allow system_dbusd_t rpm_t:process { siginh rlimitinh noatsecure };
 #============= unconfined_t ==============
 allow unconfined_t pbis_t:dbus send_msg;
 
+
+require {
+	type net_conf_t;
+	type semanage_t;
+	type xdm_dbusd_t;
+	type cert_t;
+	type usr_t;
+	type xdm_var_lib_t;
+	type pbis_t;
+	type load_policy_t;
+	class process { siginh noatsecure rlimitinh };
+	class capability sys_nice;
+	class lnk_file read;
+	class file { rename unlink };
+	class dir { remove_name search };
+}
+
+#============= pbis_t ==============
+allow pbis_t cert_t:dir remove_name;
+allow pbis_t cert_t:file { rename unlink };
+allow pbis_t net_conf_t:dir remove_name;
+allow pbis_t self:capability sys_nice;
+allow pbis_t usr_t:lnk_file read;
+
+#============= semanage_t ==============
+
+#!!!! This avc is allowed in the current policy
+allow semanage_t load_policy_t:process { siginh rlimitinh noatsecure };
+
+#============= xdm_dbusd_t ==============
+allow xdm_dbusd_t xdm_var_lib_t:dir search;
+
 ## End autoenroll
 
 require {
