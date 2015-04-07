@@ -373,6 +373,25 @@ allow setroubleshootd_t rpm_var_lib_t:file write;
 #============= system_dbusd_t ==============
 allow system_dbusd_t setroubleshootd_t:process { siginh rlimitinh noatsecure };
 
+require {
+	type net_conf_t;
+	type postfix_pickup_t;
+	type cert_t;
+	type postfix_master_t;
+	type pbis_t;
+	class process { siginh noatsecure rlimitinh };
+	class file { rename unlink };
+	class dir remove_name;
+}
+
+#============= pbis_t ==============
+allow pbis_t cert_t:dir remove_name;
+allow pbis_t cert_t:file { rename unlink };
+allow pbis_t net_conf_t:dir remove_name;
+
+#============= postfix_master_t ==============
+allow postfix_master_t postfix_pickup_t:process { siginh rlimitinh noatsecure };
+
 ## End autoenroll
 
 require {
