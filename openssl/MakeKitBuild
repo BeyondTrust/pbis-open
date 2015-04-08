@@ -289,7 +289,7 @@ configure_openssl()
             ;;
         aix-ppc32)
             host_string="aix-gcc"
-            extra_args="-static-libgcc"
+            extra_args="no-asm -static-libgcc"
             ;;
         hpux-ia64_32)
             host_string="hpux-ia64-gcc"
