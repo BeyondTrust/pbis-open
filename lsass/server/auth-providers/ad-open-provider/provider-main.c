@@ -3404,7 +3404,15 @@ AD_EmptyCache(
     BOOLEAN bAllDomainsOnline = TRUE;
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
 
-
+    char* forceOfflineDelete = strchr(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance, ':');
+    BOOLEAN bForceOfflineDelete = atoi(forceOfflineDelete+1);
+    forceOfflineDelete[0] = '\0';
+    if(strlen(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance) == 0)
+    {                
+        LwFreeString(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance);
+        ((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance = NULL;
+    }
+    
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
     
@@ -3414,32 +3422,35 @@ AD_EmptyCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    
-    dwError = LsaDmEnumDomainNames(
-                  pContext->pState->hDmState,
-                  NULL,
-                  NULL,
-                  &ppszDomainNames,
-                  &dwDomainCount);
-    BAIL_ON_LSA_ERROR(dwError);
-   
-    for(i = 0; i < dwDomainCount; i++)
+    if(!bForceOfflineDelete)
     {
-        //poke the dc so we know if it's really online.
-        LsaDmLdapOpenDc(hProvider, ppszDomainNames[i], &pConn); 
-        if(pConn != NULL)
-        {
-            LsaDmpLdapReconnect(pConn);
-        }
-        
-        LsaDmLdapClose(pConn);
+        dwError = LsaDmEnumDomainNames(
+                      pContext->pState->hDmState,
+                      NULL,
+                      NULL,
+                      &ppszDomainNames,
+                      &dwDomainCount);
+        BAIL_ON_LSA_ERROR(dwError);
 
-        //this only checks the StateFlags so it might not be accurate.
-        if(LsaDmIsDomainOffline(pContext->pState->hDmState,ppszDomainNames[i]))
+        for(i = 0; i < dwDomainCount; i++)
         {
-            bAllDomainsOnline = FALSE;
-            dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-            break;
+            //poke the dc so we know if it's really online.
+            LsaDmLdapOpenDc(hProvider, ppszDomainNames[i], &pConn); 
+            if(pConn != NULL)
+            {
+                LsaDmpLdapReconnect(pConn);
+            }
+
+            LsaDmLdapClose(pConn);
+
+            //this only checks the StateFlags so it might not be accurate.
+            if(LsaDmIsDomainOffline(pContext->pState->hDmState,ppszDomainNames[i]))
+            {
+                bAllDomainsOnline = FALSE;
+                dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+                LSA_LOG_ERROR("Cache could not be emptied because the domain is offline", dwError);
+                break;
+            }
         }
     }
 

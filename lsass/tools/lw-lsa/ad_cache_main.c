@@ -80,6 +80,7 @@ ParseArgs(
     PSTR*  ppszName,
     uid_t* pUID,
     gid_t* pGID,
+    bool* bForceOfflineDelete,    
     DWORD* pdwBatchSize
     );
 
@@ -127,6 +128,7 @@ ad_cache_main(
     PSTR    pszName = NULL;
     uid_t   uid = 0;
     gid_t   gid = 0;
+    bool    bForceOfflineDelete;
     DWORD   dwBatchSize = 10;
 
     if (argc < 2 ||
@@ -151,6 +153,7 @@ ad_cache_main(
                   &pszName,
                   &uid,
                   &gid,
+                  &bForceOfflineDelete,
                   &dwBatchSize);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -164,7 +167,8 @@ ad_cache_main(
 
             dwError = LsaAdEmptyCache(
                           hLsaConnection,
-                          pszDomainName);
+                          pszDomainName,
+                          bForceOfflineDelete);
             BAIL_ON_LSA_ERROR(dwError);
 
             fprintf(stdout, "The cache has been emptied successfully.\n");
@@ -330,6 +334,7 @@ ParseArgs(
     PSTR*  ppszName,
     uid_t* pUID,
     gid_t* pGID,
+    bool* bForceOfflineDelete,
     DWORD* pdwBatchSize
     )
 {
@@ -340,6 +345,7 @@ ParseArgs(
             PARSE_MODE_UID,
             PARSE_MODE_GID,
             PARSE_MODE_BATCHSIZE,
+            PARSE_MODE_FORCE_OFFLINE_DELETE,
             PARSE_MODE_DONE
     } ParseMode;
 
@@ -353,6 +359,8 @@ ParseArgs(
     uid_t uid = 0;
     gid_t gid = 0;
     DWORD dwBatchSize = 10;
+    
+    *bForceOfflineDelete = false;
 
     do {
         pszArg = argv[iArg++];
@@ -372,7 +380,7 @@ ParseArgs(
                     exit(0);
                 }
                 else if (!strcmp(pszArg, "--delete-all")) {
-                    dwAction = ACTION_DELETE_ALL;
+                    dwAction = ACTION_DELETE_ALL;            
                 }
                 else if (!strcmp(pszArg, "--delete-user")) {
                     dwAction = ACTION_DELETE_USER;
@@ -400,6 +408,9 @@ ParseArgs(
                 }
                 else if (!strcmp(pszArg, "--batchsize")) {
                     parseMode = PARSE_MODE_BATCHSIZE;
+                }
+                else if (!strcmp(pszArg, "--force-offline-delete")) {
+                    parseMode = PARSE_MODE_FORCE_OFFLINE_DELETE;
                 }
                 else
                 {
@@ -462,6 +473,10 @@ ParseArgs(
                 }
                 parseMode = PARSE_MODE_OPEN;
 
+                break;
+            case PARSE_MODE_FORCE_OFFLINE_DELETE:
+                *bForceOfflineDelete = (strcasecmp(pszArg, "true") == 0);
+                parseMode = PARSE_MODE_OPEN;
                 break;
 
             case PARSE_MODE_DONE:
@@ -536,7 +551,7 @@ ShowUsage(
     PCSTR pszProgramName
     )
 {
-    fprintf(stdout, "Usage: %s --delete-all [--domain domain]\n", pszProgramName);
+    fprintf(stdout, "Usage: %s --delete-all [--domain domain] [--force-offline-delete true]\n", pszProgramName);
     fprintf(stdout, "       %s --delete-user [--domain domain] {--name <user login id> | --uid <uid>} \n", pszProgramName);
     fprintf(stdout, "       %s --delete-group [--domain domain] {--name <group name> | --gid <gid>} \n", pszProgramName);
     fprintf(stdout, "       %s --enum-users [--domain domain] {--batchsize [1..1000]}\n", pszProgramName);

@@ -50,7 +50,8 @@
 DWORD
 LsaAdEmptyCache(
     IN HANDLE hLsaConnection,
-    IN OPTIONAL PCSTR pszDomainName
+    IN OPTIONAL PCSTR pszDomainName,
+    IN BOOLEAN bForceOfflineDelete
     )
 {
     DWORD dwError = 0;
@@ -66,15 +67,25 @@ LsaAdEmptyCache(
     {
         dwError = LwAllocateStringPrintf(
                       &pszTargetProvider,
-                      "%s:%s",
+                      "%s:%s:%d",
                       LSA_PROVIDER_TAG_AD,
-                      pszDomainName);
+                      pszDomainName,
+                      bForceOfflineDelete);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s::%d",
+                      LSA_PROVIDER_TAG_AD,                 
+                      bForceOfflineDelete);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  pszTargetProvider ? pszTargetProvider : LSA_PROVIDER_TAG_AD,
+                  pszTargetProvider,
                   LSA_AD_IO_EMPTYCACHE,
                   0,
                   NULL,

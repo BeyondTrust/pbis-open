@@ -71,7 +71,8 @@
 DWORD
 LsaAdEmptyCache(
     IN HANDLE hLsaConnection,
-    IN OPTIONAL PCSTR pszDomainName
+    IN OPTIONAL PCSTR pszDomainName,
+    IN BOOLEAN bForceOfflineDelete
     );
 
 DWORD
