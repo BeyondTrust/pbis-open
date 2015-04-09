@@ -976,7 +976,7 @@ BOOLEAN CTParseInt(PCSTR str, int *val)
             break;
         }
     }
-    strcpy(sanitizedStr, str + i);
+    strncpy(sanitizedStr, str + i, iStrLen);
     
     lVal = strtol(sanitizedStr, &temp, 0);
 
