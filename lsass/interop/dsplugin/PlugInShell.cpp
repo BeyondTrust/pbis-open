@@ -368,7 +368,7 @@ long PlugInShell_Initialize(void)
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
         } else if (strstr(pszVersion, "14.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
         } else {
             isUnsupported = true;
