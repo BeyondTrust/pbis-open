@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=conftestparse \
+        SOURCES="testparse.c" \
+        INCLUDEDIRS="../../../../include" \
+        HEADERDEPS="lwerror.h" \
+        LIBDEPS=""
+}

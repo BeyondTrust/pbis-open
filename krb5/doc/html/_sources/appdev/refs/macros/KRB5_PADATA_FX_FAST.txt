@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-FX-FAST-data:
+
+KRB5_PADATA_FX_FAST
+===================
+
+..
+.. data:: KRB5_PADATA_FX_FAST
+..
+
+
+
+
+========================== ======================
+``KRB5_PADATA_FX_FAST``       ``136``
+========================== ======================

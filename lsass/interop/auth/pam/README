@@ -1,0 +1,134 @@
+Facilities offered by PAM
+
+auth
+
+   Authenticates the applicant using pam_authenticate(3).
+   Requests an authentication token and compares it against a value
+   stored in the database.
+
+   Establishes the account credentials using pam_setcred(3).
+   Account credentials include user id, group id and resource limits.
+
+account
+
+   Enforces access restrictions using pam_acct_mgmt(3).
+
+   pam_acct_mgmt verifies that the requested account is available.
+
+session
+
+   Provides login accounting support and to setup and tear down login sessions.
+
+   pam_open_session(3) and pam_close_session(3) are the methods available
+   to perform this functionality.
+
+password
+
+   Provides support to change the authentication token, using
+   pam_chauthtok(3).
+
+   This method might disallow the new authentication token based on 
+   password rules.
+
+Return codes:
+============
+
+PAM_SUCCESS
+
+	conversation completed successfully
+
+PAM_CONV_ERR
+
+	conversation failed
+
+PAM_CONV_AGAIN
+
+	return to application to complete conversation
+
+PAM_CONV_RECONSIDER
+
+	Application believes that the module (lsass) should check
+        if it still needs to converse
+
+Configuration
+=============
+
+PAM uses the following control flags in the configuration.
+
+binding
+
+	If the module succeeds and no earlier module in the chain has failed,
+        the chain is terminated and the request is granted success.
+
+        If the module fails, the rest of the chain is executed; however, the
+        request is failed ultimately.
+
+required
+
+	If the module succeeds, the rest of the chain is executed - and if
+        all the other modules succeed, the request is granted.
+   
+        If the module fails, the rest of the chain is executed; however, the
+        request is failed ultimately.
+
+requisite
+
+	If the module succeeds, the rest of the chain is executed - and if
+        all the other modules succeed, the request is granted.
+
+ 	If the module fails, the chain is terminated immediately and the
+        request is denied.
+
+sufficient
+
+        If the module succeeds, and no earlier module has failed, the chain
+        is terminated immediately and the request is granted success.
+
+        if the module fails, it is ignored and the rest of the chain is
+        executed.
+
+        The binding option should be used instead if it is available.
+
+optional
+
+        The module is executed, but the result is ignored.
+
+A PAM Transaction:
+=================
+
+1. Server calls pam_start to init the PAM library and specify its service name
+   and the target account, and register a suitable conversation function.
+
+2. Server obtains various information such as applicant name and name of host
+   the client is running on and submits this information to PAM using
+   calls to pam_set_item.
+
+3. Server calls pam_authenticate to authenticate the applicant.
+
+4. Server calls pam_acct_mgmt to verify that the requested account is
+   available and valid. If the password is correct but has expired, the return
+   code is PAM_NEW_AUTHTOK_REQD instead of PAM_SUCCESS.
+
+5. If the previous step returned PAM_NEW_AUTHTOK_REQD, the server now calls
+   pam_chauthtok to change the auth token.
+
+6. If the applicant is properly authenticated, the server calls pam_setcred
+   to establish the credentials for the requested account.
+
+7. Once the correct credentials have been established, the server calls
+   pam_open_session to setup the session.
+
+8. The server performs the service that the client requested.
+
+9. After the service is done, the server calls pam_close_session to tear
+   down the session.
+
+10. The server calls pam_end to notify the PAM library that it is done
+    and any resources accrued can be released.
+
+
+References:
+==========
+
+http://www.freebsd.org/doc/en_US.ISO8859-1/articles/pam/pam-essentials.html
+

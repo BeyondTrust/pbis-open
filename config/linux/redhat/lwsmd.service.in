@@ -1,0 +1,20 @@
+[Unit]
+Description=BeyondTrust PBIS Service Manager
+After=network.target 
+
+[Service]
+Type=forking
+EnvironmentFile=@MK_LIBEXECDIR@/init-base.sh
+ExecStart=@MK_SBINDIR@/lwsmd --start-as-daemon 
+ExecReload=@MK_BINDIR@/lwsm refresh
+ExecStop=@MK_BINDIR@/lwsm shutdown
+# We want systemd to give lwsmd some time to finish gracefully, but still want
+# it to kill lwsmd after TimeoutStopSec if something went wrong during the
+# graceful stop. Normally, Systemd sends SIGTERM signal right after the
+# ExecStop, which would kill lwsmd. We are sending useless SIGCONT here to give
+# lwsmd time to finish.
+KillSignal=SIGCONT
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target nss-lookup.target

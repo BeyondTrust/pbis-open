@@ -1,0 +1,87 @@
+======================================
+FreeDCE RPC and DCOM Toolkit for Linux
+======================================
+
+This package provides support for developing DCE RPC and Microsoft RPC
+applications on the Linux platform. The source code and binaries are
+freely-redistributable provided you maintains the copyright notice of the
+source components.
+
+This package could be ported to other platforms as well, provided that you can
+implement the semantics of the DCE Exceptions and DCE Threads on the target
+platforms' thread layer.
+
+FreeDCE for Linux relies on GNU Libc 2.x and LinuxThreads Pthreads.  DCE
+Threads and DCE Exceptions are emulated using LinuxThreads, allowing for
+multithreaded RPC client and server applications to coexist with other
+threaded and non-threaded library components in the Linux development
+environment.
+
+Inventory of Goods:
+-------------------
+* OSF DCE 1.1 IDL compiler
+* DCE RPC runtime and development libraries/headers
+* `uuid' tool for generating and manipulating DCE UUIDs
+* rpcd - the host endpoint mapper for DCE RPC applications
+* Performance, Interoperability and Functionality test suite
+* some demonstration code for writing clients and servers
+
+How to Build:
+-------------
+This package uses autoconf, so `say' the following at a prompt:
+
+ % ./configure
+ % make
+ % su
+ # make install
+
+Note that things will install in /opt/dce by default. To change this, pass the
+--prefix argument to configure.
+
+What the install process doesn't do is arrange for the rpcd to run at startup;
+check out the rc.dce-clean and rc.dcerpcd scripts and install them: for RedHat
+use a set of commands like this:
+
+ # ln -s /etc/rc.d/init.d/rc.dcerpcd /etc/rc.d/rc0.d/K30dcerpcd
+ # ln -s /etc/rc.d/init.d/rc.dce-clear /etc/rc.d/rc3.d/S60dce-clean
+ # ln -s /etc/rc.d/init.d/rc.dcerpcd /etc/rc.d/rc3.d/S61dcerpcd
+
+You might also need to add /opt/dce/lib to your /etc/ld.so.conf
+
+How to build your own programs that use DCE RPC
+-----------------------------------------------
+
+CFLAGS +=-D_REENTRANT -D_GNU_SOURCE
+LIBS += -ldcepthreads
+If you are using the uuid library, you will also need:
+LIBS += -luuid
+
+----------------------
+
+Notes for AIX:
+----------------------
+
+- You must install GNU find otherwise dcelib will not link correctly.
+  This took a lot of tracking down!
+- You should use GNU Bison 1.35 - newer versions appear not to work
+- You must install your own libtool and it MUST have been built with
+  LDFLAGS=-Wl,-brtl
+- You must use the native linker, not the GNU ld
+
+Todo:
+----------------------
+
+- support for rpc_if registration flags
+- correlation robustness in [transmit_as] unmarshalling code
+- check max_rpc_size
+- support for security callbacks
+- explicit support for type pickling (without MIDL_COMPAT)
+
+Maintainers:
+ Luke Howard, lukeh@novell.com
+
+Contributors:
+ Jim Doyle, jrd@bu.edu
+ Wez Furlong, wez@thebrainroom.com
+ Miroslaw Dobrzanski-Neumann, mne@mosaic-ag.com
+

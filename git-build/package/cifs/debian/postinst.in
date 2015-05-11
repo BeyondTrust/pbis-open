@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -e
+
+PATH=$PATH:@MK_BINDIR@
+export PATH
+
+case "$1" in
+    abort-upgrade)
+        ;;
+
+    configure)
+
+        /etc/init.d/lwsmd stop >/dev/null 2>&1
+        sleep 2
+
+        if [ "@IS_EMBEDDED@" = "no" ]
+        then
+            domainjoin-cli configure --enable pam >/dev/null
+            domainjoin-cli configure --enable nsswitch >/dev/null
+        fi
+
+	/etc/init.d/lwsmd start
+
+        for file in "@LW_CONFIGDIR@/"*.reg; do
+            echo "Importing $file..."
+            lwregshell import $file >/dev/null
+        done
+
+        lwsm shutdown
+        sleep 2
+
+        /usr/sbin/update-rc.d -f lwsmd defaults 17 8 > /dev/null
+        /usr/sbin/update-rc.d -f likewise defaults 18 7 > /dev/null
+
+        /etc/init.d/lwsmd start
+        /etc/init.d/likewise start
+        ;;
+esac
+
+#DEBHELPER#

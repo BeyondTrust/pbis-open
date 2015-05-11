@@ -1,0 +1,2402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: String.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>String.h</h1>OpenSOAP API 文字列処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="ByteArray_8h-source.html">OpenSOAP/ByteArray.h</a>&gt;</code><br>
+<code>#include &lt;stdarg.h&gt;</code><br>
+
+<p>
+<a href="String_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a0" doxytag="String.h::OpenSOAPString" ></a>
+typedef tagOpenSOAPString&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a0">OpenSOAPString</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="String.h::OpenSOAPStringPtr" ></a>
+typedef <a class="el" href="String_8h.html#a0">OpenSOAPString</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPString ポインタ定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>typedef int(*&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a2">OpenSOAPStringFindIfFunc</a> )(void *opt, wchar_t c, int *judge)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Find String Function Pointer Type Definition.  <a href="#a2"></a><br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a3">OpenSOAPStringCreate</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">長さ 0 の OpenSOAP 文字列の作成。.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a4">OpenSOAPStringCreateWithMB</a> (const char *mb_str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">マルチバイト文字列により初期化した OpenSOAP 文字列の作成。  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a5">OpenSOAPStringCreateWithWC</a> (const wchar_t *wc_str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ワイドキャラクタ文字列により初期化した OpenSOAP 文字列の作成。  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a6">OpenSOAPStringCreateWithCharEncodingString</a> (const char *char_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> char_enc_str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Character-encoding 指定文字列により初期化した OpenSOAP 文字列の作成。.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a7">OpenSOAPStringCreateWithUTF8</a> (const char *utf8Str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">指定 UTF-8 文字列により初期化した OpenSOAP 文字列の作成。  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a8">OpenSOAPStringRetain</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">参照の追加。  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a9">OpenSOAPStringRelease</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">参照の開放。参照先がなくなった場合、リソースの開放も行う。  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a10">OpenSOAPStringGetLengthMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, size_t *len)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在の locale におけるマルチバイト文字列のサイズを取得する。  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a11">OpenSOAPStringGetLengthWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, size_t *len)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ワイドキャラクタ文字列における長さを取得する。  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a12">OpenSOAPStringGetStringMBWithAllocator</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, char *(*memAllocator)(size_t), size_t *len, char **mbStr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP String GetStringMB with memAllocator.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a13">OpenSOAPStringGetStringWCWithAllocator</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, wchar_t *(*memAllocator)(size_t), size_t *len, wchar_t **wcStr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP String GetStringWC with memAllocator.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a14">OpenSOAPStringGetStringUTF8WithAllocator</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, char *(*memAllocator)(size_t), size_t *len, char **utf8Str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP String GetString as UTF-8 encoding with memAllocator.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a15">OpenSOAPStringGetStringMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, size_t *len, char *mb_Str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在の locale におけるマルチバイト文字列を取得する。  <a href="#a15"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a16">OpenSOAPStringGetStringWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, size_t *len, wchar_t *wc_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ワイドキャラクタ文字列を取得する。  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a17">OpenSOAPStringGetCharEncodingString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *char_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> char_enc_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get character encoding string.  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a18">OpenSOAPStringSetStringMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *mb_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在の locale におけるマルチバイト文字列を設定する。  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a19">OpenSOAPStringSetStringWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *wc_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ワイドキャラクタ文字列を設定する。  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a20">OpenSOAPStringSetCharEncodingString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *char_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> charEncStr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在の locale におけるマルチバイト文字列を設定する。  <a href="#a20"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a21">OpenSOAPStringSetStringUTF8</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *utf8Str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set UTF-8 encoded string.  <a href="#a21"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a22">OpenSOAPStringFormatMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *format,...)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">書式整形(MB)  <a href="#a22"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a23">OpenSOAPStringFormatWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *format,...)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">書式整形(WC)  <a href="#a23"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a24">OpenSOAPStringVFormatMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *format, va_list ap)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">va_list を用いた書式整形(MB)  <a href="#a24"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a25">OpenSOAPStringVFormatWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *format, va_list ap)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">va_list を用いた書式整形(WC)  <a href="#a25"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a26">OpenSOAPStringCompareMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *cmp_str, int *cmp_rslt)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列比較(MB).  <a href="#a26"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a27">OpenSOAPStringCompareWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *cmp_str, int *cmp_rslt)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列比較(WC).  <a href="#a27"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a28">OpenSOAPStringCompare</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> cmp_str, int *cmp_rslt)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列比較.  <a href="#a28"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a29">OpenSOAPStringFindStringMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *find_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列検索(MB).  <a href="#a29"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a30">OpenSOAPStringFindStringWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *find_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列検索(WC).  <a href="#a30"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a31">OpenSOAPStringFindString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> find_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列検索.  <a href="#a31"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a32">OpenSOAPStringFindIfStringIndex</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="String_8h.html#a2">OpenSOAPStringFindIfFunc</a> find_func, void *find_func_opt, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列検索.  <a href="#a32"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a33">OpenSOAPStringReplaceStringMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *find_str, const char *rplc_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列置換(MB).  <a href="#a33"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a34">OpenSOAPStringReplaceStringWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *find_str, const wchar_t *rplc_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列置換(WC).  <a href="#a34"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a35">OpenSOAPStringReplaceString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> find_str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> rplc_str, size_t *idx)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">文字列置換.  <a href="#a35"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a36">OpenSOAPStringClear</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP 文字列をクリアして、長さを 0 にする。.  <a href="#a36"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a37">OpenSOAPStringAppendMB</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const char *mb_str, size_t mb_len)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">現在の locale におけるマルチバイト文字列を OpenSOAP 文字列に追加する(MB)  <a href="#a37"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a38">OpenSOAPStringAppendWC</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, const wchar_t *wc_str, size_t wc_len)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ワイドキャラクタ文字列を OpenSOAP 文字列に追加する(WC)  <a href="#a38"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a39">OpenSOAPStringDuplicate</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *dup_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Duplicate String.  <a href="#a39"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a40">OpenSOAPStringGetSubstring</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, size_t beg, size_t len, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *sub_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get Sub-string of OpenSOAPString.  <a href="#a40"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a41">OpenSOAPStringConvertCharEncoding</a> (const char *from_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> from_str, const char *to_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> to_str)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert character encoding. This function does not use the OpenSOAP member, but is used for string processing.  <a href="#a41"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a42">OpenSOAPStringConvertXMLCharRefToUTF8</a> (const unsigned char *utf8Beg, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> utf8BAry)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convert XML's CharRef to UTF-8 encoding. This function does not use the OpenSOAP member, but is used for string processing.  <a href="#a42"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a43">OpenSOAPStringGetStringUSASCII</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> charEncStr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get US-ASCII string.  <a href="#a43"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="String_8h.html#a44">OpenSOAPStringIterateProc</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> str, int(*iterateProc)(unsigned long c, size_t idx, size_t len, void *opt), int(*beforeProc)(size_t len, void *opt), int(*afterProc)(size_t len, void *opt), void *opt)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Iterate procedure.  <a href="#a44"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API 文字列処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>型定義</h2>
+<a class="anchor" name="a2" doxytag="String.h::OpenSOAPStringFindIfFunc" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int(* <a class="el" href="String_8h.html#a2">OpenSOAPStringFindIfFunc</a>)(void *opt, wchar_t c, int *judge)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Find String Function Pointer Type Definition. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>opt</em>&nbsp;</td><td>void * [in] Find Function Option </td></tr>
+    <tr><td valign=top><em>c</em>&nbsp;</td><td>wchar_t [in] </td></tr>
+    <tr><td valign=top><em>judge</em>&nbsp;</td><td>int * [out] Result </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr><h2>関数</h2>
+<a class="anchor" name="a37" doxytag="String.h::OpenSOAPStringAppendMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringAppendMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>mb_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>mb_len</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在の locale におけるマルチバイト文字列を OpenSOAP 文字列に追加する(MB) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>mb_str</em>&nbsp;</td><td>char * [in] ((|mb_str|)) 追加したい文字列を格納するバッファへのポインタ。 </td></tr>
+    <tr><td valign=top><em>mb_len</em>&nbsp;</td><td>size_t [in] ((|mb_len|)) 追加したい文字数。0 の場合は、mb_str 全てを追加する。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a38" doxytag="String.h::OpenSOAPStringAppendWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringAppendWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>wc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>wc_len</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ワイドキャラクタ文字列を OpenSOAP 文字列に追加する(WC) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>wc_str</em>&nbsp;</td><td>wchar_t * [in] ((|wc_str|)) 追加したい文字列を格納するバッファへのポインタ。 </td></tr>
+    <tr><td valign=top><em>wc_len</em>&nbsp;</td><td>size_t [in] ((|wc_len|)) 追加したい文字数。0 の場合は、wc_str 全てを追加する。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a36" doxytag="String.h::OpenSOAPStringClear" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringClear </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>str</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP 文字列をクリアして、長さを 0 にする。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a28" doxytag="String.h::OpenSOAPStringCompare" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCompare </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_rslt</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列比較. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>cmp_str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|cmp_str|)) 比較文字列。 </td></tr>
+    <tr><td valign=top><em>cmp_rslt</em>&nbsp;</td><td>int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a26" doxytag="String.h::OpenSOAPStringCompareMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCompareMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_rslt</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列比較(MB). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>cmp_str</em>&nbsp;</td><td>const char * [in] ((|cmp_str|)) 比較文字列。 </td></tr>
+    <tr><td valign=top><em>cmp_rslt</em>&nbsp;</td><td>int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a27" doxytag="String.h::OpenSOAPStringCompareWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCompareWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>cmp_rslt</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列比較(WC). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>cmp_str</em>&nbsp;</td><td>const wchar_t * [in] ((|cmp_str|)) 比較文字列。 </td></tr>
+    <tr><td valign=top><em>cmp_rslt</em>&nbsp;</td><td>int * [out] ((|cmp_rslt|)) 比較結果。*cmp_rslt の値の意味は、strcmp と同等。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a41" doxytag="String.h::OpenSOAPStringConvertCharEncoding" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringConvertCharEncoding </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>from_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>from_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>to_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>to_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Convert character encoding. This function does not use the OpenSOAP member, but is used for string processing. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>from_enc</em>&nbsp;</td><td>const char * [in] ((|fromEnc|)) Convert source character encoding. If NULL or "" then current locale encoding. </td></tr>
+    <tr><td valign=top><em>from_str</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in] ((|fromStr|)) Convert source string data. </td></tr>
+    <tr><td valign=top><em>to_enc</em>&nbsp;</td><td>const char * [in] ((|toEnc|)) Convert destination character encoding. If NULL or "" then current locale encoding. </td></tr>
+    <tr><td valign=top><em>to_str</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. If fromEnc equal to toEnc, then copy fromStr to toStr. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a42" doxytag="String.h::OpenSOAPStringConvertXMLCharRefToUTF8" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringConvertXMLCharRefToUTF8 </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8Beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8BAry</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Convert XML's CharRef to UTF-8 encoding. This function does not use the OpenSOAP member, but is used for string processing. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>utf8Beg</em>&nbsp;</td><td>const unsigned char * [in] ((|utf8Beg|)) Convert source UTF-8 encode string data begin pointer. </td></tr>
+    <tr><td valign=top><em>utf8BAry</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="String.h::OpenSOAPStringCreate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCreate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>str</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+長さ 0 の OpenSOAP 文字列の作成。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="String.h::OpenSOAPStringCreateWithCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCreateWithCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>char_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>char_enc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Character-encoding 指定文字列により初期化した OpenSOAP 文字列の作成。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>char_enc</em>&nbsp;</td><td>const char * [in] ((|char_enc|)) 指定 Character-encoding 。 </td></tr>
+    <tr><td valign=top><em>char_enc_str</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in] ((|char_enc_str|)) 設定したい文字列データ。 </td></tr>
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="String.h::OpenSOAPStringCreateWithMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCreateWithMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>mb_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+マルチバイト文字列により初期化した OpenSOAP 文字列の作成。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>mb_str</em>&nbsp;</td><td>const char * [in] ((|mb_str|)) 設定したいマルチバイト文字列。 </td></tr>
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="String.h::OpenSOAPStringCreateWithUTF8" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCreateWithUTF8 </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8Str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+指定 UTF-8 文字列により初期化した OpenSOAP 文字列の作成。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>utf8Str</em>&nbsp;</td><td>const char * [in] ((|utf8Str|)) 指定 UTF-8 文字列 </td></tr>
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="String.h::OpenSOAPStringCreateWithWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringCreateWithWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>wc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ワイドキャラクタ文字列により初期化した OpenSOAP 文字列の作成。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>wc_str</em>&nbsp;</td><td>const wchar_t * [in] ((|wc_str|)) 設定したいワイドキャラクタ文字列。 </td></tr>
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|str|)) 作成した OpenSOAP 文字列のポインタの格納場所。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a39" doxytag="String.h::OpenSOAPStringDuplicate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringDuplicate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>dup_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Duplicate String. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>dup_str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|dup_str|)) Duplicate string </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a32" doxytag="String.h::OpenSOAPStringFindIfStringIndex" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFindIfStringIndex </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a2">OpenSOAPStringFindIfFunc</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_func</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_func_opt</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列検索. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_func</em>&nbsp;</td><td>OpenSOAPStringFindIfFunc [in] ((|find_func|)) 検索条件関数 </td></tr>
+    <tr><td valign=top><em>find_func_opt</em>&nbsp;</td><td>void * [in] ((|find_func_opt|)) 検索条件関数第一引数 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a31" doxytag="String.h::OpenSOAPStringFindString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFindString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列検索. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|find_str|)) 検索文字列。 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a29" doxytag="String.h::OpenSOAPStringFindStringMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFindStringMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列検索(MB). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>const char * [in] ((|find_str|)) 検索文字列。 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a30" doxytag="String.h::OpenSOAPStringFindStringWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFindStringWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列検索(WC). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>const wchar_t * [in] ((|find_str|)) 検索文字列。 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 検索結果インデックス。部分文字列が存在しなかった場合は値が (size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a22" doxytag="String.h::OpenSOAPStringFormatMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFormatMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>format</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>&nbsp;</td>
+          <td class="mdname" nowrap> <em>...</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+書式整形(MB) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>format</em>&nbsp;</td><td>const char * [in] ((|format|)) フォーマット文字列。 </td></tr>
+    <tr><td valign=top><em>...</em>&nbsp;</td><td>Variable parameters </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a23" doxytag="String.h::OpenSOAPStringFormatWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringFormatWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>format</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>&nbsp;</td>
+          <td class="mdname" nowrap> <em>...</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+書式整形(WC) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>format</em>&nbsp;</td><td>const wchar_t * [in] ((|format|)) フォーマット文字列。 </td></tr>
+    <tr><td valign=top><em>...</em>&nbsp;</td><td>Variable parameters </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="String.h::OpenSOAPStringGetCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>char_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>char_enc_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get character encoding string. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>char_enc</em>&nbsp;</td><td>const char * [in] ((|charEnc|)) character encoding </td></tr>
+    <tr><td valign=top><em>char_enc_str</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|charEncStr|)) 文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="String.h::OpenSOAPStringGetLengthMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetLengthMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在の locale におけるマルチバイト文字列のサイズを取得する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [out] ((|len|)) 長さ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="String.h::OpenSOAPStringGetLengthWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetLengthWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ワイドキャラクタ文字列における長さを取得する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [out] ((|len|)) 長さ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="String.h::OpenSOAPStringGetStringMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>mb_Str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在の locale におけるマルチバイト文字列を取得する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [in, out] ((|len|)) サイズを格納するバッファへのポインタ。呼出前は ((|mb_str|)) のサイズを格納する。 </td></tr>
+    <tr><td valign=top><em>mb_Str</em>&nbsp;</td><td>char * [out] ((|mb_str|)) 文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="String.h::OpenSOAPStringGetStringMBWithAllocator" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringMBWithAllocator </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char *(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>memAllocator</em>)(size_t), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>mbStr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP String GetStringMB with memAllocator. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String </td></tr>
+    <tr><td valign=top><em>memAllocator()</em>&nbsp;</td><td>char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. </td></tr>
+    <tr><td valign=top><em>mbStr</em>&nbsp;</td><td>char ** [out] ((|mbStr|)) MB string return buffer pointer. If NULL, then error. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>After calling this function, the memory allocated to *mbStr should be released. </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a43" doxytag="String.h::OpenSOAPStringGetStringUSASCII" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringUSASCII </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>charEncStr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get US-ASCII string. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String </td></tr>
+    <tr><td valign=top><em>charEncStr</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|charEncStr|)) output buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="String.h::OpenSOAPStringGetStringUTF8WithAllocator" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringUTF8WithAllocator </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char *(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>memAllocator</em>)(size_t), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8Str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP String GetString as UTF-8 encoding with memAllocator. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String </td></tr>
+    <tr><td valign=top><em>memAllocator()</em>&nbsp;</td><td>char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. </td></tr>
+    <tr><td valign=top><em>utf8Str</em>&nbsp;</td><td>char ** [out] ((|utf8Str|)) UTF8 string return buffer pointer. If NULL, then error. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>After calling this function, the memory allocated to *utf8Str should be released. </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a16" doxytag="String.h::OpenSOAPStringGetStringWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>wc_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ワイドキャラクタ文字列を取得する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [in, out] ((|len|)) サイズを格納するバッファへのポインタ。呼出前は ((|wc_str|)) のサイズを格納する。 </td></tr>
+    <tr><td valign=top><em>wc_str</em>&nbsp;</td><td>char * [out] ((|wc_str|)) 文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="String.h::OpenSOAPStringGetStringWCWithAllocator" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetStringWCWithAllocator </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>wchar_t *(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>memAllocator</em>)(size_t), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>wchar_t **&nbsp;</td>
+          <td class="mdname" nowrap> <em>wcStr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP String GetStringWC with memAllocator. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String </td></tr>
+    <tr><td valign=top><em>memAllocator()</em>&nbsp;</td><td>wchar_t * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. </td></tr>
+    <tr><td valign=top><em>wcStr</em>&nbsp;</td><td>wchar_t ** [out] ((|wcStr|)) WC string return buffer pointer. If NULL, then error. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>After calling this function, the memory allocated to *wcStr should be released. </dd></dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a40" doxytag="String.h::OpenSOAPStringGetSubstring" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringGetSubstring </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sub_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get Sub-string of OpenSOAPString. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>size_t [in] ((|beg|)) Substring start index </td></tr>
+    <tr><td valign=top><em>len</em>&nbsp;</td><td>size_t [in] ((|len|)) Substring length. If len == -1 then copy to end of string. </td></tr>
+    <tr><td valign=top><em>sub_str</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|sub_str|)) Substring </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a44" doxytag="String.h::OpenSOAPStringIterateProc" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringIterateProc </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>iterateProc</em>)(unsigned long c, size_t idx, size_t len, void *opt), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>beforeProc</em>)(size_t len, void *opt), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>afterProc</em>)(size_t len, void *opt), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>void *&nbsp;</td>
+          <td class="mdname" nowrap> <em>opt</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Iterate procedure. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String </td></tr>
+    <tr><td valign=top><em>iterateProc()</em>&nbsp;</td><td>int [in] ( * ((|iterateProc|)) )(unsigned long, size_t, size_t, void *) iterate procedure </td></tr>
+    <tr><td valign=top><em>beforeProc()</em>&nbsp;</td><td>int [in] ( * ((|beforeProc|)) )(size_t, void *) Before iterate procedure. If NULL, then no effect </td></tr>
+    <tr><td valign=top><em>afterProc()</em>&nbsp;</td><td>int [in] ( * ((|afterProc|)) )(size_t, void *) After iterate procedure. If NULL, then no effect </td></tr>
+    <tr><td valign=top><em>opt</em>&nbsp;</td><td>void * [in, out] ((|opt|)) iterateProc, beforeProc, and afterProc's option parameters. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="String.h::OpenSOAPStringRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>str</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+参照の開放。参照先がなくなった場合、リソースの開放も行う。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a35" doxytag="String.h::OpenSOAPStringReplaceString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringReplaceString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>rplc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列置換. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|find_str|)) 検索文字列 </td></tr>
+    <tr><td valign=top><em>rplc_str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|rplc_str|)) 置換文字列 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a33" doxytag="String.h::OpenSOAPStringReplaceStringMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringReplaceStringMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>rplc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列置換(MB). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>const char * [in] ((|find_str|)) 検索文字列 </td></tr>
+    <tr><td valign=top><em>rplc_str</em>&nbsp;</td><td>const char * [in] ((|rplc_str|)) 置換文字列 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a34" doxytag="String.h::OpenSOAPStringReplaceStringWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringReplaceStringWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>find_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>rplc_str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>idx</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+文字列置換(WC). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>find_str</em>&nbsp;</td><td>const wchar_t * [in] ((|find_str|)) 検索文字列 </td></tr>
+    <tr><td valign=top><em>rplc_str</em>&nbsp;</td><td>const wchar_t * [in] ((|rplc_str|)) 置換文字列 </td></tr>
+    <tr><td valign=top><em>idx</em>&nbsp;</td><td>size_t * [in, out] ((|idx|)) [in] 検索開始インデックス; [out] 置換開始インデックス。置換できなかった場合は値が(size_t)(-1) となる。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="String.h::OpenSOAPStringRetain" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringRetain </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>str</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+参照の追加。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|str|)) OpenSOAP 文字列 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="String.h::OpenSOAPStringSetCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringSetCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>char_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>charEncStr</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在の locale におけるマルチバイト文字列を設定する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>char_enc</em>&nbsp;</td><td>const char * [in] ((|charEnc|)) 設定したい文字列の Character Encoding. </td></tr>
+    <tr><td valign=top><em>charEncStr</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in] ((|charEncStr|)) 設定したい文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a18" doxytag="String.h::OpenSOAPStringSetStringMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringSetStringMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>mb_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+現在の locale におけるマルチバイト文字列を設定する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>mb_str</em>&nbsp;</td><td>char * [in] ((|mb_str|)) 設定したい文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a21" doxytag="String.h::OpenSOAPStringSetStringUTF8" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringSetStringUTF8 </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8Str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Set UTF-8 encoded string. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>utf8Str</em>&nbsp;</td><td>const char * [in] ((|utf8Str|)) UTF-8 文字列 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a19" doxytag="String.h::OpenSOAPStringSetStringWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringSetStringWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>wc_str</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ワイドキャラクタ文字列を設定する。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>wc_str</em>&nbsp;</td><td>const wchar_t * [in] ((|wc_str|)) 設定したい文字列を格納するバッファへのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a24" doxytag="String.h::OpenSOAPStringVFormatMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringVFormatMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>format</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>va_list&nbsp;</td>
+          <td class="mdname" nowrap> <em>ap</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+va_list を用いた書式整形(MB) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>[out] OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>format</em>&nbsp;</td><td>[in] フォーマット文字列 </td></tr>
+    <tr><td valign=top><em>ap</em>&nbsp;</td><td>[in] 可変引数 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>Error Code </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a25" doxytag="String.h::OpenSOAPStringVFormatWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPStringVFormatWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>str</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>format</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>va_list&nbsp;</td>
+          <td class="mdname" nowrap> <em>ap</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+va_list を用いた書式整形(WC) 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>str</em>&nbsp;</td><td>[out] OpenSOAP 文字列 </td></tr>
+    <tr><td valign=top><em>format</em>&nbsp;</td><td>[in] フォーマット文字列 </td></tr>
+    <tr><td valign=top><em>ap</em>&nbsp;</td><td>[in] 可変引数 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>Error Code </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

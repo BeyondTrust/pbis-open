@@ -1,0 +1,21 @@
+#
+# /etc/nsswitch.hp_defaults:
+#
+# @(#)B11.23_LR
+#
+# An example file that could be copied over to /etc/nsswitch.conf; it
+# uses NIS (YP) in conjunction with files.
+#
+
+passwd:       files
+group:        files
+hosts:        dns [NOTFOUND=return] files
+ipnodes:      dns [NOTFOUND=return] files
+networks:     files
+protocols:    files
+rpc:          files
+publickey:    files
+netgroup:     files
+automount:    files 
+aliases:      files 
+services:     files

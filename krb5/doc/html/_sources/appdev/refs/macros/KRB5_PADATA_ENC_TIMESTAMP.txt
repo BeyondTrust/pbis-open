@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-ENC-TIMESTAMP-data:
+
+KRB5_PADATA_ENC_TIMESTAMP
+=========================
+
+..
+.. data:: KRB5_PADATA_ENC_TIMESTAMP
+..
+
+
+
+
+================================ ======================
+``KRB5_PADATA_ENC_TIMESTAMP``       ``2``
+================================ ======================

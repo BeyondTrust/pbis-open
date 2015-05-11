@@ -1,0 +1,69 @@
+make()
+{
+    LDAP_HEADERS="\
+        ldap_cdefs.h \
+        lber_types.h \
+        lber.h \
+        slapi-plugin.h \
+        ldap.h \
+        ldap_utf8.h \
+        ldap_features.h \
+        ldap_schema.h"
+
+    # OpenLDAP likes weird library names, so
+    # the versioned library files are specified
+    # manually
+    LDAP_LIBS="ldap ldap_r lber"
+
+    case "$MK_OS" in
+        freebsd)
+            LDAP_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.6 \
+                ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.6 \
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6 \
+                ${MK_BINDIR}/ldapsearch"
+            ;;
+        hpux)
+            LDAP_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.6.2 \
+                ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.6.2 \
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6.2 \
+                ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.6 \
+                ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.6 \
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.6 \
+                ${MK_BINDIR}/ldapsearch"
+            ;;
+        darwin)
+            LDAP_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/libldap-2.4.2${MK_LIB_EXT} \
+                ${MK_LIBDIR}/liblber-2.4.2${MK_LIB_EXT} \
+                ${MK_LIBDIR}/libldap_r-2.4.2${MK_LIB_EXT} \
+                ${MK_BINDIR}/ldapsearch"
+            ;;
+        *)
+            LDAP_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.2.4.2 \
+                ${MK_LIBDIR}/libldap-2.4${MK_LIB_EXT}.2 \
+                ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.2.4.2 \
+                ${MK_LIBDIR}/liblber-2.4${MK_LIB_EXT}.2 \
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.2.4.2 \
+                ${MK_LIBDIR}/libldap_r-2.4${MK_LIB_EXT}.2 \
+                ${MK_BINDIR}/ldapsearch"
+            ;;
+    esac
+
+    mk_autotools \
+        HEADERS="$LDAP_HEADERS" \
+        LIBS="$LDAP_LIBS" \
+        TARGETS="$LDAP_EXTRA_TARGETS" \
+        HEADERDEPS="gssapi.h sasl/sasl.h" \
+        LIBDEPS="gssapi_krb5 sasl2" \
+        CPPFLAGS="-D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -D_AVL_H" \
+        CFLAGS="-fPIC" \
+        --disable-static \
+        --enable-shared \
+        --without-kerberos \
+        --disable-slapd \
+        --disable-slurpd \
+        --without-tls
+}

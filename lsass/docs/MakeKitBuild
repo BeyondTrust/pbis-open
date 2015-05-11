@@ -1,0 +1,17 @@
+configure()
+{
+    mk_resolve_file "."
+
+    mk_declare -o \
+        srcdir="$result" \
+        ENABLE_INTERNAL_DOCS="NO"
+
+    mk_output_file Doxyfile
+}
+
+make()
+{
+    mk_have_doxygen && mk_doxygen_html \
+        INSTALLDIR="${MK_HTMLDIR}/lsass" \
+        INPUT="../include/lsa/lsa.h ../include/lsa/ad.h ../include/lsa/ad-types.h"
+}

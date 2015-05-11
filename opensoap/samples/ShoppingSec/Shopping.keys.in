@@ -1,0 +1,2 @@
+@servicesdir@/ShoppingSec/privKey_ShoppingService.pem
+@servicesdir@/ShoppingSec/pubKey_ShoppingClient.pem

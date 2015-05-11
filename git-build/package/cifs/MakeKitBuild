@@ -1,0 +1,177 @@
+MODULES="package-deb package-rpm"
+
+configure()
+{
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_declare -o PRIMARY_SERVICE=lsass
+            ;;
+        full)
+            mk_declare -o PRIMARY_SERVICE=srvsvc
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_declare -o IS_EMBEDDED="yes"
+            ;;
+        *)
+            mk_declare -o IS_EMBEDDED="no"
+            ;;
+    esac
+
+    mk_declare -o \
+        MK_BINDIR \
+        MK_PREFIX \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        LW_CACHEDIR \
+        LW_CONFIGDIR
+
+    if mk_deb_enabled
+    then
+        mk_declare -o \
+            PKG_DEB_NAME="likewise-open-cifs" \
+            PKG_DEB_VERSION="${LW_VERSION}-0" \
+            PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        mk_declare -o \
+            PKG_RPM_NAME="likewise-open-cifs" \
+            PKG_RPM_VERSION="${LW_VERSION}" \
+            PKG_RPM_RELEASE="0"
+
+        PKG_RPM_COMPAT="0"
+
+        mk_compat_do
+            PKG_RPM_COMPAT="1"
+        mk_compat_done
+
+        mk_declare -o PKG_RPM_COMPAT
+    fi
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="debian/changelog.in debian/compat.in \
+                     debian/control.in debian/postinst.in \
+                     debian/postrm.in debian/preinst.in \
+                     debian/prerm.in debian/rules.in"
+        
+        common_files
+        common_files_compat
+        
+        mk_deb_sub_do SUBPACKAGE="dev"
+            common_files_dev
+        mk_deb_sub_done
+    mk_deb_done   
+}
+        
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/cifs.spec"
+        
+        common_files
+
+        if [ "$PKG_RPM_COMPAT" -eq "1" ]
+        then
+            mk_rpm_sub_do SUBPACKAGE="compat"
+                common_files_compat
+            mk_rpm_sub_done
+        fi
+
+        mk_rpm_sub_do SUBPACKAGE="devel"
+            common_files_dev
+        mk_rpm_sub_done
+    mk_rpm_done
+}
+        
+make()
+{
+    COMMON_SUBDIRS="\
+        @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
+        @libuuid @openssl @curl @libxml2 @libtdb \
+        @lwbase @lwmsg @libedit @lwreg @lwadvapi @netlogon \
+        @lwio @libschannel @dcerpc @centutils @lwsm \
+        @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
+        @lwtools @domainjoin @lwconfig @lwupgrade @samba-interop \
+        @config"
+
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+}
+
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
+common_files()
+{
+    mk_package_patterns \
+        SUBDIRS="$COMMON_SUBDIRS" \
+        "${MK_BINDIR}/*" \
+        "${MK_SBINDIR}/*" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+        "${MK_LIBDIR}/liblsaaccess*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/libedit${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/libedit${MK_DLO_EXT}.*" \
+        "${MK_LIBDIR}/lwio-driver/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_LIBEXECDIR}/*" \
+        "${MK_DATADIR}/*.glade" \
+        "${MK_DATADIR}/*.png" \
+        "${NSSDIR}/*" \
+        "${PAMDIR}/*" \
+        "${LW_CONFIGDIR}/*.reg" \
+        "${MK_SYSCONFDIR}/*" \
+        "${MK_SYSCONFDIR}/gss/mech" \
+        "${MK_PREFIX}/data/VERSION" \
+        "/etc/init.d/*"
+
+    mk_package_dirs \
+        "${LW_CACHEDIR}" \
+        "${LW_CACHEDIR}/db" \
+        "${LW_CACHEDIR}/rpc"
+}
+
+common_files_compat()
+{
+    mk_compat_do
+        mk_package_patterns \
+            SUBDIRS="$COMMON_SUBDIRS" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+            "${NSSDIR}/*" \
+            "${PAMDIR}/*"
+    mk_compat_done
+}
+
+common_files_dev()
+{
+    mk_package_patterns \
+        SUBDIRS="$COMMON_SUBDIRS" \
+        "${MK_LIBDIR}/*.la" \
+        "*.h" \
+        "*.idl"
+}
+

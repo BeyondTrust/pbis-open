@@ -1,0 +1,76 @@
+<!-- --------------------------------------------------------------------------
+ ! $RCSfile: RequestFooter.html,v $
+ !
+ ! See Copyright for the status of this software.
+ !
+ ! The OpenSOAP Project
+ ! http://opensoap.jp/
+ !-----------------------------------------------------------------------------
+-->
+
+            Mode: 
+	    <b>
+    	        <select name="mode">
+    		    <option value="Sync">Sync (RPC)</option>
+    		    <option selected value="Async">Async (Messaging)</option>
+    	        </select>
+	    </b>
+    	    <br><br><br>
+    	    <table border="0">
+	        <tr><td colspan="2"><hr></td></tr>
+    		<th colspan="2" align="left" bgcolor="00ccee">Bank Service for Payment</th>
+    		<tr>
+    		    <td>
+		         Endpoint URL:
+		    </td>
+    		    <td>
+    			 <input type="text" size=50 name="endpoint1" 
+		          value=http://localhost/cgi-bin/TransactionABankService.cgi>
+    		    </td>
+		</tr>
+	        <tr>
+		    <td>
+		         Account:
+		    </td>
+		    <td>
+    			 <input type="text" size=15 name="account1" 
+                          value=okuno1234>
+		    </td>
+    		</tr>
+	        <tr><td colspan="2"><hr></td></tr>
+    		<th colspan="2" align="left" bgcolor="ffcc00">Bank Service for Deposit</th>
+    		<tr>
+    		    <td>
+		         Endpoint URL:
+		    </td>
+    		    <td>
+    			 <input type="text" size=50 name="endpoint2" 
+		          value=http://localhost/cgi-bin/TransactionABankService.cgi>
+    		    </td>
+		</tr>
+	        <tr>
+		    <td>
+		         Account:
+		    </td>
+		    <td>
+    			 <input type="text" size=15 name="account2" 
+                          value=bando3456>
+		    </td>
+    		</tr>
+	        <tr><td colspan="2"><hr></td></tr>
+	        <th colspan="2" align="left" >Amount of Money</th>
+	        <tr>
+		    <td align="right">
+		         $
+		    </td>
+		    <td>
+    			 <input type="text" size=15 name="money" 
+                          value=5000>
+		    </td>
+    		</tr>
+	        <tr><td colspan="2"><hr></td></tr>
+    	    </table>
+    	    <br>
+    	    <input type="submit" width=100 name="Request" value="Go">
+    	    <input type="hidden" name="screenID" value="Request">
+    	</form>

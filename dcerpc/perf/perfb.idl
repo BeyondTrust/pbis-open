@@ -1,0 +1,82 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME
+**
+**      perfb.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Performance and system execiser auxiliary interface.  This interface is
+**  dynamically registered by the server when request by the client through
+**  a call to an operation in the "perf" interface.
+**
+**
+*/
+
+[uuid(35CCD2DC-0000-0000-0D00-00C366000000),
+     version(1)]
+
+interface perfb
+{
+typedef [v1_array] unsigned long perfb_data_t[0..*];
+
+const long perfb_large_size = 3000;
+
+void perfb_init
+(
+    [in]        handle_t            handle,
+    [out, v1_array, v1_string] char name[256]
+);
+
+void perfb_in
+(
+    [in]        handle_t            handle,
+    [in, last_is(l), max_is(l)] perfb_data_t data,
+    [in]        unsigned long       l,
+    [in]        boolean             v,
+    [out]       unsigned long       *sum
+);
+
+[broadcast] void perfb_brd
+(
+    [in]        handle_t            handle,
+    [out, v1_array, v1_string] char name[256]
+);
+
+void perfb_null
+(
+    [in]        handle_t            handle
+);
+
+[idempotent] void perfb_null_idem
+(
+    [in]        handle_t            handle
+);
+
+}

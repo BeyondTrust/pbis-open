@@ -1,0 +1,12 @@
+PKG=PBISopenr
+SUNW_PKGTYPE=root
+NAME=PowerBroker Identity Services Open (root files)
+ARCH=@PKG_PKG_ARCH@
+VERSION=@PKG_PKG_VERSION@
+CATEGORY=system
+VENDOR=BeyondTrust Software, Inc
+DESC=Authentication services for Active Directory
+HOTLINE=1-800-234-9072,1-818-575-4040
+EMAIL=pbis-support@beyondtrust.com
+CLASSES=none
+VSTOCK=@PKG_OPEN_PKG_NAME@

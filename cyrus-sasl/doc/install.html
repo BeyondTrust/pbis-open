@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                      "http://www.w3.org/TR/html4/loose.dtd"> 
+<html><head>
+<title>Cyrus SASLv2 INSTALL Documentation</title>
+<!-- $Id: install.html,v 1.18 2005/02/16 20:52:05 shadow Exp $ -->
+</head>
+<body>
+<h1>Installation Procedure</h1>
+
+This document offers a general overview of installing the SASL library.
+
+<h2>Quick and Dirty</h2>
+<pre>
+  cd (directory it was untarred into)
+  ./configure
+  make
+  make install
+  ln -s /usr/local/lib/sasl2 /usr/lib/sasl2
+</pre>
+
+<p>If you're checking this directly out of CVS, you'll need to run "sh
+./SMakefile" to build the configure script first.
+
+<p>Read <A HREF="sysadmin.html">the System Administrator's Guide</A> to
+learn how to configure libsasl in depth.  There is also a <A
+HREF="upgrading.html">document</A> that covers migrating from libsasl v1
+to libsasl v2 applications.
+
+<p>You may also be interested in the contents of <tt>configure --help</tt>
+which can reveal the many possible configure options that can be used
+to build Cyrus SASL.
+
+<h3>Details</h3>
+
+<p>Note that the library looks for plugins in <tt>/usr/lib/sasl2</tt>,
+but installs them into <tt>${prefix}/lib/sasl2</tt>, where
+<tt>${prefix}</tt> is usually something like <tt>/usr/local</tt>.
+This is intentional - we want the plugins installed with the rest of
+the package (wherever things get installed at your site), but we want
+the library to <em>always</em> be able to find its plugins under
+<tt>/usr/lib/sasl2</tt>, no matter where you install things, so that
+the SASL plugin ABI on all platforms is roughly the same.
+
+<p>If you don't want to do this for some reason, you can set the location
+where the library will look for plugins by setting the environment
+variable SASL_PATH to the path the library should use.
+
+<h2>Slower and Cleaner</h2>
+
+Before reading this section, please be sure you are comfortable with
+the concepts presented in the <a href=components.html>components discussion</a>
+and in the <a href=readme.html>Read Me First</a> document.<p>
+
+You will want to have answered the following questions about your intended
+installation:<p>
+
+<ol>
+<li>What mechanisms do you want to support?  Are they plaintext (LOGIN, PLAIN),
+shared secret (DIGEST-MD5, CRAM-MD5), or Kerberos (KERBEROS_V4, GSSAPI)?
+Perhaps you will use some combination (generally plaintext with one of
+the other two types).</li>
+<li>Given the answer to the previous question, how will the mechanisms
+perform user verification?
+  <ul>
+  <li>The Kerberos mechanisms just need your existing
+Kerberos infroastructure.</li>
+  <li>The shared secret mechanisms will need an auxprop
+plugin backend.</li>
+  <li>The plaintext mechanisms can make do with saslauthd, Courier authdaemond (not included),
+*or* by using an auxprop plugin backend.</li>
+  <li>To use Kerberos and Plaintext, you'll likely want to use saslauthd
+with a kerberos module for plaintext authentication.  To use Shared Secret
+and plaintext, you'll want to use the auxprop plugin for password verification.
+  </li>
+  </ul></li>
+<li>If you are using an auxprop plugin, will you be using SASLdb (and
+if so, Berkeley DB [recommended], GDBM, or NDBM?), LDAP or an SQL backend
+(Postgres? MySQL?).</li>
+<li>If you are using saslauthd, what module will you be using?  LDAP?
+Kerberos?  PAM?</li>
+<li>Also if you are using saslauthd, what communication (IPC) method do
+you want to use?  On most systems, the correct answer is the default
+(unix sockets), but on Solaris you can use IPC doors, which have proven
+to be more stable than equivilant Solaris systems using unix sockets.</li>
+</ol>
+
+Once you have answered these questions, properly configuring a working
+configuration of Cyrus SASL becomes significantly easier.
+
+<h3>Requirements</h3>
+
+<p>You'll probably need the GNU make program, available as of this
+writing <a href="ftp://ftp.gnu.org/pub/gnu/make/">here</a>.<p>
+
+<p>If you are using SASLdb, you will need to pick your backend.
+libsasl2 can use gdbm, Berkeley db, or ndbm to implement its
+user/password lookup. Most systems come with ndbm these days; as of
+this writing, gdbm is available <a
+href="ftp://ftp.gnu.org/pub/gnu/gdbm/">here</a>.
+Berkeley DB is available from: <a
+href="http://www.sleepycat.com/">Sleepycat</a>
+
+<p>If you are using SQL, you'll need to properly configure your server/tables,
+and build the necessary client libraries on the system where you will be
+building and using SASL.  Currently we support <a href=http://postgresql.org>
+PostgreSQL</a> v7.2 (or higher) and <a href=http://mysql.org>MySQL</a>.
+
+<p>If you are using LDAPDB, you'll need SASL enabled OpenLDAP libraries.  <a
+href="http://www.openldap.org">OpenLDAP</a> 2.1.27 (or higher) or 2.2.6 (or
+higher) is support.</p>
+
+<p>For Kerberos support, you'll need the kerberos libraries.  At CMU, the
+version we use comes from <a href="http://www.pdc.kth.se/kth-krb/">here</a>.
+
+<p>For GSSAPI support you will need either <a href="http://web.mit.edu/kerberos/www/">MIT Kerberos 5</a>
+, the <a href="http://www.pdc.kth.se/heimdal">Heimdal</a> or
+<a href="http://www.cybersafe.com/">CyberSafe</a> implementation.
+
+<h3>Build Configuration</h3>
+
+<p>Once you have ansered all the necessary questions and installed
+(and tested!) any required packages for your configuration, you are
+ready to build SASL.  Building SASL is done with the aid of
+an autoconf <tt>configure</tt> script, which has a <b>lot</b> of options.
+Be sure to read the outpit of <tt>configure --help</tt> to be sure you
+aren't missing any (they are all documented).  Note that often times
+a <tt>--enable-foo</tt> option has a counterpart like <tt>--disable-foo</tt>
+to not enable that feature.
+
+<p>Some of the most important configuration options are those which allow
+you to turn off the comiplation of modules you do not need.  This is often
+the easiest way to solve compilation problems with Cyrus SASL.
+If you're not going to need a particular mechanism, don't build it!  Not
+building them can also add performance improvements as it does take system
+resources to load a given plugin, even if that plugin is otherwise unused
+(even when it is disabled via the <tt>mech_list</tt> <a href=options.html>option</a>).
+
+<p>As of this writing, modules that are enabled by default but may not
+be applicable to all systems include CRAM-MD5, DIGEST-MD5, OTP, KERBEROS_V4,
+GSSAPI, PLAIN, and ANONYMOUS.  These can be disabled with
+<tt>--disable-cram</tt>,
+<tt>--disable-digest</tt>, <tt>--disable-otp</tt>,
+<tt>--disable-krb4</tt>, <tt>--disable-gssapi</tt>,
+<tt>--disable-plain</tt>, and <tt>--disable-anon</tt> respecively.
+
+<p>If you are using an SQL auxprop plugin, you may want to specify one or more
+of <tt>--enable-sql</tt>, <tt>--with-mysql=PATH</tt>, and
+<tt>--with-pgsql=PATH</tt>, note that PATH in the later two should be replaced
+with the path where you installed the necessary client libraries.
+
+<p>If you are using LDAPDB auxprop plugin, you will need to specify
+<tt>--enable-ldapdb</tt> and <tt>--with-ldap=PATH</tt>.  <b>Warning:</b> LDAPDB
+auxprop plugin (and LDAP enabled saslauthd) introduces a circular dependency
+between OpenLDAP and SASL.  I.e., you must have OpenLDAP already built when
+building LDAPDB in SASL.  In order for LDAPDB to work at runtime, you must have
+OpenLDAP already built with SASL support. One way to solve this issue is to
+build Cyrus SASL first without ldap support, then build OpenLDAP, and then come
+back to SASL and build LDAPDB.</p>
+
+<p>Given the myriad of ways that Berkeley DB can be installed on a system,
+people useing it may want to look at the <tt>--with-bdb-libdir</tt> and
+<tt>--with-bdb-incdir</tt> as alternatives to <tt>--with-dbbase</tt> for
+specifying the paths to the Berkeley DB Library and Include directories.
+
+<p>In fact, if you're not planning on using SASLdb at all, it may be worth
+your time to disable its use entirely with the <tt>--with-dblib=none</tt>
+option.
+
+<p>If you are planning on using LDAP with saslauthd, be sure to specify
+the <tt>--with-ldap=PATH</tt> option to <tt>configure</tt>.
+
+<h3>Building and Installation</h3>
+
+After configure runs, you should be able to build SASL just by 
+running <tt>make</tt>.  If this runs into problems, be sure that you
+have disabled everything that your system doesn't need, and that you have
+correctly specified paths to any dependencies you may have.<p>
+
+To install the library, run <tt>make install</tt> as <tt>root</tt> followed by
+<tt>ln -s /usr/local/lib/sasl2 /usr/lib/sasl2</tt> (modified for your
+installation path as appropriate).  Be sure to do this last step or
+SASL will not be able to locate your plugins!
+
+<h3>Compilation Hints</h3>
+
+<p>You may need to play with your CPPFLAGS and LDFLAGS a little if you're
+using vendor compilers. We use <tt>gcc</tt> extensively, but you'll
+probably have more luck if you use the same compiler for the library
+as you do for your applications. You can see what compilers we use on
+our platforms by looking at the "SMakefile".
+
+<h3>Application Configuration</h3>
+
+<p>Plesae read about the <a href=options.html>SASL Options</a> to learn what
+needs to be configured so that applications can successfully use the SASL
+library.  This is also covered in the <a href=readme.html>Read Me First</a>
+document.
+
+<p>You will want to ensure that the settings of <tt>pwcheck_method</tt>
+and <tt>auxprop_plugin</tt> match the decisions you made about your
+authentication infrastructure.  (For example, if you are using
+saslauthd as a password verifier, you'll want to be sure to set
+<tt>pwcheck_method: saslauthd</tt>).
+
+<p>If you are using saslauthd, you will want to arrange for
+<tt>saslauthd -a pam</tt> (or ldap, or kerberos4, etc) to be run
+at boot.  If you are not going to be using saslauthd, then this is
+not necessary.
+
+<p>Many of these pieces are covered in more detail in the
+<a href=sysadmin.html>SASL System Administrator's Guide</a>.
+
+<h2>Supported platforms</h2>
+
+<p>This has been tested under Linux 2.2, Linux 2.4, Solaris 2.7 and
+Solaris 2.8.  It should work under any platform where dynamic objects
+can be linked against other dynamic objects, and where the dynamic
+library file extension is ".so", or where libtool creates the .la
+files correctly.  There is also documentation for
+<a href=windows.html>Win32</a>, <a href=macosx.html>MacOS X</a>, and
+<a href=os390.html>OS/390</a>.
+
+<hr>
+Back to the <a href="index.html">index</a>
+
+</body>
+</html>

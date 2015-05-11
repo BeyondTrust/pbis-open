@@ -1,0 +1,6 @@
+make()
+{
+    mk_library \
+        LIB=lwiocommon \
+        GROUPS="../utils/utils ../ipc/ipc"
+}

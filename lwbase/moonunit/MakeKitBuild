@@ -1,0 +1,34 @@
+make()
+{
+    TEST_SOURCES="test-security.c \
+    test-atomic.c \
+    test-threadpool.c \
+    test-compare.c \
+    test-convert.c \
+    test-printf.c \
+    test-hash.c \
+    test-rtlunicode-string.c \
+    test-rtlansi-string.c \
+    test-lwprintf.c"
+
+    mk_group \
+        GROUP="benchmark" \
+        SOURCES="benchmark.c" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="lwbase lwbase_nothr"
+
+    mk_program \
+        PROGRAM=benchmark_threadpool \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="benchmark-main.c" \
+        INCLUDEDIRS=". ../include" \
+        GROUPS="benchmark"
+
+    lw_add_tool_target "$result"
+
+    mk_have_moonunit && mk_moonunit \
+        DLO="lwbase_mu" \
+        SOURCES="$TEST_SOURCES" \
+        GROUPS="benchmark" \
+        INCLUDEDIRS=". ../include"
+}

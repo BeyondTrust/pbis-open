@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _KRB5-PADATA-PW-SALT-data:
+
+KRB5_PADATA_PW_SALT
+===================
+
+..
+.. data:: KRB5_PADATA_PW_SALT
+..
+
+
+
+
+========================== ======================
+``KRB5_PADATA_PW_SALT``       ``3``
+========================== ======================

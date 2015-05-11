@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=conflsass \
+        SOURCES="lsass.c lsass_global.c lsass_provider_ad.c lsass_provider_local.c pam-config.c" \
+        INCLUDEDIRS="../../../../include" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
+        LIBDEPS="lwadvapi_nothr"
+}

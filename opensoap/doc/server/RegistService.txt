@@ -1,0 +1,45 @@
+[[ Registering services built using the API ]]
+* If the connection method <socket> is selected in the SSML file, register the service according to the following procedure.(Refer to SSML_README.txt)
+
+Use the appropriate port number, user name, service name and service program path
+in the registration procedure below.
+
+
+==================================================
+[1] When using inetd.
+
+(1) Add the following line to /etc/services.
+
+calc-service     8765/tcp
+
+(2) Add the following line to /etc/inetd.conf.
+
+calc-service    stream  tcp     nowait  foo /usr/local/opensoap/services/CalcService CalcService
+
+(3) Restart inetd.
+
+# kill -HUP `head -1 /var/run/inetd.pid`
+
+==================================================
+[2] When using xinetd.
+
+(1) Add the following line to /etc/services
+
+calc-service     8765/tcp
+
+(2) Create the file /etc/xinetd/calc-service and insert the following:
+
+service calc-service
+{
+       socket_type         = stream
+       protocol		   = tcp
+       wait                = no
+       user                = foo
+       server              = /usr/local/opensoap/services/CalcService
+}
+
+(3) Restart inetd.
+
+# /etc/inint.d/xinetd restart
+
+==================================================

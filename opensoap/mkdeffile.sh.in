@@ -1,0 +1,62 @@
+#!/bin/sh
+# -----------------------------------------------------------------------------
+#  $RCSfile: mkdeffile.sh.in,v $
+# 
+#  See Copyright for the status of this software.
+# 
+#  The OpenSOAP Project
+#  http://opensoap.jp/
+# -----------------------------------------------------------------------------
+
+AWK=@AWK@
+
+usage() 
+{
+    cat <<EOF
+Usage: $0 deffilename sourcefile.c [sourcefile1.c ...]
+
+    deffilename		Windows DLL's .def filename
+    sourcefile*.c	Windows DLL's C source filename
+EOF
+    exit 1
+}
+
+if test $# -lt 2; then
+    usage
+fi
+
+DEFFILENAME=$1
+DEFFILEBASE=`echo ${DEFFILENAME} | sed -e 's/\.[Dd][Ee][Ff]$//'`
+shift
+
+cat > ${DEFFILENAME} <<EOF
+; -----------------------------------------------------------------------------
+;  ${DEFFILENAME}
+; 
+;  See Copyright for the status of this software.
+; 
+;  The OpenSOAP Project
+;  http://opensoap.jp/
+; -----------------------------------------------------------------------------
+LIBRARY ${DEFFILEBASE}
+
+EXPORTS
+EOF
+
+for f in $@; do
+    case $f in
+	*.c)
+	  ${AWK} '\
+BEGIN { find_export = 0 } \
+/^OPENSOAP_API/ { find_export = 1; next } \
+{ \
+    if (find_export == 1) { \
+	gsub(/\(.*$/, "", $0); \
+	print "\t" $0; find_export = 0;\
+    }\
+}' < $f >> ${DEFFILENAME}
+	    ;;
+	*)
+	    ;;
+    esac
+done

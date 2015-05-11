@@ -1,0 +1,126 @@
+digraph g {
+	graph [
+		rankdir = "LR"
+		];
+	node [
+		shape = "record"
+		];
+	vmware [
+		label = "vmware build"
+		shape = "circle"
+		];
+	domainjoin [
+		label = "<n>domainjoin|DJ error"
+		];
+	lsass [
+		label = "lsass|LSA error"
+		];
+	lsass [
+		label = "lsass|LSA error"
+		];
+	netlogon [
+		label = "<n>netlogon|LWNet error"
+		];
+	lwmsg [
+		label = "<n>lwmsg|lwmsg status"
+		];
+	openssl [
+		label = "openssl"
+		];
+	pstore [
+		label = "pstore|lwps error"
+		];
+	centutils [
+		label = "<n>centutils|centerror"
+		];
+	eventlog [
+		label = "<n>eventlog|EVT error"
+		];
+	openldap [
+		label = "<n>openldap|ldap code"
+		];
+	dcerpc [
+		label = "dcerpc|rpc exception"
+		];
+	gss [
+		label = "gss|gss minor and major status"
+		];
+	krb5 [
+		label = "krb5|kerberos error code"
+		];
+	librpc [
+		label = "librpc|ntstatus and winerror"
+		];
+	libgss [
+		label = "libgss (schannel)|rpc status"
+		];
+	lwmapsecurity [
+		label = "lwmapsecurity|NTSTATUS"
+		];
+	libtdb [
+		label = "libtdb|errno"
+		];
+	sqlite [
+		label = "sqlite|sqlite status"
+		];
+	lwbase [
+		label = "lwbase|ntstatus"
+		];
+	libunistr [
+		label = "libunistr|errno"
+		];
+	libkeytab [
+		label = "libkeytab|KT_STATUS"
+		];
+	lwio [
+		label = "lwio|NTSTATUS"
+		];
+	libuuid [
+		label = "libuuid|-1 or 0"
+		];
+	vmware -> domainjoin:n;
+	vmware -> lsass;
+	vmware -> netlogon;
+	domainjoin -> lsass;
+	domainjoin -> eventlog;
+	domainjoin -> centutils:n;
+	lsass -> krb5;
+	lsass -> openldap;
+	lsass -> netlogon:n;
+	lsass -> lwmsg;
+	lsass -> dcerpc;
+	lsass -> eventlog;
+	lsass -> librpc;
+	lsass -> libunistr;
+	lsass -> lwbase;
+	lsass -> pstore;
+	lsass -> sqlite;
+	netlogon:n -> lwmsg:n;
+	netlogon -> openldap;
+	pstore -> sqlite;
+	pstore -> libtdb;
+	pstore -> libunistr;
+	eventlog -> dcerpc;
+	eventlog:n -> lsass [ style = "dashed", label = "runtime" ];
+	dcerpc -> gss;
+	dcerpc -> libgss;
+	dcerpc -> lwio;
+	gss -> krb5 [ label = "clean" ];
+	librpc -> pstore;
+	librpc -> libunistr;
+	librpc -> libkeytab;
+	librpc -> dcerpc;
+	librpc -> openldap:n;
+	librpc -> libuuid;
+	libkeytab -> openldap:n;
+	libkeytab -> krb5;
+	lwio -> netlogon;
+	lwio -> lwbase;
+	lwio -> lwmapsecurity;
+	lwio -> krb5;
+	lwio -> lwmsg;
+	lwmapsecurity -> lsass [ style = "dashed", label = "runtime" ];
+	lwbase -> libunistr;
+	lwio -> openssl;
+	librpc -> openssl;
+}

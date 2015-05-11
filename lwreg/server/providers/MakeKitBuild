@@ -1,0 +1,9 @@
+SUBDIRS="memory sqlite"
+
+configure()
+{
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_skip_subdir sqlite
+    fi
+}

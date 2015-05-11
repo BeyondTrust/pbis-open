@@ -1,0 +1,16 @@
+configure()
+{
+    mk_check_headers \
+        CoreFoundation/CoreFoundation.h
+}
+
+
+make()
+{
+    mk_library \
+        LIB=centutils \
+        SOURCES="*.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lw/base.h lwadvapi.h" \
+        LIBDEPS="lwadvapi $LIB_KVM $LIB_RT"
+}

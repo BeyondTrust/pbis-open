@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Controlled only by:
+#
+# BUILD_DEBUG
+# BUILD_MKOUT_ROOT
+
+usage()
+{
+    cat <<EOF
+usage: `basename $0` [options]
+
+    Runs MakeKit configure in BUILD_MKOUT_ROOT/{debug,release}
+    as determined by whether BUILD_DEBUG is defined.  BUILD_DEBUG
+    also controls whether --debug=yes is passed in.
+
+    Unrecognized options are passed through to MakeKit configure.
+
+  options:
+
+    --help          This help.
+    --mkhelp        MakeKit configure help (can use -- --help instead).
+    --show          Show how MakeKit config would be invoked.
+    --              Pass remaining options through to MakeKit configure (used
+                    to escape any options listed above).
+EOF
+    exit 1
+}
+
+OPT_SHOW=false
+
+# Parse options
+while true ; do
+    case "$1" in
+        --)
+            break
+            ;;
+	--help)
+	    usage
+	    ;;
+	--mkhelp)
+            exec "${BUILD_ROOT}/src/linux/configure" --help
+	    ;;
+	--show)
+	    OPT_SHOW=true
+	    ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -z "${BUILD_MKOUT_ROOT}" ]; then
+    echo "You must define BUILD_MKROOT_ROOT (optionally by running buildenv)"
+    exit 1
+fi
+
+if [ -n "${BUILD_DEBUG}" ]; then
+    OPT_DEBUG=--debug=yes
+    TYPE=debug
+else
+    OPT_DEBUG=
+    TYPE=release
+fi
+
+DIR="${BUILD_MKOUT_ROOT}/${TYPE}"
+if ${OPT_SHOW}; then
+    alias mkdir='#'
+    alias set='#'
+    alias cd='echo "+ cd"'
+    alias exec='echo "+"'
+else
+    unalias set 2>/dev/null
+    unalias mkdir 2>/dev/null
+    unalias cd 2>/dev/null
+    unalias exec 2>/dev/null
+fi
+shopt -s expand_aliases
+mkdir -p "${DIR}"
+set -x -e
+cd "${DIR}"
+exec "${BUILD_ROOT}/src/linux/configure" \
+    ${OPT_DEBUG} \
+    "$@"

@@ -1,0 +1,358 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Developing with GSSAPI &mdash; MIT Kerberos Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/kerb.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.11.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="copyright" title="Copyright" href="../copyright.html" />
+    <link rel="top" title="MIT Kerberos Documentation" href="../index.html" />
+    <link rel="up" title="For application developers" href="index.html" />
+    <link rel="next" title="Differences between Heimdal and MIT Kerberos API" href="h5l_mit_apidiff.html" />
+    <link rel="prev" title="For application developers" href="index.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper">
+        <div class="header" style="padding-bottom: 0px;">
+            
+            
+                <h1><a href="../index.html"
+                style="color: #5d1509; font-size: 120%;
+                padding-top: 10px;">MIT Kerberos Documentation</a></h1>
+            
+            <div class="rel">
+                    <a href="../index.html"
+                    title="Full Table of Contents"
+                    accesskey="C">Contents</a>
+                     |
+                    <a href="index.html"
+                    title="For application developers"
+                    accesskey="P">previous</a>
+                     |
+                    <a href="h5l_mit_apidiff.html"
+                    title="Differences between Heimdal and MIT Kerberos API"
+                    accesskey="N">next</a>
+                     |
+                    <a href="../genindex.html"
+                    title="General Index"
+                    accesskey="I">index</a>
+                     |
+                    <a href="../search.html"
+                    title="Enter search criteria"
+                    accesskey="S">Search</a>
+                     |
+                <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__Developing with GSSAPI">feedback</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="content">
+                <div class="sidebar"
+                    style="float: right; background: #F9F9F9">
+                    <h2>On this page </h2>
+                    <ul>
+<li><a class="reference internal" href="#">Developing with GSSAPI</a><ul>
+<li><a class="reference internal" href="#name-types">Name types</a></li>
+<li><a class="reference internal" href="#initiator-credentials">Initiator credentials</a></li>
+<li><a class="reference internal" href="#acceptor-names">Acceptor names</a></li>
+<li><a class="reference internal" href="#importing-and-exporting-credentials">Importing and exporting credentials</a></li>
+</ul>
+</li>
+</ul>
+
+                    <br/>
+                    <h2>Table of contents</h2>
+                    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../user/index.html">For users</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin/index.html">For administrators</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">For application developers</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Developing with GSSAPI</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="h5l_mit_apidiff.html">Differences between Heimdal and MIT Kerberos API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="init_creds.html">Initial credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="princ_handle.html">Principal manipulation and parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="refs/index.html">Complete reference - API and datatypes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../plugindev/index.html">For plugin module developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build/index.html">Building Kerberos V5</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic/index.html">Kerberos V5 concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mitK5features.html">MIT Kerberos features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build_this.html">How to build this documentation from the source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../about.html">The Kerberos Documentation Set</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resources.html">Resources</a></li>
+</ul>
+
+                    <br/>
+                    <h4><a href="../index.html">Full Table of Contents
+                    </a></h4>
+                    <h4>Search</h4>
+                    <form class="search" action="../search.html" method="get">
+                        <input type="text" name="q" size="18" />
+                        <input type="submit" value="Go" />
+                        <input type="hidden" name="check_keywords" value="yes" />
+                        <input type="hidden" name="area" value="default" />
+                    </form>
+                </div>
+            <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="developing-with-gssapi">
+<h1>Developing with GSSAPI<a class="headerlink" href="#developing-with-gssapi" title="Permalink to this headline">¶</a></h1>
+<p>The GSSAPI (Generic Security Services API) allows applications to
+communicate securely using Kerberos 5 or other security mechanisms.
+We recommend using the GSSAPI (or a higher-level framework which
+encompasses GSSAPI, such as SASL) for secure network communication
+over using the libkrb5 API directly.</p>
+<p>GSSAPIv2 is specified in <span class="target" id="index-0"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2743.html"><strong>RFC 2743</strong></a> and <span class="target" id="index-1"></span><a class="rfc reference external" href="http://tools.ietf.org/html/rfc2744.html"><strong>RFC 2744</strong></a>.  This
+documentation will describe how various ways of using GSSAPI will
+behave with the krb5 mechanism as implemented in MIT krb5, as well as
+krb5-specific extensions to the GSSAPI.</p>
+<div class="section" id="name-types">
+<h2>Name types<a class="headerlink" href="#name-types" title="Permalink to this headline">¶</a></h2>
+<p>A GSSAPI application can name a local or remote entity by calling
+<a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.16">gss_import_name</a>, specifying a name type and a value.  The following
+name types are supported by the krb5 mechanism:</p>
+<ul class="simple">
+<li><strong>GSS_C_NT_HOSTBASED_SERVICE</strong>: The value should be a string of the
+form <tt class="docutils literal"><span class="pre">service</span></tt> or <tt class="docutils literal"><span class="pre">service&#64;hostname</span></tt>.  This is the most common
+way to name target services when initiating a security context, and
+is the most likely name type to work across multiple mechanisms.</li>
+<li><strong>GSS_KRB5_NT_PRINCIPAL_NAME</strong>: The value should be a principal name
+string.  This name type only works with the krb5 mechanism, and is
+defined in the <tt class="docutils literal"><span class="pre">&lt;gssapi_krb5.h&gt;</span></tt> header.</li>
+<li><strong>GSS_C_NT_USER_NAME</strong> or <strong>GSS_C_NULL_OID</strong>: The value is treated
+as an unparsed principal name string, as above.  These name types
+may work with mechanisms other than krb5, but will have different
+interpretations in those mechanisms.  <strong>GSS_C_NT_USER_NAME</strong> is
+intended to be used with a local username, which will parse into a
+single-component principal in the default realm.</li>
+<li><strong>GSS_C_NT_ANONYMOUS</strong>: The value is ignored.  The anonymous
+principal is used, allowing a client to authenticate to a server
+without asserting a particular identity (which may or may not be
+allowed by a particular server or Kerberos realm).</li>
+<li><strong>GSS_C_NT_MACHINE_UID_NAME</strong>: The value is uid_t object.  On
+Unix-like systems, the username of the uid is looked up in the
+system user database and the resulting username is parsed as a
+principal name.</li>
+<li><strong>GSS_C_NT_STRING_UID_NAME</strong>: As above, but the value is a decimal
+string representation of the uid.</li>
+<li><strong>GSS_C_NT_EXPORT_NAME</strong>: The value must be the result of a
+<a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.13">gss_export_name</a> call.</li>
+</ul>
+</div>
+<div class="section" id="initiator-credentials">
+<h2>Initiator credentials<a class="headerlink" href="#initiator-credentials" title="Permalink to this headline">¶</a></h2>
+<p>A GSSAPI client application uses <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.19">gss_init_sec_context</a> to establish a
+security context.  The <em>initiator_cred_handle</em> parameter determines
+what tickets are used to establish the connection.  An application can
+either pass <strong>GSS_C_NO_CREDENTIAL</strong> to use the default client
+credential, or it can use <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a> beforehand to acquire an
+initiator credential.  The call to <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a> may include a
+<em>desired_name</em> parameter, or it may pass <strong>GSS_C_NO_NAME</strong> if it does
+not have a specific name preference.</p>
+<p>If the desired name for a krb5 initiator credential is a host-based
+name, it is converted to a principal name of the form
+<tt class="docutils literal"><span class="pre">service/hostname</span></tt> in the local realm, where <em>hostname</em> is the local
+hostname if not specified.  The hostname will be canonicalized using
+forward name resolution, and possibly also using reverse name
+resolution depending on the value of the <strong>rdns</strong> variable in
+<a class="reference internal" href="../admin/conf_files/krb5_conf.html#libdefaults"><em>[libdefaults]</em></a>.</p>
+<p>If a desired name is specified in the call to <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a>, the
+krb5 mechanism will attempt to find existing tickets for that client
+principal name in the default credential cache or collection.  If the
+default cache type does not support a collection, and the default
+cache contains credentials for a different principal than the desired
+name, a <strong>GSS_S_CRED_UNAVAIL</strong> error will be returned with a minor
+code indicating a mismatch.</p>
+<p>If no existing tickets are available for the desired name, but the
+name has an entry in the default client <a class="reference internal" href="../basic/keytab_def.html#keytab-definition"><em>keytab</em></a>, the
+krb5 mechanism will acquire initial tickets for the name using the
+default client keytab.</p>
+<p>If no desired name is specified, credential acquisition will be
+deferred until the credential is used in a call to
+<a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.19">gss_init_sec_context</a> or <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.21">gss_inquire_cred</a>.  If the call is to
+<a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.19">gss_init_sec_context</a>, the target name will be used to choose a client
+principal name using the credential cache selection facility.  (This
+facility might, for instance, try to choose existing tickets for a
+client principal in the same realm as the target service).  If there
+are no existing tickets for the chosen principal, but it is present in
+the default client keytab, the krb5 mechanism will acquire initial
+tickets using the keytab.</p>
+<p>If the target name cannot be used to select a client principal
+(because the credentials are used in a call to <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.21">gss_inquire_cred</a>), or
+if the credential cache selection facility cannot choose a principal
+for it, the default credential cache will be selected if it exists and
+contains tickets.</p>
+<p>If the default credential cache does not exist, but the default client
+keytab does, the krb5 mechanism will try to acquire initial tickets
+for the first principal in the default client keytab.</p>
+<p>If the krb5 mechanism acquires initial tickets using the default
+client keytab, the resulting tickets will be stored in the default
+cache or collection, and will be refreshed by future calls to
+<a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a> as they approach their expire time.</p>
+</div>
+<div class="section" id="acceptor-names">
+<h2>Acceptor names<a class="headerlink" href="#acceptor-names" title="Permalink to this headline">¶</a></h2>
+<p>A GSSAPI server application uses <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.1">gss_accept_sec_context</a> to establish
+a security context based on tokens provided by the client.  The
+<em>acceptor_cred_handle</em> parameter determines what
+<a class="reference internal" href="../basic/keytab_def.html#keytab-definition"><em>keytab</em></a> entries may be authenticated to by the
+client, if the krb5 mechanism is used.</p>
+<p>The simplest choice is to pass <strong>GSS_C_NO_CREDENTIAL</strong> as the acceptor
+credential.  In this case, clients may authenticate to any service
+principal in the default keytab (typically <a class="reference internal" href="../mitK5defaults.html#paths"><em>DEFKTNAME</em></a>, or the value of
+the <strong>KRB5_KTNAME</strong> environment variable).  This is the recommended
+approach if the server application has no specific requirements to the
+contrary.</p>
+<p>A server may acquire an acceptor credential with <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a> and
+a <em>cred_usage</em> of <strong>GSS_C_ACCEPT</strong> or <strong>GSS_C_BOTH</strong>.  If the
+<em>desired_name</em> parameter is <strong>GSS_C_NO_NAME</strong>, then clients will be
+allowed to authenticate to any service principal in the default
+keytab, just as if no acceptor credential was supplied.</p>
+<p>If a server wishes to specify a <em>desired_name</em> to <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.2">gss_acquire_cred</a>,
+the most common choice is a host-based name.  If the host-based
+<em>desired_name</em> contains just a <em>service</em>, then clients will be allowed
+to authenticate to any host-based service principal (that is, a
+principal of the form <tt class="docutils literal"><span class="pre">service/hostname&#64;REALM</span></tt>) for the named
+service, regardless of hostname or realm, as long as it is present in
+the default keytab.  If the input name contains both a <em>service</em> and a
+<em>hostname</em>, clients will be allowed to authenticate to any host-based
+principal for the named service and hostname, regardless of realm.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If a <em>hostname</em> is specified, it will be canonicalized
+using forward name resolution, and possibly also using
+reverse name resolution depending on the value of the
+<strong>rdns</strong> variable in <a class="reference internal" href="../admin/conf_files/krb5_conf.html#libdefaults"><em>[libdefaults]</em></a>.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If the <strong>ignore_acceptor_hostname</strong> variable in
+<a class="reference internal" href="../admin/conf_files/krb5_conf.html#libdefaults"><em>[libdefaults]</em></a> is enabled, then <em>hostname</em> will be
+ignored even if one is specified in the input name.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In MIT krb5 versions prior to 1.10, and in Heimdal&#8217;s
+implementation of the krb5 mechanism, an input name with
+just a <em>service</em> is treated like an input name of
+<tt class="docutils literal"><span class="pre">service&#64;localhostname</span></tt>, where <em>localhostname</em> is the
+string returned by gethostname().</p>
+</div>
+<p>If the <em>desired_name</em> is a krb5 principal name or a local system name
+type which is mapped to a krb5 principal name, clients will only be
+allowed to authenticate to that principal in the default keytab.</p>
+</div>
+<div class="section" id="importing-and-exporting-credentials">
+<h2>Importing and exporting credentials<a class="headerlink" href="#importing-and-exporting-credentials" title="Permalink to this headline">¶</a></h2>
+<p>The following GSSAPI extensions can be used to import and export
+credentials (declared in <tt class="docutils literal"><span class="pre">&lt;gssapi/gssapi_ext.h&gt;</span></tt>):</p>
+<div class="highlight-python"><pre>OM_uint32 gss_export_cred(OM_uint32 *minor_status,
+                          gss_cred_id_t cred_handle,
+                          gss_buffer_t token);
+
+OM_uint32 gss_import_cred(OM_uint32 *minor_status,
+                          gss_buffer_t token,
+                          gss_cred_id_t *cred_handle);</pre>
+</div>
+<p>The first function serializes a GSSAPI credential handle into a
+buffer; the second unseralizes a buffer into a GSSAPI credential
+handle.  Serializing a credential does not destroy it.  If any of the
+mechanisms used in <em>cred_handle</em> do not support serialization,
+gss_export_cred will return <strong>GSS_S_UNAVAILABLE</strong>.  As with other
+GSSAPI serialization functions, these extensions are only intended to
+work with a matching implementation on the other side; they do not
+serialize credentials in a standardized format.</p>
+<p>A serialized credential may contain secret information such as ticket
+session keys.  The serialization format does not protect this
+information from eavesdropping or tampering.  The calling application
+must take care to protect the serialized credential when communicating
+it over an insecure channel or to an untrusted party.</p>
+<p>A krb5 GSSAPI credential may contain references to a credential cache,
+a client keytab, an acceptor keytab, and a replay cache.  These
+resources are normally serialized as references to their external
+locations (such as the filename of the credential cache).  Because of
+this, a serialized krb5 credential can only be imported by a process
+with similar privileges to the exporter.  A serialized credential
+should not be trusted if it originates from a source with lower
+privileges than the importer, as it may contain references to external
+credential cache, keytab, or replay cache resources not accessible to
+the originator.</p>
+<p>An exception to the above rule applies when a krb5 GSSAPI credential
+refers to a memory credential cache, as is normally the case for
+delegated credentials received by <a class="reference external" href="http://tools.ietf.org/html/rfc2744.html#section-5.1">gss_accept_sec_context</a>.  In this
+case, the contents of the credential cache are serialized, so that the
+resulting token may be imported even if the original memory credential
+cache no longer exists.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+            </div>
+            <div class="clearer" ></div>
+        </div>
+    </div>
+ 
+    <div class="footer-wrapper" >
+        <div class="footer" >
+            <div class="right" ><i>Release: 1.11.3</i><br />
+                &copy; <a href="../copyright.html">Copyright</a> 1985-2013, MIT.
+            </div>
+            <div class="left" >
+                    <a href="../index.html"
+                    title="Full Table of Contents"
+                    >Contents</a>
+                     |
+                    <a href="index.html"
+                    title="For application developers"
+                    >previous</a>
+                     |
+                    <a href="h5l_mit_apidiff.html"
+                    title="Differences between Heimdal and MIT Kerberos API"
+                    >next</a>
+                     |
+                    <a href="../genindex.html"
+                    title="General Index"
+                    >index</a>
+                     |
+                    <a href="../search.html"
+                    title="Enter search criteria"
+                    >Search</a>
+                     |
+                    <a href="mailto:krb5-bugs@mit.edu?subject=Documentation__Developing with GSSAPI">feedback</a>
+            </div>
+        </div>
+    </div>
+  </body>
+</html>

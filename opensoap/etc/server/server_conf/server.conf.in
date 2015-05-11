@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<server_conf>
+
+<!-- log -->
+  <log>
+    <path>@serverstatedir@/log/</path>
+  </log>
+
+<!-- SOAPmsg, async_tbl -->
+  <spool>
+    <soap_message>
+      <path>@serverstatedir@/spool/</path>
+    </soap_message>
+    <async_table>
+      <path>@serverstatedir@/spool/</path>
+    </async_table>
+  </spool>
+
+<!-- pid, socket -->
+  <run>
+    <pid>
+      <path>@serverstatedir@/run/</path>
+    </pid>
+    <socket>
+      <path>@serverstatedir@/run/</path>
+    </socket>
+  </run>
+
+<!-- security key -->
+  <security>
+    <keys>
+      <path>@sysconfdir@/</path>
+    </keys>
+  </security>
+
+<!-- SSML dir -->
+  <ssml>
+    <path>@sysconfdir@/ssml/</path>
+    <internalServices>
+	<path>@sysconfdir@/ssml/internalservices/</path>
+    </internalServices>
+  </ssml>
+
+<!-- *** Please correct hostname so that your hostname is shown. *** -->
+<!-- backward info. for async -->
+  <backward>
+    <url>http://yourHostNameOrIpAddr/cgi-bin/soapInterface.cgi</url>
+    <url>http://yourSomeAliases/cgi-bin/soapInterface.cgi</url>
+  </backward>
+
+<!-- *** Please correct hostname so that you wish forwarding. *** -->
+<!-- foward info -->
+  <forwarder>
+    <url>http://forwardingTargetHostNameOrIpAddr/cgi-bin/soapInterface.cgi</url>
+  </forwarder>
+
+<!-- signature -->
+  <add_signature>false</add_signature>
+
+<!-- limit -->
+  <limit>
+    <!-- check SOAP Message size. ex.) 1024, 500k, 1M,... -->
+    <soap_message_size>1M</soap_message_size>
+
+    <ttl>
+      <!-- check forwarding count -->
+      <!-- -1 is not allowed forwarding by any case -->
+      <hoptimes>4</hoptimes>
+
+      <!-- keep alive in asynchronized queue or spool. unit=second-->
+      <asynchronizedTTL>3600</asynchronizedTTL>
+
+      <!-- check each process timeout -->
+      <synchronizedTTL>600</synchronizedTTL>
+    </ttl>
+  </limit>
+
+<!-- convert default charencoding -->
+  <!-- ex. UTF-8, EUC-JP  -->
+  <default_charencoding>UTF-8</default_charencoding>
+
+<!-- logging -->
+  <Logging>
+    <System>
+      <!-- Log output type syslog/file/stderr/none -->
+      <LogType>syslog</LogType>
+
+      <!-- Log format : genelic/detail -->
+      <LogFormat>generic</LogFormat>
+
+      <!-- Syslog option -->
+      <!-- 1=PID,2=CONSOLE,4=ODELAY,8=NDELAY,16=NOWAIT,32=PERROR -->
+      <Option>5</Option>
+
+      <!-- Syslog facility -->
+      <!-- 0=KERN,8=USER,24=DAEMON,128=LOCAL0,136=LOCAL1,144=LOCAL2 -->
+      <Facility>8</Facility>
+
+      <!-- SysLog default level -->
+      <!-- 0=EMERG,2=ALERT,3=ERR,4=WARN,5=NOTICE,6=INFO,7=DEBUG -->
+      <DefaultLevel>6</DefaultLevel>
+
+      <!-- OutputLevel:0=EMERG,2=ALERT,3=ERR,4=WARN,5=NOTICE,6=INFO,7-16=DEBUG -->
+      <LogLevel>6</LogLevel>
+    </System>
+    <Application>
+      <!-- Log output type syslog/file/stderr/none -->
+      <LogType>file</LogType>
+
+      <!-- Log format:genelic/detail -->
+      <LogFormat>detail</LogFormat>
+
+      <!-- File name:file path and name -->
+      <FileName>@serverstatedir@/log/AppLog</FileName>
+
+      <!-- OutputLevel:0=EMERG,2=ALERT,3=ERR,4=WARN,5=NOTICE,6=INFO,7-16=DEBUG -->
+      <LogLevel>6</LogLevel>
+    </Application>
+    <!-- for test (time stamp output) -->
+    <soapInterface4ap>
+      <!-- Log output type syslog/file/stderr/none -->
+      <LogType>file</LogType>
+      <!-- Log format:genelic/detail -->
+      <LogFormat>detail</LogFormat>
+      <!-- File name:file path and name -->
+      <FileName>@serverstatedir@/log/soapInterface4apLog</FileName>
+      <!-- OutputLevel:0=EMERG,2=ALERT,3=ERR,4=WARN,5=NOTICE,6=INFO,7-16=DEBUG -->
+      <LogLevel>6</LogLevel>
+    </soapInterface4ap>
+  </Logging>
+
+</server_conf>

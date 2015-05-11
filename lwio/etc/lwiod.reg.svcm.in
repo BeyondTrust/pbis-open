@@ -1,0 +1,53 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwio]
+"Description" = { 
+    default = "Likewise IO Manager" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "lwreg" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000002
+    doc = "" 
+}
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
+"FdLimit" = {
+	default = dword:00004000
+	doc = "File descriptor limit"
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters]
+"SignMessagesIfSupported" = { 
+    default = dword:00000000 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
+"Load" = { 
+    default = "rdr" 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
+"Path" = { 
+    default = "@providerdir@/libiotest.sys@MOD_EXT@" 
+    doc = "" 
+}

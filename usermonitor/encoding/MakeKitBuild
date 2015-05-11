@@ -1,0 +1,17 @@
+make()
+{
+    lw_dceidl \
+	IDL="encoding.idl" \
+	CSTUB="encoding_cstub.c" \
+	HEADER="encoding_h.h" \
+        HEADERDEPS="lw/base.h" \
+	INCLUDEDIRS=". ../include/public"
+
+    mk_library \
+        LIB="usermonitor_encoding" \
+	SOURCES="encoding.c encoding_cstub.c" \
+	INCLUDEDIRS=". ../include ../include/public" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwerror.h" \
+	LIBDEPS="lwbase dcerpc" \
+	DEPS="encoding_h.h"
+}

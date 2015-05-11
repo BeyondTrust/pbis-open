@@ -1,0 +1,19 @@
+make()
+{
+    COMMON_HEADERDEPS="lw/base.h lwadvapi.h lwmsg/lwmsg.h" \
+
+    mk_library \
+        LIB=lwsm \
+        SOURCES="client.c call.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmcommon lwmsg lwmsg_nothr" \
+        SYMFILE="liblwsm.sym"
+
+    mk_program \
+        PROGRAM=lwsm \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsm lwsmcommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD"
+}

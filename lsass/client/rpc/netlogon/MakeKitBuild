@@ -1,0 +1,46 @@
+make()
+{
+    NETLOGON_SOURCES="\
+        globals.c                         \
+	netr_binding.c                    \
+	netr_memory.c                     \
+	netr_stubmemory.c                 \
+	netr_credentials.c                \
+	netr_serverreqchallenge.c         \
+	netr_serverauthenticate.c         \
+	netr_serverauthenticate2.c        \
+	netr_serverauthenticate3.c        \
+	netr_schannel.c                   \
+	netr_samlogon.c                   \
+	netr_samlogoff.c                  \
+	netr_samlogonex.c                 \
+	netr_enumeratetrusteddomainsex.c  \
+	netr_getdomaininfo.c              \
+	dsr_enumeratedomaintrusts.c       \
+	dsr_getdcname.c"
+
+    lw_dceidl \
+	IDL="../../../idl/netlogon.idl" \
+	CSTUB="netlogon_cstub.c" \
+	HEADER="netlogon_h.h" \
+	INCLUDEDIRS=". ../../../include" \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=netlogon_cstub \
+	SOURCES="netlogon_cstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h"
+	LIBDEPS="dcerpc"
+
+    mk_group \
+	GROUP=netlogon \
+	SOURCES="$NETLOGON_SOURCES" \
+	GROUPDEPS="netlogon_cstub" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h openssl/rand.h" \
+	LIBDEPS="lwbase dcerpc crypto" \
+	DEPS="netlogon_h.h"
+}

@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<TITLE>Converting Applications from SASLv1 to SASLv2</TITLE>
+<BODY>
+<H1>Application Conversion Guide for SASLv2</H1>
+
+<p>This documents our conversion experience with Cyrus IMAPd, an application
+that uses almost every part of SASL, so it should give a good idea what caveats
+need to be looked for when one is converting an application which uses SASLv1
+to use SASLv2.</P>
+
+<P>The major changes in the SASLv2 API have to do with memory management.
+That is, the rule "If you allocate it, you free it" is now enforced.  That
+means that if the application allocates something (for example, an interaction
+or callback response), it must free it.  Likewise, the application does
+NOT free anything handed to it by the SASL library, such as responses
+given by sasl_client_step or sasl_decode.</P>
+
+<UL>
+<LI>Tips for both clients and servers:<P>
+<UL>
+<LI>Change configure scripts to search for libsasl2 and include files
+prefixed with sasl/ (sasl/sasl.h, sasl/saslutil.h, etc)</LI>
+<LI><tt>sasl_decode64</tt> now takes an
+additional parameter that is the size of the buffer it is passed.</LI>
+<LI>External authentication properties are no longer handled by a
+<tt>sasl_external_properties_t</tt>.  Instead you make 2 separate calls to
+<tt>sasl_setprop.</tt>
+One with SASL_SSF_EXTERNAL to tell the SASL library what SSF is being
+provided by the external layer. The other sets SASL_AUTH_EXTERNAL to indicate
+the authentication name.</LI>
+<LI>
+<tt>sasl_getprop</tt> now returns its value in a <tt>const void **</tt>
+</LI>
+<LI><tt>sasl_encode</tt> and <tt>sasl_decode</tt> now return a constant output buffer, which
+you do not need to free (it is only valid until the next call for this sasl_
+conn_t, however)</LI>
+<LI>The SASL_IP_REMOTE and SASL_IP_LOCAL properties are now SASL_IPLOCALPORT
+and SASL_IPREMOTEPORT and take strings instead of sockaddrs. These strings
+may also be passed to the sasl_[client/server]_new functions.  They
+are in one of the following formats:
+<UL>
+<LI>a.b.c.d;p (IPv4, with port)</LI>
+<LI>e:f:g:h:i:j:k:l;p (IPv6, with port)</LI>
+<LI>e:j:k:l;p (IPv6, abbreviated zero fields, with port)</LI>
+</UL></LI>
+<li>Error handling and reporting is different. All of the functions that used
+to return a "reply" string no longer do.  Now you should (always) check
+<tt>sasl_errdetail</tt>.  Callbacks MUST likewise use <tt>sasl_seterror</tt>
+instead of setting their (now nonexistent) reply parameter.</li>
+<li>Be very careful about your handling of maxoutbuf.  If you claim that
+you can only read 4096 bytes at a time, be sure to only pass at most
+that much at a time to the SASL library!</li>
+</UL></LI>
+
+<LI>Tips for clients:</LI>
+<OL>
+<LI>In <tt>sasl_client_new</tt> you can now pass ip address strings as
+parameters 3 and 4 instead of calling setprop later on sockaddr's.
+This is preferred but not required (not passing them by either method disables
+mechs which require IP address information).   You might find the iptostring()
+function in utils/smtptest.c to be useful for this.  If the protocol supports
+the server sending data on success you should pass SASL_SUCCESS_DATA as a
+flag.</LI>
+<LI><tt>sasl_client_start</tt> loses the 3rd "secret" parameter.
+Also, NULL clientout and clientoutlen indicates that the protocol does not
+support client-send-first.  A NULL return value indicates that there is no
+first client send. (as opposed to an empty string, which indicates that
+the first client send is the empty string).</LI>
+<LI>
+Both <tt>sasl_client_start</tt> and <tt>sasl_client_step</tt> now take
+const clientout parameters that you are no longer responsible for freeing
+(it is only valid until the next call for this <tt>sasl_conn_t</tt>, however)
+</LI>
+<LI>When interactions and callbacks happen you are responsible for freeing
+the results.</LI>
+</OL></LI>
+
+<LI>Tips for Servers:</LI>
+<OL>
+<LI>SASL_SECURITY_LAYER flag no longer exists, whether or not to use a
+security layer is solely determined by the security properties information,
+namely, the <tt>maxbufsize</tt> member of the
+<tt>sasl_security_properties_t</tt></LI>
+<LI><tt>sasl_server_new</tt> now can take ip address strings.</li>
+<LI><tt>sasl_checkpass</tt> no longer has a "reply" parameter.  There
+are also considerably fewer possible values for the pwcheck_method
+option (now only auxprop, saslauthd, authdaemond, and pwcheck).</li>
+<li><tt>sasl_server_start</tt> / <tt>sasl_server_step</tt> have same
+output parameter deal as their equivalents on the client side</li>
+<li><tt>sasl_listmech</tt> has a constant output parameter</li>
+<li>If you used to canonicalize the username in a SASL_CB_PROXY_POLICY
+callback you should now separate the functionality of authorization and
+canonicalization.  That is, only do authorization in SASL_CB_PROXY_POLICY,
+and do canonicalization in the SASL_CB_CANON_USER callback</li>
+</OL></LI>
+
+</UL>
+</BODY>
+</HTML>

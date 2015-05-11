@@ -1,0 +1,17 @@
+.. highlightlang:: c
+
+.. _CKSUMTYPE-CMAC-CAMELLIA128-data:
+
+CKSUMTYPE_CMAC_CAMELLIA128
+==========================
+
+..
+.. data:: CKSUMTYPE_CMAC_CAMELLIA128
+..
+
+
+
+
+================================= ======================
+``CKSUMTYPE_CMAC_CAMELLIA128``       ``0x0011``
+================================= ======================

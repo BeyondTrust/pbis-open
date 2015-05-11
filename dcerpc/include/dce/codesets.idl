@@ -1,0 +1,88 @@
+/*
+ * 
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      codesets.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC)
+**
+**  ABSTRACT:
+**
+**  This file defines code sets data structure, and a routine to encode the
+**  data before it is stored in NSI and a routine to decode the data after
+**  the data is retrieved from NSI.
+**  
+**  Both server and client supports a certain set of code sets.  For 
+**  the communication between client and server without a major data loss,
+**  client needs to know which code sets a server supports.  NSI is used
+**  to store server's supported code sets.  Since code sets are integer values,
+**  they are encoded to endian-safe formats by IDL encoding services before
+**  they are stored in NSI.
+**
+**
+*/
+
+[
+uuid(35a38fce-b5d1-11cc-af6f-08000925d3fe),
+version(1.0)
+]
+interface codesets
+{
+
+/*
+ *  Maximum number of bytes to be stored in CDS entry.
+ *  4000 is defined as MAXATTRIBUTE in dns_record.h.  However, since there
+ *  is no IDL file which defines this value, there is no way to include
+ *  that information from this file.
+ */
+const long nsi_max_attribute_len = 4000;
+
+/* 
+ * R P C __ C O D E S E T S _ T O _ N S C O D E S E T S
+ *
+ * Encode code sets with IDL encoding services for storing in CDS
+ */
+
+void rpc__codesets_to_nscodesets (
+	[in] handle_t			h,
+	[in] long			num,
+	[in, size_is(num)] byte		codesets[]
+);
+
+/* 
+ * R P C __ N S C O D E S E T S _ T O _ C O D E S E T S
+ *
+ * Decode code sets with IDL encoding services.
+ */
+
+void rpc__nscodesets_to_codesets (
+	[in] handle_t			h,
+	[in, out] long			*num,
+	[out, size_is(*num)] byte	codesets[]
+);
+
+}

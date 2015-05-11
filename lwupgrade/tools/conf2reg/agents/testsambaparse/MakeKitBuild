@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=conftestsambaparse \
+        SOURCES="testsambaparse.c" \
+        INCLUDEDIRS="../../../../include" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
+        LIBDEPS=""
+}

@@ -1,0 +1,2 @@
+SUBDIRS = lwtask-cli
+

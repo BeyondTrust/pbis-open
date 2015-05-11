@@ -1,0 +1,18 @@
+.. highlightlang:: c
+
+.. _KRB5-CYBERSAFE-SECUREID-data:
+
+KRB5_CYBERSAFE_SECUREID
+=======================
+
+..
+.. data:: KRB5_CYBERSAFE_SECUREID
+..
+
+Cybersafe.
+
+
+
+============================== ======================
+``KRB5_CYBERSAFE_SECUREID``       ``9``
+============================== ======================

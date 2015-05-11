@@ -1,0 +1,23 @@
+HKCR
+{
+	AdExe.AddExe.1 = s 'AddExe Class'
+	{
+		CLSID = s '{7DC6AAAA-DDF1-481B-A35F-5D2AEA432728}'
+	}
+	AdExe.AddExe = s 'AddExe Class'
+	{
+		CLSID = s '{7DC6AAAA-DDF1-481B-A35F-5D2AEA432728}'
+		CurVer = s 'AdExe.AddExe.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {7DC6AAAA-DDF1-481B-A35F-5D2AEA432728} = s 'AddExe Class'
+		{
+			ProgID = s 'AdExe.AddExe.1'
+			VersionIndependentProgID = s 'AdExe.AddExe'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{C9E21980-2CA6-4EE8-9D44-3EF9B3452FB1}'
+			'TypeLib' = s '{FC216FE4-4BAF-4F04-8099-CD19D7B1403B}'
+		}
+	}
+}

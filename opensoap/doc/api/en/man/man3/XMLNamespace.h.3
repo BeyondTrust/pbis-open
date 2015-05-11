@@ -1,0 +1,295 @@
+.TH "XMLNamespace.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+XMLNamespace.h \- OpenSOAP API XML Namespace Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/String.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPXMLNamespace \fBOpenSOAPXMLNamespace\fP"
+.br
+.RI "\fIOpenSOAPXMLNamespace Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPXMLNamespace\fP * \fBOpenSOAPXMLNamespacePtr\fP"
+.br
+.RI "\fIOpenSOAPXMLNamespace Pointer Type Definition. \fP"
+.ti -1c
+.RI "typedef tagOpenSOAPXMLElm \fBOpenSOAPXMLElm\fP"
+.br
+.RI "\fIOpenSOAPXMLElm Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPXMLElm\fP * \fBOpenSOAPXMLElmPtr\fP"
+.br
+.RI "\fIOpenSOAPXMLElm Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceCreateMB\fP (const char *ns_uri, const char *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIOpenSOAP XML Namespace Element Instance Create(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceCreateWC\fP (const wchar_t *ns_uri, const wchar_t *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIOpenSOAP XML Namespace Element Instance Create(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceRelease\fP (\fBOpenSOAPXMLNamespacePtr\fP ns)"
+.br
+.RI "\fIRelease XML Namespace area. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceCreateString\fP (\fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIXML Namespace Create String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceGetURI\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP *ns_uri)"
+.br
+.RI "\fIGet XML Namespace URI. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceDuplicate\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLNamespacePtr\fP *dupNs)"
+.br
+.RI "\fIDuplicate XML Namespace. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceGetDefinedXMLElm\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLElmPtr\fP *elm)"
+.br
+.RI "\fIGet Defined XML Namespace Element. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceSetDefinedXMLElm\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLElmPtr\fP *oldElm)"
+.br
+.RI "\fISet Defined XML Namespace Element. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceGetPrefix\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP *ns_prefix)"
+.br
+.RI "\fIGet Namespace Prefix. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, char *(*memAllocator)(size_t), char **utf8NsURI, char **utf8NsPrefix)"
+.br
+.RI "\fIGet XML Namespace Properties. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceIsSameUriString\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP nsUri, int *isSame)"
+.br
+.RI "\fISame XML Namespace URI ? \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLNamespaceIsSameString\fP (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, int *isSame)"
+.br
+.RI "\fISame XML Namespace URI And Prefix ? \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API XML Namespace Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPXMLNamespaceCreateMB (const char * ns_uri, const char * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+OpenSOAP XML Namespace Element Instance Create(MB). \fBParameters:\fP
+.RS 4
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace prefix 
+.br
+\fIns\fP OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceCreateString (\fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+XML Namespace Create String. \fBParameters:\fP
+.RS 4
+\fInsUri\fP OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI 
+.br
+\fInsPrefix\fP OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceCreateWC (const wchar_t * ns_uri, const wchar_t * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+OpenSOAP XML Namespace Element Instance Create(WC). \fBParameters:\fP
+.RS 4
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace prefix 
+.br
+\fIns\fP OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceDuplicate (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLNamespacePtr\fP * dupNs)"
+.PP
+Duplicate XML Namespace. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fIdupNs\fP OpenSOAPXMLNamespacePtr * [out] ((|dupNs|)) XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceGetDefinedXMLElm (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLElmPtr\fP * elm)"
+.PP
+Get Defined XML Namespace Element. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fIelm\fP OpenSOAPXMLElmPtr * [out] ((|elm|)) XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceGetPrefix (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP * ns_prefix)"
+.PP
+Get Namespace Prefix. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fIns_prefix\fP OpenSOAPStringPtr * [out] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator (\fBOpenSOAPXMLNamespacePtr\fP ns, char *(* memAllocator)(size_t), char ** utf8NsURI, char ** utf8NsPrefix)"
+.PP
+Get XML Namespace Properties. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fImemAllocator\fP char * [in] ( * ((|memAllocator|)) )(size_t) Character String 
+.br
+\fIutf8NsURI\fP char ** [out] ((|utf8NsURI|)) Character String Array UTF8 Encoded Namespace URI 
+.br
+\fIutf8NsPrefix\fP char ** [out] ((|utf8NsPrefix|)) Character String Array UTF8 Encoded Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceGetURI (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP * ns_uri)"
+.PP
+Get XML Namespace URI. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fIns_uri\fP OpenSOAPStringPtr * [out] ((|ns_uri|)) Namespace URI 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceIsSameString (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, int * isSame)"
+.PP
+Same XML Namespace URI And Prefix ? \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fInsUri\fP OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI 
+.br
+\fInsPrefix\fP OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix 
+.br
+\fIisSame\fP int * [out] ((|isSame|)) Is same result 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceIsSameUriString (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPStringPtr\fP nsUri, int * isSame)"
+.PP
+Same XML Namespace URI ? \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace 
+.br
+\fInsUri\fP OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI 
+.br
+\fIisSame\fP int * [out] ((|isSame|)) Is same URI result 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceRelease (\fBOpenSOAPXMLNamespacePtr\fP ns)"
+.PP
+Release XML Namespace area. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLNamespaceSetDefinedXMLElm (\fBOpenSOAPXMLNamespacePtr\fP ns, \fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLElmPtr\fP * oldElm)"
+.PP
+Set Defined XML Namespace Element. \fBParameters:\fP
+.RS 4
+\fIns\fP OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace 
+.br
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element 
+.br
+\fIoldElm\fP OpenSOAPXMLElmPtr * [out] ((|oldElm|)) XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

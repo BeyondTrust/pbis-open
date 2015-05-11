@@ -1,0 +1,392 @@
+.TH "ErrorCode.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ErrorCode.h \- OpenSOAP API Error Code Definitions.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBOPENSOAP_NO_ERROR\fP   (0)"
+.br
+.RI "\fINo Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_NOT_CATEGORIZE_ERROR\fP   (0xffffffffL)"
+.br
+.RI "\fIUndefined Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_IMPLEMENTATION_ERROR\fP   (0x40000000L)"
+.br
+.RI "\fIImplementation Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_YET_IMPLEMENTATION\fP   (0x40000001L)"
+.br
+.RI "\fINot Yet Implemented Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_UNSUPPORT_PROTOCOL\fP   (0x40000002L)"
+.br
+.RI "\fIProtocol not supported (including ssl without HAVE_SSL). \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_PARAMETER_BADVALUE\fP   (0x20000001L)"
+.br
+.RI "\fIBad Parameter Value Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_USERDEFINE_ERROR\fP   (0x10000000L)"
+.br
+.RI "\fIUser Defined Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_MEM_ERROR\fP   (0x00010000L)"
+.br
+.RI "\fIMemory Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_MEM_BADALLOC\fP   (0x00010001L)"
+.br
+.RI "\fIMemory Allocation Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_MEM_OUTOFRANGE\fP   (0x00010002L)"
+.br
+.RI "\fIMemory Out-of-range Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_CHAR_ERROR\fP   (0x00020000L)"
+.br
+.RI "\fIChar Conversion Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_ICONV_NOT_IMPL\fP   (0x00020001L)"
+.br
+.RI "\fIiconv Not Implemented Error \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_INVALID_MB_SEQUENCE\fP   (0x00020002L)"
+.br
+.RI "\fIMulti-byte Sequence Invalid Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_INCOMPLETE_MB_SEQUENCE\fP   (0x00020003L)"
+.br
+.RI "\fIMulti-byte Sequence Incomplete Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_UNKNOWN_CHARENCODE\fP   (0x00020004L)"
+.br
+.RI "\fIUnknown Character Encoding Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SETLOCALEFAILURE\fP   (0x00020005L)"
+.br
+.RI "\fISet Locale Failure Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_IO_ERROR\fP   (0x00040000L)"
+.br
+.RI "\fII/O Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_IO_READ_ERROR\fP   (0x00040001L)"
+.br
+.RI "\fIRead Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_IO_WRITE_ERROR\fP   (0x00040002L)"
+.br
+.RI "\fIWrite Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_FILE_ERROR\fP   (0x00048000L)"
+.br
+.RI "\fIFile I/O Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_FILEOPEN_ERROR\fP   (0x00048001L)"
+.br
+.RI "\fIFile Open Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_ERROR\fP   (0x00080000L)"
+.br
+.RI "\fIXML Manipulation Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XMLNODE_NOT_FOUND\fP   (0x00080001L)"
+.br
+.RI "\fIXML Node Not Found Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_BADNAMESPACE\fP   (0x00080002L)"
+.br
+.RI "\fIBad Namespace Is Used Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_NOHEADERBODY\fP   (0x00080003L)"
+.br
+.RI "\fIHeader And/Or Body Element Not Found Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_BADDOCUMENTTYPE\fP   (0x00080004L)"
+.br
+.RI "\fIXML Document Root Element Is Not Envelope Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_BADMAKEDOCUMENT\fP   (0x00080005L)"
+.br
+.RI "\fIXML Document Creation Failure Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_EMPTYDOCUMENT\fP   (0x00080006L)"
+.br
+.RI "\fIXML Document Empty Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_NOTXMLDOCUMENT\fP   (0x00080007L)"
+.br
+.RI "\fINot XML Document Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_XML_NS_URI_UNMATCHED\fP   (0x00080008L)"
+.br
+.RI "\fIXML Namespace Prefix Matched, But URI Unmatched Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_ERROR\fP   (0x00100000L)"
+.br
+.RI "\fISecurity Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_KEYGEN_ERROR\fP   (0x00100001L)"
+.br
+.RI "\fIKey Generation Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_SIGNGEN_ERROR\fP   (0x00100002L)"
+.br
+.RI "\fISignature Generation Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_SIGNVERIFY_ERROR\fP   (0x00100003L)"
+.br
+.RI "\fISignature Verification Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_ENCRYPT_ERROR\fP   (0x00100004L)"
+.br
+.RI "\fIEncryption Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SEC_DECRYPT_ERROR\fP   (0x00100005L)"
+.br
+.RI "\fIDecryption Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_ERROR\fP   (0x00200000L)"
+.br
+.RI "\fITransport Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_INVOKE_ERROR\fP   (0x00210000L)"
+.br
+.RI "\fITransport Invoke Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_HOST_NOT_FOUND\fP   (0x00210001L)"
+.br
+.RI "\fITransport Error - Host Not Found Maybe DNS error. ---- ADDRINFO ? SOCKET ? \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_CONNECTION_REFUSED\fP   (0x00210002L)"
+.br
+.RI "\fITransport Error - Connection Refused No one listening on the remote address. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_CONNECTION_TIMEOUT\fP   (0x00210003L)"
+.br
+.RI "\fITransport Error - Connection Timeout. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_NETWORK_UNREACH\fP   (0x00210004L)"
+.br
+.RI "\fITransport Error - Network is unreachable. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_HOST_UNREACH\fP   (0x00210005L)"
+.br
+.RI "\fITransport Error - Host is unreachable. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_HTTP_ERROR\fP   (0x00220000L)"
+.br
+.RI "\fITransport HTTP Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_IS_HTTP_ERROR\fP(x)   (((x) & (OPENSOAP_TRANSPORT_HTTP_ERROR)) == (OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.br
+.RI "\fINon-0 if Transport Error code is an HTTP_ERROR. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_GET_HTTP_ERROR\fP(x)   ((x) & ~(OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.br
+.RI "\fICalculate actual HTTP Status (Error) number from OpenSOAP Transport Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_SET_HTTP_ERROR\fP(x)   ((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.br
+.RI "\fICalculate OpenSOAP Transport Error number from actual HTTP Status. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_SSL_ERROR\fP   (0x00240000L)"
+.br
+.RI "\fITransport SSL Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_SSL_VERSION_ERROR\fP   (0x00240001L)"
+.br
+.RI "\fITransport - SSL Version Invalid. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR\fP   (0x00240002L)"
+.br
+.RI "\fITransport - SSL Certification File Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SUCCEEDED\fP(err)   (!(err))"
+.br
+.RI "\fIOpenSOAP Success Macro Error. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_FAILED\fP(err)   (err)"
+.br
+.RI "\fIOpenSOAP Failure Macro Error. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Error Code Definitions. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Define Documentation"
+.PP 
+.SS "#define OPENSOAP_CHAR_ERROR   (0x00020000L)"
+.PP
+Char Conversion Error. (0x00020000L) 
+.SS "#define OPENSOAP_FAILED(err)   (err)"
+.PP
+OpenSOAP Failure Macro Error. (err) 
+.SS "#define OPENSOAP_FILE_ERROR   (0x00048000L)"
+.PP
+File I/O Error. (0x00048000L) 
+.SS "#define OPENSOAP_FILEOPEN_ERROR   (0x00048001L)"
+.PP
+File Open Error. (0x00048001L) 
+.SS "#define OPENSOAP_ICONV_NOT_IMPL   (0x00020001L)"
+.PP
+iconv Not Implemented Error (0x00020001L) 
+.SS "#define OPENSOAP_IMPLEMENTATION_ERROR   (0x40000000L)"
+.PP
+Implementation Error. (0x40000000L) 
+.SS "#define OPENSOAP_INCOMPLETE_MB_SEQUENCE   (0x00020003L)"
+.PP
+Multi-byte Sequence Incomplete Error. (0x00020003L) 
+.SS "#define OPENSOAP_INVALID_MB_SEQUENCE   (0x00020002L)"
+.PP
+Multi-byte Sequence Invalid Error. (0x00020002L) 
+.SS "#define OPENSOAP_IO_ERROR   (0x00040000L)"
+.PP
+I/O Error. (0x00040000L) 
+.SS "#define OPENSOAP_IO_READ_ERROR   (0x00040001L)"
+.PP
+Read Error. (0x00040001L) 
+.SS "#define OPENSOAP_IO_WRITE_ERROR   (0x00040002L)"
+.PP
+Write Error. (0x00040002L) 
+.SS "#define OPENSOAP_MEM_BADALLOC   (0x00010001L)"
+.PP
+Memory Allocation Error. (0x00010001L) 
+.SS "#define OPENSOAP_MEM_ERROR   (0x00010000L)"
+.PP
+Memory Error. (0x00010000L) 
+.SS "#define OPENSOAP_MEM_OUTOFRANGE   (0x00010002L)"
+.PP
+Memory Out-of-range Error. (0x00010002L) 
+.SS "#define OPENSOAP_NO_ERROR   (0)"
+.PP
+No Error. (0) 
+.SS "#define OPENSOAP_NOT_CATEGORIZE_ERROR   (0xffffffffL)"
+.PP
+Undefined Error. (0xffffffffL) 
+.SS "#define OPENSOAP_PARAMETER_BADVALUE   (0x20000001L)"
+.PP
+Bad Parameter Value Error. (0x20000001L) 
+.SS "#define OPENSOAP_SEC_DECRYPT_ERROR   (0x00100005L)"
+.PP
+Decryption Error. (0x00100005L) 
+.SS "#define OPENSOAP_SEC_ENCRYPT_ERROR   (0x00100004L)"
+.PP
+Encryption Error. (0x00100004L) 
+.SS "#define OPENSOAP_SEC_ERROR   (0x00100000L)"
+.PP
+Security Error. (0x00100000L) 
+.SS "#define OPENSOAP_SEC_KEYGEN_ERROR   (0x00100001L)"
+.PP
+Key Generation Error. (0x00100001L) 
+.SS "#define OPENSOAP_SEC_SIGNGEN_ERROR   (0x00100002L)"
+.PP
+Signature Generation Error. (0x00100002L) 
+.SS "#define OPENSOAP_SEC_SIGNVERIFY_ERROR   (0x00100003L)"
+.PP
+Signature Verification Error. (0x00100003L) 
+.SS "#define OPENSOAP_SETLOCALEFAILURE   (0x00020005L)"
+.PP
+Set Locale Failure Error. (0x00020005L) 
+.SS "#define OPENSOAP_SUCCEEDED(err)   (!(err))"
+.PP
+OpenSOAP Success Macro Error. (!(err)) 
+.SS "#define OPENSOAP_TRANSPORT_CONNECTION_REFUSED   (0x00210002L)"
+.PP
+Transport Error - Connection Refused No one listening on the remote address. (0x00210002L) 
+.SS "#define OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT   (0x00210003L)"
+.PP
+Transport Error - Connection Timeout. (0x00210003L) 
+.SS "#define OPENSOAP_TRANSPORT_ERROR   (0x00200000L)"
+.PP
+Transport Error. (0x00200000L) 
+.SS "#define OPENSOAP_TRANSPORT_GET_HTTP_ERROR(x)   ((x) & ~(OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.PP
+Calculate actual HTTP Status (Error) number from OpenSOAP Transport Error. ((x) & ~(OPENSOAP_TRANSPORT_HTTP_ERROR)) 
+.SS "#define OPENSOAP_TRANSPORT_HOST_NOT_FOUND   (0x00210001L)"
+.PP
+Transport Error - Host Not Found Maybe DNS error. ---- ADDRINFO ? SOCKET ? (0x00210001L) 
+.SS "#define OPENSOAP_TRANSPORT_HOST_UNREACH   (0x00210005L)"
+.PP
+Transport Error - Host is unreachable. (0x00210005L) 
+.SS "#define OPENSOAP_TRANSPORT_HTTP_ERROR   (0x00220000L)"
+.PP
+Transport HTTP Error. (0x00220000L) 
+.SS "#define OPENSOAP_TRANSPORT_INVOKE_ERROR   (0x00210000L)"
+.PP
+Transport Invoke Error. (0x00210000L) 
+.SS "#define OPENSOAP_TRANSPORT_IS_HTTP_ERROR(x)   (((x) & (OPENSOAP_TRANSPORT_HTTP_ERROR)) == (OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.PP
+Non-0 if Transport Error code is an HTTP_ERROR. ((x) & (OPENSOAP_TRANSPORT_HTTP_ERROR)) 
+.SS "#define OPENSOAP_TRANSPORT_NETWORK_UNREACH   (0x00210004L)"
+.PP
+Transport Error - Network is unreachable. (0x00210004L) 
+.SS "#define OPENSOAP_TRANSPORT_SET_HTTP_ERROR(x)   ((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))"
+.PP
+Calculate OpenSOAP Transport Error number from actual HTTP Status. ((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR)) 
+.SS "#define OPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR   (0x00240002L)"
+.PP
+Transport - SSL Certification File Error. (0x00240002L) 
+.SS "#define OPENSOAP_TRANSPORT_SSL_ERROR   (0x00240000L)"
+.PP
+Transport SSL Error. (0x00240000L) 
+.SS "#define OPENSOAP_TRANSPORT_SSL_VERSION_ERROR   (0x00240001L)"
+.PP
+Transport - SSL Version Invalid. (0x00240001L) 
+.SS "#define OPENSOAP_UNKNOWN_CHARENCODE   (0x00020004L)"
+.PP
+Unknown Character Encoding Error. (0x00020004L) 
+.SS "#define OPENSOAP_UNSUPPORT_PROTOCOL   (0x40000002L)"
+.PP
+Protocol not supported (including ssl without HAVE_SSL). (0x40000002L) 
+.SS "#define OPENSOAP_USERDEFINE_ERROR   (0x10000000L)"
+.PP
+User Defined Error. (0x10000000L) 
+.SS "#define OPENSOAP_XML_BADDOCUMENTTYPE   (0x00080004L)"
+.PP
+XML Document Root Element Is Not Envelope Error. (0x00080004L) 
+.SS "#define OPENSOAP_XML_BADMAKEDOCUMENT   (0x00080005L)"
+.PP
+XML Document Creation Failure Error. (0x00080005L) 
+.SS "#define OPENSOAP_XML_BADNAMESPACE   (0x00080002L)"
+.PP
+Bad Namespace Is Used Error. (0x00080002L) 
+.SS "#define OPENSOAP_XML_EMPTYDOCUMENT   (0x00080006L)"
+.PP
+XML Document Empty Error. (0x00080006L) 
+.SS "#define OPENSOAP_XML_ERROR   (0x00080000L)"
+.PP
+XML Manipulation Error. (0x00080000L) 
+.SS "#define OPENSOAP_XML_NOHEADERBODY   (0x00080003L)"
+.PP
+Header And/Or Body Element Not Found Error. (0x00080003L) 
+.SS "#define OPENSOAP_XML_NOTXMLDOCUMENT   (0x00080007L)"
+.PP
+Not XML Document Error. (0x00080007L) 
+.SS "#define OPENSOAP_XML_NS_URI_UNMATCHED   (0x00080008L)"
+.PP
+XML Namespace Prefix Matched, But URI Unmatched Error. (0x00080008L) 
+.SS "#define OPENSOAP_XMLNODE_NOT_FOUND   (0x00080001L)"
+.PP
+XML Node Not Found Error. (0x00080001L) 
+.SS "#define OPENSOAP_YET_IMPLEMENTATION   (0x40000001L)"
+.PP
+Not Yet Implemented Error. (0x40000001L) 
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

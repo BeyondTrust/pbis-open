@@ -1,0 +1,296 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME
+**
+**      perf.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Performance and system exerciser network interface definition.
+**
+**
+*/
+
+[uuid(34D6281B-B000-0000-0D00-00C366000000),
+    version(2),
+    endpoint("ncadg_ip_udp:[2001]", "ncadg_dds:[18]", "ncacn_ip_tcp:[2001]", 
+              "ncacn_dnet_nsp:[perf_server]")
+]
+interface perf
+{
+const long perf_magic = 432;
+
+typedef [v1_array] unsigned long perf_data_t[0..*];
+
+typedef unsigned long perf_slow_mode_t;
+
+const long perf_slow_sleep = 0;
+
+const long perf_slow_io = 1;
+
+const long perf_slow_cpu = 2;
+
+const long perf_slow_fork_sleep = 3;
+
+typedef [context_handle] void *perf_context_t;
+
+/*
+ * Initialize server
+ */
+void perf_init
+(
+    [in]        handle_t           handle
+);
+
+void perf_info
+(
+    [in]        handle_t            handle,
+    [out]       unsigned long       *n,
+    [out]       unsigned long       *nm,
+    [out]       unsigned long       *nb,
+    [out]       unsigned long       *nbm
+);
+
+/* 
+ * Null procedure
+ */
+void perf_null
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Idempotent null procedure
+ */
+[idempotent] void perf_null_idem
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Call with variable length input params
+ */
+void perf_in
+(
+    [in]        handle_t            handle,
+    [in, length_is(l), size_is(l)] perf_data_t data,
+    [in]        unsigned long       l,
+    [in]        boolean             v,
+    [out]       unsigned long       *sum
+);
+
+/*
+ * Idempotent version of above
+ */
+[idempotent] void perf_in_idem
+(
+    [in]        handle_t            handle,
+    [in, length_is(l), size_is(l)] perf_data_t data,
+    [in]        unsigned long       l,
+    [in]        boolean             v,
+    [out]       unsigned long       *sum
+);
+
+/*
+ * Call with variable length output params
+ */
+void perf_out
+(
+    [in]        handle_t            handle,
+    [out, length_is(*l), size_is(m)] perf_data_t data,
+    [in, out]   unsigned long       *l,
+    [in]        unsigned long       m,
+    [in]        unsigned long       p,
+    [in]        boolean             v
+);
+
+/*
+ * Idempotent version of above
+ */
+[idempotent] void perf_out_idem
+(
+    [in]        handle_t            handle,
+    [out, length_is(*l), size_is(m)] perf_data_t data,
+    [in, out]   unsigned long       *l,
+    [in]        unsigned long       m,
+    [in]        unsigned long       p,
+    [in]        boolean             v
+);
+
+/*
+ * Broadcast; returns host name
+ */
+[broadcast] void perf_brd
+(
+    [in]        handle_t            handle,
+    [out, v1_array, v1_string] char name[256]
+);
+
+/*
+ * Null maybe procedure
+ */
+[maybe] void perf_maybe
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Null maybe, broadcast procedure
+ */
+[broadcast, maybe] void perf_brd_maybe
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Floating point test
+ */
+void perf_fp_test
+(
+    [in]        handle_t            handle,
+    [in]        float               *float1,
+    /*  Pointer to avoid single->double ...  */
+    [in]        float               *float2,
+    /*  ... conversion in C calls  */
+    [in]        double              double1,
+    [in]        double              double2,
+    [out]       float               *out1,
+    [out]       double              *out2
+);
+
+/*
+ * Tell server to register "perfb" i/f 
+ */
+void perf_register_b
+(
+    [in]        handle_t            handle,
+    [in]        boolean             global,
+    [out]       unsigned32          *status
+);
+
+/*
+ * Tell server to unregister "perfb" i/f 
+ */
+void perf_unregister_b
+(
+    [in]        handle_t            handle,
+    [out]       unsigned32          *status
+);
+
+/*
+ * Routine that raises an exception 
+ */
+void perf_exception
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Routine that takes a long time to run
+ */
+void perf_null_slow
+(
+    [in]        handle_t            handle,
+    [in]        perf_slow_mode_t    mode,
+    [in]        unsigned long       seconds
+);
+
+/*
+ * Idempotent version of above 
+ */
+[idempotent] void perf_null_slow_idem
+(
+    [in]        handle_t            handle,
+    [in]        perf_slow_mode_t    mode,
+    [in]        unsigned long       seconds
+);
+
+/*
+ * Shutdown server 
+ */
+void perf_shutdown
+(
+    [in]        handle_t            handle
+);
+
+/*
+ * Tell server to call me back 
+ */
+void perf_call_callback
+(
+    [in]        handle_t            handle,
+    [in]        unsigned long       idempotent
+);
+
+/*
+ * Routine that returns a context handle
+ */
+void perf_get_context
+(
+    [in]        handle_t            handle,
+    [in]        unsigned long       data,
+    [out]       perf_context_t      *context
+);
+
+/*
+ * Routine to take context
+ */
+boolean perf_test_context
+(
+    [in]        perf_context_t      context,
+    [out]       unsigned long       *data
+);
+
+/*
+ * Routine to free context
+ */
+boolean perf_free_context
+(
+    [in, out]   perf_context_t      *context,
+    [out]       unsigned long       *data
+);
+
+/*
+ * Shutdown server (but have shutdown done from outside the manager routine)
+ */
+void perf_shutdown2
+(
+    [in]        handle_t            handle,
+    [in]        unsigned32          secs        /* # of secs to delay shutdown */
+);
+
+/*
+ * Broadcast; faults (shouln't see fault)
+ */
+[broadcast] void perf_brd_fault
+(
+    [in]        handle_t            handle
+);
+
+}

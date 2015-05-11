@@ -1,0 +1,189 @@
+SASLAUTHD(8)              BSD System Manager’s Manual             SASLAUTHD(8)
+
+NNAAMMEE
+     ssaassllaauutthhdd - sasl authentication server
+
+SSYYNNOOPPSSIISS
+     ssaassllaauutthhdd --aa _a_u_t_h_m_e_c_h [--TTvvddcchhllrr] [--OO _o_p_t_i_o_n] [--mm _m_u_x___p_a_t_h] [--nn _t_h_r_e_a_d_s]
+               [--ss _s_i_z_e] [--tt _t_i_m_e_o_u_t]
+
+DDEESSCCRRIIPPTTIIOONN
+     ssaassllaauutthhdd is a daemon process that handles plaintext authentication
+     requests on behalf of the SASL library.
+
+     The server fulfills two roles: it isolates all code requiring superuser
+     privileges into a single process, and it can be used to provide _p_r_o_x_y
+     authentication services to clients that do not understand SASL based
+     authentication.
+
+     ssaassllaauutthhdd should be started from the system boot scripts when going to
+     multi-user mode. When running against a protected authentication database
+     (e.g. the shadow mechanism), it must be run as the superuser.
+
+   OOppttiioonnss
+     Options named by lower-case letters configure the server itself.
+     Upper-case options control the behavior of specific authentication mecha-
+     nisms; their applicability to a particular authentication mechanism is
+     described in the _A_U_T_H_E_N_T_I_C_A_T_I_O_N _M_E_C_H_A_N_I_S_M_S section.
+
+     --aa _a_u_t_h_m_e_c_h
+             Use _a_u_t_h_m_e_c_h as the authentication mechanism. (See the
+             _A_U_T_H_E_N_T_I_C_A_T_I_O_N _M_E_C_H_A_N_I_S_M_S section below.) This parameter is
+             mandatory.
+
+     --OO _o_p_t_i_o_n
+             A mechanism specific option (e.g. rimap hostname or config file
+             path)
+
+     --HH _h_o_s_t_n_a_m_e
+             The remote host to be contacted by the rimap authentication mech-
+             anism. (Depricated, use -O instead)
+
+     --mm _p_a_t_h
+             Use _p_a_t_h as the pathname to the named socket to listen on for
+             connection requests. This must be an absolute pathname, and MUST
+             NOT include the trailing "/mux".  Note that the default for this
+             value is "/var/state/saslauthd" (or what was specified at compile
+             time) and that this directory must exist for saslauthd to func-
+             tion.
+
+     --nn _t_h_r_e_a_d_s
+             Use _t_h_r_e_a_d_s processes for responding to authentication queries.
+             (default: 5)  A value of zero will indicate that saslauthd should
+             fork an individual process for each connection.  This can solve
+             leaks that occur in some deployments..
+
+     --ss _s_i_z_e
+             Use _s_i_z_e as the table size of the hash table (in kilobytes)
+
+     --tt _t_i_m_e_o_u_t
+             Use _t_i_m_e_o_u_t as the expiration time of the authentication cache
+             (in seconds)
+
+     --TT      Honour time-of-day login restrictions.
+
+     --hh      Show usage information
+
+     --cc      Enable cacheing of authentication credentials
+
+     --ll      Disable the use of a lock file for controlling access to
+             accept().
+
+     --rr      Combine the realm with the login (with an ’@’ sign in between).
+             e.g.  login: "foo" realm: "bar" will get passed as login:
+             "foo@bar".  Note that the realm will still be passed, which may
+             lead to unexpected behavior.
+
+     --vv      Print the version number and available authentication mechanisms
+             on standard error, then exit.
+
+     --dd      Debugging mode.
+
+   LLooggggiinngg
+     ssaassllaauutthhdd logs it’s activities via ssyyssllooggdd using the LOG_AUTH facility.
+
+AAUUTTHHEENNTTIICCAATTIIOONN MMEECCHHAANNIISSMMSS
+     ssaassllaauutthhdd supports one or more "authentication mechanisms", dependent
+     upon the facilities provided by the underlying operating system.  The
+     mechanism is selected by the --aahhoo flag from the following list of
+     choices:
+
+     dce        _(_A_I_X_)
+
+                Authenticate using the DCE authentication environment.
+
+     getpwent   _(_A_l_l _p_l_a_t_f_o_r_m_s_)
+
+                Authenticate using the ggeettppwweenntt() library function. Typically
+                this authenticates against the local password file. See your
+                systems getpwent(3) man page for details.
+
+     kerberos4  _(_A_l_l _p_l_a_t_f_o_r_m_s_)
+
+                Authenticate against the local Kerberos 4 realm. (See the
+                _N_O_T_E_S section for caveats about this driver.)
+
+     kerberos5  _(_A_l_l _p_l_a_t_f_o_r_m_s_)
+
+                Authenticate against the local Kerberos 5 realm.
+
+     pam        _(_L_i_n_u_x_, _S_o_l_a_r_i_s_)
+
+                Authenticate using Pluggable Authentication Modules (PAM).
+
+     rimap      _(_A_l_l _p_l_a_t_f_o_r_m_s_)
+
+                Forward authentication requests to a remote IMAP server. This
+                driver connects to a remote IMAP server, specified using the
+                -O flag, and attempts to login (via an IMAP ‘LOGIN’ command)
+                using the credentials supplied to the local server. If the
+                remote authentication succeeds the local connection is also
+                considered to be authenticated. The remote connection is
+                closed as soon as the tagged response from the ‘LOGIN’ command
+                is received from the remote server.
+
+                The _o_p_t_i_o_n parameter to the --OO flag describes the remote
+                server to forward authentication requests to.  _h_o_s_t_n_a_m_e can be
+                a hostname (imap.example.com) or a dotted-quad IP address
+                (192.168.0.1). The latter is useful if the remote server is
+                multi-homed and has network interfaces that are unreachable
+                from the local IMAP server. The remote host is contacted on
+                the ‘imap’ service port. A non-default port can be specified
+                by appending a slash and the port name or number to the
+                _h_o_s_t_n_a_m_e argument.
+
+                The --OO flag and argument are mandatory when using the rimap
+                mechanism.
+
+     shadow     _(_A_I_X_, _I_r_i_x_, _L_i_n_u_x_, _S_o_l_a_r_i_s_)
+
+                Authenticate against the local "shadow password file".  The
+                exact mechanism is system dependent.  ssaassllaauutthhdd currently
+                understands the ggeettssppnnaamm() and ggeettuusseerrppww() library routines.
+                Some systems honour the --TT flag.
+
+     sasldb     _(_A_l_l _p_l_a_t_f_o_r_m_s_)
+
+                Authenticate against the SASL authentication database.  Note
+                that this is probabally not what you want to be using, and is
+                even disabled at compile-time by default.  If you want to use
+                sasldb with the SASL library, you probably want to use the
+                pwcheck_method of "auxprop" along with the sasldb auxprop plu-
+                gin instead.
+
+     ldap       _(_A_l_l _p_l_a_t_f_o_r_m_s _t_h_a_t _s_u_p_p_o_r_t _O_p_e_n_L_D_A_P _2_._0 _o_r _h_i_g_h_e_r_)
+
+                Authenticate against an ldap server.  The ldap configuration
+                parameters are read from /usr/local/etc/saslauthd.conf.  The
+                location of this file can be changed with the -O parameter.
+                See the LDAP_SASLAUTHD file included with the distribution for
+                the list of available parameters.
+
+     sia        _(_D_i_g_i_t_a_l _U_N_I_X_)
+
+                Authenticate using the Digital UNIX Security Integration
+                Architecture (a.k.a.  "enhanced security").
+
+NNOOTTEESS
+     The kerberos4 authentication driver consumes considerable resources. To
+     perform an authentication it must obtain a ticket granting ticket from
+     the TGT server oonn eevveerryy aauutthheennttiiccaattiioonn rreeqquueesstt.. The Kerberos library rou-
+     tines that obtain the TGT also create a local ticket file, on the reason-
+     able assumption that you will want to save the TGT for use by other Ker-
+     beros applications. These ticket files are unusable by ssaassllaauutthhdd , how-
+     ever there is no way not to create them. The overhead of creating and
+     removing these ticket files can cause serious performance degradation on
+     busy servers. (Kerberos was never intended to be used in this manner,
+     anyway.)
+
+FFIILLEESS
+     /var/run/saslauthd/mux  The default communications socket.
+
+     /usr/local/etc/saslauthd.conf
+                             The default configuration file for ldap support.
+
+SSEEEE AALLSSOO
+     passwd(1), getpwent(3), getspnam(3), getuserpw(3), sasl_checkpass(3)
+     sia_authenticate_user(3),
+
+CMU-SASL                          10 24 2002                          CMU-SASL

@@ -1,0 +1,233 @@
+#!/bin/sh
+
+PREFIX_DIR=@PREFIXDIR@
+SHARES_DB=/var/lib/likewise/db/lwio-shares.db
+
+ShowUsage()
+{
+    echo "\nUsage: lwnet share {add, delete, list} <args>\n"
+    echo "       lwnet share add [-c <comment>] [-s <sid>] -i <service> -p <path> name"
+    echo "       lwnet share delete name"
+    echo "       lwnet share list"
+}
+
+AddShare()
+{
+    _comment=
+    _sid=
+    _path=
+    _name=
+    _service=
+    
+    while [ $# -gt 0 ]; do
+
+        case $1 in
+
+            -c)
+
+                shift
+
+                if [ $# -lt 1 ]; then
+                   ShowUsage
+                   exit 1
+                fi
+
+                _comment=$1
+
+                shift
+                ;;
+            -i)
+             
+                shift
+
+                if [ $# -lt 1 ]; then
+                   ShowUsage
+                   exit 1
+                fi
+
+                case $1 in
+                   "A:"|"LPT1"|"IPC"|"COMM")
+                       _service=$1
+                       ;; 
+                   *)
+                       _service=
+                       ;;
+                esac
+
+                shift
+                ;;
+
+            -s)
+
+                shift
+
+                if [ $# -lt 1 ]; then
+                   ShowUsage
+                   exit 1
+                fi
+
+                _sid=$1
+
+                shift
+                ;;
+
+            -p)
+
+                shift
+
+                if [ $# -lt 1 ]; then
+                   ShowUsage
+                   exit 1
+                fi
+
+                _path=$1
+
+                shift
+                ;;
+
+            *)
+                _name=$1
+
+                shift 
+                ;;
+
+        esac
+
+    done
+
+    if test "x$_name" = "x"; then
+       echo "Please specify a valid share name"
+       ShowUsage
+       exit 1
+    fi
+
+    if test "x$_path" = "x"; then
+       echo "Please specify a valid share path"
+       ShowUsage
+       exit 1
+    fi
+
+    if test "x$_service" = "x"; then
+       echo "Please specify a valid service name, one of {A:, LPT1:, IPC, COMM}"
+       ShowUsage
+       exit 1
+    fi
+
+$PREFIX_DIR/bin/sqlite3 $SHARES_DB <<EOF
+
+        insert into shares (name,
+                            path,
+                            sid,
+                            service,
+                            comment)
+                    values ("$_name",
+                            "$_path",
+                            "$_sid",
+                            "$_service",
+                            "$_comment");
+EOF
+
+    if [ $? -eq 0 ]; then
+        echo "Successfully added share $name"
+    else
+        echo "Failed to add share $name [Error code: $?]"
+    fi
+
+    return $?
+}
+
+DeleteShare()
+{
+    if [ $# -lt 1 ]; then
+        ShowUsage
+        exit 1
+    fi
+
+$PREFIX_DIR/bin/sqlite3 $SHARES_DB <<EOF
+
+    delete from shares where name = "$1";
+
+EOF
+
+    if [ $? -eq 0 ]; then
+        echo "Successfully deleted share $name"
+    else
+        echo "Failed to delete share $name [Error code:$?]"
+    fi
+
+    return $?
+}
+
+ListShares()
+{
+
+$PREFIX_DIR/bin/sqlite3 $SHARES_DB << EOF
+.mode column
+.headers on
+select name,
+       path,
+       sid,
+       comment,
+       service
+from shares;
+
+EOF
+
+    return $?
+}
+
+ProcessShares()
+{
+    if [ ! -x $PREFIX_DIR/bin/sqlite3 ]; then
+        echo "Error: cannot find $PREFIX_DIR/bin/sqlite3"
+        exit 1
+    fi
+
+    if [ ! -e $SHARES_DB ]; then
+        echo "Error: cannot find the share database at $SHARE_DIR_DIR"
+        exit 1
+    fi
+
+    if [ $# -lt 1 ]; then
+        ShowUsage
+        exit 1;
+    fi
+
+    case $1 in
+        add)
+            shift
+            AddShare $@
+            ;;
+        delete)
+            shift
+            DeleteShare $@
+            ;;
+        list)
+            shift
+            ListShares $@
+            ;;
+        *)
+            ShowUsage
+            exit 1
+            ;;
+    esac
+
+    return $?
+}
+
+if [ $# -lt 2 ]; then
+   ShowUsage
+   exit 1;
+fi
+
+case $1 in
+    share)
+        shift
+        ProcessShares $@
+        ;;
+    *)
+        ShowUsage
+        exit 1;
+        ;;
+esac
+

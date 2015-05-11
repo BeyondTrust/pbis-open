@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+	GROUP=session \
+	SOURCES="libmain.c netsession.c" \
+	INCLUDEDIRS="../include ../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h lw/lm.h lwio/lwio.h lwio/lmfile.h lsa/lsa.h" \
+	LIBDEPS="lwnetapi lwadvapi lwadvapi_nothr"
+}

@@ -1,0 +1,8 @@
+pbis.staging.root=@ANT_STAGING_ROOT@
+pbis.staging.lib=@ANT_STAGING_LIB@
+pbis.staging.docs=@ANT_STAGING_DOCS@
+pbis.staging.conf=@ANT_STAGING_CONF@
+pbis.objectdir=@ANT_BUILD_DIR@
+mk.build.os=@MK_HOST_OS@
+mk.build.arch=@MK_HOST_ARCH@
+pbis.source=@PBIS_SOURCE@

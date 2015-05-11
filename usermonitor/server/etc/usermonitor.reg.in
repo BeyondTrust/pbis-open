@@ -1,0 +1,58 @@
+[HKEY_LIKEWISE\Services]
+
+[HKEY_THIS_MACHINE\Services\usermonitor]
+"Description" = {
+    value = "User Monitor"
+    default = "User Monitor"
+    doc = ""
+}
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/usermonitor@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/usermonitor@MOD_EXT@"
+    doc = ""
+}
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
+}
+"Environment" = {
+    default = ""
+    doc = ""
+}
+"Dependencies" = {
+    value = "eventlog lsass"
+    default = "eventlog lsass"
+    doc = ""
+}
+"Type" = {
+    value = dword:00000002
+    default = dword:00000002
+    doc = ""
+}
+"Autostart" = {
+   default = dword:00000000
+   doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters]
+"CheckInterval" = {
+    default = dword:00000708
+    doc = "Frequency of checking for new users"
+}
+"SkipNoLogin" = {
+    default = dword:00000000
+    doc = "Skip local users that have a /bin/false, /sbin/nologin, or similar shell"
+}
+"LastUpdated" = {
+    default = dword:00000000
+    doc = "Indicates when the last inventory of the local users and groups was generated, or 0 if it has not been generated yet"
+}
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Users]
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\AD Users]
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Groups]
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\AD Groups]

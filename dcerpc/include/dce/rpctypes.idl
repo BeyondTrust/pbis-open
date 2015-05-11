@@ -1,0 +1,114 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      rpctypes.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  This module contains the non-local type definitions required for
+**  the API of the RPC Runtime System.
+**
+**
+*/
+
+[ pointer_default (ref) ]
+
+interface rpctypes
+{
+
+/*************************************************************************/
+/*************************  Common definitions  **************************/
+/*************************************************************************/
+
+/*
+ * Interface identifier structure, consisting of uuid and major and minor
+ * version fields.
+ */
+typedef struct
+{
+    dce_uuid_t                  uuid;
+    unsigned16              vers_major;
+    unsigned16              vers_minor;
+} rpc_if_id_t;
+typedef [ptr] rpc_if_id_t *rpc_if_id_p_t;
+
+/*
+ * A vector of interface identifiers.
+ */
+typedef struct
+{
+    unsigned32              count;
+    [size_is(count)]
+    rpc_if_id_p_t           if_id[*];
+} rpc_if_id_vector_t;
+typedef [ptr] rpc_if_id_vector_t *rpc_if_id_vector_p_t;
+ 
+/*
+ * Version options (choices for matching on version numbers).
+ */
+const long  rpc_c_vers_all              = 1;
+const long  rpc_c_vers_compatible       = 2;
+const long  rpc_c_vers_exact            = 3;
+const long  rpc_c_vers_major_only       = 4;
+const long  rpc_c_vers_upto             = 5;
+
+/*************************************************************************/
+/******************  Management Services definitions  ********************/
+/*************************************************************************/
+
+/*
+ * Constants for accessing values in statistics vector
+ * - the max size should always be last in this list
+ */
+const long  rpc_c_stats_calls_in            = 0;
+const long  rpc_c_stats_calls_out           = 1;
+const long  rpc_c_stats_pkts_in             = 2;
+const long  rpc_c_stats_pkts_out            = 3;
+const long  rpc_c_stats_array_max_size      = 4;
+
+/*
+ * Statistics vector returned by management inquiry
+ */
+typedef struct
+{
+    unsigned32          count;
+    unsigned32          stats[1];       /* length_is (count) */
+} rpc_stats_vector_t, *rpc_stats_vector_p_t;
+
+/*************************************************************************/
+/*******************  Endpoint Service definitions  **********************/
+/*************************************************************************/
+
+const long  rpc_c_ep_all_elts               = 0;
+const long  rpc_c_ep_match_by_if            = 1;
+const long  rpc_c_ep_match_by_obj           = 2;
+const long  rpc_c_ep_match_by_both          = 3;
+
+}

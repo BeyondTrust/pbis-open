@@ -1,0 +1,79 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\eventlog]
+"Description" = {
+    value = "PBIS Event Log Service"
+    default = "PBIS Event Log Service"
+    doc = ""
+}
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@"
+    doc = ""
+}
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
+}
+"Environment" = {
+    default = ""
+    doc = ""
+}
+"Dependencies" = {
+    default = ""
+    doc = ""
+}
+"Type" = {
+    value = dword:00000002
+    default = dword:00000002
+    doc = ""
+}
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
+"CoreSize" = {
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)"
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters]
+"AllowReadTo" = { 
+    default = "" 
+    doc = "" 
+}
+"AllowWriteTo" = { 
+    default = "" 
+    doc = "" 
+}
+"AllowDeleteTo" = { 
+    default = "" 
+    doc = "" 
+}
+"MaxDiskUsage" = { 
+    default = dword:06400000 
+    doc = "" 
+}
+"MaxEventLifespan" = { 
+    default = dword:0000005A 
+    doc = "" 
+}
+"MaxNumEvents" = { 
+    default = dword:000186A0 
+    doc = "" 
+}
+"EventDbPurgeInterval" = { 
+    default = dword:00000001 
+    doc = "" 
+}
+"RemoveAsNeeded" = { 
+    default = dword:00000001 
+    doc = ""
+    range = boolean
+}
+"RegisterTcpIp" = { 
+    default = dword:00000000 
+    doc = ""
+    range = boolean
+}
