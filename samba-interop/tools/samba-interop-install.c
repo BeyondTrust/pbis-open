@@ -523,6 +523,15 @@ CheckSambaVersion(
             BAIL_ON_LSA_ERROR(error);
         }
     }
+    else if (!strncmp(pVersionString, "4.0.", sizeof("4.0.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "4.1.", sizeof("4.1.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "4.2.", sizeof("4.2.") - 1))
+    {
+    }
     else
     {
         LW_RTL_LOG_ERROR("Unsupported smbd version %s", pVersionString);
