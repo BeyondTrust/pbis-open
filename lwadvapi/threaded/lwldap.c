@@ -105,7 +105,7 @@ LwCLdapOpenDirectory(
     dwError = ldap_set_option( ld, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
     BAIL_ON_LDAP_ERROR(dwError);
 
-    maxbufsize = gSaslMaxBufSize;   // RALI TODO Update based on value from registry.
+    maxbufsize = gSaslMaxBufSize;
     dwError = ldap_set_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
     BAIL_ON_LDAP_ERROR(dwError);
 
@@ -331,7 +331,7 @@ LwLdapOpenDirectoryServerSingleAttempt(
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
-    maxbufsize = gSaslMaxBufSize;   // RALI TODO: Update based on value in registry.
+    maxbufsize = gSaslMaxBufSize;
     dwError = ldap_set_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
     if (dwError) {
         LW_RTL_LOG_ERROR("Failed to set LDAP option SASL_MAXBUFSIZE");
