@@ -158,6 +158,22 @@
         </registry>
     </capability>
     <capability>
+        <name>SaslMaxBufSize</name>
+        <description>Size of the buffer to allocate for decoding incoming LDAP responses (bytes).</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\SaslMaxBufSize"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\SaslMaxBufSize" >
+            <description>Size of the buffer to allocate for decoding incoming LDAP responses (bytes).</description>
+            <default>
+               <value>16777215</value>
+            </default>
+            <accept>
+               <range min="1048576" max="16777215" />
+            </accept>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
         <name>Providers</name>
         <description>Configure which lsass providers to load</description>
         <registry type="multistring"

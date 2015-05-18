@@ -59,6 +59,11 @@
 #define SASL_CB_SERVERFQDN 0xc0004001
 #endif
 
+#define LW_LDAP_16MB  16777215
+#define LW_LDAP_1MB   1048575
+
+static DWORD gSaslMaxBufSize = LW_LDAP_16MB;
+
 DWORD
 LwCLdapOpenDirectory(
     IN PCSTR pszServerName,
@@ -69,6 +74,7 @@ LwCLdapOpenDirectory(
     LDAP * ld = NULL;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     int rc = LDAP_VERSION3;
+    int maxbufsize = LW_LDAP_16MB;
     PSTR pszURL = NULL;
 
     LW_BAIL_ON_INVALID_STRING(pszServerName);
@@ -94,6 +100,18 @@ LwCLdapOpenDirectory(
 
     dwError = ldap_set_option(ld, LDAP_OPT_REFERRALS, (void *)LDAP_OPT_OFF);
     BAIL_ON_LDAP_ERROR(dwError);
+
+    /* This tells ldap to retry when select returns with EINTR */
+    dwError = ldap_set_option( ld, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+    maxbufsize = gSaslMaxBufSize;
+    dwError = ldap_set_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+    maxbufsize = 0;
+    ldap_get_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    LW_RTL_LOG_DEBUG("SASL_MAXBUFSIZE %d", maxbufsize);
 
     dwError = LwAllocateMemory(sizeof(*pDirectory), OUT_PPVOID(&pDirectory));
     BAIL_ON_LW_ERROR(dwError);
@@ -264,6 +282,7 @@ LwLdapOpenDirectoryServerSingleAttempt(
     LDAP * ld = NULL;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     int rc = LDAP_VERSION3;
+    int maxbufsize = LW_LDAP_16MB;
     DWORD dwPort = 389;
     struct timeval timeout = {0};
     BOOLEAN bLdapSeal = FALSE;
@@ -311,6 +330,17 @@ LwLdapOpenDirectoryServerSingleAttempt(
         LW_RTL_LOG_ERROR("Failed to set LDAP option to auto retry ");
         BAIL_ON_LDAP_ERROR(dwError);
     }
+
+    maxbufsize = gSaslMaxBufSize;
+    dwError = ldap_set_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    if (dwError) {
+        LW_RTL_LOG_ERROR("Failed to set LDAP option SASL_MAXBUFSIZE");
+        BAIL_ON_LDAP_ERROR(dwError);
+    }
+
+    maxbufsize = 0;
+    ldap_get_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    LW_RTL_LOG_DEBUG("SASL_MAXBUFSIZE %d", maxbufsize);
 
     if (dwFlags & LW_LDAP_OPT_SIGN_AND_SEAL)
     {
@@ -2079,6 +2109,15 @@ error:
     LwFreeStringArray(ppszReferralArray, dwReferralCount);
 
     goto cleanup;
+}
+
+
+DWORD
+LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
+{
+    DWORD dwError = 0;
+    gSaslMaxBufSize = dwSaslMaxBufSize;
+    return dwError;
 }
 
 /*

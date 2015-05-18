@@ -355,6 +355,9 @@ LwLdapParseResultForReferrals(
     OUT PDWORD pdwReferralCount
     );
 
+DWORD
+LwLdapSetOption(IN DWORD dwSaslMaxBufSize);
+
 LW_END_EXTERN_C
 
 

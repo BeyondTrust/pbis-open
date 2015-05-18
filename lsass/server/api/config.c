@@ -145,6 +145,7 @@ LsaSrvApiInitConfig(
     LsaSrvApiFreeConfigContents(pConfig);
 
     pConfig->bEnableEventLog = FALSE;
+    pConfig->dwSaslMaxBufSize = 16777215;  // 16MB
     pConfig->cDomainSeparator = '\\';
     pConfig->cSpaceReplacement = '^';
 
@@ -190,6 +191,16 @@ LsaSrvApiReadRegistry(
            MAXDWORD,
            NULL,
            &pszSpaceReplacement
+        },
+        {
+           "SaslMaxBufSize",
+           TRUE,
+           LwRegTypeDword,
+           1048576,   /* Minimum is 1MB */
+           16777215,  /* Maximum is 16MB bytes which is the default value in OpenLDAP. */
+           NULL,
+           &StagingConfig.dwSaslMaxBufSize,
+           NULL
         },
     };
 
@@ -368,6 +379,21 @@ LsaSrvDomainSeparator(
 
     return cResult;
 }
+
+DWORD
+LsaSrvSaslMaxBufSize(VOID)
+{
+    DWORD dwResult = 16777215;    // 16MB
+
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    dwResult = gAPIConfig.dwSaslMaxBufSize;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+
+    return dwResult;
+}
+
 
 /*
 local variables:
