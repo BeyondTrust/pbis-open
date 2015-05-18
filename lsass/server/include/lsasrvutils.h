@@ -228,6 +228,12 @@ LsaSrvEnableEventlog(
     BOOLEAN bValue
     );
 
+DWORD
+LsaSrvSaslMaxBufSize(
+    VOID
+    );
+
+
 VOID
 LsaSrvLogUserIDConflictEvent(
     uid_t uid,

@@ -60,6 +60,7 @@ typedef struct _LSA_SRV_RWLOCK
 typedef struct __LSA_SRV_API_CONFIG
 {
     BOOLEAN bEnableEventLog;
+    DWORD dwSaslMaxBufSize;
     char cDomainSeparator;
     char cSpaceReplacement;
 } LSA_SRV_API_CONFIG, *PLSA_SRV_API_CONFIG;

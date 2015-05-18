@@ -62,6 +62,12 @@
     default = "\\"
     doc = "Character used to designate the domain name separator"
 }
+"SaslMaxBufSize" = {
+    default = dword:00FFFFFF
+    doc = "Size of the buffer used when decoding incoming LDAP responses."
+    range = integer:1048576-16777215
+}
+
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\NTLM]
 "SendNTLMv2" = {
