@@ -43,7 +43,8 @@
 # v2.6.1  2014-08-07 RCA selinux bugfix for Deb-based systems
 # v2.6.2  2014-10-03 RCA change which/when files added to tarball, changes to tcpdump options
 # v2.6.3  2014-10-31 RCA more addtions to tarball.
-# v2.7    2014-11-03 RCA add --cleanup functionality
+# v2.7    2014-11-03 RCA add --cleanup functionality, samba gathering, get-status detection of Unknown (lsass load delays), other minor issues.
+# v2.7.1  2015-05-05 RCA fix crash due to "..." (python slip) if --gpo chosen
 #
 # Data structures explained at bottom of file
 #
@@ -67,7 +68,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.7";
+my $gVer = "2.7.1";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -877,7 +878,6 @@ sub runTool($$$$;$) {
     #  grep (greps each line for $filter, returns as a string. not memory-safe)
     #  return (default, returns the lines as a string, not memory-safe)
 
-    logDebug("Attempting to run $tool");
     my $cmd="";
     my $data="";
     if (! -x $tool) {
@@ -885,6 +885,7 @@ sub runTool($$$$;$) {
     } else {
         $cmd = "$tool 2>&1";
     }
+    logVerbose("Attempting to run '$cmd'");
     if ($action eq "bury") {
         $data=`$cmd 2>&1`;
         $data="" unless ($?);
@@ -1662,8 +1663,12 @@ sub waitForDomain($$) {
     for ($i = 0; $i < 24; $i++) {
         sleep 5;
         $error = System("$info->{lw}->{path}/$info->{lw}->{tools}->{status} >/dev/null 2>&1");
-        last unless $error;
-# lw-get-status returns 0 for success, 2 if lsassd hasn't started yet
+        unless ($error) {
+            # lw-get-status returns 0 for success, 2 if lsassd hasn't started yet
+            $error=runTool($info, $opt, $info->{lw}->{tools}->{status}, "grep", "Domain:");
+            # but sometimes it returns "Unknown" instead of a domain, so we'll keep looping in that case.
+            last if $error;
+        }
     }
 }
 
@@ -2442,7 +2447,7 @@ sub runTests($$) {
             }
         }
 
-        logData($data);...
+        logData($data);
     } elsif ($opt->{sshuser} || $info->{uid} ne "0") {
         my $user = $opt->{sshuser};
         $user = $info->{logon} if (not defined($opt->{sshuser}));
@@ -2757,7 +2762,7 @@ sub main() {
     sectionBreak("Daemon restarts");
     logDebug("Turning up logging levels");
     changeLogging($info, $opt, "debug");
-    logWarning("Sleeping for 60 seconds to let Domains be found");
+    logWarning("Sleeping for 120 seconds to let Domains be found");
     waitForDomain($info, $opt);
 
     runTests($info, $opt);
