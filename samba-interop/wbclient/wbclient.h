@@ -95,7 +95,7 @@ const char *wbcErrorString(wbcErr error);
  *  0.8: Added wbcSidsToUnixIds() and wbcLookupSids()
  **/
 #define WBCLIENT_MAJOR_VERSION 0
-#define WBCLIENT_MINOR_VERSION 8
+#define WBCLIENT_MINOR_VERSION 12   /* TODO: for testing purposes only. Need to bring the interface up to this version. */
 #define WBCLIENT_VENDOR_VERSION "Samba libwbclient"
 struct wbcLibraryDetails {
 	uint16_t major_version;
