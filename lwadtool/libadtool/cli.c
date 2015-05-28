@@ -30,10 +30,10 @@
  *
  * Abstract:
  *        Command-line processing methods.
- *        
+ *
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Apr 14, 2010
  *
  */
@@ -705,7 +705,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*newOuAction)[i++])));
 
     i = 0;
-    struct poptOption **newComputerAction = MakeOptions(5);
+    struct poptOption **newComputerAction = MakeOptions(6);
     ADT_BAIL_ON_ALLOC_FAILURE(newComputerAction);
     MakeOption(&((*newComputerAction)[i++]),
                "dn",
@@ -738,6 +738,14 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.newComputer.desc),
                0,
                "Description of the computer",
+               NULL);
+    MakeOption(&((*newComputerAction)[i++]),
+               "dnshostname",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.dnsHostName),
+               0,
+               "Fully-Qualified DNS name of the computer",
                NULL);
     MakeOption(ADT_TABLEEND(&((*newComputerAction)[i++])));
 

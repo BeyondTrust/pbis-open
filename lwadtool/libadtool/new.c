@@ -33,7 +33,7 @@
  *        Methods for creating new directory objects.
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 17, 2010
  *
  */
@@ -772,7 +772,7 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
     if(!action->newComputer.desc) {
         dwError = LwStrDupOrNull("adtool created", &(action->newComputer.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-    }
+    }   
 
     dn = NULL;
     name = NULL;
@@ -799,6 +799,11 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         NULL
     };
 
+    PSTR dnsHostName[] = {
+        action->newComputer.dnsHostName,
+        NULL
+    };
+
     PSTR name[] = {
         action->newComputer.name,
         NULL
@@ -820,8 +825,16 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         { "cn", cn },
         { "sAMAccountName", samAccountName },
         { "description", desc },
+        { "dnsHostName", dnsHostName },
         { NULL, NULL }
     };
+    
+    //remove the dnsHostName attribute if it has no value
+    if(action->newComputer.dnsHostName == NULL)
+    {
+        avp[5].attr = NULL;
+        avp[5].vals = NULL;
+    }
 
     PrintStderr(appContext, LogLevelVerbose, "%s: Creating computer %s ...\n",
                 appContext->actionName, action->newComputer.dn);

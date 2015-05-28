@@ -30,10 +30,10 @@
  *
  * Abstract:
  *
- *        
+ *
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 17, 2010
  *
  */
@@ -334,6 +334,7 @@ typedef struct AdtActionNewComputer {
     PSTR name;    /* Name */
     PSTR desc;    /* Description */
     PSTR namePreWin2000; /* Pre Windows-2000 name (samAccountName) */
+    PSTR dnsHostName; /* Fully-Qualified Host Name of the computer */
 } AdtActionNewComputerT, *AdtActionNewComputerTP;
 
 typedef struct AdtActionResetUserPassword {
