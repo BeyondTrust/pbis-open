@@ -67,7 +67,7 @@
     default = dword:00000001 
     doc = "" 
 }
-"RemoveAsNeeded" = { 
+"RemoveEventsAsNeeded" = { 
     default = dword:00000001 
     doc = ""
     range = boolean
