@@ -99,6 +99,8 @@
 #define RDR_MIN_CREDIT_RESERVE 10
 #define RDR_NS_IN_S (1000000000ll)
 
+#define IS_SEPARATOR(c) ((c) == '\\' || (c) == '/')
+
 /*
  * Macro indicating where operations on CCB should
  * use DFS paths

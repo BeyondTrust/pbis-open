@@ -41,8 +41,6 @@
 
 #include "rdr.h"
 
-#define IS_SEPARATOR(c) ((c) == '\\' || (c) == '/')
-
 NTSTATUS
 RdrConvertUnicodeStringPath(
     PUNICODE_STRING pIoPath,

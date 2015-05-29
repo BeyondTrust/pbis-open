@@ -78,6 +78,17 @@ RdrDfsChaseReferral1(
         BAIL_ON_NT_STATUS(status);
     }
 
+    /* If the path contains more than one leading backslash, remove the
+     * first. DFS Namespaces always start with only one leading
+     * backslash. */
+    if (LwRtlWC16StringNumChars(pContext->State.DfsConnect.pwszNamespace) > 2 &&
+        IS_SEPARATOR(pContext->State.DfsConnect.pwszNamespace[0]) &&
+        IS_SEPARATOR(pContext->State.DfsConnect.pwszNamespace[1])) {
+        int i;
+        for (i = 0; i < LwRtlWC16StringNumChars(pContext->State.DfsConnect.pwszNamespace); i++)
+            pContext->State.DfsConnect.pwszNamespace[i] = pContext->State.DfsConnect.pwszNamespace[i+1];
+    }
+
     pContext->Continue = RdrQueryDfsReferral1Complete;
 
     status = RdrTransceiveQueryDfsReferral1(
