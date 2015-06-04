@@ -6271,8 +6271,8 @@ LsaGetTrustEnumerationValue(
    dwError = pdwTrustEnumerationWaitEnabled1 ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES;
    BAIL_ON_LSA_ERROR(dwError);
 
-   memset(pdwTrustEnumerationWaitSeconds1, 0, sizeof(pdwTrustEnumerationWaitSeconds1));
-   memset(pdwTrustEnumerationWaitEnabled1, 0, sizeof(pdwTrustEnumerationWaitEnabled1));   
+   memset(pdwTrustEnumerationWaitSeconds1, 0, sizeof(pdwTrustEnumerationWaitSeconds1) * dwDomainCount);
+   memset(pdwTrustEnumerationWaitEnabled1, 0, sizeof(pdwTrustEnumerationWaitEnabled1)* dwDomainCount);   
 
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
