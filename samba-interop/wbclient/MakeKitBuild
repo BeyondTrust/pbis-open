@@ -21,5 +21,6 @@ make()
         SOURCES="$WBCLIENT_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwnet.h lwadvapi.h lsa/lsa.h lsa/ad.h" \
-        LIBDEPS="lsaclient lwnetclientapi"
+        LIBDEPS="lsaclient lwnetclientapi" \
+	LDFLAGS="-Wl,--version-script=${MK_SOURCE_DIR}/samba-interop/wbclient/wbclient.vscript"
 }
