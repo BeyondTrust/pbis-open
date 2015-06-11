@@ -16,11 +16,20 @@ make()
         lsa_wbc_memory.c \
         util_str.c"
 
-    mk_library \
-        LIB=wbclient \
-        SOURCES="$WBCLIENT_SOURCES" \
-        INCLUDEDIRS=". ../include" \
-        HEADERDEPS="lwnet.h lwadvapi.h lsa/lsa.h lsa/ad.h" \
-        LIBDEPS="lsaclient lwnetclientapi" \
-	LDFLAGS="-Wl,--version-script=${MK_SOURCE_DIR}/samba-interop/wbclient/wbclient.vscript"
+        if [ "$MK_HOST_OS" = "darwin" ] || ["$MK_HOST_OS" = "solaris"]; then
+    		mk_library \
+	        LIB=wbclient \
+        	SOURCES="$WBCLIENT_SOURCES" \
+	        INCLUDEDIRS=". ../include" \
+       	 	HEADERDEPS="lwnet.h lwadvapi.h lsa/lsa.h lsa/ad.h" \
+       	 	LIBDEPS="lsaclient lwnetclientapi" 
+	else
+    		mk_library \
+	        LIB=wbclient \
+        	SOURCES="$WBCLIENT_SOURCES" \
+	        INCLUDEDIRS=". ../include" \
+       	 	HEADERDEPS="lwnet.h lwadvapi.h lsa/lsa.h lsa/ad.h" \
+		LDFLAGS="-Wl,--version-script=${MK_SOURCE_DIR}/samba-interop/wbclient/wbclient.vscript" \
+       	 	LIBDEPS="lsaclient lwnetclientapi" 
+        fi
 }
