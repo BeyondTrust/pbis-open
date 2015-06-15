@@ -168,7 +168,7 @@
                <value>16777215</value>
             </default>
             <accept>
-               <range min="1048576" max="16777215" />
+               <range min="1048575" max="16777215" />
             </accept>
             <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>

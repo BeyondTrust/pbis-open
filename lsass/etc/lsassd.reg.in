@@ -63,9 +63,9 @@
     doc = "Character used to designate the domain name separator"
 }
 "SaslMaxBufSize" = {
-    default = dword:00FFFFFF
+    default = @DEFAULT_SASL_MAX_BUF_SIZE@
     doc = "Size of the buffer used when decoding incoming LDAP responses."
-    range = integer:1048576-16777215
+    range = integer:1048575-16777215
 }
 
 

@@ -54,7 +54,8 @@ configure()
         DEFAULT_AD_PROVIDER_TRIM_USER_MEMBERSHIP="dword:00000001" \
         DEFAULT_AD_PROVIDER_REFRESH_USER_CREDENTIALS="dword:00000001" \
         DEFAULT_AD_PROVIDER_DOMAINMANAGER_ONLINE_CHECK_TIME="dword:0000012C" \
-        DEFAULT_AD_PROVIDER_MULTITENANCY="dword:00000000"
+        DEFAULT_AD_PROVIDER_MULTITENANCY="dword:00000000" \
+        DEFAULT_SASL_MAX_BUF_SIZE="dword:00FFFFFF"
 
     # Declare which variable vary by system (ISA)
     mk_declare -s -o MOD_EXT
@@ -102,10 +103,12 @@ configure()
             aix:ppc32)
                 NSSDIR="/usr/lib/security"
                 PAMDIR="/usr/lib/security"
+                DEFAULT_SASL_MAX_BUF_SIZE="dword:000FFFFF"
                 ;;
             aix:ppc64)
                 NSSDIR="/usr/lib/security"
                 PAMDIR="/usr/lib/security/64"
+                DEFAULT_SASL_MAX_BUF_SIZE="dword:000FFFFF"
                 ;;
             hpux:hppa32)
                 NSSDIR="/usr/lib"

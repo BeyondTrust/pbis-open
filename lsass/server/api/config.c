@@ -196,7 +196,7 @@ LsaSrvApiReadRegistry(
            "SaslMaxBufSize",
            TRUE,
            LwRegTypeDword,
-           1048576,   /* Minimum is 1MB */
+           1048575,   /* Minimum is 1MB */
            16777215,  /* Maximum is 16MB bytes which is the default value in OpenLDAP. */
            NULL,
            &StagingConfig.dwSaslMaxBufSize,
