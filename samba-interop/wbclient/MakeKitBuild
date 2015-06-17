@@ -16,7 +16,7 @@ make()
         lsa_wbc_memory.c \
         util_str.c"
 
-        if [ "$MK_HOST_OS" = "darwin" ] || [ "$MK_HOST_OS" = "solaris" ] || [ "$MK_HOST_OS" = "aix" ]; then
+        if [ "$MK_HOST_OS" = "darwin" ] || [ "$MK_HOST_OS" = "solaris" ] || [ "$MK_HOST_OS" = "aix" ] || [ "$MK_HOST_OS" = "hpux" ] ; then
     		mk_library \
 	        LIB=wbclient \
         	SOURCES="$WBCLIENT_SOURCES" \
