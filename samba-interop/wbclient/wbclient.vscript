@@ -78,8 +78,6 @@ WBCLIENT_0.9 {
 };
 
 WBCLIENT_0.10 {
-	global:
-		wbcPingDc2;
 } WBCLIENT_0.9;
 
 WBCLIENT_0.11 {
