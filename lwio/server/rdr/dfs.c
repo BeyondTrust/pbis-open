@@ -148,13 +148,7 @@ RdrDfsFindMatchingNamespace(
     UNICODE_STRING path = {0};
     UNICODE_STRING namespace = {0};
 
-    /* If the path contains more than one leading backslash, remove the
-     * first. DFS Namespaces always start with only one leading
-     * backslash. */
-    if (IS_SEPARATOR(pwszPath[0]) && IS_SEPARATOR(pwszPath[1]))
-        LwRtlUnicodeStringInit(&path, pwszPath + 1);
-    else
-        LwRtlUnicodeStringInit(&path, pwszPath);
+    LwRtlUnicodeStringInit(&path, pwszPath);
 
     while ((pLink = LwListTraverse(&gDfsNamespaces, pLink)))
     {
@@ -260,9 +254,9 @@ RdrDfsResolvePath(
 
     status = LwRtlWC16StringAllocatePrintfW(
         ppwszResolved,
-        L"\\%ws%ws",
+        L"%ws%ws",
         pNamespace->pReferrals[usTry].pwszReferral,
-        pwszPath + LwRtlWC16StringNumChars(pNamespace->pwszNamespace) + 1);
+        pwszPath + LwRtlWC16StringNumChars(pNamespace->pwszNamespace));
     BAIL_ON_NT_STATUS(status);
 
     *pbIsRoot = pNamespace->pReferrals[usTry].bIsRoot;
