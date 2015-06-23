@@ -499,7 +499,13 @@ CheckSambaVersion(
 
     LW_RTL_LOG_ERROR("Found smbd version %s", pVersionString);
 
-    if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
+    if (!strncmp(pVersionString, "3.1.", sizeof("3.1.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "3.3.", sizeof("3.3.") - 1))
     {
     }
     else if (!strncmp(pVersionString, "3.4.", sizeof("3.4.") - 1))
