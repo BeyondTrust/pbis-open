@@ -590,7 +590,8 @@ postinstall()
     remove_old_init_symlinks
 
     if [ -f /usr/bin/systemctl ]; then
-	run /usr/bin/systemctl enable '@MK_SYSCONFDIR@/redhat/lwsmd.service'
+	run cp '@MK_SYSCONFDIR@/redhat/lwsmd.service' /usr/lib/systemd/system/
+	run /usr/bin/systemctl enable lwsmd.service
     else
         run /sbin/chkconfig --add lwsmd
     fi
@@ -877,6 +878,11 @@ preuninstall_remove()
         run_quiet /sbin/service lwsmd stop
     else
         run_quiet '@LW_INITDIR@/lwsmd' stop
+    fi
+
+    if [ -f /usr/bin/systemctl ]; then
+	run_quiet /usr/bin/systemctl disable lwsmd.service
+        run rm -f /usr/lib/systemd/system/lwsmd.service
     fi
 
     for daemon in $DAEMONS_TO_HALT

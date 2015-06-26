@@ -109,7 +109,11 @@ prerm_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    if [ -f /usr/sbin/service ]
+    if [ -f /bin/systemctl ]
+    then
+	run_quiet /bin/systemctl disable lwsmd.service
+	run_quiet rm -f /lib/systemd/system/lwsmd.service
+    elif [ -f /usr/sbin/service ]
     then
         run_quiet /usr/sbin/service lwsmd stop
     else
