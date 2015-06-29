@@ -14,7 +14,7 @@ ExecStop=@MK_BINDIR@/lwsm shutdown
 # ExecStop, which would kill lwsmd. We are sending useless SIGCONT here to give
 # lwsmd time to finish.
 KillSignal=SIGCONT
-PrivateTmp=true
+PrivateTmp=false
 
 [Install]
 WantedBy=multi-user.target nss-lookup.target
