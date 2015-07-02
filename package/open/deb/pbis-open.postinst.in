@@ -413,9 +413,10 @@ postinstall()
 
     run /usr/sbin/update-rc.d -f lwsmd defaults 17 8
 
-    if [ -f /bin/systemctl ]
+    if [ $(ps -p1 -o comm=) = 'systemd' ]
     then
         run cp '@MK_SYSCONFDIR@/redhat/lwsmd.service' '/lib/systemd/system/'
+	chmod a-x /lib/systemd/system/lwsmd.service
         run /bin/systemctl enable lwsmd.service
         run /bin/systemctl start lwsmd.service
     elif [ -f /usr/sbin/service ]
