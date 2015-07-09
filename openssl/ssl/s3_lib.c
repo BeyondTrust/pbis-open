@@ -330,7 +330,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 /* The DH ciphers */
 /* Cipher 0B */
     {
-     1,
+     0,
      SSL3_TXT_DH_DSS_DES_40_CBC_SHA,
      SSL3_CK_DH_DSS_DES_40_CBC_SHA,
      SSL_kDHd,
@@ -378,7 +378,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 
 /* Cipher 0E */
     {
-     1,
+     0,
      SSL3_TXT_DH_RSA_DES_40_CBC_SHA,
      SSL3_CK_DH_RSA_DES_40_CBC_SHA,
      SSL_kDHr,
@@ -3084,7 +3084,7 @@ void ssl3_clear(SSL *s)
     }
 #if !defined(OPENSSL_NO_TLSEXT)
     if (s->s3->alpn_selected) {
-        free(s->s3->alpn_selected);
+        OPENSSL_free(s->s3->alpn_selected);
         s->s3->alpn_selected = NULL;
     }
 #endif

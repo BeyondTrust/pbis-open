@@ -15,6 +15,7 @@ B<openssl> B<verify>
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crlfile file>]
+[B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-policy_check>]
@@ -25,9 +26,11 @@ B<openssl> B<verify>
 [B<-extended_crl>]
 [B<-use_deltas>]
 [B<-policy_print>]
+[B<-no_alt_chains>]
 [B<-untrusted file>]
 [B<-help>]
 [B<-issuer_checks>]
+[B<-trusted file>]
 [B<-verbose>]
 [B<->]
 [certificates]
@@ -67,6 +70,10 @@ because it doesn't add any security.
 =item B<-crlfile file>
 
 File containing one or more CRL's (in PEM format) to load.
+
+=item B<-crl_download>
+
+Attempt to download CRL information for this certificate.
 
 =item B<-crl_check>
 
@@ -123,6 +130,19 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-no_alt_chains>
+
+When building a certificate chain, if the first certificate chain found is not
+trusted, then OpenSSL will continue to check to see if an alternative chain can
+be found that is trusted. With this option that behaviour is suppressed so that
+only the first chain found is ever used. Using this option will force the
+behaviour to match that of previous OpenSSL versions.
+
+=item B<-trusted file>
+
+A file of additional trusted certificates. The file should contain multiple
+certificates in PEM format concatenated together.
 
 =item B<-policy_print>
 
@@ -424,5 +444,9 @@ B<20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 =head1 SEE ALSO
 
 L<x509(1)|x509(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.0.2b.
 
 =cut

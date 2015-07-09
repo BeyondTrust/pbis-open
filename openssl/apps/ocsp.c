@@ -209,6 +209,7 @@ int MAIN(int argc, char **argv)
                 OPENSSL_free(tport);
             if (tpath)
                 OPENSSL_free(tpath);
+            thost = tport = tpath = NULL;
             if (args[1]) {
                 args++;
                 if (!OCSP_parse_url(*args, &host, &port, &path, &use_ssl)) {
@@ -535,6 +536,8 @@ int MAIN(int argc, char **argv)
                    "-CApath dir          trusted certificates directory\n");
         BIO_printf(bio_err,
                    "-CAfile file         trusted certificates file\n");
+        BIO_printf(bio_err,
+                   "-no_alt_chains       only ever use the first certificate chain found\n");
         BIO_printf(bio_err,
                    "-VAfile file         validator certificates file\n");
         BIO_printf(bio_err,
