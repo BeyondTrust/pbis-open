@@ -252,7 +252,7 @@ static int GetEntryDepth(const Krb5Entry *entry)
     return depth;
 }
 
-static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr)
+static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr, DWORD useIndex)
 {
     DWORD ceError = ERROR_SUCCESS;
     const char *pos = linestr;
@@ -351,7 +351,14 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
         }
     }
 
-    GCE(ceError = InsertChildNode(*parent, (*parent)->subelements.size, line));
+    if (useIndex == -1)
+       GCE(ceError = InsertChildNode(*parent, (*parent)->subelements.size, line));
+    else
+    {
+       if ((useIndex >= 0) && (useIndex < (*parent)->subelements.size))
+       GCE(ceError = InsertChildNode(*parent, useIndex, line));
+    }
+
     if(expectChildren)
     {
         *parent = line;
@@ -396,7 +403,7 @@ static DWORD ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entr
         GCE(ceError = CTReadNextLine(file, &buffer, &endOfFile));
         if(endOfFile)
             break;
-        GCE(ceError = ParseLine(&currentEntry, buffer, NULL));
+        GCE(ceError = ParseLine(&currentEntry, buffer, NULL, -1));
     }
     GCE(ceError = CTCloseFile(file));
     file = NULL;
@@ -894,6 +901,7 @@ GatherDomainMappings(
                 &pStatus->pAuthProviderStatusList[providerIndex];
             for (domainIndex = 0;
                     domainIndex < provider->dwNumTrustedDomains;
+
                     domainIndex++)
             {
                 GCE(ceError = CTStrdup(provider->
@@ -1045,10 +1053,29 @@ static DWORD
 Krb5LeaveDomain(Krb5Entry *conf)
 {
     DWORD ceError = ERROR_SUCCESS;
+    DWORD i = 0;
     Krb5Entry *libdefaults;
     Krb5Entry *capaths = NULL;
     GCE(ceError = EnsureStanzaNode(conf, "libdefaults", &libdefaults));
     GCE(ceError = DeleteChildNode(libdefaults, "default_realm", NULL));
+
+    for(i = 0; i < libdefaults->subelements.size; i++)
+    {
+       /* Upon domain join, it was possible that the default_ccache_name was commented out. We now
+          want to undo this. ParseLine() function treats a commented out line as all leadingWhiteSpace.
+          So need to search for #BT and parse the leadingWhiteSpace in order to extract the
+          name value pair. */ 
+       Krb5Entry *child = GetChild(libdefaults, i);
+       if(child->leadingWhiteSpace != NULL &&
+               strstr(child->leadingWhiteSpace, "#BT default_ccache_name"))
+       {
+           const char *tmpStr = strstr(child->leadingWhiteSpace, " default_ccache_name");
+           ParseLine(&libdefaults, tmpStr, NULL, i);
+
+           FreeKrb5EntryContents(child);
+           break;
+       }
+    }
 
     GCE(ceError = EnsureStanzaNode(conf, "capaths", &capaths));
     DeleteAllChildren(capaths);
@@ -1115,6 +1142,8 @@ Krb5JoinDomain(
     PSTR ch = NULL, dn = NULL;
     PSTR pszParentDomain = NULL;
     PSTR pszTail = NULL;
+    const char *currentCacheName = NULL;
+    char *newValue = NULL;
     const char *wantEncTypes[] = {
         "AES256-CTS",
         "AES128-CTS",
@@ -1161,6 +1190,16 @@ Krb5JoinDomain(
                 "false" ));
     GCE(ceError = SetNodeValue( libdefaults, "pkinit_identities",
                 "PKCS11:" LIBDIR "/libpkcs11.so" ));
+
+    currentCacheName = GetFirstNodeValue(libdefaults, "default_ccache_name");
+    if(currentCacheName != NULL)
+    {
+        /* Comment out default_ccache_name and use the default value which is
+           /tmp/krb5cc_%{uid} */
+        GCE(ceError = CTDupOrNullStr(currentCacheName, &newValue));
+        GCE(ceError = DeleteChildNode(libdefaults, "default_ccache_name", NULL));
+        GCE(ceError = SetNodeValue( libdefaults, "#BT default_ccache_name", newValue ));
+    }
 
     GCE(ceError = EnsureStanzaNode(conf, "domain_realm", &domain_realm));
     GCE(ceError = EnsureStanzaNode(conf, "realms", &realms));
