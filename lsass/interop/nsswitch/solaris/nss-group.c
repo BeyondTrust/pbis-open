@@ -48,6 +48,7 @@
  */
 
 #include "lsanss.h"
+#include "externs.h"
 #include "nss-group.h"
 
 typedef struct
@@ -115,12 +116,18 @@ LsaNssSolarisGroupSetgrent(
     void* pArgs
     )
 {
+    NSS_STATUS status;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupSetgrent(
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupSetgrent(
                                      &pLsaBackend->lsaConnection,
                                      pEnumGroupsState);
+    NSS_UNLOCK();
+
+    return status;
 }
 
 static
@@ -140,6 +147,8 @@ LsaNssSolarisGroupGetgrent(
     int*                      pErrorNumber = &err;
     int                       ret = NSS_STATUS_NOTFOUND;
 
+    NSS_LOCK();
+
     ret = LsaNssCommonGroupGetgrent(
                                     &pLsaBackend->lsaConnection,
                                     pEnumGroupsState,
@@ -147,6 +156,8 @@ LsaNssSolarisGroupGetgrent(
                                     pszBuf,
                                     bufLen,
                                     pErrorNumber);
+
+    NSS_UNLOCK();
 
     if (ret == NSS_STATUS_SUCCESS)
     {
@@ -191,12 +202,19 @@ LsaNssSolarisGroupEndgrent(
     void* pArgs
     )
 {
+    NSS_STATUS status;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupEndgrent(
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupEndgrent(
             &pLsaBackend->lsaConnection,
             pEnumGroupsState);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 static
@@ -216,6 +234,8 @@ LsaNssSolarisGroupGetgrgid(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
+    NSS_LOCK();
+
     ret = LsaNssCommonGroupGetgrgid(
                                     &pLsaBackend->lsaConnection,
                                     gid,
@@ -223,6 +243,8 @@ LsaNssSolarisGroupGetgrgid(
                                     pszBuf,
                                     bufLen,
                                     pErrorNumber);
+
+    NSS_UNLOCK();
 
     if (ret == NSS_STATUS_SUCCESS)
     {
@@ -284,6 +306,8 @@ LsaNssSolarisGroupGetgrnam(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
+    NSS_LOCK();
+
     ret = LsaNssCommonGroupGetgrnam(
                                     &pLsaBackend->lsaConnection,
                                     pszGroupName,
@@ -291,6 +315,8 @@ LsaNssSolarisGroupGetgrnam(
                                     pszBuf,
                                     bufLen,
                                     pErrorNumber);
+
+    NSS_UNLOCK();
 
     if (ret == NSS_STATUS_SUCCESS)
     {
@@ -355,6 +381,7 @@ LsaNssSolarisGroupGetgroupsbymember(
     size_t myResultsSize = *pResultsSize;
     size_t myResultsCapacity = *pResultsCapacity;
 
+    NSS_LOCK();
 
     ret = LsaNssCommonGroupGetGroupsByUserName(
                 &pLsaBackend->lsaConnection,
@@ -364,6 +391,8 @@ LsaNssSolarisGroupGetgroupsbymember(
                 &myResultsSize,
                 pGidResults,
                 pErrorNumber);
+
+    NSS_UNLOCK();
 
     if (ret == NSS_STATUS_SUCCESS)
     {

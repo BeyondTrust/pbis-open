@@ -46,6 +46,7 @@
  */
 
 #include "lsanss.h"
+#include "externs.h"
 #include "nss-netgrp.h"
 
 typedef struct
@@ -415,11 +416,15 @@ LsaNssSolarisNetgroupSetnetgrent(
     struct nss_setnetgrent_args *pNetArgs = (struct nss_setnetgrent_args*) pArgs;
     PLSA_NSS_NETGROUP_BACKEND    pLsaBackend = (PLSA_NSS_NETGROUP_BACKEND) pBackend;
 
+    NSS_LOCK();
 
     ret = LsaNssCommonNetgroupFindByName(
         &pLsaBackend->lsaConnection,
         pNetArgs->netgroup,
         &pGroupContents);
+
+    NSS_UNLOCK();
+
     BAIL_ON_LSA_ERROR(ret);
 
     ret = MAP_LSA_ERROR(NULL,
