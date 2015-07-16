@@ -20,7 +20,8 @@ make()
 	nss-group.c \
 	nss-main.c \
 	nss-user.c \
-        nss-netgrp.c"
+        nss-netgrp.c\
+        globals.c"
 
     mk_multiarch_do
         mk_dlo \
