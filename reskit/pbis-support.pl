@@ -45,6 +45,9 @@
 # v2.6.3  2014-10-31 RCA more addtions to tarball.
 # v2.7    2014-11-03 RCA add --cleanup functionality, samba gathering, get-status detection of Unknown (lsass load delays), other minor issues.
 # v2.7.1  2015-05-05 RCA fix crash due to "..." (python slip) if --gpo chosen
+# v2.7.2  2015-06-18 RCA fix issue with tarFiles("/var/log/*")
+# v2.8    2015-08-07 RCA gather additional information
+# v2.9    2015-08-20 RCA basic memory statistics
 #
 # Data structures explained at bottom of file
 #
@@ -58,7 +61,7 @@
 # syslog-ng editing to allow non-restarts
 
 use strict;
-#use warnings;
+use warnings;
 
 use Getopt::Long;
 use File::Basename;
@@ -68,7 +71,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.7.1";
+my $gVer = "2.9.0";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -183,6 +186,13 @@ Log choices:
         Gather lwsm debug logs
     --(no)smartcard (default = ".&getOnOff($opt->{lwscd}).")
         Gather smartcard daemon debug logs
+    --(no)certmgr (default = ".&getOnOff($opt->{lwcertd}).")
+        Gather smartcard daemon debug logs
+    --(no)autoenroll (default = ".&getOnOff($opt->{autoenrolld}).")
+        Gather smartcard daemon debug logs
+    --pbisloglevel (default = ".&getOnOff($opt->{pbislevel}).")
+        What loglevel to run PBIS daemons at (useful for
+        long-running captures).
     --(no)messages (default = ".&getOnOff($opt->{messages}).")
         Gather syslog logs
     --(no)gatherdb (default = ".&getOnOff($opt->{gatherdb}).")
@@ -191,6 +201,7 @@ Log choices:
         Gather logs and config for Samba server
     -ps --(no)psoutput (default = ".&getOnOff($opt->{psoutput}).")
         Gathers full process list from this system
+    -m --memory (default = ".&getOnOff($opt->{memory}).")
 
 Options:
 
@@ -199,10 +210,6 @@ Options:
     --(no)syslog (default = ".&getOnOff($opt->{syslog}).")
         Allow editing syslog.conf during the debug run if not
         restarting daemons (exclusive of -r)
-    --cleanup (default = ".&getOnOff($opt->{cleanup}).")
-        Run cleanup routines if tool gets cancelled in the middle
-        of running.
-        Will generate a tarball of output.
     -V --loglevel {error,warning,info,verbose,debug}
         Changes this tool's logging level. (default = $opt->{loglevel} )
     -l --log --logfile <path> (default = $opt->{logfile} )
@@ -218,6 +225,10 @@ Options:
         as well as full logs
 
 ";
+#    --cleanup (default = ".&getOnOff($opt->{cleanup}).")
+#        Run cleanup routines if tool gets cancelled in the middle
+#        of running.
+#        Will generate a tarball of output.
     return $helplines;
 }
 
@@ -427,7 +438,7 @@ sub dnsLookup($$) {
         logError("Could not find 'dig' or 'nslookup' - unable to do any network tests!");
         return;
     }
-    if ($lookup->{name} == "dig") {
+    if ($lookup->{name} eq "dig") {
         logVerbose("Performing DNS dig: '$lookup->{path} $type $query'.");
         open(NS, "$lookup->{path} $type $query |");
         while (<NS>) {
@@ -437,7 +448,7 @@ sub dnsLookup($$) {
         }
         close NS;
 
-    } elsif ($lookup->{name} == "nslookup") {
+    } elsif ($lookup->{name} eq "nslookup") {
         my $line="";
         logVerbose("Performing DNS nslookup: '$lookup->{path} -query=$type $query'.");
         open(NS, "$lookup->{path} -query=$type $query |");
@@ -492,11 +503,12 @@ sub findProcess($$) {
             $_=~s/^\s*//;
             $_=~s/\s*$//;
             if ($_ =~/$process/i) {
+                logDebug("Found possible match in line: $_");
                 my @els = split(/\s+/, $_);
                 $catch = $els[1];
                 $proc->{cmd} = $els[7];
                 if ($proc->{cmd} =~ /(lw-container|lwsm)/) {
-                    $proc->{cmd} = join(" ", $els[7],$els[8],$els[9]);
+                    $proc->{cmd} = join(" ", @els[7..$#els]);
                 }
                 logDebug("Checking '$proc->{cmd}' for /$process/.");
                 unless ($proc->{cmd} =~ /$process/) {
@@ -504,7 +516,6 @@ sub findProcess($$) {
                     $proc={};
                 }
             }
-            logDebug("ps line: $_");
             last if $catch;
         }
         close PS;
@@ -526,7 +537,7 @@ sub findProcess($$) {
             $_=~s/\s*$//;
             logDebug("ps line: $_");
             my @els = split(/\s+/, $_);
-            if ($els[1] == $process) {
+            if ($els[1] eq $process) {
                 $catch = $els[1];
                 $proc->{cmd} = $els[7];
             }
@@ -589,7 +600,10 @@ sub getUserInfo($$$) {
     logData("getent passwd $name: ");
     logData(join(":", getpwnam($name)));
     logData("");
-    return 0 if ($name=~/root/i);  #no need to do AD lookups for root
+    if ($info->{OStype} eq "aix") {
+        runTool($info, $opt, "lsuser $name", "print");
+    }
+    return 0 if ($name=~/^root$/i);  #no need to do AD lookups for root
     logData("PBIS direct lookup:");
     runTool($info, $opt, "$info->{lw}->{tools}->{userbyname} $name", "print");
     logData("User Group Membership:");
@@ -881,7 +895,13 @@ sub runTool($$$$;$) {
     my $cmd="";
     my $data="";
     if (! -x $tool) {
-        $cmd = "$info->{lw}->{path}/$tool 2>&1";
+        my @parts=split(/\s+/, $tool);
+        logDebug("Couldn't find '$tool' executable, trying to find it as '$parts[0]'.");
+        if (! -x $parts[0]) {
+            $cmd = "$info->{lw}->{path}/$tool 2>&1";
+        } else {
+            $cmd="$tool 2>&1";
+        }
     } else {
         $cmd = "$tool 2>&1";
     }
@@ -1005,9 +1025,19 @@ sub tarFiles($$$$) {
     my $tar = shift || confess "no tar file passed to tar appender!\n";
     my $file = shift || confess "no append file passed to tar appender!\n";
 
-    if (! -e $file) {
+    if ($file=~/\*[^\/]*$/) {
+        # askign for /path/to/files/*
+        my $dir=$file;
+        $dir=~s|/[^/]*$||;
+        if (! -d $dir ){
+            logWarning("Not adding $file to $tar - $dir doesn't exist!");
+            return;
+        }
+    } elsif (! -e $file) {
         logWarning("Not adding $file to $tar - $file doesn't exist");
         return;
+    } else {
+        logVerbose("No errors looking for existance of $file, continuing.");
     }
 
     logInfo("Adding file $file to $tar");
@@ -1195,8 +1225,8 @@ sub changeLoggingBySyslog($$$) {
             runTool($info, $opt, "$info->{lw}->{logging}->{eventfwdd} $state", "bury") if ($opt->{eventfwdd} and defined($info->{lw}->{logging}->{eventfwdd}));
             runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} $state", "bury") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
             runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} $state", "bury") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
-            if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent})) {
-                $state="verbose" if ($state eq "debug"); #TODO: 6.0.217 doesn't support "debug" with gp-set-log-level
+            if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent}) and $info->{lw}->{version}=~/[56]\./) {
+                $state="verbose" if ($state eq "debug");
                 runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} $state", "bury");
             }
         }
@@ -1299,6 +1329,18 @@ sub changeLoggingStandalone($$$) {
         daemonRestart($info, $options);
         sleep 5;
     }
+    if ($opt->{lwcertd} && defined($info->{lw}->{daemons}->{lwcert})) {
+        logVerbose("Attempting restart of lwcert daemon");
+        $options->{daemon} = $info->{lw}->{daemons}->{lwcert};
+        daemonRestart($info, $options);
+        sleep 5;
+    }
+    if ($opt->{autoenroll} && defined($info->{lw}->{daemons}->{autoenroll})) {
+        logVerbose("Attempting restart of autoenroll daemon");
+        $options->{daemon} = $info->{lw}->{daemons}->{autoenroll};
+        daemonRestart($info, $options);
+        sleep 5;
+    }
 
 }
 
@@ -1318,7 +1360,7 @@ sub changeLoggingWithContainer($$$) {
         $options->{daemon} = $daemon;
         daemonContainerStop($info, $options);
     };
-    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpcks11 lwsc)){
+    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpcks11 lwsc lwcert autoenroll)){
         logDebug("Checking if I need to restart $daemon daemon...");
         my $daemonopt=$daemon."d";
         next unless(defined($opt->{$daemonopt}) and $opt->{$daemonopt});
@@ -1441,6 +1483,7 @@ sub determineOS($$) {
             $info->{timezonefile} = "/etc/timezone";
         }
         logVerbose("Setting Linux paths");
+        $info->{psmemfields}=[qw(user pid ppid rss vsz pcpu time comm args)];
         $info->{svcctl}->{start1} = "/etc/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
         $info->{svcctl}->{start3} = " start";
@@ -1467,6 +1510,7 @@ sub determineOS($$) {
         $info->{OStype} = "hpux";
         logVerbose("Setting HP-UX paths");
         $info->{release} = `swlist -l bundle`;
+        $info->{psmemfields}=[qw(user pid ppid sz vsz pcpu time comm args)];
         $info->{svcctl}->{start1} = "/sbin/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
         $info->{svcctl}->{start3} = " start";
@@ -1482,11 +1526,19 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "messages";
+        foreach my $i (("syslog", "system.log", "messages")) {
+            $file = findInPath($i, ["/var/adm", "/var/log"]);
+            if ((defined($file->{path})) && $file->{type} eq "f") {
+                $info->{logfile} = "$i";
+                $info->{logpath} = $file->{dir};
+            }
+        }
         $info->{nsfile} = "/etc/nsswitch.conf";
         $info->{timezonefile} = "/etc/TIMEZONE";
     } elsif ($^O eq "solaris") {
         $info->{OStype} = "solaris";
         logVerbose("Setting Solaris paths");
+        $info->{psmemfields}=[qw(user pid ppid rss vsz pcpu time comm args)];
         $file = findInPath("svcadm", ["/usr/sbin", "/sbin"]);
         if ((defined($file->{path})) && $file->{type} eq "f") {
             $info->{svcctl}->{start1} = "$file->{path} ";
@@ -1530,6 +1582,7 @@ sub determineOS($$) {
         logData("System release is:");
         logData(`oslevel -r`);
         logVerbose("Setting AIX paths");
+        $info->{psmemfields}=[qw(user pid ppid spgsz dpgsz shmpgsz vmsize pcpu comm args)];
         $info->{svcctl}->{start1} = "/etc/rc.d/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
         $info->{svcctl}->{start3} = " start";
@@ -1545,11 +1598,19 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "syslog/syslog.log";
+        foreach my $i (("syslog", "system.log", "messages")) {
+            $file = findInPath($i, ["/var/adm", "/var/log", "/var/adm/syslog", "/var/log/syslog"]);
+            if ((defined($file->{path})) && $file->{type} eq "f") {
+                $info->{logfile} = "$i";
+                $info->{logpath} = $file->{dir};
+            }
+        }
         $info->{nsfile} = "/etc/netsvc.conf";
         $info->{timezonefile} = "/etc/environment";
     } elsif ($^O eq "MacOS" or $^O eq "darwin") {
         $info->{OStype} = "darwin";
         logVerbose("Setting darwin paths");
+        $info->{psmemfields}=[qw(user pid ppid rss vsz pcpu time comm args)];
         $info->{svcctl}->{start1} = "launchctl";
         $info->{svcctl}->{start2} = " start";
         $info->{svcctl}->{start3} = ' com.likewisesoftware.daemonname';
@@ -1572,6 +1633,7 @@ sub determineOS($$) {
         $gRetval |= ERR_OS_INFO;
         $info->{OStype} = "unknown";
         logError("ERROR: Could not determine OS information!");
+        $info->{psmemfields}=[qw(user pid ppid rss vsz pcpu time comm args)];
         $info->{timezonefile} = "/etc/localtime";
         $info->{svcctl}->{start1} = "/etc/init.d/";
         $info->{svcctl}->{start2} = "daemonname";
@@ -1589,6 +1651,13 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.d";
         $info->{logpath} = "/var/log";
         $info->{logfile} = "messages";
+        foreach my $i (("syslog", "system.log", "messages")) {
+            $file = findInPath($i, ["/var/adm", "/var/log", "/var/adm/syslog", "/var/log/syslog"]);
+            if ((defined($file->{path})) && $file->{type} eq "f") {
+                $info->{logfile} = "$i";
+                $info->{logpath} = $file->{dir};
+            }
+        }
         $info->{nsfile} = "/etc/nsswitch.conf";
     }
     logData("OS: $info->{OStype}");
@@ -1647,7 +1716,7 @@ sub determineOS($$) {
     $info->{sudoers} = findInPath("sudoers", ["/etc", "/usr/local/etc", "/opt/etc", "/opt/local/etc", "/opt/usr/local/etc"]);
     $info->{sambaconf} = findInPath("smb.conf", ["/etc/samba", "/etc/smb", "/opt/etc/samba", "/usr/local/etc/samba", "/etc/opt/samba"]);
     $info->{resolvconf} = findInPath("resolv.conf", ["/etc", "/opt/etc"]);
-    $info->{hostsfile} = findInPath("hosts", ["/etc"]);
+    $info->{hostsfile} = findInPath("hosts", ["/etc/inet", "/etc"]);
     logData("Found sshd_config at $info->{sshd_config}->{path}") if ($info->{sshd_config}->{path});
     logData("Found krb5.conf at $info->{krb5conf}->{path}") if ($info->{krb5conf}->{path});
     logData("Found sudoers at $info->{sudoers}->{path}") if ($info->{sudoers}->{path});
@@ -1669,6 +1738,84 @@ sub waitForDomain($$) {
             # but sometimes it returns "Unknown" instead of a domain, so we'll keep looping in that case.
             last if $error;
         }
+    }
+}
+
+sub gatherMemory {
+    my $info = shift;
+    my $opt = shift;
+    my $round = 0;
+    return unless ($opt->{memory});
+    sectionBreak("Gathering Memory Stats - round $round");
+    my $pshash=findInPath("ps", ["/usr/bin", "/bin", "/usr/local/bin" ] );
+    my @psfields=@{$info->{psmemfields}};
+    my $psopts="-e";
+    my $pscmd="$pshash->{path} $psopts -o ".join(",", @psfields);
+    logVerbose("using PS command: '$pscmd'");
+    if (defined($info->{memory}) && ref($info->{memory}) eq "HASH") {
+        $round=$info->{memory}->{round};
+        logDebug("Retrieving round $round from memory.");
+    } else {
+        logDebug("Setting round $round in memory.");
+        $info->{memory}->{round}=$round;
+    }
+    runTool($info, $opt, $pscmd, "print");
+    $info->{memory}->{round}=$info->{memory}->{round}+1;
+    foreach my $service (keys(%{$info->{lw}->{daemons}})) {
+        my $daemon=$info->{lw}->{daemons}->{$service};
+        logVerbose("Checking stats on service: '$service', named '$daemon'.");
+        my $process=findProcess($daemon, $info);
+        if (not defined($process->{pid})) {
+            logVerbose("Couldn't find service $daemon in the ps list!");
+            next;
+        }
+        my $data=runTool($info, $opt, "$pshash->{path} -p $process->{pid} -o ".join(",", @psfields), "grep", "$process->{pid}");
+        logDebug("Process info is: $data");
+        $data=~s/^\s+//;  # strip off leading space so the field counting works on Solaris
+        my @memstats=split(/\s+/, $data);
+        push(@{$info->{memory}->{$daemon}}, \@memstats);
+    }
+    foreach my $tool (qw(vmstat free)) {
+        my $hash=findInPath($tool, ["/usr/bin", "/bin", "/usr/local/bin"]);
+        if ($hash->{path}) {
+            sectionBreak("Running $tool");
+            runTool($info, $opt, $hash->{path}, "print");
+        }
+    }
+}
+
+sub memoryStats {
+    my $info = shift;
+    my $opt = shift;
+    my %fieldIndex;
+    my $i=0;
+    my @fields=@{$info->{psmemfields}};
+    foreach my $field (@fields) {
+        $fieldIndex{$field}=$i;
+        $i++
+    }
+    sectionBreak("Memory utilization Statistics for PBIS");
+    my $line="Daemon\t";
+    foreach my $field (@fields) {
+        next if ($field=~/(user|comm|arg)/);
+        $line.="$field Start\t$field End\t";
+    }
+    logData($line);
+    $line="";
+    foreach my $service (keys(%{$info->{lw}->{daemons}})) {
+        my $daemon=$info->{lw}->{daemons}->{$service};
+        if (not defined($info->{memory}->{$daemon}) or (ref($info->{memory}->{$daemon}) ne "ARRAY")) {
+            logVerbose("Not pringing information for $daemon - it wasn't running.");
+            next;
+        }
+        $line="$daemon\t";
+        foreach my $field (@fields) {
+            next if ($field=~/(user|comm|arg)/);
+            logDebug("Dumping stats for $daemon and $field...");
+            $line.="$info->{memory}->{$daemon}->[0]->[$fieldIndex{$field}]";
+            $line.="\t$info->{memory}->{$daemon}->[-1]->[$fieldIndex{$field}]\t";
+        }
+        logData($line);
     }
 }
 
@@ -1732,6 +1879,10 @@ sub getLikewiseVersion($$) {
         $info->{lw}->{daemons}->{syslogreaper} = "reapsysl";
         $info->{lw}->{daemons}->{registry} = "lwreg";
         $info->{lw}->{daemons}->{lwsm} = "lwsm";
+        if ($info->{lw}->{version}=~/^8\.[2-5]/) {
+            $info->{lw}->{daemons}->{certmgr} = "lwcert";
+            $info->{lw}->{daemons}->{autoenroll} = "autoenroll";
+        }
         $info->{lw}->{daemons}->{usermonitor} = "usermonitor";
         $info->{lw}->{daemons}->{smartcard} = "lwsc";
         $info->{lw}->{daemons}->{pkcs11} = "lwpkcs11";
@@ -2169,9 +2320,20 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{usermonitor}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
+        if ($opt->{certmgr} and defined($info->{lw}->{daemons}->{certmgr})) {
+            logInfo("Adding lwcert logs.");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{certmgr}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{autoenroll}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
     }
     tarFiles($info, $opt, $tarballfile, "/Library/Logs/DirectoryService/DirectoryService.debug.log") if ($info->{OStype} eq "darwin");
-    tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert/*") if ($info->{OStype} eq "aix");
+    if ($info->{OStype} eq "aix") {
+        tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert");
+        tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert");
+        tarFiles($info, $opt, $tarballfile, "/usr/lib/security/methods.cfg")
+    }
     if ($opt->{messages}) {
         logInfo("Adding $info->{logpath}/$info->{logfile}");
         $appendfile = $info->{logpath}."/".$info->{logfile};
@@ -2182,16 +2344,16 @@ sub outputReport($$) {
     }
     if ($opt->{automounts}) {
         logInfo("Adding autofs files from PBIS GPO");
-        tarFiles($info, $opt, $tarballfile, "/etc/lwi_automount/*");
+        tarFiles($info, $opt, $tarballfile, "/etc/lwi_automount");
         tarFiles($info, $opt, $tarballfile, "/etc/auto*");
     }
     if ($opt->{sambalogs}) {
-        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/samba/*");
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}/samba");
         if ($info->{logpath} ne "/var/log") {
             logDebug("Adding files from /var/log/samba also");
-            tarFiles($info, $opt, $tarballfile, "/var/log/samba/*");
+            tarFiles($info, $opt, $tarballfile, "/var/log/samba");
         }
-        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}/*");
+        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}");
     }
     logInfo("Adding sshd_config");
     tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
@@ -2211,6 +2373,8 @@ sub outputReport($$) {
     }
     if ($opt->{tcpdump}) {
         tarFiles($info, $opt, $tarballfile, $opt->{capturefile});
+        # grab the keytab, so we can decrypt the LDAP traffic.
+        tarFiles($info, $opt, $tarballfile, "/etc/krb5.keytab");
     }
     if (defined($opt->{gatherdb}) and $opt->{gatherdb} = 1) {
         logInfo("Adding Likewise DB folder (this may take a while if the eventlog is large)...");
@@ -2243,14 +2407,21 @@ sub outputReport($$) {
     }
     if (-e "$info->{logpath}/$info->{hostname}-likewise-install-results.out") {
         logInfo("Adding ProServe install logfile $info->{hostname}-likewise-install-results.out");
+        logWarning("Customer should not be using these tools for non-migration purposes.");
         tarFiles($info, $opt, $tarballfile, "$info->{logpath}/$info->{hostname}-likewise-install-results.out");
     }
     if (-e "/var/log/pbislogs") {
         logInfo("Adding ProServe install logfile directory /var/log/pbislogs");
+        logWarning("Customer should not be using these tools for non-migration purposes.");
         tarFiles($info, $opt, $tarballfile, "/var/log/pbislogs");
+        if (-e "/root/.pbis-backup") {
+            logInfo("Adding ProServe install backup director /root/.pbis-backup");
+            tarFiles($info, $opt, $tarballfile, "/root/.pbis-backup");
+        }
     }
     if (-e "$info->{logpath}/$info->{hostname}-pbis-install-results.out") {
         logInfo("Adding ProServe install logfile $info->{hostname}-pbis-install-results.out");
+        logWarning("Customer should not be using these tools for non-migration purposes.");
         tarFiles($info, $opt, $tarballfile, "$info->{logpath}/$info->{hostname}-pbis-install-results.out");
     }
     logInfo("Finished adding files, now for our output");
@@ -2281,13 +2452,13 @@ sub runTests($$) {
 # It makes no sense to run most of the below tests if you're not joined, so... let's do that test first
     if ($opt->{domainjoin}) {
         sectionBreak("domainjoin");
-        my ($djoptions, $djcommand, $domain, $user, $djlog);
+        my ($djoptions, $djcommand, $domain, $user, $djlog)=("","","","","");
         if ($opt->{djcommand}) {
             $djcommand = $opt->{djcommand};
             logDebug("Domainjoin command is $djcommand");
         }
         if ($opt->{djlog}) {
-            $djlog = $opt->{djlog};
+            $djlog = "--loglevel verbose --logfile $opt->{djlog}";
             logDebug("Domainjoin log is $djlog");
         }
         while (not $djcommand) {
@@ -2341,12 +2512,13 @@ sub runTests($$) {
                 $opt->{sshuser} = $user;
             }
             logData("This tool will now run the following command:");
-            logData("$info->{lw}->{tools}->{domainjoin} --loglevel verbose --logfile $djlog $djcommand $djoptions $domain $user");
+            logData("$info->{lw}->{tools}->{domainjoin} $djlog $djcommand $djoptions $domain $user");
             logData(" ");
-            logData("You will see 2 lines, followed by a blank and a cursor. Please input your password at that point:");
+            logData("You will see 2 lines, followed by a blank and a cursor. Please input your password at that point.");
+            logData("You will NOT get a newline after entering your password, this is normal.");
             logData(" ");
         }
-        runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} --loglevel verbose --logfile $djlog $djcommand $djoptions $domain $user", "print");
+        runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} $djlog $djcommand $djoptions $domain $user", "print");
     }
 # Run tests that run every time no matter what
 
@@ -2372,13 +2544,14 @@ sub runTests($$) {
     }
 # run optional tests
 
-    if ($opt->{dns} or $opt->{gpo}) {
-        #gpo often breaks due to DNS, so do DNS tests, too
+    if ($opt->{dns}) {
         sectionBreak("DNS Tests");
         my $site = runTool($info, $opt, "$info->{lw}->{tools}->{status}", "grep", 'Site:\s+(.*)');
         my @status = split(/\s+/, $site);
-        my %dclist;
+        my (%dclist, %completed);
         foreach my $site (@status) {
+            next if ($completed{$site});
+            $completed{$site}=1;
             logInfo("We are in site: $site.");
             foreach my $domain (@domains) {
                 sectionBreak("DNS Info for $site in $domain.");
@@ -2395,24 +2568,35 @@ sub runTests($$) {
                         logData("  $_");
                         $dclist{$_}=1;
                     }
+                    logData("Results for $search.$site.pdc._msdcs.$domain:");
+                    @records = dnsSrvLookup("$search.$site.pdc._msdcs.$domain");
+                    foreach (@records) {
+                        logData("  $_");
+                        $dclist{$_}=1;
+                    }
                 }
             }
         }
+        sectionBreak("Full DC A record list:");
         foreach my $dc (sort(keys(%dclist))) {
+            logData(" $dc");
             foreach (dnsLookup($dc, "A")) {
                 chomp;
-                logData($_);
+                logData("  $_");
             }
         }
     }
+    gatherMemory($info, $opt);
     if ($opt->{users}) {
         sectionBreak("Enum Users");
         runTool($info, $opt, "$info->{lw}->{tools}->{userlist}", "print");
     }
+    gatherMemory($info, $opt);
     if ($opt->{groups}) {
         sectionBreak("Enum Groups");
         runTool($info, $opt, "$info->{lw}->{tools}->{grouplist}", "print");
     }
+    gatherMemory($info, $opt);
 
     if ($opt->{ssh}) {
         sectionBreak("SSH Test");
@@ -2457,7 +2641,6 @@ sub runTests($$) {
 
     if ($opt->{gpo}) {
         sectionBreak("GPO Tests");
-        $opt->{dns} = 1; #do dns tests as well if we're testing GPO, they often are related, useless to set here, but keeping for documentation
         runTool($info, $opt, "gporefresh", "print");
         for (my $i = 60; $i<=0; $i-=15) {
             logData("Sleeping $i seconds for full refresh to run...");
@@ -2481,6 +2664,7 @@ sub runTests($$) {
         logData($data);
     }
 
+    gatherMemory($info, $opt);
     if ($opt->{othertests}) {
         sectionBreak("Other Tests");
         logWarning("Please run any manual tests required now (interactive logon, sudo, su, etc.)");
@@ -2491,15 +2675,17 @@ sub runTests($$) {
             chomp $complete;
         }
     }
+    gatherMemory($info, $opt);
 
     if ($opt->{delay}) {
         sectionBreak("Delay for testing");
         logData("Please run any manual tests required now (interactive logon, sudo, su, etc.)");
         logData("This program will continue in $opt->{delaytime} seconds...");
         while ($opt->{delaytime} > 30) {
-            $opt->{delaytime} = $opt->{delaytime}-30;
+            $opt->{delaytime} = $opt->{delaytime} - 30;
             sleep 30;
             logData("This program will continue in $opt->{delaytime} seconds...");
+            gatherMemory($info, $opt);
         }
         sleep $opt->{delaytime};
     }
@@ -2538,6 +2724,10 @@ sub runTests($$) {
         $data = `$info->{pscmd}`;
         logData($data);
     }
+    if ($opt->{memory}) {
+        gatherMemory($info, $opt);
+        memoryStats($info, $opt);
+    }
 }
 
 # Main Functions End
@@ -2554,6 +2744,7 @@ sub main() {
     my $datestring = $time[5].sprintf("%02d", $time[4]+1).sprintf("%02d", $time[3]).sprintf("%02d", $time[2]).sprintf("%02d", $time[1]);
     my $info = {};
     $info->{emailaddress} = 'openproject@beyondtrust.com';
+    my $host=hostname();
 
     my $opt = { netlogond => 1,
         users => 1,
@@ -2561,14 +2752,14 @@ sub main() {
         lsassd => 1,
         lwiod => 1,
         netlogond => 1,
-        gpagentd => 1,
+        gpagentd => 0,
         messages => 1,
         syslog => 1,
         capturefile => "/tmp/pbis-cap",
         loglevel => "info",
-        logfile => "/tmp/pbis-support.log",
+        logfile => "/tmp/pbis-support-$host.log",
         tarballdir => "/tmp",
-        tarballfile => "pbis-support-$datestring",
+        tarballfile => "pbis-support-$host-$datestring",
         tarballext => ".tar.gz",
         sshcommand => "exit",
         sudocmd => "ls -l /var/lib/pbis/db",
@@ -2614,7 +2805,10 @@ sub main() {
         'reapsysld|syslogreaper|reaper!',
         'lwscd|smartcard|lwsc!',
         'lwpcks11d|lwpcks11!',
+        'lwcertd|lwcert!',
+        'autoenrolld|autoenroll!',
         'usermonitor!',
+        'pbislevel|pbisloglevel=s',
         'messages!',
         'sambalogs!',
         'restart|r!',
@@ -2625,6 +2819,7 @@ sub main() {
         'sudopasswd=s',
         'sudocmd=s@',
         'psoutput|ps!',
+        'memory|m!',
         'delay!',
         'delaytime|dt=s',
         'cleanup!',
@@ -2632,12 +2827,12 @@ sub main() {
     my $more = shift @ARGV;
     my $errors;
 
+    #now to force some options for tool consistency
     if ($opt->{domainjoin}) {
         $opt->{restart} = 1;
         $opt->{other} = 1;
         $opt->{tcpdump} =1;
     }
-
     if (not defined $opt->{restart}) {
         $opt->{restart} = 1 if not $opt->{syslog};
         $opt->{restart} = 0 if $opt->{syslog};
@@ -2691,12 +2886,6 @@ sub main() {
         logData("Logging at level $gDebug");
     }
 
-    if ($gDebug<1 or $gDebug > 5) {
-        $gDebug = 1 if ($gDebug < 1);
-        $gDebug = 5 if ($gDebug > 5);
-        logWarning("Log Level not specified.");
-    }
-
     if (defined($opt->{loglevel}) && not defined($opt->{verbose})) {
         $gDebug = 5 if ($opt->{loglevel}=~/^debug$/i);
         $gDebug = 4 if ($opt->{loglevel}=~/^verbose$/i);
@@ -2706,6 +2895,12 @@ sub main() {
         $gDebug = $opt->{loglevel} if ($opt->{loglevel}=~/^\d+$/);
         logWarning("Logging at $opt->{loglevel} level.");
     }
+    if ($gDebug<1 or $gDebug > 5) {
+        $gDebug = 1 if ($gDebug < 1);
+        $gDebug = 5 if ($gDebug > 5);
+        logWarning("Log Level previously not properly specified.");
+    }
+
 
     $opt->{tarballdir}=~s/\/$//;
 
@@ -2753,7 +2948,7 @@ sub main() {
         $gRetval |= ERR_OS_INFO;
         exit $gRetval;
     }
-
+    gatherMemory($info, $opt);
     if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
         sectionBreak("Starting tcpdump");
         tcpdumpStart($info, $opt);
@@ -2761,7 +2956,11 @@ sub main() {
 
     sectionBreak("Daemon restarts");
     logDebug("Turning up logging levels");
-    changeLogging($info, $opt, "debug");
+    if ( $opt->{pbislevel}=~/^(error|warning|verbose|info|debug|trace)$/) {
+        changeLogging($info, $opt, $opt->{pbislevel});
+    } else {
+        changeLogging($info, $opt, "debug");
+    }
     logWarning("Sleeping for 120 seconds to let Domains be found");
     waitForDomain($info, $opt);
 
@@ -3002,6 +3201,8 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         lwpcks11d
         lwscd
         lwsmd
+        lwcertd
+        autoenrolld
         messages
     (Group: Restart Options)
         syslog
