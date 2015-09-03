@@ -661,6 +661,10 @@ error:
         LwFreeMemory(pszTmpPath);
     }
 
+    if (pSELinux)  {
+       SELinuxFree(pSELinux);
+    }
+
     return dwError;
 }
 
