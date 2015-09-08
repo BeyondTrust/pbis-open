@@ -2767,6 +2767,7 @@ sub main() {
         gatherdb => 1,
         psoutput => 1,
         djlog => "/var/log/domainjoin-verbose.log",
+        pbislevel => "debug",
     };
 
     my $ok = GetOptions($opt,
