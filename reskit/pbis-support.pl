@@ -48,6 +48,7 @@
 # v2.7.2  2015-06-18 RCA fix issue with tarFiles("/var/log/*")
 # v2.8    2015-08-07 RCA gather additional information
 # v2.9    2015-08-20 RCA basic memory statistics
+# v2.9.3  2015-09-18 RCA add additional AIX and additional information to gather
 #
 # Data structures explained at bottom of file
 #
@@ -64,6 +65,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use Cwd;
 use File::Basename;
 use Carp;
 use FindBin;
@@ -71,7 +73,7 @@ use Config;
 use Sys::Hostname;
 
 # Define global variables
-my $gVer = "2.9.0";
+my $gVer = "2.9.3";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -1036,6 +1038,10 @@ sub tarFiles($$$$) {
     } elsif (! -e $file) {
         logWarning("Not adding $file to $tar - $file doesn't exist");
         return;
+    } elsif ( -l $file ) {
+        #we want the actual contents, not just the link
+        logInfo("$file is a link, adding its target first.");
+        tarFiles($info, $opt, $tar, abs_path($file));
     } else {
         logVerbose("No errors looking for existance of $file, continuing.");
     }
@@ -2338,6 +2344,8 @@ sub outputReport($$) {
         logInfo("Adding $info->{logpath}/$info->{logfile}");
         $appendfile = $info->{logpath}."/".$info->{logfile};
         tarFiles($info, $opt, $tarballfile, $appendfile);
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}.auth");
+        tarFiles($info, $opt, $tarballfile, "$info->{logpath}.secure");
     }
     if ($opt->{domainjoin}) {
         tarFiles($info, $opt, $tarballfile, $opt->{djlog});
@@ -2354,6 +2362,8 @@ sub outputReport($$) {
             tarFiles($info, $opt, $tarballfile, "/var/log/samba");
         }
         tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}");
+    } else {
+        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{path}");
     }
     logInfo("Adding sshd_config");
     tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
@@ -2391,6 +2401,7 @@ sub outputReport($$) {
     logInfo("Adding PBIS Configuration...");
     tarFiles($info, $opt, $tarballfile, "/etc/likewise");
     tarFiles($info, $opt, $tarballfile, "/etc/pbis");
+    tarFiles($info, $opt, $tarballfile, "/etc/nscd.conf");
     tarFiles($info, $opt, $tarballfile, $info->{nsfile});
     tarFiles($info, $opt, $tarballfile, $info->{timezonefile});
     if (defined($info->{hostsfile}->{path})) {
