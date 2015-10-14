@@ -75,6 +75,7 @@ pam_sm_authenticate(
     PSTR pszSmartCardReader = NULL;
     PSTR pszPINPrompt = NULL;
     BOOLEAN bUseRegularAuthentication = TRUE;
+    BOOLEAN bIsLocalUser = FALSE;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -446,6 +447,7 @@ pam_sm_authenticate(
                 pPamContext,
                 pConfig->pszLocalPasswordPrompt,
                 &pszPassword);
+            bIsLocalUser = TRUE;
         }
         else
         {
@@ -484,6 +486,14 @@ pam_sm_authenticate(
         else
         {
             params.pszPassword = pszPassword;
+        }
+
+        if (bIsLocalUser)
+        {
+            // Lsass does not handle local user. Return PAM_IGNORE
+            // and let pam_unix or pam_ldap handle it.
+            dwError = LW_ERROR_IGNORE_THIS_USER;
+            BAIL_ON_LSA_ERROR(dwError);
         }
 
         dwError = LsaAuthenticateUserPam(
