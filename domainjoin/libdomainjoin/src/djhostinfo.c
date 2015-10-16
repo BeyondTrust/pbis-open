@@ -834,6 +834,13 @@ DJConfigureDHCPService(
             NULL
         };
 #endif
+    PSTR ppszSystemCtlArgs[] = 
+    {
+        "systemctl",
+        "restart",
+        "network"
+    };
+    
     PPROCINFO pProcInfo = NULL;
     LONG status = 0;
     PSTR pszFinalPath = NULL;
@@ -883,7 +890,16 @@ DJConfigureDHCPService(
 
     /* Restart network */
 
-    ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
+    /*try init.d first, otherwise systemctl*/
+    if(CTCheckFileExists(ppszNetArgs[0], &bFileExists))
+    {
+        ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
+    }
+    else
+    {
+        ceError = DJSpawnProcess(ppszSystemCtlArgs[0], ppszSystemCtlArgs, &pProcInfo);
+    }
+    
     CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(pProcInfo, &status);
