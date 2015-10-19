@@ -21,8 +21,7 @@
     doc = ""
 }
 "Dependencies" = {
-    value = "lwreg"
-    default = "lwreg"
+    default = ""
     doc = ""
 }
 "Type" = {
