@@ -56,7 +56,7 @@ my_vasprintf(const char* format, va_list args)
     char *smallBuffer;
     unsigned int bufsize;
     int requiredLength;
-    unsigned int newRequiredLength;
+    ssize_t newRequiredLength;
     char* outputString = NULL;
     va_list args2;
 

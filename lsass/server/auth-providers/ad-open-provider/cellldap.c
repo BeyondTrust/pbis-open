@@ -133,7 +133,7 @@ CellModeSchemaFindNSSArtefactByKey(
     )
 {
     DWORD  dwError = 0;
-    DWORD  dwCount = 0;
+    long  lCount = 0;
     PSTR   pszQuery = NULL;
     PSTR   pszDN = NULL;
     PSTR   pszEscapedDN = NULL;
@@ -196,12 +196,12 @@ CellModeSchemaFindNSSArtefactByKey(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                       pLd,
                       pMessagePseudo);
-    if (dwCount < 0) {
+    if (lCount < 0) {
        dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
        dwError = LW_ERROR_NO_SUCH_NSS_KEY;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -384,7 +384,7 @@ CellModeSchemaEnumNSSArtefacts(
     )
 {
     DWORD  dwError = 0;
-    DWORD  dwCount = 0;
+    long  lCount = 0;
     PSTR   pszQuery = "(&(objectClass=serviceConnectionPoint)(keywords=objectClass=centerisLikewiseMapEntry))";
     PSTR   pszDN = NULL;
     PSTR   pszEscapedDN = NULL;
@@ -443,12 +443,12 @@ CellModeSchemaEnumNSSArtefacts(
 
         pLd = LwLdapGetSession(hDirectory);
 
-        dwCount = ldap_count_entries(
+        lCount = ldap_count_entries(
                           pLd,
                           pMessagePseudo);
-        if (dwCount < 0) {
+        if (lCount < 0) {
            dwError = LW_ERROR_LDAP_ERROR;
-        } else if (dwCount == 0) {
+        } else if (lCount == 0) {
            dwError = LW_ERROR_NO_MORE_NSS_ARTEFACTS;
         }
         BAIL_ON_LSA_ERROR(dwError);

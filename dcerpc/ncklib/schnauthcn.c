@@ -391,7 +391,7 @@ INTERNAL void rpc__schnauth_cn_create_info
      * Initialize the common auth_info stuff.
      */
     schnauth_info->auth_info.refcount = 1;
-    schnauth_info->auth_info.server_princ_name = '\0';
+    schnauth_info->auth_info.server_princ_name = NULL;
     schnauth_info->auth_info.authn_level = authn_level;
     schnauth_info->auth_info.authn_protocol = rpc_c_authn_schannel;
     schnauth_info->auth_info.authz_protocol = rpc_c_authz_name;

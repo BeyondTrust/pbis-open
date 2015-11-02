@@ -161,7 +161,7 @@ extern inline BOOL IsSlashPresent(IN PSTR s);
  * @param s String to check.
  * @return TRUE or FALSE.
  */
-extern inline BOOL IsDotPresent(IN PSTR s);
+extern BOOL IsDotPresent(IN PSTR s);
 
 /**
  * Check if the string is DN component.

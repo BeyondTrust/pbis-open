@@ -74,7 +74,7 @@ static LWMsgTypeSpec gConnectionInfo1Spec[] =
 #define CONNECTION_INFO_LEVEL_1     1
 
 
-static LWMsgTypeSpec gShareInfoUnionSpec[] =
+/*static LWMsgTypeSpec gShareInfoUnionSpec[] =
 {
     LWMSG_UNION_BEGIN(CONNECTION_INFO_UNION),
     LWMSG_MEMBER_POINTER(CONNECTION_INFO_UNION, p0, LWMSG_TYPESPEC(gConnectionInfo0Spec)),
@@ -84,7 +84,7 @@ static LWMsgTypeSpec gShareInfoUnionSpec[] =
     LWMSG_UNION_END,
     LWMSG_TYPE_END
 };
-
+*/
 
 static LWMsgTypeSpec gConnectionInfoEnumInParamsSpec[] =
 {

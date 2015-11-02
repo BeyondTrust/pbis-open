@@ -65,7 +65,7 @@ __LwSmIpcCallInit(
     
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_connect_endpoint(
                                    gpClient, 
-                                   LWMSG_CONNECTION_MODE_LOCAL,
+                                   (LWMsgEndpointType)LWMSG_CONNECTION_MODE_LOCAL,
                                    SM_ENDPOINT));
     BAIL_ON_ERROR(dwError);
     

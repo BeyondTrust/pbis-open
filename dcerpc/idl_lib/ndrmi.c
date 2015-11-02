@@ -933,9 +933,9 @@ void rpc_ss_ndr_m_fix_or_conf_arr
 {
     idl_ulong_int element_count;
     int i;
-    idl_ulong_int element_defn_index;
+    idl_ulong_int element_defn_index = 0;
     idl_ulong_int element_offset_index;
-    idl_ulong_int element_size;
+    idl_ulong_int element_size = 0;
     idl_byte *element_defn_ptr;
     idl_byte base_type;
     idl_boolean marshall_by_pointing;

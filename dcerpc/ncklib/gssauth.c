@@ -169,8 +169,8 @@ INTERNAL void rpc__gssauth_bnd_set_auth
 {
 	unsigned32 st;
 	rpc_gssauth_info_p_t gssauth_info;
-	unsigned_char_p_t str_server_name;
-	gss_name_t gss_server_name;
+	unsigned_char_p_t str_server_name = NULL;
+	gss_name_t gss_server_name = NULL;
 
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
 		("(rpc__gssauth_bnd_set_auth)\n"));

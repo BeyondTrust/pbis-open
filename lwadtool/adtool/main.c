@@ -49,7 +49,7 @@
  */
 int main(int argc, const char **argv) {
     DWORD dwError = 0;
-    AdtActionTP action;
+    AdtActionTP action = NULL;
     HANDLE context;
     /* PCSTR errs; */
     AdtResultBaseTP result;

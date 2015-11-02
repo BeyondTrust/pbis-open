@@ -1010,7 +1010,7 @@ CheckOffset(
     }
 }
 
-static
+/*static
 inline
 NTSTATUS
 AdvanceTo(
@@ -1029,7 +1029,7 @@ AdvanceTo(
         return STATUS_SUCCESS;
     }
 }
-
+*/
 static
 ULONG
 RtlAccessTokenRelativeSize(

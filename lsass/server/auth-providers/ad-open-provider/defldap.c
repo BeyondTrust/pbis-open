@@ -135,7 +135,7 @@ DefaultModeSchemaFindNSSArtefactByKey(
     )
 {
     DWORD  dwError = 0;
-    DWORD  dwCount = 0;
+    long  lCount = 0;
     PSTR   pszQuery = NULL;
     PSTR   pszDN = NULL;
     PSTR   pszEscapedDN = NULL;
@@ -198,12 +198,12 @@ DefaultModeSchemaFindNSSArtefactByKey(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                       pLd,
                       pMessagePseudo);
-    if (dwCount < 0) {
+    if (lCount < 0) {
        dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
        dwError = LW_ERROR_NO_SUCH_NSS_KEY;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -263,7 +263,7 @@ DefaultModeNonSchemaFindNSSArtefactByKey(
     )
 {
     DWORD  dwError = 0;
-    DWORD  dwCount = 0;
+    long  dwCount = 0;
     PSTR   pszQuery = NULL;
     PSTR   pszDN = NULL;
     PSTR   pszEscapedDN = NULL;
@@ -463,7 +463,7 @@ DefaultModeSchemaEnumNSSArtefacts(
     )
 {
     DWORD  dwError = 0;
-    DWORD  dwCount = 0;
+    long  lCount = 0;
     PCSTR   pszQuery = "(&(objectClass=serviceConnectionPoint)(keywords=objectClass=centerisLikewiseMapEntry))";
     PSTR   pszDN = NULL;
     PSTR   pszEscapedDN = NULL;
@@ -513,13 +513,13 @@ DefaultModeSchemaEnumNSSArtefacts(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                           pLd,
                           pMessagePseudo
                           );
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = LW_ERROR_NO_MORE_NSS_ARTEFACTS;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -578,7 +578,7 @@ DefaultModeNonSchemaEnumNSSArtefacts(
     )
 {
     DWORD dwError = 0;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PCSTR pszQuery = "(&(objectClass=serviceConnectionPoint)(keywords=objectClass=centerisLikewiseMapEntry))";
     PSTR pszDN = NULL;
     PSTR pszEscapedDN = NULL;
@@ -636,12 +636,12 @@ DefaultModeNonSchemaEnumNSSArtefacts(
 
         pLd = LwLdapGetSession(hDirectory);
 
-        dwCount = ldap_count_entries(
+        lCount = ldap_count_entries(
                           pLd,
                           pMessagePseudo);
-        if (dwCount < 0) {
+        if (lCount < 0) {
            dwError = LW_ERROR_LDAP_ERROR;
-        } else if (dwCount == 0) {
+        } else if (lCount == 0) {
            dwError = LW_ERROR_NO_MORE_NSS_ARTEFACTS;
         }
         BAIL_ON_LSA_ERROR(dwError);

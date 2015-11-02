@@ -40,7 +40,7 @@
  */
 
 #ifndef __RDR_TREE2_H__
-#define __RDR_TREE2_H_
+#define __RDR_TREE2_H__
 
 VOID
 RdrTree2Revive(

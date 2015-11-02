@@ -70,7 +70,7 @@ static LWMsgTypeSpec gFileInfo3Spec[] =
 #define FILE_INFO_LEVEL_2   2
 #define FILE_INFO_LEVEL_3   3
 
-static LWMsgTypeSpec gFileInfoUnionSpec[] =
+/*static LWMsgTypeSpec gFileInfoUnionSpec[] =
 {
     LWMSG_UNION_BEGIN(FILE_INFO_UNION),
     LWMSG_MEMBER_POINTER(FILE_INFO_UNION, p2, LWMSG_TYPESPEC(gFileInfo2Spec)),
@@ -79,7 +79,7 @@ static LWMsgTypeSpec gFileInfoUnionSpec[] =
     LWMSG_ATTR_TAG(FILE_INFO_LEVEL_3),
     LWMSG_UNION_END,
     LWMSG_TYPE_END
-};
+};*/
 
 static LWMsgTypeSpec gFileInfoEnumInParamsSpec[] =
 {

@@ -1104,7 +1104,7 @@ long PlugInShell_PeriodicTask(void)
     if (bMergeModeMCX)
     {
         NewFlags = NewFlags | LWE_DS_FLAG_MERGE_MODE_MCX;
-        if (GlobalState.Flags & LWE_DS_FLAG_MERGE_MODE_MCX == 0)
+        if ((GlobalState.Flags & LWE_DS_FLAG_MERGE_MODE_MCX) == 0)
         {
             LOG("Merge mode MCX is now enabled. Settings from multiple Group Policy Objects will be merged for the AD user accounts at logon.");
         }
@@ -1114,7 +1114,7 @@ long PlugInShell_PeriodicTask(void)
     if (bEnableForceHomedirOnStartupDisk)
     {
         NewFlags = NewFlags | LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK;
-        if (GlobalState.Flags & LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK == 0)
+        if ((GlobalState.Flags & LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK) == 0)
         {
             LOG("Force Home Directory On Startup Disk is now enabled.");
         }
@@ -1141,7 +1141,7 @@ long PlugInShell_PeriodicTask(void)
     if (bMergeAdmins)
     {
         NewFlags = NewFlags | LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS;
-        if (GlobalState.Flags & LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS == 0)
+        if ((GlobalState.Flags & LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS) == 0)
         {
             LOG("Option to override allow-administration-by with local computer changes to the admin group is now enabled.");
         }

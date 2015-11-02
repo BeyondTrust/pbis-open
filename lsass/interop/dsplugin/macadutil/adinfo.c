@@ -44,7 +44,7 @@ ADUGetAllMCXPolicies(
     PGROUP_POLICY_OBJECT pGPObject = NULL;
     LDAPMessage* pMessage = NULL;
     LDAPMessage* pLDAPMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR pszValue = NULL;
 
     dwError = LwLdapDirectorySearch(
@@ -59,11 +59,11 @@ ADUGetAllMCXPolicies(
     dwError = LwLdapCountEntries(
         hDirectory,
         pMessage,
-        &dwCount
+        &lCount
         );
     BAIL_ON_MAC_ERROR(dwError);
 
-    if (dwCount > 0)
+    if (lCount > 0)
     {
         pLDAPMessage = LwLdapFirstEntry(hDirectory, pMessage);
     }
@@ -157,7 +157,7 @@ ADUGetMCXPolicy(
     char szQuery[512] = {0};
     PGROUP_POLICY_OBJECT pGPObject = NULL;
     LDAPMessage* pMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR pszValue = NULL;
 
     sprintf(szQuery, "(&(objectclass=groupPolicyContainer)(%s=%s))", ADU_DISPLAY_NAME_ATTR, pszGPOName);
@@ -174,15 +174,15 @@ ADUGetMCXPolicy(
     dwError = LwLdapCountEntries(
         hDirectory,
         pMessage,
-        &dwCount
+        &lCount
         );
     BAIL_ON_MAC_ERROR(dwError);
 
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
     }
     BAIL_ON_MAC_ERROR(dwError);
@@ -540,7 +540,7 @@ ADUGetPolicyInformation(
          NULL
         };
     LDAPMessage* pMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR  pszValue = NULL;
     DWORD dwValue = 0;
 
@@ -556,15 +556,15 @@ ADUGetPolicyInformation(
     dwError = LwLdapCountEntries(
         hDirectory,
         pMessage,
-        &dwCount
+        &lCount
         );
     BAIL_ON_MAC_ERROR(dwError);
 
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
     }
     BAIL_ON_MAC_ERROR(dwError);

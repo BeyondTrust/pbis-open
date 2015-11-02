@@ -79,7 +79,7 @@ LWAddUserToLocalGroup(
     _LOG("     ", format, ##__VA_ARGS__)
 
 #define TRY_CRASH() \
-    ((*(char*)0) = 0)
+    ((*(volatile char*)0) = 0)
 
 #define NOP() \
     (0)

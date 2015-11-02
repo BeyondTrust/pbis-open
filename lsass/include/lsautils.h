@@ -649,7 +649,7 @@ LsaGetLibDirPath(
 
 DWORD
 LsaValidateGroupInfoLevel(
-    DWORD dwGroupInfoLevel
+    long dwGroupInfoLevel
     );
 
 DWORD
@@ -671,7 +671,7 @@ LsaValidateUserInfo(
 
 DWORD
 LsaValidateUserInfoLevel(
-    DWORD dwUserInfoLevel
+    long lUserInfoLevel
     );
 
 DWORD

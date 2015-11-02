@@ -1030,9 +1030,9 @@ lwmsg_peer_accept_fd_internal(
         break;
     }
     BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
-    BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, type, fd));
-    BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
-    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session));
+    BAIL_ON_ERROR((LWMsgBool)(status = lwmsg_connection_set_fd(assoc, (LWMsgConnectionMode)type, fd)));
+    BAIL_ON_ERROR((LWMsgBool)(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE)));
+    BAIL_ON_ERROR((LWMsgBool)(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session)));
     assoc = NULL;
 
     lwmsg_task_wake(session->assoc_session->event_task);

@@ -122,7 +122,7 @@ void yywhere
 	int        text_len = 0;       /* Length of source text to output */
 	int        lineno;             /* Source line number of relevant text */
 	long       msg_id;             /* ID of message to output */
-	char const *near_text;         /* Text of object near error */
+	char const *near_text = NULL;         /* Text of object near error */
 	STRTAB_str_t string_id;     /* Entry in string table of near text */
 	char wherebuf[WHERE_TEXT_LEN+1];
 	char * text_p = *yytext_p;

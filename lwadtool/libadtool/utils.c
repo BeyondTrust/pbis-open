@@ -100,7 +100,7 @@ static inline BOOL IsAtPresent(IN PSTR s) {
  * @param s String to check.
  * @return TRUE or FALSE.
  */
-inline BOOL IsDotPresent(IN PSTR s) {
+BOOL IsDotPresent(IN PSTR s) {
     INT i;
 
     for(i = 0; s && s[i]; ++i) {

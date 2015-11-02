@@ -55,6 +55,8 @@
 
 #ifdef __LWI_DARWIN__
 
+#define BUFFERSIZE 1024 * 16
+
 static
 DWORD
 GetPstrFromStringRef(
@@ -95,7 +97,7 @@ cleanup:
     return error;
 }
 
-static
+/*static
 DWORD
 UrlErrorToLwError(
     SInt32 urlError
@@ -124,6 +126,7 @@ UrlErrorToLwError(
             return ERROR_TIMEOUT;
     }
 }
+*/
 
 static
 DWORD
@@ -134,7 +137,7 @@ CTGetPListVersion(
     DWORD error = 0;
     CFURLRef pURL = NULL;
     CFDataRef pContents = NULL;
-    SInt32 urlError = 0;
+//    SInt32 urlError = 0;
     // Do not free. This is returned by a mac function following the "get"
     // rule.
     CFStringRef pVers = NULL;
@@ -154,8 +157,39 @@ CTGetPListVersion(
         error = ERROR_NOT_ENOUGH_MEMORY;
         GCE(error);
     }
+    ////
+    
+    CFMutableDataRef fileContent = CFDataCreateMutable(kCFAllocatorDefault, 0);
+    CFReadStreamRef stream = CFReadStreamCreateWithFile(kCFAllocatorDefault, pURL);
+    if(stream)
+    {
+        if(CFReadStreamOpen(stream)) 
+        {
+            UInt8 buffer[BUFFERSIZE];
+            CFIndex bytesRead;
+            do
+            {
+                bytesRead = CFReadStreamRead(stream, buffer, sizeof(buffer));
+                if(bytesRead > 0)
+                {
+                    CFDataAppendBytes(fileContent, buffer, bytesRead);
+                }
+            } while (bytesRead > 0);
 
-    if (!CFURLCreateDataAndPropertiesFromResource(
+            CFReadStreamClose(stream);                
+            
+        }
+        
+        CFRelease(stream);        
+    }
+    
+    
+    
+    
+    
+    
+////
+ /*   if (!CFURLCreateDataAndPropertiesFromResource(
             kCFAllocatorDefault,
             pURL,
             &pContents,
@@ -166,7 +200,7 @@ CTGetPListVersion(
         error = UrlErrorToLwError(urlError);
         GCE(error);
     }
-
+*/
     pPList = CFPropertyListCreateFromXMLData(
                     kCFAllocatorDefault,
                     pContents,

@@ -287,7 +287,7 @@ AST_type_n_t *ASTP_chase_ptr_to_type
     short int    pointer_count;
 
     for (tp= type_node, pointer_count = 0;
-        (tp->kind == AST_pointer_k);
+        tp->kind == AST_pointer_k;
         tp = tp->type_structure.pointer->pointee_type, pointer_count++)
     {
         /* Chase pointer until we find the base type node */

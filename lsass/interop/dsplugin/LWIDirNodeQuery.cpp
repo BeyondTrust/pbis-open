@@ -1218,7 +1218,7 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo, LWE_DS_FLAGS Flags, 
                             macError = LWIQuery::SetAttributeValue(pAttribute, pNameNode->fBufferData);
                             GOTO_CLEANUP_ON_MACERROR(macError);
 
-                            dsDataNodeDeAllocate(NULL, pNameNode);
+                            dsDataNodeDeAllocate(0, pNameNode);
                             pNameNode = NULL;
                         }
                     }

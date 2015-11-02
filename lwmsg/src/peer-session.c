@@ -932,13 +932,13 @@ lwmsg_peer_session_connect_endpoint(
         if (endpoint->fd >= 0)
         {
             session->endpoint_str = lwmsg_format("<local fd:%d>", endpoint->fd);
-            BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, endpoint->type, endpoint->fd));
+            BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, (LWMsgConnectionMode)endpoint->type, endpoint->fd));
             endpoint->fd = -1;
         }
         else
         {
             session->endpoint_str = lwmsg_format("<local socket:%s>", endpoint->endpoint);
-            BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
+            BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, (LWMsgConnectionMode)endpoint->type, endpoint->endpoint));
         }
         BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
         /* Create task to manage it */

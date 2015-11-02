@@ -1,4 +1,5 @@
 #include <Security/AuthorizationDB.h>
+#define KERBEROS_APPLE_DEPRECATED(x)
 #include <Kerberos/krb5.h>
 
 #include <lw/types.h>

@@ -815,7 +815,7 @@ LWIsUserInLocalGroup(
         {	
             if(isspace(account[i]) )
             {
-                account[i] = NULL;
+                account[i] = '\0';
                 break;
             }
         }

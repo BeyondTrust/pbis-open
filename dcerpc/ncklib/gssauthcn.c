@@ -411,7 +411,7 @@ INTERNAL void rpc__gssauth_cn_create_info
 	 * Initialize the common auth_info stuff.
 	 */
 	gssauth_info->auth_info.refcount = 1;
-	gssauth_info->auth_info.server_princ_name = '\0';
+	gssauth_info->auth_info.server_princ_name = NULL;
 	gssauth_info->auth_info.authn_level = authn_level;
 	gssauth_info->auth_info.authn_flags = authn_flags;
 	gssauth_info->auth_info.authn_protocol = authn_protocol;

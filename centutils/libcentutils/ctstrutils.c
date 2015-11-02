@@ -395,7 +395,7 @@ CTAllocateStringPrintfV(
     char *smallBuffer;
     unsigned int bufsize;
     int requiredLength;
-    unsigned int newRequiredLength;
+    ssize_t newRequiredLength;
     PSTR outputString = NULL;
     va_list args2;
 

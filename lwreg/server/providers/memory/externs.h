@@ -49,13 +49,13 @@
 
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
 
-inline
+
 PREG_DB_CONNECTION 
 MemRegRoot(
     VOID
     );
 
-inline VOID
+VOID
 MemRegRootInit(
     PREG_DB_CONNECTION hMemRegRoot
     );

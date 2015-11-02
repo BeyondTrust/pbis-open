@@ -185,7 +185,10 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_UNIX_SIGNAL  = 0x100
+    LW_TASK_EVENT_UNIX_SIGNAL  = 0x100,
+            
+    LW_TASK_COMPLETE_MASK = 0xFFFFFFFF
+            
 } LW_TASK_EVENT_MASK, *PLW_TASK_EVENT_MASK;
 
 /**
