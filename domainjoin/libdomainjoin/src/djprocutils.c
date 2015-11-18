@@ -197,7 +197,7 @@ DJTimedReadData(
 {
     DWORD ceError = ERROR_SUCCESS;
     PSTR pszBuf = NULL;
-    long lBytesRead = 0;
+    DWORD dwBytesRead = 0;
     int maxfd;
     fd_set read_fd_set;
     int select_status;
@@ -258,24 +258,24 @@ DJTimedReadData(
 
                 if (FD_ISSET(fd, &read_fd_set)) {
 
-                    lBytesRead = read(fd, pszBuf, MAX_PROC_BUF_LEN);
-                    if (lBytesRead < 0) {
+                    dwBytesRead = read(fd, pszBuf, MAX_PROC_BUF_LEN);
+                    if (dwBytesRead < 0) {
 
                         if (errno != EAGAIN && errno != EINTR) {
                             ceError = LwMapErrnoToLwError(errno);
                             BAIL_ON_CENTERIS_ERROR(ceError);
                         }
 
-                    } else if (lBytesRead == 0) {
+                    } else if (dwBytesRead == 0) {
 
                         pProcBuffer->bEndOfFile = TRUE;
 
                     } else {
 
                         if (iFd == 0)
-                            pProcBuffer->dwOutBytesRead = lBytesRead;
+                            pProcBuffer->dwOutBytesRead = dwBytesRead;
                         else
-                            pProcBuffer->dwErrBytesRead = lBytesRead;
+                            pProcBuffer->dwErrBytesRead = dwBytesRead;
 
                     }
 
@@ -307,7 +307,7 @@ DJWriteData(
     )
 {
     DWORD ceError = ERROR_SUCCESS;
-    long nWritten = 0;
+    DWORD nWritten = 0;
     DWORD dwRemaining = 0;
     PSTR pStr;
 
