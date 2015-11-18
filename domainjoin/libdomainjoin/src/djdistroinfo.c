@@ -45,7 +45,7 @@
 #ifdef HAVE_COREFOUNDATION_COREFOUNDATION_H
 #include <CoreFoundation/CoreFoundation.h>
 #endif
-
+#define BUFFERSIZE 16*1024
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 #ifdef __LWI_DARWIN__
@@ -89,7 +89,7 @@ cleanup:
     }
     return error;
 }
-
+/*
 static
 DWORD
 UrlErrorToLwError(
@@ -118,7 +118,7 @@ UrlErrorToLwError(
         case kCFURLTimeoutError:
             return ERROR_TIMEOUT;
     }
-}
+}*/
 
 static
 DWORD
@@ -128,8 +128,9 @@ DJGetPListVersion(
 {
     DWORD error = 0;
     CFURLRef pURL = NULL;
-    CFDataRef pContents = NULL;
-    SInt32 urlError = 0;
+   // CFDataRef pContents = NULL;
+    CFMutableDataRef fileContent = NULL;
+
     // Do not free. This is returned by a mac function following the "get"
     // rule.
     CFStringRef pVers = NULL;
@@ -149,8 +150,34 @@ DJGetPListVersion(
         error = ERROR_NOT_ENOUGH_MEMORY;
         GCE(error);
     }
+    
+    ///
+     fileContent = CFDataCreateMutable(kCFAllocatorDefault, 0);
+    CFReadStreamRef stream = CFReadStreamCreateWithFile(kCFAllocatorDefault, pURL);
+    if(stream)
+    {
+        if(CFReadStreamOpen(stream)) 
+        {
+            UInt8 buffer[BUFFERSIZE];
+            CFIndex bytesRead;
+            do
+            {
+                bytesRead = CFReadStreamRead(stream, buffer, sizeof(buffer));
+                if(bytesRead > 0)
+                {
+                    CFDataAppendBytes(fileContent, buffer, bytesRead);
+                }
+            } while (bytesRead > 0);
 
-    if (!CFURLCreateDataAndPropertiesFromResource(
+            CFReadStreamClose(stream);                
+            
+        }
+        
+        CFRelease(stream);        
+    }
+    ///
+
+    /*if (!CFURLCreateDataAndPropertiesFromResource(
             kCFAllocatorDefault,
             pURL,
             &pContents,
@@ -160,11 +187,11 @@ DJGetPListVersion(
     {
         error = UrlErrorToLwError(urlError);
         GCE(error);
-    }
+    }*/
 
     pPList = CFPropertyListCreateFromXMLData(
                     kCFAllocatorDefault,
-                    pContents,
+                    fileContent,
                     kCFPropertyListImmutable,
                     &pError);
     if (!pPList)
@@ -206,9 +233,9 @@ cleanup:
     {
         CFRelease(pURL);
     }
-    if (pContents)
+    if (fileContent)
     {
-        CFRelease(pContents);
+        CFRelease(fileContent);
     }
     if (pPList)
     {

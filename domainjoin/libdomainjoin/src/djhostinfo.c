@@ -891,7 +891,10 @@ DJConfigureDHCPService(
     /* Restart network */
 
     /*try init.d first, otherwise systemctl*/
-    if(CTCheckFileExists(ppszNetArgs[0], &bFileExists))
+    ceError = CTCheckFileExists(ppszNetArgs[0], &bFileExists);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
+
+    if(bFileExists)
     {
         ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
     }
