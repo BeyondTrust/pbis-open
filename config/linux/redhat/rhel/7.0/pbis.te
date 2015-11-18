@@ -3,30 +3,39 @@ module pbis 1.0;
 
 require {
 	type chkpwd_t;
-	type sshd_t;
-	type system_dbusd_t;
-	type var_lib_t;
+	type init_t;
+        type init_var_lib_t;
+        type NetworkManager_t;
+        type passwd_t;
+        type policykit_auth_t;
+        type policykit_t;
         type postfix_pickup_t;
 	type rpm_var_lib_t;
 	type setroubleshootd_t;
-	type init_t;
-	class sock_file write;
+	type sshd_t;
+	type system_dbusd_t;
+        type user_home_t;
+	type var_lib_t;
+        class sock_file { write create unlink getattr };
 	class unix_stream_socket connectto;
 	class process { siginh noatsecure rlimitinh };
-	class file write;
+        class dir { write remove_name create add_name rmdir };
+        class file { write read getattr open };
 }
 
-require {
-        type policykit_auth_t;
-        type policykit_t;
-        type var_lib_t;
-        class sock_file write;
-        class process { siginh noatsecure rlimitinh };
-}
 
 #============= chkpwd_t ==============
 allow chkpwd_t init_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
+
+#============= NetworkManager_t ==============
+allow NetworkManager_t init_var_lib_t:file { read getattr open };
+
+#============= passwd_t ==============
+allow passwd_t init_t:unix_stream_socket connectto;
+allow passwd_t user_home_t:dir { write remove_name create add_name rmdir };
+allow passwd_t user_home_t:sock_file { write create unlink getattr };
+allow passwd_t var_lib_t:sock_file write;
 
 #============= setroubleshootd_t ==============
 allow setroubleshootd_t rpm_var_lib_t:file write;
