@@ -68,7 +68,7 @@ AuthorizationPluginCreate(
 {
     LW_AUTH_PLUGIN *pPlugin = NULL;
     OSStatus osStatus = noErr;
-    PAUTH_MECHANISM_MODULE pModule;
+    PAUTH_MECHANISM_MODULE pModule = NULL;
     PVOID pMemory = NULL;
     glob_t gl = { 0 };
     int result;

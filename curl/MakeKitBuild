@@ -1,3 +1,8 @@
+configure()
+{
+    MK_CFLAGS="$MK_CFLAGS -w"
+}
+
 make()
 {
     CURL_HEADERS="\

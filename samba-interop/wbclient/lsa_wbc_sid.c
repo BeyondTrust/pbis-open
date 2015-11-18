@@ -213,7 +213,7 @@ wbcErr wbcSidToString(
         char pszAuth[12];
 
         snprintf(pszAuth, sizeof(pszAuth), "-%u", sid->sub_auths[i]);
-        strncat(pszSidStr, pszAuth, sizeof(pszSidStr)-strlen(pszSidStr));
+        strncat(pszSidStr, pszAuth, sizeof(pszSidStr)-strlen(pszSidStr)-1);
     }
 
     *sid_string = _wbc_strdup(pszSidStr);
@@ -508,7 +508,7 @@ _wbc_free_translated_names(
 
     if (pNames)
     {
-        for (index = 0; pNames[index].type != -1; index++)
+        for (index = 0; pNames[index].type != WBC_SID_NAME_END_OF_LIST; index++)
         {
             _WBC_FREE(pNames[index].name);
         }
@@ -583,7 +583,7 @@ wbcErr wbcLookupSids(
                  _wbc_free_translated_names);
     BAIL_ON_NULL_PTR(pNames, dwErr);
 
-    pNames[num_sids].type = -1;
+    pNames[num_sids].type = WBC_SID_NAME_END_OF_LIST;
 
     for (index = 0; index < num_sids; index++)
     {
@@ -600,7 +600,7 @@ wbcErr wbcLookupSids(
                     pNameList[index].pszSamAccountName);
             BAIL_ON_NULL_PTR(pNames[index].name, dwErr);
 
-            pNames[index].domain_index = -1;
+            pNames[index].domain_index = WBC_SID_NAME_END_OF_LIST;
             for (domainIndex = 0; domainIndex < numDomains; domainIndex++)
             {
                 if (!strcmp(pDomains[domainIndex].short_name,

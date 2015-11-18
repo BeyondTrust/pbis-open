@@ -172,7 +172,7 @@ lwmsg_task_set_unix_signal(
     LWMsgBool disp
     )
 {
-    return __MAP_NTSTATUS(
+    return (LWMsgBool)__MAP_NTSTATUS(
         LwRtlSetTaskUnixSignal(task, sig, disp));
 }
 

@@ -1297,7 +1297,7 @@ MemDbQueryInfoKey(
 
     if (pcMaxSubKeyLen)
     {
-        for (indx=0, keyLen=0, maxKeyLen; indx < hKeyNode->NodesLen; indx++)
+        for (indx=0, keyLen=0, maxKeyLen = 0; indx < hKeyNode->NodesLen; indx++)
         {
             keyLen = RtlWC16StringNumChars(hKeyNode->SubNodes[indx]->Name);
             if (keyLen > maxKeyLen)

@@ -802,11 +802,11 @@ error:
 
 DWORD
 LsaValidateUserInfoLevel(
-    DWORD dwUserInfoLevel
+    long lUserInfoLevel
     )
 {
-    return ((dwUserInfoLevel >= 0) &&
-            (dwUserInfoLevel <= 2)) ? 0 : LW_ERROR_INVALID_USER_INFO_LEVEL;
+    return ((lUserInfoLevel >= 0) &&
+            (lUserInfoLevel <= 2)) ? 0 : LW_ERROR_INVALID_USER_INFO_LEVEL;
 }
 
 DWORD

@@ -338,7 +338,7 @@ CTCopyFileWithPerms(
     CHAR szBuf[1024+1];
     int  iFd = -1;
     int  oFd = -1;
-    DWORD dwBytesRead = 0;
+    ssize_t bytesRead = 0;
 
     if (IsNullOrEmptyString(pszSrcPath) ||
         IsNullOrEmptyString(pszDstPath)) {
@@ -367,7 +367,7 @@ CTCopyFileWithPerms(
 
     while (1) {
 
-        if ((dwBytesRead = read(iFd, szBuf, 1024)) < 0) {
+        if ((bytesRead = read(iFd, szBuf, 1024)) < 0) {
 
             if (errno == EINTR)
                 continue;
@@ -376,10 +376,10 @@ CTCopyFileWithPerms(
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
-        if (dwBytesRead == 0)
+        if (bytesRead == 0)
             break;
 
-        if (write(oFd, szBuf, dwBytesRead) != dwBytesRead) {
+        if (write(oFd, szBuf, bytesRead) != bytesRead) {
 
             if (errno == EINTR)
                 continue;

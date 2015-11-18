@@ -29,7 +29,7 @@
  */
 
 #ifndef __LWIMUTEXLOCKGUARD_H__
-#define __LWIMUTEXLOCKGUARD_H___
+#define __LWIMUTEXLOCKGUARD_H__
 
 #include "LWIMutexLock.h"
 

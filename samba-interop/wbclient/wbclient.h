@@ -143,6 +143,7 @@ struct wbcDomainSid {
  **/
 
 enum wbcSidType {
+        WBC_SID_NAME_END_OF_LIST = -1,
 	WBC_SID_NAME_USE_NONE=0,
 	WBC_SID_NAME_USER=1,
 	WBC_SID_NAME_DOM_GRP=2,

@@ -515,7 +515,7 @@ AD_GetLinkedCellInfo(
     LDAP *pLd = NULL;
     LDAPMessage *pCellMessage1 = NULL;
     LDAPMessage *pCellMessage2 = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR szAttributeList[] =
                     {AD_LDAP_DESCRIP_TAG,
                      NULL
@@ -555,14 +555,14 @@ AD_GetLinkedCellInfo(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                       pLd,
                       pCellMessage1);
-    if (dwCount < 0) {
+    if (lCount < 0) {
        dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
        dwError = LW_ERROR_NO_SUCH_CELL;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
        dwError = LW_ERROR_DUPLICATE_CELLNAME;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -640,14 +640,14 @@ AD_GetLinkedCellInfo(
 
             pGCLd = LwLdapGetSession(hGCDirectory);
 
-            dwCount = ldap_count_entries(
+            lCount = ldap_count_entries(
                               pGCLd,
                               pCellMessage2);
-            if (dwCount < 0) {
+            if (lCount < 0) {
                dwError = LW_ERROR_LDAP_ERROR;
-            } else if (dwCount == 0) {
+            } else if (lCount == 0) {
                dwError = LW_ERROR_NO_SUCH_CELL;
-            } else if (dwCount > 1) {
+            } else if (lCount > 1) {
                dwError = LW_ERROR_DUPLICATE_CELLNAME;
             }
             BAIL_ON_LSA_ERROR(dwError);

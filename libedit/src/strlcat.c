@@ -33,7 +33,8 @@ __weak_alias(strlcat, _strlcat)
 # endif
 #endif
 
-#if !HAVE_STRLCAT
+
+#if !defined(__APPLE__) && !defined(__MACH__)
 /*
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
@@ -41,8 +42,7 @@ __weak_alias(strlcat, _strlcat)
  * Returns strlen(src) + MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
-size_t
-strlcat(char *dst, const char *src, size_t siz)
+size_t strlcat(char *dst, const char *src, size_t siz)
 {
 	char *d = dst;
 	const char *s = src;

@@ -29,7 +29,7 @@
  */
 
 #ifndef __DNSERROR_H__
-#define __DNSERROR__H__
+#define __DNSERROR_H__
 
 DWORD
 DNSMapRCode(

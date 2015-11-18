@@ -1686,7 +1686,7 @@ lwmsg_peer_task_run(
 
     if (trigger & LWMSG_TASK_TRIGGER_INIT)
     {
-        BAIL_ON_ERROR(status = lwmsg_task_set_unix_signal(
+        BAIL_ON_ERROR(status = (LWMsgStatus)lwmsg_task_set_unix_signal(
             _task,
             SIGUSR1,
             LWMSG_TRUE));

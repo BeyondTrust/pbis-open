@@ -855,7 +855,7 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
         LwFreeMemory(pValue);
         pValue = NULL;
         
-        dsDataNodeDeAllocate(NULL, pDataNode);
+        dsDataNodeDeAllocate(0, pDataNode);
         pDataNode = NULL;
     }
 

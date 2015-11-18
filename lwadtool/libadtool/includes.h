@@ -38,8 +38,8 @@
  *
  */
 
-#ifndef _ADTOOL_INCLUDES_H_
-#define _ADTOOL_INCLUDES_H_
+#ifndef _LIB_ADTOOL_INCLUDES_H_
+#define _LIB_ADTOOL_INCLUDES_H_
 
 #include "config.h"
 

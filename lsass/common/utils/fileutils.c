@@ -753,7 +753,7 @@ LsaCopyFileWithPerms(
     CHAR szBuf[1024+1];
     int  iFd = -1;
     int  oFd = -1;
-    DWORD dwBytesRead = 0;
+    ssize_t bytesRead = 0;
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszSrcPath) ||
         LW_IS_NULL_OR_EMPTY_STR(pszDstPath)) {
@@ -781,7 +781,7 @@ LsaCopyFileWithPerms(
     bRemoveFile = TRUE;
 
     while (1) {
-        if ((dwBytesRead = read(iFd, szBuf, 1024)) < 0) {
+        if ((bytesRead = read(iFd, szBuf, 1024)) < 0) {
 
             if (errno == EINTR)
                 continue;
@@ -790,10 +790,10 @@ LsaCopyFileWithPerms(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        if (dwBytesRead == 0)
+        if (bytesRead == 0)
             break;
 
-        if (write(oFd, szBuf, dwBytesRead) != dwBytesRead) {
+        if (write(oFd, szBuf, bytesRead) != bytesRead) {
 
             if (errno == EINTR)
                 continue;

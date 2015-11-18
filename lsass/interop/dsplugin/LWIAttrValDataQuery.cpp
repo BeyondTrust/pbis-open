@@ -70,7 +70,7 @@
 // allocated by calling dsDataNodeAllocateBlock or dsDataNodeAllocateString that
 // contains an attribute type to search for. To search all attribute types, set the
 // attribute type to kDSAttributesAll. For other possible values, see the attribute
-// constants described in the ÒConstantsÓ section for other possible values.
+// constants described in the ï¿½Constantsï¿½ section for other possible values.
 //
 // inPatternMatchType
 //
@@ -112,12 +112,12 @@
 // pointed to by inOutContinueData is NULL, there are no new results in the buffer. If the
 // value pointed to by inOutContinueData is not NULL on output, pass the value pointed to by
 // inOutContinueData to this function again to get the next entries. You must call
-// dsReleaseContinueData if you donÕt want to get the remaining records.
+// dsReleaseContinueData if you donï¿½t want to get the remaining records.
 //
 // function result
 //
 // A value of type tDirStatus indicating success (eDSNoErr) or an error.
-// For a list of possible result codes, see ÒResult CodesÓ.
+// For a list of possible result codes, see ï¿½Result Codesï¿½.
 //
 // Discussion
 //
@@ -135,8 +135,8 @@
 // passing the pointer to inOutContinueData that was returned by the previous call to this function.
 //
 // To get a record from the data buffer pointed to by inOutDataBuffer, call dsGetRecordEntry. To get
-// information about the recordÕs attributes, call dsGetAttributeEntry. To get the value of a
-// recordÕs attribute, call dsGetAttributeValue.
+// information about the recordï¿½s attributes, call dsGetAttributeEntry. To get the value of a
+// recordï¿½s attribute, call dsGetAttributeValue.
 //
 // When you no longer need inOutContinueData, call dsReleaseContinueData to release the memory
 // associated with it.
@@ -548,7 +548,7 @@ LWIAttrValDataQuery::Run(sDoMultiAttrValueSearchWithData* pMultiAttrValueSearchW
             }
         }
 
-        dsDataNodeDeAllocate(NULL, pPatternNode);
+        dsDataNodeDeAllocate(0, pPatternNode);
         pPatternNode = NULL;
     }
 

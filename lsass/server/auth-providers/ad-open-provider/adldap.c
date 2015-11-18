@@ -229,7 +229,7 @@ ADFindComputerDN(
     PSTR szAttributeList[] = {"*", NULL};
     PSTR pszQuery = NULL;
     LDAPMessage *pMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR pszComputerDN = NULL;
     PSTR pszEscapedUpperSamAccountName = NULL;
     HANDLE hDirectory = NULL;
@@ -261,15 +261,15 @@ ADFindComputerDN(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                 pLd,
                 pMessage
                 );
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = LW_ERROR_DUPLICATE_DOMAINNAME;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -318,7 +318,7 @@ ADGetCellInformation(
     LDAP *pLd = NULL;
     PSTR szAttributeList[] = {"*", NULL};
     LDAPMessage *pMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PSTR pszCellDN = NULL;
     HANDLE hDirectory = NULL;
 
@@ -334,15 +334,15 @@ ADGetCellInformation(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                 pLd,
                 pMessage
                 );
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = LW_ERROR_NO_SUCH_CELL;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = LW_ERROR_INTERNAL;
     }
     BAIL_ON_LSA_ERROR(dwError);
@@ -390,7 +390,7 @@ ADGetDomainMaxPwdAge(
             AD_LDAP_MAX_PWDAGE_TAG,
             NULL};
     LDAPMessage *pMessage = NULL;
-    DWORD dwCount = 0;
+    long dwCount = 0;
     PSTR pszDirectoryRoot = NULL;
     int64_t int64MaxPwdAge = 0;
     HANDLE hDirectory = NULL;
@@ -468,7 +468,7 @@ ADGetConfigurationMode(
     LDAP *pLd = NULL;
     PSTR szAttributeList[] = {AD_LDAP_DESCRIPTION_TAG, NULL};
     LDAPMessage *pMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     ADConfigurationMode adConfMode = NonSchemaMode;
     HANDLE hDirectory = NULL;
 
@@ -493,15 +493,15 @@ ADGetConfigurationMode(
 
     pLd = LwLdapGetSession(hDirectory);
 
-    dwCount = ldap_count_entries(
+    lCount = ldap_count_entries(
                 pLd,
                 pMessage
                 );
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = LW_ERROR_NO_SUCH_CELL;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = LW_ERROR_INTERNAL;
     }
 

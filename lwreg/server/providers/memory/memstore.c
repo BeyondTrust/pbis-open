@@ -593,7 +593,7 @@ MemRegStoreAddNodeValue(
     PWSTR pwszName = NULL;
     WCHAR pwszNull[2] = {0};
     BYTE *pbData = NULL;
-    PMEMREG_VALUE *newValues;
+    PMEMREG_VALUE *newValues = NULL;
     DWORD index = 0;
 
     status = LW_RTL_ALLOCATE(

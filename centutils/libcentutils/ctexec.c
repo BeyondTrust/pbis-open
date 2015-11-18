@@ -93,7 +93,7 @@ CTCaptureOutputWithStderrEx(
 {
     DWORD ceError = ERROR_SUCCESS;
     unsigned int buffer_size = 1024;
-    unsigned int read_size, write_size;
+    ssize_t read_size, write_size;
     int out[2];
     int pid, status;
     PSTR tempOutput = NULL;

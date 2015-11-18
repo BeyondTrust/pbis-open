@@ -218,7 +218,7 @@ ADMarshalNSSArtefactInfoList_0(
     PLSA_NSS_ARTEFACT_INFO_0* ppArtefactInfoList = NULL;
     PLSA_NSS_ARTEFACT_INFO_0  pArtefactInfo = NULL;
     DWORD iArtefact = 0;
-    DWORD nArtefact = 0;
+    long nArtefact = 0;
     DWORD dwArtefactInfoLevel = 0;
     // Do not free
     LDAPMessage *pArtefactMessage = NULL;

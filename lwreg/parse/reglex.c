@@ -1131,7 +1131,7 @@ RegLexResetToken(
 
     BAIL_ON_INVALID_HANDLE(lexHandle);
 
-    lexHandle->state = REGLEX_FIRST;
+    lexHandle->state = (REGLEX_STATE)REGLEX_FIRST;
     lexHandle->tokenDataType = REGLEX_FIRST;
     lexHandle->isToken = FALSE;
     LWREG_SAFE_FREE_MEMORY(lexHandle->curToken.pszValue);
@@ -1169,7 +1169,7 @@ RegLexGetToken(
     {
         if ( lexHandle->curToken.token == REGLEX_REG_DWORD)
         {
-            lexHandle->state = REGLEX_FIRST;
+            lexHandle->state = (REGLEX_STATE)REGLEX_FIRST;
         }
         lexHandle->isToken = FALSE;
         lexHandle->curToken.token = REGLEX_FIRST;

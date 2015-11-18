@@ -57,7 +57,7 @@
 // Value of type sInt32 that the plug-in sets to eDSNoErr before
 // returning to indicate that it was able to get the requested list
 // of records for the node identified by fInNodeRef. If an error occurs,
-// the plug-in sets fResult to a value listed in ÒResult CodesÓ.
+// the plug-in sets fResult to a value listed in ï¿½Result Codesï¿½.
 // If no matches are found, the plug-in should set fResult to eDSNoErr,
 // fOutRecEntryCount to zero, and fIOContinueData to NULL.
 //
@@ -98,7 +98,7 @@
 //
 // Value of type tDataListPtr that points to a tDataList structure
 // containing the attribute types of records to get. See the attribute
-// constants described in the ÒConstantsÓ section for possible values.
+// constants described in the ï¿½Constantsï¿½ section for possible values.
 //
 // fInAttribInfoOnly
 //
@@ -129,7 +129,7 @@
 // plug-in can store all of the matching records in the buffer pointed to by
 // fInDataBuff, it sets fIOContinueData to NULL before returning. If there
 // more records than can be stored in the buffer, the plug-in stores as much
-// data as possible and sets fIOContinueData to a plug-inÐdefined value that
+// data as possible and sets fIOContinueData to a plug-inï¿½defined value that
 // the plug-in can use when the client application calls dsGetRecordList
 // again to get another buffer of data. You may want to include a timestamp
 // in the continuation data and return an error if you determine that
@@ -137,7 +137,7 @@
 //
 // Discussion
 //
-// The DirectoryService daemon calls a plug-inÕs ProcessRequest entry point
+// The DirectoryService daemon calls a plug-inï¿½s ProcessRequest entry point
 // and passes an sGetRecordList structure when an Open Directory client
 // calls dsGetRecordList to get a list of records for a directory node.
 // The plug-in uses the fInNodeRef field of the sGetRecordList structure to
@@ -151,12 +151,12 @@
 // fInRecNameList. The value of the fInAttributeInfoOnly field determines
 // whether the plug-in should also return attribute values.
 // Depending on the size of the data buffer pointed to by fInDataBuff and the
-// length of the list of records, the plug-inÕs routine for processing
+// length of the list of records, the plug-inï¿½s routine for processing
 // sGetRecordList structures may be called multiple times in order to return
-// the complete list. The first time the plug-inÕs routine for processing
+// the complete list. The first time the plug-inï¿½s routine for processing
 // sGetRecordList structures is called, the input value of fIOContinueData
 // is NULL and input value of fInOutRecEntryCount specifies the total number
-// of records that the plug-in should return even if the plug-inÕs routine for
+// of records that the plug-in should return even if the plug-inï¿½s routine for
 // processing sGetRecordList structures must be called more than once.
 // If there are records that match the criteria specified by fInRecNameList,
 // fInPatternMatch, fInRecTypeList, and fInAttributeTypeList, plug-in puts the
@@ -165,13 +165,13 @@
 // It also sets fInOutRecEntryCount to the number of records that have been
 // placed in fInDataBuff and sets fResult to eDSNoErr. If the buffer pointed
 // to by fInDataBuff is too small to hold all of the records, the plug-in sets
-// fIOContinueData to a plug-inÐdefined value that the plug-in can use when the
+// fIOContinueData to a plug-inï¿½defined value that the plug-in can use when the
 // client application calls dsGetRecordList again to get another buffer of data.
 // If the buffer pointed to by fInDataBuff contains all of the records or
 // contains the last records in the record list, the plug-in sets
 // fIOContinueData to NULL. If the plug-in returns before it can get records to
 // place in the buffer pointed to by fInDataBuff, it should set fOutRecEntryCount
-// to zero, set fResult to eDSNoErr, set fIOContinueData to a plug-inÐdefined
+// to zero, set fResult to eDSNoErr, set fIOContinueData to a plug-inï¿½defined
 // value that is not NULL. These settings indicate to the client application that
 // it should call dsGetRecordList again to get the records. If there are no
 // matching records, the plug-in sets fOutRecEntryCount to zero, fIOContinueData
@@ -330,7 +330,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
             }
         }
 
-        dsDataNodeDeAllocate(NULL, pDataNode);
+        dsDataNodeDeAllocate(0, pDataNode);
         pDataNode = NULL;
     }
     
@@ -510,7 +510,7 @@ LWIRecordListQuery::Test(
     tDataListPtr dirNodeName = NULL;
     tDataBufferPtr pData = NULL;
     UInt32 outCount;
-    tContextData continueData = NULL;
+    tContextData continueData = 0;
 
     LOG_ENTER("");
 

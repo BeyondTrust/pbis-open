@@ -1017,7 +1017,7 @@ DWORD
 LwLdapCountEntries(
     HANDLE hDirectory,
     LDAPMessage* pMessage,
-    PDWORD pdwCount
+    long* plCount
     )
 {
     int iCount = 0;
@@ -1039,13 +1039,13 @@ LwLdapCountEntries(
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
-    *pdwCount = iCount;
+    *plCount = iCount;
 
 cleanup:
     return dwError;
 
 error:
-    *pdwCount = 0;
+    *plCount = 0;
     goto cleanup;
 }
 

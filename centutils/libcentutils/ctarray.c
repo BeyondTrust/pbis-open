@@ -115,7 +115,7 @@ DWORD CTArrayRemove(DynamicArray *array, int removePos, int itemSize, size_t dat
 {
     if(dataLen + removePos > array->size)
         dataLen = array->size - removePos;
-    if(dataLen < 0)
+    if(dataLen == 0)
         return ERROR_INVALID_PARAMETER;
     memmove((char *)array->data + removePos*itemSize,
             (char *)array->data + (removePos + dataLen)*itemSize,

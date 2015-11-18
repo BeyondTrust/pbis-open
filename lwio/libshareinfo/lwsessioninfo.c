@@ -114,7 +114,7 @@ static LWMsgTypeSpec gSessionInfo502Spec[] =
 #define SESSION_INFO_LEVEL_10   10
 #define SESSION_INFO_LEVEL_502 502
 
-static LWMsgTypeSpec gSessionInfoUnionSpec[] =
+/*static LWMsgTypeSpec gSessionInfoUnionSpec[] =
 {
     LWMSG_UNION_BEGIN(SESSION_INFO_UNION),
     LWMSG_MEMBER_POINTER(SESSION_INFO_UNION, p0, LWMSG_TYPESPEC(gSessionInfo0Spec)),
@@ -130,7 +130,7 @@ static LWMsgTypeSpec gSessionInfoUnionSpec[] =
     LWMSG_UNION_END,
     LWMSG_TYPE_END
 };
-
+*/
 static LWMsgTypeSpec gSessionInfoEnumInParamsSpec[] =
 {
     LWMSG_STRUCT_BEGIN(SESSION_INFO_ENUM_IN_PARAMS),

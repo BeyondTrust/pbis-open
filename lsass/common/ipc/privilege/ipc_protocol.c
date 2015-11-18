@@ -66,18 +66,7 @@ static LWMsgTypeSpec gLsaLuidAndAttributesSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaPrivilegeSetSpec[] =
-{
-    LWMSG_STRUCT_BEGIN(PRIVILEGE_SET),
-    LWMSG_MEMBER_UINT32(PRIVILEGE_SET, PrivilegeCount),
-    LWMSG_MEMBER_UINT32(PRIVILEGE_SET, Control),
-    LWMSG_MEMBER_POINTER_BEGIN(PRIVILEGE_SET, Privilege),
-    LWMSG_TYPESPEC(gLsaLuidAndAttributesSpec),
-    LWMSG_POINTER_END,
-    LWMSG_ATTR_LENGTH_MEMBER(PRIVILEGE_SET, PrivilegeCount),
-    LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
+
 
 LWMsgTypeSpec gLsaPrivsIPCEnumPrivilegesSidsReqSpec[] =
 {

@@ -269,8 +269,8 @@ unsigned char           *error_text,
 int                     *status
 )
 {
-    char        cname[4];
-    char        fname[4];
+    unsigned char        cname[4];
+    unsigned char        fname[4];
 
     /*
      * check for ok input status
@@ -287,9 +287,9 @@ int                     *status
 
     dce_get_msg (status_to_convert, error_text, fname, cname, status);
     strcat ((char*) error_text, " (");
-    strcat ((char*) error_text, fname);
+    strcat ((char*) error_text, (char*)fname);
     strcat ((char*) error_text, " / ");
-    strcat ((char*) error_text, cname);
+    strcat ((char*) error_text, (char*)cname);
     strcat ((char*) error_text, ")");
 }
 
@@ -298,13 +298,13 @@ int dce_fprintf(FILE *f, unsigned long index, ...)
     va_list ap;
     int st;
     int i;
-    char format[1024];
+    unsigned char format[1024];
 
     dce_get_msg(index, format, NULL, NULL, &st);
     if (st != 0) return EOF;
 
     va_start(ap, index);
-    i = vfprintf(f, format, ap);
+    i = vfprintf(f, (char*)format, ap);
     va_end(ap);
     return i;
 }
@@ -313,13 +313,13 @@ int dce_printf(unsigned long index, ...)
     va_list ap;
     int st;
     int i;
-    char format[1024];
+    unsigned char format[1024];
 
     dce_get_msg(index, format, NULL, NULL, &st);
     if (st != 0) return EOF;
 
     va_start(ap, index);
-    i = vfprintf(stdout, format, ap);
+    i = vfprintf(stdout, (char*)format, ap);
     va_end(ap);
     return i;
 }

@@ -211,7 +211,7 @@ LWIAttrLookup::GetVector(tDataListPtr List, PLWIBITVECTOR* ppVector)
               LWI_BITVECTOR_SET(pResult, value);
            }
 
-           dsDataNodeDeAllocate(NULL, pDataNode);
+           dsDataNodeDeAllocate(0, pDataNode);
            pDataNode = NULL;
        }
     }

@@ -174,7 +174,7 @@ DWORD
 LwLdapCountEntries(
     HANDLE hDirectory,
     LDAPMessage* pMessage,
-    PDWORD pdwCount
+    long* pdwCount
     );
 
 DWORD

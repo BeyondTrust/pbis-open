@@ -467,7 +467,7 @@ LsaFreeGroupInfoList(
 
 DWORD
 LsaValidateGroupInfoLevel(
-    DWORD dwGroupInfoLevel
+    long dwGroupInfoLevel
     )
 {
     return (((dwGroupInfoLevel < 0) || (dwGroupInfoLevel > 1)) ? LW_ERROR_INVALID_GROUP_INFO_LEVEL : 0);

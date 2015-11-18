@@ -921,7 +921,7 @@ void rpc_ss_ndr_u_fix_or_conf_arr
     unsigned32 i;
     idl_byte base_type;
     idl_boolean unmarshall_by_copying;
-    idl_ulong_int element_size;
+    idl_ulong_int element_size = 0;
     idl_ulong_int element_defn_index;
     idl_ulong_int struct_offset_index;
     idl_byte *struct_defn_ptr;

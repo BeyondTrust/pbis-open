@@ -9,7 +9,7 @@ struct _dcethread
     pthread_t pthread;
 
     /* Reference count */
-    unsigned int refs;
+    int refs;
 
     /* Current state of thread 
        Changing state should be done with

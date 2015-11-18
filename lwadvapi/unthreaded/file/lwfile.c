@@ -663,7 +663,7 @@ LwCopyFileWithPerms(
     CHAR szBuf[1024+1];
     int  iFd = -1;
     int  oFd = -1;
-    DWORD dwBytesRead = 0;
+    ssize_t dwBytesRead = 0;
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszSrcPath) ||
         LW_IS_NULL_OR_EMPTY_STR(pszDstPath)) {

@@ -60,11 +60,7 @@ static LWMsgTypeSpec gLsaIPCErrorSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaStringSpec[] =
-{
-    LWMSG_PSTR,
-    LWMSG_TYPE_END
-};
+
 
 static LWMsgTypeSpec gLsaGroupAddInfoSpec[] =
 {
@@ -183,13 +179,7 @@ static LWMsgTypeSpec gLsaIPCUserModInfo2Spec[] =
 };
 
 
-static LWMsgTypeSpec gLsaIPCGroupMemberInfoSpec[] =
-{
-    LWMSG_STRUCT_BEGIN(LSA_GROUP_MEMBER_INFO),
-    LWMSG_MEMBER_PSTR(LSA_GROUP_MEMBER_INFO, pszSid),
-    LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
+
 
 static LWMsgTypeSpec gLsaIPCGroupModInfo2Spec[] =
 {
@@ -372,29 +362,9 @@ static LWMsgTypeSpec gLsaStatusPtrSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaIpcEnumUsersHandleExistingSpec[] =
-{
-    /* Identify type name of handle */
-    LWMSG_HANDLE(EnumUsers),
-    /* Must be local to receiver (server) */
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
-    /* Must be non-NULL */
-    LWMSG_ATTR_NOT_NULL,
-    /* End specification */
-    LWMSG_TYPE_END
-};
 
-static LWMsgTypeSpec gLsaIpcEnumGroupsHandleExistingSpec[] =
-{
-    /* Identify type name of handle */
-    LWMSG_HANDLE(EnumGroups),
-    /* Must be local to receiver (server) */
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
-    /* Must be non-NULL */
-    LWMSG_ATTR_NOT_NULL,
-    /* End specification */
-    LWMSG_TYPE_END
-};
+
+
 
 static LWMsgTypeSpec gLsaIpcEnumArtefactsHandleExistingSpec[] =
 {
@@ -408,29 +378,9 @@ static LWMsgTypeSpec gLsaIpcEnumArtefactsHandleExistingSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaIpcEnumUsersHandleNewSpec[] =
-{
-    /* Identify type name of handle */
-    LWMSG_HANDLE(EnumUsers),
-    /* Must be local to sender (server) */
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_SENDER,
-    /* Must be non-NULL */
-    LWMSG_ATTR_NOT_NULL,
-    /* End specification */
-    LWMSG_TYPE_END
-};
 
-static LWMsgTypeSpec gLsaIpcEnumGroupsHandleNewSpec[] =
-{
-    /* Identify type name of handle */
-    LWMSG_HANDLE(EnumGroups),
-    /* Must be local to sender (server) */
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_SENDER,
-    /* Must be non-NULL */
-    LWMSG_ATTR_NOT_NULL,
-    /* End specification */
-    LWMSG_TYPE_END
-};
+
+
 
 static LWMsgTypeSpec gLsaIpcEnumArtefactsHandleNewSpec[] =
 {
@@ -466,11 +416,7 @@ static LWMsgTypeSpec gLsaIPCBeginNssArtefactEnumReqSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaIPCDelObjectInfoReqSpec[] =
-{
-    LWMSG_PSTR,
-    LWMSG_TYPE_END
-};
+
 
 static LWMsgTypeSpec gLsaIPCAuthUserReqSpec[] =
 {
@@ -651,13 +597,7 @@ static LWMsgTypeSpec gLsaIPCLsaRidAttribSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaIPCLsaRidAttribPtrSpec[] =
-{
-    LWMSG_POINTER_BEGIN,
-    LWMSG_TYPESPEC(gLsaIPCLsaRidAttribSpec),
-    LWMSG_POINTER_END,
-    LWMSG_TYPE_END
-};
+
 
 static LWMsgTypeSpec gLsaIPCLsaSidAttribSpec[] =
 {
@@ -665,14 +605,6 @@ static LWMsgTypeSpec gLsaIPCLsaSidAttribSpec[] =
     LWMSG_MEMBER_PSTR(LSA_SID_ATTRIB, pszSid),
     LWMSG_MEMBER_UINT32(LSA_SID_ATTRIB, dwAttrib),
     LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
-
-static LWMsgTypeSpec gLsaIPCLsaSidAttribPtrSpec[] =
-{
-    LWMSG_POINTER_BEGIN,
-    LWMSG_TYPESPEC(gLsaIPCLsaSidAttribSpec),
-    LWMSG_POINTER_END,
     LWMSG_TYPE_END
 };
 

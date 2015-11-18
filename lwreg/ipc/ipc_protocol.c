@@ -80,7 +80,7 @@
 // have to add that as a limitation.
 //
 // In the mean time, we won't use the nLength as a LWMSG_ATTR_LENGTH_MEMBER
-static LWMsgTypeSpec gRegSecAttrSpec[] =
+/*static LWMsgTypeSpec gRegSecAttrSpec[] =
 {
     // DWORD  nLength;
     // PVOID  pSecurityDescriptor;
@@ -100,7 +100,7 @@ static LWMsgTypeSpec gRegSecAttrSpec[] =
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
-
+*/
 /******************************************************************************/
 
 static LWMsgTypeSpec gRegIPCErrorSpec[] =

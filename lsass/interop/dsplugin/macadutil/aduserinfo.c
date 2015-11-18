@@ -45,7 +45,7 @@ GetUserAttributes(
     CHAR szQuery[1024];
     LDAPMessage *pUserMessage = NULL;
     LDAPMessage *pDomainMessage = NULL;
-    DWORD dwCount = 0;
+    long lCount = 0;
     PGPUSER_AD_ATTRS pUserADAttrs = NULL;
 
     dwError = ADUConvertDomainToDN(pszDomainName, &pszDirectoryRoot);
@@ -65,15 +65,15 @@ GetUserAttributes(
     dwError = LwLdapCountEntries(
         hDirectory,
         pUserMessage,
-        &dwCount
+        &lCount
         );
     BAIL_ON_MAC_ERROR(dwError);
 
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
     }
     BAIL_ON_MAC_ERROR(dwError);
@@ -90,15 +90,15 @@ GetUserAttributes(
     dwError = LwLdapCountEntries(
         hDirectory,
         pDomainMessage,
-        &dwCount
+        &lCount
         );
     BAIL_ON_MAC_ERROR(dwError);
 
-    if (dwCount < 0) {
+    if (lCount < 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
-    } else if (dwCount == 0) {
+    } else if (lCount == 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
-    } else if (dwCount > 1) {
+    } else if (lCount > 1) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
     }
     BAIL_ON_MAC_ERROR(dwError);

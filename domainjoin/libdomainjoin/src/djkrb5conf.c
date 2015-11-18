@@ -252,7 +252,7 @@ static int GetEntryDepth(const Krb5Entry *entry)
     return depth;
 }
 
-static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr, DWORD useIndex)
+static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr, long useIndex)
 {
     DWORD ceError = ERROR_SUCCESS;
     const char *pos = linestr;
