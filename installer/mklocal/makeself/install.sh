@@ -714,6 +714,8 @@ package_uninstall_solaris()
         err=$?
         if [ $err -eq 1 ]; then
             return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+        elif [ $err -eq 2 -a "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+            pkgrm $RESPONSE -n "$pkg" > /dev/null 2>&1
         fi
     done
     return 0
