@@ -1,6 +1,6 @@
 Name: Likewise
 Default: yes
-Priority: 250
+Priority: 260
 Conflicts: winbind
 Auth-Type: Primary
 Auth:
