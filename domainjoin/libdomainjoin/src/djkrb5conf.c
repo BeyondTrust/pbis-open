@@ -2000,8 +2000,18 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
         }
         if (makeChanges)
         {
+#ifdef __LWI_SOLARIS__
+            LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
+                        "default_keytab_name", "/etc/krb5/krb5.keytab"));
+
+            (void) CTRemoveFile("/etc/krb5.keytab");
+            LW_CLEANUP_CTERR(exc, CTCreateSymLink("/etc/krb5/krb5.keytab",
+                            "/etc/krb5.keytab"));
+#else			
             LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
                         "default_keytab_name", "/etc/krb5.keytab"));
+#endif
+
             LW_CLEANUP_CTERR(exc, WriteKrb5Configuration(tempDir,
                         "/etc/krb5.conf", &conf, NULL));
         }
