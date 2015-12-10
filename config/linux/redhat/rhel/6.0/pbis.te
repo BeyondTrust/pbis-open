@@ -2,6 +2,8 @@
 module pbis 1.0;
 
 require {
+        type automount_t;
+        type mount_t;
         type tmp_t;
         type home_root_t;
         type passwd_t;
@@ -23,16 +25,22 @@ require {
         type bin_t;
 	type sshd_t;
 	type rpm_script_t;
+        type rpm_t;
 	type var_lib_t;
         type admin_home_t;
         class sock_file { write create unlink getattr };
-	class unix_stream_socket connectto;
+        class unix_stream_socket { read write connectto };
         class file { rename setattr read create write getattr unlink open };
 	class process { siginh noatsecure rlimitinh };
         class chr_file { read write };
         class lnk_file read;
         class dir { search read create write getattr rmdir remove_name open add_name };
 }
+
+#============= automount_t ==============
+allow automount_t mount_t:process { siginh rlimitinh noatsecure };
+allow automount_t rpm_script_t:unix_stream_socket { read write };
+allow automount_t var_lib_t:file { read open };
 
 #============= passwd_t ==============
 allow passwd_t home_root_t:dir { getattr search };
@@ -63,6 +71,7 @@ allow semanage_t setfiles_t:process { siginh rlimitinh noatsecure };
 
 #============= setfiles_t ==============
 allow setfiles_t bin_t:lnk_file read;
+allow setfiles_t rpm_script_t:unix_stream_socket { read write };
 
 #============= sshd_t ==============
 allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
