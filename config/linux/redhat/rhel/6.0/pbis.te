@@ -24,12 +24,16 @@ require {
         type initrc_var_run_t;
         type bin_t;
 	type sshd_t;
+        type system_dbusd_t;
 	type rpm_script_t;
         type rpm_t;
 	type var_lib_t;
         type admin_home_t;
+        type xdm_dbusd_t;
+        type xdm_var_lib_t;
         class sock_file { write create unlink getattr };
         class unix_stream_socket { read write connectto };
+        class unix_stream_socket connectto;
         class file { rename setattr read create write getattr unlink open };
 	class process { siginh noatsecure rlimitinh };
         class chr_file { read write };
@@ -44,6 +48,7 @@ allow automount_t var_lib_t:file { read open };
 
 #============= passwd_t ==============
 allow passwd_t home_root_t:dir { getattr search };
+allow passwd_t initrc_t:unix_stream_socket connectto;
 allow passwd_t inotifyfs_t:dir getattr;
 allow passwd_t rpm_script_t:unix_stream_socket connectto;
 allow passwd_t tmp_t:dir { write remove_name create add_name rmdir };
@@ -64,6 +69,7 @@ allow auditd_t audisp_t:process { siginh noatsecure };
 #============= chkpwd_t ==============
 allow chkpwd_t rpm_script_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
+allow chkpwd_t initrc_t:unix_stream_socket connectto;
 
 #============= semanage_t ==============
 allow semanage_t load_policy_t:process { siginh rlimitinh noatsecure };
@@ -75,10 +81,19 @@ allow setfiles_t rpm_script_t:unix_stream_socket { read write };
 
 #============= sshd_t ==============
 allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
+allow sshd_t initrc_t:unix_stream_socket connectto;
 allow sshd_t rpm_script_t:unix_stream_socket connectto;
 allow sshd_t unconfined_t:process { siginh noatsecure };
 allow sshd_t var_lib_t:sock_file write;
 
 #============= sysstat_t ==============
 allow sysstat_t admin_home_t:dir { getattr search };
+
+
+#============= system_dbusd_t ==============
+allow system_dbusd_t initrc_t:unix_stream_socket connectto;
+allow system_dbusd_t var_lib_t:sock_file write;
+
+#============= xdm_dbusd_t ==============
+allow xdm_dbusd_t xdm_var_lib_t:dir search;
 
