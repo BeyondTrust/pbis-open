@@ -42,9 +42,12 @@ require {
 }
 
 #============= automount_t ==============
+allow automount_t initrc_t:unix_stream_socket connectto;
 allow automount_t mount_t:process { siginh rlimitinh noatsecure };
 allow automount_t rpm_script_t:unix_stream_socket { read write };
 allow automount_t var_lib_t:file { read open };
+allow automount_t var_lib_t:sock_file write;
+
 
 #============= passwd_t ==============
 allow passwd_t home_root_t:dir { getattr search };
