@@ -218,10 +218,14 @@ setup_selinux_policy_module()
         log 'Setting up SELinux Policy Module using @MK_DATADIR@/pbis.pp'
         run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
+        run_quiet /usr/sbin/semanage fcontext --add --type unconfined_exec_t "/opt/pbis/sbin(/.*)?"
+        run_quiet /sbin/restorecon -Rv /opt/pbis/sbin
     elif [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module'
         run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
+        run_quiet /usr/sbin/semanage fcontext --add --type unconfined_exec_t "/opt/pbis/sbin(/.*)?"
+        run_quiet /sbin/restorecon -Rv /opt/pbis/sbin
     else
       log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package.
 You may provide a policy at @MK_DATADIR@/pbis.pp"
