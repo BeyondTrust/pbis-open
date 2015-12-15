@@ -45,6 +45,7 @@ require {
 allow automount_t initrc_t:unix_stream_socket connectto;
 allow automount_t mount_t:process { siginh rlimitinh noatsecure };
 allow automount_t rpm_script_t:unix_stream_socket { read write };
+allow automount_t unconfined_t:unix_stream_socket connectto;
 allow automount_t var_lib_t:file { read open };
 allow automount_t var_lib_t:sock_file write;
 
@@ -73,6 +74,8 @@ allow auditd_t audisp_t:process { siginh noatsecure };
 allow chkpwd_t rpm_script_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
 allow chkpwd_t initrc_t:unix_stream_socket connectto;
+allow chkpwd_t unconfined_t:unix_stream_socket connectto;
+
 
 #============= semanage_t ==============
 allow semanage_t load_policy_t:process { siginh rlimitinh noatsecure };
@@ -87,6 +90,7 @@ allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
 allow sshd_t initrc_t:unix_stream_socket connectto;
 allow sshd_t rpm_script_t:unix_stream_socket connectto;
 allow sshd_t unconfined_t:process { siginh noatsecure };
+allow sshd_t unconfined_t:unix_stream_socket connectto;
 allow sshd_t var_lib_t:sock_file write;
 
 #============= sysstat_t ==============

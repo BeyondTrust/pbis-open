@@ -2,6 +2,7 @@
 module pbis 1.0;
 
 require {
+        type accountsd_t;
         type automount_t;
         type mount_t;
 	type chkpwd_t;
@@ -16,8 +17,11 @@ require {
 	type setroubleshootd_t;
 	type sshd_t;
 	type system_dbusd_t;
+        type systemd_logind_t;
         type user_home_t;
+        type unconfined_t;
 	type var_lib_t;
+        type xdm_t;
         class sock_file { write create unlink getattr };
 	class unix_stream_socket connectto;
 	class process { siginh noatsecure rlimitinh };
@@ -25,10 +29,22 @@ require {
         class file { write read getattr open };
 }
 
+#============= accountsd_t ==============
+allow accountsd_t unconfined_t:unix_stream_socket connectto;
+allow accountsd_t var_lib_t:sock_file write;
+
+#============= automount_t ==============
+allow automount_t init_var_lib_t:file { read open };
+allow automount_t mount_t:process { siginh rlimitinh noatsecure };
+allow automount_t init_t:unix_stream_socket connectto;
+allow automount_t var_lib_t:sock_file write;
+allow automount_t unconfined_t:unix_stream_socket connectto;
+allow automount_t var_lib_t:file { read open };
 
 #============= chkpwd_t ==============
 allow chkpwd_t init_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
+allow chkpwd_t unconfined_t:unix_stream_socket connectto;
 
 #============= NetworkManager_t ==============
 allow NetworkManager_t init_var_lib_t:file { read getattr open };
@@ -38,6 +54,19 @@ allow passwd_t init_t:unix_stream_socket connectto;
 allow passwd_t user_home_t:dir { write remove_name create add_name rmdir };
 allow passwd_t user_home_t:sock_file { write create unlink getattr };
 allow passwd_t var_lib_t:sock_file write;
+
+#============= policykit_auth_t ==============
+allow policykit_auth_t var_lib_t:sock_file write;
+allow policykit_auth_t unconfined_t:unix_stream_socket connectto;
+
+#============= policykit_t ==============
+allow policykit_t policykit_auth_t:process { siginh rlimitinh noatsecure };
+allow policykit_t unconfined_t:unix_stream_socket connectto;
+allow policykit_t var_lib_t:sock_file write;
+
+#============= postfix_pickup_t ==============
+allow postfix_pickup_t init_t:unix_stream_socket connectto;
+allow postfix_pickup_t var_lib_t:sock_file write;
 
 #============= setroubleshootd_t ==============
 allow setroubleshootd_t rpm_var_lib_t:file write;
@@ -49,19 +78,10 @@ allow sshd_t var_lib_t:sock_file write;
 #============= system_dbusd_t ==============
 allow system_dbusd_t setroubleshootd_t:process { siginh rlimitinh noatsecure };
 
-#============= policykit_auth_t ==============
-allow policykit_auth_t var_lib_t:sock_file write;
+#============= systemd_logind_t ==============
+allow systemd_logind_t unconfined_t:unix_stream_socket connectto;
+allow systemd_logind_t var_lib_t:sock_file write;
 
-#============= policykit_t ==============
-allow policykit_t policykit_auth_t:process { siginh rlimitinh noatsecure };
-
-#============= postfix_pickup_t ==============
-allow postfix_pickup_t init_t:unix_stream_socket connectto;
-allow postfix_pickup_t var_lib_t:sock_file write;
-
-#============= automount_t ==============
-allow automount_t init_var_lib_t:file { read open };
-allow automount_t mount_t:process { siginh rlimitinh noatsecure };
-allow automount_t init_t:unix_stream_socket connectto;
-allow automount_t var_lib_t:sock_file write;
+#============= xdm_t ==============
+allow xdm_t var_lib_t:sock_file write;
 
