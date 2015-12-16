@@ -1092,6 +1092,7 @@ do_purge()
 
     if [ "$PKGTYPE" = "linux_rpm" ]; then
         semodule -r pbis
+        semanage fcontext --delete "/opt/pbis/sbin(/.*)?"
     fi
 
 
