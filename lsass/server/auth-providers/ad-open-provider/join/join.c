@@ -2809,6 +2809,51 @@ LsaMachAcctSetAttribute(
     return LwMapLdapErrorToLwError(lderr);
 }
 
+DWORD
+LsaGetDcName(
+    const wchar16_t *DnsDomainName,
+    BOOLEAN Force,
+    wchar16_t** DomainControllerName
+    )
+{
+    DWORD dwError = 0;
+    wchar16_t *domain_controller_name = NULL;
+    char *dns_domain_name_mbs = NULL;
+    DWORD get_dc_name_flags = 0;
+    PLWNET_DC_INFO pDC = NULL;
+
+    if (Force)
+    {
+        get_dc_name_flags |= DS_FORCE_REDISCOVERY;
+    }
+
+    dwError = LwWc16sToMbs(DnsDomainName, &dns_domain_name_mbs);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LWNetGetDCName(NULL, dns_domain_name_mbs, NULL, get_dc_name_flags, &pDC);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMbsToWc16s(pDC->pszDomainControllerName,
+                           &domain_controller_name);
+    BAIL_ON_LSA_ERROR(dwError)
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(dns_domain_name_mbs);
+    LWNET_SAFE_FREE_DC_INFO(pDC);
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(domain_controller_name);
+    }
+
+    *DomainControllerName = domain_controller_name;
+
+    // ISSUE-2008/07/14-dalmeida -- Need to do error code conversion
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
 
 DWORD
 LsaGetRwDcName(
@@ -3059,7 +3104,7 @@ LsaMachineChangePassword(
     dwError = LsaPstoreGetPasswordInfoW(pwszDnsDomainName, &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetRwDcName(pPasswordInfo->Account.DnsDomainName, FALSE,
+    dwError = LsaGetDcName(pPasswordInfo->Account.DnsDomainName, FALSE,
                             &pwszDCName);
     BAIL_ON_LSA_ERROR(dwError);
 
