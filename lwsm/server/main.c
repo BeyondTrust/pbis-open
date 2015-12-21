@@ -568,6 +568,10 @@ Startup(
     dwError = LwSmIpcInit();
     BAIL_ON_ERROR(dwError);
 
+    /* Start IPC servers */
+    dwError = LwSmStartIpcServer();
+    BAIL_ON_ERROR(dwError);
+
     if (!gState.bContainer)
     {
         /* Bootstrap ourselves by adding and starting any
@@ -586,10 +590,6 @@ Startup(
             BAIL_ON_ERROR(dwError);
         }
     }
-
-    /* Start IPC servers */
-    dwError = LwSmStartIpcServer();
-    BAIL_ON_ERROR(dwError);
 
     /* If we are starting as a daemon, indicate that we
        are ready to the parent process.  This ensures that
