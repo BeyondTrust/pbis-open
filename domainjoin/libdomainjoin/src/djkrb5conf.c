@@ -1986,6 +1986,16 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     libdefaults = GetFirstNode(&conf, "libdefaults");
     if(libdefaults == NULL)
     {
+#ifdef __LWI_SOLARIS__
+        /* The krb5.conf may exist, but is relatively empty - usually because there was 
+	   no default krb5.conf file.  Therefore on Solaris setup a symlink to where
+	   we will create the keytab
+	*/
+	CTCheckFileOrLinkExists("/etc/krb5/krb5.keystab", &exists);
+	if(! exists) 
+            CTCreateSymLink("/etc/krb5.keytab","/etc/krb5/krb5.keytab");
+#endif
+
         goto nochanges;
     }
 
