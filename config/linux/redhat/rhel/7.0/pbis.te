@@ -3,6 +3,8 @@ module pbis 1.0;
 
 require {
 	type unconfined_t;
+        type init_t;
+        type initrc_t;
 	type rpm_var_lib_t;
         type rpm_t;
 	type automount_t;
@@ -18,15 +20,18 @@ require {
 	type accountsd_t;
         type syslogd_t;
 	type sshd_t;
+        type unconfined_exec_t;
+        type init_var_lib_t;
 	type system_dbusd_t;
         type NetworkManager_t;
         type xdm_t;
 	class process { siginh noatsecure rlimitinh };
 	class unix_stream_socket connectto;
-	class dir { write remove_name create add_name rmdir };
-	class file { read getattr write open };
+	class dir { write remove_name create add_name rmdir search };
+	class file { read getattr write open entrypoint append create ioctl };
 	class sock_file { write create unlink getattr };
         class fifo_file { ioctl open getattr append };
+        role unconfined_r;
 }
 
 #============= accountsd_t ==============
@@ -41,7 +46,11 @@ allow automount_t var_lib_t:sock_file write;
 
 #============= chkpwd_t ==============
 allow chkpwd_t unconfined_t:unix_stream_socket connectto;
+allow chkpwd_t init_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
+
+#============= init_t ==============
+allow init_t unconfined_exec_t:file entrypoint;
 
 #============= NetworkManager_t ==============
 allow NetworkManager_t var_lib_t:file { read getattr open };
@@ -65,6 +74,9 @@ allow setroubleshootd_t rpm_var_lib_t:file write;
 
 #============= syslogd_t ==============
 allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
+allow syslogd_t init_var_lib_t:fifo_file { getattr ioctl append };
+allow syslogd_t init_var_lib_t:file { create append ioctl open getattr };
+allow syslogd_t init_var_lib_t:dir { write add_name search };
 
 #============= sshd_t ==============
 allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
@@ -80,3 +92,9 @@ allow systemd_logind_t var_lib_t:sock_file write;
 
 #============= xdm_t ==============
 allow xdm_t var_lib_t:sock_file write;
+allow xdm_t chkpwd_t:process { siginh rlimitinh noatsecure };
+allow xdm_t unconfined_t:process { siginh noatsecure };
+
+#============= ROLES ==============
+role unconfined_r types init_t;
+role unconfined_r types initrc_t;
