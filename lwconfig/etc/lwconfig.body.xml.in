@@ -628,6 +628,18 @@
         </registry>
     </capability>
     <capability>
+        <name>IgnoreGroupAlias</name>
+        <description>When enabled, Group Alias will not be used when displaying group names.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\ignore_group_alias"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\ignore_group_alias" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
         <name>SmartcardEnabled</name>
         <description>Smartcard services will not be used when disabled</description>
         <registry type="boolean"
