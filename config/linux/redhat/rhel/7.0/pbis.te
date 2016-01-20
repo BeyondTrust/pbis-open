@@ -2,6 +2,7 @@
 module pbis 1.0;
 
 require {
+        type abrt_t;
 	type unconfined_t;
         type init_t;
         type initrc_t;
@@ -19,9 +20,11 @@ require {
 	type chkpwd_t;
 	type accountsd_t;
         type syslogd_t;
+        type syslogd_var_lib_t;
 	type sshd_t;
         type unconfined_exec_t;
         type init_var_lib_t;
+        type sosreport_t;
 	type system_dbusd_t;
         type NetworkManager_t;
         type xdm_t;
@@ -33,6 +36,12 @@ require {
         class fifo_file { ioctl open getattr append };
         role unconfined_r;
 }
+
+#============= abrt_t ==============
+allow abrt_t rpm_var_lib_t:file write;
+allow abrt_t sosreport_t:process { siginh rlimitinh noatsecure };
+allow abrt_t unconfined_t:unix_stream_socket connectto;
+allow abrt_t var_lib_t:sock_file write;
 
 #============= accountsd_t ==============
 allow accountsd_t unconfined_t:unix_stream_socket connectto;
@@ -71,12 +80,16 @@ allow policykit_t var_lib_t:sock_file write;
 
 #============= setroubleshootd_t ==============
 allow setroubleshootd_t rpm_var_lib_t:file write;
+allow setroubleshootd_t rpm_var_lib_t:dir { write add_name };
+allow setroubleshootd_t rpm_var_lib_t:file create;
 
 #============= syslogd_t ==============
 allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
 allow syslogd_t init_var_lib_t:fifo_file { getattr ioctl append };
 allow syslogd_t init_var_lib_t:file { create append ioctl open getattr };
 allow syslogd_t init_var_lib_t:dir { write add_name search };
+allow syslogd_t syslogd_var_lib_t:dir create;
+allow syslogd_t var_lib_t:file append;
 
 #============= sshd_t ==============
 allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
@@ -98,3 +111,23 @@ allow xdm_t unconfined_t:process { siginh noatsecure };
 #============= ROLES ==============
 role unconfined_r types init_t;
 role unconfined_r types initrc_t;
+
+
+require {
+    type colord_t;
+    type cupsd_t;
+    type httpd_t;
+    type NetworkManager_t;
+    type system_dbusd_t;
+    type useradd_t;
+    type xdm_t;
+}
+
+pbis_client(colord_t)
+pbis_client(cupsd_t)
+pbis_client(httpd_t)
+pbis_client(NetworkManager_t)
+pbis_client(system_dbusd_t)
+pbis_client(useradd_t)
+pbis_client(xdm_t)
+
