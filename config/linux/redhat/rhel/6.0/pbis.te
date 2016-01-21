@@ -12,14 +12,22 @@ require {
 	type user_home_dir_t;
 	type syslogd_t;
 	type user_home_t;
+        type consolekit_t;
 	type inotifyfs_t;
 	type var_lib_t;
 	type chkpwd_t;
+        type gnomeclock_t;
+        type rpm_t;
 	type tmp_t;
         type semanage_t;
 	type sshd_t;
         type setfiles_t;
+        type system_dbusd_t;
         type load_policy_t;
+        type udev_t;
+        type xdm_t;
+        type xdm_dbusd_t;
+        type xdm_var_lib_t;
 	class file { rename setattr read create getattr write ioctl unlink open append };
 	class process { siginh rlimitinh noatsecure };
 	class unix_stream_socket { connectto read write };
@@ -40,6 +48,9 @@ allow automount_t var_lib_t:sock_file write;
 allow chkpwd_t unconfined_t:unix_stream_socket connectto;
 allow chkpwd_t var_lib_t:sock_file write;
 
+#============= consolekit_t ==============
+allow consolekit_t udev_t:process { siginh rlimitinh noatsecure };
+
 #============= passwd_t ==============
 allow passwd_t home_root_t:dir { getattr search };
 allow passwd_t inotifyfs_t:dir getattr;
@@ -47,9 +58,6 @@ allow passwd_t tmp_t:dir { write remove_name create add_name rmdir };
 allow passwd_t tmp_t:sock_file { write create unlink getattr };
 allow passwd_t user_home_dir_t:dir { getattr search };
 allow passwd_t user_home_t:dir { search read create write getattr remove_name open add_name };
-#!!!! The source type 'passwd_t' can write to a 'file' of the following types:
-# shadow_t, etc_t, pcscd_var_run_t
-
 allow passwd_t user_home_t:file { rename write setattr read create unlink open };
 allow passwd_t usr_t:file { read getattr open };
 allow passwd_t var_lib_t:sock_file write;
@@ -70,9 +78,42 @@ allow sshd_t var_lib_t:sock_file write;
 
 #============= syslogd_t ==============
 allow syslogd_t unconfined_t:unix_stream_socket { read write };
-#!!!! The source type 'syslogd_t' can write to a 'dir' of the following types:
-# syslogd_tmp_t, tmp_t, syslogd_var_lib_t, syslogd_var_run_t, innd_log_t, device_t, var_run_t, var_log_t, root_t
-
 allow syslogd_t var_lib_t:dir { write add_name };
 allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
 allow syslogd_t var_lib_t:file { create open ioctl append getattr };
+
+#============= system_dbusd_t ==============
+allow system_dbusd_t gnomeclock_t:process { siginh rlimitinh noatsecure };
+allow system_dbusd_t rpm_t:process { siginh rlimitinh noatsecure };
+allow system_dbusd_t unconfined_t:unix_stream_socket connectto;
+allow system_dbusd_t var_lib_t:sock_file write;
+
+#============= xdm_dbusd_t ==============
+allow xdm_dbusd_t unconfined_t:unix_stream_socket connectto;
+allow xdm_dbusd_t var_lib_t:sock_file write;
+allow xdm_dbusd_t xdm_t:process { siginh rlimitinh noatsecure };
+allow xdm_dbusd_t xdm_var_lib_t:dir search;
+
+#============= xdm_t ==============
+allow xdm_t chkpwd_t:process { siginh rlimitinh noatsecure };
+allow xdm_t unconfined_t:process { siginh noatsecure };
+allow xdm_t user_home_t:dir { write add_name };
+allow xdm_t user_home_t:file { write create setattr };
+allow xdm_t var_lib_t:sock_file write;
+allow xdm_t xdm_dbusd_t:process { siginh rlimitinh noatsecure };
+
+
+require {
+    type crond_t;
+    type mount_t;
+    type policykit_t;
+    type postfix_pickup_t;
+    type useradd_t;
+}
+
+pbis_client(crond_t)
+pbis_client(mount_t)
+pbis_client(policykit_t)
+pbis_client(postfix_pickup_t)
+pbis_client(useradd_t)
+

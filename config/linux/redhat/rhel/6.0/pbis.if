@@ -1,1 +1,19 @@
-## <summary></summary>
+########################################
+## <summary>
+##      Connect to pbis services.
+## </summary>
+## <param name="domain">
+##      <summary>
+##      Domain allowed access.
+##      </summary>
+## </param>
+#
+interface(`pbis_client',`
+        gen_require(`
+                type var_lib_t, unconfined_t;
+        ')
+
+        # Client should be allowed to talk to services.
+        allow $1 unconfined_t:unix_stream_socket { connectto read write };
+        allow $1 var_lib_t:sock_file write;
+')
