@@ -120,8 +120,6 @@ require {
     type chfn_t;
     type chkpwd_t;
     type chronyd_t;
-    type clamd_t;
-    type clvmd_t;
     type comsat_t;
     type consolekit_t;
     type crond_t;
@@ -148,7 +146,6 @@ require {
     type exim_t;
     type fail2ban_t;
     type fprintd_t;
-    type freshclam_t;
     type ftpd_t;
     type gnomeclock_t;
     type gpg_helper_t;
@@ -307,8 +304,6 @@ pbis_client(certmaster_t)
 pbis_client(chfn_t)
 pbis_client(chkpwd_t)
 pbis_client(chronyd_t)
-pbis_client(clamd_t)
-pbis_client(clvmd_t)
 pbis_client(comsat_t)
 pbis_client(consolekit_t)
 pbis_client(crond_t)
@@ -336,7 +331,6 @@ pbis_client(dovecot_t)
 pbis_client(exim_t)
 pbis_client(fail2ban_t)
 pbis_client(fprintd_t)
-pbis_client(freshclam_t)
 pbis_client(ftpd_t)
 pbis_client(gnomeclock_t)
 pbis_client(gpg_helper_t)
