@@ -1,398 +1,116 @@
-# Bump version to 1.0.0 if ever included in SELinux template
-policy_module(pbis, 0.0.1)
 
-type pbis_etc_t;
-files_config_file(pbis_etc_t)
-
-type pbis_initrc_exec_t;
-init_script_file(pbis_initrc_exec_t)
-
-type pbis_var_lib_t;
-files_type(pbis_var_lib_t)
-
-type pbis_krb5_ad_t;
-files_type(pbis_krb5_ad_t)
-
-type pbis_t;
-type pbis_exec_t;
-init_daemon_domain(pbis_t, pbis_exec_t)
-domain_use_interactive_fds(pbis_t)
-allow pbis_t pbis_exec_t:file execute_no_trans;
-
-allow pbis_t initrc_t:process { siginh rlimitinh noatsecure };
-
-allow pbis_t self:process { signal_perms getsched setsched setpgid setrlimit };
-allow pbis_t self:fifo_file rw_fifo_file_perms;
-allow pbis_t self:unix_dgram_socket create_socket_perms;
-allow pbis_t self:unix_stream_socket { create_stream_socket_perms connectto };
-allow pbis_t self:tcp_socket create_stream_socket_perms;
-allow pbis_t self:udp_socket create_socket_perms;
-allow pbis_t self:capability { fowner chown fsetid dac_override sys_time sys_resource setuid setgid };
-allow pbis_t self:netlink_route_socket rw_netlink_socket_perms;
+module pbis 1.0;
 
 require {
-        type user_home_t;
-        type xdm_t;
-        class dir create;
-}
-
-require {
-        type rhsmcertd_t;
-        type rpm_var_lib_t;
-        class dir { write add_name };
-        class file create;
-}
-
-require {
-        type pbis_t;
-        type colord_t;
-        type pbis_var_lib_t;
-        class sock_file write;
-        class unix_stream_socket connectto;
-}
-
-require {
-        type systemd_logind_t;
-        type pbis_t;
-        type pbis_var_lib_t;
-        class sock_file write;
-        class unix_stream_socket connectto;
-        class dir search;
-}
-
-require {
-        type automount_unit_file_t;
-        type automount_t;
-        type pbis_t;
-        type pbis_var_lib_t;
-        class service { status start };
-        class file { read open };
-}
-
-require {
-        type systemd_systemctl_exec_t;
-        type pbis_t;
+        type abrt_t;
+	type unconfined_t;
         type init_t;
-        class unix_stream_socket connectto;
-        class file { read getattr open execute execute_no_trans };
-}
-
-require {
-        type bin_t;
-        type pbis_t;
-        class file { relabelfrom relabelto unlink setattr };
-}
-
-require {
-        type pbis_t;
-        type systemd_systemctl_exec_t;
-        class file {read execute getattr open execute_no_trans };
-}
-
-require {
-        type bin_t;
-        type pbis_t;
-        class file { relabelto unlink setattr};
-}
-
-#============= xdm_t ==============
-
-#!!!! This avc can be allowed using the boolean 'polyinstantiation_enabled'
-allow xdm_t user_home_t:dir create;
-
-#============= rhsmcertd_t ==============
-allow rhsmcertd_t rpm_var_lib_t:dir { write add_name };
-allow rhsmcertd_t rpm_var_lib_t:file create;
-
-#============= colord_t ==============
-#!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
-allow colord_t pbis_t:unix_stream_socket connectto;
-allow colord_t pbis_var_lib_t:sock_file write;
-
-#============= systemd_logind_t ==============
-allow systemd_logind_t pbis_var_lib_t:dir search;
-allow systemd_logind_t pbis_t:unix_stream_socket connectto;
-allow systemd_logind_t pbis_var_lib_t:sock_file write;
-
-
-#============= automount_t ==============
-allow automount_t pbis_var_lib_t:file read;
-allow automount_t pbis_var_lib_t:file open;
-
-#============= pbis_t ==============
-allow pbis_t automount_unit_file_t:service start;
-allow pbis_t automount_unit_file_t:service status;
-
-allow pbis_t init_t:unix_stream_socket connectto;
-allow pbis_t systemd_systemctl_exec_t:file open;
-allow pbis_t systemd_systemctl_exec_t:file { open read getattr execute execute_no_trans };
-allow pbis_t bin_t:file { relabelto relabelfrom unlink setattr };
-
-allow pbis_t bin_t:file { relabelto unlink };
-allow pbis_t bin_t:file setattr;
-
-require {
-	type var_t;
-        type pbis_t;
-        type passwd_file_t;
-        class file { read getattr open} ;
-	class dir create;
-        class capability2 block_suspend;
-}
-allow pbis_t passwd_file_t:file getattr;
-allow pbis_t passwd_file_t:file open;
-allow pbis_t passwd_file_t:file read;
-allow pbis_t self:capability2 block_suspend;
-
-admin_pattern(pbis_t, pbis_var_lib_t)
-stream_connect_pattern(pbis_t, pbis_var_lib_t, pbis_var_lib_t, pbis_t)
-
-allow pbis_t pbis_var_lib_t:file { execute execute_no_trans };
-
-dev_read_rand(pbis_t)
-dev_read_urand(pbis_t)
-
-files_read_etc_files(pbis_t)
-files_search_var_lib(pbis_t)
-
-logging_admin_syslog(pbis_t, system_r)
-logging_send_syslog_msg(pbis_t)
-
-### Don't know about this one
-require {
-    type admin_home_t;
-}
-allow pbis_t admin_home_t:dir search;
-
-miscfiles_read_localization(pbis_t)
-
-type pbis_tmp_t;
-files_tmp_file(pbis_tmp_t)
-
-corenet_all_recvfrom_netlabel(pbis_t)
-corenet_all_recvfrom_unlabeled(pbis_t)
-corenet_sendrecv_generic_client_packets(pbis_t)
-corenet_sendrecv_generic_server_packets(pbis_t)
-
-corenet_tcp_sendrecv_generic_if(pbis_t)
-corenet_tcp_sendrecv_generic_node(pbis_t)
-corenet_tcp_sendrecv_generic_port(pbis_t)
-corenet_tcp_bind_generic_node(pbis_t)
-corenet_tcp_connect_generic_port(pbis_t)
-corenet_tcp_bind_epmap_port(pbis_t)
-corenet_tcp_connect_epmap_port(pbis_t)
-corenet_tcp_sendrecv_epmap_port(pbis_t)
-
-corenet_udp_sendrecv_generic_if(pbis_t)
-corenet_udp_sendrecv_generic_node(pbis_t)
-corenet_udp_sendrecv_generic_port(pbis_t)
-corenet_udp_bind_generic_node(pbis_t)
-corenet_udp_bind_epmap_port(pbis_t)
-
-corenet_sendrecv_smbd_server_packets(pbis_t)
-corenet_sendrecv_smbd_client_packets(pbis_t)
-corenet_tcp_bind_smbd_port(pbis_t)
-corenet_tcp_connect_smbd_port(pbis_t)
-
-allow pbis_t pbis_krb5_ad_t:file read_file_perms;
-
-manage_files_pattern(pbis_t, pbis_etc_t, pbis_etc_t)
-
-manage_files_pattern(pbis_t, pbis_tmp_t, pbis_tmp_t);
-files_tmp_filetrans(pbis_t, pbis_tmp_t, file)
-
-kernel_read_system_state(pbis_t)
-kernel_getattr_proc_files(pbis_t)
-kernel_list_all_proc(pbis_t)
-kernel_list_proc(pbis_t)
-
-corecmd_exec_bin(pbis_t)
-corecmd_exec_shell(pbis_t)
-
-domain_obj_id_change_exemption(pbis_t)
-
-files_manage_etc_files(pbis_t)
-files_manage_etc_symlinks(pbis_t)
-files_manage_etc_runtime_files(pbis_t)
-files_relabel_etc_files(pbis_t)
-files_relabelto_home(pbis_t)
-
-# Group Policy Agent can rewrite various Configuration Files
-sysnet_setattr_config(pbis_t)
-sysnet_write_config(pbis_t)
-sysnet_relabelfrom_net_conf(pbis_t)
-sysnet_relabelto_net_conf(pbis_t)
-require {
-    type syslog_conf_t;
-    type selinux_config_t;
-    type etc_runtime_t;
-    type mnt_t;
-    type mount_exec_t;
-    type crontab_exec_t;
-}
-
-allow pbis_t syslog_conf_t:file { relabelfrom relabelto };
-allow pbis_t selinux_config_t:file { relabelfrom relabelto };
-allow pbis_t etc_runtime_t:file { relabelfrom relabelto };
-allow pbis_t net_conf_t:file { unlink rename };
-
-allow pbis_t mnt_t:dir { read write create add_name relabelfrom mounton };
-
-domtrans_pattern(pbis_t, mount_exec_t, mount_t);
-
-domtrans_pattern(pbis_t, crontab_exec_t, crontab_t);
-allow pbis_t system_cron_spool_t:dir { open read search };
-allow pbis_t system_cron_spool_t:file { relabelfrom relabelto getattr setattr unlink };
-allow pbis_t crond_t:process signal;
-allow pbis_t system_cronjob_t:process signal;
-role system_r types crontab_t;
-
-allow pbis_t var_t:dir { create read write remove_name add_name };
-allow pbis_t var_t:file { open create read getattr append rename unlink };
-
-selinux_get_fs_mount(pbis_t)
-selinux_validate_context(pbis_t)
-
-# We apply security contexts when needed.
-seutil_read_config(pbis_t)
-seutil_read_default_contexts(pbis_t)
-seutil_read_file_contexts(pbis_t)
-seutil_run_semanage(pbis_t, system_r)
-
-sysnet_use_ldap(pbis_t)
-sysnet_read_config(pbis_t)
-
-userdom_home_filetrans_user_home_dir(pbis_t)
-userdom_manage_home_role(system_r, pbis_t)
-
-optional_policy(`
-	kerberos_rw_keytab(pbis_t)
-	kerberos_rw_config(pbis_t)
-	kerberos_use(pbis_t)
-')
-
-allow pbis_t semanage_t:process { siginh rlimitinh noatsecure };
-
-sysnet_dns_name_resolve(pbis_t)
-## generate_resolve_rules
-
-allow pbis_t pbis_etc_t:dir search_dir_perms;
-
-allow pbis_t home_root_t:file getattr;
-allow pbis_t usr_t:file { open read };
-
-# Enterprise licensing creates /var/lib/ts.tdb
-files_list_var_lib(pbis_t)
-files_rw_var_lib_dirs(pbis_t)
-allow pbis_t var_lib_t:file { write read create open };
-
-# Fedora 16 requires sysfs_t be readable -- may be needed in Fedora 17, doesn't exist on RHEL 6
-dev_read_sysfs(pbis_t)
-
-domain_read_all_domains_state(pbis_t)
-
-# Enterprise requires these
-init_read_utmp(pbis_t)
-## Fedora 16 requires this, doesn't exist on RHEL 6
-# auth_read_passwd(pbis_t)
-manage_sock_files_pattern(pbis_t, tmp_t, tmp_t)
-
-require {
-    type unconfined_t;
-}
-allow pbis_t unconfined_t:unix_stream_socket { read write getattr };
-
-require {
-    type crontab_exec_t;
-    type selinux_config_t;
-    type system_cron_spool_t;
-}
-allow pbis_t crontab_exec_t:file getattr;
-allow pbis_t selinux_config_t:dir { write remove_name add_name };
-allow pbis_t selinux_config_t:file { write rename create unlink setattr };
-allow pbis_t system_cron_spool_t:dir getattr;
-
-## Start autoenroll
-
-require {
-	type net_conf_t;
-	type policykit_auth_t;
-	type cert_t;
-	type firewalld_t;
-	type NetworkManager_t;
-	type iptables_t;
-	type policykit_t;
-	type pbis_t;
-	type initrc_t;
-	type pbis_var_lib_t;
-	type setroubleshootd_t;
-	type NetworkManager_var_run_t;
-	type pbis_etc_t;
-	type dhcpc_t;
-	type proc_net_t;
-	type http_port_t;
+        type initrc_t;
 	type rpm_var_lib_t;
+        type rpm_t;
+	type automount_t;
+	type passwd_t;
+	type mount_t;
+	type systemd_logind_t;
+	type user_home_t;
+	type policykit_t;
+	type policykit_auth_t;
+	type setroubleshootd_t;
+	type var_lib_t;
+	type chkpwd_t;
+	type accountsd_t;
+        type syslogd_t;
+        type syslogd_var_lib_t;
+	type sshd_t;
+        type unconfined_exec_t;
+        type init_var_lib_t;
+        type sosreport_t;
 	type system_dbusd_t;
+        type NetworkManager_t;
+        type xdm_t;
 	class process { siginh noatsecure rlimitinh };
 	class unix_stream_socket connectto;
-	class tcp_socket name_connect;
-	class file { write relabelfrom getattr setattr read relabelto create open };
-	class sock_file write;
-	class lnk_file create;
-	class dir { write search setattr create add_name };
+	class dir { write remove_name create add_name rmdir search };
+	class file { read getattr write open entrypoint append create ioctl };
+	class sock_file { write create unlink getattr };
+        class fifo_file { ioctl open getattr append };
+        role unconfined_r;
 }
 
+#============= abrt_t ==============
+allow abrt_t rpm_var_lib_t:file write;
+allow abrt_t sosreport_t:process { siginh rlimitinh noatsecure };
+allow abrt_t unconfined_t:unix_stream_socket connectto;
+allow abrt_t var_lib_t:sock_file write;
+
+#============= accountsd_t ==============
+allow accountsd_t unconfined_t:unix_stream_socket connectto;
+allow accountsd_t var_lib_t:sock_file write;
+
+#============= automount_t ==============
+allow automount_t mount_t:process { siginh rlimitinh noatsecure };
+allow automount_t unconfined_t:unix_stream_socket connectto;
+allow automount_t var_lib_t:file { read open };
+allow automount_t var_lib_t:sock_file write;
+
+#============= chkpwd_t ==============
+allow chkpwd_t unconfined_t:unix_stream_socket connectto;
+allow chkpwd_t init_t:unix_stream_socket connectto;
+allow chkpwd_t var_lib_t:sock_file write;
+
+#============= init_t ==============
+allow init_t unconfined_exec_t:file entrypoint;
+
 #============= NetworkManager_t ==============
-allow NetworkManager_t dhcpc_t:process { siginh rlimitinh noatsecure };
-allow NetworkManager_t initrc_t:process { siginh rlimitinh noatsecure };
-allow NetworkManager_t pbis_var_lib_t:file { read getattr open };
+allow NetworkManager_t var_lib_t:file { read getattr open };
 
-#============= firewalld_t ==============
-allow firewalld_t iptables_t:process { siginh rlimitinh noatsecure };
+#============= passwd_t ==============
+allow passwd_t user_home_t:dir { write remove_name create add_name rmdir };
+allow passwd_t user_home_t:sock_file { write create unlink getattr };
+allow passwd_t var_lib_t:sock_file write;
 
-#============= pbis_t ==============
-
-#!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
-allow pbis_t NetworkManager_t:unix_stream_socket connectto;
-allow pbis_t NetworkManager_var_run_t:dir search;
-allow pbis_t NetworkManager_var_run_t:sock_file write;
-allow pbis_t cert_t:dir { write create add_name setattr };
-allow pbis_t cert_t:file { write create setattr };
-allow pbis_t cert_t:lnk_file create;
-allow pbis_t http_port_t:tcp_socket name_connect;
-allow pbis_t net_conf_t:dir { write add_name };
-allow pbis_t pbis_etc_t:file { relabelfrom relabelto };
-allow pbis_t proc_net_t:file { read open };
+#============= policykit_auth_t ==============
+allow policykit_auth_t unconfined_t:unix_stream_socket connectto;
+allow policykit_auth_t var_lib_t:sock_file write;
 
 #============= policykit_t ==============
 allow policykit_t policykit_auth_t:process { siginh rlimitinh noatsecure };
+allow policykit_t unconfined_t:unix_stream_socket connectto;
+allow policykit_t var_lib_t:sock_file write;
 
 #============= setroubleshootd_t ==============
 allow setroubleshootd_t rpm_var_lib_t:file write;
+allow setroubleshootd_t rpm_var_lib_t:dir { write add_name };
+allow setroubleshootd_t rpm_var_lib_t:file create;
+
+#============= syslogd_t ==============
+allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
+allow syslogd_t init_var_lib_t:fifo_file { getattr ioctl append };
+allow syslogd_t init_var_lib_t:file { create append ioctl open getattr };
+allow syslogd_t init_var_lib_t:dir { write add_name search };
+allow syslogd_t syslogd_var_lib_t:dir create;
+allow syslogd_t var_lib_t:file append;
+
+#============= sshd_t ==============
+allow sshd_t chkpwd_t:process { siginh rlimitinh noatsecure };
+allow sshd_t var_lib_t:sock_file write;
 
 #============= system_dbusd_t ==============
 allow system_dbusd_t setroubleshootd_t:process { siginh rlimitinh noatsecure };
+allow system_dbusd_t rpm_t:process { siginh rlimitinh noatsecure };
 
-require {
-	type net_conf_t;
-	type postfix_pickup_t;
-	type cert_t;
-	type postfix_master_t;
-	type pbis_t;
-	class process { siginh noatsecure rlimitinh };
-	class file { rename unlink };
-	class dir remove_name;
-}
+#============= systemd_logind_t ==============
+allow systemd_logind_t unconfined_t:unix_stream_socket connectto;
+allow systemd_logind_t var_lib_t:sock_file write;
 
-#============= pbis_t ==============
-allow pbis_t cert_t:dir remove_name;
-allow pbis_t cert_t:file { rename unlink };
-allow pbis_t net_conf_t:dir remove_name;
+#============= xdm_t ==============
+allow xdm_t var_lib_t:sock_file write;
+allow xdm_t chkpwd_t:process { siginh rlimitinh noatsecure };
+allow xdm_t unconfined_t:process { siginh noatsecure };
 
-#============= postfix_master_t ==============
-allow postfix_master_t postfix_pickup_t:process { siginh rlimitinh noatsecure };
-
-## End autoenroll
+#============= ROLES ==============
+role unconfined_r types init_t;
+role unconfined_r types initrc_t;
 
 require {
     type abrt_t;
@@ -411,8 +129,7 @@ require {
     type chfn_t;
     type chkpwd_t;
     type chronyd_t;
-    type clamd_t;
-    type clvmd_t;
+    type colord_t;
     type comsat_t;
     type consolekit_t;
     type crond_t;
@@ -439,7 +156,6 @@ require {
     type exim_t;
     type fail2ban_t;
     type fprintd_t;
-    type freshclam_t;
     type ftpd_t;
     type gnomeclock_t;
     type gpg_helper_t;
@@ -552,6 +268,7 @@ require {
     type sysadm_passwd_t;
     type syslogd_t;
     type system_cronjob_t;
+    type system_cron_spool_t;
     type system_dbusd_t;
     type telnetd_t;
     type tftpd_t;
@@ -592,13 +309,11 @@ pbis_client(certmaster_t)
 pbis_client(chfn_t)
 pbis_client(chkpwd_t)
 pbis_client(chronyd_t)
-pbis_client(clamd_t)
-pbis_client(clvmd_t)
+pbis_client(colord_t)
 pbis_client(comsat_t)
 pbis_client(consolekit_t)
 pbis_client(crond_t)
 pbis_client(crontab_t)
-allow crontab_t pbis_t:unix_stream_socket { read write };
 allow crontab_t system_cron_spool_t:file { open read getattr };
 pbis_client(cupsd_config_t)
 pbis_client(cupsd_lpd_t)
@@ -622,7 +337,6 @@ pbis_client(dovecot_t)
 pbis_client(exim_t)
 pbis_client(fail2ban_t)
 pbis_client(fprintd_t)
-pbis_client(freshclam_t)
 pbis_client(ftpd_t)
 pbis_client(gnomeclock_t)
 pbis_client(gpg_helper_t)
@@ -734,9 +448,6 @@ pbis_client(stunnel_t)
 pbis_client(swat_t)
 pbis_client(sysadm_passwd_t)
 pbis_client(syslogd_t)
-## We create named pipes for syslog to write to
-allow syslogd_t pbis_t:unix_stream_socket {read write};
-allow syslogd_t pbis_var_lib_t:fifo_file { ioctl open getattr append };
 pbis_client(system_cronjob_t)
 pbis_client(system_dbusd_t)
 pbis_client(telnetd_t)
@@ -760,6 +471,3 @@ pbis_client(xdm_t)
 pbis_client(xdm_dbusd_t)
 pbis_client(xserver_t)
 pbis_client(zos_remote_t)
-
-#Allow socket access so that xdm can log in via the GUI.
-allow pbis_t xdm_t:unix_stream_socket { read write getattr };
