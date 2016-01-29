@@ -49,6 +49,8 @@
 # v2.8    2015-08-07 RCA gather additional information
 # v2.9    2015-08-20 RCA basic memory statistics
 # v2.9.3  2015-09-18 RCA add additional AIX and additional information to gather
+# v2.10   2015-10-21 RCA add auto-detection of logfiles from syslog.conf/rsyslog.conf (no syslog-ng yet)
+# v2.11   2015-12-16 RCA add --performance flag
 #
 # Data structures explained at bottom of file
 #
@@ -62,21 +64,24 @@
 # syslog-ng editing to allow non-restarts
 
 use strict;
-use warnings;
+#use warnings;
 
 use Getopt::Long;
-use Cwd;
+use Cwd "abs_path";
 use File::Basename;
 use Carp;
 use FindBin;
 use Config;
 use Sys::Hostname;
+use sigtrap qw (handler cleanup old-interface-signals normal-signals);
+
 
 # Define global variables
-my $gVer = "2.9.3";
+my $gVer = "2.11.0";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
+my ($info, $opt);
 
 # Define system signals
 use Config;
@@ -153,6 +158,12 @@ Tests to be performed:
     --(no)delay (default = ".&getOnOff($opt->{delay}).")
         Pause the script for $opt->{delaytime} seconds to gather logging
         data, for example from GUI logons.
+    -m --memory (default = ".&getOnOff($opt->{memory}).")
+        Gather memory utilization statistics to help find/disprove
+        memory leaks.
+    -p --performance (default = ".&getOnOff($opt->{performance}).")
+        Run specific set of tests for performance troubleshooting
+        of NSS modules and user lookups.
     -dt --delaytime <seconds> (default = $opt->{delaytime})
     -dj --domainjoin (default = ".&getOnOff($opt->{domainjoin}).")
         Set flags for attempting to join AD, then launch the join interactively
@@ -242,6 +253,24 @@ Options:
 # multiple "main" routines, or
 # just planned to be reused
 
+sub cleanup {
+    logData("");
+    logError("Recieved CTRL-C, cleaning up...!");
+    logData("");
+    if ($info->{scriptstatus}->{tcpdump}) {
+        tcpdumpStop($info, $opt);
+    }
+    if ($info->{scriptstatus}->{loglevel}) {
+        changeLoggingLevels($info, $opt, "normal");
+        if ($opt->{restart} and $info->{lw}->{control} eq "lwsm") {
+            runTool($info, $opt, "lwsm autostart", "print");
+        }
+    }
+    $gRetval |= ERR_SYSTEM_CALL;
+    logError("exiting for CTRL-C.");
+    exit $gRetval;
+}
+
 sub daemonRestart($$) {
     my $info = shift || confess "no info hash to restartDaemon!!\n";
     my $options = shift || confess "no options hash to restartDaemon!!\n";
@@ -265,6 +294,7 @@ sub daemonRestart($$) {
             if ($result & ERR_SYSTEM_CALL) {
                 logError("Couldn't stop or kill $options->{daemon}");
                 logError("Manually stop or kill $options->{daemon} or it will continue running with debugging on.");
+                $gRetval|=ERR_SYSTEM_CALL;
             }
         }
     } else {
@@ -436,7 +466,6 @@ sub dnsLookup($$) {
     }
     unless ($lookup->{path}) {
         $gRetval |= ERR_FILE_ACCESS;
-        $gRetval |= ERR_NETWORK;
         logError("Could not find 'dig' or 'nslookup' - unable to do any network tests!");
         return;
     }
@@ -489,6 +518,66 @@ sub dnsSrvLookup($) {
     return @records;
 }
 
+sub findLogFile {
+    my $facility=shift;
+    $facility="daemon" if ($facility eq "*");  #have to escape the star for later regex searches
+    $facility="($facility|\\*)";
+    my $syslog;
+    my @files;
+    my $file="";
+    foreach my $candidate (("syslog-ng.conf", "rsyslog.conf", "syslog.conf")) {
+        $syslog=findInPath($candidate, ["/etc/", "/usr/local/etc/", "/opt/etc", "/etc/local"]);
+        if ($syslog->{path}) {
+            logVerbose("Found $candidate in path $syslog->{dir}!");
+            last;
+        }
+    }
+    # rsyslog and syslog-ng can include ".d/*.conf" files as well, so we need to read in *everything*
+    my @paths=($syslog->{path});
+    PATH: foreach my $path (@paths) {
+        if (open(my $sl, "<$path")) {
+            READ: while(<$sl>) {
+                chomp;
+                next if ($_=~/^\s*#/);  #skip comments
+                next if ($_=~/^\s*$/);  #skip blank lines
+                next if ($_=~/syslog-reaper/); #skip PBIS syslog-reaper lines, since we can't include them
+                next if ($_=~/^\s*\$Mod/); # skip ModLoad in rsyslog
+                logDebug("Reading $path line: $_");
+                if ($_=~/^\s*\$IncludeConfig\s*(.*)/) {
+                    my @newpaths=glob $1; #do this so we can print, rather than just adding to @paths directly.
+                    logVerbose("Adding paths: ".join(" ", @newpaths)."; to syslog path search.");
+                    push(@paths, @newpaths);
+                    next;
+                }
+                if ($_=~/(^|\b)$facility(\.|,[^.]+.)(\*|err|crit|notice|warn|info|verbose|debug)(;[^\s]+)?\s+-?([^\s]+)/) {
+                    $file=$6;
+                    logVerbose("Matched $file for $facility.");
+                    if ( -f "$file" ) {
+                        push(@files, $file);
+                        # we have our match, and $file is scoped to the sub.
+                    } else {
+                        logVerbose("Matched $file for $facility, but it's not a file, continuing.");
+                    }
+                }
+                if ($_=~/\{/) {
+                    #dirty check for syslog-ng
+                    logError("Syslog-ng found, can't handle that right now!!!");
+                    #TODO syslog-ng, obvs.
+                }
+            }
+        } else {
+            $gRetval|= ERR_ACCESS;
+            logError("Can't open $path for reading!");
+            next;
+        };
+        logVerbose("Didn't find $facility in $path.");
+    }
+    if (not @files) {
+        logError("Couldn't find $facility in any syslog files! returning empty logfile.");
+    }
+    return @files;
+}
+
 sub findProcess($$) {
     my $process = shift;
     my $info=shift;
@@ -508,7 +597,12 @@ sub findProcess($$) {
                 logDebug("Found possible match in line: $_");
                 my @els = split(/\s+/, $_);
                 $catch = $els[1];
-                $proc->{cmd} = $els[7];
+                if ($els[7]=~/^[0-9:]*$/) {
+                    #long-running processes mean that "STIME" may have a space in it;
+                    $proc->{cmd}=$els[8];
+                } else {
+                    $proc->{cmd} = $els[7];
+                }
                 if ($proc->{cmd} =~ /(lw-container|lwsm)/) {
                     $proc->{cmd} = join(" ", @els[7..$#els]);
                 }
@@ -603,13 +697,13 @@ sub getUserInfo($$$) {
     logData(join(":", getpwnam($name)));
     logData("");
     if ($info->{OStype} eq "aix") {
-        runTool($info, $opt, "lsuser $name", "print");
+        runTool($info, $opt, "/usr/sbin/lsuser -f '$name'", "print");
     }
     return 0 if ($name=~/^root$/i);  #no need to do AD lookups for root
     logData("PBIS direct lookup:");
-    runTool($info, $opt, "$info->{lw}->{tools}->{userbyname} $name", "print");
+    runTool($info, $opt, "$info->{lw}->{tools}->{userbyname} '$name'", "print");
     logData("User Group Membership:");
-    runTool($info, $opt, "$info->{lw}->{tools}->{groupsforuser} $name", "print");
+    runTool($info, $opt, "$info->{lw}->{tools}->{groupsforuser} '$name'", "print");
 
     return 0;
 }
@@ -796,9 +890,8 @@ sub killProc($$$) {
     if (defined($proc->{pid}) && $proc->{pid}=~/^\d+$/) {
         logInfo("Found $process with pid $proc->{pid}.");
     } else {
-        $gRetval |= ERR_SYSTEM_CALL;
         logError("Could not pkill $process - it does not appear to be running!");
-        return $gRetval;
+        return ERR_SYSTEM_CALL();
     }
 
     my $error;
@@ -809,7 +902,7 @@ sub killProc($$$) {
             logWarning("$process did not respond to SIGTERM, having to send KILL");
             $error = killProc2(9, $proc);
             if ($error) {
-                return $gRetval;
+                return $error;
             } else {
                 logInfo("Successfully killed hung process $proc->{pid}");
                 return 0;
@@ -831,27 +924,25 @@ sub killProc2($$) {
     my $process = $proc->{pid};
     my $safesig;
     unless ($process=~/^\d+$/) {
-        $gRetval |= ERR_SYSTEM_CALL;
         logError("$process is not a numeric PID, so we cannot kill it!");
-        return $gRetval;
+        return ERR_OPTIONS;
     }
     foreach my $sig (sort(keys(%gSignals))) {
         if ($signal eq $sig) {
             $safesig = $signal;
+            # just making sure that the signal being asked to be sent is on the list of available signals
             last;
         }
     }
     unless ($safesig or $signal=~/^\d+$/ or $signal > ($#gSignalno + 1)) {
         logError("$signal is unknown, so can't send it to $process!");
-        $gRetval |= ERR_SYSTEM_CALL;
-        return $gRetval;
+        return ERR_OPTIONS;
     }
     my $error = kill($signal, $process);
     unless ($error) {
         # kill returns number of processes killed.
-        $gRetval |= ERR_SYSTEM_CALL;
         logError("Could not kill PID $process with signal $signal - $!");
-        return $gRetval;
+        return ERR_SYSTEM_CALL;
     } else {
         logVerbose("successfully killed $error processes");
         return 0;
@@ -898,11 +989,18 @@ sub runTool($$$$;$) {
     my $data="";
     if (! -x $tool) {
         my @parts=split(/\s+/, $tool);
-        logDebug("Couldn't find '$tool' executable, trying to find it as '$parts[0]'.");
-        if (! -x $parts[0]) {
+        my @search=split(/:/, $ENV{PATH});
+        my $hash=findInPath($parts[0], \@search);
+        logVerbose("Couldn't find '$tool' executable, trying to find it as '$parts[0]'.");
+        if ( -x "$info->{lw}->{path}/$parts[0]") {
             $cmd = "$info->{lw}->{path}/$tool 2>&1";
+        } elsif (defined($hash->{path})) {
+            logDebug("Found $parts[0] in $hash->{dir}, building fullpath for program back up...");
+            $cmd="$hash->{dir}/$tool 2>&1";
         } else {
-            $cmd="$tool 2>&1";
+            logDebug("Looks like $parts[0] is a shell builtin, so we'll shell to bash -c...");
+            $tool=~s/([^[:alnum:]_\-\$])/\\$1/g;  #take a trick from sudo code
+            $cmd="sh -c $tool 2>&1";
         }
     } else {
         $cmd = "$tool 2>&1";
@@ -912,26 +1010,33 @@ sub runTool($$$$;$) {
         $data=`$cmd 2>&1`;
         $data="" unless ($?);
     } elsif ($action eq "print") {
-        open(RT, "$cmd |");
-        while (<RT>) {
-            logData("$_");
+        if (open(my $RT, "$cmd |")) {
+            while (<$RT>) {
+                logData("$_");
+            }
+            close RT;
+        } else {
+            logError("Could not run '$cmd'!");
         }
-        close RT;
         $data="";
     } elsif ($action eq "grep") {
-        open(RT, "$cmd | ");
-        my @results;
-        while (<RT>) {
-            if ($_=~/$filter/) {
-                if ($1) {
-                    push(@results, $1);
-                } else {
-                    push(@results, $_);
+        if (open(RT, "$cmd | ")) {
+            my @results;
+            while (<RT>) {
+                if ($_=~/$filter/) {
+                    if ($1) {
+                        push(@results, $1);
+                    } else {
+                        push(@results, $_);
+                    }
                 }
             }
+            close RT;
+            $data=join("\n", @results);
+        } else {
+            $data="";
+            logError("Could not run '$cmd' to grep for '$filter'!!");
         }
-        close RT;
-        $data=join("\n", @results);
     } else { # ($action eq "return")
         $data=`$cmd`;
     }
@@ -957,7 +1062,7 @@ sub safeUsername($) {
     my $cleaned = $name;
     $cleaned=~s/\\\\/\\/g;
     $cleaned=~s/(\$\*\{\})/\\$1/g;
-    $cleaned="'$cleaned'";
+    $cleaned="$cleaned";
     logDebug("Cleaned up $name as $cleaned");
     return $cleaned;
 }
@@ -1070,7 +1175,11 @@ sub tcpdumpStart($$) {
     }
     my $dumpcmd = "$info->{tcpdump}->{startcmd} $iface $info->{tcpdump}->{args} $opt->{capturefile} $info->{tcpdump}->{filter}";
     logVerbose("Trying to run: $dumpcmd");
-    System("$dumpcmd &");
+    my $error = System("$dumpcmd &");
+    if ($error) {
+        $gRetval |= ERR_SYSTEM_CALL;
+        logError("Could not start capture command: $dumpcmd");
+    }
 }
 
 sub tcpdumpStop($$) {
@@ -1078,16 +1187,22 @@ sub tcpdumpStop($$) {
     my $opt = shift || confess "No options hash passed to tcpdump()!\n";
 
     logInfo("Stopping tcpdump analogue for $info->{OStype}");
+    my $error;
     my $stopcmd = "$info->{tcpdump}->{stopcmd}";
     if ($stopcmd eq "kill") {
         logVerbose("Stopping tcpdump by killing it...");
-        killProc("$info->{tcpdump}->{startcmd}", 9, $info);
+        $error = killProc("$info->{tcpdump}->{startcmd}", 9, $info);
     } else {
         logVerbose("Sending stop command...");
         my $error = System($stopcmd);
         if ($error) {
-            killProc($info->{tcpdump}->{startcmd}, 9, $info);
+            logWarning("There was an error running: '$stopcmd', trying to kill via kill -9.");
+            $error=killProc($info->{tcpdump}->{startcmd}, 9, $info);
         }
+    }
+    if ($error) {
+        logError("Unable to kill capture command via '$stopcmd' or via kill -9! It may still be running!");
+        $gRetval |= ERR_SYSTEM_CALL;
     }
 }
 
@@ -1146,12 +1261,17 @@ sub changeLoggingByTap($$$) {
     my $info = shift || confess "no info hash passed to log starter!\n";
     my $opt = shift || confess "no options hash passed to log starter!\n";
     my $state = shift || confess "no start/stop state passed to log start!\n";
+    my $error;
     $opt->{paclog} = "$info->{logpath}/lsass.log" if ($opt->{lsassd});
     foreach my $daemonname (keys(%{$info->{lw}->{daemons}})) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
         if ($state eq "normal" and exists($info->{logging}->{$daemon}->{proc})) {
             logInfo("Killing tap for $daemon at pid $info->{logging}->{$daemon}->{proc}->{pid}.");
-            killProc2(9, $info->{logging}->{$daemon}->{proc});
+            $error=killProc2(9, $info->{logging}->{$daemon}->{proc});
+            if ($error) {
+                logError("lwsm tap-log $daemon may still be running!");
+                $gRetval |= ERR_SYSTEM_CALL;
+            }
         } elsif ($state eq "normal") {
             logVerbose("Nothing to do for $daemon.");
         } else {
@@ -1247,7 +1367,7 @@ sub changeLoggingStandalone($$$) {
     my $opt = shift || confess "no opt hash passed to standalone log starter!\n";
     my $options = shift || confess "no options hash passed to standalone log starter!\n";
     my ($startscript, $logopts, $result);
-    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
+    $opt->{paclog} = "$info->{logpath}/.$info->{lw}->{daemons}->{authdaemon}.log" if ($opt->{lsassd});
 
     if ($opt->{lwsmd} && defined($info->{lw}->{daemons}->{lwsm})) {
         logVerbose("Attempting restart of service controller");
@@ -1355,7 +1475,7 @@ sub changeLoggingWithContainer($$$) {
     my $opt = shift;
     my $options = shift;
     my ($startscript, $logopts, $result);
-    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
+    $opt->{paclog} = "$info->{logpath}/.$info->{lw}->{daemons}->{authdaemon}.log" if ($opt->{lsassd});
 
     foreach my $daemonname (keys(%{$info->{lw}->{daemons}})) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
@@ -1380,7 +1500,7 @@ sub changeLoggingWithLwSm($$$) {
     my $opt = shift;
     my $options=shift;
     my ($startscript, $logopts, $result);
-    $opt->{paclog} = "$info->{logpath}/lsassd.log" if ($opt->{lsassd});
+    $opt->{paclog} = "$info->{logpath}/.$info->{lw}->{daemons}->{authdaemon}.log" if ($opt->{lsassd});
     foreach my $daemonname (sort(keys(%{$info->{lw}->{daemons}}))) {
         my $daemon = $info->{lw}->{daemons}->{$daemonname};
         next unless(defined($opt->{$daemon}) and $opt->{$daemon});
@@ -1504,13 +1624,6 @@ sub determineOS($$) {
         $info->{tcpdump}->{stopcmd} = "kill";
         $info->{sshd}->{opts} = "-ddd -p 22226";
         $info->{pampath} = "/etc/pam.d";
-        foreach my $i (("syslog", "system.log", "messages")) {
-            $file = findInPath($i, ["/var/log"]);
-            if ((defined($file->{path})) && $file->{type} eq "f") {
-                $info->{logfile} = "$i";
-                $info->{logpath} = $file->{dir};
-            }
-        }
         $info->{nsfile} = "/etc/nsswitch.conf";
     } elsif ($^O eq "hpux") {
         $info->{OStype} = "hpux";
@@ -1532,13 +1645,6 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "messages";
-        foreach my $i (("syslog", "system.log", "messages")) {
-            $file = findInPath($i, ["/var/adm", "/var/log"]);
-            if ((defined($file->{path})) && $file->{type} eq "f") {
-                $info->{logfile} = "$i";
-                $info->{logpath} = $file->{dir};
-            }
-        }
         $info->{nsfile} = "/etc/nsswitch.conf";
         $info->{timezonefile} = "/etc/TIMEZONE";
     } elsif ($^O eq "solaris") {
@@ -1604,13 +1710,6 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.conf";
         $info->{logpath} = "/var/adm";
         $info->{logfile} = "syslog/syslog.log";
-        foreach my $i (("syslog", "system.log", "messages")) {
-            $file = findInPath($i, ["/var/adm", "/var/log", "/var/adm/syslog", "/var/log/syslog"]);
-            if ((defined($file->{path})) && $file->{type} eq "f") {
-                $info->{logfile} = "$i";
-                $info->{logpath} = $file->{dir};
-            }
-        }
         $info->{nsfile} = "/etc/netsvc.conf";
         $info->{timezonefile} = "/etc/environment";
     } elsif ($^O eq "MacOS" or $^O eq "darwin") {
@@ -1657,14 +1756,17 @@ sub determineOS($$) {
         $info->{pampath} = "/etc/pam.d";
         $info->{logpath} = "/var/log";
         $info->{logfile} = "messages";
-        foreach my $i (("syslog", "system.log", "messages")) {
-            $file = findInPath($i, ["/var/adm", "/var/log", "/var/adm/syslog", "/var/log/syslog"]);
-            if ((defined($file->{path})) && $file->{type} eq "f") {
-                $info->{logfile} = "$i";
-                $info->{logpath} = $file->{dir};
-            }
-        }
         $info->{nsfile} = "/etc/nsswitch.conf";
+    }
+    $info->{logfiles}=[];
+    foreach my $facility (("kern", "daemon", "auth")) {
+        my @logs=findLogFile($facility);
+        push(@{$info->{logfiles}}, @logs) if (@logs);
+        if ($facility eq "daemon") {
+            $info->{logpath} = dirname($logs[0]);
+            $info->{logfile} = basename($logs[0]);
+            logInfo("Found $info->{logfile} via syslog config.");
+        }
     }
     logData("OS: $info->{OStype}");
 
@@ -1681,6 +1783,18 @@ sub determineOS($$) {
         $file = findInPath($i, ["/etc"]);
         if ((defined($file->{path})) && $file->{type} eq "f") {
             readFile($info, $file->{path});
+            if (($i eq "redhat-release" or $i eq "centos-release") and ($opt->{syslog})) {
+                my $rel;
+                open($rel, "<", $i);
+                while (<$rel>) {
+                    if ($_=~/ 7\./) {
+                        logError("Cannot issue tap-log command on RHEL7-based systems on PBIS < 8.3.4!");
+                        logError("You should hit CTRL-C and re-run with the '-r' flag.");
+                        logWarning("This tool has not determined the PBIS version yet.");
+                        sleep 5;
+                    }
+                }
+            }
         }
     }
     logData("LD_LIBRARY_PATH is: $ENV{LD_LIBRARY_PATH}");
@@ -1752,21 +1866,20 @@ sub gatherMemory {
     my $opt = shift;
     my $round = 0;
     return unless ($opt->{memory});
+    if (defined($info->{memory}) && ref($info->{memory}) eq "HASH") {
+        $round=$info->{memory}->{round};
+        logDebug("Retrieving round $round from memory.");
+    } else {
+        logDebug("Setting round $round in memory.");
+        $info->{memory}={};
+    }
     sectionBreak("Gathering Memory Stats - round $round");
     my $pshash=findInPath("ps", ["/usr/bin", "/bin", "/usr/local/bin" ] );
     my @psfields=@{$info->{psmemfields}};
     my $psopts="-e";
     my $pscmd="$pshash->{path} $psopts -o ".join(",", @psfields);
     logVerbose("using PS command: '$pscmd'");
-    if (defined($info->{memory}) && ref($info->{memory}) eq "HASH") {
-        $round=$info->{memory}->{round};
-        logDebug("Retrieving round $round from memory.");
-    } else {
-        logDebug("Setting round $round in memory.");
-        $info->{memory}->{round}=$round;
-    }
     runTool($info, $opt, $pscmd, "print");
-    $info->{memory}->{round}=$info->{memory}->{round}+1;
     foreach my $service (keys(%{$info->{lw}->{daemons}})) {
         my $daemon=$info->{lw}->{daemons}->{$service};
         logVerbose("Checking stats on service: '$service', named '$daemon'.");
@@ -1788,6 +1901,8 @@ sub gatherMemory {
             runTool($info, $opt, $hash->{path}, "print");
         }
     }
+    $round+=1;
+    $info->{memory}->{round}=$round;
 }
 
 sub memoryStats {
@@ -2337,15 +2452,17 @@ sub outputReport($$) {
     tarFiles($info, $opt, $tarballfile, "/Library/Logs/DirectoryService/DirectoryService.debug.log") if ($info->{OStype} eq "darwin");
     if ($info->{OStype} eq "aix") {
         tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert");
-        tarFiles($info, $opt, $tarballfile, "/etc/security/aixpert");
-        tarFiles($info, $opt, $tarballfile, "/usr/lib/security/methods.cfg")
+        tarFiles($info, $opt, $tarballfile, "/etc/security/user");
+        tarFiles($info, $opt, $tarballfile, "/etc/security/group");
+        tarFiles($info, $opt, $tarballfile, "/usr/lib/security/methods.cfg") if (-f "/usr/lib/security/methods.cfg");
+        tarFiles($info, $opt, $tarballfile, "/etc/security/methods.cfg") if (-f "/etc/security/methods.cfg");
+        tarFiles($info, $opt, $tarballfile, "/etc/security/login.cfg") if (-f "/etc/security/login.cfg");
     }
     if ($opt->{messages}) {
-        logInfo("Adding $info->{logpath}/$info->{logfile}");
-        $appendfile = $info->{logpath}."/".$info->{logfile};
-        tarFiles($info, $opt, $tarballfile, $appendfile);
-        tarFiles($info, $opt, $tarballfile, "$info->{logpath}.auth");
-        tarFiles($info, $opt, $tarballfile, "$info->{logpath}.secure");
+        foreach my $file (@{$info->{logfiles}}) {
+            logInfo("Adding syslog logfile $file...");
+            tarFiles($info, $opt, $tarballfile, $file);
+        }
     }
     if ($opt->{domainjoin}) {
         tarFiles($info, $opt, $tarballfile, $opt->{djlog});
@@ -2355,7 +2472,7 @@ sub outputReport($$) {
         tarFiles($info, $opt, $tarballfile, "/etc/lwi_automount");
         tarFiles($info, $opt, $tarballfile, "/etc/auto*");
     }
-    if ($opt->{sambalogs}) {
+    if ($opt->{sambalogs} and $info->{sambaconf}) {
         tarFiles($info, $opt, $tarballfile, "$info->{logpath}/samba");
         if ($info->{logpath} ne "/var/log") {
             logDebug("Adding files from /var/log/samba also");
@@ -2363,7 +2480,7 @@ sub outputReport($$) {
         }
         tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{dir}");
     } else {
-        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{path}");
+        tarFiles($info, $opt, $tarballfile, "$info->{sambaconf}->{path}") if ($info->{sambaconf}->{path});
     }
     logInfo("Adding sshd_config");
     tarFiles($info, $opt, $tarballfile, $info->{sshd_config}->{path}) if ($info->{sshd_config}->{path});
@@ -2374,6 +2491,12 @@ sub outputReport($$) {
     tarFiles($info, $opt, $tarballfile, $info->{pampath});
     tarFiles($info, $opt, $tarballfile, "/etc/pam.conf");
     tarFiles($info, $opt, $tarballfile, "/etc/pam.d");
+    tarFiles($info, $opt, $tarballfile, "/etc/nscd.conf");
+    if ( -d "/etc/pb") {
+        tarFiles($info, $opt, $tarballfile, "/etc/pb");
+        tarFiles($info, $opt, $tarballfile, "/etc/pb.settings");
+        tarFiles($info, $opt, $tarballfile, "/etc/pb.conf");
+    }
     tarFiles($info, $opt, $tarballfile, $info->{krb5conf}->{path}) if ($info->{krb5conf}->{path});
     tarFiles($info, $opt, $tarballfile, $info->{logedit}->{path}) if ($info->{logedit}->{path});
     logError("Can't find krb5.conf to add to tarball!") unless ($info->{krb5conf}->{path});
@@ -2460,6 +2583,7 @@ sub runTests($$) {
     my $opt = shift || confess "no options hash passed to test runner!\n";
     my $data;
 
+    gatherMemory($info, $opt);
 # It makes no sense to run most of the below tests if you're not joined, so... let's do that test first
     if ($opt->{domainjoin}) {
         sectionBreak("domainjoin");
@@ -2530,6 +2654,7 @@ sub runTests($$) {
             logData(" ");
         }
         runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} $djlog $djcommand $djoptions $domain $user", "print");
+        gatherMemory($info, $opt);
     }
 # Run tests that run every time no matter what
 
@@ -2553,6 +2678,7 @@ sub runTests($$) {
         runTool($info, $opt, "$info->{lw}->{tools}->{dctime} $domain", "print");
         push(@domains, $domain);
     }
+    gatherMemory($info, $opt);
 # run optional tests
 
     if ($opt->{dns}) {
@@ -2596,18 +2722,18 @@ sub runTests($$) {
                 logData("  $_");
             }
         }
+        gatherMemory($info, $opt);
     }
-    gatherMemory($info, $opt);
     if ($opt->{users}) {
         sectionBreak("Enum Users");
         runTool($info, $opt, "$info->{lw}->{tools}->{userlist}", "print");
+        gatherMemory($info, $opt);
     }
-    gatherMemory($info, $opt);
     if ($opt->{groups}) {
         sectionBreak("Enum Groups");
         runTool($info, $opt, "$info->{lw}->{tools}->{grouplist}", "print");
+        gatherMemory($info, $opt);
     }
-    gatherMemory($info, $opt);
 
     if ($opt->{ssh}) {
         sectionBreak("SSH Test");
@@ -2643,11 +2769,29 @@ sub runTests($$) {
         }
 
         logData($data);
+        gatherMemory($info, $opt);
     } elsif ($opt->{sshuser} || $info->{uid} ne "0") {
         my $user = $opt->{sshuser};
         $user = $info->{logon} if (not defined($opt->{sshuser}));
         sectionBreak("User Lookup");
         getUserInfo($info, $opt, $user);
+        gatherMemory($info, $opt);
+    }
+
+    if ($opt->{performance}) {
+        sectionBreak("Performance Tests");
+        #my $time = findInPath("time", ["/usr/bin", "/bin", "/usr/local/bin", "/usr/csw/bin", "/usr/sfw/bin"]);
+        #if (not $time->{path}) {
+        #    logError("Can't run performance testing - can't find 'time' command in: /usr/bin, /bin, /usr/local/bin, /usr/csw/bin, /usr/sfw/bin!!");
+        #} else {
+            foreach my $flag (("-ln", "-l")) {
+                foreach my $dir (("/home", "/tmp", "/var/tmp", "/etc")) {
+                    logData("# ".scalar(localtime()));
+                    runTool($info, $opt, "time ls $flag $dir", "print");
+                }
+            }
+        #}
+        gatherMemory($info, $opt);
     }
 
     if ($opt->{gpo}) {
@@ -2657,6 +2801,7 @@ sub runTests($$) {
             logData("Sleeping $i seconds for full refresh to run...");
             sleep 15;
         }
+        gatherMemory($info, $opt);
     }
 
     if ($opt->{smb}) {
@@ -2673,9 +2818,9 @@ sub runTests($$) {
         my $file = findInPath("bash", ["/bin", "/usr/bin", "/usr/local/bin"]);
         $data = `$file->{path}`;
         logData($data);
+        gatherMemory($info, $opt);
     }
 
-    gatherMemory($info, $opt);
     if ($opt->{othertests}) {
         sectionBreak("Other Tests");
         logWarning("Please run any manual tests required now (interactive logon, sudo, su, etc.)");
@@ -2685,8 +2830,8 @@ sub runTests($$) {
             $complete=readline(*STDIN);
             chomp $complete;
         }
+        gatherMemory($info, $opt);
     }
-    gatherMemory($info, $opt);
 
     if ($opt->{delay}) {
         sectionBreak("Delay for testing");
@@ -2729,6 +2874,7 @@ sub runTests($$) {
         }
         close LF;
         logWarning("Couldn't find any PAC information to review") unless ($error);
+        gatherMemory($info, $opt);
     }
     if ($opt->{psoutput}) {
         sectionBreak("ps output");
@@ -2767,6 +2913,7 @@ sub main() {
         messages => 1,
         syslog => 1,
         capturefile => "/tmp/pbis-cap",
+        captureiface => "",
         loglevel => "info",
         logfile => "/tmp/pbis-support-$host.log",
         tarballdir => "/tmp",
@@ -2832,6 +2979,7 @@ sub main() {
         'sudocmd=s@',
         'psoutput|ps!',
         'memory|m!',
+        'performance|p!',
         'delay!',
         'delaytime|dt=s',
         'cleanup!',
@@ -2922,6 +3070,20 @@ sub main() {
         logError("$opt->{tarballdir} is not a directory!");
     }
 
+    if (defined($opt->{performance}) and $opt->{performance}) {
+        #set specific options because of this kind of test
+
+        # turn on restarts, so that the capture gets readable ldap traffic
+        $opt->{restart} = 1;
+        $opt->{syslog} = 0;
+        $opt->{capture} = 1;
+        $opt->{memory} = 1;
+        # specifically disable user/group enumeration
+        # because we don't want to pre-fill the cache and screw up data analysis
+        $opt->{users} = 0;
+        $opt->{groups} = 0;
+    }
+
     exit $gRetval if $gRetval;
 
 
@@ -2960,14 +3122,16 @@ sub main() {
         $gRetval |= ERR_OS_INFO;
         exit $gRetval;
     }
-    gatherMemory($info, $opt);
+    #gatherMemory($info, $opt); # no point gathering stuff before we do restarts, we know the PID will change
     if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
         sectionBreak("Starting tcpdump");
+        $info->{scriptstatus}->{tcpdump}=1;
         tcpdumpStart($info, $opt);
     }
 
     sectionBreak("Daemon restarts");
     logDebug("Turning up logging levels");
+    $info->{scriptstatus}->{loglevel}=1;
     if ( $opt->{pbislevel}=~/^(error|warning|verbose|info|debug|trace)$/) {
         changeLogging($info, $opt, $opt->{pbislevel});
     } else {
@@ -2981,10 +3145,12 @@ sub main() {
     sectionBreak("Daemon restarts");
     logDebug("Turning logging levels back to normal");
     changeLogging($info, $opt, "normal");
+    $info->{scriptstatus}->{loglevel}=0;
 
     if (defined $opt->{tcpdump} && $opt->{tcpdump}) {
         sectionBreak("Stopping tcpdump");
         tcpdumpStop($info, $opt);
+        $info->{scriptstatus}->{tcpdump}=0;
     }
 
     outputReport($info, $opt);
@@ -3042,6 +3208,11 @@ usage: pbis-support.pl [tests] [log choices] [options]
     --(no)delay (default = off)
     Pause the script for 90 seconds to gather logging
     data, for example from GUI logons.
+    -m --memory
+    Gather memory statistics to look for or
+    prove/disprove memory leaks
+    -p --performance
+    do some specific timing tests to look for performance drains
     -dt --delaytime <seconds> (default = 180)
     -dj --domainjoin (default = on)
         Set flags for attempting to join AD, then launch the join interactively
@@ -3125,17 +3296,35 @@ usage($opt, $info) - outputs help status with intelligent on/off values based on
 
 changeLogging($info, $opt, $state) - changes logging for all daemons in $opt to $state
 
+changeLoggingByTap($info, $opt, $state) - changes logging using tap-log
+
+changeLoggingBySyslog($info, $opt, $state) - changes daemon log level in $opt if no "tap-log" and syslog logging is in place (not restarting to separte file)
+
 changeLoggingWithLwSm($info, $opt, $state) - called by changeLogging() if LW 6 or greater, to use LWSM for state changes
+
+cleanup() - tries to clean up before exiting, like in failure or ctrl-c - stop tap-log commnads, restart daemons in normal mode, etc.
+
+cleanupaftermyself($info, $opt) - tries to clean up before exiting
 
 daemonRestart($info, $options) - restarts daemon in $options to state in $options
 
+daemonContainerStop($info, $options, $opt) - stops a containerized daemon
+
+daemonContainerStart($info, $options, $opt) - starts a containerized daemon to get startup logs or ldap captures readable
+
 determineOS($info) - updates the $info hash with OS specific paths and commands
+
+dnsLookup($query, $type) - looks up a DNS query of type via dig or nslookup (Net::DNS isn't core)
 
 dnsSrvLookup($lookup) - looks up $lookup via DNS by best means available on system
 
 findInPath($file, $path) searches array REF $path for $file - more detail below
 
+findLogFile($facility) - finds the logfile handling $facility and returns that filename
+
 findProcess($process, $info) returns hash structure of a process' information from PS
+
+gatherMemory($info, $opt) - gathers memory stats in different formats to search for leaks without valgrind available
 
 GetErrorCodeFromChildError($error) - gets error status from child spawned by System();
 
@@ -3164,6 +3353,8 @@ logInfo($line) - logs $line at info (3) level or lower
 logVerbose($line) - logs $line at verbose (4) level or lower
 
 logDebug($line) - logs $line at debug (5) level or lower
+
+memoryStats($info, $opt) - does analysis on memory utilization gathered from the gatherMemory() sub.
 
 outputReport($info, $opt) - determines the pieces to gather based on flags
 
@@ -3229,6 +3420,8 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         othertests
         delay
         authtest
+        memory
+        performance
         domainjoin
         djoptions (string)
         djdomain (string)
