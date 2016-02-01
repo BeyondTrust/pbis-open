@@ -102,7 +102,7 @@ _mk_at_system_string()
                     ;;
             esac
             ;;
-        ppc64)
+        ppc64|ppc64le)
             case "$__os" in
                 darwin*)
                     __arch="ppc64-apple"

@@ -158,8 +158,8 @@ typedef struct _LW_SIGNAL_MULTIPLEX
     BOOLEAN bExit;
 } LW_SIGNAL_MULTIPLEX;
 
-#define LOCK_THREADS(m) (pthread_mutex_lock(&(m)->Lock))
-#define UNLOCK_THREADS(m) (pthread_mutex_unlock(&(m)->Lock))
+#define LOCK_THREADS(m) (pthread_mutex_lock(&((m)->Lock)))
+#define UNLOCK_THREADS(m) (pthread_mutex_unlock(&((m)->Lock)))
 #define LOCK_SIGNAL() (pthread_mutex_lock(&gSignal.Lock))
 #define UNLOCK_SIGNAL() (pthread_mutex_unlock(&gSignal.Lock))
 

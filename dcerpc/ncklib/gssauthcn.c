@@ -1234,7 +1234,7 @@ INTERNAL void rpc__gssauth_cn_free_prot_info
 	}
 
 #ifdef DEBUG
-	memset (gssauth_cn_info, 0, sizeof (rpc_gssauth_cn_info_p_t));
+	memset (gssauth_cn_info, 0, sizeof (rpc_gssauth_cn_info_t));
 #endif
 
 	RPC_MEM_FREE (gssauth_cn_info, RPC_C_MEM_GSSAUTH_CN_INFO);

@@ -276,7 +276,7 @@ option()
             _var="LIBDIR_$result"
             
             case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
-                linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64)
+                linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64|linux-redhat-powerpc-ppc64|linux-redhat-powerpc-ppc64le)
                     _default_libdir="${BASELIBDIR}64"
                     ;;
                 linux-debian-x86_64-x86_32)
@@ -298,6 +298,7 @@ option()
                     _default_libdir="${BASELIBDIR}/hpux64"
                     ;;
                 *)
+                    mk_msg "Defaulting to ${BASELIBDIR} for platform ${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}"
                     _default_libdir="${BASELIBDIR}"
                     ;;
             esac

@@ -1,5 +1,5 @@
 /****
- **** NDR types for the PowerPC RISC Architecture - 64bit, Big Endian Mode
+ **** NDR types for the PowerPC RISC Architecture - 64bit, Little Endian Mode
  ****/
 
 #ifndef _NDRTYPES_H
@@ -26,6 +26,7 @@
 #if defined(C_STD_99)
 #include <stdint.h>
 #endif
+
 
 typedef unsigned char 		ndr_boolean;
 
@@ -62,13 +63,13 @@ typedef unsigned int 	ndr_ulong_int;
 #endif
 
 struct ndr_hyper_int_rep_s_t   {
-    ndr_long_int high; 
     ndr_ulong_int low;
+    ndr_long_int high; 
 };
 
 struct ndr_uhyper_int_rep_s_t  {
-    ndr_ulong_int high; 
     ndr_ulong_int low;
+    ndr_ulong_int high; 
 };
 
 #ifdef __GNUC__

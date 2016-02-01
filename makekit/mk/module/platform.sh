@@ -309,6 +309,8 @@ mk_declare_system_var()
     mk_pop_vars
 }
 
+# this defines the default values for various MakeKit command line options
+# based on the machine MakeKit is running on
 option()
 {
     case `uname` in
@@ -414,7 +416,7 @@ option()
                 x86_64|amd64)
                     _default_MK_BUILD_ARCH="x86_64"
                     ;;
-                ppc)
+                ppc|ppc32|ppc64|ppc64le)
                     _default_MK_BUILD_ARCH="powerpc"
                     ;;
                 *)
@@ -441,7 +443,7 @@ option()
             _default_MK_BUILD_ISAS="sparc_32"
             ;;
         *"-powerpc")
-            _default_MK_BUILD_ISAS="ppc32 ppc64"
+            _default_MK_BUILD_ISAS="ppc32 ppc64 ppc64le"
             ;;
         *"-hppa1."*)
             _default_MK_BUILD_ISAS="hppa32"

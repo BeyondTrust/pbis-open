@@ -54,6 +54,46 @@
 #define DDBE_VER_MINOR        2     /* Interpreter encoding minor version */
 
 /*
+ * The generated client stub type_vec depends on a 4 byte integer type
+ * so use C99 uint32_t/int32_t if available.
+ * 
+ * n.b. for gcc this requires passing --std=c99 (or greater)
+ * or else __STDC_VERSION__ is not defined.
+ */
+#if defined(__STDC__)
+# if defined(__STDC_VERSION__)
+#  if (__STDC_VERSION__ >= 19901L)
+#    define C_STD_99
+#  endif
+# endif
+#endif
+
+/* define the types and related printf specifiers 
+ * used to generate stub marshalling structures
+ */
+#if defined(C_STD_99)
+#include <stdint.h>
+#include <inttypes.h>
+
+#define PRId_ddbe16 PRId16
+typedef int16_t  ddbe_int16_t;
+typedef uint16_t ddbe_uint16_t;
+
+#define PRId_ddbe32 PRId32
+typedef int32_t  ddbe_int32_t;
+typedef uint32_t ddbe_uint32_t;
+
+#else 
+#define PRId_ddbe16 "d" 
+typedef short          ddbe_int16_t;
+typedef unsigned short ddbe_uint16_t;
+
+#define PRId_ddbe32 "ld" 
+typedef long          ddbe_int32_t;
+typedef unsigned long ddbe_uint32_t;
+#endif
+
+/*
  * DDBE_ARRAYIFIED macro evaluates TRUE if all of the following:
  *  1) instance type is a pointer
  *  2) instance pointee type has an array_rep_type
@@ -174,15 +214,15 @@ typedef enum DDBE_vec_kind_t {
 typedef struct DDBE_vec_rep_t {
     union {                         /* Arm valid for kind ==            */
         byte            byte_val;   /* byte*_k, pad_k                   */
-        short           short_val;  /* short*_k                         */
-        long            long_val;   /* long*_k                          */
+        ddbe_int16_t    short_val;  /* short*_k                         */
+        ddbe_int32_t    long_val;   /* long*_k                          */
         NAMETABLE_id_t  name;       /* name_k, tag_k                    */
         STRTAB_str_t    expr;       /* expr*_k                          */
         AST_type_n_t    *type_p;    /* offset_*_k, sizeof_k, type_kind_k*/
         struct DDBE_vec_rep_t *ref_p;     /* reference_k                */
         struct DDBE_vec_rep_t **p_ref_p;  /* indirect_k                 */
     } val;
-    long                index;      /* Vector index of this entry */
+    ddbe_int32_t        index;      /* Vector index of this entry */
     struct DDBE_vec_rep_t *next;    /* Pointer to next entry */
     STRTAB_str_t        comment;    /* Comment for this entry */
     DDBE_vec_kind_t     kind;       /* Kind of this entry */

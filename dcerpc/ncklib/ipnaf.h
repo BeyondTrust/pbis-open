@@ -90,7 +90,7 @@
 typedef struct rpc_addr_ip_t
 {
     rpc_protseq_id_t        rpc_protseq_id;
-    unsigned32              len;
+    socklen_t               len;
     union
     {
         struct sockaddr_in      sa;

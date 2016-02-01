@@ -17,6 +17,12 @@ lw_sfx()
     if [ "$MK_HOST_OS" = "solaris" -a $MK_HOST_DISTRO_VERSION = "11" ]
     then
         TMP_TARGET="@sfx/$SFX.$MK_HOST_OS$MK_HOST_DISTRO_VERSION.$MK_HOST_ARCH.$FORMAT.sh"
+    elif [ "$MK_HOST_OS" = "linux" -a "$MK_HOST_ARCH" = "powerpc" ] 
+    then
+        # if this is linux powerpc also include the HOST_ISAS information in the sfx name
+        _lw_isas_concat "$MK_ISAS"
+        SFX_ISAS="$result"
+        TMP_TARGET="@sfx/$SFX.$MK_HOST_OS.$MK_HOST_ARCH.$SFX_ISAS.$FORMAT.sh"
     else
         TMP_TARGET="@sfx/$SFX.$MK_HOST_OS.$MK_HOST_ARCH.$FORMAT.sh"
     fi
@@ -165,3 +171,23 @@ _lw_sfx()
         "./install.sh" \
         --echo-dir "$LABEL"
 }
+
+_lw_isas_concat() 
+{
+    _text=$1
+    set -- _junk $_text
+
+    # check whether we can safely shift as 
+    # dash considers shifting when nothing is
+    # available as a fatal error
+    shift $(( $# > 0 ? 1 : 0))
+    _result=$1
+
+    shift $(( $# > 0 ? 1 : 0))
+    for _isas 
+    do
+        _result=${_result}_${_isas}
+    done
+    result=$_result
+}
+

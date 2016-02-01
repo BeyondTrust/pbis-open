@@ -334,7 +334,7 @@ typedef struct
     
 typedef union
 {
-    unsigned long                       all;
+    unsigned32                          all;
     rpc_cn_local_id_parts_t             parts;
 } rpc_cn_local_id_t, *rpc_cn_local_id_p_t;
 

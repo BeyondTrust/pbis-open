@@ -872,7 +872,7 @@ INTERNAL unsigned32     rundown_handles_action_rtn
      */  
     if (assoc_grp->grp_liveness_mntr != NULL)
     {
-        (*assoc_grp->grp_liveness_mntr) ((rpc_client_handle_t) assoc_grp->grp_id.all);
+        (*assoc_grp->grp_liveness_mntr) ((rpc_client_handle_t) ((size_t)assoc_grp->grp_id.all));
     }
 
     sm_p->cur_state = RPC_C_ASSOC_GRP_CLOSED;

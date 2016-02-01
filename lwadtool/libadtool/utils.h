@@ -153,7 +153,7 @@ extern BOOL IsBackSlashPresent(IN PSTR s);
  * @param s String to check.
  * @return TRUE or FALSE.
  */
-extern inline BOOL IsSlashPresent(IN PSTR s);
+extern BOOL IsSlashPresent(IN PSTR s);
 
 /**
  * Check if dot is present in the string.

@@ -43,6 +43,7 @@
 #include <nidlmsg.h>
 #include <cspell.h>
 
+
 /*
  * Conditional macro to spell a comment containing the current vector index.
  */
@@ -197,7 +198,7 @@ static void DDBE_spell_short_bytes
 static void DDBE_spell_long_bytes
 (
     FILE            *fid,           /* [in] output file handle */
-    unsigned long   *val,           /* [in] value to print */
+    ddbe_uint32_t   *val,           /* [in] value to print */
     boolean         little_endian ATTRIBUTE_UNUSED  /* [in] T/F => spell as little/big endian */
 )
 {
@@ -931,9 +932,9 @@ void DDBE_spell_type_vec_preamble
     byte                *bp;        /* Pointer to byte stream */
     char                *getenvres; /* Environment variable translation */
     unsigned long       index;      /* Type vector index */
-    unsigned long       longint;    /* 4-byte integer data */
-    unsigned short      shortint;   /* 2-byte integer data */
-    boolean         spell_stg_info; /* TRUE => spell storage information list */
+    ddbe_uint32_t       longint;    /* 4-byte integer data */
+    ddbe_uint16_t       shortint;   /* 2-byte integer data */
+    boolean             spell_stg_info; /* TRUE => spell storage information list */
 
     int_p = vip->ast_int_p;
     NAMETABLE_id_to_string(int_p->name, &int_name);
@@ -1181,7 +1182,7 @@ void DDBE_spell_type_vec_addenda
     void                **cmd_val  /* [in] array of cmd option values */
 )
 {
-    unsigned long size,index,longint; /* 4-byte integer data */
+    ddbe_uint32_t size,index,longint; /* 4-byte integer data */
     byte                *p4;        /* Pointer to 4-byte integer */
     boolean             *do_bug;    /* Pointer to array of bug flags */
     char                *getenvres; /* Environment variable translation */
