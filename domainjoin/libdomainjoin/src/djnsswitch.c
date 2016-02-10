@@ -528,9 +528,34 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
     PSTR defaultFilePath = NULL;
     DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bFileExists = FALSE;
+    LwDistroInfo distro = {0};
+
     memset(conf, 0, sizeof(*conf));
-    
+
+    GCE(ceError = DJGetDistroInfo(NULL, &distro));
+
     //Keep trying to read different filenames until one of them is found
+    if(!bFileExists)
+    {
+	    if(distro.os == OS_SUNOS)
+		{
+			if(strcmp("5.11", distro.version) == 0)
+			{
+				// Solaris 11 and above use SMF for nsswitch configuration.
+				// When in Automatic mode, by default Solaris 11.x uses the /etc/nsswitch.dns
+				// as a template.
+				bFileExists = TRUE;
+				ceError = ReadNsswitchFile(conf, testPrefix, "/etc/nsswitch.dns");
+				if(ceError == ERROR_FILE_NOT_FOUND)
+				{
+					bFileExists = FALSE;
+					ceError = ERROR_SUCCESS;
+				}
+				GCE(ceError);
+			}
+		}
+	}
+	
     if(!bFileExists)
     {
         bFileExists = TRUE;
@@ -601,6 +626,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
 cleanup:
     CT_SAFE_FREE_STRING(copyDestPath);
     CT_SAFE_FREE_STRING(defaultFilePath);
+    DJFreeDistroInfo(&distro);
 
     return ceError;
 }
@@ -756,7 +782,6 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     static const char* moduleName = "lsass";
     static const char* oldModule = "lwidentity";
     const char* pszModule = NULL;
-    PSTR pOutput = NULL;
     CHAR  szCommand[2 * PATH_MAX + 1] = {};
 
     GCE(ceError = DJGetDistroInfo(NULL, &distro));
@@ -875,10 +900,7 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 
     if(distro.os == OS_SUNOS)
     {
-        CTCaptureOutput("uname -rv", &pOutput);
-        CTStripWhitespace(pOutput);
-        if(!strcmp(pOutput, "5.11 11.0") || !strcmp(pOutput, "5.11 11.1") ||
-           !strcmp(pOutput, "5.11 11.2"))
+        if(strcmp("5.11", distro.version) == 0)
         {
             if(enable)
             {
@@ -936,7 +958,6 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 
 cleanup:
     DJFreeDistroInfo(&distro);
-    CT_SAFE_FREE_STRING(pOutput);
 
     return ceError;
 }
