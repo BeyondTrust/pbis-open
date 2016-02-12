@@ -2086,54 +2086,87 @@ option()
                 *-darwin-x86_32)
                     _default_cflags="-arch i386"
                     _default_cxxflags="-arch i386"
+                    _default_ldflags=""
                     ;;
                 *-darwin-x86_64)
                     _default_cflags="-arch x86_64"
                     _default_cxxflags="-arch x86_64"
+                    _default_ldflags=""
                     ;;
                 *-darwin-ppc32)
                     _default_cflags="-arch ppc"
                     _default_cxxflags="-arch ppc"
+                    _default_ldflags=""
                     ;;
                 *-darwin-ppc64)
                     _default_cflags="-arch ppc64"
                     _default_cxxflags="-arch ppc64"
+                    _default_ldflags=""
                     ;;
                 *-*-x86_32)
                     _default_cflags="-m32"
                     _default_cxxflags="-m32"
+                    _default_ldflags=""
                     ;;
                 *-*-x86_64)
                     _default_cflags="-m64"
                     _default_cxxflags="-m64"
+                    _default_ldflags=""
+                    ;;
+                *-linux-ppc32)
+                    _default_cflags="-mcpu=powerpc -m32"
+                    _default_cxxflags="-mcpu=powerpc -m32"
+                    _default_ldflags="-m32"
+                    ;;
+                *-linux-ppc64)
+#                   n.b. compiling with -m64 produces 8 bytes longs, 
+#                   ensure un/marshalling code doesn't assume 4 byte longs
+                    _default_cflags="-std=gnu99 -mcpu=powerpc64 -m64"
+                    _default_cxxflags="-mcpu=powerpc64 -m64"
+                    _default_ldflags="-m64"
+                    ;;
+                *-linux-ppc64le)
+#                   n.b. compiling with -m64 produces 8 bytes longs, 
+#                   ensure un/marshalling code doesn't assume 4 byte longs
+                    _default_cflags="-std=gnu99 -mcpu=powerpc64 -mlittle-endian -m64"
+                    _default_cxxflags="-mcpu=powerpc64 -mlittle-endian -m64"
+                    _default_ldflags="-m64"
                     ;;
                 *-*-sparc_32)
                     _default_cflags="-m32"
                     _default_cxxflags="-m32"
+                    _default_ldflags=""
                     ;;
                 *-*-sparc_64)
                     _default_cflags="-m64"
                     _default_cxxflags="-m64"
+                    _default_ldflags=""
                     ;;
                 *-aix-ppc32)
                     _default_cflags="-maix32"
                     _default_cxxflags="-maix32"
+                    _default_ldflags=""
                     ;;
                 *-aix-ppc64)
                     _default_cflags="-maix64"
                     _default_cxxflags="-maix64"
+                    _default_ldflags=""
                     ;;
                 *-hpux-ia64_32)
                     _default_cflags="-milp32"
                     _default_cxxflags="-milp32"
+                    _default_ldflags=""
                     ;;
                 *-hpux-ia64_64)
                     _default_cflags="-mlp64"
                     _default_cxxflags="-mlp64"
+                    _default_ldflags=""
                     ;;
                 *)
                     _default_cflags=""
                     _default_cxxflags=""
+                    _default_ldflags=""
+                    mk_msg "Unknown platform ${MK_DEFAULT_CC}-${result}-${_isa} will use default compiler flags."
                     ;;
             esac
             
@@ -2170,7 +2203,7 @@ option()
             mk_option \
                 VAR="${_def}_LDFLAGS" \
                 PARAM="flags" \
-                DEFAULT="" \
+                DEFAULT="$_default_ldflags" \
                 HELP="Linker flags ($_sys/$_isa)"
         done
     done

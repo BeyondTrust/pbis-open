@@ -1041,7 +1041,9 @@ RegTransactEnumValueW(
         case REG_R_ENUM_VALUEW:
             pEnumValueResp = (PREG_IPC_ENUM_VALUE_RESPONSE) out.data;
 
-            memcpy(pValueName, pEnumValueResp->pName, (pEnumValueResp->cName+1)*sizeof(*pValueName));
+            memcpy(pValueName, pEnumValueResp->pName, (pEnumValueResp->cName)*sizeof(*pValueName));
+            pValueName[pEnumValueResp->cName + 1] = 0;
+
             *pcchValueName = pEnumValueResp->cName;
 
             if (pData)

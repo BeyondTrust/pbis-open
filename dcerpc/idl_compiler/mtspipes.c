@@ -203,7 +203,7 @@ void DDBE_init_server_pipes
             fprintf( fid,
         "rpc_ss_mts_init_callee_pipe(%ld,%ld,%ld,&IDL_current_pipe,&IDL_ms,\n",
              curr_pipe_index, next_in_pipe_index, next_out_pipe_index );
-            fprintf( fid, "%ld,(rpc_ss_mts_ee_pipe_state_t**)&%s.state);\n",
+            fprintf( fid, "%" PRId_ddbe32 ",(rpc_ss_mts_ee_pipe_state_t**)&%s.state);\n",
                      (p_parameter->type->kind == AST_pipe_k)
                      ? p_parameter->type->be_info.dd_type->type_vec_p->index
                      : p_parameter->type->type_structure.pointer->pointee_type

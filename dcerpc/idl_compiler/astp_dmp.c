@@ -486,6 +486,9 @@ static void AST_dump_exported_item
         AST_dump_operation (export_ptr->thing_p.exported_operation, 1);
         break;
 
+    case AST_cpp_quote_k:
+        printf("AST_cpp_quote_k\n");
+        break;
     }
 }
 

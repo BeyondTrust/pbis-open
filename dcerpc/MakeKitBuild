@@ -170,6 +170,9 @@ configure()
             ppc64)
                 target_cpu="$target_cpu powerpc64"
                 ;;
+            ppc64le)
+                target_cpu="$target_cpu powerpc64le"
+                ;;
             hppa32)
                 target_cpu="$target_cpu hppa2.0"
                 ;;

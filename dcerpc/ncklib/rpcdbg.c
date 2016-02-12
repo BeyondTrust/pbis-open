@@ -44,6 +44,15 @@
 #include <ctype.h>
 #include <commonp.h>
 #include <string.h>
+
+
+#ifdef DEBUG
+#define RPC_DBG_USE_SYSLOG 1
+#endif
+
+#ifdef RPC_DBG_USE_SYSLOG
+#include <syslog.h>
+#endif
 
 /*
  * Debug table
@@ -230,6 +239,8 @@ PRIVATE int rpc__printf (char *format, ...)
 	va_end (arg_ptr);
     }
 
+/* Hack to write to syslog as lw containers close stderr */
+#ifndef RPC_DBG_USE_SYSLOG
     {
         int             cs;
         int ret;
@@ -241,6 +252,13 @@ PRIVATE int rpc__printf (char *format, ...)
             return ret;
     }
     return 0;
+#else
+    /* POSIX/GNU syslog related functions are thread safe; not verified on other platforms */
+    openlog("DCERPC", LOG_PID | LOG_NDELAY, LOG_USER);
+    syslog(LOG_USER | LOG_DEBUG, "%s", buff);
+    closelog();
+    return 0;
+#endif
 }
 
 #endif /* NO_RPC_PRINTF */

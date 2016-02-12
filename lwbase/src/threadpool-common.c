@@ -424,45 +424,44 @@ WorkLoop(
     NTSTATUS status = STATUS_SUCCESS;
     PRING pRing = NULL;
     PLW_WORK_ITEM pItem = NULL;
-    PLW_WORK_THREADS pThreads = pThread->pThreads;
 
     LOCK_THREADS(pThread->pThreads);
 
     for(;;)
     {
-        pThreads->ulAvailable++;
+        pThread->pThreads->ulAvailable++;
 
         status = WorkWait(pThread);
         GOTO_ERROR_ON_STATUS(status);
 
-        RingDequeue(&pThreads->WorkItems, &pRing);
-        pThreads->ulQueued--;
-        pThreads->ulAvailable--;
+        RingDequeue(&(pThread->pThreads->WorkItems), &pRing);
+        pThread->pThreads->ulQueued--;
+        pThread->pThreads->ulAvailable--;
 
-        UNLOCK_THREADS(pThreads);
+        UNLOCK_THREADS(pThread->pThreads);
 
         pItem = LW_STRUCT_FROM_FIELD(pRing, LW_WORK_ITEM, Ring);
         pItem->pfnFunc(pItem, pItem->pContext);
 
-        LOCK_THREADS(pThreads);
+        LOCK_THREADS(pThread->pThreads);
     }
 
 error:
 
-    pThreads->ulAvailable--;
-    pThreads->ulStarted--;
+    pThread->pThreads->ulAvailable--;
+    pThread->pThreads->ulStarted--;
     pThread->bStarted = FALSE;
 
     /* If the thread pool is not being shut down, nothing is
        going to call pthread_join() on this thread, so call
        pthread_detach() now */
-    if (!pThreads->bShutdown)
+    if (!pThread->pThreads->bShutdown)
     {
         pthread_detach(pThread->Thread);
         pThread->Thread = INVALID_THREAD_HANDLE;
     }
 
-    UNLOCK_THREADS(pThreads);
+    UNLOCK_THREADS(pThread->pThreads);
 
     return status;
 }

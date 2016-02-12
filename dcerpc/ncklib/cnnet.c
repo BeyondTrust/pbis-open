@@ -1537,8 +1537,11 @@ PRIVATE void rpc__cn_network_mon
     /*
      * Get the association group using the group id provided as a
      * client handle. 
+     *
+     * n.b. group ids are 32bits, but passed around as opaque handles
+     * (pointers), hence the trickery below. 
      */
-    grp_id.all = (unsigned long) client_h;
+    grp_id.all = (unsigned32) ((size_t) client_h);
     grp_id = rpc__cn_assoc_grp_lkup_by_id (grp_id,
                                            RPC_C_CN_ASSOC_GRP_SERVER,
                                            binding_r->transport_info,
@@ -1617,8 +1620,11 @@ PRIVATE void rpc__cn_network_stop_mon
     /*
      * Get the association group using the group id provided as a
      * client handle. 
+     *
+     * n.b. group ids are 32bits, but passed around as opaque handles
+     * (pointers), hence the trickery below. 
      */
-    grp_id.all = (unsigned long) client_h;
+    grp_id.all = (unsigned32) ((size_t)client_h);
     grp_id = rpc__cn_assoc_grp_lkup_by_id (grp_id,
                                            RPC_C_CN_ASSOC_GRP_SERVER,
                                            binding_r->transport_info,

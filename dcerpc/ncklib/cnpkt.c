@@ -97,6 +97,30 @@
 #include <cnp.h>        /* NCA Connection private declarations */
 #include <cnpkt.h>	/* NCA Connection packet encoding */
 
+
+/*
+ * Determine if we have C99 support, so we can use stdint types if possible.
+ *
+ * n.b. for gcc this requires passing --std=c99 (or greater)
+ *  or else __STDC_VERSION__ is not defined.
+ */
+#if defined(__STDC__)
+# if defined(__STDC_VERSION__)
+#  if (__STDC_VERSION__ >= 19901L)
+#    define C_STD_99
+#  endif
+# endif
+#endif
+
+#if defined(C_STD_99)
+#include <stdint.h>
+typedef uintptr_t unsignedptr;
+#else 
+/* without C99 support, rely on the existing code which while
+ * not portable works on many platforms */
+typedef unsigned32 unsignedptr; 
+#endif
+
 /*
  * R P C _ G _ C N _ C O M M O N _ H D R 
  *
@@ -217,7 +241,7 @@ void SWAP_INPLACE_SYNTAX
 
 INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any 
 (
-  rpc_cn_port_any_t       *port_any_p,
+    rpc_cn_port_any_t       *port_any_p,
     unsigned8               *drepp,
     unsigned8               *end_of_pkt,
     unsigned32              *st
@@ -533,6 +557,7 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported
 }
 
 
+
 /*
 **++
 **
@@ -570,14 +595,14 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported
 
 INTERNAL void force_alignment 
 (
-  unsigned32 boundary,
+  unsignedptr boundary,
   unsigned8 **ptr
 )
 {
     union
     {
     	unsigned8 **as_ptr;
-    	unsigned32 *as_int;
+    	unsignedptr *as_int;
     } anyptr;
 
     anyptr.as_ptr = ptr;
@@ -860,7 +885,7 @@ PRIVATE unsigned32 rpc__cn_unpack_hdr
                 return (st);
             }
 
-            force_alignment (4, (unsigned8 **)&presp);
+            force_alignment(4, (unsigned8 **)&presp);
             authp = unpack_pres_result_list (presp, swap, end_of_pkt, &st);
             if (st != rpc_s_ok)
             {

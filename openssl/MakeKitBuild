@@ -265,6 +265,10 @@ configure_openssl()
     MK_MSG_DOMAIN="configure"
     extra_args=""
 
+    # sets the host_string to configure 
+    # openssl so it builds properly for the 
+    # target platform; you can see the supported
+    # host_string values by running Configure -?
     case "${MK_OS}-${MK_ISA}" in
         darwin-x86_64)
             host_string="darwin64-x86_64-cc"
@@ -303,6 +307,15 @@ configure_openssl()
             ;;
         linux-ppc32)
             host_string="linux-ppc"
+            extra_args="-m32"
+            ;;
+        linux-ppc64)
+            host_string="linux-ppc64"
+            extra_args="-m64"
+            ;;
+        linux-ppc64le)
+            host_string="linux-ppc64le"
+            extra_args="-m64 -mlittle-endian"
             ;;
         linux-x86_32)
             host_string="linux-elf"
@@ -316,6 +329,7 @@ configure_openssl()
             host_string="linux-generic32"
             ;;
         *)
+            mk_msg "Unknown host/build '${MK_OS}-${MK_ISA}'; will use openssl config to build openssl. You should verify openssl config correctly detects your host/build."
             host_string=""
             ;;
     esac

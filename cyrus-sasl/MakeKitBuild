@@ -57,13 +57,33 @@ make()
             ;;
     esac
 
+    # per platform compilation flags
+    CYRUS_CFLAGS="$CFLAGS"
+    CYRUS_BUILD_CFLAGS="$BUILD_CFLAGS"
+    case "$MK_OS" in
+        linux)
+            if [ $MK_ARCH="powerpc" ] 
+            then
+                CYRUS_CFLAGS="$CYRUS_CFLAGS -O0"
+                CYRUS_BUILD_CFLAGS="$CYRUS_BUILD_CFLAGS -O0"
+
+                mk_msg "cyrus-sasl on linux-powerpc; disabling compiler optimizations to avoid duplicate symbols."
+                mk_msg "CFLAGS="$CYRUS_CFLAGS 
+                mk_msg "BUILD_CFLAGS="$CYRUS_BUILD_CFLAGS 
+            fi
+        ;;
+        *)
+        ;;
+    esac
+
     mk_autotools \
         HEADERS="$SASL_HEADERS" \
         LIBS='sasl2:2:23:0' \
         TARGETS="$SASL_EXTRA_TARGETS" \
-	HEADERDEPS="gssapi.h" \
-	LIBDEPS="gssapi_krb5" \
+        HEADERDEPS="gssapi.h" \
+        LIBDEPS="gssapi_krb5" \
         CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE" \
+        CFLAGS="$CYRUS_CFLAGS" \
         -- \
         --with-configdir="${MK_LIBDIR}/sasl2" \
         --with-plugindir="${MK_LIBDIR}/sasl2" \
@@ -82,5 +102,5 @@ make()
         --enable-shared \
         --enable-fast-install \
         BUILD_CC="$BUILD_CC" \
-        BUILD_CFLAGS="$BUILD_CFLAGS"
+        BUILD_CFLAGS="$CYRUS_BUILD_CFLAGS"
 }

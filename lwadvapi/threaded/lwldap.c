@@ -74,7 +74,7 @@ LwCLdapOpenDirectory(
     LDAP * ld = NULL;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     int rc = LDAP_VERSION3;
-    int maxbufsize = LW_LDAP_16MB;
+    ber_len_t maxbufsize = LW_LDAP_16MB;
     PSTR pszURL = NULL;
 
     LW_BAIL_ON_INVALID_STRING(pszServerName);

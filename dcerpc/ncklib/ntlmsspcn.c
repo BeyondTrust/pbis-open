@@ -1087,7 +1087,7 @@ INTERNAL void rpc__ntlmauth_cn_free_prot_info
 	}
 
 #ifdef DEBUG
-	memset(ntlmauth_cn_info, 0, sizeof (rpc_ntlmauth_cn_info_p_t));
+	memset(ntlmauth_cn_info, 0, sizeof (rpc_ntlmauth_cn_info_t));
 #endif
 
 	RPC_MEM_FREE (ntlmauth_cn_info, RPC_C_MEM_NTLMAUTH_CN_INFO);
