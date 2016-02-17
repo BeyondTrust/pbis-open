@@ -818,6 +818,11 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         action->newComputer.namePreWin2000,
         NULL
     };
+    
+     PSTR userAccountControl[] = {
+        "4128",
+        NULL
+    };
 
     AttrValsT avp[] = {
         { "objectClass", GetObjectClassVals(ObjectClassComputer) },
@@ -825,15 +830,16 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         { "cn", cn },
         { "sAMAccountName", samAccountName },
         { "description", desc },
-        { "dnsHostName", dnsHostName },
+        { "userAccountControl", userAccountControl },
+        { "dnsHostName", dnsHostName },        
         { NULL, NULL }
     };
     
     //remove the dnsHostName attribute if it has no value
     if(action->newComputer.dnsHostName == NULL)
     {
-        avp[5].attr = NULL;
-        avp[5].vals = NULL;
+        avp[6].attr = NULL;
+        avp[6].vals = NULL;
     }
 
     PrintStderr(appContext, LogLevelVerbose, "%s: Creating computer %s ...\n",
