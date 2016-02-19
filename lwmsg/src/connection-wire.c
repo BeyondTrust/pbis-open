@@ -180,9 +180,14 @@ lwmsg_connection_recvmsg(
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
         case EINVAL:
+            status = LWMSG_STATUS_INVALID_PARAMETER;
+            LWMSG_ASSERT_NOT_REACHED();
+            break;
         case EBADF:
             /* bug */
+            status=LWMSG_STATUS_FILE_NOT_FOUND;
             LWMSG_ASSERT_NOT_REACHED();
+            break;
         default:
             status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from recvmsg(): %i", errno);
@@ -319,10 +324,15 @@ lwmsg_connection_sendmsg(
         case ECONNRESET:
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
-        case EINVAL:
+         case EINVAL:
+            status = LWMSG_STATUS_INVALID_PARAMETER;
+            LWMSG_ASSERT_NOT_REACHED();
+            break;            
         case EBADF:
             /* bug */
+            status=LWMSG_STATUS_FILE_NOT_FOUND;
             LWMSG_ASSERT_NOT_REACHED();
+            break;
         default:
             status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from sendmsg(): %i", errno);
@@ -753,6 +763,19 @@ error:
     goto done;
 }
 
+static int getSafeFd(int fd) {
+	int rv = fd;
+
+	if (fd >= 0 && fd < 3) {
+		rv = dup(fd);
+		rv = getSafeFd(rv);
+		close(fd);
+	}
+
+	return rv;
+}
+
+
 static
 LWMsgStatus
 lwmsg_connection_begin_connect_local(
@@ -765,6 +788,7 @@ lwmsg_connection_begin_connect_local(
     long opts = 0;
 
     priv->fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    priv->fd = getSafeFd(priv->fd);
     
     if (priv->fd == -1)
     {
