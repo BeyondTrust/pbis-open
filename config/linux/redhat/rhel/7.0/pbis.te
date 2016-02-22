@@ -52,6 +52,7 @@ allow automount_t mount_t:process { siginh rlimitinh noatsecure };
 allow automount_t unconfined_t:unix_stream_socket connectto;
 allow automount_t var_lib_t:file { read open };
 allow automount_t var_lib_t:sock_file write;
+allow automount_t init_var_lib_t:file { read open };
 
 #============= chkpwd_t ==============
 allow chkpwd_t unconfined_t:unix_stream_socket connectto;
@@ -85,7 +86,7 @@ allow setroubleshootd_t rpm_var_lib_t:file create;
 
 #============= syslogd_t ==============
 allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
-allow syslogd_t init_var_lib_t:fifo_file { getattr ioctl append };
+allow syslogd_t init_var_lib_t:fifo_file { open getattr ioctl append };
 allow syslogd_t init_var_lib_t:file { create append ioctl open getattr };
 allow syslogd_t init_var_lib_t:dir { write add_name search };
 allow syslogd_t syslogd_var_lib_t:dir create;
