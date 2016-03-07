@@ -837,11 +837,62 @@ error:
 }
 
 DWORD
+LwSmResetServiceLogDefaults(
+    LW_SERVICE_HANDLE hHandle
+    )
+{
+    DWORD dwError = 0;
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    SM_RESET_LOG_DEFAULTS_REQ info = {0};
+
+    info.hHandle = (LWMsgHandle*) hHandle;
+    in.tag = SM_IPC_RESET_LOG_DEFAULTS_REQ;
+    in.data = &info;
+
+    dwError = LwSmIpcAcquireCall(&pCall);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case SM_IPC_RESET_LOG_DEFAULTS_RES:
+        break;
+    case SM_IPC_ERROR:
+        dwError = *(PDWORD) out.data;
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
 LwSmSetServiceLogTarget(
     LW_SERVICE_HANDLE hHandle,
     LW_PCSTR pszFacility,
     LW_SM_LOGGER_TYPE type,
-    PCSTR pszTarget
+    PCSTR pszTarget,
+    const LW_BOOLEAN persistFlag
     )
 {
     DWORD dwError = 0;
@@ -854,6 +905,7 @@ LwSmSetServiceLogTarget(
     info.pFacility = (PSTR) pszFacility;
     info.type = type;
     info.pszTarget = (PSTR) pszTarget;
+    info.PersistFlag = persistFlag;
     in.tag = SM_IPC_SET_LOG_INFO_REQ;
     in.data = &info;
 
@@ -958,7 +1010,8 @@ DWORD
 LwSmSetServiceLogLevel(
     LW_SERVICE_HANDLE hHandle,
     LW_PCSTR pFacility,
-    LW_SM_LOG_LEVEL level
+    LW_SM_LOG_LEVEL level,
+    const LW_BOOLEAN persistFlag
     )
 {
     DWORD dwError = 0;
@@ -970,6 +1023,7 @@ LwSmSetServiceLogLevel(
     info.hHandle = (LWMsgHandle*) hHandle;
     info.pFacility = (PSTR) pFacility;
     info.Level = level;
+    info.PersistFlag = persistFlag;
 
     in.tag = SM_IPC_SET_LOG_LEVEL_REQ;
     in.data = &info;

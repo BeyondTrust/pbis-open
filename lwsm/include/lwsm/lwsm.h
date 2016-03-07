@@ -591,6 +591,21 @@ LwSmRefreshService(
 
 
 /**
+ * @brief Resets the log defaults for a service
+ *
+ * Resets the log defaults for a service.  Does not affect running services.
+ *
+ * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
+ *
+ * @retval ERROR_SUCCESS success
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log targets
+ */
+DWORD
+LwSmResetServiceLogDefaults(
+    LW_SERVICE_HANDLE hHandle
+    );
+
+/**
  * @brief Sets log target for a service
  *
  * Sets the log target for a service.  If the service is running in a container,
@@ -600,6 +615,7 @@ LwSmRefreshService(
  * @param[in] pFacility the facility to redirect, or NULL to set the default log target
  * @param[in] type the type of logging target
  * @param[in] pTarget the logging target, or NULL for target types that don't require it
+ * @param[in] persistFlag if true, persist the log type to the registry
  * @retval ERROR_SUCCESS success
  * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log targets
  */
@@ -608,7 +624,8 @@ LwSmSetServiceLogTarget(
     LW_SERVICE_HANDLE hHandle,
     LW_PCSTR pFacility,
     LW_SM_LOGGER_TYPE type,
-    PCSTR pTarget
+    PCSTR pTarget,
+    const LW_BOOLEAN persistFlag
     );
 
 /**
@@ -620,14 +637,16 @@ LwSmSetServiceLogTarget(
  * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
  * @param[in] pFacility the facility to set the level for, or NULL to set the default log level
  * @param[in] level the maximum log level to set
+ * @param[in] persistFlag if true, persist the log level to the registry
  * @retval ERROR_SUCCESS success
- * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log targets
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log level
  */
 DWORD
 LwSmSetServiceLogLevel(
     LW_SERVICE_HANDLE hHandle,
     LW_PCSTR pFacility,
-    LW_SM_LOG_LEVEL level
+    LW_SM_LOG_LEVEL level,
+    LW_BOOLEAN persistFlag
     );
 
 /**

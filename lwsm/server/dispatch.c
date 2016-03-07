@@ -38,6 +38,11 @@
 
 #include "includes.h"
 
+/* logging related registry key names */
+static PCSTR szLogLevelKeyValue = "LogLevel";
+static PCSTR szLogTargetKeyValue = "LogTarget";
+static PCSTR szLogTypeKeyValue = "LogType";
+
 static
 DWORD
 LwSmGetCallUid(
@@ -638,75 +643,46 @@ error:
 }
 
 static
-LWMsgStatus
-LwSmDispatchSetLogInfo(
+DWORD 
+LwSmDispatchResetLogDefaults(
     LWMsgCall* pCall,
     LWMsgParams* pIn,
     LWMsgParams* pOut,
     PVOID pData
-    )
+)
 {
     DWORD dwError = 0;
-    PSM_SET_LOG_INFO_REQ pReq = pIn->data;
+    PSM_RESET_LOG_DEFAULTS_REQ pReq = pIn->data;
     uid_t uid = 0;
     LW_SERVICE_HANDLE hHandle = NULL;
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
 
-    if (uid == 0)
-    {
-        if (pReq->hHandle)
-        {
-            dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
-            BAIL_ON_ERROR(dwError);
-
-            dwError = LwSmTableSetEntryLogInfo(
-                hHandle->pEntry,
-                pReq->pFacility,
-                pReq->type,
-                pReq->pszTarget);
-            BAIL_ON_ERROR(dwError);
-        }
-        else switch (pReq->type)
-        {
-        case LW_SM_LOGGER_NONE:
-            dwError = LwSmSetLogger(pReq->pFacility, NULL, NULL);
-            break;
-        case LW_SM_LOGGER_FILE:
-            dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
-            break;
-        case LW_SM_LOGGER_SYSLOG:
-            dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
-            break;
-        case LW_SM_LOGGER_DEFAULT:
-            if (!pReq->pFacility)
-            {
-                dwError = ERROR_INVALID_PARAMETER;
-            }
-            else
-            {
-                dwError = LwSmSetLoggerToDefault(pReq->pFacility);
-            }
-            break;
-        }
-    }
-    else
+    if (uid != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
     }
+    else 
+    {
+        // if we don't have a handle are we lwsmd?
+        if (pReq->hHandle)
+        {
+           dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+           BAIL_ON_ERROR(dwError);
 
-    if (dwError)
+           // LW_PWSTR serviceName = hHandle->pEntry->pInfo->pwszName;
+        }
+        // doesn't appear that there are registry entries for lwsmd so
+        // should this fail?
+    }
+
+    if (dwError) 
     {
         dwError = LwSmSetError(pOut, dwError);
         BAIL_ON_ERROR(dwError);
     }
-    else
-    {
-        pOut->tag = SM_IPC_SET_LOG_INFO_RES;
-        pOut->data = NULL;
-    }
-    
+
 cleanup:
 
     return LwSmMapLwError(dwError);
@@ -716,50 +692,95 @@ error:
     goto cleanup;
 }
 
-static
-LWMsgStatus
-LwSmDispatchGetLogState(
-    LWMsgCall* pCall,
-    LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    )
+
+
+static 
+DWORD 
+LwSmDispatchPersistRegistryValue(
+    PCWSTR pwszServiceName, 
+    PCSTR szRegistryValueName,
+    PCSTR value
+  )
 {
     DWORD dwError = 0;
-    PSM_GET_LOG_STATE_REQ pReq = pIn->data;
-    PSM_GET_LOG_STATE_RES pRes = NULL;
-    LW_SERVICE_HANDLE hHandle = NULL;
+    HANDLE hReg = NULL;
+    HKEY pRootKey = NULL;
 
-    dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
+    PSTR pszServiceName = NULL;
+    PSTR pszServiceKeyPath = NULL;
+    
+
+    // construct the services key path
+    dwError = LwWc16sToMbs(pwszServiceName, &pszServiceName);
+    BAIL_ON_ERROR(dwError);
+    
+    dwError = LwAllocateStringPrintf(&pszServiceKeyPath, "Services\\%s", pszServiceName);
+    BAIL_ON_ERROR(dwError);
+    
+
+    dwError = RegOpenServer(&hReg); 
+    if (dwError) 
+    {
+      SM_LOG_ERROR("Could not open registry: error %d", dwError);
+    }
     BAIL_ON_ERROR(dwError);
 
-    if (pReq->hHandle)
+    dwError = RegOpenKeyExA(hReg, NULL, HKEY_THIS_MACHINE, 0 , KEY_READ, &pRootKey);
+    if (dwError) 
     {
-        dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
-        BAIL_ON_ERROR(dwError);
-
-        dwError = LwSmTableGetEntryLogState(hHandle->pEntry, pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
-        BAIL_ON_ERROR(dwError);
+      SM_LOG_ERROR("Could not open registry root key: error %d", dwError);
     }
-    else
-    {
-        dwError = LwSmGetLoggerState(pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
-        BAIL_ON_ERROR(dwError);
-    }
+    BAIL_ON_ERROR(dwError);
 
-    pOut->tag = SM_IPC_GET_LOG_STATE_RES;
-    pOut->data = pRes;
-    
+    dwError = LwSmRegistryWriteStringA(hReg, pRootKey, pszServiceKeyPath, szRegistryValueName, value);
+    BAIL_ON_ERROR(dwError);
+
 cleanup:
+
+    LW_SAFE_FREE_MEMORY(pszServiceName);
+    LW_SAFE_FREE_MEMORY(pszServiceKeyPath);
+
+    if (pRootKey) 
+    {
+      RegCloseKey(hReg, pRootKey);
+    }
+
+    if (hReg) 
+    {
+      RegCloseServer(&hReg);
+    }
 
     return LwSmMapLwError(dwError);
 
 error:
 
-    LW_SAFE_FREE_MEMORY(pRes);
-
     goto cleanup;
 }
+
+static 
+DWORD 
+LwSmDispatchPersistLogLevel(
+    PCWSTR pwszServiceName, 
+    LW_SM_LOG_LEVEL level
+  )
+{
+    PCSTR pszLogLevel = NULL;
+    DWORD dwError;
+    
+    /* this just points pszLogLevel at a constant string, so
+       no need to free this */
+    dwError = LwSmLogLevelToLogLevelName(&level, &pszLogLevel);
+    BAIL_ON_ERROR(dwError);
+    
+    LwSmDispatchPersistRegistryValue(pwszServiceName, szLogLevelKeyValue, pszLogLevel);
+    
+    cleanup:
+        return LwSmMapLwError(dwError);
+
+    error:
+        goto cleanup;
+}
+
 
 static
 LWMsgStatus
@@ -812,6 +833,31 @@ LwSmDispatchSetLogLevel(
         pOut->data = NULL;
     }
     
+    if (pReq->PersistFlag) 
+    {
+      dwError = LwSmDispatchPersistLogLevel(hHandle->pEntry->pInfo->pwszName, pReq->Level);
+      BAIL_ON_ERROR(dwError);
+
+      /* the new defaults won't be used on a lwsm service restart unless we
+         also update the cached service log levels obtained when lwsmd started.  
+         This requires we update the LW_SERVICE_INFO.DefaultLogLevel for the service 
+         and mark the service entry as dirty so that it is reconstructed from the 
+         service info 
+
+         the service info mask only supports updating all log related entries,
+         so must supply them all
+      */
+      const LW_SERVICE_INFO updatedServiceInfo = 
+      {
+        .DefaultLogLevel = pReq->Level,
+        .DefaultLogType = hHandle->pEntry->pInfo->DefaultLogType,
+        .pDefaultLogTarget = hHandle->pEntry->pInfo->pDefaultLogTarget
+      };
+       
+      dwError = LwSmTableUpdateEntry(hHandle->pEntry, &updatedServiceInfo, LW_SERVICE_INFO_MASK_LOG);
+      BAIL_ON_ERROR(dwError);
+    }
+ 
 cleanup:
 
     return LwSmMapLwError(dwError);
@@ -820,6 +866,176 @@ error:
 
     goto cleanup;
 }
+
+
+static
+LWMsgStatus
+LwSmDispatchSetLogInfo(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PSM_SET_LOG_INFO_REQ pReq = pIn->data;
+    uid_t uid = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PCSTR pszLogType = NULL;
+    PWSTR pDefaultLogTarget = NULL;
+
+    dwError = LwSmGetCallUid(pCall, &uid);
+    BAIL_ON_ERROR(dwError);
+
+    if (uid == 0)
+    {
+        if (pReq->hHandle)
+        {
+            dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+            BAIL_ON_ERROR(dwError);
+
+            dwError = LwSmTableSetEntryLogInfo(
+                hHandle->pEntry,
+                pReq->pFacility,
+                pReq->type,
+                pReq->pszTarget);
+            BAIL_ON_ERROR(dwError);
+        }
+        else switch (pReq->type)
+        {
+        case LW_SM_LOGGER_NONE:
+            dwError = LwSmSetLogger(pReq->pFacility, NULL, NULL);
+            break;
+        case LW_SM_LOGGER_FILE:
+            dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
+            break;
+        case LW_SM_LOGGER_SYSLOG:
+            dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
+            break;
+        case LW_SM_LOGGER_DEFAULT:
+            if (!pReq->pFacility)
+            {
+                dwError = ERROR_INVALID_PARAMETER;
+            }
+            else
+            {
+                dwError = LwSmSetLoggerToDefault(pReq->pFacility);
+            }
+            break;
+        }
+
+        if (pReq->PersistFlag)
+        {
+            dwError = LwSmDispatchPersistRegistryValue(hHandle->pEntry->pInfo->pwszName, szLogTargetKeyValue, pReq->pszTarget);
+            BAIL_ON_ERROR(dwError);
+            
+            pszLogType = LwSmLogTypeToLogTypeName(pReq->type);
+            if (!strcasecmp(pszLogType, "UNKNOWN"))
+            {
+                dwError = LW_ERROR_INVALID_PARAMETER;
+                BAIL_ON_ERROR(dwError);
+            }
+            
+            dwError = LwSmDispatchPersistRegistryValue(hHandle->pEntry->pInfo->pwszName, szLogTypeKeyValue, pszLogType);
+            BAIL_ON_ERROR(dwError);
+            
+            dwError = LwMbsToWc16s(pReq->pszTarget, &pDefaultLogTarget);
+            BAIL_ON_ERROR(dwError);
+
+            /* update the service info so that a restart of the service (via lwsm) will 
+               use these new defaults */
+            const LW_SERVICE_INFO updatedServiceInfo = 
+            {              
+              .DefaultLogLevel = hHandle->pEntry->pInfo->DefaultLogLevel,
+              .DefaultLogType = pReq->type,
+              .pDefaultLogTarget = pDefaultLogTarget 
+            };
+
+            dwError = LwSmTableUpdateEntry(hHandle->pEntry, &updatedServiceInfo, LW_SERVICE_INFO_MASK_LOG);
+            BAIL_ON_ERROR(dwError);
+        }
+    }
+    else
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+    }
+
+    if (dwError)
+    {
+        dwError = LwSmSetError(pOut, dwError);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        pOut->tag = SM_IPC_SET_LOG_INFO_RES;
+        pOut->data = NULL;
+    }
+    
+cleanup:
+
+    if (pDefaultLogTarget) 
+    {
+        LwFreeMemory(pDefaultLogTarget);
+    }
+
+    return LwSmMapLwError(dwError);
+
+
+    goto cleanup;
+
+error:
+  
+    goto cleanup;
+}
+
+static
+LWMsgStatus
+LwSmDispatchGetLogState(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PSM_GET_LOG_STATE_REQ pReq = pIn->data;
+    PSM_GET_LOG_STATE_RES pRes = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
+    BAIL_ON_ERROR(dwError);
+
+    if (pReq->hHandle)
+    {
+        dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmTableGetEntryLogState(hHandle->pEntry, pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwSmGetLoggerState(pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    pOut->tag = SM_IPC_GET_LOG_STATE_RES;
+    pOut->data = pRes;
+    
+cleanup:
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    LW_SAFE_FREE_MEMORY(pRes);
+
+    goto cleanup;
+}
+
+
+
+
 
 static
 LWMsgStatus
@@ -1064,6 +1280,7 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_BLOCK(SM_IPC_QUERY_SERVICE_STATUS_REQ, LwSmDispatchGetServiceStatus),
     LWMSG_DISPATCH_BLOCK(SM_IPC_QUERY_SERVICE_INFO_REQ, LwSmDispatchGetServiceInfo),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_WAIT_SERVICE_REQ, LwSmDispatchWaitService),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_RESET_LOG_DEFAULTS_REQ, LwSmDispatchResetLogDefaults),
     LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_INFO_REQ, LwSmDispatchSetLogInfo),
     LWMSG_DISPATCH_BLOCK(SM_IPC_GET_LOG_STATE_REQ, LwSmDispatchGetLogState),
     LWMSG_DISPATCH_BLOCK(SM_IPC_ENUM_FACILITIES_REQ, LwSmDispatchEnumFacilities),

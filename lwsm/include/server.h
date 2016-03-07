@@ -36,6 +36,10 @@
  *
  */
 
+/**
+ * @file 
+ * @brief Server side (lwsmd) definitions of lwsm functionality 
+ */
 #ifndef __LWSM_SERVER_H__
 #define __LWSM_SERVER_H__
 
@@ -251,6 +255,10 @@ LwSmTableAddEntry(
     PSM_TABLE_ENTRY* ppEntry
     );
 
+/**
+ * @brief Update the service info for the service entry 
+ * with the supplied information as indicated by the mask.
+ */
 DWORD
 LwSmTableUpdateEntry(
     PSM_TABLE_ENTRY pEntry,
@@ -381,6 +389,27 @@ LwSmRegistryReadServiceInfo(
     PLW_SERVICE_INFO* ppInfo
     );
 
+/**
+ * @brief Write a string value to the registry
+ *
+ * Writes a string value to the specified registry key.
+ * The key may be a path, but must exist. 
+ *
+ * @param [in] hReg the registry handle
+ * @param [in] pRootKey the root key handle
+ * @param [in] pszParentKey the registry key to which the value will be written
+ * @param [in] pszValueName the value name 
+ * @param [in] pszValue the value 
+ */
+DWORD
+LwSmRegistryWriteStringA(
+  HANDLE hReg,
+  HKEY pRootKey,
+  PCSTR pszParentKey,
+  PCSTR pszValueName,
+  PCSTR pszValue
+);
+
 DWORD
 LwSmBootstrap(
     VOID
@@ -482,6 +511,17 @@ DWORD
 LwSmLogLevelNameToLogLevel(
     PCSTR pszName,
     PLW_SM_LOG_LEVEL pLevel
+    );
+
+DWORD
+LwSmLogLevelToLogLevelName(
+    PLW_SM_LOG_LEVEL pLevel,
+    PCSTR *pszName
+    );
+
+PCSTR
+LwSmLogTypeToLogTypeName(
+    LW_SM_LOGGER_TYPE type
     );
 
 DWORD

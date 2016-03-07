@@ -1161,6 +1161,21 @@ typedef enum LWMsgTypeDirective
 #define LWMSG_MEMBER_UINT64(type, field) LWMSG_MEMBER_INTEGER(type, field, 8, LWMSG_UNSIGNED)
 
 /**
+ * @brief Define a (LW_BOOLEAN) boolean member
+ *
+ * Defines an unsigned 8-bit integer member of a struct or union.
+ * This is a convenient shortcut for a full LWMSG_MEMBER_INTEGER()
+ * invocation.
+ *
+ * @param type the name of the containing structure or union
+ * @param field the name of the member
+ * @hideinitializer
+ */
+#define LWMSG_MEMBER_BOOL(type, field)  \
+    LWMSG_MEMBER_INTEGER(type, field, 1, LWMSG_UNSIGNED),   \
+    LWMSG_ATTR_RANGE(LW_FALSE, LW_TRUE)
+
+/**
  * @brief Define a signed 8-bit integer
  *
  * Defines a signed 8-bit integer type.  This is a convenient

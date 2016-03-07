@@ -432,7 +432,7 @@ LwSmRegistryReadServiceInfo(
 
         for (i = 0; i < sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]); i++)
         {
-            if (!strcmp(gLogLevelMap[i].pszName, pszDefaultLogLevel))
+            if (!strcasecmp(gLogLevelMap[i].pszName, pszDefaultLogLevel))
             {
                 pInfo->DefaultLogLevel = gLogLevelMap[i].eValue;
                 break;
@@ -571,6 +571,55 @@ cleanup:
 error:
 
     *ppwszValue = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
+LwSmRegistryWriteStringA(
+  HANDLE hReg,
+  HKEY pRootKey,
+  PCSTR pszParentKey,
+  PCSTR pszValueName,
+  PCSTR pszValue
+)
+{
+    DWORD dwError = 0;
+    HKEY pKey= NULL;
+   
+    dwError = RegOpenKeyExA(hReg, pRootKey, pszParentKey, 0, KEY_WRITE, &pKey);
+    if (dwError) 
+    {
+      SM_LOG_ERROR("Could not open registry key: '%s' error %d", pszParentKey, dwError);
+    }
+    BAIL_ON_ERROR(dwError);
+
+    dwError = RegSetValueExA(
+      hReg,
+      pKey,
+      pszValueName,
+      0,
+      REG_SZ,
+      (const BYTE *)pszValue,
+      (DWORD)(strlen(pszValue) + 1));
+
+    if (dwError) 
+    {
+      SM_LOG_ERROR("Could not set registry key '%s' value '%s': error %d", pszParentKey, pszValueName, dwError);
+    }
+
+    BAIL_ON_ERROR(dwError);
+    
+cleanup:
+    if (pKey) 
+    {
+      RegCloseKey(hReg, pKey);
+    }
+
+    return dwError;
+
+error:
 
     goto cleanup;
 }

@@ -208,6 +208,14 @@ static LWMsgTypeSpec gServiceStatusSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gResetLogDefaultsSpec[] = 
+{
+    LWMSG_STRUCT_BEGIN(SM_RESET_LOG_DEFAULTS_REQ),
+    LWMSG_MEMBER_TYPESPEC(SM_RESET_LOG_DEFAULTS_REQ, hHandle, gOptionalHandleSpec),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gSetLogInfoSpec[] =
 {
     LWMSG_STRUCT_BEGIN(SM_SET_LOG_INFO_REQ),
@@ -215,6 +223,7 @@ static LWMsgTypeSpec gSetLogInfoSpec[] =
     LWMSG_MEMBER_PSTR(SM_SET_LOG_INFO_REQ, pFacility),
     LWMSG_MEMBER_TYPESPEC(SM_SET_LOG_INFO_REQ, type, gLogTypeSpec),
     LWMSG_MEMBER_PSTR(SM_SET_LOG_INFO_REQ, pszTarget),
+    LWMSG_MEMBER_BOOL(SM_SET_LOG_INFO_REQ, PersistFlag),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -225,6 +234,7 @@ static LWMsgTypeSpec gSetLogLevelSpec[] =
     LWMSG_MEMBER_TYPESPEC(SM_SET_LOG_LEVEL_REQ, hHandle, gOptionalHandleSpec),
     LWMSG_MEMBER_PSTR(SM_SET_LOG_LEVEL_REQ, pFacility),
     LWMSG_MEMBER_TYPESPEC(SM_SET_LOG_LEVEL_REQ, Level, gLogLevelSpec),
+    LWMSG_MEMBER_BOOL(SM_SET_LOG_LEVEL_REQ, PersistFlag),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -325,6 +335,8 @@ static LWMsgProtocolSpec gIpcSpec[] =
     LWMSG_MESSAGE(SM_IPC_QUERY_SERVICE_INFO_RES, gServiceInfoSpec),
     LWMSG_MESSAGE(SM_IPC_WAIT_SERVICE_REQ, gWaitStateChangeSpec),
     LWMSG_MESSAGE(SM_IPC_WAIT_SERVICE_RES, gServiceStateSpec),
+    LWMSG_MESSAGE(SM_IPC_RESET_LOG_DEFAULTS_REQ, gResetLogDefaultsSpec),
+    LWMSG_MESSAGE(SM_IPC_RESET_LOG_DEFAULTS_RES, NULL),
     LWMSG_MESSAGE(SM_IPC_SET_LOG_INFO_REQ, gSetLogInfoSpec),
     LWMSG_MESSAGE(SM_IPC_SET_LOG_INFO_RES, NULL),
     LWMSG_MESSAGE(SM_IPC_SET_LOG_LEVEL_REQ, gSetLogLevelSpec),

@@ -1510,6 +1510,46 @@ error:
 
 static
 DWORD
+LwSmResetLogDefaults(
+    int argc,
+    char** pArgv
+    )
+{
+    DWORD dwError = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR pServiceName = NULL;
+
+    if (argc < 2)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[1], "-"))
+    {
+        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+
+    dwError = LwSmResetServiceLogDefaults(hHandle);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
 LwSmSetLog(
     int argc,
     char** pArgv
@@ -1521,6 +1561,17 @@ LwSmSetLog(
     PSTR pFacility = NULL;
     PSTR pszTarget = NULL;
     PWSTR pServiceName = NULL;
+    
+    LW_BOOLEAN persistFlag = LW_FALSE;
+
+    if (strcmp(pArgv[1], "--persist") == 0
+        || strcmp(pArgv[1], "-p") == 0)
+    {
+        persistFlag = LW_TRUE;      
+
+        argc--;
+        pArgv++;
+    }
 
     if (argc < 4)
     {
@@ -1571,7 +1622,7 @@ LwSmSetLog(
         BAIL_ON_ERROR(dwError);
     }
 
-    dwError = LwSmSetServiceLogTarget(hHandle, pFacility, type, pszTarget);
+    dwError = LwSmSetServiceLogTarget(hHandle, pFacility, type, pszTarget, persistFlag);
     BAIL_ON_ERROR(dwError);
 
 error:
@@ -1724,6 +1775,16 @@ LwSmCmdSetLogLevel(
     PSTR pFacility = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
     PWSTR pServiceName = NULL;
+    LW_BOOLEAN persistFlag = LW_FALSE;
+
+    if (strcmp(pArgv[1], "--persist") == 0
+        || strcmp(pArgv[1], "-p") == 0)
+    {
+        persistFlag = LW_TRUE;      
+
+        argc--;
+        pArgv++;
+    }
 
     if (argc < 4)
     {
@@ -1748,7 +1809,7 @@ LwSmCmdSetLogLevel(
     dwError = LwSmLogLevelNameToLogLevel(pArgv[3], &level);
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwSmSetServiceLogLevel(hHandle, pFacility, level);
+    dwError = LwSmSetServiceLogLevel(hHandle, pFacility, level, persistFlag);
     BAIL_ON_ERROR(dwError);
 
 error:
@@ -1990,11 +2051,11 @@ LwSmCmdTapLog(
         BAIL_ON_ERROR(error);
     }
 
-    error = LwSmSetServiceLogTarget(hHandle, pFacility, LW_SM_LOGGER_FILE, pFifo);
+    error = LwSmSetServiceLogTarget(hHandle, pFacility, LW_SM_LOGGER_FILE, pFifo, LW_FALSE);
     BAIL_ON_ERROR(error);
     bResetLogger = TRUE;
 
-    error = LwSmSetServiceLogLevel(hHandle, pFacility, newLevel);
+    error = LwSmSetServiceLogLevel(hHandle, pFacility, newLevel, LW_FALSE);
     BAIL_ON_ERROR(error);
 
     error = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&pPool, NULL));
@@ -2021,10 +2082,10 @@ error:
 
     if (bResetLogger)
     {
-        error = LwSmSetServiceLogLevel(hHandle, pFacility, oldLevel);
+        error = LwSmSetServiceLogLevel(hHandle, pFacility, oldLevel, LW_FALSE);
         BAIL_ON_ERROR(error);
 
-        error = LwSmSetServiceLogTarget(hHandle, pFacility, oldLogger, pOldTarget);
+        error = LwSmSetServiceLogTarget(hHandle, pFacility, oldLogger, pOldTarget, LW_FALSE);
         BAIL_ON_ERROR(error);
     }
 
@@ -2072,10 +2133,14 @@ LwSmUsage(
            "    status <service>           Get the status of a service\n"
            "    get-log <service> [ <facility> ]\n"
            "                               List logging state given service and optional facility\n"
-           "    set-log-target <service> <facility> <type> [ <target> ]\n"
+           "    reset-log-defaults <service>\n"
+           "                               Clear saved log level, type/target defaults\n"
+           "    set-log-target [-p, --persist] <service> <facility> <type> [ <target> ]\n"
            "                               Set log target for a given service and facility\n"
-           "    set-log-level <service> <facility> <level>\n"
+           "                               -p, --persist save the log type/target so it will be used when the service starts\n"
+           "    set-log-level [-p, --persist] <service> <facility> <level>\n"
            "                               Set log level for a given service and facility\n"
+           "                               -p, --persist save the log level so it will be used when the service starts\n"
            "    tap-log <service> <facility> <level>\n"
            "                               Temporarily redirect logging for the given service and\n"
            "                               facility to stdout with the given log level\n"
@@ -2169,6 +2234,11 @@ main(
         else if (!strcmp(pArgv[i], "gdb"))
         {
             dwError = LwSmGdb(argc-i, pArgv+i);
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "reset-log-defaults"))
+        {
+            dwError = LwSmResetLogDefaults(argc-i, pArgv+i);
             goto error;
         }
         else if (!strcmp(pArgv[i], "set-log-target"))

@@ -327,6 +327,51 @@ error:
     return dwError;
 }
 
+PCSTR
+LwSmLogTypeToLogTypeName(
+    LW_SM_LOGGER_TYPE type
+)
+{     
+  switch (type)
+  {
+      case LW_SM_LOGGER_NONE:
+          return "none";
+      case LW_SM_LOGGER_FILE:
+          return "file";    
+      case LW_SM_LOGGER_SYSLOG :
+          return  "syslog";          
+          
+      default:          
+          return  "UNKNOWN";          
+  } 
+}
+
+DWORD
+LwSmLogLevelToLogLevelName(
+    PLW_SM_LOG_LEVEL pLevel,
+    PCSTR *pszName
+    )
+{
+  DWORD dwError = 0;
+
+#ifdef DEBUG
+  assert(pLevel != NULL);
+#endif
+
+  *pszName = LwSmLogLevelToString(*pLevel);
+
+  if (!strcasecmp(*pszName, "UNNOWN"))
+  {
+    dwError = LW_ERROR_INVALID_PARAMETER;
+    BAIL_ON_ERROR(dwError);
+  }
+
+error:
+
+    return dwError;
+
+}
+
 static
 DWORD
 LwSmLogMessageInLock(
