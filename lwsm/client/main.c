@@ -38,6 +38,11 @@
 
 #include "includes.h"
 
+static const char LWSMD_SERVICE[]          = "lwsmd";
+static const char RESET_LOG_DEFAULTS_CMD[] = "reset-log-defaults";
+static const char SET_LOG_LEVEL_CMD[]      = "set-log-level";
+static const char SET_LOG_TARGET_CMD[]   = "set-log-target";
+
 static struct
 {
     BOOLEAN bQuiet;
@@ -1535,6 +1540,7 @@ LwSmResetLogDefaults(
     }
     else
     {
+        printf("Service %s is not supported for command %s\n", LWSMD_SERVICE, RESET_LOG_DEFAULTS_CMD);
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_ERROR(dwError);
     }
@@ -1587,6 +1593,17 @@ LwSmSetLog(
         dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
         BAIL_ON_ERROR(dwError);
     }
+    else 
+    {
+        /* specifying lwsdm itself via service of '-' */
+        if (persistFlag == LW_TRUE) 
+        {
+            printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_ERROR(dwError);
+        }
+    }
+
 
     if (strcmp(pArgv[2], "-"))
     {
@@ -1799,7 +1816,18 @@ LwSmCmdSetLogLevel(
 
         dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
         BAIL_ON_ERROR(dwError);
+    } 
+    else 
+    {
+        /* specifying lwsdm itself via service of '-' */
+        if (persistFlag == LW_TRUE) 
+        {
+            printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_ERROR(dwError);
+        }
     }
+
 
     if (strcmp(pArgv[2], "-"))
     {
@@ -2135,12 +2163,15 @@ LwSmUsage(
            "                               List logging state given service and optional facility\n"
            "    reset-log-defaults <service>\n"
            "                               Clear saved log level, type/target defaults\n"
+           "                               Cannot be used with service lwsmd, i.e. where service is -\n"
            "    set-log-target [-p, --persist] <service> <facility> <type> [ <target> ]\n"
            "                               Set log target for a given service and facility\n"
            "                               -p, --persist save the log type/target so it will be used when the service starts\n"
+           "                               --persist cannot be used with service lwsmd, i.e. where service is -\n"
            "    set-log-level [-p, --persist] <service> <facility> <level>\n"
            "                               Set log level for a given service and facility\n"
            "                               -p, --persist save the log level so it will be used when the service starts\n"
+           "                               --persist cannot be used with service lwsmd, i.e. where service is -\n"
            "    tap-log <service> <facility> <level>\n"
            "                               Temporarily redirect logging for the given service and\n"
            "                               facility to stdout with the given log level\n"
@@ -2236,12 +2267,12 @@ main(
             dwError = LwSmGdb(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "reset-log-defaults"))
+        else if (!strcmp(pArgv[i], RESET_LOG_DEFAULTS_CMD))
         {
             dwError = LwSmResetLogDefaults(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "set-log-target"))
+        else if (!strcmp(pArgv[i], SET_LOG_TARGET_CMD))
         {
             dwError = LwSmSetLog(argc-i, pArgv+i);
             goto error;
@@ -2251,7 +2282,7 @@ main(
             dwError = LwSmGetLog(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "set-log-level"))
+        else if (!strcmp(pArgv[i], SET_LOG_LEVEL_CMD))
         {
             dwError = LwSmCmdSetLogLevel(argc-i, pArgv+i);
             goto error;
