@@ -704,7 +704,7 @@ LwSmDispatchResetLogDefaults(
     }
     else
     {
-        pOut->tag = SM_IPC_SET_LOG_INFO_RES;
+        pOut->tag = SM_IPC_RESET_LOG_DEFAULTS_RES;
         pOut->data = NULL;
     }
      
