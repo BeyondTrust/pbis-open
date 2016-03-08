@@ -32,6 +32,6 @@ make()
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="\
             crypto lwsmcommon lwmsg lwmsg_nothr lwioclient lwnetclientapi \
-            regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr dcerpc $LIB_PTHREAD" \
+            regclient rsutils lwadvapi lwadvapi_nothr lwbase lwbase_nothr dcerpc $LIB_PTHREAD" \
         INSTALLDIR="${MK_SBINDIR}"
 }

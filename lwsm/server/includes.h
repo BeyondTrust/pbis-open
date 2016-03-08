@@ -64,6 +64,7 @@
 #include <lwstr.h>
 #include <lwdscache.h>
 #include <reg/lwreg.h>
+#include <reg/regutil.h>
 #include <lwmsg/lwmsg.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>

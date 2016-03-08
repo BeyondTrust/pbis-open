@@ -643,48 +643,76 @@ error:
 }
 
 static
-DWORD 
+DWORD
 LwSmDispatchResetLogDefaults(
-    LWMsgCall* pCall,
-    LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-)
-{
+        LWMsgCall* pCall,
+        LWMsgParams* pIn,
+        LWMsgParams* pOut,
+        PVOID pData
+        ) {
     DWORD dwError = 0;
     PSM_RESET_LOG_DEFAULTS_REQ pReq = pIn->data;
     uid_t uid = 0;
     LW_SERVICE_HANDLE hHandle = NULL;
+    PSTR pszServiceName = NULL;
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
 
-    if (uid != 0)
-    {
+    if (uid != 0) {
         dwError = LW_ERROR_ACCESS_DENIED;
-    }
-    else 
-    {
+    } else {
         // if we don't have a handle are we lwsmd?
-        if (pReq->hHandle)
-        {
-           dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
-           BAIL_ON_ERROR(dwError);
+        if (pReq->hHandle) {
+            dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+            BAIL_ON_ERROR(dwError);
 
-           // LW_PWSTR serviceName = hHandle->pEntry->pInfo->pwszName;
+            LW_PWSTR pwszServiceName = hHandle->pEntry->pInfo->pwszName;
+            if (pwszServiceName != NULL) {
+                //convert from LW_PWSTR to PSTR
+                dwError = LwWc16sToMbs(pwszServiceName, &pszServiceName);
+                BAIL_ON_ERROR(dwError);
+
+
+                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogLevel");
+                if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
+                    dwError = 0;
+                }
+                BAIL_ON_ERROR(dwError);
+
+                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogTarget");
+                if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
+                    dwError = 0;
+                }
+                BAIL_ON_ERROR(dwError);
+
+                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogType");
+                if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
+                    dwError = 0;
+                }
+                BAIL_ON_ERROR(dwError);
+
+            }
         }
         // doesn't appear that there are registry entries for lwsmd so
         // should this fail?
     }
 
-    if (dwError) 
-    {
+    if (dwError) {
         dwError = LwSmSetError(pOut, dwError);
         BAIL_ON_ERROR(dwError);
     }
+    else
+    {
+        pOut->tag = SM_IPC_SET_LOG_INFO_RES;
+        pOut->data = NULL;
+    }
+     
 
 cleanup:
-
+    if (pszServiceName) {
+        LwFreeString(pszServiceName);
+    }
     return LwSmMapLwError(dwError);
 
 error:
@@ -692,15 +720,13 @@ error:
     goto cleanup;
 }
 
-
-
-static 
-DWORD 
+static
+DWORD
 LwSmDispatchPersistRegistryValue(
-    PCWSTR pwszServiceName, 
-    PCSTR szRegistryValueName,
-    PCSTR value
-  )
+        PCWSTR pwszServiceName,
+        PCSTR szRegistryValueName,
+        PCSTR value
+        ) 
 {
     DWORD dwError = 0;
     HANDLE hReg = NULL;
@@ -708,27 +734,25 @@ LwSmDispatchPersistRegistryValue(
 
     PSTR pszServiceName = NULL;
     PSTR pszServiceKeyPath = NULL;
-    
+
 
     // construct the services key path
     dwError = LwWc16sToMbs(pwszServiceName, &pszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwAllocateStringPrintf(&pszServiceKeyPath, "Services\\%s", pszServiceName);
     BAIL_ON_ERROR(dwError);
-    
 
-    dwError = RegOpenServer(&hReg); 
-    if (dwError) 
-    {
-      SM_LOG_ERROR("Could not open registry: error %d", dwError);
+
+    dwError = RegOpenServer(&hReg);
+    if (dwError) {
+        SM_LOG_ERROR("Could not open registry: error %d", dwError);
     }
     BAIL_ON_ERROR(dwError);
 
-    dwError = RegOpenKeyExA(hReg, NULL, HKEY_THIS_MACHINE, 0 , KEY_READ, &pRootKey);
-    if (dwError) 
-    {
-      SM_LOG_ERROR("Could not open registry root key: error %d", dwError);
+    dwError = RegOpenKeyExA(hReg, NULL, HKEY_THIS_MACHINE, 0, KEY_READ, &pRootKey);
+    if (dwError) {
+        SM_LOG_ERROR("Could not open registry root key: error %d", dwError);
     }
     BAIL_ON_ERROR(dwError);
 
@@ -740,14 +764,12 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszServiceName);
     LW_SAFE_FREE_MEMORY(pszServiceKeyPath);
 
-    if (pRootKey) 
-    {
-      RegCloseKey(hReg, pRootKey);
+    if (pRootKey) {
+        RegCloseKey(hReg, pRootKey);
     }
 
-    if (hReg) 
-    {
-      RegCloseServer(&hReg);
+    if (hReg) {
+        RegCloseServer(&hReg);
     }
 
     return LwSmMapLwError(dwError);
@@ -1285,7 +1307,7 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_BLOCK(SM_IPC_GET_LOG_STATE_REQ, LwSmDispatchGetLogState),
     LWMSG_DISPATCH_BLOCK(SM_IPC_ENUM_FACILITIES_REQ, LwSmDispatchEnumFacilities),
     LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
-    LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),    
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SHUTDOWN_REQ, LwSmDispatchShutdown),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SET_GLOBAL_REQ, LwSmDispatchSetGlobal),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_GLOBAL_REQ, LwSmDispatchGetGlobal),
