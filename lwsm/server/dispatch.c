@@ -651,10 +651,13 @@ LwSmDispatchResetLogDefaults(
         PVOID pData
         ) {
     DWORD dwError = 0;
-    PSM_RESET_LOG_DEFAULTS_REQ pReq = pIn->data;
     uid_t uid = 0;
+
+    PSM_RESET_LOG_DEFAULTS_REQ pReq = pIn->data;
     LW_SERVICE_HANDLE hHandle = NULL;
     PSTR pszServiceName = NULL;
+    HANDLE hReg = NULL;
+    PLW_SERVICE_INFO pInfo = NULL;
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
@@ -662,7 +665,7 @@ LwSmDispatchResetLogDefaults(
     if (uid != 0) {
         dwError = LW_ERROR_ACCESS_DENIED;
     } else {
-        // if we don't have a handle are we lwsmd?
+        // if we don't have a handle, we don't have a service with registry entries
         if (pReq->hHandle) {
             dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
             BAIL_ON_ERROR(dwError);
@@ -673,29 +676,47 @@ LwSmDispatchResetLogDefaults(
                 dwError = LwWc16sToMbs(pwszServiceName, &pszServiceName);
                 BAIL_ON_ERROR(dwError);
 
+                dwError = RegOpenServer(&hReg);
+                BAIL_ON_ERROR(dwError);
 
-                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogLevel");
+                dwError = RegUtilDeleteValue(hReg, NULL, "Services", pszServiceName, szLogLevelKeyValue);
                 if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
                     dwError = 0;
                 }
                 BAIL_ON_ERROR(dwError);
 
-                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogTarget");
+                dwError = RegUtilDeleteValue(hReg, NULL, "Services", pszServiceName, szLogTargetKeyValue);
                 if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
                     dwError = 0;
                 }
                 BAIL_ON_ERROR(dwError);
 
-                dwError = RegUtilDeleteValue(NULL, NULL, "Services", pszServiceName, "LogType");
+                dwError = RegUtilDeleteValue(hReg, NULL, "Services", pszServiceName, szLogTypeKeyValue);
                 if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
                     dwError = 0;
                 }
                 BAIL_ON_ERROR(dwError);
 
+                /* reset the service info log information to the defaults,
+                   by rereading the service information from the registry and 
+                   using that */
+                dwError = LwSmRegistryReadServiceInfo(
+                    hReg, 
+                    pwszServiceName,
+                    &pInfo);
+                BAIL_ON_ERROR(dwError);
+                    
+                const LW_SERVICE_INFO updatedServiceInfo = 
+                {
+                    .DefaultLogLevel = pInfo->DefaultLogLevel,
+                    .DefaultLogType = pInfo->DefaultLogType,
+                    .pDefaultLogTarget = pInfo->pDefaultLogTarget
+                };
+       
+                dwError = LwSmTableUpdateEntry(hHandle->pEntry, &updatedServiceInfo, LW_SERVICE_INFO_MASK_LOG);
+                BAIL_ON_ERROR(dwError);
             }
         }
-        // doesn't appear that there are registry entries for lwsmd so
-        // should this fail?
     }
 
     if (dwError) {
@@ -710,8 +731,14 @@ LwSmDispatchResetLogDefaults(
      
 
 cleanup:
+    if (pInfo) {
+        LwFreeMemory(pInfo);
+    }
     if (pszServiceName) {
         LwFreeString(pszServiceName);
+    }
+    if (hReg) {
+      RegCloseServer(hReg);
     }
     return LwSmMapLwError(dwError);
 
