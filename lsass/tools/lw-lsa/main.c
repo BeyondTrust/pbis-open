@@ -109,7 +109,7 @@ cli_main(
     if (argc < 2 || (argc == 2 &&
             (!strcmp(argv[1], "--help") || !strcmp(argv[1], "--usage"))))
     {
-        fprintf(stderr, "Usage: %s mode ...\n\n", argv[0]);
+        fprintf(stderr, "Usage: %s mode [--help] ...\n\n", argv[0]);
         fprintf(stderr, "Available modes:\n");
         
         for (i = 0; entry_list[i].name; i++)

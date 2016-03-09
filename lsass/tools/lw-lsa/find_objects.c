@@ -136,39 +136,34 @@ error:
 static
 VOID
 ShowUsage(
-    PCSTR pszProgramName,
-    BOOLEAN bFull
+    PCSTR pszProgramName
     )
 {
     printf(
         "Usage: %s [ --<object type> ] [ --by-<key> ] [ <flags> ] [ --provider name ] keys ...\n",
         Basename(pszProgramName));
-    
-    if (bFull)
-    {
-        printf(
-            "\n"
-            "Object type options:\n"
-            "    --user                  Return only user objects\n"
-            "    --group                 Return only group objects\n"
-            "\n"
-            "Key type options:\n"
-            "    --by-dn                 Query by distinguished name\n"
-            "    --by-sid                Query by SID\n"
-            "    --by-nt4                Query by NT4-style domain-qualified name\n"
-            "    --by-alias              Query by alias (must specify object type)\n"
-            "    --by-upn                Query by user principal name\n"
-            "    --by-unix-id            Query by UID or GID (must specify object type)\n"
-            "    --by-name               Query by generic name (NT4, alias, or UPN accepted)\n"
-            "\n"
-            "Query flags:\n"
-            "     --nss                  Omit data not necessary for NSS layer\n"
-            "     --pb-out               Format query output data to show NT4 style name only\n"
-            "\n"
-            "Other options:\n"
-            "     --provider name        Direct request to provider with the specified name\n"
-            "\n");
-    }
+    printf(
+        "\n"
+        "Object type options:\n"
+        "    --user                  Return only user objects\n"
+        "    --group                 Return only group objects\n"
+        "\n"
+        "Key type options:\n"
+        "    --by-dn                 Query by distinguished name\n"
+        "    --by-sid                Query by SID\n"
+        "    --by-nt4                Query by NT4-style domain-qualified name\n"
+        "    --by-alias              Query by alias (must specify object type)\n"
+        "    --by-upn                Query by user principal name\n"
+        "    --by-unix-id            Query by UID or GID (must specify object type)\n"
+        "    --by-name               Query by generic name (NT4, alias, or UPN accepted)\n"
+        "\n"
+        "Query flags:\n"
+        "     --nss                  Omit data not necessary for NSS layer\n"
+        "     --pb-out               Format query output data to show NT4 style name only\n"
+        "\n"
+        "Other options:\n"
+        "     --provider name        Direct request to provider with the specified name\n"
+        "\n");
 }
     
 static
@@ -372,13 +367,9 @@ FindObjectsMain(
 
 error:
 
-    if (gState.bShowUsage)
+    if ((gState.bShowUsage) || (dwError == LW_ERROR_INVALID_PARAMETER))
     {
-        ShowUsage(ppszArgv[0], TRUE);
-    }
-    else if (dwError == LW_ERROR_INVALID_PARAMETER)
-    {
-        ShowUsage(ppszArgv[0], FALSE);
+        ShowUsage(ppszArgv[0]);
     }
 
     if (dwError)
