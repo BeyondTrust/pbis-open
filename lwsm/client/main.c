@@ -1540,7 +1540,10 @@ LwSmResetLogDefaults(
     }
     else
     {
-        printf("Service %s is not supported for command %s\n", LWSMD_SERVICE, RESET_LOG_DEFAULTS_CMD);
+        if (!gState.bQuiet)
+        {
+          printf("Service %s is not supported for command %s\n", LWSMD_SERVICE, RESET_LOG_DEFAULTS_CMD);
+        }
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_ERROR(dwError);
     }
@@ -1548,6 +1551,11 @@ LwSmResetLogDefaults(
 
     dwError = LwSmResetServiceLogDefaults(hHandle);
     BAIL_ON_ERROR(dwError);
+
+    if (!gState.bQuiet)
+    {
+        printf("Log defaults for service %s were reset.\nYou will need to restart %s to pick up the new defaults.\n", pArgv[1], pArgv[1]);
+    }
 
 error:
 
@@ -1598,7 +1606,10 @@ LwSmSetLog(
         /* specifying lwsdm itself via service of '-' */
         if (persistFlag == LW_TRUE) 
         {
-            printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
+            if (!gState.bQuiet) 
+            {
+              printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
+            }
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_ERROR(dwError);
         }
@@ -1822,7 +1833,10 @@ LwSmCmdSetLogLevel(
         /* specifying lwsdm itself via service of '-' */
         if (persistFlag == LW_TRUE) 
         {
+            if (!gState.bQuiet)
+            {
             printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
+            }
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_ERROR(dwError);
         }
@@ -2172,6 +2186,7 @@ LwSmUsage(
            "    reset-log-defaults <service>\n"
            "                               Clear saved log level, type and target defaults\n"
            "                               This does not affect the service's current log settings\n"
+           "                               You will need to restart the service to pick up the new defaults\n"
            "                               Cannot be used with service lwsmd, i.e. where service is -\n"
            "    tap-log <service> <facility> <level>\n"
            "                               Temporarily redirect logging for the given service and\n"
