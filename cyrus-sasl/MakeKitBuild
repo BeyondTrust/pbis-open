@@ -62,7 +62,7 @@ make()
     CYRUS_BUILD_CFLAGS="$BUILD_CFLAGS"
     case "$MK_OS" in
         linux)
-            if [ $MK_ARCH="powerpc" ] 
+            if [ $MK_ARCH = "powerpc" ] 
             then
                 CYRUS_CFLAGS="$CYRUS_CFLAGS -O0"
                 CYRUS_BUILD_CFLAGS="$CYRUS_BUILD_CFLAGS -O0"
