@@ -220,6 +220,32 @@ NetAllocateSamrUserInfo26FromUserInfo1(
 
 static
 DWORD
+NetAllocateSamrUserInfo25FromUserInfo1003(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
+NetAllocateSamrUserInfo25FromPassword(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
 NetAllocateSamrUserInfo26FromUserInfo1003(
     PVOID                *ppCursor,
     PDWORD                pdwSpaceLeft,
@@ -1586,6 +1612,44 @@ NetAllocateSamrUserInfo(
 
         case 1003:
             err = NetAllocateSamrUserInfo26FromUserInfo1003(
+                                         &pCursor,
+                                         pdwSpaceLeft,
+                                         pSource,
+                                         pConn,
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
+            break;
+
+        default:
+            err = ERROR_INVALID_LEVEL;
+            break;
+        }
+        BAIL_ON_WIN_ERROR(err);
+    }
+    else if (dwSamrLevel == 25)
+    {
+        switch (dwLevel)
+        {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            /* USER_INFO_[1-4] types start the same way 
+               (up to password field */
+//TODO: let's add this
+            err = NetAllocateSamrUserInfo26FromUserInfo1(
+                                         &pCursor,
+                                         pdwSpaceLeft,
+                                         pSource,
+                                         pConn,
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
+            break;
+
+        case 1003:
+            err = NetAllocateSamrUserInfo25FromUserInfo1003(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
@@ -3450,6 +3514,163 @@ error:
     goto cleanup;
 }
 
+
+static
+DWORD
+NetAllocateSamrUserInfo25FromUserInfo1003(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    PUSER_INFO_1003 pUserInfo1003 = (PUSER_INFO_1003)pSource;
+    DWORD dwParmErr = 0;
+
+    BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (eValidation == NET_VALIDATION_USER_SET)
+    {
+        dwParmErr = USER_PASSWORD_PARMNUM;
+
+        err = NetValidatePassword(pUserInfo1003->usri1003_password,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    err = NetAllocateSamrUserInfo25FromPassword(
+                                   ppCursor,
+                                   pdwSpaceLeft,
+                                   pUserInfo1003->usri1003_password,
+                                   pConn,
+                                   pdwSize,
+                                   eValidation,
+                                   pdwParmErr);
+cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
+    return err;
+
+error:
+    goto cleanup;
+}
+
+
+static
+DWORD
+NetAllocateSamrUserInfo25FromPassword(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
+    UserInfo25 *pSamrUserInfo25 = NULL;
+    PVOID pCursor = NULL;
+    DWORD dwSpaceLeft = 0;
+    DWORD dwSize = 0;
+    DWORD dwPasswordLen = 0;
+    BYTE PasswordBuffer[532] = {0};
+    UserInfo21 UserInfo21Buffer = {0};
+
+    BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (pdwSpaceLeft)
+    {
+        dwSpaceLeft = *pdwSpaceLeft;
+    }
+
+    if (pdwSize)
+    {
+        dwSize = *pdwSize;
+    }
+
+    if (ppCursor)
+    {
+        pCursor         = *ppCursor;
+        pSamrUserInfo25 = *ppCursor;
+    }
+
+    if (!pwszPassword)
+    {
+        err = ERROR_INVALID_PASSWORD;
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    NetAllocBufferFixedBlob(&pCursor,
+                             &dwSpaceLeft,
+                             (PBYTE)&UserInfo21Buffer,
+                             sizeof(UserInfo21Buffer),
+                             &dwSize,
+                             eValidation);
+                             
+
+    err = LwWc16sLen(pwszPassword,
+                     (size_t*)&dwPasswordLen);
+    BAIL_ON_WIN_ERROR(err);
+
+    err = NetEncryptPasswordBufferEx(PasswordBuffer,
+                                        sizeof(PasswordBuffer),
+                                        pwszPassword,
+                                        dwPasswordLen,
+                                        pConn);
+    BAIL_ON_WIN_ERROR(err);
+
+    err = NetAllocBufferFixedBlob(&pCursor,
+                                  &dwSpaceLeft,
+                                  PasswordBuffer,
+                                  sizeof(PasswordBuffer),
+                                  &dwSize,
+                                  eValidation);
+    BAIL_ON_WIN_ERROR(err);
+
+    err = NetAllocBufferByte(&pCursor,
+                             &dwSpaceLeft,
+                             dwPasswordLen,
+                             &dwSize);
+    BAIL_ON_WIN_ERROR(err);
+
+    if (pdwSpaceLeft)
+    {
+        *pdwSpaceLeft = dwSpaceLeft;
+    }
+
+    if (pdwSize)
+    {
+        *pdwSize = dwSize;
+    }
+
+cleanup:
+    memset(PasswordBuffer, 0, sizeof(PasswordBuffer));
+
+    if (err == ERROR_SUCCESS &&
+        status != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(status);
+    }
+
+    return err;
+
+error:
+    if (pSamrUserInfo25)
+    {
+        memset(pSamrUserInfo25, 0, sizeof(*pSamrUserInfo25));
+    }
+
+    goto cleanup;
+}
 
 static
 DWORD
