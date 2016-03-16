@@ -3577,13 +3577,19 @@ NetAllocateSamrUserInfo25FromPassword(
 {
     DWORD err = ERROR_SUCCESS;
     NTSTATUS status = STATUS_SUCCESS;
-    UserInfo25 *pSamrUserInfo25 = NULL;
+
+    /* related to writing to our output buffer */
     PVOID pCursor = NULL;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
     DWORD dwPasswordLen = 0;
-    BYTE PasswordBuffer[532] = {0};
+
+//    UserInfo25 *pSamrUserInfo25 = NULL;
     UserInfo21 UserInfo21Buffer = {0};
+
+    /* used to hold the encrypted password */
+    /* TODO magic number */
+    BYTE PasswordBuffer[532] = {0};
 
     BAIL_ON_INVALID_PTR(pConn, err);
 
@@ -3600,7 +3606,7 @@ NetAllocateSamrUserInfo25FromPassword(
     if (ppCursor)
     {
         pCursor         = *ppCursor;
-        pSamrUserInfo25 = *ppCursor;
+        //pSamrUserInfo25 = *ppCursor;
     }
 
     if (!pwszPassword)
@@ -3609,16 +3615,8 @@ NetAllocateSamrUserInfo25FromPassword(
         BAIL_ON_WIN_ERROR(err);
     }
 
-    NetAllocBufferFixedBlob(&pCursor,
-                             &dwSpaceLeft,
-                             (PBYTE)&UserInfo21Buffer,
-                             sizeof(UserInfo21Buffer),
-                             &dwSize,
-                             eValidation);
-                             
-
-    err = LwWc16sLen(pwszPassword,
-                     (size_t*)&dwPasswordLen);
+   /* encrypt the supplied plain text password */
+    err = LwWc16sLen(pwszPassword, (size_t*)&dwPasswordLen);
     BAIL_ON_WIN_ERROR(err);
 
     err = NetEncryptPasswordBufferEx(PasswordBuffer,
@@ -3626,6 +3624,34 @@ NetAllocateSamrUserInfo25FromPassword(
                                         pwszPassword,
                                         dwPasswordLen,
                                         pConn);
+    BAIL_ON_WIN_ERROR(err);
+
+
+    /* this (should) work as follows, 
+     * allocate the structures comprising the UserInfo25 structure, 
+     * i.e. the UserInfo21 and password structs, then
+     * 1)  NetAllocBufferFixedBlob() for the UserInfo21 buffer
+     *     which on pass one sets dwSize to be the size of UserInfo21
+     *     on pass two copies UserInfo21 to the buffer allocated in NetUserSetInfo() ?
+     * 2)  NetAllocBufferByte() to advance pCursor, set space left etc. dwSize should 
+     *     be size of UserInfo21 
+     * 3)  Repeat 1 & 2 for password
+     * 4)  dwSize should be the sizeof(UserInfo25) at end of this */
+    /* allocate the UserInfo21 structure */
+    NetAllocBufferFixedBlob(&pCursor,
+                             &dwSpaceLeft,
+                             (PBYTE)&UserInfo21Buffer,
+                             sizeof(UserInfo21Buffer),
+                             &dwSize,
+                             eValidation);
+                             
+    /* advance the pCursor, space left etc to point to the password attribute */
+    // TODO this really should be offset of UserInfo25->password
+    const unsigned int x = sizeof(UserInfo21);
+    err = NetAllocBufferByte(&pCursor,
+                             &dwSpaceLeft,
+                             x,
+                             &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
     err = NetAllocBufferFixedBlob(&pCursor,
@@ -3640,6 +3666,7 @@ NetAllocateSamrUserInfo25FromPassword(
                              &dwSpaceLeft,
                              dwPasswordLen,
                              &dwSize);
+                            
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -3647,6 +3674,7 @@ NetAllocateSamrUserInfo25FromPassword(
         *pdwSpaceLeft = dwSpaceLeft;
     }
 
+    // TODO dwSize must be sizeof(UserInfo25)
     if (pdwSize)
     {
         *pdwSize = dwSize;
@@ -3664,10 +3692,13 @@ cleanup:
     return err;
 
 error:
+    // TODO - do we still need this sort of cleanup?
+    /*
     if (pSamrUserInfo25)
     {
         memset(pSamrUserInfo25, 0, sizeof(*pSamrUserInfo25));
     }
+    */
 
     goto cleanup;
 }

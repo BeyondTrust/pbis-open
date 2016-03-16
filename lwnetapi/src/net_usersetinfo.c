@@ -129,7 +129,7 @@ NetUserSetInfo(
                                    dwSpaceLeft);
         BAIL_ON_NT_STATUS(status);
 
-        err = NetAllocateSamrUserInfo(&pSamrUserInfo->info21,
+        err = NetAllocateSamrUserInfo(&pSamrUserInfo->info25,
                                       &dwSamrInfoLevel,
                                       &dwSpaceLeft,
                                       dwLevel,
