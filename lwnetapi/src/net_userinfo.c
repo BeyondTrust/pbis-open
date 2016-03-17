@@ -3586,6 +3586,7 @@ NetAllocateSamrUserInfo25FromPassword(
 
 //    UserInfo25 *pSamrUserInfo25 = NULL;
     UserInfo21 UserInfo21Buffer = {0};
+    UserInfo21Buffer.fields_present = SAMR_FIELD_PASSWORD2;
 
     /* used to hold the encrypted password */
     /* TODO magic number */
