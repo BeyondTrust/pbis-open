@@ -69,11 +69,6 @@ pam_sm_open_session(
 
     LSA_LOG_PAM_DEBUG("pam_sm_open_session::begin");
 
-    dwError = LsaPamGetConfig(&pConfig);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaPamSetLogLevel(pConfig->dwLogLevel);
-
     dwError = LsaPamGetContext(
                     pamh,
                     flags,
@@ -88,6 +83,20 @@ pam_sm_open_session(
                     &pszLoginId,
                     TRUE);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
+        dwError = LW_ERROR_IGNORE_THIS_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+
+    dwError = LsaPamGetConfig(&pConfig);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaPamSetLogLevel(pConfig->dwLogLevel);
+
 
 #ifdef HAVE_PAM_PUTENV
     dwError = pam_get_data(
@@ -109,13 +118,6 @@ pam_sm_open_session(
         BAIL_ON_LSA_ERROR(dwError);
     }
 #endif /* HAVE_PAM_PUTENV */
-
-    if (LsaShouldIgnoreUser(pszLoginId))
-    {
-        LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
@@ -168,7 +170,8 @@ cleanup:
 
 error:
 
-    if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
+    if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED) ||
+        (dwError == LW_ERROR_IGNORE_THIS_USER))
     {
         LSA_LOG_PAM_WARNING("pam_sm_open_session failed [login:%s][error code: %u]", 
                             LSA_SAFE_LOG_STRING(pszLoginId),
@@ -293,7 +296,7 @@ pam_sm_close_session(
     if (LsaShouldIgnoreUser(pszLoginId))
     {
         LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-        dwError = LW_ERROR_NOT_HANDLED;
+        dwError = LW_ERROR_IGNORE_THIS_USER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -334,7 +337,8 @@ cleanup:
 
 error:
 
-    if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
+    if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED) ||
+        (dwError == LW_ERROR_IGNORE_THIS_USER))
     {
         LSA_LOG_PAM_WARNING("pam_sm_close_session error [error code:%u]", dwError);
     }

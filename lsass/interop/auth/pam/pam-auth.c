@@ -79,11 +79,6 @@ pam_sm_authenticate(
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
-    dwError = LsaPamGetConfig(&pConfig);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaPamSetLogLevel(pConfig->dwLogLevel);
-
     dwError = LsaPamGetContext(
                     pamh,
                     flags,
@@ -91,6 +86,35 @@ pam_sm_authenticate(
                     argv,
                     &pPamContext);
     BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaPamGetLoginId(
+            pamh,
+            pPamContext,
+            &pszLoginId,
+            TRUE);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        // Get the password and store in pam context, for the 
+        // next module in the pam stack using try_first_pass or
+        // use_first_pass 
+        dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                "",
+                &pszPassword);
+
+        LSA_LOG_PAM_WARNING("By passing lsass for ignore user %s", pszLoginId);
+        dwError = LW_ERROR_IGNORE_THIS_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+
+    dwError = LsaPamGetConfig(&pConfig);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaPamSetLogLevel(pConfig->dwLogLevel);
 
     /* If we are just overriding the default repository
        (Solaris), only do that */
@@ -386,29 +410,6 @@ pam_sm_authenticate(
     /* Otherwise, proceed with usual authentication */
     if (bUseRegularAuthentication)
     {
-        dwError = LsaPamGetLoginId(
-            pamh,
-            pPamContext,
-            &pszLoginId,
-            TRUE);
-        BAIL_ON_LSA_ERROR(dwError);
-        
-        if (LsaShouldIgnoreUser(pszLoginId))
-        {
-            // Get the password and store in pam context, for the 
-            // next module in the pam stack using try_first_pass or
-            // use_first_pass 
-            dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                "",
-                &pszPassword);
-
-            LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-            dwError = LW_ERROR_IGNORE_THIS_USER;
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-
         dwError = LsaOpenServer(&hLsaConnection);
         if (dwError)
         {
@@ -643,7 +644,8 @@ cleanup:
 
 error:
 
-    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
+    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED ||
+        dwError == LW_ERROR_IGNORE_THIS_USER )
     {
         LSA_LOG_PAM_WARNING("pam_sm_authenticate error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
@@ -678,11 +680,6 @@ pam_sm_setcred(
 
     LSA_LOG_PAM_DEBUG("pam_sm_setcred::begin");
 
-    dwError = LsaPamGetConfig(&pConfig);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaPamSetLogLevel(pConfig->dwLogLevel);
-
     dwError = LsaPamGetContext(
                     pamh,
                     flags,
@@ -698,6 +695,19 @@ pam_sm_setcred(
         TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        LSA_LOG_PAM_WARNING("By passing lsass for ignore user %s", pszLoginId);
+        dwError = LW_ERROR_IGNORE_THIS_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LsaPamGetConfig(&pConfig);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaPamSetLogLevel(pConfig->dwLogLevel);
+
+
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
@@ -712,13 +722,6 @@ pam_sm_setcred(
     {
         dwError = 0;
         goto cleanup;
-    }
-
-    if (LsaShouldIgnoreUser(pszLoginId))
-    {
-        LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = LsaOpenServer(&hLsaConnection);
@@ -766,7 +769,8 @@ cleanup:
     return iPamError;
 
 error:
-    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
+    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED ||
+        dwError == LW_ERROR_IGNORE_THIS_USER)
     {
         LSA_LOG_PAM_WARNING("pam_sm_setcred error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),

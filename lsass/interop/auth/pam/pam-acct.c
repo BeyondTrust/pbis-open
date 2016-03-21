@@ -73,11 +73,6 @@ pam_sm_acct_mgmt(
 
     LSA_LOG_PAM_DEBUG("pam_sm_acct_mgmt::begin");
 
-    dwError = LsaPamGetConfig(&pConfig);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaPamSetLogLevel(pConfig->dwLogLevel);
-
     dwError = LsaPamGetContext(
                     pamh,
                     flags,
@@ -95,10 +90,16 @@ pam_sm_acct_mgmt(
 
     if (LsaShouldIgnoreUser(pszLoginId))
     {
-        LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
-        dwError = LW_ERROR_NOT_HANDLED;
+        LSA_LOG_PAM_WARNING("By passing lsass for ignore user %s", pszLoginId);
+        dwError = LW_ERROR_IGNORE_THIS_USER;
         BAIL_ON_LSA_ERROR(dwError);
     }
+
+    dwError = LsaPamGetConfig(&pConfig);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaPamSetLogLevel(pConfig->dwLogLevel);
+
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
@@ -221,7 +222,8 @@ cleanup:
 
 error:
 
-    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
+    if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED ||
+        dwError == LW_ERROR_IGNORE_THIS_USER )
     {
         LSA_LOG_PAM_WARNING("pam_sm_acct_mgmt failed [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
