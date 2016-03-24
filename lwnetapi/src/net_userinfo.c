@@ -207,19 +207,6 @@ NetAllocateSamrUserInfo21FromUserInfo4(
 
 static
 DWORD
-NetAllocateSamrUserInfo26FromUserInfo1(
-    PVOID                *ppCursor,
-    PDWORD                pdwSpaceLeft,
-    PVOID                 pSource,
-    PNET_CONN             pConn,
-    PDWORD                pdwSize,
-    NET_VALIDATION_LEVEL  eValidation,
-    PDWORD                pdwParmErr
-    );
-
-
-static
-DWORD
 NetAllocateSamrUserInfo25FromUserInfo1003(
     PVOID                *ppCursor,
     PDWORD                pdwSpaceLeft,
@@ -237,6 +224,19 @@ NetAllocateSamrUserInfo25FromPassword(
     PVOID                *ppCursor,
     PDWORD                pdwSpaceLeft,
     PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
+NetAllocateSamrUserInfo26FromUserInfo1(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
     PNET_CONN             pConn,
     PDWORD                pdwSize,
     NET_VALIDATION_LEVEL  eValidation,
@@ -1494,6 +1494,20 @@ error:
 }    
 
 
+/**
+ *  Encrypt the password buffer as per the SAMR spec 
+ *  (SAMR revision 36.0 10/16/2015)
+ *
+ *  This encrypts a cleartext password according to 
+ *  §2.2.7.22 SAMPR_ENCRYPTED_USER_PASSWORD_NEW
+ *
+ *  Basically this is random characters prepadding the 
+ *  buffer followed by the clear text password which ends
+ *  on index 511. The cleartext password length follows
+ *  in indices 512 - 515.  This is then encrypted via RC4, 
+ *  and the 16 character initial salt value for RC4 follows
+ *  in plain text, i.e. not encrypted.
+ */
 DWORD
 NetEncryptPasswordBufferEx(
     PBYTE      pPasswordBuffer,
@@ -1534,16 +1548,20 @@ NetEncryptPasswordBufferEx(
         dwError = ERROR_ENCRYPTION_FAILED;
         BAIL_ON_WIN_ERROR(dwError);
     }
-
+    
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    MD5_Update(&ctx, pConn->SessionKey, pConn->dwSessionKeyLen);
+    // TODO this doesn't match the spec, which says it should be 
+    // 16 chars, while debugging this is 32
+    //MD5_Update(&ctx, pConn->SessionKey, pConn->dwSessionKeyLen);
+    MD5_Update(&ctx, pConn->SessionKey, 16);
     MD5_Final(DigestedSessKey, &ctx);
 
     RC4_set_key(&rc4_key, 16, (unsigned char*)DigestedSessKey);
     RC4(&rc4_key, 516, PasswordBuffer, PasswordBuffer);
 
-    memcpy((PVOID)&PasswordBuffer[516], InitValue, 16);
+    /* the last portion of the struct is the salt */
+    memcpy((PVOID)&PasswordBuffer[516], &InitValue, 16);
 
     memcpy(pPasswordBuffer, PasswordBuffer, sizeof(PasswordBuffer));
 
@@ -3563,6 +3581,10 @@ error:
 }
 
 
+/**
+ * Populate a UserInfo25 struct from the supplied password information
+ * as per SAMR spec revision 36.0 §3.1.5.6.4
+ */
 static
 DWORD
 NetAllocateSamrUserInfo25FromPassword(
@@ -3578,37 +3600,7 @@ NetAllocateSamrUserInfo25FromPassword(
     DWORD err = ERROR_SUCCESS;
     NTSTATUS status = STATUS_SUCCESS;
 
-    /* related to writing to our output buffer */
-    PVOID pCursor = NULL;
-    DWORD dwSpaceLeft = 0;
-    DWORD dwSize = 0;
-    DWORD dwPasswordLen = 0;
-
-//    UserInfo25 *pSamrUserInfo25 = NULL;
-    UserInfo21 UserInfo21Buffer = {0};
-    UserInfo21Buffer.fields_present = SAMR_FIELD_PASSWORD2;
-
-    /* used to hold the encrypted password */
-    /* TODO magic number */
-    BYTE PasswordBuffer[532] = {0};
-
     BAIL_ON_INVALID_PTR(pConn, err);
-
-    if (pdwSpaceLeft)
-    {
-        dwSpaceLeft = *pdwSpaceLeft;
-    }
-
-    if (pdwSize)
-    {
-        dwSize = *pdwSize;
-    }
-
-    if (ppCursor)
-    {
-        pCursor         = *ppCursor;
-        //pSamrUserInfo25 = *ppCursor;
-    }
 
     if (!pwszPassword)
     {
@@ -3616,58 +3608,40 @@ NetAllocateSamrUserInfo25FromPassword(
         BAIL_ON_WIN_ERROR(err);
     }
 
-   /* encrypt the supplied plain text password */
+    /* related to writing to our output buffer; data is written
+     * to the buffer, and then these are updated as a single step */
+    PVOID pCursor = (ppCursor) ? *ppCursor : NULL;
+    DWORD dwSpaceLeft = (pdwSpaceLeft) ? *pdwSpaceLeft : 0;
+    DWORD dwSize = (pdwSize) ? *pdwSize : 0;
+    DWORD dwPasswordLen = 0;
+
+    UserInfo25 * const pSamrUserInfo25 = (ppCursor) ? *ppCursor : NULL;
+
+    /* as per SAMR spec rev 36.0 §3.1.5.6.4.5 UserInternal4InformationNew
+     * must set either USER_ALL_NTPASSWORDPRESENT or USER_ALL_LMPASSWORDPRESENT
+     * in order that the users password be updated 
+     */
+    UserInfo25 UserInfo25Buffer = { .info.fields_present = SAMR_FIELD_PASSWORD2 }; 
+
+   /* encrypt the supplied plain text password as 
+    * per SAMR spec revision 36.0  
+    * §2.2.7.22 SAMPR_ENCRYPTED_USER_PASSWORD_NEW */
     err = LwWc16sLen(pwszPassword, (size_t*)&dwPasswordLen);
     BAIL_ON_WIN_ERROR(err);
 
-    err = NetEncryptPasswordBufferEx(PasswordBuffer,
-                                        sizeof(PasswordBuffer),
+    err = NetEncryptPasswordBufferEx(UserInfo25Buffer.password.data,
+                                        sizeof(UserInfo25Buffer.password.data),
                                         pwszPassword,
                                         dwPasswordLen,
                                         pConn);
     BAIL_ON_WIN_ERROR(err);
 
-
-    /* this (should) work as follows, 
-     * allocate the structures comprising the UserInfo25 structure, 
-     * i.e. the UserInfo21 and password structs, then
-     * 1)  NetAllocBufferFixedBlob() for the UserInfo21 buffer
-     *     which on pass one sets dwSize to be the size of UserInfo21
-     *     on pass two copies UserInfo21 to the buffer allocated in NetUserSetInfo() ?
-     * 2)  NetAllocBufferByte() to advance pCursor, set space left etc. dwSize should 
-     *     be size of UserInfo21 
-     * 3)  Repeat 1 & 2 for password
-     * 4)  dwSize should be the sizeof(UserInfo25) at end of this */
-    /* allocate the UserInfo21 structure */
-    NetAllocBufferFixedBlob(&pCursor,
+    err = NetAllocBufferFixedBlob(&pCursor,
                              &dwSpaceLeft,
-                             (PBYTE)&UserInfo21Buffer,
-                             sizeof(UserInfo21Buffer),
+                             (PBYTE)&UserInfo25Buffer,
+                             sizeof(UserInfo25Buffer),
                              &dwSize,
                              eValidation);
-                             
-    /* advance the pCursor, space left etc to point to the password attribute */
-    // TODO this really should be offset of UserInfo25->password
-    const unsigned int x = sizeof(UserInfo21);
-    err = NetAllocBufferByte(&pCursor,
-                             &dwSpaceLeft,
-                             x,
-                             &dwSize);
-    BAIL_ON_WIN_ERROR(err);
-
-    err = NetAllocBufferFixedBlob(&pCursor,
-                                  &dwSpaceLeft,
-                                  PasswordBuffer,
-                                  sizeof(PasswordBuffer),
-                                  &dwSize,
-                                  eValidation);
-    BAIL_ON_WIN_ERROR(err);
-
-    err = NetAllocBufferByte(&pCursor,
-                             &dwSpaceLeft,
-                             dwPasswordLen,
-                             &dwSize);
-                            
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -3675,14 +3649,13 @@ NetAllocateSamrUserInfo25FromPassword(
         *pdwSpaceLeft = dwSpaceLeft;
     }
 
-    // TODO dwSize must be sizeof(UserInfo25)
     if (pdwSize)
     {
         *pdwSize = dwSize;
     }
 
 cleanup:
-    memset(PasswordBuffer, 0, sizeof(PasswordBuffer));
+    memset(&UserInfo25Buffer, 0, sizeof(UserInfo25Buffer));
 
     if (err == ERROR_SUCCESS &&
         status != STATUS_SUCCESS)
@@ -3693,16 +3666,14 @@ cleanup:
     return err;
 
 error:
-    // TODO - do we still need this sort of cleanup?
-    /*
-    if (pSamrUserInfo25)
+    if (pSamrUserInfo25) 
     {
         memset(pSamrUserInfo25, 0, sizeof(*pSamrUserInfo25));
     }
-    */
 
     goto cleanup;
 }
+
 
 static
 DWORD
@@ -3803,7 +3774,6 @@ error:
 
     goto cleanup;
 }
-
 
 
 static
