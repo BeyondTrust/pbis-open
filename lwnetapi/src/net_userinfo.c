@@ -1549,11 +1549,14 @@ NetEncryptPasswordBufferEx(
         BAIL_ON_WIN_ERROR(dwError);
     }
     
+    /* 
+     * note: the spec is clear that the session key is 16 characters,
+     * so don't rely on the session key length; which either isn't being
+     * set correctly in all cases (e.g. smb over rpc on debian), or is 
+     * in fact greater than 16
+     */
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    // TODO this doesn't match the spec, which says it should be 
-    // 16 chars, while debugging this is 32
-    //MD5_Update(&ctx, pConn->SessionKey, pConn->dwSessionKeyLen);
     MD5_Update(&ctx, pConn->SessionKey, 16);
     MD5_Final(DigestedSessKey, &ctx);
 
@@ -1561,7 +1564,7 @@ NetEncryptPasswordBufferEx(
     RC4(&rc4_key, 516, PasswordBuffer, PasswordBuffer);
 
     /* the last portion of the struct is the salt */
-    memcpy((PVOID)&PasswordBuffer[516], &InitValue, 16);
+    memcpy((PVOID)&PasswordBuffer[516], InitValue, 16);
 
     memcpy(pPasswordBuffer, PasswordBuffer, sizeof(PasswordBuffer));
 
