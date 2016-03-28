@@ -197,7 +197,7 @@ NetUserSetInfo(
                                       &dwParmErr);
         BAIL_ON_WIN_ERROR(err);
 
-//TODO: Only change this to SamrSetUserInfo2 when resetting password
+        /* only using SamrSetUserInfo2 when changing the password */
         status = SamrSetUserInfo2(hSamrBinding,
                                  hUser,
                                  dwSamrPasswordInfoLevel,

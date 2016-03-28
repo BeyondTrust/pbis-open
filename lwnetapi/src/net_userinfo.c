@@ -1652,23 +1652,6 @@ NetAllocateSamrUserInfo(
     {
         switch (dwLevel)
         {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            /* USER_INFO_[1-4] types start the same way 
-               (up to password field */
-//TODO: let's add this
-            err = NetAllocateSamrUserInfo26FromUserInfo1(
-                                         &pCursor,
-                                         pdwSpaceLeft,
-                                         pSource,
-                                         pConn,
-                                         pdwSize,
-                                         eValidation,
-                                         pdwParmErr);
-            break;
-
         case 1003:
             err = NetAllocateSamrUserInfo25FromUserInfo1003(
                                          &pCursor,
@@ -3632,12 +3615,17 @@ NetAllocateSamrUserInfo25FromPassword(
     err = LwWc16sLen(pwszPassword, (size_t*)&dwPasswordLen);
     BAIL_ON_WIN_ERROR(err);
 
-    err = NetEncryptPasswordBufferEx(UserInfo25Buffer.password.data,
-                                        sizeof(UserInfo25Buffer.password.data),
-                                        pwszPassword,
-                                        dwPasswordLen,
-                                        pConn);
-    BAIL_ON_WIN_ERROR(err);
+    /* minor optimization; don't bother with the encryption if we 
+     * are only reporting the size of the struct that needs to be 
+     * allocated */
+    if (pCursor) {
+        err = NetEncryptPasswordBufferEx(UserInfo25Buffer.password.data,
+                                            sizeof(UserInfo25Buffer.password.data),
+                                            pwszPassword,
+                                            dwPasswordLen,
+                                            pConn);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     err = NetAllocBufferFixedBlob(&pCursor,
                              &dwSpaceLeft,

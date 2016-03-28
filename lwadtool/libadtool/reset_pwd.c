@@ -88,7 +88,7 @@ DWORD ValidateAdtResetUserPasswordAction(IN AdtActionTP action)
     */
 
     if (action->resetUserPassword.password) {
-        dwError = ProcessADUserPassword(&(action->resetUserPassword.name));
+        dwError = ProcessADUserPassword(&(action->resetUserPassword.password));
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
