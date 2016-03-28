@@ -114,4 +114,11 @@ LsaPamGetNewPassword(
     PSTR*         ppszPassword
     );
 
+#ifdef __LWI_DEBIAN__
+DWORD LsaVerifyCurrentPassword( pam_handle_t* pamh,
+                      int flags,
+                      PPAMCONTEXT pPamContext,
+                      PSTR pszPassword );
+#endif
+
 #endif /* __PAM_PASSWD_H__ */

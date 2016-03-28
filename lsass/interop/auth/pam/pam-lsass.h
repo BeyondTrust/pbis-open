@@ -68,6 +68,11 @@
 #include "pam-auth.h"
 #include "pam-notify.h"
 
+#ifdef __LWI_DEBIAN__
+#include "shadow.h"
+#endif
+
+
 #endif /* __PAM_LSASS_H__ */
 
 
