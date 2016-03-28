@@ -207,6 +207,32 @@ NetAllocateSamrUserInfo21FromUserInfo4(
 
 static
 DWORD
+NetAllocateSamrUserInfo25FromUserInfo1003(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
+NetAllocateSamrUserInfo25FromPassword(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
 NetAllocateSamrUserInfo26FromUserInfo1(
     PVOID                *ppCursor,
     PDWORD                pdwSpaceLeft,
@@ -1468,6 +1494,20 @@ error:
 }    
 
 
+/**
+ *  Encrypt the password buffer as per the SAMR spec 
+ *  (SAMR revision 36.0 10/16/2015)
+ *
+ *  This encrypts a cleartext password according to 
+ *  §2.2.7.22 SAMPR_ENCRYPTED_USER_PASSWORD_NEW
+ *
+ *  Basically this is random characters prepadding the 
+ *  buffer followed by the clear text password which ends
+ *  on index 511. The cleartext password length follows
+ *  in indices 512 - 515.  This is then encrypted via RC4, 
+ *  and the 16 character initial salt value for RC4 follows
+ *  in plain text, i.e. not encrypted.
+ */
 DWORD
 NetEncryptPasswordBufferEx(
     PBYTE      pPasswordBuffer,
@@ -1508,15 +1548,22 @@ NetEncryptPasswordBufferEx(
         dwError = ERROR_ENCRYPTION_FAILED;
         BAIL_ON_WIN_ERROR(dwError);
     }
-
+    
+    /* 
+     * note: the spec is clear that the session key is 16 characters,
+     * so don't rely on the session key length; which either isn't being
+     * set correctly in all cases (e.g. smb over rpc on debian), or is 
+     * in fact greater than 16
+     */
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    MD5_Update(&ctx, pConn->SessionKey, pConn->dwSessionKeyLen);
+    MD5_Update(&ctx, pConn->SessionKey, 16);
     MD5_Final(DigestedSessKey, &ctx);
 
     RC4_set_key(&rc4_key, 16, (unsigned char*)DigestedSessKey);
     RC4(&rc4_key, 516, PasswordBuffer, PasswordBuffer);
 
+    /* the last portion of the struct is the salt */
     memcpy((PVOID)&PasswordBuffer[516], InitValue, 16);
 
     memcpy(pPasswordBuffer, PasswordBuffer, sizeof(PasswordBuffer));
@@ -1586,6 +1633,27 @@ NetAllocateSamrUserInfo(
 
         case 1003:
             err = NetAllocateSamrUserInfo26FromUserInfo1003(
+                                         &pCursor,
+                                         pdwSpaceLeft,
+                                         pSource,
+                                         pConn,
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
+            break;
+
+        default:
+            err = ERROR_INVALID_LEVEL;
+            break;
+        }
+        BAIL_ON_WIN_ERROR(err);
+    }
+    else if (dwSamrLevel == 25)
+    {
+        switch (dwLevel)
+        {
+        case 1003:
+            err = NetAllocateSamrUserInfo25FromUserInfo1003(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
@@ -3453,6 +3521,153 @@ error:
 
 static
 DWORD
+NetAllocateSamrUserInfo25FromUserInfo1003(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    PUSER_INFO_1003 pUserInfo1003 = (PUSER_INFO_1003)pSource;
+    DWORD dwParmErr = 0;
+
+    BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (eValidation == NET_VALIDATION_USER_SET)
+    {
+        dwParmErr = USER_PASSWORD_PARMNUM;
+
+        err = NetValidatePassword(pUserInfo1003->usri1003_password,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    err = NetAllocateSamrUserInfo25FromPassword(
+                                   ppCursor,
+                                   pdwSpaceLeft,
+                                   pUserInfo1003->usri1003_password,
+                                   pConn,
+                                   pdwSize,
+                                   eValidation,
+                                   pdwParmErr);
+cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
+    return err;
+
+error:
+    goto cleanup;
+}
+
+
+/**
+ * Populate a UserInfo25 struct from the supplied password information
+ * as per SAMR spec revision 36.0 §3.1.5.6.4
+ */
+static
+DWORD
+NetAllocateSamrUserInfo25FromPassword(
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (!pwszPassword)
+    {
+        err = ERROR_INVALID_PASSWORD;
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    /* related to writing to our output buffer; data is written
+     * to the buffer, and then these are updated as a single step */
+    PVOID pCursor = (ppCursor) ? *ppCursor : NULL;
+    DWORD dwSpaceLeft = (pdwSpaceLeft) ? *pdwSpaceLeft : 0;
+    DWORD dwSize = (pdwSize) ? *pdwSize : 0;
+    DWORD dwPasswordLen = 0;
+
+    UserInfo25 * const pSamrUserInfo25 = (ppCursor) ? *ppCursor : NULL;
+
+    /* as per SAMR spec rev 36.0 §3.1.5.6.4.5 UserInternal4InformationNew
+     * must set either USER_ALL_NTPASSWORDPRESENT or USER_ALL_LMPASSWORDPRESENT
+     * in order that the users password be updated 
+     */
+    UserInfo25 UserInfo25Buffer = { .info.fields_present = SAMR_FIELD_PASSWORD2 }; 
+
+   /* encrypt the supplied plain text password as 
+    * per SAMR spec revision 36.0  
+    * §2.2.7.22 SAMPR_ENCRYPTED_USER_PASSWORD_NEW */
+    err = LwWc16sLen(pwszPassword, (size_t*)&dwPasswordLen);
+    BAIL_ON_WIN_ERROR(err);
+
+    /* minor optimization; don't bother with the encryption if we 
+     * are only reporting the size of the struct that needs to be 
+     * allocated */
+    if (pCursor) {
+        err = NetEncryptPasswordBufferEx(UserInfo25Buffer.password.data,
+                                            sizeof(UserInfo25Buffer.password.data),
+                                            pwszPassword,
+                                            dwPasswordLen,
+                                            pConn);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    err = NetAllocBufferFixedBlob(&pCursor,
+                             &dwSpaceLeft,
+                             (PBYTE)&UserInfo25Buffer,
+                             sizeof(UserInfo25Buffer),
+                             &dwSize,
+                             eValidation);
+    BAIL_ON_WIN_ERROR(err);
+
+    if (pdwSpaceLeft)
+    {
+        *pdwSpaceLeft = dwSpaceLeft;
+    }
+
+    if (pdwSize)
+    {
+        *pdwSize = dwSize;
+    }
+
+cleanup:
+    memset(&UserInfo25Buffer, 0, sizeof(UserInfo25Buffer));
+
+    if (err == ERROR_SUCCESS &&
+        status != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(status);
+    }
+
+    return err;
+
+error:
+    if (pSamrUserInfo25) 
+    {
+        memset(pSamrUserInfo25, 0, sizeof(*pSamrUserInfo25));
+    }
+
+    goto cleanup;
+}
+
+
+static
+DWORD
 NetAllocateSamrUserInfo26FromPassword(
     PVOID                *ppCursor,
     PDWORD                pdwSpaceLeft,
@@ -3550,7 +3765,6 @@ error:
 
     goto cleanup;
 }
-
 
 
 static
