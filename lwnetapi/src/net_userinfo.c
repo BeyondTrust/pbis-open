@@ -3586,14 +3586,6 @@ NetAllocateSamrUserInfo25FromPassword(
     DWORD err = ERROR_SUCCESS;
     NTSTATUS status = STATUS_SUCCESS;
 
-    BAIL_ON_INVALID_PTR(pConn, err);
-
-    if (!pwszPassword)
-    {
-        err = ERROR_INVALID_PASSWORD;
-        BAIL_ON_WIN_ERROR(err);
-    }
-
     /* related to writing to our output buffer; data is written
      * to the buffer, and then these are updated as a single step */
     PVOID pCursor = (ppCursor) ? *ppCursor : NULL;
@@ -3608,6 +3600,14 @@ NetAllocateSamrUserInfo25FromPassword(
      * in order that the users password be updated 
      */
     UserInfo25 UserInfo25Buffer = { .info.fields_present = SAMR_FIELD_PASSWORD2 }; 
+
+    BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (!pwszPassword)
+    {
+        err = ERROR_INVALID_PASSWORD;
+        BAIL_ON_WIN_ERROR(err);
+    }
 
    /* encrypt the supplied plain text password as 
     * per SAMR spec revision 36.0  
