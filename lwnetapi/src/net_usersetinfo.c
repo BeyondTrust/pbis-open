@@ -129,7 +129,7 @@ NetUserSetInfo(
                                    dwSpaceLeft);
         BAIL_ON_NT_STATUS(status);
 
-        err = NetAllocateSamrUserInfo(&pSamrUserInfo->info21,
+        err = NetAllocateSamrUserInfo(&pSamrUserInfo->info25,
                                       &dwSamrInfoLevel,
                                       &dwSpaceLeft,
                                       dwLevel,
@@ -162,7 +162,7 @@ NetUserSetInfo(
      * the function returns ERROR_INVALID_PASSWORD)
      */
 
-    dwSamrPasswordInfoLevel = 26;
+    dwSamrPasswordInfoLevel = 25;
     dwSize                  = 0;
 
     err = NetAllocateSamrUserInfo(NULL,
@@ -186,7 +186,7 @@ NetUserSetInfo(
             BAIL_ON_NT_STATUS(status);
         }
 
-        err = NetAllocateSamrUserInfo(&pSamrPasswordUserInfo->info26,
+        err = NetAllocateSamrUserInfo(&pSamrPasswordUserInfo->info25,
                                       &dwSamrPasswordInfoLevel,
                                       &dwSpaceLeft,
                                       dwLevel,
@@ -197,7 +197,8 @@ NetUserSetInfo(
                                       &dwParmErr);
         BAIL_ON_WIN_ERROR(err);
 
-        status = SamrSetUserInfo(hSamrBinding,
+        /* only using SamrSetUserInfo2 when changing the password */
+        status = SamrSetUserInfo2(hSamrBinding,
                                  hUser,
                                  dwSamrPasswordInfoLevel,
                                  pSamrPasswordUserInfo);
