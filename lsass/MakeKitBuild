@@ -256,7 +256,7 @@ configure()
 	FAIL=yes \
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
 	lwmsg_nothr lwmsg pam sqlite3 crypto krb5 gssapi_krb5 \
-        uuid ldap_r
+        uuid ldap_r crypt
 
     mk_check_libraries \
         eventlog dl
