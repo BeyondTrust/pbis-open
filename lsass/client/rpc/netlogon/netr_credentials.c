@@ -465,6 +465,7 @@ NetrGetLmHash(
 {
     const size_t sMaxPasswordLen = 14;
     const BYTE InputData[] = "KGS!@#$%";
+    BYTE PasswordData[16] = {0};
 
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -496,17 +497,17 @@ NetrGetLmHash(
     
     for (i = 0; i < sPasswordLen; i++)
     {
-        pszPassword[i] = (CHAR) toupper(pszPassword[i]);
+        PasswordData[i] = (CHAR) toupper(pszPassword[i]);
     }
 
-    ntStatus = NetrPrepareDesKey((PBYTE)&pszPassword[0],
+    ntStatus = NetrPrepareDesKey((PBYTE)&PasswordData[0],
                                  (PBYTE)KeyBlockLo);
     BAIL_ON_NT_STATUS(ntStatus);
 
     DES_set_odd_parity(&KeyBlockLo);
     DES_set_key_unchecked(&KeyBlockLo, &KeyLo);
 
-    ntStatus = NetrPrepareDesKey((PBYTE)&pszPassword[7],
+    ntStatus = NetrPrepareDesKey((PBYTE)&PasswordData[7],
                                  (PBYTE)KeyBlockHi);
     BAIL_ON_NT_STATUS(ntStatus);
 

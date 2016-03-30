@@ -1415,7 +1415,6 @@ CallNetUserGetLocalGroups(
     DWORD dwLastTotal = 0;
     DWORD dwCalculatedTotal = 0;
     DWORD dwTotal = 0;
-    DWORD dwResume = 0;
 
     /* max buffer size below 10 bytes doesn't make much sense */
     while (dwMaxLen > 10)
@@ -1474,7 +1473,6 @@ CallNetUserGetLocalGroups(
 
         dwNumEntries = 0;
         dwTotal      = 0;
-        dwResume     = 0;
     }
 
 done:

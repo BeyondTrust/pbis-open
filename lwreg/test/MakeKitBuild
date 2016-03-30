@@ -6,7 +6,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
     mk_program \
@@ -15,7 +15,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
     mk_program \
@@ -24,7 +24,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
     mk_program \
@@ -33,7 +33,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
     mk_program \
@@ -42,7 +42,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
     mk_program \
@@ -51,7 +51,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/test-lwreg" \
         INCLUDEDIRS="../include .." \
 	HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-	LIBDEPS="regclient rsutils lwmsg lwbase"
+	LIBDEPS="regclient regcommon rsutils lwmsg_nothr lwbase_nothr"
     lw_add_tool_target "$result"
 
 

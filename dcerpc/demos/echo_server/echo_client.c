@@ -565,7 +565,6 @@ main(
         case 'P':
             if (!strcmp(optarg, "-") || !strcmp(optarg, "*"))
             {
-                char *result = NULL;
 #ifdef _WIN32
                 FILE *tty = stdin;
                 HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE); 
@@ -589,7 +588,7 @@ main(
                 fflush(tty);
 #endif
 
-                result = fgets(password_buffer, sizeof(password_buffer), tty);
+                fgets(password_buffer, sizeof(password_buffer), tty);
 
 #ifdef _WIN32
                 fprintf(stdout, "\n");

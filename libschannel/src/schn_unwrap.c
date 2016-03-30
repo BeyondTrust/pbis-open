@@ -47,7 +47,7 @@ uint32 schn_unwrap(void                 *sec_ctx,
 {
     uint32 status = schn_s_ok;
     struct schn_auth_ctx *schn_ctx = NULL;
-    uint8 seq_number[8], digest[8];
+    uint8 seq_number[8], digest[16];
     uint32 sender_flags;
     unsigned char *schannel_sig;
     uint8 seal_key[16];

@@ -202,7 +202,6 @@ int main(int argc, char *argv[])
     PSTR pszPrincipal = NULL;
     PSTR pszCredsCache = NULL;
     PSTR pszBindingString = NULL;
-    int krb5_auth = 1;
     PTEST pTests  = NULL;
     PTEST pRunTest = NULL;
     PWSTR pwszHostname = NULL;
@@ -216,7 +215,7 @@ int main(int argc, char *argv[])
 
     verbose_mode = false;
 
-    while ((opt = getopt(argc, argv, "h:o:vu:p:d:w:r:c:kb:")) != -1) {
+    while ((opt = getopt(argc, argv, "h:o:vu:p:d:w:r:c:b:")) != -1) {
         switch (opt) {
         case 'h':
             pszHost = optarg;
@@ -252,10 +251,6 @@ int main(int argc, char *argv[])
 
         case 'c':
             pszCredsCache = optarg;
-            break;
-
-        case 'k':
-            krb5_auth = 1;
             break;
 
         case 'b':

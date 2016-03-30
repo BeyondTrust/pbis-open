@@ -509,10 +509,11 @@ LsaSrvFreePrivileges(
     )
 {
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
-    BOOLEAN Locked = FALSE;
+    BOOLEAN PrivilegesLocked = FALSE;
+    BOOLEAN AccountsLocked = FALSE;
 
-    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
-    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+    LSASRV_PRIVS_WRLOCK_RWLOCK(PrivilegesLocked, &pGlobals->privilegesRwLock);
+    LSASRV_PRIVS_WRLOCK_RWLOCK(AccountsLocked, &pGlobals->accountsRwLock);
 
     if (pGlobals->pPrivileges)
     {
@@ -536,8 +537,8 @@ LsaSrvFreePrivileges(
         LwMapSecurityFreeContext(&pGlobals->pSecurityContext);
     }
 
-    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
-    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(AccountsLocked, &pGlobals->accountsRwLock);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(PrivilegesLocked, &pGlobals->privilegesRwLock);
     pthread_rwlock_destroy(&pGlobals->accountsRwLock);
     pthread_rwlock_destroy(&pGlobals->privilegesRwLock);
 }

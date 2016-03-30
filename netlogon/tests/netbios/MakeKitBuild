@@ -6,7 +6,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/netlogon" \
         INCLUDEDIRS="../.. ../../include ../../server/api" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-        LIBDEPS="lwnetclientapi" \
+        LIBDEPS="lwnetclientapi lwadvapi_nothr" \
         GROUPS="../../server/api/api ../../server/ipc/ipc"
 
     lw_add_tool_target "$result"
@@ -17,7 +17,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/netlogon" \
         INCLUDEDIRS="../.. ../../include ../../server/api" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-        LIBDEPS="lwnetclientapi" \
+        LIBDEPS="lwnetclientapi lwadvapi_nothr" \
         GROUPS="../../server/api/api ../../server/ipc/ipc"
 
     lw_add_tool_target "$result"
@@ -28,7 +28,7 @@ make()
         INSTALLDIR="$LW_TOOL_DIR/netlogon" \
         INCLUDEDIRS="../.. ../../include ../../server/api" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h" \
-        LIBDEPS="lwnetclientapi" \
+        LIBDEPS="lwnetclientapi lwadvapi_nothr" \
         GROUPS="../../server/api/api ../../server/ipc/ipc"
 
     lw_add_tool_target "$result"

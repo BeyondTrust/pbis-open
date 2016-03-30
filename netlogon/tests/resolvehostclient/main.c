@@ -100,7 +100,6 @@ main(
     DWORD i = 0;
     CHAR ipAddressBuf[INET_ADDRSTRLEN];
     PCSTR pszAddress = NULL;
-    DWORD ipAddressLen = 0;
     DWORD ipAddrFamily = 0;
     PBYTE pIpAddr = NULL;
 
@@ -131,13 +130,11 @@ main(
     {
         if (ppAddressList[i]->AddressType == LWNET_IP_ADDR_V4)
         {
-            ipAddressLen = 4; 
             ipAddrFamily = PF_INET;
             pIpAddr = ppAddressList[i]->Address.Ip4Addr;
         }
         else if (ppAddressList[i]->AddressType == LWNET_IP_ADDR_V6)
         {
-            ipAddressLen = 16; 
             ipAddrFamily = PF_INET6;
             pIpAddr = ppAddressList[i]->Address.Ip4Addr;
         }

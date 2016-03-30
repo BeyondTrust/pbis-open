@@ -202,7 +202,7 @@ LwSmTableAddEntry(
     )
 {
     DWORD dwError = 0;
-    BOOL bLocked = TRUE;
+    BOOL bLocked = FALSE;
     PSM_TABLE_ENTRY pEntry = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pEntry), OUT_PPVOID(&pEntry));

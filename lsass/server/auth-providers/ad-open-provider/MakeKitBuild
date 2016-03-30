@@ -58,7 +58,7 @@ make()
 	    CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	    INCLUDEDIRS="join/include ../../include ../../../include" \
 	    HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h eventlog.h" \
-	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3 $LIB_KVM" \
+	    LIBDEPS="lsacommon lsapstore lsaserverapi lwadvapi lwadvapi_nothr sqlite3 $LIB_KVM" \
             GROUPDEPS="join/lsajoin" \
             LDFLAGS="$FRAMEWORK_FLAGS"
     else
@@ -69,7 +69,7 @@ make()
 	    CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	    INCLUDEDIRS="join/include ../../include ../../../include" \
 	    HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
-	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3 $LIB_KVM" \
+	    LIBDEPS="lsacommon lsapstore lsaserverapi lwadvapi lwadvapi_nothr sqlite3 $LIB_KVM" \
 	    GROUPS="join/lsajoin" \
             LDFLAGS="$FRAMEWORK_FLAGS"
     fi

@@ -48,7 +48,7 @@ uint32 schn_wrap(void                 *sec_ctx,
     uint32 status = schn_s_ok;
     struct schn_auth_ctx *schn_ctx = NULL;
     unsigned char *schannel_sig = NULL;
-    unsigned char sess_key[16], nonce[8], seq_number[8], digest[8];
+    unsigned char sess_key[16], nonce[8], seq_number[8], digest[16];
     uint32 sender_flags;
     unsigned char seal_key[16];
 
