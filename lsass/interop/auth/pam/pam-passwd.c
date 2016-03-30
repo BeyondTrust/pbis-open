@@ -103,38 +103,6 @@ pam_sm_chauthtok(
              */
             dwError = 0;
         }
-#ifdef __LWI_DEBIAN__
-        else if (dwError == LW_ERROR_NO_SUCH_USER || dwError == ERROR_FILE_NOT_FOUND)
-        {
-           // On debian systems, the next entry in the pam stack has pam-unix.so with
-           // use-authtok token as default. See /usr/share/pam-configs/unix file.
-           // This means that pam-unix is expecting the old and new password in the
-           // pam context.
-           LSA_LOG_PAM_DEBUG("pam_sm_chauthtok get current password.");
-           dwError = 0;
-
-           // Get current password and set in pam context. The next module in the stack
-           // pam_unix with option use_authtok will continue with authentication.
-           if (getuid() != 0) // Prompt for old password from non-root users.
-           {
-               //Prompt for current password and add to pam context.
-               dwError = LsaPamGetOldPassword(pamh, pPamContext, &pszPassword);
-               BAIL_ON_LSA_ERROR(dwError);
-
-               // Check if the current password is correct.
-               dwError = LsaVerifyCurrentPassword(pamh, flags, pPamContext, pszPassword);
-               BAIL_ON_LSA_ERROR(dwError);
-           }
-
-           //Prompt for new password and add to pam context.
-           dwError = LsaPamGetNewPassword(pamh, pPamContext, &pszPassword);
-           BAIL_ON_LSA_ERROR(dwError);
-
-           // Let the following pam module pam-unix with option use_authtok handle the 
-           // symmantics of the password change.
-           dwError = LsaPamUnmapErrorCode(PAM_IGNORE);
-        }
-#endif
     }
     else if (flags & PAM_UPDATE_AUTHTOK)
     {
@@ -793,60 +761,6 @@ error:
 
     goto cleanup;
 }
-
-#ifdef __LWI_DEBIAN__
-
-DWORD LsaVerifyCurrentPassword( pam_handle_t* pamh,     
-                      int flags,
-                      PPAMCONTEXT pPamContext,
-                      PSTR pszPassword )
-{
-   DWORD   dwError = 0;
-   DWORD   iPamError = 0;
-   struct spwd *my_spwd = NULL;
-   const char *user = NULL;
-   const char *crypt_password = NULL;
-
-   LSA_LOG_PAM_DEBUG("LsaVerifyCurrentPassword::begin");
-
-   if ((iPamError = pam_get_user(pamh, &user, NULL)) != PAM_SUCCESS)
-   {
-     dwError = LsaPamUnmapErrorCode(iPamError);
-     BAIL_ON_LSA_ERROR(dwError);
-   }
-
-   if ((my_spwd = getspnam(user)) == NULL)
-   {
-     dwError = LsaPamUnmapErrorCode(PAM_USER_UNKNOWN);
-     BAIL_ON_LSA_ERROR(dwError);
-   }
-
-   if ((!my_spwd->sp_pwdp[0] && (flags & PAM_DISALLOW_NULL_AUTHTOK)) ||
-         (crypt_password = crypt(pszPassword, my_spwd->sp_pwdp)) == NULL ||
-          strcmp(crypt_password, my_spwd->sp_pwdp) != 0)
-   {
-      dwError = LsaPamUnmapErrorCode(PAM_AUTH_ERR);
-   }
-   else
-   {
-      dwError = LsaPamUnmapErrorCode(PAM_SUCCESS);
-   }
-
-cleanup:
-
-   LSA_LOG_PAM_DEBUG("LsaVerifyCurrentPassword::end");
-   
-   return dwError;
-
-error:
-
-   LSA_LOG_PAM_DEBUG("LsaVerifyCurrentPassword error code %d", dwError);
-
-   goto cleanup;
-
-}
-
-#endif
 
 
 /*

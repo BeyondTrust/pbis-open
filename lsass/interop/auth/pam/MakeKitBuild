@@ -11,16 +11,6 @@ make()
        pam-session.c   \
        pam-notify.c"
 
-    if [ "$MK_BUILD_DISTRO" = "debian" ] 
-    then
-       mk_check_libraries \
-        FAIL=yes \
-        crypt
-       
-       BT_CRYPT=crypt 
-       mk_define __LWI_DEBIAN__ 1
-    fi
-
     mk_multiarch_do
         case "$MK_HOST_OS" in
             hpux) PAMEXT=.sl ;;
@@ -33,6 +23,6 @@ make()
 	    SOURCES="$PAM_SOURCES" \
 	    INCLUDEDIRS="../include ../../../include" \
 	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
-	    LIBDEPS="lsaauth pam $BT_CRYPT"
+	    LIBDEPS="lsaauth pam"
     mk_multiarch_done
 }
