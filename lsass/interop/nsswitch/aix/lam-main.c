@@ -237,6 +237,7 @@ LsaNssGetSupportedAttrs(
         {S_USERS, AL_GROUPATTR, SEC_LIST},
         {"SID", AL_GROUPATTR, SEC_CHAR},
 
+        {S_USERS, AL_USERATTR, SEC_LIST},
         {S_ID, AL_USERATTR, SEC_INT},
         {S_PGID, AL_USERATTR, SEC_INT},
         {S_PWD, AL_USERATTR, SEC_CHAR},
@@ -271,6 +272,7 @@ LsaNssGetSupportedAttrs(
         &pList[16],
         &pList[17],
         &pList[18],
+        &pList[19],
         NULL
     };
 
