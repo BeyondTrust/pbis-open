@@ -81,7 +81,14 @@ make()
         done
     fi
 
-    mk_symlink \
-        LINK="/usr/bin/pbis" \
-        TARGET="${MK_BINDIR}/lsa"
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        mk_symlink \
+            LINK="/usr/local/bin/pbis" \
+            TARGET="${MK_BINDIR}/lsa"
+    else
+        mk_symlink \
+            LINK="/usr/bin/pbis" \
+            TARGET="${MK_BINDIR}/lsa"
+    fi
 }

@@ -92,8 +92,7 @@ run_or_fail()
 
 ConfigureDirectoryOwners()
 {
-    CHOWN_0_80="/opt/ @MK_PREFIX@ /etc/ @MK_SYSCONFDIR@ /var/ /var/lib/ @LW_CACHEDIR@"
-    CHOWN_0_0="/usr/ /usr/lib/"
+    CHOWN_0_80="/opt/  /etc/   /var/lib/ "
 
     ETC_LW="@MK_SYSCONFDIR@"
 

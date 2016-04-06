@@ -355,11 +355,18 @@ open_files_prefix()
 open_files_usr()
 {
     open_files_interop
-
-     mk_package_patterns \
-        SUBDIRS="$OPEN_SUBDIRS" \
-        "@${MK_STAGE_DIR}/usr/bin/domainjoin-cli" \
-        "@${MK_STAGE_DIR}/usr/bin/pbis"
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        mk_package_patterns \
+            SUBDIRS="$OPEN_SUBDIRS" \
+            "@${MK_STAGE_DIR}/usr/local/bin/domainjoin-cli" \
+            "@${MK_STAGE_DIR}/usr/local/bin/pbis"
+    else
+        mk_package_patterns \
+            SUBDIRS="$OPEN_SUBDIRS" \
+            "@${MK_STAGE_DIR}/usr/bin/domainjoin-cli" \
+            "@${MK_STAGE_DIR}/usr/bin/pbis"
+    fi
 
     mk_package_patterns SUBDIRS="@docs" "*"
 }

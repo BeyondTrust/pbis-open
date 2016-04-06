@@ -7,7 +7,14 @@ make()
         HEADERDEPS="ctbase.h" \
         LIBDEPS="lsaclient centutils domainjoin lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwsm"
 
-    mk_symlink \
-        LINK="/usr/bin/domainjoin-cli" \
-        TARGET="${MK_BINDIR}/domainjoin-cli"
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        mk_symlink \
+            LINK="/usr/local/bin/domainjoin-cli" \
+            TARGET="${MK_BINDIR}/domainjoin-cli"
+    else
+        mk_symlink \
+            LINK="/usr/bin/domainjoin-cli" \
+            TARGET="${MK_BINDIR}/domainjoin-cli"
+    fi
 }
