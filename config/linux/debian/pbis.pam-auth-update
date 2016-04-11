@@ -1,4 +1,4 @@
-Name: Likewise
+Name: PBIS
 Default: yes
 Priority: 260
 Conflicts: winbind

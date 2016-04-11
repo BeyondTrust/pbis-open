@@ -3901,6 +3901,262 @@ cleanup:
     CT_SAFE_FREE_STRING(pamauthupdateconf);
 }
 
+// The purpose of this function is to parse the given source file and either add or 
+// remove the use-authtok option from password phase. The results are written to the 
+// destination file.  The function assumes the source file is /usr/lib/pam-configs/unix.
+static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUseAuthtok)
+{
+   DWORD ceError = ERROR_SUCCESS;
+   BOOLEAN bSrcExists = FALSE;
+   BOOLEAN bDstExists = FALSE;
+   BOOLEAN bEndOfFile = FALSE;
+   BOOLEAN bFoundPasswordTypePrimary = FALSE;
+   BOOLEAN bFoundPassword = FALSE;
+   BOOLEAN bFoundUseAuthTokLine = FALSE;
+   DWORD i = 0;
+   FILE  *fSrcHandle = NULL;
+   FILE  *fDstHandle = NULL;
+   PSTR buffer = NULL;
+   struct PamLine lineObj;
+   PSTR pUseAuthTok = "use_authtok";
+
+   memset(&lineObj, 0, sizeof(struct PamLine));
+
+   ceError = CTCheckFileExists(srcFile, &bSrcExists);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   if (!bSrcExists)
+    goto cleanup;
+
+   ceError = CTCheckFileExists(dstFile, &bDstExists);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   if (bDstExists)
+   {
+      ceError = CTRemoveFile(dstFile);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+   }
+
+   ceError = CTOpenFile(srcFile, "r", &fSrcHandle);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   ceError = CTOpenFile(dstFile, "w", &fDstHandle);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   while (TRUE)
+   {
+       CT_SAFE_FREE_STRING(buffer);
+
+       ceError = CTReadNextLine(fSrcHandle, &buffer, &bEndOfFile);
+       BAIL_ON_CENTERIS_ERROR(ceError);
+    
+       if (bEndOfFile)
+         break;
+
+       // Ensure we're in the password phase.
+       if (strstr(buffer, "Password-Type:"))
+       {
+          bFoundPasswordTypePrimary = TRUE;
+          ceError = CTFilePrintf(fDstHandle, "%s", buffer);
+          BAIL_ON_CENTERIS_ERROR(ceError);
+       }
+       else if (strstr(buffer, "Password:") && bFoundPasswordTypePrimary)
+       {
+          bFoundPassword = TRUE;
+          ceError = CTFilePrintf(fDstHandle, "%s", buffer);
+          BAIL_ON_CENTERIS_ERROR(ceError);
+       }
+       else if (strstr(buffer, "success") &&
+                strstr(buffer, "default") &&
+                strstr(buffer, "pam_unix.so") &&
+                strstr(buffer, "obscure") &&
+                strstr(buffer, "try_first_pass") &&
+                bFoundPassword && !bFoundUseAuthTokLine)
+       {
+
+            ceError = ParsePamLine(&lineObj, "unix", buffer, NULL);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            bFoundUseAuthTokLine = TRUE;
+
+            ceError = CTFilePrintf(fDstHandle, "%s", lineObj.leadingWhiteSpace);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            ceError = CTWriteToken(fDstHandle, lineObj.phase);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            ceError = CTWriteToken(fDstHandle, lineObj.control);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            // Depending the format of the line, use_authtok maybe found
+            // in the module field or the options list.
+            // Write out the module field provided it is not use_authtok.
+            if (!strstr(lineObj.module->value, pUseAuthTok))
+            {
+               ceError = CTWriteToken(fDstHandle, lineObj.module);
+               BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+
+            if (!bUseAuthtok)
+            {
+               // Remove use_authtok option.
+               for (i = 0; i < lineObj.optionCount; i++)
+               {
+                   // Write out all the options except use_authtok.
+                   if (!strstr(lineObj.options[i].value, pUseAuthTok))
+                   {
+                      ceError = CTWriteToken(fDstHandle, &lineObj.options[i]);
+                      BAIL_ON_CENTERIS_ERROR(ceError);
+                   }
+               }
+
+               ceError = CTFilePrintf(fDstHandle, "\n");
+               BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+
+            if (bUseAuthtok)
+            {
+               if (!strstr(buffer, pUseAuthTok))
+               {
+                   // First write the use_authtok option followed by the exitsting options.
+                   ceError = CTFilePrintf(fDstHandle, "%s ", pUseAuthTok);
+                   BAIL_ON_CENTERIS_ERROR(ceError);
+               } 
+
+               for (i = 0; i < lineObj.optionCount; i++)
+               {
+                   ceError = CTWriteToken(fDstHandle, &lineObj.options[i]);
+                   BAIL_ON_CENTERIS_ERROR(ceError);
+               }
+               ceError = CTFilePrintf(fDstHandle, "\n");
+               BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+       }
+       else
+       {
+          ceError = CTFilePrintf(fDstHandle, "%s", buffer);
+          BAIL_ON_CENTERIS_ERROR(ceError);
+       }
+   }
+   
+cleanup:
+
+   if (fDstHandle != NULL)
+     CTSafeCloseFile(&fDstHandle);
+
+   if (fSrcHandle != NULL)
+     CTSafeCloseFile(&fSrcHandle);
+
+   if (buffer)
+     CT_SAFE_FREE_STRING(buffer);
+
+   if (bFoundUseAuthTokLine)
+     FreePamLineContents(&lineObj);
+
+   return ceError;
+
+error:
+   goto cleanup;
+}
+
+// TFS-50532
+// The purpose of this function is to first do some prechecks before modifiying
+// /usr/share/pam-configs/unix file to remove or add the use_authtok option in
+// the password phase.
+static DWORD
+ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
+{
+   DWORD ceError = ERROR_SUCCESS;
+   BOOLEAN pamConfigUnixOriginalExists = FALSE;
+   BOOLEAN pamConfigUnixExists = FALSE;
+   BOOLEAN pamConfigCrackExists = FALSE;
+   BOOLEAN pamConfigsPbisDirExists = FALSE;
+   PSTR pFilePamConfigsUnix = "/usr/share/pam-configs/unix";
+   PSTR pFilePamConfigsCrack = "/usr/share/pam-configs/cracklib";
+   PSTR pDirPamConfigsPbis = "/usr/share/pam-configs.pbis";
+   PSTR pFilePamConfigUnixOriginal = "/usr/share/pam-configs.pbis/unix.orig";
+   PSTR pFilePamConfigsUnixBak = "/usr/share/pam-configs.pbis/unix.bak";
+   PSTR pFileUnixTemp = "/tmp/unix.pbis";
+
+   // Ensure pam-config/unix exists.
+   ceError = CTCheckFileOrLinkExists(pFilePamConfigsUnix, &pamConfigUnixExists);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   if (!pamConfigUnixExists)
+   {
+     // Nothing to do.
+     goto cleanup;
+   }
+   
+   ceError = CTCheckFileOrLinkExists(pFilePamConfigsCrack, &pamConfigCrackExists);
+   BAIL_ON_CENTERIS_ERROR(ceError);
+
+   if (pamConfigUnixExists && !pamConfigCrackExists && !useAuthtok)
+   {
+      // Remove the use_authtok option from pam-unix entry. pam-lsass will be above
+      // pam-unix. By removing the use-authtok, it will cause pam-unix to prompt and
+      // get password changes.
+      //
+      // Before modifing backup the original pam-configs/unix file.
+      ceError = CTCheckDirectoryExists(pDirPamConfigsPbis, &pamConfigsPbisDirExists);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+ 
+      if (!pamConfigsPbisDirExists)
+      {
+         ceError = CTCreateDirectory(pDirPamConfigsPbis, 0700);
+         BAIL_ON_CENTERIS_ERROR(ceError);
+      }
+
+      ceError = CTCheckFileOrLinkExists(pFilePamConfigUnixOriginal, &pamConfigUnixOriginalExists);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+
+      if (!pamConfigUnixOriginalExists)
+      {
+          // Copy pam-configs/unix to pam-configs.pbis/unix.orig
+          ceError = CTCopyFileWithOriginalPerms(pFilePamConfigsUnix, pFilePamConfigUnixOriginal);
+      }
+      else
+      {
+          ceError = CTCopyFileWithOriginalPerms(pFilePamConfigsUnix, pFilePamConfigsUnixBak);
+      }
+
+      BAIL_ON_CENTERIS_ERROR(ceError);
+
+      // Go ahead and remove or add the use_authtok option. Result is written to a 
+      // temporary file.
+      ceError = ParseUnixFile(pFilePamConfigsUnix, pFileUnixTemp, useAuthtok);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+
+      ceError = CTCopyFileWithOriginalPerms(pFileUnixTemp, pFilePamConfigsUnix);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+   }
+
+   if (pamConfigUnixExists && pamConfigCrackExists && !useAuthtok)
+   {
+       // Dont modify pam-unix password entry which would have the use_authtok option. 
+       // Mostly likely pam-cracklib is above pam-unix.
+       goto cleanup;
+   }
+
+   if (pamConfigUnixExists && useAuthtok)
+   {
+      // Verify and/or add use-authtok back to pam-config/unix file.
+      ceError = ParseUnixFile(pFilePamConfigsUnix, pFileUnixTemp, useAuthtok);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+
+      ceError = CTCopyFileWithOriginalPerms(pFileUnixTemp, pFilePamConfigsUnix);
+      BAIL_ON_CENTERIS_ERROR(ceError);
+   }
+
+cleanup:
+
+   return ceError;
+
+error:
+   goto cleanup;
+
+}
+
 static void
 EnablePamAuthUpdate(
     const char *testPrefix,
@@ -3928,6 +4184,8 @@ EnablePamAuthUpdate(
     if (!pamauthupdatedirconfExists)
         LW_CLEANUP_CTERR(exc, CTCopyFileWithOriginalPerms(pamauthupdateconf, pamauthupdatedirconf));
 
+    LW_CLEANUP_CTERR(exc, ModifyPamConfigUnixFile(FALSE));
+
     LW_CLEANUP_CTERR(exc, CTRunCommand(pamauthupdate));
 
 cleanup:
@@ -3953,6 +4211,8 @@ DisablePamAuthUpdate(
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
          &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/pbis"));
+
+    LW_CLEANUP_CTERR(exc, ModifyPamConfigUnixFile(TRUE));
 
     LW_CLEANUP_CTERR(exc, CTRunCommand(pamauthupdate));
 
