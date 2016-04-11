@@ -80,7 +80,7 @@ allow sshd_t var_lib_t:sock_file write;
 allow syslogd_t unconfined_t:unix_stream_socket { read write };
 allow syslogd_t var_lib_t:dir { write add_name };
 allow syslogd_t var_lib_t:fifo_file { ioctl open getattr append };
-allow syslogd_t var_lib_t:file { create open ioctl append getattr };
+allow syslogd_t var_lib_t:file { create open ioctl append getattr setattr };
 
 #============= system_dbusd_t ==============
 allow system_dbusd_t gnomeclock_t:process { siginh rlimitinh noatsecure };
@@ -213,6 +213,7 @@ require {
     type postfix_pickup_t;
     type postfix_postdrop_t;
     type postfix_qmgr_t;
+    type postfix_smtp_t;
     type postgresql_t;
     type pppd_t;
     type pptp_t;
@@ -398,6 +399,7 @@ pbis_client(postfix_master_t)
 pbis_client(postfix_pickup_t)
 pbis_client(postfix_postdrop_t)
 pbis_client(postfix_qmgr_t)
+pbis_client(postfix_smtp_t)
 pbis_client(postgresql_t)
 pbis_client(pppd_t)
 pbis_client(pptp_t)

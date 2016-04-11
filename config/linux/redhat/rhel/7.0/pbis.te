@@ -220,6 +220,7 @@ require {
     type postfix_pickup_t;
     type postfix_postdrop_t;
     type postfix_qmgr_t;
+    type postfix_smtp_t;
     type postgresql_t;
     type pppd_t;
     type pptp_t;
@@ -401,6 +402,7 @@ pbis_client(postfix_master_t)
 pbis_client(postfix_pickup_t)
 pbis_client(postfix_postdrop_t)
 pbis_client(postfix_qmgr_t)
+pbis_client(postfix_smtp_t)
 pbis_client(postgresql_t)
 pbis_client(pppd_t)
 pbis_client(pptp_t)
