@@ -127,7 +127,7 @@ configure()
                 PAMDIR="/usr/lib/security/hpux64"
                 ;;
             darwin:*)
-                PAMDIR="/usr/lib/pam"
+                PAMDIR="/usr/local/lib/pam"
                 default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
                 default_homedir_prefix="/Users"
                 ;;

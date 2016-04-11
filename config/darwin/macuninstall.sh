@@ -28,6 +28,7 @@ gather_version_info()
     IS_10_8=
     IS_10_9=
     IS_10_10=
+    IS_10_11=
     HAVE_LAUNCHCTL_V2=
 
     _get_os_version=`uname -r`
@@ -64,6 +65,11 @@ gather_version_info()
         14.*)
             IS_10_10=1
             echo "This is a Yosemite (10.10) version of Mac OS X"
+            HAVE_LAUNCHCTL_V2=1
+            ;;
+        15.*)
+            IS_10_11=1
+            echo "This is an El Capitan (10.11) version of Mac OS X"
             HAVE_LAUNCHCTL_V2=1
             ;;
         *)

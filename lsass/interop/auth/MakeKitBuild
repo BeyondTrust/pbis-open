@@ -1,9 +1,1 @@
 SUBDIRS="common pam"
-configure()
-{
-    if [ "$MK_HOST_OS" = "darwin" ] 
-    then
-        mk_skip_subdir pam
-    fi
-}
-
