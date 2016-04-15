@@ -1,4 +1,4 @@
-Name: PBIS
+Name: PowerBroker Identity Services (PBIS)
 Default: yes
 Priority: 260
 Conflicts: winbind
