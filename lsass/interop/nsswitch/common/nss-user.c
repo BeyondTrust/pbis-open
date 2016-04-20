@@ -168,10 +168,11 @@ LsaNssWriteUserInfo(
            pszMarker += dwLen + 1;
         }
         else {
-            dwLen = sizeof("x") - 1;
-            *pszMarker = 'x';
-            pResultUser->pw_passwd = pszMarker;
-            pszMarker += dwLen + 1;
+           PCSTR pszPBIS = "PBIS";
+           dwLen = strlen(pszPBIS);
+           memcpy(pszMarker, pszPBIS, dwLen);
+           pResultUser->pw_passwd = pszMarker;
+           pszMarker += dwLen + 1;
         }
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszGecos)) {
