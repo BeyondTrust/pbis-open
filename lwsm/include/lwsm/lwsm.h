@@ -326,6 +326,11 @@ typedef enum _LW_SERVICE_INFO_MASK
     LW_SERVICE_INFO_MASK_ALL              = 0x7FF
 } LW_SERVICE_INFO_MASK, *PLW_SERVICE_INFO_MASK;
 
+/* default value for the shutdown timeout; service
+ * shutdowns which exceed this timeout are forcibly
+ * killed */
+#define DEFAULT_SHUTDOWN_TIMEOUT_SECONDS 60
+
 /**
  * @brief Service information
  *

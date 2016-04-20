@@ -73,7 +73,7 @@ static struct SM_LOGLEVEL_MAP gLogLevelMap[] =
 /* default value for the shutdown timeout; service
  * shutdowns which exceed this timeout are forcibly
  * killed */
-const DWORD DEFAULT_SHUTDOWN_TIMEOUT_SECONDS = 60;
+static const DWORD SHUTDOWN_TIMEOUT_DEFAULT = 60;
 
 static
 DWORD
@@ -492,7 +492,7 @@ LwSmRegistryReadServiceInfo(
         pwszParentKey,
         wszShutdownTimeout,
         &pInfo->uShutdownTimeout,
-        DEFAULT_SHUTDOWN_TIMEOUT_SECONDS);
+        SHUTDOWN_TIMEOUT_DEFAULT);
     BAIL_ON_ERROR(dwError);
 
     *ppInfo = pInfo;

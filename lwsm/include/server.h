@@ -137,6 +137,7 @@ typedef struct _SM_BOOTSTRAP_SERVICE
     PCSTR pszName;
     LW_SERVICE_TYPE type;
     PCSTR pszPath;
+    DWORD uShutdownTimeout;
     CHAR const * const ppszArgs[];
 } SM_BOOTSTRAP_SERVICE, *PSM_BOOTSTRAP_SERVICE;
 

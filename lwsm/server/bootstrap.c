@@ -43,6 +43,7 @@ static SM_BOOTSTRAP_SERVICE gRegistryService =
     .pszName = "lwreg",
     .type = LW_SERVICE_TYPE_MODULE,
     .pszPath = LIBDIR "/lw-svcm/lwreg" MOD_EXT,
+    .uShutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS,
     .ppszArgs =
     {
         "--syslog",
@@ -122,6 +123,8 @@ LwSmBootstrap(
             1 * sizeof(*pInfo->ppwszDependencies),
             OUT_PPVOID(&pInfo->ppwszDependencies));
         BAIL_ON_ERROR(dwError);
+
+        pInfo->uShutdownTimeout = pService->uShutdownTimeout;
 
         dwError = LwSmTableAddEntry(pInfo, &pEntry);
         BAIL_ON_ERROR(dwError);
