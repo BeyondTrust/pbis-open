@@ -405,6 +405,8 @@ NTSTATUS
 BeginShutdownTimer(PSTR pServiceName, struct _TIMER * timer, LW_DWORD uShutdownTimeout)
 {
     NTSTATUS status = STATUS_SUCCESS;
+    pthread_t timerThread;
+    int thread_status  = 0;
 
     /* this MUST be freed by the shutdown thread */
     struct _SHUTDOWN_TIMER_REQUEST * request = NULL;
@@ -420,9 +422,7 @@ BeginShutdownTimer(PSTR pServiceName, struct _TIMER * timer, LW_DWORD uShutdownT
     status = LwRtlCStringDuplicate(&request->serviceName, pServiceName);
     GCOS(status);
 
-    pthread_t timerThread = NULL;
-    const int thread_status = pthread_create(&timerThread, NULL, ShutdownTimerThread, request);
-
+    thread_status = pthread_create(&timerThread, NULL, ShutdownTimerThread, request);
     if (thread_status != 0) {
       LW_RTL_LOG_WARNING("Could not %s create the shutdown timer thread: error %s (%d). Will NOT use shutdown timer.", 
               request->serviceName, ErrnoToName(thread_status), thread_status);
