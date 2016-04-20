@@ -716,6 +716,7 @@ MainTask(
                 BAIL_ON_ERROR(status);
                 break;
             default:
+                SM_LOG_ERROR("MainTask: ignoring unhandled signal %d", info.si_signo);
                 break;
             }
         }
@@ -731,6 +732,7 @@ error:
 
     if (status)
     {
+        SM_LOG_ERROR("MainTask: exiting (likely due to error queuing tasks) %d", status);
         LwRtlExitMain(status);
         *pWaitMask = LW_TASK_EVENT_COMPLETE;
     }

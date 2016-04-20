@@ -70,6 +70,11 @@ static struct SM_LOGLEVEL_MAP gLogLevelMap[] =
     { "trace", LW_RTL_LOG_LEVEL_TRACE }
 };
 
+/* default value for the shutdown timeout; service
+ * shutdowns which exceed this timeout are forcibly
+ * killed */
+const DWORD DEFAULT_SHUTDOWN_TIMEOUT_SECONDS = 60;
+
 static
 DWORD
 LwSmRegistryReadDword(
@@ -78,6 +83,17 @@ LwSmRegistryReadDword(
     PCWSTR pwszParentKey,
     PCWSTR pwszValueName,
     PDWORD pdwValue
+    );
+
+static
+DWORD
+LwSmRegistryReadDwordOrUseDefault(
+    HANDLE hReg,
+    HKEY pRootKey,
+    PCWSTR pwszParentKey,
+    PCWSTR pwszValueName,
+    PDWORD pdwValue,
+    DWORD  defaultValue
     );
 
 static
@@ -250,6 +266,8 @@ LwSmRegistryReadServiceInfo(
             {'L', 'o', 'g', 'L', 'e', 'v', 'e', 'l', 0};
     static const WCHAR wszCoreSize[] =
         {'C', 'o', 'r', 'e', 'S', 'i', 'z', 'e', 0};
+    static const WCHAR wszShutdownTimeout[] =
+        { 'S', 'h', 'u', 't', 'd', 'o', 'w', 'n', 'T', 'i', 'm', 'e', 'o', 'u', 't', 0 };
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -438,6 +456,7 @@ LwSmRegistryReadServiceInfo(
                 break;
             }
         }
+
         if (i == sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]))
         {
             SM_LOG_WARNING("Service %s has invalid LogLevel '%s'.", pszName, pszDefaultLogLevel);
@@ -467,6 +486,15 @@ LwSmRegistryReadServiceInfo(
     }
     BAIL_ON_ERROR(dwError);
 
+    dwError = LwSmRegistryReadDwordOrUseDefault(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszShutdownTimeout,
+        &pInfo->uShutdownTimeout,
+        DEFAULT_SHUTDOWN_TIMEOUT_SECONDS);
+    BAIL_ON_ERROR(dwError);
+
     *ppInfo = pInfo;
 
 cleanup:
@@ -493,6 +521,7 @@ error:
 
     goto cleanup;
 }
+
 
 static
 DWORD
@@ -528,6 +557,32 @@ error:
     goto cleanup;
 }
 
+
+static
+DWORD
+LwSmRegistryReadDwordOrUseDefault(
+    HANDLE hReg,
+    HKEY pRootKey,
+    PCWSTR pwszParentKey,
+    PCWSTR pwszValueName,
+    PDWORD pdwValue,
+    DWORD  defaultValue
+    ) 
+{
+    DWORD dwError = LwSmRegistryReadDword(
+              hReg, 
+              pRootKey,
+              pwszParentKey,
+              pwszValueName,
+              pdwValue);
+
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE) {
+       *pdwValue = defaultValue;
+       dwError = 0;
+    }
+
+    return dwError;
+}
 static
 DWORD
 LwSmRegistryReadString(

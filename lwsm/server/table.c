@@ -315,6 +315,7 @@ LwSmTableUpdateEntry(
     pUpdate->dwCoreSize = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->dwCoreSize : pEntry->pInfo->dwCoreSize;
     pUpdate->DefaultLogType = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogType : pEntry->pInfo->DefaultLogType;
     pUpdate->DefaultLogLevel = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogLevel : pEntry->pInfo->DefaultLogLevel;
+    pUpdate->uShutdownTimeout = mask & LW_SERVICE_INFO_MASK_SHUTDOWN_TIMEOUT ? pInfo->uShutdownTimeout : pEntry->pInfo->uShutdownTimeout;
 
     /* Atomically replace previous info structure */
     LwSmCommonFreeServiceInfo(pEntry->pInfo);

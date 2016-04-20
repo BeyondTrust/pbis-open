@@ -94,6 +94,7 @@ typedef struct _CONTAINER_START_REQ
     LW_SM_LOG_LEVEL LogLevel;
     PWSTR pLogTarget;
     DWORD CoreSize;
+    DWORD ShutdownTimeout;
 } CONTAINER_START_REQ, *PCONTAINER_START_REQ;
 
 typedef struct _CONTAINER_STATUS_RES
@@ -167,6 +168,7 @@ typedef struct _CONTAINER_INSTANCE
     CONTAINER_START_REQ Start;
     SM_LINK Link;
     DWORD CoreSize;
+    DWORD ShutdownTimeout;
 } CONTAINER_INSTANCE, *PCONTAINER_INSTANCE;
 
 static LWMsgTypeSpec gLogLevelSpec[] =
@@ -251,6 +253,7 @@ static LWMsgTypeSpec gContainerStartSpec[] =
     LWMSG_MEMBER_PWSTR(CONTAINER_START_REQ, pLogTarget),
     LWMSG_MEMBER_TYPESPEC(CONTAINER_START_REQ, LogLevel, gLogLevelSpec),
     LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, CoreSize),
+    LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, ShutdownTimeout),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -1015,6 +1018,7 @@ ContainerStart(
     pInstance->Start.LogLevel = pInstance->LogLevel;
     pInstance->Start.pLogTarget = pInstance->pLogTarget;
     pInstance->Start.CoreSize = pInstance->CoreSize;
+    pInstance->Start.ShutdownTimeout = pInstance->ShutdownTimeout;
     pInstance->In.tag = CONTAINER_REQ_START;
     pInstance->In.data = &pInstance->Start;
 
@@ -1518,6 +1522,7 @@ ContainerConstruct(
     pInstance->CoreSize = pInfo->dwCoreSize;
     pInstance->LogType = pInfo->DefaultLogType;
     pInstance->LogLevel = pInfo->DefaultLogLevel;
+    pInstance->ShutdownTimeout = pInfo->uShutdownTimeout; 
 
     dwError = LwAllocateWc16String(&pInstance->pName, pInfo->pwszName);
     BAIL_ON_ERROR(dwError);
@@ -1783,12 +1788,12 @@ ContainerSrvStart(
 
     if (entry)
     {
-        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadEmbedded(pReq->pName, entry, &pHandle->pInstance));
+        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadEmbedded(pReq->pName, pReq->ShutdownTimeout, entry, &pHandle->pInstance));
         BAIL_ON_ERROR(dwError);
     }
     else
     {
-        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadModule(pReq->pName, pReq->pPath, &pHandle->pInstance));
+        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadModule(pReq->pName, pReq->pPath, pReq->ShutdownTimeout, &pHandle->pInstance));
         BAIL_ON_ERROR(dwError);
     }
 

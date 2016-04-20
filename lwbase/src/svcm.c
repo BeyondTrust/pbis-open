@@ -46,6 +46,9 @@
 #include <lw/rtllog.h>
 #include <dlfcn.h>
 #include <assert.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #define GCOS(s) GOTO_CLEANUP_ON_STATUS(s)
 #define STRINGIFY(token) (#token)
@@ -65,6 +68,29 @@ static struct
 {
     PLW_THREAD_POOL volatile pPool;
 } gSvcmState;
+
+/* used to implement a shutdown timer */
+struct _TIMER {
+    pthread_mutex_t mutex;
+    pthread_cond_t  cond;
+
+    /* indicates if the timer was cancelled */
+    unsigned int cancelled : 1;
+};
+
+struct _SHUTDOWN_TIMER_REQUEST {
+    PSTR serviceName;
+    struct _TIMER * shutdownTimer;
+    /* the pthread cond wait time in seconds */
+    unsigned short delaySeconds;
+};
+
+static struct _TIMER gShutdownTimer = { 
+      PTHREAD_MUTEX_INITIALIZER,
+      PTHREAD_COND_INITIALIZER,
+      LW_FALSE
+};
+
 
 static
 NTSTATUS
@@ -100,12 +126,17 @@ LwRtlSvcmInitializeInstance(
     PLW_SVCM_INSTANCE pInstance,
     PCWSTR pServiceName,
     PCSTR pModuleName,
+    LW_DWORD uShutdownTimeout,
     LW_SVCM_MODULE_ENTRY_FUNCTION Entry
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
+    pInstance->ShutdownTimeout = uShutdownTimeout;
     pInstance->pTable = Entry();
+
+    status = LwRtlCStringAllocateFromWC16String(&pInstance->pServiceName, pServiceName);
+    GCOS(status);
 
     status = ValidateModuleTable(pInstance->pTable, pModuleName);
     GCOS(status);
@@ -128,7 +159,8 @@ cleanup:
 
 LW_NTSTATUS
 LwRtlSvcmLoadEmbedded(
-    LW_IN LW_PCWSTR pServiceName,
+    LW_IN LW_PCWSTR pwServiceName,
+    LW_IN LW_DWORD uShutdownTimeout,
     LW_IN LW_SVCM_MODULE_ENTRY_FUNCTION Entry,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
     )
@@ -142,9 +174,9 @@ LwRtlSvcmLoadEmbedded(
     status = LW_RTL_ALLOCATE_AUTO(&pInstance);
     GCOS(status);
 
-    LW_RTL_LOG_DEBUG("Loading embedded service: %s", pServiceName);
+    LW_RTL_LOG_DEBUG("Loading embedded service: %s", pwServiceName);
 
-    status = LwRtlSvcmInitializeInstance(pInstance, pServiceName, "<embedded>", Entry);
+    status = LwRtlSvcmInitializeInstance(pInstance, pwServiceName, "<embedded>", uShutdownTimeout, Entry);
     GCOS(status);
 
 cleanup:
@@ -164,6 +196,7 @@ LW_NTSTATUS
 LwRtlSvcmLoadModule(
     LW_IN LW_PCWSTR pServiceName,
     LW_IN LW_PCWSTR pModulePath,
+    LW_IN LW_DWORD uShutdownTimeout,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
     )
 {
@@ -244,7 +277,7 @@ LwRtlSvcmLoadModule(
         GCOS(status);
     }
 
-    status = LwRtlSvcmInitializeInstance(pInstance, pServiceName, pModulePathA, Entry);
+    status = LwRtlSvcmInitializeInstance(pInstance, pServiceName, pModulePathA, uShutdownTimeout, Entry);
     GCOS(status);
 
 cleanup:
@@ -281,6 +314,7 @@ LwRtlSvcmUnload(
             dlclose(pInstance->pDlHandle);
         }
 
+        RTL_FREE(&pInstance->pServiceName);
         RTL_FREE(&pInstance);
     }
 }
@@ -305,6 +339,119 @@ LwRtlSvcmGetData(
 
     return pInstance->pServiceData;
 }
+
+
+/**
+ * @brief Shutdown timer thread performs a cond timed wait
+ * of the supplied 'timer' and if it expires, this kills
+ * this process.
+ */
+static void *ShutdownTimerThread(void *arg) {
+    struct _SHUTDOWN_TIMER_REQUEST * request = (struct _SHUTDOWN_TIMER_REQUEST *)arg;
+    struct _TIMER * timer = request->shutdownTimer;
+    struct timespec timeout = { .tv_sec = time(NULL) + request->delaySeconds};
+    PSTR serviceName = NULL;
+
+    int status = 0;
+
+    status = LwRtlCStringDuplicate(&serviceName, request->serviceName);
+    GCOS(status);
+
+    LW_RTL_FREE(&request->serviceName);
+    LW_RTL_FREE(&request);
+
+    status = pthread_mutex_lock(&(timer->mutex));
+    if (status != 0) {
+      LW_RTL_LOG_WARNING("Could not lock the '%s' shutdown timer: error %s (%d). Will NOT use shutdown timer.", 
+              serviceName, ErrnoToName(status), status);
+      GCOS(status);
+    }
+
+    while (!timer->cancelled) {
+        status = pthread_cond_timedwait(&(timer->cond), &(timer->mutex), &timeout);
+
+        if (status == ETIMEDOUT) {
+           break;
+        } else if (status != 0) {
+            /* break the loop for errors which indicate programming errors */ 
+            if (status == EINVAL || status == EPERM) {
+              LW_RTL_LOG_ERROR("Error waiting on for '%s' shutdown timeout: error %s (%d).", 
+                      serviceName, ErrnoToName(status), status);
+              break;
+            }
+        }
+    }
+
+    if (!timer->cancelled) {
+      pthread_mutex_unlock(&(timer->mutex));
+      LW_RTL_LOG_WARNING("Shutdown timer for service '%s' expired, sending SIGKILL", serviceName); 
+      kill(getpid(), SIGKILL);
+    } else {
+      pthread_mutex_unlock(&(timer->mutex));
+    }
+
+cleanup:
+    LW_RTL_FREE(&serviceName);
+    return NULL;
+}
+
+
+/**
+ * @brief Create the shutdown timer thread. 
+ * @return STATUS_SUCCESS or LW_STATUS_INSUFFICIENT_RESOURCES 
+ */
+static 
+NTSTATUS 
+BeginShutdownTimer(PSTR pServiceName, struct _TIMER * timer, LW_DWORD uShutdownTimeout)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    /* this MUST be freed by the shutdown thread */
+    struct _SHUTDOWN_TIMER_REQUEST * request = NULL;
+
+    status = LW_RTL_ALLOCATE_AUTO(&request);
+    if (status != STATUS_SUCCESS) {
+      LW_RTL_LOG_WARNING("Could not create the %s shutdown timer request. Will NOT use shutdown timer.", pServiceName);
+      GCOS(status);
+    }
+
+    request->shutdownTimer = &gShutdownTimer;
+    request->delaySeconds = uShutdownTimeout;
+    status = LwRtlCStringDuplicate(&request->serviceName, pServiceName);
+    GCOS(status);
+
+    pthread_t timerThread = NULL;
+    const int thread_status = pthread_create(&timerThread, NULL, ShutdownTimerThread, request);
+
+    if (thread_status != 0) {
+      LW_RTL_LOG_WARNING("Could not %s create the shutdown timer thread: error %s (%d). Will NOT use shutdown timer.", 
+              request->serviceName, ErrnoToName(thread_status), thread_status);
+      status = LW_STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+cleanup:
+    if (status) {
+        /* an error occurred, so free the request as
+         * the shutdown thread won't */
+        LW_RTL_FREE(&request->serviceName);
+        LW_RTL_FREE(&request);
+    }
+
+    return status;
+}
+
+
+static 
+VOID 
+CancelShutdownTimer(struct _TIMER * timer) {
+    if (timer) {
+      pthread_mutex_lock(&(timer->mutex));
+      timer->cancelled = LW_TRUE;
+      pthread_cond_signal(&(timer->cond));
+      pthread_mutex_unlock(&(timer->mutex));
+    }
+}
+
 
 static
 VOID
@@ -332,6 +479,7 @@ StartWorkItem(
     LwRtlFreeWorkItem(&pItem);
 }
 
+
 static
 VOID
 StopWorkItem(
@@ -342,7 +490,14 @@ StopWorkItem(
     NTSTATUS status = STATUS_SUCCESS;
     PSVCM_COMMAND_STATE pState = pContext;
 
+    LW_RTL_LOG_INFO("Executing stop for service '%s'", pState->pInstance->pServiceName); 
+    LW_RTL_LOG_INFO("Starting %d second shutdown timer for service '%s'", 
+            pState->pInstance->ShutdownTimeout,
+            pState->pInstance->pServiceName); 
+    BeginShutdownTimer(pState->pInstance->pServiceName, &gShutdownTimer, pState->pInstance->ShutdownTimeout);
     status = pState->pInstance->pTable->Stop(pState->pInstance);
+    CancelShutdownTimer(&gShutdownTimer);
+    LW_RTL_LOG_INFO("Stop of service '%s' completed.", pState->pInstance->pServiceName); 
 
     if (pState->Notify)
     {
@@ -352,6 +507,7 @@ StopWorkItem(
     RTL_FREE(&pState);
     LwRtlFreeWorkItem(&pItem);
 }
+
 
 static
 VOID

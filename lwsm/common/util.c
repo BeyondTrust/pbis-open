@@ -238,6 +238,7 @@ LwSmCopyServiceInfo(
     pCopy->dwCoreSize = pInfo->dwCoreSize;
     pCopy->DefaultLogType = pInfo->DefaultLogType;
     pCopy->DefaultLogLevel = pInfo->DefaultLogLevel;
+    pCopy->uShutdownTimeout = pInfo->uShutdownTimeout;
     
     dwError = LwSmCopyString(pInfo->pwszPath, &pCopy->pwszPath);
     BAIL_ON_ERROR(dwError);
