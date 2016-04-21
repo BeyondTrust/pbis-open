@@ -329,6 +329,21 @@ preserve_6_1_configuration()
     fi
 }
 
+preserve_ignore_files()
+{
+    if [ -f "/etc/likewise/user-ignore" ]; then
+        run_or_fail cp /etc/likewise/user-ignore "${UPGRADEDIR}"
+    elif [ -f "/etc/pbis/user-ignore" ]; then
+        run_or_fail cp /etc/pbis/user-ignore "${UPGRADEDIR}"
+    fi
+
+    if [ -f "/etc/likewise/group-ignore" ]; then
+        run_or_fail cp /etc/likewise/group-ignore "${UPGRADEDIR}"
+    elif [ -f "/etc/pbis/group-ignore" ]; then
+        run_or_fail cp /etc/pbis/group-ignore "${UPGRADEDIR}"
+    fi
+}
+
 wait_for_lwsm_shutdown()
 {
     LWSMD_WAIT_TIME=$1
@@ -397,6 +412,8 @@ preinstall()
     preserve_6_1_configuration
 
 #   preserve_6_5_configuration is not needed
+
+    preserve_ignore_files
 
     preserve_join_status
 
