@@ -479,6 +479,13 @@ error:
     goto cleanup;
 }
 
+/**
+ * \brief Reads the specified DWORD value from the 
+ * registry and returns it in pdwValue.
+ *
+ * n.b. the value is clamped to the range specified
+ * by dwMin .. dwMax.
+ */
 NTSTATUS
 NtRegReadConfigDword(
     PLWREG_CONFIG_REG pReg,
@@ -539,14 +546,16 @@ NtRegReadConfigDword(
 
     if (bGotValue)
     {
-        if (dwMin <= dwValue && dwValue <= dwMax)
-        {
-            *pdwValue = dwValue;
+        /* clamp the value to the specified range */
+        if (dwMin > dwValue) {
+            dwValue = dwMin;
         }
-        else
-        {
-            ntStatus = STATUS_INVALID_PARAMETER;
+
+        if (dwMax < dwValue) {
+            dwValue = dwMax;
         }
+
+        *pdwValue = dwValue;
     }
 
 cleanup:
