@@ -528,6 +528,18 @@ restore_7_5_configuration()
     run_quiet rm -r "${UPGRADEDIR}"
 }
 
+restore_ignore_files()
+{
+    if [ -f "${UPGRADEDIR}/user-ignore" ]; then
+        run_or_fail cp "${UPGRADEDIR}/user-ignore" '/etc/pbis/user-ignore'
+    fi
+
+    if [ -f "${UPGRADEDIR}/group-ignore" ]; then
+        run_or_fail cp "${UPGRADEDIR}/group-ignore" '/etc/pbis/group-ignore'
+    fi
+}
+
+
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/regshell'
@@ -729,6 +741,8 @@ restore_7_5_configuration
 run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
 restore_5_0123_configuration
+
+restore_ignore_files
 
 import_registry_configurations
 
