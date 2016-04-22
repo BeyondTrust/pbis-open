@@ -214,7 +214,7 @@ LsaNssWriteUserInfo(
         // etc passwd format expects: "pw_name:pw_passwd:pw_uid:pw_gid:pw_gecos:pw_dir:pw_shell"
         len = snprintf(pszMarker, bufLen, "%s:%s:%lu:%lu:%s:%s:%s",
                 PASSWD_SAFE_STRING(pUserInfo_0->pszName, ""),
-                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, "x"),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, "PBIS"),
                 (unsigned long)pUserInfo_0->uid,
                 (unsigned long)pUserInfo_0->gid,
                 PASSWD_SAFE_STRING(pUserInfo_0->pszGecos, ""),
