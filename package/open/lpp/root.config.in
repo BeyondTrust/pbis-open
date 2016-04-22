@@ -290,6 +290,17 @@ restore_6_1_configuration()
     run_quiet rm -r "${UPGRADEDIR}"
 }
 
+restore_ignore_files()
+{
+    if [ -f "${UPGRADEDIR}/user-ignore" ]; then
+        run_or_fail cp "${UPGRADEDIR}/user-ignore" '/etc/pbis/user-ignore'
+    fi
+
+    if [ -f "${UPGRADEDIR}/group-ignore" ]; then
+        run_or_fail cp "${UPGRADEDIR}/group-ignore" '/etc/pbis/group-ignore'
+    fi
+}
+
 relocate_domain_separator()
 {
     DomainSeparator=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
