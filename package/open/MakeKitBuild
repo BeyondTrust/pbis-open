@@ -346,8 +346,6 @@ open_files_prefix()
         "${MK_DATADIR}/fedora/15/*" \
         "${MK_DATADIR}/fedora/14/*" \
         "${MK_DATADIR}/fedora/13/*" \
-        "${MK_DOCDIR}/*" \
-        "${MK_DOCDIR}/html/*" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
 }
