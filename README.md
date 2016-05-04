@@ -1,4 +1,5 @@
-**PowerBroker Identity Services Open**.
+PowerBroker Identity Services Open
+==================================
 
 PowerBroker Identity Services Open has several goals:
 
@@ -9,7 +10,7 @@ PowerBroker Identity Services Open has several goals:
     heterogeneous networks.
 
 Instructions on building pbis-open
-======================================
+==================================
 
 The pbis-open build uses makekit (http://bkoropoff.github.io/makekit/)
 While the code is portable among a variety of *nix based platforms
@@ -25,8 +26,6 @@ packages (depending on your Linux distro):
 
     Optional packages: 
        o libglade2-devel - To build domainjoin-gui GTK application
-       o libattr-devel   - To enable extended attribute support for the 
-                           PBIS CIFS server (experimental)
        o 32bit development tools and libraries for compatibility packages
          when building on x86_64
          - glibc-devel.i686, libgcc.i686, pam-devel.i686
@@ -37,8 +36,6 @@ packages (depending on your Linux distro):
 
     Optional packages: 
        o libglade2-dev - To build domainjoin-gui GTK application
-       o libattr1-dev  - To enable extended attribute support for the 
-                         PBIS CIFS server (experimental)
        o 32bit development tools and libraries for compatibility packages
          when building on x86_64
          - ia32-libs, libc6-dev-i386, gcc-multilib
@@ -78,9 +75,9 @@ you will need to start lwsmd and import registry files manually:
 
   $ sudo /etc/init.d/lwsmd start
   $ sudo bash -c 'for file in /opt/pbis/share/config/*.reg; do \
-      /opt/pbis/bin/lwregshell import $file; \
+      /opt/pbis/bin/regshell import $file; \
     done'
-  $ sudo /etc/init.d/lwmsd reload
+  $ sudo /etc/init.d/lwsmd reload
 
 PBIS Registry Service
 =========================
