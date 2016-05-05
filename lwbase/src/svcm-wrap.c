@@ -55,12 +55,19 @@ MainTask(
     PLONG64 pllTime
     );
 
+
+/* default value for the shutdown timeout; service
+ * shutdowns which exceed this timeout are forcibly
+ * killed */
+#define DEFAULT_SHUTDOWN_TIMEOUT_SECONDS 60
+
 static struct
 {
     PWSTR pServiceName;
     PWSTR pServicePath;
     ULONG ArgCount;
     PWSTR* ppArgs;
+    DWORD ShutdownTimeout;
     PLW_THREAD_POOL pPool;
     PLW_TASK pMainTask;
     PLW_SVCM_INSTANCE pService;
@@ -70,6 +77,7 @@ static struct
     .pServicePath = NULL,
     .ArgCount = 0,
     .ppArgs = NULL,
+    .ShutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS,
     .pPool = NULL,
     .pMainTask = NULL,
     .pService = NULL
@@ -127,6 +135,7 @@ int main(
     status = LwRtlSvcmLoadModule(
         gState.pServiceName,
         gState.pServicePath,
+        gState.ShutdownTimeout,
         &gState.pService);
     GCOS(status);
 

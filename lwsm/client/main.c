@@ -1040,6 +1040,7 @@ LwSmInfo(
     {
         printf("File descriptor limit: inherit\n");
     }
+
     if (pInfo->dwCoreSize)
     {
         printf("Core dump size limit: %lu\n", (unsigned long) pInfo->dwCoreSize);
@@ -1047,6 +1048,15 @@ LwSmInfo(
     else
     {
         printf("Core dump size limit: inherit\n");
+    }
+
+    if (pInfo->uShutdownTimeout)
+    {
+        printf("Shutdown timeout (sec): %lu\n", (unsigned long) pInfo->uShutdownTimeout);
+    }
+    else
+    {
+        printf("Shutdown timeout (sec): inherit\n");
     }
 
 cleanup:
@@ -1576,13 +1586,14 @@ LwSmSetLog(
     PSTR pszTarget = NULL;
     PWSTR pServiceName = NULL;
     
-    LW_BOOLEAN persistFlag = LW_FALSE;
+    const LW_BOOLEAN persistFlag = 
+        (pArgv[1] && (strcmp(pArgv[1], "--persist") == 0
+                    || strcmp(pArgv[1], "-p") == 0))
+        ? LW_TRUE 
+        : LW_FALSE;
 
-    if (strcmp(pArgv[1], "--persist") == 0
-        || strcmp(pArgv[1], "-p") == 0)
+    if (persistFlag) 
     {
-        persistFlag = LW_TRUE;      
-
         argc--;
         pArgv++;
     }
@@ -1803,13 +1814,15 @@ LwSmCmdSetLogLevel(
     PSTR pFacility = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
     PWSTR pServiceName = NULL;
-    LW_BOOLEAN persistFlag = LW_FALSE;
 
-    if (strcmp(pArgv[1], "--persist") == 0
-        || strcmp(pArgv[1], "-p") == 0)
+    const LW_BOOLEAN persistFlag = 
+        (pArgv[1] && (strcmp(pArgv[1], "--persist") == 0
+                    || strcmp(pArgv[1], "-p") == 0))
+        ? LW_TRUE
+        : LW_FALSE;
+
+    if (persistFlag) 
     {
-        persistFlag = LW_TRUE;      
-
         argc--;
         pArgv++;
     }

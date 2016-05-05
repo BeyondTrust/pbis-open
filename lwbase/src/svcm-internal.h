@@ -70,9 +70,15 @@ typedef struct _SVCM_COMMAND_STATE
 struct _LW_SVCM_INSTANCE
 {
     PVOID pDlHandle;
+    PSTR pServiceName;
     PLW_SVCM_MODULE pTable;
     PLW_WORK_ITEM pStopItem;
     PSVCM_COMMAND_STATE pStopState;
+
+    /* the timeout in seconds before the shutdown 
+     * timer kills the process */
+    LW_DWORD ShutdownTimeout;
+
     PVOID pServiceData;
 };
 

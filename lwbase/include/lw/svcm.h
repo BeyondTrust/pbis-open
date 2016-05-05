@@ -248,6 +248,7 @@ LwRtlSvcmGetData(
  *
  * @param[in] pServiceName the name of the service
  * @param[in] pModulePath the filesystem path of the module object file
+ * @param[in] uShutdownTimeout the shutdown timeout in seconds
  * @param[out] ppInstance set to the created service instance
  * @return an NTSTATUS code
  */
@@ -255,6 +256,7 @@ LW_NTSTATUS
 LwRtlSvcmLoadModule(
     LW_IN LW_PCWSTR pServiceName,
     LW_IN LW_PCWSTR pModulePath,
+    LW_IN LW_DWORD uShutdownTimeout,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
     );
 
@@ -267,6 +269,7 @@ LwRtlSvcmLoadModule(
  * and then loaded.
  *
  * @param[in] pServiceName the name of the service
+ * @param[in] uShutdownTimeout the shutdown timeout in seconds
  * @param[in] Entry the entry point function
  * @param[out] ppInstance set to the created service instance
  * @return an NTSTATUS code
@@ -274,6 +277,7 @@ LwRtlSvcmLoadModule(
 LW_NTSTATUS
 LwRtlSvcmLoadEmbedded(
     LW_IN LW_PCWSTR pServiceName,
+    LW_IN LW_DWORD uShutdownTimeout,
     LW_IN LW_SVCM_MODULE_ENTRY_FUNCTION Entry,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
     );
