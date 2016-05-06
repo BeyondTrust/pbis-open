@@ -700,6 +700,7 @@ lwmsg_data_marshal_internal(
                           buffer));
         break;
     default:
+        status = LWMSG_STATUS_UNIMPLEMENTED;
         LWMSG_ASSERT_NOT_REACHED();
         break;
     }
