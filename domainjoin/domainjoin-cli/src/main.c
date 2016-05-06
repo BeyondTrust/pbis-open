@@ -63,6 +63,7 @@ ShowUsage()
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
+    fprintf(stdout, "    leave [--release]\n");
     fprintf(stdout, "    leave --details <module>\n\n");
 
     fprintf(stdout, "  Example:\n\n");
@@ -571,7 +572,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
     BOOLEAN preview = FALSE;
     DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
-    size_t i;
+    ssize_t i;
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
     int passwordIndex = -1;
@@ -588,6 +589,13 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
+        else if(!strcmp(argv[0], "--release"))
+        {
+            options.releaseLicense = TRUE; 
+            argv++;
+            argc--;
+        }
+        // remaining options require at least two options 
         else if(argc < 2)
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
