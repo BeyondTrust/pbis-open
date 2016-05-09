@@ -235,8 +235,7 @@ static const SSL_CIPHER cipher_aliases[] = {
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, 0, SSL_aNULL, ~SSL_eNULL, 0, ~SSL_SSLV2,
-     SSL_EXP_MASK, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
 
     /*
      * key exchange aliases (some of those using only a single bit here
@@ -376,10 +375,11 @@ static int get_optional_pkey_id(const char *pkey_name)
     const EVP_PKEY_ASN1_METHOD *ameth;
     int pkey_id = 0;
     ameth = EVP_PKEY_asn1_find_str(NULL, pkey_name, -1);
-    if (ameth) {
-        EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
+    if (ameth && EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL,
+                                         ameth) > 0) {
+        return pkey_id;
     }
-    return pkey_id;
+    return 0;
 }
 
 #else
@@ -391,7 +391,9 @@ static int get_optional_pkey_id(const char *pkey_name)
     int pkey_id = 0;
     ameth = EVP_PKEY_asn1_find_str(&tmpeng, pkey_name, -1);
     if (ameth) {
-        EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
+        if (EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL,
+                                    ameth) <= 0)
+            pkey_id = 0;
     }
     if (tmpeng)
         ENGINE_finish(tmpeng);
@@ -1027,10 +1029,6 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
             if (cipher_id && cipher_id != cp->id)
                 continue;
 #endif
-            if (algo_strength == SSL_EXP_MASK && SSL_C_IS_EXPORT(cp))
-                goto ok;
-            if (alg_ssl == ~SSL_SSLV2 && cp->algorithm_ssl == SSL_SSLV2)
-                goto ok;
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
                 continue;
             if (alg_auth && !(alg_auth & cp->algorithm_auth))
@@ -1047,9 +1045,10 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
             if ((algo_strength & SSL_STRONG_MASK)
                 && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
                 continue;
+            if ((algo_strength & SSL_NOT_DEFAULT)
+                && !(cp->algo_strength & SSL_NOT_DEFAULT))
+                continue;
         }
-
-    ok:
 
 #ifdef CIPHER_DEBUG
         fprintf(stderr, "Action = %d\n", rule);
@@ -1334,6 +1333,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         ca_list[j]->algo_strength & SSL_STRONG_MASK;
             }
 
+            if (ca_list[j]->algo_strength & SSL_NOT_DEFAULT) {
+                algo_strength |= SSL_NOT_DEFAULT;
+            }
+
             if (ca_list[j]->valid) {
                 /*
                  * explicit ciphersuite found; its protocol version does not
@@ -1404,15 +1407,16 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
                                     const char **prule_str)
 {
     unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (!strcmp(*prule_str, "SUITEB128"))
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    else if (!strcmp(*prule_str, "SUITEB128ONLY"))
+    if (strncmp(*prule_str, "SUITEB128ONLY", 13) == 0) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    else if (!strcmp(*prule_str, "SUITEB128C2")) {
+    } else if (strncmp(*prule_str, "SUITEB128C2", 11) == 0) {
         suiteb_comb2 = 1;
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (!strcmp(*prule_str, "SUITEB192"))
+    } else if (strncmp(*prule_str, "SUITEB128", 9) == 0) {
+        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
+    } else if (strncmp(*prule_str, "SUITEB192", 9) == 0) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
+    }
 
     if (suiteb_flags) {
         c->cert_flags &= ~SSL_CERT_FLAG_SUITEB_128_LOS;
