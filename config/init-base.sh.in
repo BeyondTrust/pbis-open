@@ -127,6 +127,8 @@ fi
 
 if [ $PLATFORM = "HP-UX" -o $PLATFORM = "SOLARIS" -o $PLATFORM = "FREEBSD" ]; then
     LOCKFILE="/var/run/${SCRIPTNAME}.lock"
+elif [ $PLATFORM = "AIX" ]; then
+    LOCKFILE="/var/locks/${SCRIPTNAME}"
 else
     LOCKFILE="/var/lock/subsys/${SCRIPTNAME}"
 fi
