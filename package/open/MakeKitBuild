@@ -13,7 +13,6 @@ configure()
         MK_STAGE_DIR \
         MK_HOST_ARCH \
         MK_SYSCONFDIR \
-        MK_DOCDIR \
         LW_CACHEDIR \
         LW_CONFIGDIR \
         LW_INITDIR \
@@ -130,8 +129,6 @@ package_pkg()
                 "${MK_BINDIR}" \
                 "${MK_SBINDIR}" \
                 "${MK_DATADIR}" \
-                "${MK_DOCDIR}" \
-                "${MK_DOCDIR}/html" \
                 "${MK_LIBEXECDIR}" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
@@ -201,8 +198,6 @@ package_lpp()
                 "${MK_SBINDIR}" \
                 "${MK_DATADIR}" \
                 "${MK_LIBEXECDIR}" \
-                "${MK_DOCDIR}" \
-                "${MK_DOCDIR}/html" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
                 "${MK_LIBDIR}/krb5" \
