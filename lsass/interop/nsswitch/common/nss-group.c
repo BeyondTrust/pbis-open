@@ -218,8 +218,9 @@ LsaNssWriteGroupInfo(
            pszMarker += dwLen + 1;
         }
         else{
-            dwLen = sizeof("x") - 1;
-            *pszMarker = 'x';
+            PCSTR pszPBIS = "PBIS";
+            dwLen = strlen(pszPBIS);
+            memcpy(pszMarker, pszPBIS, dwLen);
             pResultGroup->gr_passwd = pszMarker;
             pszMarker += dwLen + 1;
         }
@@ -234,7 +235,7 @@ LsaNssWriteGroupInfo(
         // etc group format expects: "gr_name:gr_passwd:gr_gid:members"
         len = snprintf(pszMarker, bufLen - outLen, "%s:%s:%lu:",
                 GROUP_SAFE_STRING(pGroupInfo_1->pszName, ""),
-                GROUP_SAFE_STRING(pGroupInfo_1->pszPasswd, "x"),
+                GROUP_SAFE_STRING(pGroupInfo_1->pszPasswd, "PBIS"),
                 (unsigned long)pGroupInfo_1->gid
                 );
 
