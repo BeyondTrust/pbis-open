@@ -48,7 +48,7 @@ ShowUsage()
     fprintf(stdout, "usage: domainjoin-cli [options] command [args...]\n\n");
     fprintf(stdout, "  where options are:\n\n");
     fprintf(stdout, "    --help                                     Display this help information.\n");
-    fprintf(stdout, "    --help-internal                            Display help for debug commands\n");
+    fprintf(stdout, "    --help-internal                            Display help for debug commands.\n");
     fprintf(stdout, "    --logfile {.|path}                         Log to a file (or \".\" to log\n"
                     "                                               to console).\n");
     fprintf(stdout, "    --loglevel {error|warning|info|verbose}    Adjusts how much logging is\n"
@@ -63,8 +63,10 @@ ShowUsage()
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
+    fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "    leave [--release]\n");
-    fprintf(stdout, "    leave --details <module>\n\n");
+    fprintf(stdout, "    NOTE: --release is the only leave command that DOES perform the leave.\n"
+                    "          All other leave commands will not actually cause a domain leave.\n\n");
 
     fprintf(stdout, "  Example:\n\n");
     fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
