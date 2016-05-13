@@ -1263,49 +1263,54 @@ Krb5JoinDomain(
                     GCE(ceError = AddChildNode(capathsGroup, addNode));
                     addNode = NULL;
                 }
-                length = strlen(pszLongNameUpper);
                 CT_SAFE_FREE_STRING(pszTail);
                 GCE(ceError = getTail(pszLongNameUpper, &pszTail));
-                for( dn = pszLongNameUpper; dn < &pszLongNameUpper[length]; dn++)
+                if (pszTail)
                 {
-                    if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue; 
-                    ch = &dn[1];
-                    if( !strcmp(ch,pszforestUpper) || 
-                        !strcmp(ch,pszTail)) 
+                    length = strlen(pszLongNameUpper);
+                    for( dn = pszLongNameUpper; dn < &pszLongNameUpper[length]; dn++)
                     {
-                        break;
-                    }
-                    CT_SAFE_FREE_STRING(pszParentDomain);
-                    GCE(ceError = CTStrdup(ch, &pszParentDomain));
-                    if(strcmp(pszParentDomain,pszforestUpper))
-                    {
-                        GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
-                        GCE(ceError = AddChildNode(capathsGroup, addNode));
-                        addNode = NULL;
+                        if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue; 
+                        ch = &dn[1];
+                        if( !strcmp(ch,pszforestUpper) || 
+                            !strcmp(ch,pszTail)) 
+                        {
+                            break;
+                        }
+                        CT_SAFE_FREE_STRING(pszParentDomain);
+                        GCE(ceError = CTStrdup(ch, &pszParentDomain));
+                        if(strcmp(pszParentDomain,pszforestUpper))
+                        {
+                            GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
+                            GCE(ceError = AddChildNode(capathsGroup, addNode));
+                            addNode = NULL;
+                        }
                     }
                 }
                 CT_SAFE_FREE_STRING(pszTail);
                 GCE(ceError = getTail(pszJoinDomain, &pszTail));
                 length = strlen(pszJoinDomain);
-                for( dn = pszJoinDomain; dn < &pszJoinDomain[length]; dn++)
+                if (pszTail)
                 {
-                    if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue; 
-                    ch = &dn[1];
-                    if( !strcmp(ch,pszforestUpper) || 
-                        !strcmp(ch,pszTail)) 
+                    for( dn = pszJoinDomain; dn < &pszJoinDomain[length]; dn++)
                     {
-                        break;
-                    }
-                    CT_SAFE_FREE_STRING(pszParentDomain);
-                    GCE(ceError = CTStrdup(ch, &pszParentDomain));
-                    if(strcmp(pszParentDomain,pszforestUpper))
-                    {
-                        GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
-                        GCE(ceError = AddChildNode(capathsGroup, addNode));
-                        addNode = NULL;
+                        if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue; 
+                        ch = &dn[1];
+                        if( !strcmp(ch,pszforestUpper) || 
+                            !strcmp(ch,pszTail)) 
+                        {
+                            break;
+                        }
+                        CT_SAFE_FREE_STRING(pszParentDomain);
+                        GCE(ceError = CTStrdup(ch, &pszParentDomain));
+                        if(strcmp(pszParentDomain,pszforestUpper))
+                        {
+                            GCE(ceError = CreateValueNode(conf, 3, pszJoinDomain, pszParentDomain, &addNode));
+                            GCE(ceError = AddChildNode(capathsGroup, addNode));
+                            addNode = NULL;
+                        }
                     }
                 }
-                
             }
         }
     }
