@@ -48,6 +48,7 @@
 #include <DirectoryService/DirServices.h>
 #include <DirectoryService/DirServicesUtils.h>
 #include <DirectoryService/DirServicesConst.h>
+#include <OpenDirectory/OpenDirectory.h>
 
 // Likewise headers
 #include <lw/types.h>
