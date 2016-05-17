@@ -3395,33 +3395,40 @@ AD_EmptyCache(
     IN gid_t  peerGID
     )
 {
+
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
-    
+
     PSTR* ppszDomainNames = NULL;
     DWORD dwDomainCount = 0;
     DWORD i = 0;
-    BOOLEAN bAllDomainsOnline = TRUE;
-    PLSA_DM_LDAP_CONNECTION pConn = NULL;
+    PLWNET_DC_INFO pDcInfo = NULL;
 
     char* forceOfflineDelete = strchr(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance, ':');
     BOOLEAN bForceOfflineDelete = atoi(forceOfflineDelete+1);
     forceOfflineDelete[0] = '\0';
+
+    if (peerUID)
+    {
+       dwError = LW_ERROR_ACCESS_DENIED;
+       BAIL_ON_LSA_ERROR(dwError);
+    }
+
     if(strlen(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance) == 0)
-    {                
+    {
         LwFreeString(((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance);
         ((PAD_PROVIDER_CONTEXT)hProvider)->pszInstance = NULL;
     }
-    
+
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if(!bForceOfflineDelete)
     {
         dwError = LsaDmEnumDomainNames(
@@ -3434,36 +3441,24 @@ AD_EmptyCache(
 
         for(i = 0; i < dwDomainCount; i++)
         {
-            //poke the dc so we know if it's really online.
-            LsaDmLdapOpenDc(hProvider, ppszDomainNames[i], &pConn); 
-            if(pConn != NULL)
-            {
-                LsaDmpLdapReconnect(pConn);
-            }
+            dwError = LWNetGetDCName(NULL,
+                             ppszDomainNames[i],
+                             NULL,
+                             DS_FORCE_REDISCOVERY,
+                             &pDcInfo);
+            LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+            pDcInfo = NULL;
 
-            LsaDmLdapClose(pConn);
-
-            //this only checks the StateFlags so it might not be accurate.
-            if(LsaDmIsDomainOffline(pContext->pState->hDmState,ppszDomainNames[i]))
+            if (dwError)
             {
-                bAllDomainsOnline = FALSE;
-                dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-                LSA_LOG_ERROR("Cache could not be emptied because the domain is offline", dwError);
-                break;
+               LSA_LOG_ERROR("Cache could not be emptied because domain %s is offline [%d]", ppszDomainNames[i], dwError);
+               dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+               BAIL_ON_LSA_ERROR(dwError);
             }
         }
     }
 
-    if(bAllDomainsOnline)
-    {                  
-        if (peerUID)
-        {
-            dwError = LW_ERROR_ACCESS_DENIED;
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-
-        dwError = ADCacheEmptyCache(pContext->pState->hCacheConnection);
-    }
+    dwError = ADCacheEmptyCache(pContext->pState->hCacheConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
