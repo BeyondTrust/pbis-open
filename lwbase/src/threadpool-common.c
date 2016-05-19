@@ -691,6 +691,16 @@ LwRtlGetCpuCount(
 #endif
 
 #if defined(HAVE_PTHREAD_ATTR_SETAFFINITY_NP)
+/** 
+ * @brief Set the thread cpu affinity attribute to the 
+ * supplied cpu number.
+ * Specifying a cpu number that does not exist, or is 
+ * offline will cause pthread_create() to fail with 
+ * EINVAL.
+ *
+ * @param pAttr  pointer to the pthread_att_t
+ * @param CpuNumber the cpu number 
+ */
 NTSTATUS
 LwRtlSetAffinityThreadAttribute(
     pthread_attr_t* pAttr,
