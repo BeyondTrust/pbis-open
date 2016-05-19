@@ -101,6 +101,11 @@ DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info);
 //been zeroed out.
 void DJFreeDistroInfo(LwDistroInfo *info);
 
+/**
+ * @brief Returns TRUE is this is Enterprise.
+ */
+BOOLEAN DJGetIsEnterprise(void);
+
 DWORD
 DJGetLikewiseVersion(
     PSTR *product,
