@@ -1405,9 +1405,6 @@ InitEventThread(
 
     RingInit(&pThread->Tasks);
 
-    status = LwRtlSetAffinityThreadAttribute(&threadAttr, ulCpu);
-    GOTO_ERROR_ON_STATUS(status);
-
     if (pAttrs && pAttrs->ulTaskThreadStackSize)
     {
         status = LwErrnoToNtStatus(
