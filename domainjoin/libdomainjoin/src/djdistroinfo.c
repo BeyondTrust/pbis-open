@@ -869,6 +869,33 @@ void DJFreeDistroInfo(LwDistroInfo *info)
         CT_SAFE_FREE_STRING(info->version);
 }
 
+
+/**
+ * @brief Returns TRUE is this is Enterprise.
+ *
+ * This is a simple check for the existent of the Enterprise data file.
+ */
+BOOLEAN 
+DJGetIsEnterprise(void) 
+{
+    DWORD ceError = ERROR_SUCCESS;
+    BOOLEAN bIsEnterprise = FALSE;
+    PSTR enterpriseVersionFile = NULL;
+
+    ceError = CTAllocateStringPrintf(&enterpriseVersionFile, "%s%s", PREFIXDIR, "/data/ENTERPRISE_VERSION");
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTCheckFileExists(enterpriseVersionFile, &bIsEnterprise);
+
+error:
+    if (enterpriseVersionFile) {
+        CTFreeString(enterpriseVersionFile);
+    }
+
+    return (ceError == ERROR_SUCCESS) ? bIsEnterprise : FALSE;
+}
+
+
 DWORD
 DJGetLikewiseVersion(
     PSTR *product,

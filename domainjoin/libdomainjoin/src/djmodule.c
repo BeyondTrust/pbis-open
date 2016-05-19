@@ -215,6 +215,16 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
         {
             LW_TRY(exc, QueryInformation(&joinedInfo, &LW_EXC));
             userDomain = joinedInfo->pszDomainName;
+
+            if (joinedInfo->pszDomainName) {
+                LW_CLEANUP_CTERR(exc, CTStrdup(joinedInfo->pszDomainName, &(options->domainName)));
+                CTStrToUpper(options->domainName);
+            }
+
+            if (joinedInfo->pszDomainShortName) {
+                LW_CLEANUP_CTERR(exc, CTStrdup(joinedInfo->pszDomainShortName, &(options->shortDomainName)));
+                CTStrToUpper(options->shortDomainName);
+            }
         }
         moduleTable = stopList;
     }

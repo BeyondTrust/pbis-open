@@ -43,12 +43,12 @@
 
 static
 void
-ShowUsage()
+ShowUsage(const BOOLEAN isEnterprise)
 {
     fprintf(stdout, "usage: domainjoin-cli [options] command [args...]\n\n");
     fprintf(stdout, "  where options are:\n\n");
     fprintf(stdout, "    --help                                     Display this help information.\n");
-    fprintf(stdout, "    --help-internal                            Display help for debug commands\n");
+    fprintf(stdout, "    --help-internal                            Display help for debug commands.\n");
     fprintf(stdout, "    --logfile {.|path}                         Log to a file (or \".\" to log\n"
                     "                                               to console).\n");
     fprintf(stdout, "    --loglevel {error|warning|info|verbose}    Adjusts how much logging is\n"
@@ -61,19 +61,20 @@ ShowUsage()
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
-    fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
+    fprintf(stdout, (isEnterprise)
+            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--releaseLicense] [user name] [password]\n"
+            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
-    fprintf(stdout, "    leave --details <module>\n\n");
-
+    fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "  Example:\n\n");
     fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
 }
 
 static
 void
-ShowUsageInternal()
+ShowUsageInternal(const BOOLEAN isEnterprise)
 {
-    ShowUsage();
+    ShowUsage(isEnterprise);
 
     fprintf(stdout, "  Internal debug commands:\n");
     fprintf(stdout, "    fixfqdn\n");
@@ -154,13 +155,14 @@ cleanup:
 
 void PrintWarning(const JoinProcessOptions *options, const char *title, const char *message)
 {
-    PSTR      wrapped = NULL;
+    PSTR wrapped = NULL;
     int columns;
+
     if(CTGetTerminalWidth(fileno(stdout), &columns))
         columns = -1;
 
-    //This function doesn't return a DWORD, so we have to recover as much
-    //as possible.
+    // This function doesn't return a DWORD, so we have to recover as much
+    // as possible.
     if(!CTWordWrap(message, &wrapped, 4, columns))
         fprintf(stdout, "Warning: %s\n%s\n\n", title, wrapped);
     else
@@ -564,14 +566,14 @@ cleanup:
     CT_SAFE_FREE_STRING(wrapped);
 }
 
-void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
+void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWException **exc)
 {
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
     DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
-    size_t i;
+    ssize_t i;
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
     int passwordIndex = -1;
@@ -588,6 +590,9 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
+        else if(!strcmp(argv[0], "--releaseLicense") && isEnterprise)
+            options.releaseLicense = TRUE; 
+        // remaining options require at least two options 
         else if(argc < 2)
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
@@ -995,6 +1000,9 @@ int main(
     char **argPos = argv;
     int i;
     BOOLEAN directoryExists = FALSE;
+    BOOLEAN isEnterprise = FALSE;
+
+    isEnterprise = DJGetIsEnterprise();
 
     if(CTGetTerminalWidth(fileno(stdout), &columns))
         columns = -1;
@@ -1036,12 +1044,12 @@ int main(
         showHelp = TRUE;
 
     if (showInternalHelp) {
-        ShowUsageInternal();
+        ShowUsageInternal(isEnterprise);
         goto cleanup;
     }
 
     if (showHelp) {
-        ShowUsage();
+        ShowUsage(isEnterprise);
         goto cleanup;
     }
 
@@ -1137,7 +1145,7 @@ int main(
         argPos++;
         if(--remainingArgs != 1)
         {
-            ShowUsage();
+            ShowUsage(isEnterprise);
             goto cleanup;
         }
 
@@ -1163,7 +1171,7 @@ int main(
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DoLeaveNew(remainingArgs, argPos, columns, &LW_EXC));
+        LW_TRY(&exc, DoLeaveNew(remainingArgs, argPos, columns, isEnterprise, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "query"))
     {
@@ -1196,7 +1204,7 @@ cleanup:
 
     if (!LW_IS_OK(exc) && exc->code == LW_ERROR_SHOW_USAGE)
     {
-        ShowUsage();
+        ShowUsage(isEnterprise);
         LWHandle(&exc);
     }
     else if (!LW_IS_OK(exc))
