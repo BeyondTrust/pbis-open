@@ -18,7 +18,7 @@ make()
 {
     # Works for many different RedHat products
     mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd" MODE=0755 SOURCE="lwsmd"
-    mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd.service" MODE=0755 SOURCE="lwsmd.service"
+    mk_stage DEST="${MK_SYSCONFDIR}/redhat/lwsmd.service" MODE=0644 SOURCE="lwsmd.service"
 
     #### SELINUX ####
 
