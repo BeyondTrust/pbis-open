@@ -180,8 +180,6 @@ CTStrToUpper(
     PSTR pszString
     )
 {
-    //PSTR pszTmp = pszString;
-
     if (pszString != NULL) {
         while (*pszString != '\0') {
             *pszString = toupper((int)*pszString);
@@ -195,8 +193,6 @@ CTStrToLower(
     PSTR pszString
     )
 {
-    //PSTR pszTmp = pszString;
-
     if (pszString != NULL) {
         while (*pszString != '\0') {
             *pszString = tolower((int)*pszString);

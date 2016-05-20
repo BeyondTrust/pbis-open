@@ -1306,9 +1306,15 @@ void DJDisableComputerAccount(PCSTR username,
                 LWException **exc)
 {
     HANDLE lsa = NULL;
+    LSA_NET_JOIN_FLAGS leaveFlags = 0;
+
+    if (options->releaseLicense) 
+    {
+        leaveFlags |= LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE;
+    }
 
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
-    LW_CLEANUP_LSERR(exc, LsaAdLeaveDomain2(lsa, username, password, options->domainName, 0));
+    LW_CLEANUP_LSERR(exc, LsaAdLeaveDomain2(lsa, username, password, options->domainName, leaveFlags));
 
 cleanup:
 
