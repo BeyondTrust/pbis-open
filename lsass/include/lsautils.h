@@ -158,7 +158,7 @@
                 Action ; \
                 BAIL_ON_LSA_ERROR(dwError))
 #ifdef NDEBUG
-#define LSA_ASSERT(Expression)
+#define LSA_ASSERT(Expression) ( (Expression) ? ((void) 0) : ((void) 0) )
 #define LSA_ASSERT_OR_BAIL(Expression, dwError) \
     _LSA_ASSERT_OR_BAIL(Expression, dwError, 0)
 #else

@@ -77,7 +77,7 @@
 
 typedef int             SOCKET;
 
-#define LW_ASSERT(x)   assert( (x) )
+#define LW_ASSERT(x)   ( (x) ? ((void) 0) : assert( (x) ) )
 
 #define REG_DB_DIR CACHEDIR "/db"
 #define REG_CACHE  REG_DB_DIR "/registry.db"

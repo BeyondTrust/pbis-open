@@ -63,7 +63,6 @@
 #include "lwstr.h"
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
-#include <assert.h>
 
 #define LSA_MAP_SECURITY_MAP_TO_GUEST_RID   DOMAIN_USER_RID_GUEST
 
@@ -194,7 +193,7 @@ LsaMapSecurityResolveObjectInfo(
 
     if (IS_BOTH_OR_NEITHER(pszName, Id))
     {
-        assert(FALSE);
+        LSA_ASSERT(FALSE);
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP();
     }
@@ -296,7 +295,7 @@ LsaMapSecurityResolveObjectInfo(
 
     if (IsUser)
     {
-        assert(pszName || ppObjects[0]->userInfo.uid);
+        LSA_ASSERT(pszName || ppObjects[0]->userInfo.uid);
 
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER);
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID);
@@ -320,7 +319,7 @@ LsaMapSecurityResolveObjectInfo(
     }
     else
     {
-        assert(pszName || ppObjects[0]->groupInfo.gid);
+        LSA_ASSERT(pszName || ppObjects[0]->groupInfo.gid);
 
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID);
 
@@ -384,7 +383,7 @@ LsaMapSecurityResolveObjectInfoBySid(
     }
 
     status = LsaLsaErrorToNtStatus(dwError);
-    assert(STATUS_NOT_FOUND != status);
+    LSA_ASSERT(STATUS_NOT_FOUND != status);
     GOTO_CLEANUP_ON_STATUS(status);
 
     if (ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
@@ -495,7 +494,7 @@ LsaMapSecurityCompleteObjectInfoFromSid(
 
     if (ppObjects[0] && ppObjects[0]->enabled)
     {
-        assert(ppObjects[0]->type == LSA_OBJECT_TYPE_USER);
+        LSA_ASSERT(ppObjects[0]->type == LSA_OBJECT_TYPE_USER);
             
         SetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID);
         SetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID);
@@ -947,7 +946,7 @@ LsaMapSecurityAllocateAccessTokenCreateInformation(
     createInformation->Unix = location;
     location = LwRtlOffsetToPointer(location, sizeof(*createInformation->Unix));
 
-    assert(LwRtlOffsetToPointer(createInformation, size) == location);
+    LSA_ASSERT(LwRtlOffsetToPointer(createInformation, size) == location);
 
 cleanup:
     if (!NT_SUCCESS(status))
@@ -1228,7 +1227,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromObjectInfo(
     else
     {
         // TODO-Would need to put in some nobody-like gid.
-        assert(FALSE);
+        LSA_ASSERT(FALSE);
         status = STATUS_ASSERTION_FAILURE;
         GOTO_CLEANUP();
     }
@@ -2274,7 +2273,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
     }
     GOTO_CLEANUP_ON_STATUS(status);
     
-    assert(pUserInfo->pSessionKey->dwLen == NTLM_SESSION_KEY_SIZE);    
+    LSA_ASSERT(pUserInfo->pSessionKey->dwLen == NTLM_SESSION_KEY_SIZE);    
     RtlCopyMemory(pNtlmResult->SessionKey, 
                   pUserInfo->pSessionKey->pData, 
                   NTLM_SESSION_KEY_SIZE);
@@ -2385,7 +2384,7 @@ MapSecurityPluginCreateContext(
     // compiler type check for this function
     LWMSP_CREATE_CONTEXT_CALLBACK unused = MapSecurityPluginCreateContext;
 
-    assert(unused);
+    LSA_ASSERT(unused);
 
     status = RTL_ALLOCATE(&context, LW_MAP_SECURITY_PLUGIN_CONTEXT, sizeof(*context));
     GOTO_CLEANUP_ON_STATUS(status);

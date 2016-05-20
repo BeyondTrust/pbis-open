@@ -1074,7 +1074,7 @@ LsaGetAccountName(
             }
             LW_SAFE_FREE_MEMORY(dnsname);
         }
-        if (offset == 10)
+        if (offset == 100)
         {
             err = ERROR_DUP_NAME;
             goto error;

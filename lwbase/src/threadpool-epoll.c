@@ -71,7 +71,7 @@ SignalThread(
     {
         res = write(pThread->SignalFds[1], &c, sizeof(c));
         assert(res == sizeof(c));
-        pThread->bSignalled = TRUE;
+        if (res == sizeof(c)) pThread->bSignalled = TRUE;
     }
 }
 
@@ -519,21 +519,24 @@ ScheduleSignalled(
         res = read(pThread->SignalFds[0], &c, sizeof(c));
         assert(res == sizeof(c));
         
-        /* Add all signalled tasks to the runnable list */
-        for (pRing = pThread->Tasks.pNext; pRing != &pThread->Tasks; pRing = pNext)
+        if (res == sizeof(c)) 
         {
-            pNext = pRing->pNext;
-            pTask = LW_STRUCT_FROM_FIELD(pRing, EPOLL_TASK, SignalRing);
-            
-            RingRemove(&pTask->SignalRing);
-            RingRemove(&pTask->QueueRing);
-            
-            if (pTask->EventSignal != TASK_COMPLETE_MASK)
+            /* Add all signalled tasks to the runnable list */
+            for (pRing = pThread->Tasks.pNext; pRing != &pThread->Tasks; pRing = pNext)
             {
-                RingEnqueue(pRunnable, &pTask->QueueRing);
-                /* Transfer the signal bits into the event args */
-                pTask->EventArgs |= pTask->EventSignal;
-                pTask->EventSignal = 0;
+                pNext = pRing->pNext;
+                pTask = LW_STRUCT_FROM_FIELD(pRing, EPOLL_TASK, SignalRing);
+
+                RingRemove(&pTask->SignalRing);
+                RingRemove(&pTask->QueueRing);
+
+                if (pTask->EventSignal != TASK_COMPLETE_MASK)
+                {
+                    RingEnqueue(pRunnable, &pTask->QueueRing);
+                    /* Transfer the signal bits into the event args */
+                    pTask->EventArgs |= pTask->EventSignal;
+                    pTask->EventSignal = 0;
+                }
             }
         }
         

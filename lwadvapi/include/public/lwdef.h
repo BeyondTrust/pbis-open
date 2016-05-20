@@ -72,7 +72,7 @@
 
 #endif
 
-#define LW_ASSERT(x)   assert( (x) )
+#define LW_ASSERT(x)   ( (x) ? ((void) 0) : assert( (x) ) )
 
 #define LW_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
