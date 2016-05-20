@@ -555,6 +555,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
 
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
     fprintf(stdout, "SUCCESS\n");
+    DJ_LOG_INFO("Join SUCCESS");
 
 cleanup:
     DJFreeJoinProcessOptions(&options);
@@ -779,6 +780,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
 
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
     fprintf(stdout, "SUCCESS\n");
+    DJ_LOG_INFO("Leave SUCCESS");
 
 cleanup:
     DJFreeJoinProcessOptions(&options);
@@ -869,6 +871,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         goto cleanup;
     }
     fprintf(stdout, "SUCCESS\n");
+    DJ_LOG_INFO("Configure SUCCESS");
 cleanup:
     ;
 }
