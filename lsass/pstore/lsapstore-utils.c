@@ -44,10 +44,10 @@
  */
 
 #include "lsapstore-includes.h"
+#include "lsautils.h"
 #include <lw/security-api.h>
 #include <wc16str.h>
 #include <ctype.h>
-#include <assert.h>
 #include <dlfcn.h>
 
 static
@@ -587,7 +587,7 @@ LsaPstorepRegGetDword(
                     &size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    assert(size == sizeof(valueData));
+    LSA_ASSERT(size == sizeof(valueData));
 
 cleanup:
     if (dwError)
@@ -629,7 +629,7 @@ LsaPstorepRegGetQword(
                     &size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    assert(size == sizeof(valueData));
+    LSA_ASSERT(size == sizeof(valueData));
 
 cleanup:
     if (dwError)
@@ -667,7 +667,7 @@ LsaPstorepRegGetStringA(
                     &size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    assert(size > 0);
+    LSA_ASSERT(size > 0);
 
     dwError = LSA_PSTORE_ALLOCATE(&valueData, size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -722,7 +722,7 @@ LsaPstorepRegGetMultiStringA(
                     &size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    assert(size > 0);
+    LSA_ASSERT(size > 0);
 
     dwError = LSA_PSTORE_ALLOCATE(&valueData, size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -866,7 +866,7 @@ LsaPstorepConvertMultiStringDataToArrayA(
          (itemLength = strlen(item));
          item += itemLength + 1)
     {
-        assert(count < savedCount);
+        LSA_ASSERT(count < savedCount);
 
         dwError = LwNtStatusToWin32Error(LwRtlCStringDuplicate(
                         &stringArray[count],
@@ -876,7 +876,7 @@ LsaPstorepConvertMultiStringDataToArrayA(
         count++;
     }
 
-    assert(count == savedCount);
+    LSA_ASSERT(count == savedCount);
 
 cleanup:
     if (dwError)

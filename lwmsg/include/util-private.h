@@ -51,17 +51,14 @@
 
 struct msghdr;
 
-#ifdef DEBUG
+#ifdef NDEBUG
 #define LWMSG_ASSERT_SUCCESS(_x_)                                       \
     do                                                                  \
     {                                                                   \
         LWMsgStatus __status__ = (_x_);                                 \
         if (__status__)                                                 \
         {                                                               \
-            fprintf(stderr,                                             \
-                    "%s:%i: Assertion failed with status %i: %s\n",     \
-                    __FILE__, __LINE__, __status__, #_x_);              \
-            abort();                                                    \
+            ((void) 0);                                                 \
         }                                                               \
     } while (0)
 #else
@@ -74,19 +71,18 @@ struct msghdr;
             fprintf(stderr,                                             \
                     "%s:%i: Assertion failed with status %i: %s\n",     \
                     __FILE__, __LINE__, __status__, #_x_);              \
+            abort();                                                    \
         }                                                               \
     } while (0)
 #endif
-#ifdef DEBUG
+
+#ifdef NDEBUG
 #define LWMSG_ASSERT(_x_)                                               \
     do                                                                  \
     {                                                                   \
         if (!(_x_))                                                     \
         {                                                               \
-            fprintf(stderr,                                             \
-                    "%s:%i: Assertion failed: %s\n",                    \
-                    __FILE__, __LINE__, #_x_);                          \
-            abort();                                                    \
+            ((void) 0);                                                 \
         }                                                               \
     } while (0)
 #else
@@ -98,10 +94,14 @@ struct msghdr;
             fprintf(stderr,                                             \
                     "%s:%i: Assertion failed: %s\n",                    \
                     __FILE__, __LINE__, #_x_);                          \
+            abort();                                                    \
         }                                                               \
     } while (0)
 #endif
-#ifdef DEBUG
+
+#ifdef NDEBUG
+#define LWMSG_ASSERT_NOT_REACHED() ((void) 0)
+#else
 #define LWMSG_ASSERT_NOT_REACHED()         \
     do                                     \
     {                                      \
@@ -109,14 +109,6 @@ struct msghdr;
             "%s:%i: Should not be here\n", \
             __FILE__, __LINE__);           \
             abort();                       \
-    } while (0)
-#else
-#define LWMSG_ASSERT_NOT_REACHED()         \
-    do                                     \
-    {                                      \
-        fprintf(stderr,                    \
-            "%s:%i: Should not be here\n", \
-            __FILE__, __LINE__);         \
     } while (0)
 #endif
 

@@ -11,7 +11,9 @@
 
 #include "benchmark.h"
 
-#define ASSERT_SUCCESS(status) assert((status) == STATUS_SUCCESS)
+#define LW_ASSERT(x)   ( (x) ? ((void) 0) : assert( (x) ) )
+
+#define ASSERT_SUCCESS(status) LW_ASSERT((status) == STATUS_SUCCESS)
 
 static PLW_THREAD_POOL gpPool = NULL;
 static PBENCHMARK_SETTINGS gpSettings = NULL;
@@ -66,6 +68,7 @@ Transceiver(
     PSOCKET pSocket = (PSOCKET) pContext;
     size_t sendSize = gpSettings->ulBufferSize / gpSettings->usSendSegments;
     ssize_t transferred = 0;
+    NTSTATUS status;
     long opts = 0;
     int err = 0;
 
@@ -73,8 +76,10 @@ Transceiver(
         pSocket->Iteration >= gpSettings->ulIterations)
     {
         *pWaitMask = 0;
-        ASSERT_SUCCESS(
-            LwRtlSetTaskFd(pTask, pSocket->Fd, 0));
+        
+        status = LwRtlSetTaskFd(pTask, pSocket->Fd, 0);
+        
+        ASSERT_SUCCESS(status);
         close(pSocket->Fd);
         pSocket->Fd = -1;
         return;
@@ -88,13 +93,14 @@ Transceiver(
         assert(opts >= 0);
         opts |= O_NONBLOCK;
         err = fcntl(pSocket->Fd, F_SETFL, opts);
-        assert(err == 0);
+        LW_ASSERT(err == 0);
         
-        ASSERT_SUCCESS(
-            LwRtlSetTaskFd(
+        status = LwRtlSetTaskFd(
                 pTask,
                 pSocket->Fd,
-                LW_TASK_EVENT_FD_READABLE | LW_TASK_EVENT_FD_WRITABLE));
+                LW_TASK_EVENT_FD_READABLE | LW_TASK_EVENT_FD_WRITABLE);
+        
+        ASSERT_SUCCESS(status);
     }
 
     switch(pSocket->State)
@@ -238,32 +244,35 @@ BenchmarkThreadPool(
     LONG64 llStart = 0;
     LONG64 llEnd = 0;
     ULONG64 ullTime = 0;
+    NTSTATUS status;
 
     gpPool = pPool;
     gpSettings = pSettings;
 
-    ASSERT_SUCCESS(LwRtlCreateTaskGroup(
-                                 gpPool,
-                                 &pGroup));
+    status = LwRtlCreateTaskGroup(gpPool, &pGroup);
+    ASSERT_SUCCESS(status);
 
-    ASSERT_SUCCESS(LW_RTL_ALLOCATE_ARRAY_AUTO(&ppSockets1, gpSettings->ulPairs));
-    ASSERT_SUCCESS(LW_RTL_ALLOCATE_ARRAY_AUTO(&ppSockets2, gpSettings->ulPairs));
+    status = LW_RTL_ALLOCATE_ARRAY_AUTO(&ppSockets1, gpSettings->ulPairs);
+    ASSERT_SUCCESS(status);
+
+    status = LW_RTL_ALLOCATE_ARRAY_AUTO(&ppSockets2, gpSettings->ulPairs);
+    ASSERT_SUCCESS(status);
 
     for (i = 0; i < gpSettings->ulPairs; i++)
     {
-        ASSERT_SUCCESS(
-            CreateSocketPair(
-                pGroup,
-                &ppSockets1[i],
-                &ppSockets2[i]));
+        NTSTATUS status = CreateSocketPair(pGroup, &ppSockets1[i], &ppSockets2[i]);
+        
+        ASSERT_SUCCESS(status);
     }
     
-    ASSERT_SUCCESS(TimeNow(&llStart));
+    status = TimeNow(&llStart);
+    ASSERT_SUCCESS(status);
     
     LwRtlWakeTaskGroup(pGroup);
     LwRtlWaitTaskGroup(pGroup);
     
-    ASSERT_SUCCESS(TimeNow(&llEnd));
+    status = TimeNow(&llEnd);
+    ASSERT_SUCCESS(status);
     
     ullTime = (ULONG64) (llEnd - llStart);
     

@@ -76,7 +76,7 @@
 #    define SOCKLEN_TYPE int
 #endif
 
-#define LW_ASSERT(x)   assert( (x) )
+#define LW_ASSERT(x)   ( (x) ? ((void) 0) : assert( (x) ) )
 
 typedef ULONG KRB5_TIME, KRB5_ENCTYPE, KRB5_FLAGS;
 

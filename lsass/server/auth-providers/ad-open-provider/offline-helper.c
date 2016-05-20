@@ -220,7 +220,7 @@ AD_GatherSidsFromGroupMemberships(
         if (ppszSids)
         {
             // Done.
-            assert(sOldSidsCount == sSidsCount);
+            LW_ASSERT(sOldSidsCount == sSidsCount);
             break;
         }
 

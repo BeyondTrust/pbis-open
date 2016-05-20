@@ -76,6 +76,6 @@
 
 typedef int             SOCKET;
 
-#define LW_ASSERT(x)   assert( (x) )
+#define LW_ASSERT(x)   ( (x) ? ((void) 0) : assert( (x) ) )
 
 #endif /* __LSADEF_H__ */

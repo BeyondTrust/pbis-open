@@ -283,8 +283,8 @@ LsaAdBatchBuilderCreateQuery(
                                       pszQuerySuffix, dwQuerySuffixLength);
     BAIL_ON_LSA_ERROR(dwError);
 
-    assert(dwQueryOffset + 1 == dwQuerySize);
-    assert(dwSavedQueryCount == dwQueryCount);
+    LW_ASSERT(dwQueryOffset + 1 == dwQuerySize);
+    LW_ASSERT(dwSavedQueryCount == dwQueryCount);
 
 cleanup:
     // We handle error here instead of error label

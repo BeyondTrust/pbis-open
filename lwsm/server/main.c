@@ -1220,7 +1220,10 @@ LwSmFIPsMode(
     fp = fopen(LWSM_FIPS_MODE_PATH, "r");
     
     if (fp) {
-        fscanf(fp, "%d", &fips_mode);
+        int fm = 0;
+        int rc = fscanf(fp, "%d", &fm);
+
+        if (rc == 1) fips_mode = fm;
 
         fclose(fp);
     }

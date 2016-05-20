@@ -51,7 +51,9 @@
 #include <ctxeertl.h>
 
 #ifndef DEBUG_VERBOSE
+#ifndef NDEBUG
 #   define NDEBUG
+#endif
 #endif
 #include <assert.h>
 

@@ -1663,7 +1663,7 @@ PRIVATE void rpc__cn_assoc_receive_frag
          */
         call_rep = assoc->call_rep;
         binding_r = call_rep->binding_rep;
-        assert(binding_r != NULL);
+        if (binding_r == NULL) assert(binding_r != NULL);
 
         assoc->assoc_msg_waiters++;
 

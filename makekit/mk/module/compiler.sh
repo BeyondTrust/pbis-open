@@ -2011,8 +2011,10 @@ option()
 {
     if [ "$MK_DEBUG" = yes ]
     then
+        _default_CPPFLAGS="-DDEBUG=1"
         _default_OPTFLAGS="-O0 -g"
     else
+        _default_CPPFLAGS="-DNDEBUG=1"
         _default_OPTFLAGS="-O2 -g"
     fi
 
@@ -2035,7 +2037,7 @@ option()
     mk_option \
         VAR="CPPFLAGS" \
         PARAM="flags" \
-        DEFAULT="" \
+        DEFAULT="$_default_CPPFLAGS" \
         HELP="C preprocessor flags"
 
     MK_CPPFLAGS="$CPPFLAGS"
