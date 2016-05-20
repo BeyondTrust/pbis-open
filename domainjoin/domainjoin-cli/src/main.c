@@ -1208,18 +1208,21 @@ int main(
 
 cleanup:
 
-    if (!LW_IS_OK(exc) && exc->code == LW_ERROR_SHOW_USAGE)
+    if (!LW_IS_OK(exc))
     {
-        ShowUsage(isEnterprise);
-        LWHandle(&exc);
-    }
-    else if (!LW_IS_OK(exc))
-    {
-        //Ignoring the return value from this because we can't do anything
-        //if there is an error
-        fprintf(stdout, "\n");
-        LWPrintException(stdout, exc, FALSE);
-        DJLogException(LOG_LEVEL_ERROR, exc);
+        if (exc->code == LW_ERROR_SHOW_USAGE)
+        {
+            ShowUsage(isEnterprise);
+        }
+        else
+        {
+            //Ignoring the return value from this because we can't do anything
+            //if there is an error
+            fprintf(stdout, "\n");
+            LWPrintException(stdout, exc, FALSE);
+            DJLogException(LOG_LEVEL_ERROR, exc);
+        }
+
         LWHandle(&exc);
         dj_close_log();
         return 1;
