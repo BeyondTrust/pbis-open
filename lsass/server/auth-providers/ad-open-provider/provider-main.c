@@ -2654,6 +2654,11 @@ AD_LeaveDomainInternal(
     BOOLEAN bLocked = FALSE;
     PAD_PROVIDER_CONTEXT pContext = (PAD_PROVIDER_CONTEXT)hProvider;
 
+    const BOOLEAN bRemoveAccount = ((dwFlags & LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
+                                           == LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
+                                       ? TRUE
+                                       : FALSE;
+
     dwError = AD_GetStateWithReference(
                   pszDomain,
                   &pContext->pState);

@@ -1313,6 +1313,11 @@ void DJDisableComputerAccount(PCSTR username,
         leaveFlags |= LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE;
     }
 
+    if (options->removeAccount)
+    {
+        leaveFlags |= LSA_NET_LEAVE_DOMAIN_ACCT_DELETE;
+    }
+
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
     LW_CLEANUP_LSERR(exc, LsaAdLeaveDomain2(lsa, username, password, options->domainName, leaveFlags));
 

@@ -84,10 +84,8 @@ typedef DWORD *PLSA_NET_JOIN_FLAGS;
 #define LSA_NET_JOIN_DOMAIN_JOIN_WITH_NEW_NAME (0x00000080)
 #define LSA_NET_JOIN_DOMAIN_JOIN_READONLY      (0x00000100)
 
-// The following setting is NOT implemented
+// The following settings ARE implemented
 #define LSA_NET_LEAVE_DOMAIN_ACCT_DELETE       (0x00000001)
-
-// The following setting IS implemented
 #define LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE   (0x00000200)
 
 /* LDAP account flags - local copies of UF_* flags
