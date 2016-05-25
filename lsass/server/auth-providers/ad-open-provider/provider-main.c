@@ -2654,6 +2654,8 @@ AD_LeaveDomainInternal(
     BOOLEAN bLocked = FALSE;
     PAD_PROVIDER_CONTEXT pContext = (PAD_PROVIDER_CONTEXT)hProvider;
 
+    PSTR pszReleaseLicenseMachineAccount = NULL;
+    PSTR pszReleaseLicenseDomain = (PSTR)pszDomain;
     const BOOLEAN bRemoveAccount = ((dwFlags & LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
                                            == LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
                                        ? TRUE
@@ -2672,15 +2674,57 @@ AD_LeaveDomainInternal(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+    /*
+     * Deleting the account requires the computer account information
+     *
+     * NOTE: this MUST be done before acquiring the write lock
+     * (or we will DEADLOCK)
+     */
+
+    if (bRemoveAccount) {
+
+        PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+        LSA_LOG_VERBOSE("Obtaining computer account information to delete the account.");
+        dwError = AD_GetMachineAccountInfoA(pszDomain, &pAccountInfo);
+
+        if (dwError) {
+            LSA_LOG_ERROR("Failed obtaining computer account information, error %s (0x%x), account will not be deleted.",
+                    LwWin32ExtErrorToName(dwError), dwError);
+        } else {
+            LSA_LOG_VERBOSE("Obtained computer account credentials, these will be used to delete the computer account.");
+
+            /* if duplication fails, it sets the target pointer to NULL */
+            if (!pszReleaseLicenseMachineAccount) {
+                dwError = LwRtlCStringDuplicate(&pszReleaseLicenseMachineAccount, pAccountInfo->SamAccountName);
+            }
+
+            if (!pszReleaseLicenseDomain) {
+                dwError |= LwRtlCStringDuplicate(&pszReleaseLicenseDomain, pAccountInfo->DnsDomainName);
+            }
+
+            if (dwError) {
+                LSA_LOG_ERROR("Failed copying computer account credentials, account will not be deleted.");
+            }
+        }
+
+        if (pAccountInfo)
+        {
+            LsaSrvFreeMachineAccountInfoA(pAccountInfo);
+        }
+
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     LsaAdProviderStateAcquireWrite(pContext->pState);
     bLocked = TRUE;
 
     dwError = AD_PreLeaveDomain(pContext);
-    if (dwError == NERR_SetupNotJoined)
-    {
+    if (dwError == NERR_SetupNotJoined) {
         dwError = 0;
         bNeedLeave = FALSE;
     }
+
     BAIL_ON_LSA_ERROR(dwError);
 
     if (bNeedLeave)
@@ -2701,6 +2745,30 @@ AD_LeaveDomainInternal(
     BAIL_ON_LSA_ERROR(dwError);
 
     LSA_LOG_INFO("Left domain\n");
+
+    // We've left the domain, we can now delete the computer account
+    if (bRemoveAccount)
+    {
+        LSA_LOG_VERBOSE("Deleting computer account %s for domain %s.",
+                pszReleaseLicenseMachineAccount, pszReleaseLicenseDomain);
+
+        // TODO: ACTUALLY DELETE THE ACCOUNT HERE
+        // dwError = ldap_delete_ext(ld, DN, NULL, NULL);
+        //
+        // Going to have to use the code from openldap/libraries/libldap/delete.c here
+        // See provider-main.c Enterprise for notes
+
+        if (dwError) {
+            LSA_LOG_ERROR("Failed to delete computer account %s for domain %s. Error: %s(0x%s).",
+                    pszReleaseLicenseMachineAccount, pszReleaseLicenseDomain,
+                    LwWin32ExtErrorToName(dwError), dwError);
+        } else {
+            LSA_LOG_INFO("Computer account %s deleted for domain %s.",
+                    pszReleaseLicenseMachineAccount, pszReleaseLicenseDomain);
+        }
+
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
 cleanup:
 
