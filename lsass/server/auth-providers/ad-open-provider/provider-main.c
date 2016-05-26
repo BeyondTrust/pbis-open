@@ -1102,7 +1102,7 @@ AD_InitializeProvider(
    if(pStartupThreadInfo1 && pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex  && pStartupThreadInfo1->Thread_Info.pTrustEnumerationCondition) {
        while (bTrustEnumerationWait)
        {
-           LSA_LOG_DEBUG("AD Provider: Waiting for trust enumeration to complete.");
+           LSA_LOG_INFO("AD Provider: Waiting for trust enumeration to complete.");
            LsaStartupThreadAcquireMutex(pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex);
            bTrustEnumerationIsDone = pStartupThreadInfo1->Thread_Info.bTrustEnumerationIsDone;
            if (!bTrustEnumerationIsDone)
@@ -1118,7 +1118,7 @@ AD_InitializeProvider(
       
            if (bTrustEnumerationIsDone)
            {  
-                LSA_LOG_DEBUG("AD Provider: Trust enumeration complete.");
+                LSA_LOG_INFO("AD Provider: Trust enumeration complete.");
                 break;
            }
            if (ETIMEDOUT == iError)
@@ -1127,7 +1127,7 @@ AD_InitializeProvider(
 
                if (time(NULL) >= pStartupThreadInfo1->Thread_Info.waitTime.tv_sec)
                {
-                   LSA_LOG_DEBUG("AD Provider: Aborting wait for trust enumeration");
+                   LSA_LOG_INFO("AD Provider: Aborting wait for trust enumeration");
                    break;
                }
            }  
@@ -1144,9 +1144,10 @@ cleanup:
     LsaPstoreFreeStringArrayA(ppszDomainList, dwDomainCount);
     AD_DereferenceProviderState(pStateMinimal);
 
-    if(pStartupThreadInfo1){
-        LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);       
-    }
+//    if(pStartupThreadInfo1){
+//        LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);       
+//    }
+//
     if(pdwTrustEnumerationWaitSeconds) {
        free(pdwTrustEnumerationWaitSeconds);
        pdwTrustEnumerationWaitSeconds = NULL;
@@ -1193,8 +1194,11 @@ LsaAdStartupThread(
     if(pInfo && pInfo->bSignalThread)
     {
         pInfo->Thread_Info.bTrustEnumerationIsDone = TRUE;
-        if(pInfo->Thread_Info.pTrustEnumerationCondition) {
+        if(pInfo->Thread_Info.pTrustEnumerationCondition) 
+        {
+            LsaStartupThreadAcquireMutex(pInfo->Thread_Info.pTrustEnumerationMutex);
             pthread_cond_signal(pInfo->Thread_Info.pTrustEnumerationCondition);
+            LsaStartupThreadReleaseMutex( pInfo->Thread_Info.pTrustEnumerationMutex);
         }
     }
 
