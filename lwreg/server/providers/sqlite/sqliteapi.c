@@ -180,7 +180,7 @@ SqliteCreateKeyEx(
     OUT OPTIONAL PDWORD pdwDisposition
     )
 {
-	NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PWSTR pwszKeyNameWithSubKey = NULL;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
@@ -1297,7 +1297,7 @@ SqliteDeleteTree(
 
     BAIL_ON_NT_INVALID_POINTER(pServerState);
 
-	// ACL check
+    // ACL check
     status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_ALL_ACCESS | DELETE);
     BAIL_ON_NT_STATUS(status);
 
@@ -1610,7 +1610,9 @@ error:
     goto cleanup;
 }
 
-/*delete all subkeys and values of hKey*/
+/**
+ * @brief Delete all subkeys and values of hKey
+ */
 static
 NTSTATUS
 SqliteDeleteTreeInternal_inlock_inDblock(
@@ -1620,13 +1622,13 @@ SqliteDeleteTreeInternal_inlock_inDblock(
 {
     NTSTATUS status = STATUS_SUCCESS;
     HKEY hCurrKey = NULL;
-    int iCount = 0;
-    DWORD dwSubKeyCount = 0;
     LW_WCHAR psubKeyName[MAX_KEY_LENGTH];
     DWORD dwSubKeyLen = 0;
     PWSTR* ppwszSubKey = NULL;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+    size_t iCount = 0;
+    size_t dwSubKeyCount = 0;
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     pKeyCtx = pKeyHandle->pKey;
@@ -1635,7 +1637,7 @@ SqliteDeleteTreeInternal_inlock_inDblock(
     status = RegDbQueryInfoKeyCount_inlock(ghCacheConnection,
                                            pKeyCtx->qwId,
                                            QuerySubKeys,
-                                           (size_t*)&dwSubKeyCount);
+                                           &dwSubKeyCount);
     BAIL_ON_NT_STATUS(status);
 
     if (dwSubKeyCount)
