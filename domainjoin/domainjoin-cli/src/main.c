@@ -62,7 +62,7 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
-            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--releaseLicense] [user name] [password]\n"
+            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n"
             : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
@@ -585,17 +585,15 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
 
+    // Enterprise default is to release the license 
+    options.releaseLicense = isEnterprise;
+
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
         if(!strcmp(argv[0], "--advanced"))
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
-        else if(!strcmp(argv[0], "--releaseLicense") && isEnterprise)
-        {
-            options.releaseLicense = TRUE; 
-            fprintf(stdout, "License release request sent\n");
-        }
         // remaining options require at least two options 
         else if(argc < 2)
         {
@@ -778,6 +776,9 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
                     &options.password));
     }
 
+    if (options.releaseLicense) {
+        fprintf(stdout, "License release request sent\n");
+    }
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
     fprintf(stdout, "SUCCESS\n");
     DJ_LOG_INFO("Leave SUCCESS");
