@@ -594,7 +594,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
         else if(!strcmp(argv[0], "--releaseLicense") && isEnterprise)
         {
             options.releaseLicense = TRUE; 
-            fprintf(stdout, "License release request sent.\n");
+            fprintf(stdout, "License release request sent\n");
         }
         // remaining options require at least two options 
         else if(argc < 2)
