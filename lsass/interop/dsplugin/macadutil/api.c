@@ -2350,8 +2350,7 @@ GetConfigurationSettings(
     if (pszUNCProtocolForHomeLocation)
     {
         // Make sure that the value is valid
-        if (strcmp(pszUNCProtocolForHomeLocation, "afp") || strcmp(pszUNCProtocolForHomeLocation, "AFP") ||
-            strcmp(pszUNCProtocolForHomeLocation, "smb") || strcmp(pszUNCProtocolForHomeLocation, "SMB"))
+        if ((strcasecmp(pszUNCProtocolForHomeLocation, "afp") != 0 && strcasecmp(pszUNCProtocolForHomeLocation, "smb") != 0))
         {
             LW_SAFE_FREE_STRING(pszUNCProtocolForHomeLocation);
             pszUNCProtocolForHomeLocation = NULL;
