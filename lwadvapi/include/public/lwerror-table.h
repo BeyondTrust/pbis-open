@@ -396,6 +396,8 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GID_TOO_HIGH, -1, "The specified group
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_FAILED, -1, "Certificate auto-enrollment failed with a general SOAP fault" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED, -1, "Certificate auto-enrollment HTTP request failed" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_SUBJECT_NAME_REQUIRED, -1, "A subject name must be provided for the specified certificate template" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_LICENSE_NOT_RELEASED , -1, "The domain leave completed but the license could not be released" )
+
 
 #include "lwerror-table-krb5.h"
 

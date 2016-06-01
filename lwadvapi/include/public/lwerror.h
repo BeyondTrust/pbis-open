@@ -746,6 +746,7 @@
 #define LW_ERROR_SHOW_USAGE                                42506
 #define LW_ERROR_DOMAINJOIN_WARNING                        42507
 #define LW_ERROR_FAILED_ADMIN_PRIVS                        42508
+#define LW_ERROR_DOMAINJOIN_LEAVE_LICENSE_NOT_RELEASED     42509
 
 // Range 42600 - 42560 is reserved for autoenroll
 #define LW_ERROR_AUTOENROLL_FAILED                         42600

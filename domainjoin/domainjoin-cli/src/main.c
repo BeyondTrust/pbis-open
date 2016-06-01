@@ -62,7 +62,7 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
-            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n"
+            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [user name] [password]\n"
             : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
@@ -594,6 +594,9 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
+        else if (!strcmp(argv[0], "--keepLicense")) {
+            options.releaseLicense = FALSE;
+        }
         // remaining options require at least two options 
         else if(argc < 2)
         {
