@@ -150,4 +150,9 @@ void SetLsassTimeSync(
     BOOLEAN sync,
     LWException **exc);
 
+void 
+DJUpdateRegistryTrustEnumeration(
+    JoinProcessOptions *options,
+    LWException **exc);
+
 #endif /* __DJ_AUTHINFO_H__ */

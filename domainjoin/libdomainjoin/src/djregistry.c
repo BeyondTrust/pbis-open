@@ -177,12 +177,6 @@ SetDwordRegistryValue(
     HANDLE hReg = (HANDLE)NULL;
     HKEY pRootKey = NULL;
     HKEY pNodeKey = NULL;
-    DWORD dwValue = 0;
-
-    if (value)
-    {
-        dwValue = 1;
-    }
 
     ceError = RegOpenServer(&hReg);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -219,8 +213,8 @@ SetDwordRegistryValue(
                 name,
                 0,
                 REG_DWORD,
-                (const BYTE*) &dwValue,
-                sizeof(dwValue));
+                (const BYTE*) &value,
+                sizeof(value));
     if (ceError)
     {
         DJ_LOG_ERROR( "Failed to set registry value %s with value %d", name, value ? 1 : 0);

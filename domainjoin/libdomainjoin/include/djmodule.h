@@ -105,6 +105,9 @@ struct _JoinProcessOptions
      * The data type inside of the array is ModuleState.
     */
     DynamicArray moduleStates;
+
+    // Range is zero to 3600 seconds. Zero disables the functionality.
+    DWORD dwTrustEnumerationWaitSeconds;
 };
 
 //A struct that defines a join module.

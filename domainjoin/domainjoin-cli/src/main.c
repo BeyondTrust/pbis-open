@@ -59,7 +59,7 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    setname <computer name>\n");
     fprintf(stdout, "    join [--notimesync] [--enable <module> --disable <module> ...] [--ou <organizationalUnit>] [--multiple] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
-    fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
+    fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] [--trustEnumerationWaitSeconds <seconds>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
             ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [user name] [password]\n"
@@ -289,6 +289,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
+    BOOLEAN bTrustEnumeration = FALSE;
     DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
     size_t i;
@@ -409,6 +410,21 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             argv++;
             argc--;
         }
+        else if(!strcmp(argv[0], "--trustEnumerationWaitSeconds"))
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option --trustEnumerationWaitSeconds %s", argv[1]);
+            options.dwTrustEnumerationWaitSeconds = strtoul(argv[1], NULL, 0);
+            // Verify the supported range. Zero disables the functionality.
+            if ( (options.dwTrustEnumerationWaitSeconds < 0) ||
+                 (options.dwTrustEnumerationWaitSeconds > 3600 ) )
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            bTrustEnumeration = TRUE;
+            argv++;
+            argc--;
+        }
         else
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
@@ -424,7 +440,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         passwordIndex = 2;
     }
     // The join username is not required in preview or details mode.
-    else if(argc == 1 && (preview || detailModules.size != 0) )
+    else if(argc == 1 && (preview || detailModules.size != 0 || bTrustEnumeration) )
         ;
     else if(argc != 2)
     {
@@ -553,7 +569,13 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
                     &options.password));
     }
 
+    if (bTrustEnumeration)
+    {
+       LW_TRY(exc, DJUpdateRegistryTrustEnumeration(&options, &LW_EXC));
+    }
+
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
+
     fprintf(stdout, "SUCCESS\n");
     DJ_LOG_INFO("Join SUCCESS");
 

@@ -1789,3 +1789,28 @@ void SetLsassTimeSync(BOOLEAN sync, LWException **exc)
 cleanup:
     return;
 }
+
+void DJUpdateRegistryTrustEnumeration(JoinProcessOptions *options,
+                                      LWException **exc)
+{
+   PSTR pszRegistryPath = NULL;
+   DWORD dwEnableTrustEnumeration = 0;
+
+   if ((options == NULL) || (options->domainName == NULL))
+     return;
+
+   LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&pszRegistryPath, "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\DomainJoin\\%s", options->domainName));
+
+   LW_CLEANUP_CTERR(exc, SetDwordRegistryValue(pszRegistryPath, "TrustEnumerationWaitSeconds", options->dwTrustEnumerationWaitSeconds));
+
+   if (options->dwTrustEnumerationWaitSeconds > 0)
+     dwEnableTrustEnumeration = 1;
+
+   LW_CLEANUP_CTERR(exc, SetDwordRegistryValue(pszRegistryPath, "TrustEnumerationWait", dwEnableTrustEnumeration));
+
+cleanup:
+
+   CT_SAFE_FREE_STRING(pszRegistryPath);
+
+   return;
+}
