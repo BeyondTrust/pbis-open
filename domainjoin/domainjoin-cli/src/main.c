@@ -415,8 +415,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             DJ_LOG_INFO("Domainjoin invoked with option --trustEnumerationWaitSeconds %s", argv[1]);
             options.dwTrustEnumerationWaitSeconds = strtoul(argv[1], NULL, 0);
             // Verify the supported range. Zero disables the functionality.
-            if ( (options.dwTrustEnumerationWaitSeconds < 0) ||
-                 (options.dwTrustEnumerationWaitSeconds > 3600 ) )
+            if (options.dwTrustEnumerationWaitSeconds > 3600) 
             {
                 LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
                 goto cleanup;
