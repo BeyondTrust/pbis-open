@@ -1261,6 +1261,11 @@ Once the problem is resolved, you may join the computer to the \"%s\" domain.\n"
     LW_TRY(exc, DJGuessShortDomainName(
                                  options->domainName,
                                  shortDomainName, &LW_EXC));
+    
+    LW_TRY(exc, DJUpdateRegistryTrustEnumeration(options, &LW_EXC));
+
+
+
 cleanup:
 
     if (lsa)

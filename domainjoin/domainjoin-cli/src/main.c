@@ -568,11 +568,6 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
                     &options.password));
     }
 
-    if (bTrustEnumeration)
-    {
-       LW_TRY(exc, DJUpdateRegistryTrustEnumeration(&options, &LW_EXC));
-    }
-
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
 
     fprintf(stdout, "SUCCESS\n");
