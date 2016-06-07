@@ -4,7 +4,6 @@ After=network.target
 
 [Service]
 Type=forking
-EnvironmentFile=@MK_LIBEXECDIR@/init-base.sh
 ExecStart=@MK_SBINDIR@/lwsmd --start-as-daemon 
 ExecReload=@MK_BINDIR@/lwsm refresh
 ExecStop=@MK_BINDIR@/lwsm shutdown
