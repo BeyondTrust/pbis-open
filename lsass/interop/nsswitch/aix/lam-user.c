@@ -319,7 +319,7 @@ LsaNssListUsers(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     const DWORD dwInfoLevel = 0;
-    const DWORD dwEnumLimit = 150000;
+    const DWORD dwEnumLimit = 10000;
     DWORD dwIndex = 0;
     DWORD dwUsersFound = 0;
     HANDLE hResume = (HANDLE)NULL;
