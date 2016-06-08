@@ -316,9 +316,8 @@ NtRegReadConfigString(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOLEAN bGotValue = FALSE;
     PSTR pszValue = NULL;
-    char szValue[MAX_VALUE_LENGTH];
     DWORD dwType;
-    DWORD dwSize;
+    DWORD dwSize = 0;
 
     if ( bUsePolicy )
     {
@@ -328,8 +327,6 @@ NtRegReadConfigString(
             BAIL_ON_NT_STATUS(ntStatus);
         }
 
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
         ntStatus = NtRegGetValueA(
                     pReg->hConnection,
                     pReg->hKey,
@@ -337,9 +334,28 @@ NtRegReadConfigString(
                     pszName,
                     RRF_RT_REG_SZ,
                     &dwType,
-                    szValue,
+                    pszValue,
                     &dwSize);
         if (!ntStatus)
+        {
+            if (dwSize > 0)
+            {
+                ntStatus = LW_RTL_ALLOCATE(&pszValue, char, dwSize);
+                BAIL_ON_NT_STATUS(ntStatus);
+
+                ntStatus = NtRegGetValueA(
+                            pReg->hConnection,
+                            pReg->hKey,
+                            pReg->pszPolicyKey,
+                            pszName,
+                            RRF_RT_REG_SZ,
+                            &dwType,
+                            pszValue,
+                            &dwSize);
+            }
+        }
+
+        if (!ntStatus && dwSize > 0)
         {
             bGotValue = TRUE;
         }
@@ -347,8 +363,8 @@ NtRegReadConfigString(
 
     if (!bGotValue )
     {
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
+        LW_RTL_FREE(&pszValue);
+        dwSize = 0;
         ntStatus = NtRegGetValueA(
                     pReg->hConnection,
                     pReg->hKey,
@@ -356,9 +372,28 @@ NtRegReadConfigString(
                     pszName,
                     RRF_RT_REG_SZ,
                     &dwType,
-                    szValue,
+                    pszValue,
                     &dwSize);
         if (!ntStatus)
+        {
+            if (dwSize > 0)
+            {
+                ntStatus = LW_RTL_ALLOCATE(&pszValue, char, dwSize);
+                BAIL_ON_NT_STATUS(ntStatus);
+
+                ntStatus = NtRegGetValueA(
+                            pReg->hConnection,
+                            pReg->hKey,
+                            pReg->pszConfigKey,
+                            pszName,
+                            RRF_RT_REG_SZ,
+                            &dwType,
+                            pszValue,
+                            &dwSize);
+            }
+        }
+
+        if (!ntStatus && dwSize > 0)
         {
             bGotValue = TRUE;
         }
@@ -366,9 +401,6 @@ NtRegReadConfigString(
 
     if (bGotValue)
     {
-        ntStatus = LwRtlCStringDuplicate(&pszValue, szValue);
-        BAIL_ON_NT_STATUS(ntStatus);
-
         LwRtlCStringFree(ppszValue);
         *ppszValue = pszValue;
         pszValue = NULL;
@@ -401,7 +433,6 @@ NtRegReadConfigMultiString(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOLEAN bGotValue = FALSE;
     PSTR pszValue = NULL;
-    char szValue[MAX_VALUE_LENGTH];
     DWORD dwType = 0;
     DWORD dwSize = 0;
 
@@ -413,8 +444,6 @@ NtRegReadConfigMultiString(
             BAIL_ON_NT_STATUS(ntStatus);
         }
 
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
         ntStatus = NtRegGetValueA(
                     pReg->hConnection,
                     pReg->hKey,
@@ -422,9 +451,28 @@ NtRegReadConfigMultiString(
                     pszName,
                     RRF_RT_REG_MULTI_SZ,
                     &dwType,
-                    szValue,
+                    pszValue,
                     &dwSize);
         if (!ntStatus)
+        {
+            if (dwSize > 0)
+            {
+                ntStatus = LW_RTL_ALLOCATE(&pszValue, char, dwSize);
+                BAIL_ON_NT_STATUS(ntStatus);
+
+                ntStatus = NtRegGetValueA(
+                            pReg->hConnection,
+                            pReg->hKey,
+                            pReg->pszPolicyKey,
+                            pszName,
+                            RRF_RT_REG_MULTI_SZ,
+                            &dwType,
+                            pszValue,
+                            &dwSize);
+            }
+        }
+
+        if (!ntStatus && dwSize > 0)
         {
             bGotValue = TRUE;
         }
@@ -432,8 +480,8 @@ NtRegReadConfigMultiString(
 
     if (!bGotValue )
     {
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
+        LW_RTL_FREE(&pszValue);
+        dwSize = 0;
         ntStatus = NtRegGetValueA(
                     pReg->hConnection,
                     pReg->hKey,
@@ -441,9 +489,28 @@ NtRegReadConfigMultiString(
                     pszName,
                     RRF_RT_REG_MULTI_SZ,
                     &dwType,
-                    szValue,
+                    pszValue,
                     &dwSize);
         if (!ntStatus)
+        {
+            if (dwSize > 0)
+            {
+                ntStatus = LW_RTL_ALLOCATE(&pszValue, char, dwSize);
+                BAIL_ON_NT_STATUS(ntStatus);
+
+                ntStatus = NtRegGetValueA(
+                            pReg->hConnection,
+                            pReg->hKey,
+                            pReg->pszConfigKey,
+                            pszName,
+                            RRF_RT_REG_MULTI_SZ,
+                            &dwType,
+                            pszValue,
+                            &dwSize);
+            }
+        }
+
+        if (!ntStatus && dwSize > 0)
         {
             bGotValue = TRUE;
         }
@@ -451,12 +518,6 @@ NtRegReadConfigMultiString(
 
     if (bGotValue)
     {
-        ntStatus = LW_RTL_ALLOCATE(&pszValue, char,
-                                        dwSize);
-        BAIL_ON_NT_STATUS(ntStatus);
-
-        memcpy(pszValue, szValue, dwSize);
-
         LwRtlCStringFree(ppszValue);
         *ppszValue = pszValue;
         pszValue = NULL;

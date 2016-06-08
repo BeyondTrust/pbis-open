@@ -308,9 +308,10 @@ UtilGetValueExA(
 {
     DWORD dwError = 0;
     DWORD dwActualType = 0;
+    PSTR pszData = NULL;
     PSTR pszValue = NULL;
-    char szValue[MAX_VALUE_LENGTH];
-    DWORD cbData = sizeof(szValue);
+    char szValue[128];
+    DWORD cbData = 0;
     HANDLE hReg = NULL;
     HKEY hRootKey = NULL;
     HKEY hKeyKey = NULL;
@@ -340,9 +341,30 @@ UtilGetValueExA(
         hKeyKey = hRootKey;
         hRootKey = NULL;
     }
+    
+    if (dwType == REG_MULTI_SZ || dwType == REG_SZ)
+    {
+        // Determine the size of the data
+        dwError =  LwRegQueryValueExA(hReg, hKeyKey, pszValueName, 0, &dwActualType,
+                (PBYTE)pszData, &cbData);
+        BAIL_ON_ERROR(dwError);
+
+        if (cbData > 0)
+        {
+            dwError = LwAllocateMemory(cbData, (PVOID*)&pszData);
+            BAIL_ON_ERROR(dwError);
+        }
+        
+        pszValue = pszData;
+    }
+    else 
+    {
+        pszValue = szValue;
+        cbData = sizeof(szValue);
+    }
 
     dwError =  LwRegQueryValueExA(hReg, hKeyKey, pszValueName, 0, &dwActualType,
-            (PBYTE)szValue, &cbData);
+            (PBYTE)pszValue, &cbData);
     BAIL_ON_ERROR(dwError);
 
     if (dwActualType != dwType)
@@ -358,21 +380,17 @@ UtilGetValueExA(
     }
     else if (dwType == REG_SZ)
     {
-       dwError = LwAllocateString(szValue, &pszValue);
-       BAIL_ON_ERROR(dwError);
+        *ppvData = pszData;
+        *pcbData = cbData;
 
-       *ppvData = pszValue;
-       *pcbData = cbData;
+        pszData = NULL;
     }
     else if (dwType == REG_MULTI_SZ)
     {
-        dwError = LwAllocateMemory(cbData, (PVOID*)&pszValue);
-        BAIL_ON_ERROR(dwError);
-
-        memcpy(pszValue, szValue, cbData);
-
-        *ppvData = pszValue;
+        *ppvData = pszData;
         *pcbData = cbData;
+       
+        pszData = NULL;
     }
     else
     {
@@ -400,10 +418,11 @@ cleanup:
         hReg = NULL;
     }
 
+    LW_SAFE_FREE_MEMORY(pszData);
+
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pszValue);
     goto cleanup;
 }
 
