@@ -347,6 +347,11 @@ LwLdapOpenDirectoryServerSingleAttempt(
         bLdapSeal = TRUE;
     }
 
+    if (dwFlags & LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT)
+    {
+        ldap_set_option(ld, LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT, LDAP_OPT_ON);
+    }
+
     dwError = LwAllocateMemory(sizeof(*pDirectory), OUT_PPVOID(&pDirectory));
     BAIL_ON_LW_ERROR(dwError);
 
@@ -2119,6 +2124,28 @@ LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
     gSaslMaxBufSize = dwSaslMaxBufSize;
     return dwError;
 }
+
+
+/*
+ * Unwrap hDirectory and pass along its LDAP object to ldap_delete
+ * for deleting computer account on domain leave.
+ */
+DWORD
+LwLdapDeleteAccount(
+        IN PCSTR DN,
+        IN HANDLE hDirectory
+        )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    LDAP *ld = NULL;
+
+    // TODO: Unwrap hDirectory and get its ld object assigned to our ld pointer
+
+    dwError = ldap_delete(ld, DN);
+
+    return dwError;
+}
+
 
 /*
 local variables:

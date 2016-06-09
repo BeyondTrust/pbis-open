@@ -1313,7 +1313,7 @@ void DJDisableComputerAccount(PCSTR username,
         leaveFlags |= LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE;
     }
 
-    if (options->removeAccount)
+    if (options->deleteAccount)
     {
         leaveFlags |= LSA_NET_LEAVE_DOMAIN_ACCT_DELETE;
     }

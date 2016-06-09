@@ -62,8 +62,8 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
-            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--removeAccount] [--releaseLicense] [user name] [password]\n"
-            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--removeAccount] [user name] [password]\n");
+            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [--deleteAccount] [user name] [password]\n"
+            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "  Example:\n\n");
@@ -599,6 +599,9 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
         {
             options.removeAccount = TRUE;
             fprintf(stdout, "Removing computer account.\n");
+        }
+        else if (!strcmp(argv[0], "--deleteAccount")) {
+            options.deleteAccount = TRUE;
         }
         // remaining options require at least two options 
         else if(argc < 2)
