@@ -2743,7 +2743,6 @@ AD_LeaveDomainInternal(
     BAIL_ON_LSA_ERROR(dwError);
 
     LSA_LOG_INFO("Left domain\n");
-    }
 
 cleanup:
 
