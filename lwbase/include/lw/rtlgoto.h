@@ -41,7 +41,7 @@
  *
  *        GOTO_CLEANUP<XXX> macros used to bail.  Logging is done separately
  *        by using a local EE (early exit) variable (of type int),
- *        which contains the line nubmer of the GOTO_CLEANUP<XXX>_EE
+ *        which contains the line number of the GOTO_CLEANUP<XXX>_EE
  *        operation.
  *
  *        The reason for GOTO_CLEANUP() is so that you can search
