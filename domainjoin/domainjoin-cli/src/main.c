@@ -595,15 +595,15 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             options.releaseLicense = TRUE; 
             fprintf(stdout, "License release request sent.\n");
         }
-        else if (!strcmp(argv[0], "--deleteAccount")) {
-            options.deleteAccount = TRUE;
-            fprintf(stdout, "Delete account request sent.\n");
-        }
         // remaining options require at least two options 
         else if(argc < 2)
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
+        }
+        else if (!strcmp(argv[0], "--deleteAccount")) {
+            options.deleteAccount = TRUE;
+            fprintf(stdout, "Delete account request sent.\n");
         }
         else if(!strcmp(argv[0], "--enable"))
         {
