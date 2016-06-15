@@ -105,7 +105,7 @@ check_params SOURCE_DIR BUILD_DIR DIST_DIR
 if [ -n "$TOOLS" ]
 then
     PATH="${TOOLS}/bin:$PATH"
-    EXTRA_CPPFLAGS="-I${TOOLS}/include"
+    EXTRA_CPPFLAGS="-DNDEBUG=1 -I${TOOLS}/include"
     EXTRA_LDFLAGS="-L$(dirname $(find "${TOOLS}" -name 'libmoonunit.la'))"
 
     if [ -x "${TOOLS}/bin/dash" ]
