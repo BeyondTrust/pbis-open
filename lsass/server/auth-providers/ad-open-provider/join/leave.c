@@ -78,6 +78,10 @@ LsaLeaveDomain2(
     PWSTR pwszDnsDomainName = NULL;
     PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo = NULL;
     PLSA_CREDS_FREE_INFO pAccessInfo = NULL;
+    const BOOLEAN bAccountDeleted = ((dwFlags & LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
+                                           == LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
+                                       ? TRUE
+                                       : FALSE;
 
     if (pszDnsDomainName)
     {
@@ -88,7 +92,8 @@ LsaLeaveDomain2(
     dwError = LsaPstoreGetPasswordInfoW(pwszDnsDomainName, &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pszUsername) &&
+    if (!bAccountDeleted && // Don't try to disable account if we've already deleted it
+        !LW_IS_NULL_OR_EMPTY_STR(pszUsername) &&
         !LW_IS_NULL_OR_EMPTY_STR(pszPassword))
     {
         // TODO-2011/01/13-dalmeida -- Ensure we use UPN.

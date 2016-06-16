@@ -52,7 +52,8 @@
 #include <lsa/lsapstore-api.h>
 #include <dce/rpc.h>
 #include <lwexc.h>
-#include <djauthinfo.h>
+#include <lsaipc.h>
+#include <lsa/ad.h>
 
 
 static
@@ -2656,11 +2657,9 @@ AD_LeaveDomainInternal(
     BOOLEAN bLocked = FALSE;
     PAD_PROVIDER_CONTEXT pContext = (PAD_PROVIDER_CONTEXT)hProvider;
 
-    PSTR pszDeleteAccountMachineAccountInfo = NULL;
     PSTR pszDeleteAccountDomain = (PSTR)pszDomain;
     PSTR pszDeleteAccountDN = NULL;
     HANDLE hDirectory = (HANDLE)NULL;
-    LWException **exc = NULL;
 
     const BOOLEAN bDeleteAccount = ((dwFlags & LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
                                            == LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
@@ -2680,48 +2679,19 @@ AD_LeaveDomainInternal(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * Deleting the account requires the computer account information
-     *
-     * Note: This MUST be done before acquiring the write lock
-     * (or we will DEADLOCK)
-     */
     if (bDeleteAccount) {
         // Get fqdn
-        LW_TRY(exc, DJGetComputerDN(&pszDeleteAccountDN, &LW_EXC));
+        HANDLE hLsaConnection = NULL;
+
+        dwError = LsaOpenServer(&hLsaConnection);
         BAIL_ON_LSA_ERROR(dwError);
 
-/*        PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+        dwError = LsaAdGetComputerDn(hLsaConnection, NULL, &pszDeleteAccountDN);
+        BAIL_ON_LSA_ERROR(dwError);
 
-        LSA_LOG_VERBOSE("Obtaining computer account information to delete the account.");
-        dwError = AD_GetMachineAccountInfoA(pszDomain, &pAccountInfo);
-
-        if (dwError) {
-            LSA_LOG_ERROR("Failed obtaining computer account information, error %x (0x%x), account will not be deleted.",
-                    LwWin32ExtErrorToName(dwError), dwError);
-        } else {
-            LSA_LOG_VERBOSE("Obtained computer account credentials, these will be used to delete the computer account.");
-
-  */          /* If duplication fails, it sets the target pointer to NULL */ /*
-            if (!pszDeleteAccountMachineAccountInfo) {
-                dwError = LwRtlCStringDuplicate(&pszDeleteAccountMachineAccountInfo, pAccountInfo->SamAccountName);
-            }
-
-            if (!pszDeleteAccountDomain) {
-                dwError |= LwRtlCStringDuplicate(&pszDeleteAccountDomain, pAccountInfo->DnsDomainName);
-            }
-
-            if (dwError) {
-                LSA_LOG_ERROR("Failed copying computer account credentials, computer account will not be deleted.");
-            }
+        if (hLsaConnection) {
+            LsaCloseServer(hLsaConnection);
         }
-
-        if (pAccountInfo)
-        {
-            LsaSrvFreeMachineAccountInfoA(pAccountInfo);
-        }
-
-        BAIL_ON_LSA_ERROR(dwError);*/
     }
 
     LsaAdProviderStateAcquireWrite(pContext->pState);
@@ -2736,6 +2706,7 @@ AD_LeaveDomainInternal(
     BAIL_ON_LSA_ERROR(dwError);
 
     if (bDeleteAccount) {
+        // Here we actually delete the account
         PLWNET_DC_INFO pDCInfo = NULL;
         PLSA_CREDS_FREE_INFO pAccessInfo = NULL;
         // ensure this DC is NOT RO, we
@@ -2762,6 +2733,10 @@ AD_LeaveDomainInternal(
         LwLdapCloseDirectory(hDirectory);
 
         LsaFreeSMBCreds(&pAccessInfo);
+
+        if (pDCInfo) {
+            LWNetFreeDCInfo(pDCInfo);
+        }
 
         BAIL_ON_LSA_ERROR(dwError);
     }
