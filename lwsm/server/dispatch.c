@@ -848,7 +848,11 @@ LwSmDispatchSetLogLevel(
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
 
-    if (uid == 0)
+    if (uid != 0)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+    }
+    else 
     {
         if (pReq->hHandle)
         {
@@ -865,10 +869,31 @@ LwSmDispatchSetLogLevel(
         {
             LwSmSetMaxLogLevel(pReq->pFacility, pReq->Level);
         }
-    }
-    else
-    {
-        dwError = LW_ERROR_ACCESS_DENIED;
+
+        if (pReq->PersistFlag && hHandle->pEntry) 
+        {
+          dwError = LwSmDispatchPersistLogLevel(hHandle->pEntry->pInfo->pwszName, pReq->Level);
+          BAIL_ON_ERROR(dwError);
+
+          /* the new defaults won't be used on a lwsm service restart unless we
+             also update the cached service log levels obtained when lwsmd started.  
+             This requires we update the LW_SERVICE_INFO.DefaultLogLevel for the service 
+             and mark the service entry as dirty so that it is reconstructed from the 
+             service info 
+
+             the service info mask only supports updating all log related entries,
+             so must supply them all
+          */
+          const LW_SERVICE_INFO updatedServiceInfo = 
+          {
+            .DefaultLogLevel = pReq->Level,
+            .DefaultLogType = hHandle->pEntry->pInfo->DefaultLogType,
+            .pDefaultLogTarget = hHandle->pEntry->pInfo->pDefaultLogTarget
+          };
+           
+          dwError = LwSmTableUpdateEntry(hHandle->pEntry, &updatedServiceInfo, LW_SERVICE_INFO_MASK_LOG);
+          BAIL_ON_ERROR(dwError);
+        }
     }
 
     if (dwError)
@@ -882,30 +907,6 @@ LwSmDispatchSetLogLevel(
         pOut->data = NULL;
     }
     
-    if (pReq->PersistFlag) 
-    {
-      dwError = LwSmDispatchPersistLogLevel(hHandle->pEntry->pInfo->pwszName, pReq->Level);
-      BAIL_ON_ERROR(dwError);
-
-      /* the new defaults won't be used on a lwsm service restart unless we
-         also update the cached service log levels obtained when lwsmd started.  
-         This requires we update the LW_SERVICE_INFO.DefaultLogLevel for the service 
-         and mark the service entry as dirty so that it is reconstructed from the 
-         service info 
-
-         the service info mask only supports updating all log related entries,
-         so must supply them all
-      */
-      const LW_SERVICE_INFO updatedServiceInfo = 
-      {
-        .DefaultLogLevel = pReq->Level,
-        .DefaultLogType = hHandle->pEntry->pInfo->DefaultLogType,
-        .pDefaultLogTarget = hHandle->pEntry->pInfo->pDefaultLogTarget
-      };
-       
-      dwError = LwSmTableUpdateEntry(hHandle->pEntry, &updatedServiceInfo, LW_SERVICE_INFO_MASK_LOG);
-      BAIL_ON_ERROR(dwError);
-    }
  
 cleanup:
 
