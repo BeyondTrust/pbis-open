@@ -334,7 +334,7 @@ NtRegReadConfigString(
                     pszName,
                     RRF_RT_REG_SZ,
                     &dwType,
-                    pszValue,
+                    NULL,
                     &dwSize);
         if (!ntStatus)
         {
@@ -372,7 +372,7 @@ NtRegReadConfigString(
                     pszName,
                     RRF_RT_REG_SZ,
                     &dwType,
-                    pszValue,
+                    NULL,
                     &dwSize);
         if (!ntStatus)
         {

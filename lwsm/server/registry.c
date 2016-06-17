@@ -605,7 +605,7 @@ LwSmRegistryReadString(
         pwszValueName,
         RRF_RT_REG_SZ,
         &dwType,
-        pwszValue,
+        NULL,
         &dwSize);
     BAIL_ON_ERROR(dwError);
 

@@ -310,7 +310,7 @@ UtilGetValueExA(
     DWORD dwActualType = 0;
     PSTR pszData = NULL;
     PSTR pszValue = NULL;
-    char szValue[128];
+    char szValue[sizeof(DWORD)];
     DWORD cbData = 0;
     HANDLE hReg = NULL;
     HKEY hRootKey = NULL;
@@ -346,7 +346,7 @@ UtilGetValueExA(
     {
         // Determine the size of the data
         dwError =  LwRegQueryValueExA(hReg, hKeyKey, pszValueName, 0, &dwActualType,
-                (PBYTE)pszData, &cbData);
+                (PBYTE)NULL, &cbData);
         BAIL_ON_ERROR(dwError);
 
         if (cbData > 0)
