@@ -69,7 +69,8 @@ static void * timer_loop(void *arg) {
 
     status = pthread_mutex_lock(&(timer->mutex));
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to lock timer mutex: error %s (%d); timer will NOT run.", ErrnoToName(status), status);
+        LW_RTL_LOG_ERROR("Failed to lock %s timer mutex: error %s (%d); timer will NOT run.", 
+                timer->tag, ErrnoToName(status), status);
         GOTO_ERROR_ON_STATUS(status);
     }
 
@@ -82,15 +83,16 @@ static void * timer_loop(void *arg) {
             /* break the loop for errors which indicate programming errors 
              * so this doesn't run endlessly */ 
             if (status == EINVAL || status == EPERM) {
-              LW_RTL_LOG_ERROR("Error waiting on timer: error %s (%d).", 
-                      ErrnoToName(status), status);
+              LW_RTL_LOG_ERROR("Error waiting on %s timer: error %s (%d).", 
+                      timer->tag, ErrnoToName(status), status);
               break;
             }
         }
     }
 
     if (!timer->cancelled) {
-        LW_RTL_LOG_WARNING("Timer expired, executing timer expired action."); 
+        LW_RTL_LOG_WARNING("%s timer expired, executing timer expired action.",
+                timer->tag); 
         if (timer->pfnAction) {
             timer->pfnAction(timer->actionData);
         }
@@ -113,8 +115,8 @@ error:
 static int timer_start_internal(PLW_TIMER timer) {
     int status = pthread_create(&timer->thread, NULL, &timer_loop, (void *)timer);
     if (status) {
-        LW_RTL_LOG_ERROR("Could not create the timer thread: error %s (%d).",
-                ErrnoToName(status), status);
+        LW_RTL_LOG_ERROR("Could not create the %s timer thread: error %s (%d).",
+                timer->tag, ErrnoToName(status), status);
         GOTO_ERROR_ON_STATUS(status);
     }
 
@@ -127,7 +129,7 @@ static int timer_cancel_internal(PLW_TIMER timer) {
 
     status = pthread_mutex_lock(&(timer->mutex));
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to lock mutex: error %s (%d). Can NOT cancel timer (%s).", 
+        LW_RTL_LOG_ERROR("Failed to lock mutex: error %s (%d). Can NOT cancel %s timer.", 
                 ErrnoToName(status), status, timer->tag);
         GOTO_ERROR_ON_STATUS(status);
     }
@@ -136,14 +138,14 @@ static int timer_cancel_internal(PLW_TIMER timer) {
 
     status = pthread_mutex_unlock(&(timer->mutex));
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to unlock mutex: error %s (%d). Can NOT cancel timer (%s).", 
+        LW_RTL_LOG_ERROR("Failed to unlock mutex: error %s (%d). Can NOT cancel %s timer.", 
                 ErrnoToName(status), status, timer->tag);
         GOTO_ERROR_ON_STATUS(status);
     }
 
     status = pthread_cond_signal(&(timer->cond));
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to signal timer cond variable: error %s (%d). Can NOT cancel timer (%s).", 
+        LW_RTL_LOG_ERROR("Failed to signal timer cond variable: error %s (%d). Can NOT cancel %s timer.", 
                 ErrnoToName(status), status, timer->tag);
         GOTO_ERROR_ON_STATUS(status);
     }
@@ -173,13 +175,13 @@ PLW_TIMER LwTimerInitialize(const char *tag,
 
     status = pthread_mutex_init(&(timer->mutex),NULL);
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to initialize timer (%s) mutex: error %s (%d).", timer->tag, ErrnoToName(status), status);
+        LW_RTL_LOG_ERROR("Failed to initialize %s timer mutex: error %s (%d).", timer->tag, ErrnoToName(status), status);
         GOTO_ERROR_ON_STATUS(status);
     }
 
     status = pthread_cond_init(&(timer->cond), NULL);
     if (status) {
-        LW_RTL_LOG_ERROR("Failed to initialize timer (%s) cond: error %s (%d).", timer->tag, ErrnoToName(status), status);
+        LW_RTL_LOG_ERROR("Failed to initialize %s timer cond: error %s (%d).", timer->tag, ErrnoToName(status), status);
         GOTO_ERROR_ON_STATUS(status);
     }
     timer->cancelled = 0;

@@ -542,7 +542,7 @@ LwSmTableStopEntry(
     DWORD dwAttempts = 0;
     PSTR pszServiceName = NULL;
 
-    const unsigned int timerDelaySeconds = 25;
+    const unsigned int timerDelaySeconds = pEntry->pInfo->uShutdownTimeout;
     PLW_TIMER pShutdownTimer = NULL;
     pid_t shutdownProcessId = 0;
 
