@@ -594,13 +594,9 @@ LwSmRegistryReadString(
     )
 {
     DWORD dwError = 0;
-    WCHAR wszValue[MAX_VALUE_LENGTH];
     DWORD dwSize = 0;
     DWORD dwType = 0;
     PWSTR pwszValue = NULL;
-
-    memset(wszValue, 0, sizeof(wszValue));
-    dwSize = sizeof(wszValue);
 
     dwError = RegGetValueW(
         hReg,
@@ -609,14 +605,24 @@ LwSmRegistryReadString(
         pwszValueName,
         RRF_RT_REG_SZ,
         &dwType,
-        wszValue,
+        NULL,
         &dwSize);
     BAIL_ON_ERROR(dwError);
 
     dwError = LwAllocateMemory(dwSize + sizeof(WCHAR), OUT_PPVOID(&pwszValue));
     BAIL_ON_ERROR(dwError);
 
-    memcpy(pwszValue, wszValue, dwSize);
+    dwError = RegGetValueW(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        pwszValueName,
+        RRF_RT_REG_SZ,
+        &dwType,
+        pwszValue,
+        &dwSize);
+    BAIL_ON_ERROR(dwError);
+
     *ppwszValue = pwszValue;
 
 cleanup:
