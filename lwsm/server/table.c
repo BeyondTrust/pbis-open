@@ -492,6 +492,45 @@ error:
     goto cleanup;
 }
 
+static void 
+LwSmTableKillProcess(
+    void *data) 
+{
+    assert(data);
+
+    int status = 0;
+    const pid_t process_id = *((pid_t *)data);
+    const int signal = SIGKILL;
+
+    /* don't kill process groups, so 
+     * only kill if process id > 0 */
+    if (process_id) 
+    { 
+        SM_LOG_INFO("Sending SIGKILL to process %d", process_id);
+        status = kill(process_id, signal);
+
+        switch(status) {
+            case ESRCH:
+                SM_LOG_INFO("Failed sending signal (%d) to process %d: error %s (%d); process does not exist.", 
+                    signal, process_id, ErrnoToName(status), status);
+                break;
+            case 0:
+                SM_LOG_INFO("Sent signal (%d) to process %d.: error %s (%d); process does not exist.", 
+                    signal, process_id, ErrnoToName(status), status);
+                break;
+            case EINVAL:
+            case EPERM:
+            default:
+                /* programming or other errors */
+                SM_LOG_ERROR("Failed sending signal (%d) to process %d: error %s (%d).", 
+                    signal, process_id, ErrnoToName(status), status);
+                break;
+
+        }
+    }
+}
+
+
 DWORD
 LwSmTableStopEntry(
     PSM_TABLE_ENTRY pEntry
@@ -502,6 +541,10 @@ LwSmTableStopEntry(
     LW_SERVICE_STATUS status = {.state = LW_SERVICE_STATE_RUNNING};
     DWORD dwAttempts = 0;
     PSTR pszServiceName = NULL;
+
+    const unsigned int timerDelaySeconds = 25;
+    PLW_TIMER pShutdownTimer = NULL;
+    pid_t shutdownProcessId = 0;
 
     LOCK(bLocked, pEntry->pLock);
 
@@ -532,6 +575,17 @@ LwSmTableStopEntry(
                 
                 SM_LOG_INFO("Stopping service: %s", pszServiceName);
 
+                if (pShutdownTimer == NULL) 
+                {
+                    /* create a shutdown timer that will forcibly kill the
+                     * related process unless it shuts down before the timer
+                     * expires */
+                    shutdownProcessId = status.pid;
+                    pShutdownTimer = LwTimerInitialize(pszServiceName, &LwSmTableKillProcess, (void *)&shutdownProcessId, timerDelaySeconds);
+                    SM_LOG_INFO("Starting lwsmd shutdown timer for service: %s", pszServiceName);
+                    LwTimerStart(pShutdownTimer);
+                }
+
                 UNLOCK(bLocked, pEntry->pLock);
                 dwError = pEntry->pVtbl->pfnStop(&pEntry->object);
                 LOCK(bLocked, pEntry->pLock);
@@ -545,6 +599,11 @@ LwSmTableStopEntry(
             }
             break;
         case LW_SERVICE_STATE_STOPPED:
+            if (pShutdownTimer) 
+            {
+                SM_LOG_INFO("Service %s stopped, cancelling service shutdown timer.", pszServiceName);
+                LwTimerCancel(pShutdownTimer);
+            }
             break;
         case LW_SERVICE_STATE_STARTING:
         case LW_SERVICE_STATE_STOPPING:
@@ -559,6 +618,11 @@ LwSmTableStopEntry(
     }
 
 cleanup:
+
+    if (pShutdownTimer) 
+    {
+        LwTimerFree(pShutdownTimer);
+    }
 
     LW_SAFE_FREE_MEMORY(pszServiceName);
 
