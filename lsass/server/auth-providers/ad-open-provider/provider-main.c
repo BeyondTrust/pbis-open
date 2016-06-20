@@ -51,7 +51,6 @@
 #include "adprovider.h"
 #include <lsa/lsapstore-api.h>
 #include <dce/rpc.h>
-#include <lwexc.h>
 #include <lsaipc.h>
 #include <lsa/ad.h>
 
@@ -2644,6 +2643,87 @@ error:
 
 static
 DWORD
+AD_LeaveDomainAcctDelete(
+    PCSTR pszDeleteAccountDomain,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszDeleteAccountDN
+    )
+{
+    PLWNET_DC_INFO pDCInfo = NULL;
+    PLSA_CREDS_FREE_INFO pAccessInfo = NULL;
+    HANDLE hDirectory = (HANDLE)NULL;
+    DWORD dwError = 0;
+    // ensure this DC is NOT RO, we
+    // need to delete an object
+    dwError = LWNetGetDCName(
+                NULL,
+                pszDeleteAccountDomain,
+                NULL,
+                DS_WRITABLE_REQUIRED,
+                &pDCInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaSetSMBCreds(pszUsername, pszPassword, TRUE, &pAccessInfo);
+
+    dwError = LwLdapOpenDirectoryServer(
+                pDCInfo->pszDomainControllerAddress,
+                pDCInfo->pszDomainControllerName,
+                0,
+                &hDirectory);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwLdapDelete(hDirectory, pszDeleteAccountDN);
+
+    LwLdapCloseDirectory(hDirectory);
+
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    LsaFreeSMBCreds(&pAccessInfo);
+
+    if (pDCInfo) {
+        LWNetFreeDCInfo(pDCInfo);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+AD_LeaveDomainGetDN(
+    PSTR *ppszDN
+    )
+{
+    HANDLE hLsaConnection = NULL;
+    DWORD dwError = 0;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaAdGetComputerDn(hLsaConnection, NULL, ppszDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    if (hLsaConnection) {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
 AD_LeaveDomainInternal(
     HANDLE hProvider,
     PCSTR pszUsername,
@@ -2659,7 +2739,6 @@ AD_LeaveDomainInternal(
 
     PSTR pszDeleteAccountDomain = (PSTR)pszDomain;
     PSTR pszDeleteAccountDN = NULL;
-    HANDLE hDirectory = (HANDLE)NULL;
 
     const BOOLEAN bDeleteAccount = ((dwFlags & LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
                                            == LSA_NET_LEAVE_DOMAIN_ACCT_DELETE)
@@ -2669,8 +2748,7 @@ AD_LeaveDomainInternal(
     dwError = AD_GetStateWithReference(
                   pszDomain,
                   &pContext->pState);
-    if (dwError == LW_ERROR_NOT_HANDLED)
-    {
+    if (dwError == LW_ERROR_NOT_HANDLED) {
         // not joined, ensure pstore is clean
         dwError = AD_SafeRemoveJoinInfo(pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
@@ -2679,19 +2757,11 @@ AD_LeaveDomainInternal(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+    // We need the fqdn to delete the account
+    // Get it while we're still joined to the domain
     if (bDeleteAccount) {
-        // Get fqdn
-        HANDLE hLsaConnection = NULL;
-
-        dwError = LsaOpenServer(&hLsaConnection);
+        dwError = AD_LeaveDomainGetDN(&pszDeleteAccountDN);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaAdGetComputerDn(hLsaConnection, NULL, &pszDeleteAccountDN);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (hLsaConnection) {
-            LsaCloseServer(hLsaConnection);
-        }
     }
 
     LsaAdProviderStateAcquireWrite(pContext->pState);
@@ -2702,47 +2772,18 @@ AD_LeaveDomainInternal(
         dwError = 0;
         bNeedLeave = FALSE;
     }
-
     BAIL_ON_LSA_ERROR(dwError);
 
+    // Now we delete the account
     if (bDeleteAccount) {
-        // Here we actually delete the account
-        PLWNET_DC_INFO pDCInfo = NULL;
-        PLSA_CREDS_FREE_INFO pAccessInfo = NULL;
-        // ensure this DC is NOT RO, we
-        // need to delete an object
-        dwError = LWNetGetDCName(
-                    NULL,
-                    pszDeleteAccountDomain,
-                    NULL,
-                    DS_WRITABLE_REQUIRED,
-                    &pDCInfo);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        LsaSetSMBCreds(pszUsername, pszPassword, TRUE, &pAccessInfo);
-
-        dwError = LwLdapOpenDirectoryServer(
-                    pDCInfo->pszDomainControllerAddress,
-                    pDCInfo->pszDomainControllerName,
-                    0,
-                    &hDirectory);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LwLdapDelete(hDirectory, pszDeleteAccountDN);
-
-        LwLdapCloseDirectory(hDirectory);
-
-        LsaFreeSMBCreds(&pAccessInfo);
-
-        if (pDCInfo) {
-            LWNetFreeDCInfo(pDCInfo);
-        }
-
+        dwError = AD_LeaveDomainAcctDelete(pszDeleteAccountDomain,
+                                           pszUsername,
+                                           pszPassword,
+                                           pszDeleteAccountDN);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (bNeedLeave)
-    {
+    if (bNeedLeave) {
         dwError = LsaLeaveDomain2(
             pszDomain,
             pszUsername,
@@ -2767,13 +2808,11 @@ cleanup:
         LW_SAFE_FREE_MEMORY(pszDeleteAccountDomain);
     }
 
-    if (bLocked)
-    {
+    if (bLocked) {
         LsaAdProviderStateRelease(pContext->pState);
     }
 
-    if (pContext->pState)
-    {
+    if (pContext->pState) {
         AD_DereferenceProviderState(pContext->pState);
         pContext->pState = NULL;
     }
