@@ -57,7 +57,8 @@
 #include <lw/errno.h>
 
 
-/* @brief Performs a timed wait on the timer pthread cond until the 
+/**
+ * @brief Performs a timed wait on the timer pthread cond until the 
  * timeout expires or timer->cancelled is set.
  *
  * @return NULL
@@ -65,7 +66,7 @@
 static void * timer_loop(void *arg) {
     const PLW_TIMER timer = (PLW_TIMER)arg;
     struct timespec timeout = { .tv_sec = time(NULL) + timer->delaySeconds};
-    int status = 0; 
+    int status = 0;
 
     status = pthread_mutex_lock(&(timer->mutex));
     if (status) {
@@ -106,10 +107,10 @@ error:
 }
 
 
-/* Creates the timer thread 
- * 
+/* Creates the timer thread
+ *
  * This does not detach the thread as joining the
- * thread allows the free routine to know the 
+ * thread allows the free routine to know the
  * timer thread has completed.
  */
 static int timer_start_internal(PLW_TIMER timer) {
@@ -124,7 +125,7 @@ error:
    return status;
 }
 
-static int timer_cancel_internal(PLW_TIMER timer) {
+static int timer_cancel_internal(const PLW_TIMER timer) {
     int status = 0;
 
     status = pthread_mutex_lock(&(timer->mutex));
@@ -154,8 +155,8 @@ error:
     return status;
 }
 
-PLW_TIMER LwTimerInitialize(const char *tag, 
-            void (*pfnAction)(void *), 
+PLW_TIMER LwTimerInitialize(const char *tag,
+            void (*pfnAction)(void *),
             void *actionData,
             unsigned short delaySeconds) {
     PLW_TIMER timer = NULL;
@@ -223,12 +224,12 @@ void LwTimerFree(PLW_TIMER timer) {
     free(timer);
 }
 
-int LwTimerStart(PLW_TIMER timer) {
+int LwTimerStart(const PLW_TIMER timer) {
     assert(timer != NULL);
     return LwMapErrnoToLwError(timer->pfnStart(timer));
 }
 
-int LwTimerCancel(PLW_TIMER timer) {
+int LwTimerCancel(const PLW_TIMER timer) {
     assert(timer != NULL);
     return LwMapErrnoToLwError(timer->pfnCancel(timer));
 }

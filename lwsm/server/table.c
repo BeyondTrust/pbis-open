@@ -494,7 +494,7 @@ error:
 
 static void 
 LwSmTableKillProcess(
-    void *data) 
+    void *data)
 {
     assert(data);
 
@@ -511,12 +511,11 @@ LwSmTableKillProcess(
 
         switch(status) {
             case ESRCH:
-                SM_LOG_INFO("Failed sending signal (%d) to process %d: error %s (%d); process does not exist.", 
+                SM_LOG_WARNING("Failed sending signal (%d) to process %d: error %s (%d); process exited on its own?", 
                     signal, process_id, ErrnoToName(status), status);
                 break;
             case 0:
-                SM_LOG_INFO("Sent signal (%d) to process %d.: error %s (%d); process does not exist.", 
-                    signal, process_id, ErrnoToName(status), status);
+                SM_LOG_INFO("Sent signal (%d) to process %d.:", signal, process_id);
                 break;
             case EINVAL:
             case EPERM:
@@ -572,7 +571,7 @@ LwSmTableStopEntry(
 
                 dwError = LwWc16sToMbs(pEntry->pInfo->pwszName, &pszServiceName);
                 BAIL_ON_ERROR(dwError);
-                
+
                 SM_LOG_INFO("Stopping service: %s", pszServiceName);
 
                 if (pShutdownTimer == NULL) 

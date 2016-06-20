@@ -61,16 +61,16 @@ typedef struct _LW_TIMER {
 
   pthread_t thread;
 
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
-	unsigned short cancelled : 1;
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+  unsigned short cancelled : 1;
 
-	unsigned short delaySeconds; 
-	void *actionData;
-	
-	int  (*pfnStart)(struct _LW_TIMER *self);
-	void (*pfnAction)(void *);
-	int  (*pfnCancel)(struct _LW_TIMER *self);
+  unsigned short delaySeconds; 
+  void *actionData;
+
+  int  (*pfnStart)(struct _LW_TIMER *self);
+  void (*pfnAction)(void *);
+  int  (*pfnCancel)(struct _LW_TIMER *self);
 } LW_TIMER, *PLW_TIMER;
 
 
@@ -85,7 +85,7 @@ typedef struct _LW_TIMER {
  * @param [in] delaySeconds the timer delay in seconds
  * @return a pointer to the timer, or NULL
  */
-PLW_TIMER LwTimerInitialize(const char *tag, void (*pfnAction)(void *), void *actionData, unsigned short delaySeconds);
+PLW_TIMER LwTimerInitialize(const char *tag, void (*pfnAction)(void *), void *actionData, const unsigned short delaySeconds);
 
 /**
  * @brief Start the timer. 
@@ -93,7 +93,7 @@ PLW_TIMER LwTimerInitialize(const char *tag, void (*pfnAction)(void *), void *ac
  *
  * @return an LW status code 
  */
-int LwTimerStart(PLW_TIMER timer);
+int LwTimerStart(const PLW_TIMER timer);
 
 /**
  * @brief Cancel the timer. 
@@ -101,7 +101,7 @@ int LwTimerStart(PLW_TIMER timer);
  *
  * @return an LW status code 
  */
-int LwTimerCancel(PLW_TIMER timer);
+int LwTimerCancel(const PLW_TIMER timer);
 
 /**
  * @brief Free the timer. 
