@@ -311,7 +311,6 @@ LwLdapPutUInt32(
     DWORD  dwValue
     );
 
-
 DWORD
 LwLdapEscapeString(
     PSTR *ppszResult,

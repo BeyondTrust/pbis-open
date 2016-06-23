@@ -2664,7 +2664,8 @@ AD_LeaveDomainAcctDelete(
                 &pDCInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LsaSetSMBCreds(pszUsername, pszPassword, TRUE, &pAccessInfo);
+    dwError = LsaSetSMBCreds(pszUsername, pszPassword, TRUE, &pAccessInfo);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwLdapOpenDirectoryServer(
                 pDCInfo->pszDomainControllerAddress,
@@ -2674,14 +2675,17 @@ AD_LeaveDomainAcctDelete(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwLdapDelete(hDirectory, pszDeleteAccountDN);
-
-    LwLdapCloseDirectory(hDirectory);
-
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
-    LsaFreeSMBCreds(&pAccessInfo);
+    if (pAccessInfo) {
+        LsaFreeSMBCreds(&pAccessInfo);
+    }
+
+    if (hDirectory) {
+        LwLdapCloseDirectory(hDirectory);
+    }
 
     if (pDCInfo) {
         LWNetFreeDCInfo(pDCInfo);

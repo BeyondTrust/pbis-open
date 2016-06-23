@@ -2148,27 +2148,6 @@ LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
 
 
 /*
- * Unwrap hDirectory and pass along its LDAP object to ldap_delete
- * for deleting computer account on domain leave.
- */
-DWORD
-LwLdapDeleteAccount(
-        IN PCSTR DN,
-        IN HANDLE hDirectory
-        )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    LDAP *ld = NULL;
-
-    // TODO: Unwrap hDirectory and get its ld object assigned to our ld pointer
-
-    dwError = ldap_delete(ld, DN);
-
-    return dwError;
-}
-
-
-/*
 local variables:
 mode: c
 c-basic-offset: 4
