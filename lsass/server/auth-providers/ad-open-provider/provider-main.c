@@ -5924,6 +5924,19 @@ AD_ResolveConfiguredLists(
                 LsaSrvFreeNameInfo(pLoginInfo);
                 pLoginInfo = NULL;
             }
+            
+            // Ensure Groups and Users configured via Group Policy still work when
+            // an alternate DomainSeparator is specified
+            if (LsaSrvDomainSeparator() != '\\')
+            {
+                PSTR pszDomainSeparator = strchr(pszMember, '\\');
+                
+                if (pszDomainSeparator)
+                {
+                    *pszDomainSeparator = LsaSrvDomainSeparator();
+                }
+            }
+
             dwError = LsaSrvCrackDomainQualifiedName(
                 pszMember,
                 &pLoginInfo);
