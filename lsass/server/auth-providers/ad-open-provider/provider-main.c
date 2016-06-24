@@ -2679,12 +2679,12 @@ AD_LeaveDomainAcctDelete(
 
 cleanup:
 
-    if (pAccessInfo) {
-        LsaFreeSMBCreds(&pAccessInfo);
-    }
-
     if (hDirectory) {
         LwLdapCloseDirectory(hDirectory);
+    }
+
+    if (pAccessInfo) {
+        LsaFreeSMBCreds(&pAccessInfo);
     }
 
     if (pDCInfo) {
