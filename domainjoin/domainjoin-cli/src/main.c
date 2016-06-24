@@ -614,7 +614,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
-        else if (!strcmp(argv[0], "--keepLicense")) {
+        else if (!strcmp(argv[0], "--keepLicense"))
             options.releaseLicense = FALSE;
         else if (!strcmp(argv[0], "--deleteAccount")) {
             if (argc < 2) {
@@ -807,9 +807,6 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
                     &options.password));
     }
 
-    if (options.releaseLicense) {
-        fprintf(stdout, "License release request sent\n");
-    }
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
     fprintf(stdout, "SUCCESS\n");
     DJ_LOG_INFO("Leave SUCCESS");
