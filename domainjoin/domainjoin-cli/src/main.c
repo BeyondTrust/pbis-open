@@ -63,7 +63,8 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
             ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [user name] [password]\n"
-            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
+              "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n"
+            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "  Example:\n\n");
@@ -252,6 +253,9 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
         if(domain == NULL)
             domain = "(unknown)";
         fprintf(stdout, "Leaving AD Domain:   %s\n", domain);
+        if (options->deleteAccount) {
+            fprintf(stdout, "Attempting to delete account\n");
+        }
     }
 
 cleanup:
@@ -612,6 +616,14 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             preview = TRUE;
         else if (!strcmp(argv[0], "--keepLicense")) {
             options.releaseLicense = FALSE;
+        else if (!strcmp(argv[0], "--deleteAccount")) {
+            if (argc < 2) {
+                // User hasn't supplied at least a user name
+                // If user name supplied but not password, user will be prompted to enter it later
+                fprintf(stdout, "--deleteAccount must be followed by a user name and a password.\n");
+                goto cleanup;
+            }
+            options.deleteAccount = TRUE;
         }
         // remaining options require at least two options 
         else if(argc < 2)

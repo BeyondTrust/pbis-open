@@ -89,6 +89,7 @@ struct _JoinProcessOptions
     BOOLEAN ignorePam;
     BOOLEAN ignoreSsh;
     BOOLEAN releaseLicense;
+    BOOLEAN deleteAccount;
 
     BOOLEAN setAssumeDefaultDomain;
     // TRUE means that lsass will be configured to append a domain prefix so user logons
