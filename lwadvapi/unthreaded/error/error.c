@@ -630,6 +630,8 @@ LwMapLwmsgStatusToLwError(
             return LW_ERROR_NOT_IMPLEMENTED;
         case LWMSG_STATUS_SYSTEM:
             return LW_ERROR_INTERNAL;
+        case LWMSG_STATUS_TIMEOUT:
+            return LW_ERROR_ERRNO_ETIMEDOUT;
         case LWMSG_STATUS_SECURITY:
             return LW_ERROR_ACCESS_DENIED;
         case LWMSG_STATUS_CANCELLED:

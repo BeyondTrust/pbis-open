@@ -76,5 +76,6 @@
 #endif
 
 #include "server.h"
+#include "lwptimer.h"
 
 #endif
