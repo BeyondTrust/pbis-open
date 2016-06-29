@@ -229,6 +229,9 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
     PSTR fqdn = NULL;
     PDOMAINJOININFO pDomainJoinInfo = NULL;
     PCSTR domain;
+    BOOLEAN isEnterprise;
+
+    isEnterprise = DJGetIsEnterprise();
 
     if(options->joiningDomain)
     {
@@ -253,6 +256,9 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
         if(domain == NULL)
             domain = "(unknown)";
         fprintf(stdout, "Leaving AD Domain:   %s\n", domain);
+        if (!options->releaseLicense && isEnterprise) {
+            fprintf(stdout, "Leaving domain without releasing license\n");
+        }
         if (options->deleteAccount) {
             fprintf(stdout, "Attempting to delete account\n");
         }
