@@ -14,7 +14,7 @@
 PROG_DESC="PBIS Service Manager"
 PROG_BIN=@MK_SBINDIR@/lwsmd
 PROG_ARGS="--start-as-daemon"
-PROG_PATTERN="/opt/pbis/sbin/lwsmd|lw-container|lw-svcm-wrap"
+PROG_PATTERN="@MK_SBINDIR@/lwsmd|lw-container|lw-svcm-wrap"
 PIDFILE=
 SCRIPTNAME="lwsmd"
 STARTHOOK="fix_locale"
