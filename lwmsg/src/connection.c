@@ -95,16 +95,19 @@ lwmsg_connection_destruct(
     if (priv->active_session)
     {
         lwmsg_session_release(priv->active_session);
+        priv->active_session = NULL;
     }
 
     if (priv->default_session)
     {
         lwmsg_session_release(priv->default_session);
+        priv->default_session = NULL;
     }
 
     if (priv->marshal_context)
     {
         lwmsg_data_context_delete(priv->marshal_context);
+        priv->marshal_context = NULL;
     }
 }
 
