@@ -292,5 +292,8 @@ _mk_lpp_files_begin()
 
 _mk_lpp_files_end()
 {
-    :
+    sort -u -o "${LPP_MANIFEST}.usr.files" "${LPP_MANIFEST}.usr.files"
+    sort -u -o "${LPP_MANIFEST}.usr.dirs" "${LPP_MANIFEST}.usr.dirs"
+    sort -u -o "${LPP_MANIFEST}.root.files" "${LPP_MANIFEST}.root.files"
+    sort -u -o "${LPP_MANIFEST}.root.dirs" "${LPP_MANIFEST}.root.dirs"
 }
