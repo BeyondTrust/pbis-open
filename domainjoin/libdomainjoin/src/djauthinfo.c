@@ -1004,13 +1004,13 @@ cleanup:
 static PSTR GetLeaveDescription(const JoinProcessOptions *options, LWException **exc)
 {
     PSTR ret = NULL;
-    LW_CLEANUP_CTERR(exc, CTStrdup("Remove the computer account from AD", &ret));
+    LW_CLEANUP_CTERR(exc, CTStrdup("Disable the computer account in AD\n  If --keepLicense is used, the license will not be released\n  If --deleteAccount is used, the computer account will be deleted", &ret));
 
 cleanup:
     return ret;
 }
 
-const JoinModule DJDoLeaveModule = { TRUE, "leave", "disable machine account", QueryLeave, DoLeave, GetLeaveDescription };
+const JoinModule DJDoLeaveModule = { TRUE, "leave", "disable machine account and release the license", QueryLeave, DoLeave, GetLeaveDescription };
 
 void
 DJGetConfiguredDnsDomain(
@@ -1316,6 +1316,11 @@ void DJDisableComputerAccount(PCSTR username,
     if (options->releaseLicense) 
     {
         leaveFlags |= LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE;
+    }
+
+    if (options->deleteAccount)
+    {
+        leaveFlags |= LSA_NET_LEAVE_DOMAIN_ACCT_DELETE;
     }
 
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));

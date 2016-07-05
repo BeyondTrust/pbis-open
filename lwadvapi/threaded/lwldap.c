@@ -347,6 +347,11 @@ LwLdapOpenDirectoryServerSingleAttempt(
         bLdapSeal = TRUE;
     }
 
+    if (dwFlags & LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT)
+    {
+        ldap_set_option(ld, LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT, LDAP_OPT_ON);
+    }
+
     dwError = LwAllocateMemory(sizeof(*pDirectory), OUT_PPVOID(&pDirectory));
     BAIL_ON_LW_ERROR(dwError);
 
@@ -510,14 +515,14 @@ LwLdapBindDirectory(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
-    PSTR pszTargetPrinciaplName = NULL;
+    PSTR pszTargetPrincipalName = NULL;
     BOOLEAN bNeedCredentials = FALSE;
 
     // Leave the realm empty so that kerberos referrals are turned on.
-    dwError = LwAllocateStringPrintf(&pszTargetPrinciaplName, "ldap/%s@", pszServerName);
+    dwError = LwAllocateStringPrintf(&pszTargetPrincipalName, "ldap/%s@", pszServerName);
     BAIL_ON_LW_ERROR(dwError);
 
-    dwError = LwKrb5CheckInitiatorCreds(pszTargetPrinciaplName, &bNeedCredentials);
+    dwError = LwKrb5CheckInitiatorCreds(pszTargetPrincipalName, &bNeedCredentials);
     BAIL_ON_LW_ERROR(dwError);
 
     if (bNeedCredentials)
@@ -530,7 +535,7 @@ LwLdapBindDirectory(
     BAIL_ON_LW_ERROR(dwError);
 
 error:
-    LW_SAFE_FREE_STRING(pszTargetPrinciaplName);
+    LW_SAFE_FREE_STRING(pszTargetPrincipalName);
 
     return dwError;
 }
@@ -1065,6 +1070,27 @@ LwLdapModify(
                   pDirectory->ld,
                   pszDN,
                   ppMods);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+LwLdapDelete(
+    HANDLE hDirectory,
+    PCSTR pszDN
+    )
+{
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+    DWORD dwError = ldap_delete_ext_s(
+                  pDirectory->ld,
+                  pszDN, 
+                  NULL,
+                  NULL);
     BAIL_ON_LDAP_ERROR(dwError);
 
 cleanup:
@@ -2119,6 +2145,7 @@ LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
     gSaslMaxBufSize = dwSaslMaxBufSize;
     return dwError;
 }
+
 
 /*
 local variables:

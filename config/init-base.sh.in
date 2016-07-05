@@ -13,6 +13,8 @@
 # PROG_DESC - English description of program/service
 # PROG_BIN - path to the program binary
 # PROG_ARGS - additional arguments to pass to program on startup
+# PROG_PATTERN - grep -E pattern to match daemon and related processes
+#                used to identify and kill processes
 # PROG_ERR - file where error diagnostics are logged
 # PIDFILE - file where pid is stored (or empty/unset if a pid file is not created)
 # SCRIPTNAME - the name of the init script
@@ -143,6 +145,11 @@ if [ $? -ne 0 ]; then
     else
         echo "WARNING: unable to find printf program"
     fi
+fi
+
+if [ -d  "/usr/xpg4/bin" -a $PLATFORM = "SOLARIS" ]; then
+    # add POSIX compliant utilities
+    PATH=/usr/xpg4/bin:$PATH
 fi
 
 # echo_replacement emulates echo for all platforms using printf. printf is a
@@ -326,6 +333,25 @@ generic_pid()
     fi
 }
 
+# return the pids of lwsmd and lw-container processes
+generic_daemon_spawn_pids() 
+{
+    case "${PLATFORM}" in
+        FREEBSD)
+            ( ps -ax -o pid= -o args= | grep -E "${PROG_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+        ESXI)
+            ( UNIX95=1; ps -e -o pid= -o args= | grep -E "${PROG_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+        HP-UX)
+            ( UNIX95= ps -e -o pid= -o args= | grep -E "${PROG_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+        *)
+            ( UNIX95=1; ps -e -o pid= -o args= | grep -E "${PROG_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+    esac
+}
+
 check_load_path()
 {
     libdir=/opt/pbis/lib
@@ -445,6 +471,58 @@ daemon_start() {
     return $status
 }
 
+# A 'generic' non-platform daemon stop suitable for calling from
+# platform specific mechanisms
+generic_daemon_stop() {
+    echo -n "Stopping $PROG_DESC"
+    status=1
+    #only try to stop the daemon if it is running
+    if generic_status; then
+        kill -TERM "`generic_pid`"
+        # Forget our pidfile since it will now be invalid
+        # if is still present.  This means generic_status
+        # will fall back on ps to see if the daemon is still
+        # running.  This is important on LinuxThreads-based
+        # systems where other threads can still be in the process
+        # of shutting down even when the main thread has exited
+        PIDFILE=""
+        #Wait up to 180 seconds for the program to end
+        for i in `seq 180`; do
+            #Did the program end?
+            generic_status
+            # Make sure the agent is not running and is not a zombie
+            # process.
+            [ $? -ne 0 -a $? -ne 4 ] && status=0 && break
+            # use the following line instead after bug 3634 is fixed
+            #[ $? -eq 3 -o $? -eq 2 ] && status=0 && break
+            sleep 1
+        done
+    fi
+
+    # if the daemon or any of its children have not shutdown 
+    # attempt a graceful shutdown, delay and then forcibly kill them
+    process_pids="`generic_daemon_spawn_pids`"
+    if [ "$process_pids" ] 
+    then
+        kill -TERM $process_pids ;
+
+        for i in `seq 60`; do
+            process_pids="`generic_daemon_spawn_pids`"
+            [ -z "$process_pids" ] && break
+            sleep 1
+        done
+
+        process_pids="`generic_daemon_spawn_pids`"
+        if [ "$process_pids" ]
+        then
+            kill -KILL $process_pids ;
+        fi
+    fi
+
+    [ $status = 0 ] && /bin/rm -f ${LOCKFILE}
+    return $status
+}
+
 daemon_stop() {
     case "${PLATFORM}" in 
         DEBIAN)
@@ -472,6 +550,27 @@ daemon_stop() {
                     sleep 1
                 done
             fi
+
+            # if the daemon or any of its children have not shutdown 
+            # attempt a graceful shutdown, delay and then forcibly kill them
+            process_pids="`generic_daemon_spawn_pids`"
+            if [ "$process_pids" ] 
+            then
+                kill -TERM $process_pids ;
+
+                for i in `seq 60`; do
+                    process_pids="`generic_daemon_spawn_pids`"
+                    [ -z "$process_pids" ] && break
+                    sleep 1
+                done
+
+                process_pids="`generic_daemon_spawn_pids`"
+                if [ "$process_pids" ]
+                then
+                    kill -KILL $process_pids ;
+                fi
+            fi
+
             log_end_msg $status
             ;;
         REDHAT | SUSE | AIX | HP-UX | SOLARIS | FREEBSD | ESXI)
@@ -510,6 +609,26 @@ daemon_stop() {
                     #[ $? -eq 3 -o $? -eq 2 ] && status=0 && break
                     sleep 1
                 done
+            fi
+
+            # if the daemon or any of its children have not shutdown 
+            # attempt a graceful shutdown, delay and then forcibly kill them
+            process_pids="`generic_daemon_spawn_pids`"
+            if [ "$process_pids" ] 
+            then
+                kill -TERM $process_pids ;
+
+                for i in `seq 60`; do
+                    process_pids="`generic_daemon_spawn_pids`"
+                    [ -z "$process_pids" ] && break
+                    sleep 1
+                done
+
+                process_pids="`generic_daemon_spawn_pids`"
+                if [ "$process_pids" ]
+                then
+                    kill -KILL $process_pids ;
+                fi
             fi
             ;;
         UNKNOWN)
@@ -638,6 +757,12 @@ fi
 case "$1" in 
     start)
         daemon_start
+        ret=$?
+        print_status $ret
+        ;;
+
+    stop-internal)
+        generic_daemon_stop
         ret=$?
         print_status $ret
         ;;

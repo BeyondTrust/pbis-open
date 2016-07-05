@@ -63,7 +63,8 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
             ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [user name] [password]\n"
-            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
+              "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n"
+            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "  Example:\n\n");
@@ -228,6 +229,9 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
     PSTR fqdn = NULL;
     PDOMAINJOININFO pDomainJoinInfo = NULL;
     PCSTR domain;
+    BOOLEAN isEnterprise;
+
+    isEnterprise = DJGetIsEnterprise();
 
     if(options->joiningDomain)
     {
@@ -252,6 +256,12 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
         if(domain == NULL)
             domain = "(unknown)";
         fprintf(stdout, "Leaving AD Domain:   %s\n", domain);
+        if (!options->releaseLicense && isEnterprise) {
+            fprintf(stdout, "Leaving domain without releasing license\n");
+        }
+        if (options->deleteAccount) {
+            fprintf(stdout, "Attempting to delete account\n");
+        }
     }
 
 cleanup:
@@ -415,7 +425,8 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             DJ_LOG_INFO("Domainjoin invoked with option --trustEnumerationWaitSeconds %s", argv[1]);
             options.dwTrustEnumerationWaitSeconds = strtoul(argv[1], NULL, 0);
             // Verify the supported range. Zero disables the functionality.
-            if (options.dwTrustEnumerationWaitSeconds > 3600) 
+            // Range is the same as the GPO.
+            if (options.dwTrustEnumerationWaitSeconds > 1000) 
             {
                 LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
                 goto cleanup;
@@ -610,8 +621,16 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             advanced = TRUE;
         else if(!strcmp(argv[0], "--preview"))
             preview = TRUE;
-        else if (!strcmp(argv[0], "--keepLicense")) {
+        else if (!strcmp(argv[0], "--keepLicense"))
             options.releaseLicense = FALSE;
+        else if (!strcmp(argv[0], "--deleteAccount")) {
+            if (argc < 2) {
+                // User hasn't supplied at least a user name
+                // If user name supplied but not password, user will be prompted to enter it later
+                fprintf(stdout, "--deleteAccount must be followed by a user name and a password.\n");
+                goto cleanup;
+            }
+            options.deleteAccount = TRUE;
         }
         // remaining options require at least two options 
         else if(argc < 2)
@@ -795,9 +814,6 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
                     &options.password));
     }
 
-    if (options.releaseLicense) {
-        fprintf(stdout, "License release request sent\n");
-    }
     LW_TRY(exc, DJRunJoinProcess(&options, &LW_EXC));
     fprintf(stdout, "SUCCESS\n");
     DJ_LOG_INFO("Leave SUCCESS");

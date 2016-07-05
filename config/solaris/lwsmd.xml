@@ -52,8 +52,8 @@
         </exec_method>
 
         <exec_method type='method' name='stop'
-                exec='/opt/pbis/bin/lwsm shutdown'
-                timeout_seconds='60'>
+                exec='/opt/pbis/libexec/lwsmd-shutdown.sh'
+                timeout_seconds='240'>
                 <method_context>
                         <method_environment>
                                 <envvar name="LD_LIBRARY_PATH" value=""/>

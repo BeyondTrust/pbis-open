@@ -424,7 +424,7 @@ BeginShutdownTimer(PSTR pServiceName, struct _TIMER * timer, LW_DWORD uShutdownT
 
     thread_status = pthread_create(&timerThread, NULL, ShutdownTimerThread, request);
     if (thread_status != 0) {
-      LW_RTL_LOG_WARNING("Could not %s create the shutdown timer thread: error %s (%d). Will NOT use shutdown timer.", 
+      LW_RTL_LOG_WARNING("Could not create the %s shutdown timer thread: error %s (%d). Will NOT use shutdown timer.", 
               request->serviceName, ErrnoToName(thread_status), thread_status);
       status = LW_STATUS_INSUFFICIENT_RESOURCES;
     }

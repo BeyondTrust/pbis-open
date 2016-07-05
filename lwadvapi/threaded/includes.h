@@ -75,5 +75,6 @@
 #include "lwkrb5_p.h"
 #include "lwtime.h"
 #include "lwsecurityidentifier.h"
+#include "lwptimer.h"
 
 #endif /* __INCLUDES_H__ */

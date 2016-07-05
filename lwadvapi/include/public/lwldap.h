@@ -82,6 +82,19 @@ LwLdapPingTcp(
     DWORD dwTimeoutSeconds
     );
 
+/**
+ * @brief Open a connection to an LDAP server.
+ *
+ * @param[in] pszServerAddress - Server's address.
+ * @param[in] pszServerName - Server's name (used for authentication).
+ * @param[in] dwFlags - LW_LDAP_OPT_* flags.
+ * @param[out] phDirectory - Returns handle to LDAP connection.
+ *
+ * @return Windows error code
+ * @retval ERROR_SUCCESS on success
+ * @retval SEC_E_NO_CREDENTIALS if no usable credentials
+ * @retval !ERROR_SUCCESS on failure
+ */
 DWORD
 LwLdapOpenDirectoryServer(
     IN PCSTR pszServerAddress,
@@ -89,19 +102,6 @@ LwLdapOpenDirectoryServer(
     IN DWORD dwFlags,
     OUT PHANDLE phDirectory
     );
-///<
-/// Open a connection to an LDAP server.
-///
-/// @param[in] pszServerAddress - Server's address.
-/// @param[in] pszServerName - Server's name (used for authentication).
-/// @param[in] dwFlags - LW_LDAP_OPT_* flags.
-/// @param[out] phDirectory - Returns handle to LDAP connection.
-///
-/// @return Windows error code
-/// @retval ERROR_SUCCESS on success
-/// @retval SEC_E_NO_CREDENTIALS if no usable credentials
-/// @retval !ERROR_SUCCESS on failure
-///
 
 DWORD
 LwLdapConvertDomainToDN(
@@ -182,6 +182,18 @@ LwLdapModify(
     HANDLE hDirectory,
     PCSTR pszDN,
     LDAPMod** ppMods
+    );
+
+/**
+ * @brief Delete the Ldap entry
+ *
+ * @param[in] hDirectory handle to the LDAP connection.
+ * @param[in] pszDN - ldap distinguished name of the object to be deleted.
+ */
+DWORD
+LwLdapDelete(
+    HANDLE hDirectory,
+    PCSTR pszDN
     );
 
 LDAPMessage*
