@@ -2798,15 +2798,10 @@ AD_LeaveDomainInternal(
         // where it clarifies the error, map the underlying error
         // to specific "can't delete account errors"
         switch(dwError) {
-            case LW_ERROR_SUCCESS:
-            case LW_ERROR_INVALID_ACCOUNT:
-            case LW_ERROR_PASSWORD_MISMATCH:
-                break;
             case LW_ERROR_LDAP_INSUFFICIENT_ACCESS: 
                 dwError = LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_INSUFFICIENT_ACCESS;
                 break;
             default:
-                dwError = LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_GENERAL_ERROR; 
                 break;
         }
 
