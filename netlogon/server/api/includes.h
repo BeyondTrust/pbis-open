@@ -53,6 +53,7 @@
 #include <lwldap.h>
 #include <lwerror.h>
 #include <lwmsg/lwmsg.h>
+#include <lwdlinked-list.h>
 #include <lwfile.h>
 #include <lwstr.h>
 #include <lwmem.h>

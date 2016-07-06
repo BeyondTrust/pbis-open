@@ -85,3 +85,7 @@
     default = "DNS"
     doc = "Enable name resolution type and order; DNS/NETBIOS/WINS"
 }
+"BlacklistDC" = {
+    default = sza:""
+    doc = "List of blacklisted domain controller IP addresses"
+}

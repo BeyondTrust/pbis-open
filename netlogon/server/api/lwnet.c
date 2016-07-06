@@ -741,7 +741,7 @@ LWNetFilterFromBlackList(
             {
                 bBlackListed = TRUE;
                 LWNET_LOG_INFO("Filtering server %s since it is black listed",
-                        pServerArray->pszAddress);
+                        pServerArray[dwServerRead].pszAddress);
             }
         }
         /* If bBlackListed is true, this server array entry will get
@@ -891,6 +891,7 @@ LWNetSrvGetDCNameDiscoverInternal(
         ppszAddressBlackList,
         &dwServerCount,
         pServerArray);
+
     if (!dwServerCount)
     {
         dwError = DNS_ERROR_BAD_PACKET;
@@ -906,6 +907,12 @@ LWNetSrvGetDCNameDiscoverInternal(
             &pServersInPrimaryDomain,
             &dwServersInPrimaryDomainCount);
         BAIL_ON_LWNET_ERROR(dwError);
+
+        LWNetFilterFromBlackList(
+            dwBlackListCount,
+            ppszAddressBlackList,
+            &dwServersInPrimaryDomainCount,
+            pServersInPrimaryDomain);
 
         if (dwServersInPrimaryDomainCount > 0)
         {
@@ -974,6 +981,17 @@ LWNetSrvGetDCNameDiscoverInternal(
                 // Use the site-specific DC.
                 LWNET_SAFE_FREE_MEMORY(pServerArray);
                 dwServerCount = 0;
+
+                LWNetFilterFromBlackList(
+                         dwBlackListCount,
+                         ppszAddressBlackList,
+                         &dwSiteServerCount,
+                         pSiteServerArray);
+                if (!dwSiteServerCount)
+                {
+                   dwError = DNS_ERROR_BAD_PACKET;
+                   BAIL_ON_LWNET_ERROR(dwError);
+                }
 
                 pServerArray = pSiteServerArray;
                 dwServerCount = dwSiteServerCount;

@@ -67,6 +67,12 @@ LWNetSrvApiShutdown(
     );
 
 DWORD
+LWNetSrvRefreshConfiguration(
+     HANDLE hServer
+     );
+
+
+DWORD
 LWNetSrvOpenServer(
     uid_t peerUID,
     gid_t peerGID,

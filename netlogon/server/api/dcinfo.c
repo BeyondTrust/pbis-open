@@ -87,14 +87,38 @@ LWNetSrvGetDCName(
     PDNS_SERVER_INFO pServerArray = NULL;
     DWORD dwServerCount = 0;
     DWORD dwIndex = 0;
+    DWORD i = 0;
     BOOLEAN bFailedFindWritable = FALSE;
     BOOLEAN bUpdateCache = FALSE;
     BOOLEAN bUpdateKrb5Affinity = FALSE;
+
+    #define MAX_NUM_BLACKLIST_DC 50
+    PSTR ppszTempAddressBlackList[MAX_NUM_BLACKLIST_DC] = {0};
+    DWORD dwTempBlackListCount = 0;
+
 
     LWNET_LOG_INFO("Looking for a DC in domain '%s', site '%s' with flags %X",
             LWNET_SAFE_LOG_STRING(pszDnsDomainName),
             LWNET_SAFE_LOG_STRING(pszSiteName),
             dwDsFlags);
+
+    // Get the configured back list.
+    dwError = LWNet_GetConfiguredBlackListDC( &dwTempBlackListCount, ppszTempAddressBlackList);
+
+    // Add any blacklisted DC passed into the function.
+    for (i = 0; i < dwBlackListCount; i++)
+    {
+       if (dwTempBlackListCount < MAX_NUM_BLACKLIST_DC-1)
+       {
+          dwError = LwAllocateString(ppszAddressBlackList[i], &ppszTempAddressBlackList[dwTempBlackListCount]);
+          dwTempBlackListCount++;
+       }
+       else
+       {
+          LWNET_LOG_INFO("Maximum number of blacklisted domain controllers reached.");
+          break;
+       }
+    }
 
     if (!IsNullOrEmptyString(pszServerName))
     {
@@ -154,12 +178,14 @@ LWNetSrvGetDCName(
             {
                 // Need to re-affinitize
                 LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+                pDcInfo = NULL;
             }
             // Note that we only explicitly verify writability wrt re-affinitization.
             else if (!LWNetSrvIsMatchingDcInfo(pDcInfo, dwDsFlags))
             {
                 // Cannot use these results.
                 LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+                pDcInfo = NULL;
             }
             else if ((now - lastPinged) > LWNetConfigGetPingAgainTimeoutSeconds())
             {
@@ -233,12 +259,13 @@ LWNetSrvGetDCName(
         }
     }
 
-    for (dwIndex = 0; pDcInfo && dwIndex < dwBlackListCount; dwIndex++)
+    for (dwIndex = 0; pDcInfo && dwIndex < dwTempBlackListCount; dwIndex++)
     {
-        if (!strcmp(pDcInfo->pszDomainControllerAddress,
-                    ppszAddressBlackList[dwIndex]))
+        if (!strcmp(pDcInfo->pszDomainControllerAddress, ppszTempAddressBlackList[dwIndex]))
         {
-            LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+           LWNET_LOG_INFO("Domain controller %s is blacklisted", pDcInfo->pszDomainControllerAddress);
+           LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+           pDcInfo = NULL;
         }
     }
 
@@ -248,8 +275,8 @@ LWNetSrvGetDCName(
                                             pszSiteName,
                                             pszPrimaryDomain,
                                             dwDsFlags,
-                                            dwBlackListCount,
-                                            ppszAddressBlackList,
+                                            dwTempBlackListCount,
+                                            ppszTempAddressBlackList,
                                             &pDcInfo,
                                             &pServerArray,
                                             &dwServerCount,
@@ -260,7 +287,7 @@ LWNetSrvGetDCName(
         // callers would have too much control over which DC is affinitized.
         // Also do not update if looking for a writeable DC since Windows
         // (Vista) does not appear to update its cache in that case either.
-        if ((dwBlackListCount == 0) && LWNetSrvIsAffinitizableRequestFlags(dwDsFlags))
+        if (LWNetSrvIsAffinitizableRequestFlags(dwDsFlags))
         {
             // We need to update the cache with this entry.
             
@@ -310,11 +337,17 @@ LWNetSrvGetDCName(
 error:
     LWNET_SAFE_FREE_MEMORY(pServerArray);
     LWNET_SAFE_FREE_DC_INFO(pNewDcInfo);
+
     if (dwError)
     {
         LWNET_SAFE_FREE_DC_INFO(pDcInfo);
     }
+
+    for (i = 0; i < dwTempBlackListCount; i++)
+        LWNET_SAFE_FREE_STRING(ppszTempAddressBlackList[i]);
+
     *ppDcInfo = pDcInfo;
+
     return dwError;
 }
 

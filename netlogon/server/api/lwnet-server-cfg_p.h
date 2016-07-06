@@ -110,5 +110,16 @@ LwNetConfigGetWinsServers(
     PSTR *secondaryServer
     );
 
+DWORD
+LWNet_GetConfiguredBlackListDC(
+    PDWORD pdwBlackListCount,
+    PSTR ppszBlackList[]
+    );
+
+DWORD
+LWNetSrvRefreshConfiguration(
+    HANDLE hServer
+    );
+
 
 #endif /* __LWNET_SERVER_CFG_H__ */

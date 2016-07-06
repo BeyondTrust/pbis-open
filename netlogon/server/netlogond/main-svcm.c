@@ -116,13 +116,52 @@ LWNetSvcmStop(
     return STATUS_SUCCESS;
 }
 
+NTSTATUS
+LWNetSvcmRefresh(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hServer = NULL;
+
+    LWNET_LOG_INFO("Refreshing configuration");
+
+    dwError = LWNetSrvOpenServer(
+                getuid(),
+                getgid(),
+                &hServer);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+     dwError = LWNetSrvRefreshConfiguration(hServer);
+     BAIL_ON_LWNET_ERROR(dwError);
+
+    LWNET_LOG_INFO("Refreshed configuration successfully");
+
+cleanup:
+
+    if (hServer != NULL)
+    {
+        LWNetSrvCloseServer(hServer);
+    }
+
+    return LwWin32ErrorToNtStatus(dwError);
+
+error:
+
+    LWNET_LOG_ERROR("Failed to refresh configuration. [Error code:%u]", dwError);
+
+    goto cleanup;
+}
+
+
 static LW_SVCM_MODULE gService =
 {
     .Size = sizeof(gService),
     .Init = LWNetSvcmInit,
     .Destroy = LWNetSvcmDestroy,
     .Start = LWNetSvcmStart,
-    .Stop = LWNetSvcmStop
+    .Stop = LWNetSvcmStop,
+    .Refresh = LWNetSvcmRefresh
 };
 
 #define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(netlogon)
