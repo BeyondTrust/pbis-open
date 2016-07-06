@@ -2798,6 +2798,7 @@ AD_LeaveDomainInternal(
         // where it clarifies the error, map the underlying error
         // to specific "can't delete account errors"
         switch(dwError) {
+            case LW_ERROR_SUCCESS:
             case LW_ERROR_INVALID_ACCOUNT:
             case LW_ERROR_PASSWORD_MISMATCH:
                 break;
