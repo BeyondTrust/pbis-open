@@ -67,7 +67,8 @@ ShowUsage(const BOOLEAN isEnterprise)
             : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
-    fprintf(stdout, "  Example:\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  Example:\n");
     fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
 }
 
