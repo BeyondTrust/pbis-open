@@ -53,7 +53,7 @@
 #include <dce/rpc.h>
 #include <lsaipc.h>
 #include <lsa/ad.h>
-
+#include <lwadvapi.h>
 
 static
 DWORD
@@ -2788,6 +2788,27 @@ AD_LeaveDomainInternal(
                                            pszUsername,
                                            pszPassword,
                                            pszDeleteAccountDN);
+        if (dwError) {
+            LSA_LOG_ERROR("Failed to delete computer account, error = %d symbol = %s %s", 
+                    dwError,
+                    LwWin32ExtErrorToName(dwError), 
+                    LwWin32ExtErrorToDescription(dwError));
+        }
+
+        // where it clarifies the error, map the underlying error
+        // to specific "can't delete account errors"
+        switch(dwError) {
+            case LW_ERROR_INVALID_ACCOUNT:
+            case LW_ERROR_PASSWORD_MISMATCH:
+                break;
+            case LW_ERROR_LDAP_INSUFFICIENT_ACCESS: 
+                dwError = LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_INSUFFICIENT_ACCESS;
+                break;
+            default:
+                dwError = LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_GENERAL_ERROR; 
+                break;
+        }
+
         BAIL_ON_LSA_ERROR(dwError);
     }
 
