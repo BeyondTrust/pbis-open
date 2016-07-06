@@ -792,3 +792,18 @@
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
+<section section="Netlogon">
+    <capability>
+        <name>BlacklistDC</name>
+        <description>List of blacklisted domain controller IP addresses</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\netlogon\Parameters\BlackListDC"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\netlogon\Parameters\BlackListDC" >
+            <description>IP address of domain controllers.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh netlogon" />
+        </registry>
+    </capability>
+</section>
