@@ -8,7 +8,7 @@
         <key>OnDemand</key>
           <true/>
         <key>ExitTimeOut</key>
-          <integer>60</integer>
+          <integer>70</integer>
         <key>RunAtLoad</key>
           <true/>
         <key>ProgramArguments</key>
