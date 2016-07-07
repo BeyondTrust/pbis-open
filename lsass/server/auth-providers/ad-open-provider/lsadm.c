@@ -3710,7 +3710,7 @@ LsaDmConnectDomain(
              (AD_GetTrustEnumerationWait(pProviderState)))
         {
             dwEnumTimeout = time(NULL) + AD_GetTrustEnumerationWaitSeconds(pProviderState);
-            LSA_LOG_INFO("TrustEnumerationWaitSeconds: %d", AD_GetTrustEnumerationWaitSeconds(pProviderState));
+            LSA_LOG_VERBOSE("Trust enumeration timeout: %d", AD_GetTrustEnumerationWaitSeconds(pProviderState));
         }
         else
            dwEnumTimeout = 0;
