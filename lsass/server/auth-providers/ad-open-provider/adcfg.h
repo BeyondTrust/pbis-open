@@ -83,6 +83,12 @@ AD_ReadRegistry(
     );
 
 DWORD
+AD_ReadRegistryForDomain(
+    IN PCSTR pszDomainName,
+    OUT PLSA_AD_CONFIG pConfig
+    );
+
+DWORD
 AD_TransferConfigContents(
     PLSA_AD_CONFIG pSrcConfig,
     PLSA_AD_CONFIG pDstConfig
@@ -313,6 +319,16 @@ AD_GetDomainManagerTrustExceptionList(
 
 BOOLEAN
 AD_GetAddDomainToLocalGroupsEnabled(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+DWORD
+AD_GetTrustEnumerationWait(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+DWORD
+AD_GetTrustEnumerationWaitSeconds(
     IN PLSA_AD_PROVIDER_STATE pState
     );
 

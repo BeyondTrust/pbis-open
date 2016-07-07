@@ -144,6 +144,8 @@ AD_InitializeConfig(
 
     pConfig->bMultiTenancyEnabled = FALSE;
     pConfig->bAddDomainToLocalGroupsEnabled = FALSE;
+    pConfig->dwTrustEnumerationWait = 0;
+    pConfig->dwTrustEnumerationWaitSeconds = 0;
 
     dwError = LwAllocateString(
                     AD_DEFAULT_SHELL,
@@ -667,6 +669,8 @@ AD_ReadRegistry(
              pszIncludeTrustsListMultiString :
              pszExcludeTrustsListMultiString));
 
+    AD_ReadRegistryForDomain(pszDomainName, &StagingConfig);
+
     AD_TransferConfigContents(&StagingConfig, pConfig);
 
 cleanup:
@@ -676,6 +680,89 @@ cleanup:
     LW_SAFE_FREE_STRING(pszUnresolvedMemberList);
     LW_SAFE_FREE_STRING(pszExcludeTrustsListMultiString);
     LW_SAFE_FREE_STRING(pszIncludeTrustsListMultiString);
+
+    AD_FreeConfigContents(&StagingConfig);
+
+    return dwError;
+
+error:
+    AD_FreeConfigContents(pConfig);
+    goto cleanup;
+}
+
+DWORD
+AD_ReadRegistryForDomain(
+    IN PCSTR pszDomainName,
+    OUT PLSA_AD_CONFIG pConfig
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszDomainKey = NULL;
+    PSTR pszDomainPolicyKey = NULL;
+    LSA_AD_CONFIG StagingConfig;
+
+    memset(&StagingConfig, 0, sizeof( LSA_AD_CONFIG));
+
+    LWREG_CONFIG_ITEM ADConfigDescription[] =
+    {
+        {
+            "TrustEnumerationWait",
+            TRUE,
+            LwRegTypeDword,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.dwTrustEnumerationWait,
+            NULL
+        },
+        {
+            "TrustEnumerationWaitSeconds",
+            TRUE,
+            LwRegTypeDword,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.dwTrustEnumerationWaitSeconds,
+            NULL
+        }
+    };
+
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDomainKey,
+                     "%s\\%s",
+                     AD_PROVIDER_DOMAINJOIN_REGKEY,
+                     pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwAllocateStringPrintf(
+                     &pszDomainPolicyKey,
+                     "%s\\%s",
+                     AD_PROVIDER_POLICY_DOMAINJOIN_REGKEY,
+                     pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = RegProcessConfig(
+                      pszDomainKey,
+                      pszDomainPolicyKey,
+                      ADConfigDescription,
+                      sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    pConfig->dwTrustEnumerationWait = StagingConfig.dwTrustEnumerationWait;
+
+    if (StagingConfig.dwTrustEnumerationWait && 
+        StagingConfig.dwTrustEnumerationWaitSeconds == 0)
+    
+         pConfig->dwTrustEnumerationWaitSeconds = TRUST_ENUMERATIONWAIT_DEFAULTVALUE;
+    else
+         pConfig->dwTrustEnumerationWaitSeconds = StagingConfig.dwTrustEnumerationWaitSeconds;
+
+cleanup:
+    LW_SAFE_FREE_STRING(pszDomainKey);
+    LW_SAFE_FREE_STRING(pszDomainPolicyKey);
 
     AD_FreeConfigContents(&StagingConfig);
 
@@ -2000,6 +2087,39 @@ AD_GetAddDomainToLocalGroupsEnabled(
 
     return result;
 }
+
+DWORD
+AD_GetTrustEnumerationWait(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    DWORD result = FALSE;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+    result = pState->config.dwTrustEnumerationWait;
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return result;
+}
+
+
+DWORD
+AD_GetTrustEnumerationWaitSeconds(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    DWORD result = FALSE;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+    result = pState->config.dwTrustEnumerationWaitSeconds;
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return result;
+}
+
+
 
 VOID
 AD_ConfigLockAcquireRead(

@@ -108,6 +108,8 @@ typedef struct _LSA_AD_CONFIG {
     } DomainManager;
     BOOLEAN             bMultiTenancyEnabled;
     BOOLEAN             bAddDomainToLocalGroupsEnabled;
+    DWORD               dwTrustEnumerationWait;
+    DWORD               dwTrustEnumerationWaitSeconds;
 } LSA_AD_CONFIG, *PLSA_AD_CONFIG;
 
 struct _LSA_DB_CONNECTION;

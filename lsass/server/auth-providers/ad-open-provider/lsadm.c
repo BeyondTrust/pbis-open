@@ -3652,6 +3652,8 @@ LsaDmConnectDomain(
     BOOLEAN bUseGc = IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_GC);
     BOOLEAN bUseDcInfo = IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO);
     BOOLEAN bNeedRevertDc = FALSE;
+    BOOLEAN done = FALSE;
+    DWORD   dwEnumTimeout = 0;
     PSTR pszPrimaryDomain = NULL;
 
     LsaDmpGetProviderState(hDmState, &pProviderState);
@@ -3704,18 +3706,50 @@ LsaDmConnectDomain(
 
     if (bUseDcInfo && !pActualDcInfo)
     {
-        dwError = LWNetGetDCNameExt(
-            NULL,
-            pszDnsDomainOrForestName,
-            NULL,
-            pszPrimaryDomain,
-            dwGetDcNameFlags,
-            0,
-            NULL,
-            &pLocalDcInfo);
-        bIsNetworkError = LsaDmpIsNetworkError(dwError);
+        if ( (dwConnectFlags == LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO) &&
+             (AD_GetTrustEnumerationWait(pProviderState)))
+        {
+            dwEnumTimeout = time(NULL) + AD_GetTrustEnumerationWaitSeconds(pProviderState);
+            LSA_LOG_INFO("TrustEnumerationWaitSeconds: %d", AD_GetTrustEnumerationWaitSeconds(pProviderState));
+        }
+        else
+           dwEnumTimeout = 0;
+
+        while (!done)
+        {
+            dwError = LWNetGetDCNameExt(
+                NULL,
+                pszDnsDomainOrForestName,
+                NULL,
+                pszPrimaryDomain,
+                dwGetDcNameFlags,
+                0,
+                NULL,
+                &pLocalDcInfo);
+            bIsNetworkError = LsaDmpIsNetworkError(dwError);
+            if (bIsNetworkError)
+            {
+               if (time(NULL) > dwEnumTimeout)
+                 done = TRUE;
+            }
+            else
+               done = TRUE;
+        }
         BAIL_ON_LSA_ERROR(dwError);
         pActualDcInfo = pLocalDcInfo;
+    }
+
+    if ((dwConnectFlags == LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO) && (pActualDcInfo))
+    {
+        // Upon lsass startup, this function is called with only
+        // the LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO flag set. The
+        // callback function does a ldap tcp ping with a timeout of 
+        // trust enumeration wait seconds.
+        if (AD_GetTrustEnumerationWait(pProviderState))
+        {
+           pActualDcInfo->dwPingTime = AD_GetTrustEnumerationWaitSeconds(pProviderState);
+           LSA_LOG_INFO("TrustEnumerationWaitSeconds: %d", pActualDcInfo->dwPingTime);
+        }
     }
 
     dwError = pfConnectCallback(pszDnsDomainOrForestName,

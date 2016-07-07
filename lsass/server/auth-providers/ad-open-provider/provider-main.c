@@ -944,13 +944,12 @@ AD_InitializeProvider(
     PSTR pszDefaultDomain = NULL;
     BOOLEAN bFoundDefault = FALSE;
     BOOLEAN bIsPstoreInitialized = FALSE;
-  
     int iError = 0;
     BOOLEAN bSignalThread = FALSE;
     PDWORD pdwTrustEnumerationWaitSeconds = NULL;
     PDWORD pdwTrustEnumerationWaitEnabled = NULL;
     BOOLEAN bTrustEnumerationIsDone = FALSE;
-    BOOLEAN bTrustEnumerationWait = FALSE;
+    DWORD dwTrustEnumerationWait = 0;
     DWORD dwTrustEnumerationWaitSecondsMaxValue = 0;
     PLSA_STARTUP_THREAD_INFO  pStartupThreadInfo = NULL;
     PLSA_STARTUP_THREAD_INFO pStartupThreadInfo1 = NULL;
@@ -1013,8 +1012,13 @@ AD_InitializeProvider(
     
     if(dwDomainCount > 0)
     {
-        LsaGetTrustEnumerationValue(ppszDomainList,dwDomainCount, (PDWORD*)&pdwTrustEnumerationWaitEnabled,
-                          (PDWORD*)&pdwTrustEnumerationWaitSeconds, &dwTrustEnumerationWaitSecondsMaxValue, (PDWORD)&bTrustEnumerationWait);
+        // Retrieve from the registry for each domain the wait time and enabled flags.
+        // It also determines the maximum wait time.
+        LsaGetTrustEnumerationValue(ppszDomainList, dwDomainCount, 
+                                   (PDWORD*)&pdwTrustEnumerationWaitEnabled,
+                                   (PDWORD*)&pdwTrustEnumerationWaitSeconds, 
+                                    &dwTrustEnumerationWaitSecondsMaxValue, 
+                                    &dwTrustEnumerationWait);
     }
      
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
@@ -1057,9 +1061,10 @@ AD_InitializeProvider(
 
         if( !bSignalThread && pdwTrustEnumerationWaitEnabled[dwIndex] &&
             ((pdwTrustEnumerationWaitSeconds[dwIndex] == dwTrustEnumerationWaitSecondsMaxValue) ||
-            ((signed)pdwTrustEnumerationWaitSeconds[dwIndex] <= 0)))
+            (pdwTrustEnumerationWaitSeconds[dwIndex] == 0)))
         {
-           // Flag used to identify the thread which has to signal lsass startup
+           // Flag used to identify the thread which has to signal lsass startup. The thread waiting
+           // for the maximum time is the one that sends the signal.
            bSignalThread = 1;
 
            dwError = LsaStartupThreadInfoCreate(
@@ -1074,7 +1079,8 @@ AD_InitializeProvider(
                                           LsaAdStartupThread,
                                           pStartupThreadInfo1));
         }
-        else {
+        else 
+        {
 
              dwError = LsaStartupThreadInfoCreate(
                        &pdwTrustEnumerationWaitSeconds[dwIndex],
@@ -1102,13 +1108,14 @@ AD_InitializeProvider(
     }
 
    if(pStartupThreadInfo1 && pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex  && pStartupThreadInfo1->Thread_Info.pTrustEnumerationCondition) {
-       while (bTrustEnumerationWait)
+       while (dwTrustEnumerationWait)
        {
-           LSA_LOG_INFO("AD Provider: Waiting for trust enumeration to complete.");
+           LSA_LOG_INFO("AD Provider: Waiting maximum of %d seconds for trust enumeration to complete.", dwTrustEnumerationWaitSecondsMaxValue);
            LsaStartupThreadAcquireMutex(pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex);
            bTrustEnumerationIsDone = pStartupThreadInfo1->Thread_Info.bTrustEnumerationIsDone;
            if (!bTrustEnumerationIsDone)
            {
+               // THe timed wait is the same as the maximum wait time determined above.
                iError = pthread_cond_timedwait(
                           pStartupThreadInfo1->Thread_Info.pTrustEnumerationCondition,
                           pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex,
@@ -6401,6 +6408,7 @@ LsaGetTrustEnumerationValue(
    DWORD dwIndex = 0;
    DWORD dwError = 0;
    DWORD dwTrustEnumerationWaitSecondsMaxValue = 0;
+   LSA_AD_CONFIG config = {0};
    PDWORD pdwTrustEnumerationWaitSeconds1 = NULL;
    PDWORD pdwTrustEnumerationWaitEnabled1 = NULL;
 
@@ -6421,12 +6429,16 @@ LsaGetTrustEnumerationValue(
             break;
         }
 
-        dwError = LsaPstoreGetDomainTrustEnumerationWaitTime(
-                          ppszDomainList[dwIndex],
-                          (PDWORD*)&pdwTrustEnumerationWaitSeconds1[dwIndex],
-                          (PDWORD*)&pdwTrustEnumerationWaitEnabled1[dwIndex]);
+        config.dwTrustEnumerationWait = 0;
+        config.dwTrustEnumerationWaitSeconds = 0;
+
+        dwError = AD_ReadRegistryForDomain(ppszDomainList[dwIndex], &config);
         BAIL_ON_LSA_ERROR(dwError);
+
+        pdwTrustEnumerationWaitEnabled1[dwIndex] = config.dwTrustEnumerationWait;
+        pdwTrustEnumerationWaitSeconds1[dwIndex] = config.dwTrustEnumerationWaitSeconds;
     }
+
     for(dwIndex = 0; dwIndex < dwDomainCount; dwIndex++)
     {
          if(pdwTrustEnumerationWaitEnabled1[dwIndex]) {
@@ -6451,13 +6463,19 @@ LsaGetTrustEnumerationValue(
             break;
         }
     }
-    if(pdwTrustEnumerationWaitSecondsMaxValue) {
+
+    if(pdwTrustEnumerationWaitSecondsMaxValue) 
+    {
         *pdwTrustEnumerationWaitSecondsMaxValue = dwTrustEnumerationWaitSecondsMaxValue;
     }
-    if(pdwTrustEnumerationWaitSeconds) {
+
+    if(pdwTrustEnumerationWaitSeconds) 
+    {
         *pdwTrustEnumerationWaitSeconds = (PDWORD)pdwTrustEnumerationWaitSeconds1;
     }
-    if(pdwTrustEnumerationWaitEnabled) { 
+
+    if(pdwTrustEnumerationWaitEnabled) 
+    { 
         *pdwTrustEnumerationWaitEnabled = (PDWORD)pdwTrustEnumerationWaitEnabled1;
     }
 

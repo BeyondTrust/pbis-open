@@ -53,6 +53,7 @@
 #include "lsa/lsa.h"
 #include "lsajoin.h"
 #include "lsa/lsapstore-types.h"
+#include "lsa/lsapstore-api.h"
 
 #include <openssl/md4.h>
 #include <openssl/rand.h>

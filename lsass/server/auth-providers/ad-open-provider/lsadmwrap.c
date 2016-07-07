@@ -401,9 +401,44 @@ LsaDmWrappLdapPingTcpCallback(
     )
 {
     DWORD dwError = 0;
+    BOOLEAN bDone = FALSE;
+    #define LSA_MINIMUM_SECS_TIMEOUT 5    // seconds
+    DWORD dwTimeout = LSA_MINIMUM_SECS_TIMEOUT;
+    DWORD dwAbortTime = 0;
 
-    dwError = LwLdapPingTcp(pDcInfo->pszDomainControllerAddress, 5);
+    if (!pDcInfo)
+    {
+       dwError = LW_ERROR_INTERNAL;
+       *pbIsNetworkError = TRUE;
+       goto cleanup;
+    }
+
+    // Add the trust enumeration wait seconds to the minimum wait time.
+    // If the group policy is not enabled, then trust enumeration wait
+    // seconds would be zero.
+    if (pDcInfo->dwPingTime)
+       dwTimeout = pDcInfo->dwPingTime + 1;
+
+    dwAbortTime = time(NULL) + dwTimeout;
+
+    while (!bDone)
+    {
+       dwError = LwLdapPingTcp(pDcInfo->pszDomainControllerAddress, dwTimeout);
+       if ( (dwError == LW_ERROR_ERRNO_EHOSTUNREACH) ||
+            (dwError == LW_ERROR_ERRNO_ETIMEDOUT) )
+       {
+           // Keep trying until we've exhausted the trust enumeration wait time.
+           if (time(NULL) >= dwAbortTime)
+             bDone = TRUE;
+       }
+       else
+            bDone = TRUE;
+    }
+
     *pbIsNetworkError = dwError ? TRUE : FALSE;
+
+cleanup:
+
     return dwError;
 }
 
