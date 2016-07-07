@@ -110,7 +110,10 @@ lwmsg_session_release(
     LWMsgSession* session
     )
 {
-    session->sclass->release(session);
+    if (session && session->sclass->release)
+    {
+        session->sclass->release(session);
+    }
 }
 
 size_t
