@@ -3,16 +3,18 @@
 	"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Label</key>
-	<string>com.beyondtrust.pbis.lwsmd</string>
+        <key>Label</key>
+          <string>com.beyondtrust.pbis.lwsmd</string>
         <key>OnDemand</key>
-        <true/>
+          <true/>
+        <key>ExitTimeOut</key>
+          <integer>60</integer>
         <key>RunAtLoad</key>
-        <true/>
-	<key>ProgramArguments</key>
-	<array>
+          <true/>
+        <key>ProgramArguments</key>
+          <array>
             <string>/opt/pbis/libexec/startup</string>
-	</array>
+          </array>
         <key>EnvironmentVariables</key>
             <dict>
                 <key>LC_MONETARY</key>
