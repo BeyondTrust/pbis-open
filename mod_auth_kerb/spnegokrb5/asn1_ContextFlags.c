@@ -18,9 +18,8 @@ encode_ContextFlags(unsigned char *p, size_t len, const ContextFlags *data, size
 {
 size_t ret = 0;
 size_t l;
-int i, e;
+int e;
 
-i = 0;
 {
 unsigned char c = 0;
 *p-- = c; len--; ret++;

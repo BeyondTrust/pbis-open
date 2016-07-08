@@ -18,9 +18,8 @@ encode_MechType(unsigned char *p, size_t len, const MechType *data, size_t *size
 {
 size_t ret = 0;
 size_t l;
-int i, e;
+int e;
 
-i = 0;
 e = encode_oid(p, len, data, &l);
 BACK;
 *size = ret;
@@ -32,12 +31,11 @@ return 0;
 int
 decode_MechType(const unsigned char *p, size_t len, MechType *data, size_t *size)
 {
-size_t ret = 0, reallen;
+size_t ret = 0;
 size_t l;
 int e;
 
 memset(data, 0, sizeof(*data));
-reallen = 0;
 e = decode_oid(p, len, data, &l);
 FORW;
 if(size) *size = ret;
