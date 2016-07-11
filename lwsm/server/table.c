@@ -41,6 +41,8 @@
 #define RESTART_PERIOD 30
 #define RESTART_LIMIT 2
 
+#define ADDITIONAL_SHUTDOWN_DELAY_SEC 2
+
 static
 DWORD
 LwSmTablePollEntry(
@@ -541,7 +543,13 @@ LwSmTableStopEntry(
     DWORD dwAttempts = 0;
     PSTR pszServiceName = NULL;
 
-    const unsigned int timerDelaySeconds = pEntry->pInfo->uShutdownTimeout;
+    /* 
+     * add a slight additional delay, as the service 
+     * itself also uses this value
+     */
+    const unsigned int timerDelaySeconds 
+        = pEntry->pInfo->uShutdownTimeout 
+            + ADDITIONAL_SHUTDOWN_DELAY_SEC;
     PLW_TIMER pShutdownTimer = NULL;
     pid_t shutdownProcessId = 0;
 
