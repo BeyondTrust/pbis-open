@@ -28,6 +28,11 @@ configure()
 
     mk_define KRB5
 
+    if [ $AP24_PREFIX ]
+    then
+        mk_define AP_24
+    fi
+
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
     mk_check_headers \
