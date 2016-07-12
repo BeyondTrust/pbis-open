@@ -12,7 +12,18 @@ ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
 OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd" 
 DAEMONS="lwsmd"
+DAEMON_PATTERN="lwsmd|lsassd|dcerpcd|eventlogd|lwiod|netlogond|lwregd|srvsvcd|lwrdrd|lw-container|lw-svcm-wrap"
 likewise_bindir="/opt/likewise/bin"
+
+## Have to set the path for HP-UX boot process
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:$PATH
+
+if [ -d  "/usr/xpg4/bin" -a `uname` = "SunOS" ]; then
+    # add POSIX compliant utilities
+    PATH=/usr/xpg4/bin:$PATH
+fi
+
+export PATH
 
 solaris_zones()
 {
@@ -59,6 +70,45 @@ setup_initdir_likewise()
     esac
 }
 
+# return the pids of obsolete daemons, 
+# lwsmd and lw-container processes
+generic_daemon_spawn_pids() 
+{
+    case "${OS_TYPE}" in
+        freebsd)
+            ( ps -ax -o pid= -o args= | grep -E "${DAEMON_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+        hpux)
+            ( UNIX95= ps -e -o pid= -o args= | grep -E "${DAEMON_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+        *)
+            ( UNIX95=1; ps -e -o pid= -o args= | grep -E "${DAEMON_PATTERN}" | awk '/grep -E/ {next;} { print $1 };' )
+            ;;
+    esac
+}
+
+generic_daemon_kill() {
+    process_pids="`generic_daemon_spawn_pids`"
+    if [ "$process_pids" ]
+    then
+        kill -KILL $process_pids ;
+    fi
+}
+
+generic_daemon_wait() {
+    process_pids="`generic_daemon_spawn_pids`"
+    i=1
+    LAST=$1
+    if [ "$process_pids" ] 
+    then
+        while [ "$i" -le "$LAST" ]; do
+            process_pids="`generic_daemon_spawn_pids`"
+            [ -z "$process_pids" ] && break
+            sleep 1
+            i="`expr "$i" + "1"`"
+        done
+    fi
+}
 
 stop_daemon()
 {
@@ -78,8 +128,11 @@ stop_daemons()
 {
     for daemon in ${OBSOLETE_DAEMONS} ${DAEMONS}
     do
-        stop_daemon $daemon
+        stop_daemon $daemon &
     done
+
+    # wait as long as the init scripts wait
+    generic_daemon_wait 180
 
     if type svccfg >/dev/null 2>&1; then
         for daemon in ${OBSOLETE_DAEMONS} ${DAEMONS}; do
@@ -89,7 +142,11 @@ stop_daemons()
             fi
         done
     fi
+
+    generic_daemon_wait 60 
+    generic_daemon_kill
 }
+
 stop_daemons_on_reboot()
 {
     for daemon in ${DAEMONS} ${OBSOLETE_DAEMONS}; do
