@@ -217,7 +217,7 @@ add_TrustEnumerationWaitSetting()
         regshell=/usr/bin/lwregshell
     fi
     if [ -n "$STATUS_JOINED" ]; then
-         if [ -n "$UPGRADING_FROM_6_1" -o -n "$UPGRADING_PBIS" ]; then
+         if [ -n "$UPGRADING_FROM_6_1" -o -n "$UPGRADING_FROM_6_0" -o -n "$UPGRADING_PBIS" ]; then
             domain_list=`$regshell list_keys '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainJoin]'`
             for KEYS in $domain_list
             do
