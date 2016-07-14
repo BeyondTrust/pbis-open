@@ -2772,6 +2772,17 @@ AD_LeaveDomainInternal(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+    /* If we don't call this sometimes the cache path isn't set
+     * and we end up being blocked by GSS errors.
+     * We call this instead of AD_ResolveProviderState because
+     * we already do most of what that function does so calling
+     * it would result in a DEADLOCK
+     */
+    dwError = LwKrb5SetThreadDefaultCachePath(
+                  pContext->pState->MachineCreds.pszCachePath,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
     // We need the fqdn to delete the account
     // Get it while we're still joined to the domain
     if (bDeleteAccount) {
