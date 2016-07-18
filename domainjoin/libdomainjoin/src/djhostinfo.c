@@ -891,6 +891,7 @@ DJConfigureDHCPService(
     /* Restart network */
 
     /*try init.d first, otherwise systemctl*/
+	bFileExists = FALSE;
 	CTCheckFileExists(ppszNetArgs[0], &bFileExists);
 	
     if(bFileExists)
