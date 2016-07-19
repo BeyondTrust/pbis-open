@@ -501,6 +501,7 @@ LwSmTableKillProcess(
     assert(data);
 
     int status = 0;
+    int kill_errno = 0;
     const pid_t process_id = *((pid_t *)data);
     const int signal = SIGKILL;
 
@@ -510,23 +511,23 @@ LwSmTableKillProcess(
     { 
         SM_LOG_INFO("Sending SIGKILL to process %d", process_id);
         status = kill(process_id, signal);
-
-        switch(status) {
-            case ESRCH:
-                SM_LOG_WARNING("Failed sending signal (%d) to process %d: error %s (%d); process exited on its own?", 
-                    signal, process_id, ErrnoToName(status), status);
-                break;
-            case 0:
-                SM_LOG_INFO("Sent signal (%d) to process %d.:", signal, process_id);
-                break;
-            case EINVAL:
-            case EPERM:
-            default:
-                /* programming or other errors */
-                SM_LOG_ERROR("Failed sending signal (%d) to process %d: error %s (%d).", 
-                    signal, process_id, ErrnoToName(status), status);
-                break;
-
+        if (status == 0) { 
+            SM_LOG_INFO("Sent signal (%d) to process %d.:", signal, process_id);
+        } else {
+            kill_errno = errno;
+            switch(kill_errno) {
+                case ESRCH:
+                    SM_LOG_WARNING("Failed sending signal (%d) to process %d: error %s (%d); process exited on its own?", 
+                        signal, process_id, ErrnoToName(kill_errno), kill_errno);
+                    break;
+                case EINVAL:
+                case EPERM:
+                default:
+                    /* programming or other errors */
+                    SM_LOG_ERROR("Failed sending signal (%d) to process %d: error %s (%d).", 
+                        signal, process_id, ErrnoToName(kill_errno), kill_errno);
+                    break;
+            }
         }
     }
 }
