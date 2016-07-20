@@ -398,6 +398,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED, -1, "C
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_SUBJECT_NAME_REQUIRED, -1, "A subject name must be provided for the specified certificate template" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_LICENSE_NOT_RELEASED , -1, "The domain leave completed but the license could not be released" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_INSUFFICIENT_ACCESS , -1, "The computer account could not be deleted, the specified user does not have sufficient rights to delete the object" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_DELETE_FAILED_LIC_NOT_RELEASED , -1, "The domain leave completed but the computer account was not deleted because the license could not be released" )
 
 
 #include "lwerror-table-krb5.h"
