@@ -28,11 +28,6 @@ configure()
 
     mk_define KRB5
 
-    if [ $AP24_PREFIX ]
-    then
-        mk_define AP_24
-    fi
-
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
     mk_check_headers \
@@ -71,12 +66,15 @@ make()
         case "$AP_VER" in
             2.0)
                 AP_ABI=0
+                AP_DEF_VER=AP_20
                 ;;
             2.2)
                 AP_ABI=1
+                AP_DEF_VER=AP_22
                 ;;
             2.4)
                 AP_ABI=1
+                AP_DEF_VER=AP_24
                 ;;
         esac
 
@@ -91,7 +89,7 @@ make()
                 GROUP="mod${AP_VER}" \
                 SOURCES="$MOD_SOURCES" \
                 INCLUDEDIRS=". spnegokrb5" \
-                CPPFLAGS="$CPPFLAGS_LARGEFILE64 -I${AP_PREFIX}/include" \
+                CPPFLAGS="$CPPFLAGS_LARGEFILE64 -I${AP_PREFIX}/include -D${AP_DEF_VER}" \
                 HEADERDEPS="krb5.h gssapi.h" \
                 LIBDEPS="gssapi_krb5 $LIB_DL $LIB_RESOLV" \
                 LDFLAGS="-L${AP_PREFIX}/lib -lapr-${AP_ABI} -laprutil-${AP_ABI}"
