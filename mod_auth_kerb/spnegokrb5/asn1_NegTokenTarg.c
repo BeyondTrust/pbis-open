@@ -18,9 +18,8 @@ encode_NegTokenTarg(unsigned char *p, size_t len, const NegTokenTarg *data, size
 {
 size_t ret = 0;
 size_t l;
-int i, e;
+int e;
 
-i = 0;
 if((data)->mechListMIC)
 {
 int oldret = ret;

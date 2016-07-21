@@ -13,6 +13,13 @@ option()
         PARAM="path" \
         DEFAULT="" \
         HELP="Path to apache 2.2 headers and libraries"
+
+    mk_option \
+        OPTION='apache2.4-prefix' \
+        VAR="AP24_PREFIX" \
+        PARAM="path" \
+        DEFAULT="" \
+        HELP="Path to apache 2.4 headers and libraries"
 }
 
 configure()
@@ -20,6 +27,11 @@ configure()
     mk_config_header config.h
 
     mk_define KRB5
+
+    if [ $AP24_PREFIX ]
+    then
+        mk_define AP_24
+    fi
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
@@ -51,7 +63,7 @@ make()
         spnegokrb5/external.c              \
         src/mod_auth_kerb.c"
 
-    for AP_VER in 2.0 2.2
+    for AP_VER in 2.0 2.2 2.4
     do
         mk_get "AP${AP_VER%.*}${AP_VER#*.}_PREFIX"
         AP_PREFIX="$result"
@@ -61,6 +73,9 @@ make()
                 AP_ABI=0
                 ;;
             2.2)
+                AP_ABI=1
+                ;;
+            2.4)
                 AP_ABI=1
                 ;;
         esac

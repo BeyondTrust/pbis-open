@@ -114,7 +114,7 @@ then
         export MK_SHELL
     fi
 
-    for ver in 2.0 2.2
+    for ver in 2.0 2.2 2.4
     do
         [ -d "${TOOLS}/apache${ver}" ] && APACHE_PARAMS="$APACHE_PARAMS --apache${ver}-prefix=${TOOLS}/apache${ver}"
     done
