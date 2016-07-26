@@ -222,7 +222,7 @@ LWNetSetSystemTime(
     }
         
     //Make sure the time is now within 5 seconds of what we set
-    if (labs(readTime - ttCurTime) > 5)
+    if (labs((long)(readTime - ttCurTime)) > 5)
     {
         LWNET_LOG_ERROR("Attempted to set time to %ld, but it is now %ld.", ttCurTime, readTime);
         dwError = ERROR_INVALID_TIME;
