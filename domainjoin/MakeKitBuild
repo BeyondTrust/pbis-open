@@ -52,7 +52,7 @@ configure()
             LDFLAGS="$GTK_LDFLAGS" \
             LIBDEPS="$GTK_LIBS" \
             gtk_file_chooser_dialog_new
-    elif [ "$MK_HOST_OS" = "darwin" ]
+    elif [ "$MK_HOST_OS" = "darwin" ] && [ "DJ_GUI" = yes ]
     then
         DJ_GUI_INTERFACE="carbon"
     else
