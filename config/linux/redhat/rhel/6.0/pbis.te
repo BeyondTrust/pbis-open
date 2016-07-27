@@ -1,5 +1,5 @@
 
-module pbis 1.0;
+module pbis 8.5.0;
 
 require {
 	type unconfined_t;

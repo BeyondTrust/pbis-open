@@ -471,6 +471,17 @@ daemon_start() {
     return $status
 }
 
+# Kill off the daemon and child processes 
+daemon_kill() {
+    process_pids="`generic_daemon_spawn_pids`"
+    if [ "$process_pids" ]
+    then
+        kill -KILL $process_pids ;
+    fi
+
+    return 0
+}
+
 # A 'generic' non-platform daemon stop suitable for calling from
 # platform specific mechanisms
 generic_daemon_stop() {
@@ -765,6 +776,11 @@ case "$1" in
         generic_daemon_stop
         ret=$?
         print_status $ret
+        ;;
+
+    kill-internal)
+        daemon_kill 
+        ret=$?
         ;;
 
     stop)

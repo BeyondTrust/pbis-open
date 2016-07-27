@@ -37,6 +37,7 @@
  */
 
 #include "includes.h"
+#include "ctexec.h"
 
 #define LWSM_FIPS_MODE_PATH CONFIGDIR "/fipsmode"
      
@@ -629,13 +630,26 @@ error:
     LwRtlExitMain(STATUS_UNSUCCESSFUL);
 }
 
+static 
+void 
+KillProcessGroup(
+    void *data)
+{
+   CTRunCommand("/opt/pbis/libexec/lwkill.sh kill-internal"); 
+}
+
 static
 VOID
 Shutdown(
     PVOID pUnused
     )
 {
+    const unsigned int timerDelaySeconds = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS; 
+    PLW_TIMER pShutdownTimer = LwTimerInitialize("lwsmd", &KillProcessGroup, NULL, timerDelaySeconds);
     DWORD dwError = 0;
+
+    SM_LOG_INFO("Starting lwsmd shutdown timer");
+    LwTimerStart(pShutdownTimer);
 
     if (!gState.bContainer)
     {
@@ -648,14 +662,15 @@ Shutdown(
     dwError = LwSmStopIpcServer();
     BAIL_ON_ERROR(dwError);
 
-    /* Exit from main loop */
-    LwRtlExitMain(STATUS_SUCCESS);
-
-    return;
-
 error:
-    
-    LwRtlExitMain(STATUS_UNSUCCESSFUL);
+    if (pShutdownTimer) 
+    {
+        SM_LOG_INFO("Services were stopped, cancelling shutdown timer");
+        LwTimerCancel(pShutdownTimer);
+        LwTimerFree(pShutdownTimer);
+    }
+
+    LwRtlExitMain((dwError) ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS);
 }
  
 

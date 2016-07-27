@@ -73,7 +73,7 @@ static struct SM_LOGLEVEL_MAP gLogLevelMap[] =
 /* default value for the shutdown timeout; service
  * shutdowns which exceed this timeout are forcibly
  * killed */
-static const DWORD SHUTDOWN_TIMEOUT_DEFAULT = 60;
+static const DWORD SHUTDOWN_TIMEOUT_DEFAULT = 50;
 
 static
 DWORD
