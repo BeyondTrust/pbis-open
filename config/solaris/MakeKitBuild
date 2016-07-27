@@ -15,7 +15,6 @@ configure()
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file lwsmd
-    mk_output_file lwsmd-shutdown.sh
     mk_output_file OUTPUT="postinstall.sh" INPUT="@${MK_SOURCE_DIR}/package/open/pkg/postinstall.in"
 }
 
@@ -32,6 +31,4 @@ make()
 
     mk_stage DEST="${MK_BINDIR}/uninstall.sh" MODE=0755 SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
     mk_stage DEST="${MK_BINDIR}/postinstall.sh" MODE=0755 SOURCE="postinstall.sh"
-
-    mk_stage DEST="${MK_LIBEXECDIR}/lwsmd-shutdown.sh" MODE=700 SOURCE="lwsmd-shutdown.sh"
 }

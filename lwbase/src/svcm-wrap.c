@@ -59,7 +59,7 @@ MainTask(
 /* default value for the shutdown timeout; service
  * shutdowns which exceed this timeout are forcibly
  * killed */
-#define DEFAULT_SHUTDOWN_TIMEOUT_SECONDS 60
+#define DEFAULT_SHUTDOWN_TIMEOUT_SECONDS 50
 
 static struct
 {

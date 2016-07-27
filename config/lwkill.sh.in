@@ -1,10 +1,9 @@
-#! /bin/sh
-# ex: set tabstop=4 expandtab shiftwidth=4:
+#!/bin/sh
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
 PROG_DESC="PBIS Service Manager"
-PROG_BIN=@MK_SBINDIR@/lwsmd
+PROG_BIN=""
 PROG_ARGS=""
 PROG_PATTERN="@MK_SBINDIR@/lwsmd|lw-container|lw-svcm-wrap"
 PIDFILE=
@@ -40,4 +39,4 @@ fix_locale()
     fi
 }
 
-. @MK_LIBEXECDIR@/init-base.sh stop-internal
+. @MK_LIBEXECDIR@/init-base.sh
