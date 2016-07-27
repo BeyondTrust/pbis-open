@@ -228,7 +228,7 @@ LsaSetSystemTime(
     }
         
     //Make sure the time is now within 5 seconds of what we set
-    if (labs(readTime - ttCurTime) > 5)
+    if (labs((long)(readTime - ttCurTime)) > 5)
     {
         LSA_LOG_ERROR("Attempted to set time to %ld, but it is now %ld.", ttCurTime, readTime);
         dwError = LW_ERROR_FAILED_TO_SET_TIME;
@@ -241,7 +241,7 @@ LsaSetSystemTime(
     {
         readTime = time(NULL);
 
-        if (labs(readTime - ttCurTime) > 5)
+        if (labs((long)(readTime - ttCurTime)) > 5)
         {
             LSA_LOG_DEBUG("Time is slow to update...waiting");
             sleep(1);

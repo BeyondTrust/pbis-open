@@ -134,7 +134,7 @@ DJGetPListVersion(
     // Do not free. This is returned by a mac function following the "get"
     // rule.
     CFStringRef pVers = NULL;
-    CFStringRef pError = NULL;
+    CFErrorRef pError = NULL;
     PSTR pVersionString = NULL;
     CFPropertyListRef pPList = NULL;
     PSTR pErrorString = NULL;
@@ -189,17 +189,20 @@ DJGetPListVersion(
         GCE(error);
     }*/
 
-    pPList = CFPropertyListCreateFromXMLData(
+    pPList = CFPropertyListCreateWithData(
                     kCFAllocatorDefault,
                     fileContent,
                     kCFPropertyListImmutable,
+                    NULL,
                     &pError);
     if (!pPList)
     {
-        GetPstrFromStringRef(pError, &pErrorString);
+        CFStringRef pErrorDesc = CFErrorCopyDescription(pError);
+        GetPstrFromStringRef(pErrorDesc, &pErrorString);
         DJ_LOG_ERROR("Error '%s' parsing OS X version file",
                 LW_SAFE_LOG_STRING(pErrorString));
         error = ERROR_PRODUCT_VERSION;
+        CFRelease(pErrorDesc);
         GCE(error);
     }
 
