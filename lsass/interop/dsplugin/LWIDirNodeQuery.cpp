@@ -89,12 +89,6 @@ static long GetCountedString(tDataBufferPtr BufferData, size_t* Offset, char** R
 
     LOG_ENTER("");
 
-    if (!BufferData->fBufferData)
-    {
-        macError = eDSNullDataBuff;
-        GOTO_CLEANUP_EE(EE);
-    }
-
     if (offset >= BufferData->fBufferLength)
     {
         macError = eDSAuthInBuffFormatError;
@@ -691,7 +685,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
     macError = GetDsDirNodeRef(pDoDirNodeAuth->fInNodeRef, &pDirNode);
     GOTO_CLEANUP_ON_MACERROR(macError);
     
-    if (!pDoDirNodeAuth->fInAuthMethod || !pDoDirNodeAuth->fInAuthMethod->fBufferData)
+    if (!pDoDirNodeAuth->fInAuthMethod)
     {
         macError = eDSNullDataBuff;
         GOTO_CLEANUP_EE(EE);

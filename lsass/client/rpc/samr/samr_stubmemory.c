@@ -365,7 +365,7 @@ SamrCleanStubUserInfo(
         rpc_sm_client_free(pInfo->info21.unknown1.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info21.unknown2.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info21.unknown3.Buffer, &rpcStatus);
-        if (&pInfo->info21.buf_count) {
+        if (pInfo->info21.buf_count) {
             rpc_sm_client_free(pInfo->info21.buffer, &rpcStatus);
         }
         rpc_sm_client_free(pInfo->info21.logon_hours.units, &rpcStatus);
@@ -385,7 +385,7 @@ SamrCleanStubUserInfo(
         rpc_sm_client_free(pInfo->info23.info.unknown1.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info23.info.unknown2.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info23.info.unknown3.Buffer, &rpcStatus);
-        if (&pInfo->info23.info.buf_count) {
+        if (pInfo->info23.info.buf_count) {
             rpc_sm_client_free(pInfo->info23.info.buffer, &rpcStatus);
         }
         rpc_sm_client_free(pInfo->info23.info.logon_hours.units, &rpcStatus);
@@ -406,7 +406,7 @@ SamrCleanStubUserInfo(
         rpc_sm_client_free(pInfo->info25.info.unknown1.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info25.info.unknown2.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info25.info.unknown3.Buffer, &rpcStatus);
-        if (&pInfo->info25.info.buf_count) {
+        if (pInfo->info25.info.buf_count) {
             rpc_sm_client_free(pInfo->info25.info.buffer, &rpcStatus);
         }
         rpc_sm_client_free(pInfo->info25.info.logon_hours.units, &rpcStatus);
