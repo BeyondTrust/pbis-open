@@ -953,12 +953,16 @@ LWAddUserToLocalGroup(
     
     //locate the admin group   
     ODRecordRef adminGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);            
-    ODRecordRef userRecord = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeUsers);
+    ODRecordRef recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeUsers);
+    if(recordToAdd == NULL)
+    {
+        recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeGroups);
+    }
 
     long lResult = 0;
-    if(adminGroup != NULL && userRecord != NUL)
+    if(adminGroup != NULL && recordToAdd != NUL)
     {
-        lResult = ODRecordAddMember(adminGroup, userRecord, &cfError) == true ? ERROR_SUCCESS : CFErrorGetCode(cfError);
+        lResult = ODRecordAddMember(adminGroup, recordToAdd, &cfError) == true ? ERROR_SUCCESS : CFErrorGetCode(cfError);
         if(cfError != NULL)
         {
             BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
@@ -974,9 +978,9 @@ LWAddUserToLocalGroup(
     {
         CFRelease(adminGroup);
     }
-    if(userRecord != NULL)
+    if(recordToAdd != NULL)
     {
-        CFRelease(userRecord);
+        CFRelease(recordToAdd);
     }
    
     return lResult;
