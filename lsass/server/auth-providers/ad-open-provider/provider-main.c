@@ -3548,8 +3548,7 @@ AD_EmptyCache(
 
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
-
-    PSTR* ppszDomainNames = NULL;
+    PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo = NULL;
     DWORD dwDomainCount = 0;
     DWORD i = 0;
     PLWNET_DC_INFO pDcInfo = NULL;
@@ -3581,29 +3580,32 @@ AD_EmptyCache(
 
     if(!bForceOfflineDelete)
     {
-        dwError = LsaDmEnumDomainNames(
+        dwError = LsaDmEnumDomainInfo(
                       pContext->pState->hDmState,
                       NULL,
                       NULL,
-                      &ppszDomainNames,
+                      &ppDomainInfo,
                       &dwDomainCount);
         BAIL_ON_LSA_ERROR(dwError);
 
         for(i = 0; i < dwDomainCount; i++)
         {
-            dwError = LWNetGetDCName(NULL,
-                             ppszDomainNames[i],
-                             NULL,
-                             DS_FORCE_REDISCOVERY,
-                             &pDcInfo);
-            LWNET_SAFE_FREE_DC_INFO(pDcInfo);
-            pDcInfo = NULL;
-
-            if (dwError)
+            if (ppDomainInfo[i]->dwTrustDirection != LSA_TRUST_DIRECTION_ZERO_WAY)
             {
-               LSA_LOG_ERROR("Cache could not be emptied because domain %s is offline [%d]", ppszDomainNames[i], dwError);
-               dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-               BAIL_ON_LSA_ERROR(dwError);
+                dwError = LWNetGetDCName(NULL,
+                                 ppDomainInfo[i]->pszDnsDomainName,
+                                 NULL,
+                                 DS_FORCE_REDISCOVERY,
+                                 &pDcInfo);
+                LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+                pDcInfo = NULL;
+
+                if (dwError)
+                {
+                   LSA_LOG_ERROR("Cache could not be emptied because domain %s is offline [%d]", ppDomainInfo[i]->pszDnsDomainName, dwError);
+                   dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+                   BAIL_ON_LSA_ERROR(dwError);
+                }
             }
         }
     }
@@ -3614,7 +3616,7 @@ AD_EmptyCache(
 cleanup:
 
     AD_ClearProviderState(pContext);
-    LwFreeStringArray(ppszDomainNames, dwDomainCount);
+    LsaDmFreeEnumDomainInfoArray(ppDomainInfo);
 
     return dwError;
 
