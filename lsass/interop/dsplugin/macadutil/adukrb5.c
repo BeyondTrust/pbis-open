@@ -394,6 +394,10 @@ error:
     goto cleanup;
 }
 
+OM_uint32 KRB5_CALLCONV
+lw_gss_krb5_ccache_name(OM_uint32 *minor_status,
+                     const char *name,
+                     const char **out_name);
 DWORD
 ADUKrb5SetDefaultCachePath(
     PSTR  pszCachePath,
@@ -405,7 +409,8 @@ ADUKrb5SetDefaultCachePath(
     DWORD dwMinorStatus = 0;
     PSTR  pszOrigCachePath = NULL;
 
-    dwMajorStatus = gss_krb5_ccache_name(
+	// Avoid library conflicts with Mac OSX library
+    dwMajorStatus = lw_gss_krb5_ccache_name(
                             (OM_uint32 *)&dwMinorStatus,
                             pszCachePath,
                             (ppszOrigCachePath) ? (const char**)&pszOrigCachePath : NULL);

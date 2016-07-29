@@ -231,8 +231,9 @@ gss_krb5_set_allowable_enctypes(OM_uint32 *minor_status,
     return major_status;
 }
 
+static
 OM_uint32 KRB5_CALLCONV
-gss_krb5_ccache_name(OM_uint32 *minor_status,
+_internal_gss_krb5_ccache_name(OM_uint32 *minor_status,
                      const char *name,
                      const char **out_name)
 {
@@ -255,6 +256,22 @@ gss_krb5_ccache_name(OM_uint32 *minor_status,
                                       &req_buffer);
 
     return major_status;
+}
+
+OM_uint32 KRB5_CALLCONV
+gss_krb5_ccache_name(OM_uint32 *minor_status,
+                     const char *name,
+                     const char **out_name)
+{
+	return _internal_gss_krb5_ccache_name(minor_status, name, out_name);
+}
+
+OM_uint32 KRB5_CALLCONV
+lw_gss_krb5_ccache_name(OM_uint32 *minor_status,
+                     const char *name,
+                     const char **out_name)
+{
+	return _internal_gss_krb5_ccache_name(minor_status, name, out_name);
 }
 
 OM_uint32 KRB5_CALLCONV
