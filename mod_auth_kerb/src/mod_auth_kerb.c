@@ -326,6 +326,30 @@ krb5_save_realms(cmd_parms *cmd, void *vsec, const char *arg)
    return NULL;
 }
 
+/* Apache 2.4 adds int module_index to ap_log_error
+ * so we need different versions of this function and the
+ * call to ap_log_error depending on what version of
+ * Apache we're using.
+ */
+#ifdef AP_24 // Using Apache 2.4
+static void
+log_rerror(const char *file, int line, int module_index, int level,
+           int status, const request_rec *r, const char *fmt, ...)
+{
+   char errstr[1024];
+   va_list ap;
+
+   va_start(ap, fmt);
+   vsnprintf(errstr, sizeof(errstr), fmt, ap);
+   va_end(ap);
+   
+#ifdef STANDARD20_MODULE_STUFF
+   ap_log_rerror(file, line, module_index, level | APLOG_NOERRNO, status, r, "%s", errstr);
+#else
+   ap_log_rerror(file, line, module_index, level | APLOG_NOERRNO, r, "%s", errstr);
+#endif
+}
+#else // Using Apache 2.0 or 2.2
 static void
 log_rerror(const char *file, int line, int level, int status,
            const request_rec *r, const char *fmt, ...)
@@ -336,7 +360,6 @@ log_rerror(const char *file, int line, int level, int status,
    va_start(ap, fmt);
    vsnprintf(errstr, sizeof(errstr), fmt, ap);
    va_end(ap);
-
    
 #ifdef STANDARD20_MODULE_STUFF
    ap_log_rerror(file, line, level | APLOG_NOERRNO, status, r, "%s", errstr);
@@ -344,6 +367,7 @@ log_rerror(const char *file, int line, int level, int status,
    ap_log_rerror(file, line, level | APLOG_NOERRNO, r, "%s", errstr);
 #endif
 }
+#endif // AP_24
 
 static int
 is_basic_auth_on(const kerb_auth_config *conf)
@@ -1665,7 +1689,6 @@ set_kerb_auth_headers(request_rec *r, const kerb_auth_config *conf,
       		      int use_krb4, int use_krb5pwd, char *negotiate_ret_value)
 {
    const char *auth_name = NULL;
-   int set_basic = 0;
    int basic_on = 0;
    char *negoauth_param;
    const char *header_name = 
@@ -1687,12 +1710,11 @@ set_kerb_auth_headers(request_rec *r, const kerb_auth_config *conf,
    if ( use_krb5pwd && basic_on ) {
       apr_table_add(r->err_headers_out, header_name,
 		   apr_pstrcat(r->pool, "Basic realm=\"", auth_name, "\"", NULL));
-      set_basic = 1;
    }
 #endif
 
 #ifdef KRB4
-   if (!set_basic && ( use_krb4 && basic_on ) )
+   if ( use_krb4 && basic_on )
       apr_table_add(r->err_headers_out, header_name,
 		  apr_pstrcat(r->pool, "Basic realm=\"", auth_name, "\"", NULL));
 #endif

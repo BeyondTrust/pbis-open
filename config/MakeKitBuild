@@ -23,6 +23,7 @@ configure()
 
     mk_output_file VERSION
     mk_output_file init-base.sh
+    mk_output_file lwkill.sh
 }
 
 make()
@@ -30,6 +31,11 @@ make()
     mk_stage \
         DESTDIR="${MK_LIBEXECDIR}" \
         init-base.sh
+
+    mk_stage \
+        DESTDIR="${MK_LIBEXECDIR}" \
+        MODE="0744" \
+        lwkill.sh
 
     mk_stage \
         SOURCE="VERSION" \
