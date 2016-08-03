@@ -873,35 +873,46 @@ LWIsUserInLocalGroup(
     const char* pszGroupname
     )
 {
+    FILE *fp;
+    char path[2048];
+    char command[2048];
+    sprintf(command, "dscl . -read /Groups/%s GroupMembership", pszGroupname);
+
+    fp = popen(command, "r");
+
+    if(fp == NULL) {
+	LOG("Unable to find dscl command");
+        return FALSE;
+    }
+
+    while(fgets(path, sizeof(path), fp) != NULL) {
+    }
     
-    CFErrorRef cfError;
-    
-    ODRecordRef odGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);
-    ODRecordRef odUser = FindRecordByName("/Likewise - Active Directory", pszUsername, kDSStdRecordTypeUsers);
-    
-    BOOLEAN bResult = false;
-    if(odGroup != NULL && odUser != NULL)
+    pclose(fp);
+
+    char* account = strtok(path, " ");
+    account = strtok(NULL, " ");
+
+    while(account != NULL)
     {
-        bResult =  ODRecordContainsMember(odGroup, odUser, &cfError);
-        if(cfError != NULL)
+        for(unsigned int i = 0; i < strlen(account); i++)
+        {	
+            if(isspace(account[i]) )
+            {
+                account[i] = '\0';
+                break;
+            }
+        }
+
+        if(strcasecmp(pszUsername, account) == 0)
         {
-            BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
-        }        
+            return TRUE;
+        }
+
+        account = strtok(NULL, " ");
     }
-    
-error:
-    
-    if(odGroup != NULL)
-    {
-        CFRelease(odGroup);
-    }
-    if(odUser != NULL)
-    {
-        CFRelease(odUser);
-    }
-        
-    return bResult;
-    
+
+    return FALSE;
 }
 
 long
