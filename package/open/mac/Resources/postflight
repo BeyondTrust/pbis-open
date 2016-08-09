@@ -364,132 +364,9 @@ restore_6_1_configuration()
     run_quiet rm -r "${UPGRADEDIR}"
 }
 
-restore_6_5_configuration()
+restore_pbis_configuration()
 {
-    if [ -z "$UPGRADING_FROM_6_5" ]; then
-        return 0
-    fi
-
-    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
-    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
-    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
-
-    if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
-    fi
-
-    for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        if [ -f "$cache" ]; then
-            cachefile=`basename $cache`
-            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
-        fi
-    done
-
-    run_quiet rm -r "${UPGRADEDIR}"
-}
-
-restore_7_0_configuration()
-{
-    if [ -z "$UPGRADING_FROM_7_0" ]; then
-        return 0
-    fi
-
-    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
-    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
-    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
-
-    if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
-    fi
-
-    for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        if [ -f "$cache" ]; then
-            cachefile=`basename $cache`
-            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
-        fi
-    done
-
-    run_quiet rm -r "${UPGRADEDIR}"
-}
-
-restore_7_1_configuration()
-{
-    if [ -z "$UPGRADING_FROM_7_1" ]; then
-        return 0
-    fi
-
-    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
-    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
-    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
-
-    if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
-    fi
-
-    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
-        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
-    fi
-
-    for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        if [ -f "$cache" ]; then
-            cachefile=`basename $cache`
-            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
-        fi
-    done
-
-    run_quiet rm -r "${UPGRADEDIR}"
-}
-
-restore_7_5_configuration()
-{
-    if [ -z "$UPGRADING_FROM_7_5" ]; then
+    if [ -n "$UPGRADING_FROM_LW" ]; then
         return 0
     fi
 
@@ -559,21 +436,27 @@ determine_upgrade_type()
         run_or_fail cat "$PRESERVEDVERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Identity Services Open 5.0'
         elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Identity Services Open 5.1'
         elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Identity Services Open 5.2'
         elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Identity Services Open 5.3'
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Open 6.0'
         elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_1=1
+            UPGRADING_FROM_LW=1
             log 'Upgrading from Likewise Open 6.1'
         elif [ -n "`grep '^VERSION=6.5' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_5=1
