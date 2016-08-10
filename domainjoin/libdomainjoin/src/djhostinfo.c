@@ -836,7 +836,7 @@ DJConfigureDHCPService(
 #endif
     PSTR ppszSystemCtlArgs[] = 
     {
-        "systemctl",
+        "/bin/systemctl",
         "restart",
         "network"
     };
@@ -891,7 +891,10 @@ DJConfigureDHCPService(
     /* Restart network */
 
     /*try init.d first, otherwise systemctl*/
-    if(CTCheckFileExists(ppszNetArgs[0], &bFileExists))
+	bFileExists = FALSE;
+	CTCheckFileExists(ppszNetArgs[0], &bFileExists);
+	
+    if(bFileExists)
     {
         ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
     }
