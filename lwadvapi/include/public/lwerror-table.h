@@ -400,7 +400,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_LICENSE_NOT_RELEASED 
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_INSUFFICIENT_ACCESS , -1, "The computer account could not be deleted, the specified user does not have sufficient rights to delete the object" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_DELETE_FAILED_LIC_NOT_RELEASED , -1, "The domain leave completed but the computer account was not deleted because the license could not be released" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_CANNOT_DELETE , -1, "Cannot use --deleteAccount when the domain is offline." )
-S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_USE_KEEPLICENSE , -1, "Cannot release license or delete acocunt when domain is offline. Use --keepLicense to proceed with leave." )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_USE_KEEPLICENSE , -1, "Cannot release license or delete account when domain is offline. Use --keepLicense to proceed with leave." )
 
 
 #include "lwerror-table-krb5.h"
