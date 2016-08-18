@@ -468,8 +468,7 @@ LwRtlpTimedWaitEvent(
 
     PTHREAD_MUTEX_LOCK(&pEvent->Private.Mutex);
 
-    // Protect against spurious or stolen wakes.  Note thta
-    // this should never happen for pthread condition variables.
+    // Protect against spurious or stolen wakes.  
     while (!IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET))
     {
         PTHREAD_COND_TIMEDWAIT(
@@ -503,13 +502,10 @@ LwRtlpSimpleWaitEvent(
 
     PTHREAD_MUTEX_LOCK(&pEvent->Private.Mutex);
 
-    // Protect against spurious or stolen wakes.  Note thta
-    // this should never happen for pthread condition variables.
+    // Protect against spurious or stolen wakes.  
     while (!IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET))
     {
         PTHREAD_COND_WAIT(&pEvent->Private.Condition, &pEvent->Private.Mutex);
-        // TODO-Perhaps remove this assert
-        LWIO_ASSERT(IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET));
     }
 
     PTHREAD_MUTEX_UNLOCK(&pEvent->Private.Mutex);
@@ -543,8 +539,7 @@ LwRtlWaitEvent(
 
     if (Timeout)
     {
-        // Protect against spurious or stolen wakes.  Note thta
-        // this should never happen for pthread condition variables.
+        // Protect against spurious or stolen wakes.  
         while (!IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET))
         {
             PTHREAD_COND_TIMEDWAIT(
@@ -560,13 +555,10 @@ LwRtlWaitEvent(
     }
     else
     {
-        // Protect against spurious or stolen wakes.  Note thta
-        // this should never happen for pthread condition variables.
+        // Protect against spurious or stolen wakes.  
         while (!IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET))
         {
             PTHREAD_COND_WAIT(&pEvent->Private.Condition, &pEvent->Private.Mutex);
-            // TODO-Perhaps remove this assert
-            LWIO_ASSERT(IsSetFlag(pEvent->Private.Flags, _LW_RTL_EVENT_FLAG_SET));
         }
         isSignalled = TRUE;
     }
