@@ -2013,6 +2013,10 @@ static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char
         return TRUE;
     if(!strcmp(buffer, "pam_cracklib"))
         return TRUE;
+
+    if (!strcmp(buffer, "pam_faillock"))
+        return TRUE;
+
     if(!strcmp(buffer, "pam_pwcheck"))
         return TRUE;
 
@@ -2534,6 +2538,7 @@ static void FixPromptingModule(struct PamConf *conf, const char *service, const 
                     const char *optionName = "try_first_pass";
                     if(!PamModuleUnderstandsTryFirstPass(phase, module))
                         optionName = "use_first_pass";
+
                     LW_CLEANUP_CTERR(exc, AddOption(conf, line, optionName));
                 }
             }
@@ -3166,6 +3171,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 &LW_EXC));
             state->sawPromptingModule = TRUE;
         }
+
 
         /* Fill in the correct values for lwidentityLine */
         lineObj = &conf->lines[lwidentityLine];

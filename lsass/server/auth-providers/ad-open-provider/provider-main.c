@@ -2783,12 +2783,22 @@ AD_LeaveDomainInternal(
                   NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    // We need the fqdn to delete the account
-    // Get it while we're still joined to the domain
-    if (bDeleteAccount) {
-        dwError = AD_LeaveDomainGetDN(&pszDeleteAccountDN);
-        BAIL_ON_LSA_ERROR(dwError);
+    // We need the fqdn to delete the account so we get it while we're still joined to the domain
+    // We also use this call to determine whether the domain is offline
+    dwError = AD_LeaveDomainGetDN(&pszDeleteAccountDN);
+    if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE) {
+        if (!bDeleteAccount) {
+            // We aren't deleting the account so we don't care that the domain is offline
+            LSA_LOG_WARNING("The domain is offline. Continuing with domain leave.");
+            dwError = LW_ERROR_SUCCESS;
+        } else {
+            // Replace the standard error message with one that tells the user they can leave
+            // without using --deleteAccount
+            LSA_LOG_ERROR("Unable to delete account. The domain is offline.");
+            dwError = LW_ERROR_DOMAIN_IS_OFFLINE_CANNOT_DELETE;
+        }
     }
+    BAIL_ON_LSA_ERROR(dwError);
 
     LsaAdProviderStateAcquireWrite(pContext->pState);
     bLocked = TRUE;
