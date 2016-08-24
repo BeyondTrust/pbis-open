@@ -5949,7 +5949,7 @@ LsaAdProviderLogRequireMembershipOfChangeEvent(
              LSASS_EVENT_INFO_REQUIRE_MEMBERSHIP_OF_UPDATED,
              SERVICE_EVENT_CATEGORY,
              pszDescription,
-             NULL);
+             pszMemberList);
 
 cleanup:
 
