@@ -3731,6 +3731,12 @@ LsaDmConnectDomain(
             {
                if (time(NULL) > dwEnumTimeout)
                  done = TRUE;
+               else
+               {
+                  // Wait for half a second and try again.
+                  struct timeval tv ={0,500000};
+                  select(0, NULL, NULL, NULL, &tv);
+               }
             }
             else
                done = TRUE;
