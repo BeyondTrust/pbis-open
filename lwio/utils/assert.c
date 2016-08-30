@@ -60,12 +60,12 @@ LwIoAssertionFailed(
             Function,
             File,
             Line,
-            "ASSERION FAILED: Expression = (%s), Message = '%s'",
+            "ASSERTION FAILED: Expression = (%s), Message = '%s'",
             Expression,
             Message);
         fprintf(
             stderr,
-            "ASSERION FAILED: Expression = (%s), Message = '%s'",
+            "ASSERTION FAILED: Expression = (%s), Message = '%s'",
             Expression,
             Message);
     }
@@ -77,11 +77,11 @@ LwIoAssertionFailed(
             Function,
             File,
             Line,
-            "ASSERION FAILED: Expression = (%s)",
+            "ASSERTION FAILED: Expression = (%s)",
             Expression);
         fprintf(
             stderr,
-            "ASSERION FAILED: Expression = (%s)",
+            "ASSERTION FAILED: Expression = (%s)",
             Expression);
     }
     fprintf(stderr, "\n");
