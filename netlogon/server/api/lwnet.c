@@ -894,7 +894,7 @@ LWNetSrvGetDCNameDiscoverInternal(
 
     if (!dwServerCount)
     {
-        dwError = DNS_ERROR_BAD_PACKET;
+        dwError = ERROR_DOMAIN_BLACKLISTED;
         BAIL_ON_LWNET_ERROR(dwError);
     }
 
