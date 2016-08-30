@@ -263,12 +263,12 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
 
     GCE(ceError = CTAllocateMemory(sizeof(*line), (void**) (void*)&line));
 
-    /* Find the leading whitespace in the line */
+    // Find the leading whitespace in the line
     token_start = pos;
     while(isblank(*pos)) pos++;
     if(*pos == '#' || *pos == ';')
     {
-        //This is a comment line. The whole line is leading white space
+        // This is a comment line. The whole line is leading white space
         while(*pos != '\0' && *pos != '\n' && *pos != '\r') pos++;
     }
     GCE(ceError = CTStrndup(token_start, pos - token_start, &line->leadingWhiteSpace));
@@ -276,12 +276,10 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
     if(*pos == '\0' || *pos == '\n' || *pos == '\r')
     {
         DJ_LOG_VERBOSE("Found krb5 comment '%s'", linestr);
-        //This is a comment line
     }
     else if(*pos == '}')
     {
         DJ_LOG_VERBOSE("Found krb5 compound end '%s'", linestr);
-        //This is the end of a compound statement
         if(!IsGroupEntry(*parent))
         {
             DJ_LOG_ERROR("Expecting line '%s' to end a compound statement, but no compound statement appears before it",
@@ -297,12 +295,12 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
     {
         size_t len;
         DJ_LOG_VERBOSE("Found krb5 stanza '%s'", linestr);
-        //This is a stanza
+        // This is a stanza
         *parent = GetRootNode(*parent);
-        //Trim [
+        // Trim [
         pos++;
         GCE(ceError = CTReadToken(&pos, &line->name, "", "\r\n", " \t"));
-        //Trim ]
+        // Trim ]
         len = strlen(line->name.value);
         if(line->name.value[len - 1] == ']')
             line->name.value[len - 1] = 0;
@@ -312,42 +310,54 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
                     line->name.value);
             GCE(ceError = ERROR_BAD_FORMAT);
         }
-        //Add future lines under this stanza
+        // Add future lines under this stanza
         expectChildren = TRUE;
     }
     else
     {
-        //This is either a name value pair, or a compound element
+        // This is either a name value pair, a compound element, 
+        // or a (currently unsupported) directive
+        // For now, treat anything we don't understand/support as a comment
+        // so that we don't break with every change to the format
         GCE(ceError = CTReadToken(&pos, &line->name, " \t", "=\r\n", ""));
+
         if(*pos != '=')
         {
-            DJ_LOG_ERROR("Expecting krb5 name value or compound statement '%s' to have a = at position %d",
-                    linestr, pos - linestr);
-            GCE(ceError = ERROR_BAD_FORMAT);
-        }
-        oldpos = pos;
-        GCE(ceError = CTReadToken(&pos, &line->beginSeparator, " \t", "\r\n", ""));
-        if(*pos == '{')
-        {
-            DJ_LOG_VERBOSE("Found krb5 compound statement '%s'", linestr);
-            //Oops, looks like this was really a compound statement, so we want to store the = and the { in the beginSeparator.
-            CTFreeParseTokenContents(&line->beginSeparator);
-            pos = oldpos;
-            GCE(ceError = CTReadToken(&pos, &line->beginSeparator, "", "\r\n", " \t"));
-            if(!CTStrEndsWith(line->beginSeparator.value, "{"))
-            {
-                DJ_LOG_ERROR("Expecting krb5 compound statement line '%s' to end with a {",
-                        linestr);
-                GCE(ceError = ERROR_BAD_FORMAT);
+            // Not a nv-pair, or compound element
+            CTFreeParseTokenContents(&line->name);
+            while(*pos != '\0' && *pos != '\n' && *pos != '\r') {
+                pos++;
             }
-            //Add future lines under this statement
-            expectChildren = TRUE;
-        }
-        else
-        {
-            DJ_LOG_VERBOSE("Found krb5 name value pair '%s'", linestr);
-            //This is name value statement
-            GCE(ceError = CTReadToken(&pos, &line->value, "", "\r\n", " \t"));
+            GCE(ceError = CTStrndup(token_start, pos - token_start, &line->leadingWhiteSpace));
+
+            DJ_LOG_WARNING("Ignoring unsupported krb5 line '%s'; line will be included in krb5.conf but won't be parsed",
+                    line->leadingWhiteSpace);
+        } else {
+            oldpos = pos;
+            GCE(ceError = CTReadToken(&pos, &line->beginSeparator, " \t", "\r\n", ""));
+
+            if(*pos == '{')
+            {
+                DJ_LOG_VERBOSE("Found krb5 compound statement '%s'", linestr);
+                //Oops, looks like this was really a compound statement, so we want to store the = and the { in the beginSeparator.
+                CTFreeParseTokenContents(&line->beginSeparator);
+                pos = oldpos;
+                GCE(ceError = CTReadToken(&pos, &line->beginSeparator, "", "\r\n", " \t"));
+                if(!CTStrEndsWith(line->beginSeparator.value, "{"))
+                {
+                    DJ_LOG_ERROR("Expecting krb5 compound statement line '%s' to end with a {",
+                            linestr);
+                    GCE(ceError = ERROR_BAD_FORMAT);
+                }
+                //Add future lines under this statement
+                expectChildren = TRUE;
+            }
+            else
+            {
+                DJ_LOG_VERBOSE("Found krb5 name value pair '%s'", linestr);
+                //This is name value statement
+                GCE(ceError = CTReadToken(&pos, &line->value, "", "\r\n", " \t"));
+            }
         }
     }
 
