@@ -63,12 +63,11 @@ SignalThread(
     )
 {
     char c = 0;
-    int res = 0;
 
     if (!pThread->bSignalled)
     {
-        res = write(pThread->SignalFds[1], &c, sizeof(c));
-        assert(res == sizeof(c));
+        int res = write(pThread->SignalFds[1], &c, sizeof(c));
+        if (res != sizeof(c)) assert(res == sizeof(c));
         pThread->bSignalled = TRUE;
     }
 }
@@ -507,7 +506,7 @@ ScheduleSignalled(
         pThread->bSignalled = FALSE;
         
         res = read(pThread->SignalFds[0], &c, sizeof(c));
-        assert(res == sizeof(c));
+        if (res != sizeof(c)) assert(res == sizeof(c));
         
         /* Add all signalled tasks to the runnable list */
         for (pRing = pThread->Tasks.pNext; pRing != &pThread->Tasks; pRing = pNext)

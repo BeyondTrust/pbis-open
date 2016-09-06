@@ -217,20 +217,15 @@ LsaAdJoinDomainDn(
  * flag values.
  *
  * @param[in] hLsaConnection a connection handle
- * @param[in] pHostname the computer name to join with
- * @param[in] pHostDnsDomain the DNS domain name of the computer
- * @param[in] pDomain the fully-qualified domain name to join
- * @param[in] pOu an optional OU (organizational unit) to join
- * specified as a DN.
- * @param[in] pUsername the name of an AD user with permission with
- * permission to join computers to the target domain
- * @param[in] pPassword the password for the user
- * @param[in] pOsName the operating system name to set on
- * the computer object
- * @param[in] pOsVersion the operating system version to set on
- * the computer object
- * @param[in] pOsServicePack the service pack level to set on
- * the computer object
+ * @param[in] pszHostname the computer name to join with
+ * @param[in] pszHostDnsDomain the DNS domain name of the computer
+ * @param[in] pszDomain the fully-qualified domain name to join
+ * @param[in] pszOu an optional OU (organizational unit) to join specified as a DN
+ * @param[in] pszUsername the name of an AD user with permission with permission to join computers to the target domain
+ * @param[in] pszPassword the password for the user
+ * @param[in] pszOSName the operating system name to set on the computer object
+ * @param[in] pszOSVersion the operating system version to set on the computer object
+ * @param[in] pszOSServicePack the service pack level to set on the computer object
  * @param[in] dwFlags additional flags to control join behavior
  * @param[in] dwUac additional user account control flags
  * @retval LW_ERROR_SUCCESS success
