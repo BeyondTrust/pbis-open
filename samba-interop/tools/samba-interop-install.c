@@ -535,6 +535,12 @@ CheckSambaVersion(
     else if (!strncmp(pVersionString, "4.3.", sizeof("4.3.") - 1))
     {
     }
+    else if (!strncmp(pVersionString, "4.4.", sizeof("4.4.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "4.5.", sizeof("4.5.") - 1))
+    {
+    }
     else
     {
         LW_RTL_LOG_ERROR("Unsupported smbd version %s", pVersionString);
