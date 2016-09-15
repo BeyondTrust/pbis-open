@@ -1129,10 +1129,43 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*unlockAccountAction)[i++])));
 
     /**
+     ** Set attribute options.
+     **/
+    i = 0;
+    struct poptOption **setAttrAction = MakeOptions(4);
+    ADT_BAIL_ON_ALLOC_FAILURE(setAttrAction);
+    MakeOption(&((*setAttrAction)[i++]),
+               "dn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.dn),
+               0,
+               "DN",
+               NULL);
+    MakeOption(&((*setAttrAction)[i++]),
+               "name",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.attrName),
+               0,
+               "Name of attribute",
+               NULL);
+
+    MakeOption(&((*setAttrAction)[i++]),
+               "value",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.attrValue),
+               0,
+               "Value of attribute",
+               NULL);
+    MakeOption(ADT_TABLEEND(&((*setAttrAction)[i++])));
+
+    /**
      * Open Edition options.
      */
     i = 0;
-    struct poptOption **openActionsTable = MakeOptions(19);
+    struct poptOption **openActionsTable = MakeOptions(20);
     ADT_BAIL_ON_ALLOC_FAILURE(openActionsTable);
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1278,6 +1311,16 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                AdtSearchUserAction,
                ADT_SEARCH_USER_ACT " - search for users, print DNs.",
                NULL);
+
+    MakeOption(&((*openActionsTable)[i++]),
+               NULL,
+               'O',
+               POPT_ARG_INCLUDE_TABLE,
+               *setAttrAction,
+               AdtSetAttrAction,
+               ADT_SET_ATTR_ACT " - set attribute.",
+               NULL);
+
     /*
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1349,6 +1392,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
         LW_SAFE_FREE_MEMORY(addToGroupAction);
         LW_SAFE_FREE_MEMORY(removeFromGroupAction);
         LW_SAFE_FREE_MEMORY(unlockAccountAction);
+        LW_SAFE_FREE_MEMORY(setAttrAction);
         /*
         LW_SAFE_FREE_MEMORY(enableComputerAction);
         LW_SAFE_FREE_MEMORY(disableComputerAction);
