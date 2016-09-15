@@ -523,22 +523,7 @@ CheckSambaVersion(
             BAIL_ON_LSA_ERROR(error);
         }
     }
-    else if (!strncmp(pVersionString, "4.0.", sizeof("4.0.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.1.", sizeof("4.1.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.2.", sizeof("4.2.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.3.", sizeof("4.3.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.4.", sizeof("4.4.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.5.", sizeof("4.5.") - 1))
+    else if (!strncmp(pVersionString, "4.", sizeof("4.") - 1))
     {
     }
     else
