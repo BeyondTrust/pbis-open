@@ -1143,7 +1143,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                "DN",
                NULL);
     MakeOption(&((*setAttrAction)[i++]),
-               "name",
+               "attrName",
                '\0',
                POPT_ARG_STRING,
                &(appContext->action.setAttribute.attrName),
@@ -1152,7 +1152,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                NULL);
 
     MakeOption(&((*setAttrAction)[i++]),
-               "value",
+               "attrValue",
                '\0',
                POPT_ARG_STRING,
                &(appContext->action.setAttribute.attrValue),

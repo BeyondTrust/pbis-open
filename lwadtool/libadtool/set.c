@@ -44,7 +44,6 @@
 
 DWORD InitAdtSetAttrAction(IN AdtActionTP action)
 {
-    printf ("InitAdtSetAttrAction Enter\n");
     return InitBaseAction(action);
 }
 
@@ -53,8 +52,6 @@ DWORD ValidateAdtSetAttrAction(IN AdtActionTP action)
     DWORD dwError = 0;
     AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
     PSTR dn = NULL;
-
-    printf ("ValidateAdtSetAttrAction Enter\n");
 
     dwError = OpenADSearchConnectionDN(action, &(action->setAttribute.dn));
     ADT_BAIL_ON_ERROR_NP(dwError);
@@ -85,21 +82,48 @@ DWORD ValidateAdtSetAttrAction(IN AdtActionTP action)
 DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action)
 {
     DWORD dwError = 0;
-//    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+    int  i, j = 0;
+    AttrValsT *avp = NULL;
+    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
 
-    printf ("ExecuteAdtSetAttrAction Enter\n");
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-//    cleanup:
-        return dwError;
+    avp[0].attr = action->setAttribute.attrName;
 
-//    error:
-//        goto cleanup;
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    dwError = LwStrDupOrNull((PCSTR) action->setAttribute.attrValue, &(avp[0].vals[0]));
+    ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+    dwError = ModifyADObject(appContext, action->setAttribute.dn, avp, 2);
+    ADT_BAIL_ON_ERROR_NP(dwError);
+
+cleanup:
+    if (avp) 
+    {
+        for (i = 0; avp[i].vals; ++i) 
+        {
+            for (j = 0; avp[i].vals[j]; ++j) 
+            {
+               LW_SAFE_FREE_MEMORY(avp[i].vals[j]);
+            }
+
+            LW_SAFE_FREE_MEMORY(avp[i].vals);
+        }
+
+        LW_SAFE_FREE_MEMORY(avp);
+    }
+
+       return dwError;
+
+error:
+        goto cleanup;
 }
 
 DWORD CleanUpAdtSetAttrAction(IN AdtActionTP action)
 {
-    printf ("CleanUpAdtSetAttrAction Enter\n");
-
     return CleanUpBaseAction(action);
 }
 
