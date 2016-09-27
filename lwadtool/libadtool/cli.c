@@ -1666,6 +1666,10 @@ VOID PrintExamples() {
             "Modify an attribute. Note: Attribute value validation is not done. Use with care:"
             NL_STR2
             "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""
+            NL_STR
+            "Unset an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName"
             ;
 
     fprintf(stdout, "%s\n", s);
