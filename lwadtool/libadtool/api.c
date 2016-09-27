@@ -1093,7 +1093,6 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
     }
 
     if(!strcmp(name, ADT_SET_ATTR_ACT)) {
-        printf("Found %s\n", ADT_SET_ATTR_ACT);
         return AdtSetAttrAction;
     }
 

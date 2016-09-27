@@ -1662,6 +1662,10 @@ VOID PrintExamples() {
             "Delete the default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
+            NL_STR
+            "Modify an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""
             ;
 
     fprintf(stdout, "%s\n", s);
