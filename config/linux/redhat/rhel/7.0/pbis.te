@@ -1,5 +1,5 @@
 
-module pbis 8.5.0;
+module pbis 8.5.2;
 
 require {
         type abrt_t;
