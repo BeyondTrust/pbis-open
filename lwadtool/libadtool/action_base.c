@@ -303,7 +303,9 @@ DWORD OpenADSearchConnectionDomain(IN AdtActionTP action, IN OUT PSTR *name)
         }
     }
     else {
-        if (IsBackSlashPresent(*name)) {
+		// Check if this is domain\name format
+		// #72263: A DN with escaped characters will contain a backslash so check it doesn't look like a DN
+        if (IsBackSlashPresent(*name) && !IsDNComp(*name)) {
             p = strstr((PCSTR) *name, "\\");
 
             if (p) {
