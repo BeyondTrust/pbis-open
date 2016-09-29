@@ -105,13 +105,13 @@ DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action)
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     // Use semi-colon to delimit a multi-value attribute.
-    aStr = strtok_r(tmpStr, ";", &saveStrPtr);
+    aStr = strtok_r(tmpStr, ADT_LIST_DELIMITER, &saveStrPtr);
     i = 0;
     while ((aStr != NULL) && (i < dwMaxValues))
     {
         dwError = LwStrDupOrNull((PCSTR) aStr, &(avp[0].vals[i]));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-        aStr = strtok_r(NULL, ";", &saveStrPtr);
+        aStr = strtok_r(NULL, ADT_LIST_DELIMITER, &saveStrPtr);
         i++;
     }
 
