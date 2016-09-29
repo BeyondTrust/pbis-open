@@ -82,25 +82,44 @@ DWORD ValidateAdtSetAttrAction(IN AdtActionTP action)
 DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action)
 {
     DWORD dwError = 0;
-    int  i, j = 0;
+    DWORD  i, j = 0;
+    DWORD dwMaxValues = 100;
     AttrValsT *avp = NULL;
     AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+    PSTR aStr = NULL;
+    PSTR saveStrPtr = NULL;
+    PSTR tmpStr = NULL;
 
     dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = action->setAttribute.attrName;
 
-    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
+    dwError = LwAllocateMemory(dwMaxValues * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-    dwError = LwStrDupOrNull((PCSTR) action->setAttribute.attrValue, &(avp[0].vals[0]));
+    for (i = 0; i < dwMaxValues; i++)
+       avp[0].vals[i] = NULL;
+
+    dwError = LwStrDupOrNull(action->setAttribute.attrValue, &tmpStr);
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+    // Use semi-colon to delimit a multi-value attribute.
+    aStr = strtok_r(tmpStr, ";", &saveStrPtr);
+    i = 0;
+    while ((aStr != NULL) && (i < dwMaxValues))
+    {
+        dwError = LwStrDupOrNull((PCSTR) aStr, &(avp[0].vals[i]));
+        ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+        aStr = strtok_r(NULL, ";", &saveStrPtr);
+        i++;
+    }
 
     dwError = ModifyADObject(appContext, action->setAttribute.dn, avp, 2);
     ADT_BAIL_ON_ERROR_NP(dwError);
 
 cleanup:
+
     if (avp) 
     {
         for (i = 0; avp[i].vals; ++i) 
@@ -116,10 +135,13 @@ cleanup:
         LW_SAFE_FREE_MEMORY(avp);
     }
 
-       return dwError;
+    if (tmpStr)
+        LW_SAFE_FREE_STRING(tmpStr);
+
+    return dwError;
 
 error:
-        goto cleanup;
+    goto cleanup;
 }
 
 DWORD CleanUpAdtSetAttrAction(IN AdtActionTP action)
