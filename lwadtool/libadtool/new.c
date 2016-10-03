@@ -437,20 +437,25 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
                                         action->newUser.password);
         ADT_BAIL_ON_ERROR_NP(dwError);
 
+        dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
+        ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+        dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
+        ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+        avpTime[0].attr = "pwdLastSet";
+
         if(action->newUser.isNoMustChangePasswd) {
-            dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            avpTime[0].attr = "pwdLastSet";
             avpTime[0].vals[0] = "-1";
-
-            dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
-            //fprintf(stderr, "Setting time to %s\n", avpTime[0].vals[0]);
-            ADT_BAIL_ON_ERROR_NP(dwError);
         }
+        else 
+        {
+            avpTime[0].vals[0] = "0";
+        }
+
+        dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
+        //fprintf(stderr, "Setting time to %s\n", avpTime[0].vals[0]);
+        ADT_BAIL_ON_ERROR_NP(dwError);
 
     }
 
