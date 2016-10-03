@@ -101,18 +101,21 @@ DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action)
     for (i = 0; i < dwMaxValues; i++)
        avp[0].vals[i] = NULL;
 
-    dwError = LwStrDupOrNull(action->setAttribute.attrValue, &tmpStr);
-    ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-
-    // Use semi-colon to delimit a multi-value attribute.
-    aStr = strtok_r(tmpStr, ADT_LIST_DELIMITER, &saveStrPtr);
-    i = 0;
-    while ((aStr != NULL) && (i < dwMaxValues))
+    if (action->setAttribute.attrValue)
     {
-        dwError = LwStrDupOrNull((PCSTR) aStr, &(avp[0].vals[i]));
-        ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-        aStr = strtok_r(NULL, ADT_LIST_DELIMITER, &saveStrPtr);
-        i++;
+       dwError = LwStrDupOrNull(action->setAttribute.attrValue, &tmpStr);
+       ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+       // Use semi-colon to delimit a multi-value attribute.
+       aStr = strtok_r(tmpStr, ADT_LIST_DELIMITER, &saveStrPtr);
+       i = 0;
+       while ((aStr != NULL) && (i < dwMaxValues))
+       {
+           dwError = LwStrDupOrNull((PCSTR) aStr, &(avp[0].vals[i]));
+           ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+           aStr = strtok_r(NULL, ADT_LIST_DELIMITER, &saveStrPtr);
+           i++;
+       }
     }
 
     dwError = ModifyADObject(appContext, action->setAttribute.dn, avp, 2);
