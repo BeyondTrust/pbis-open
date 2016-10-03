@@ -121,6 +121,13 @@ DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action)
     dwError = ModifyADObject(appContext, action->setAttribute.dn, avp, 2);
     ADT_BAIL_ON_ERROR_NP(dwError);
 
+    if (action->setAttribute.attrValue)
+       PrintResult(appContext, LogLevelNone, "Success. Modified attribute %s to %s\n", 
+                                  action->setAttribute.attrName,
+                                  action->setAttribute.attrValue);
+    else
+       PrintResult(appContext, LogLevelNone, "Success. Cleared attribute %s\n", action->setAttribute.attrName);
+
 cleanup:
 
     if (avp) 

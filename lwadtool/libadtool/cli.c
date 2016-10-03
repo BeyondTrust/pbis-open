@@ -1667,6 +1667,10 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""
             NL_STR
+            "Modify a multi-value attribute using a semi-colon as the delimiter. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=group,OU=department,DC=company,DC=com --attrName member --attrValue \"CN=Test User,OU=department,DC=company,DC=com;CN=Test User2,OU=department,DC=company,DC=com\""
+            NL_STR
             "Unset an attribute. Note: Attribute value validation is not done. Use with care:"
             NL_STR2
             "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName"
