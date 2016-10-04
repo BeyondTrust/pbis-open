@@ -1484,6 +1484,7 @@ main(
     PCSTR pErrorSymbol = NULL;
     PSTR pVersion = NULL;
     BOOLEAN smbdExists = FALSE;
+    BOOLEAN force = FALSE;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
     {
@@ -1514,6 +1515,17 @@ main(
             if (mode == UNSET)
             {
                 mode = UNINSTALL;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--force"))
+        {
+            if (mode == INSTALL || mode== UNINSTALL)
+            {
+                force = TRUE;
             }
             else
             {
@@ -1609,8 +1621,11 @@ main(
     }
 
     error = CheckSambaVersion(pSmbdPath, &pVersion);
-    BAIL_ON_LSA_ERROR(error);
-
+    if (force == FALSE) 
+    {
+       BAIL_ON_LSA_ERROR(error);
+    }
+ 
     if (mode == CHECK_VERSION)
     {
         fprintf(stderr, "Samba version supported\n");
@@ -1620,7 +1635,7 @@ main(
         error = InstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 
-        if (!strncmp(pVersion, "3.0.", sizeof("3.0.") - 1))
+        if (pVersion && strncmp(pVersion, "3.0.", sizeof("3.0.") - 1) == 0)
         {
             // Only Samba 3.0.x needs this
             error = InstallLwiCompat(pSmbdPath);
