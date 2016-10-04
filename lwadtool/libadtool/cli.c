@@ -1157,7 +1157,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.setAttribute.attrValue),
                0,
-               "Value of attribute",
+               "Value of attribute. Multi-value attributes are delimited with a semi-colon. To unset an attribute do not provide the attrValue argument.",
                NULL);
     MakeOption(ADT_TABLEEND(&((*setAttrAction)[i++])));
 
