@@ -508,6 +508,10 @@ LwNtRegUpdateConfigItemRange(
  * from a registry key.  If an entry is not found in the registry
  * @dwConfigEntries determines whether an error is returned.
  *
+ * @deprecated new code should use LwNtRegProcessConfigUsingAttributeRanges()
+ *  as this function does NOT restrict config values based on 
+ *  acceptable ranges defined in the registry
+ *
  * @param[in] pszConfigKey Registry key path
  * @param[in] pszPolicyKey Registry policy key path
  * @param[in] pConfig Configuration table specifying parameter names

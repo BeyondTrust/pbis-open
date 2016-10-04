@@ -524,6 +524,10 @@ LwRegUpdateConfigItemRange(
  * from a registry key. If an entry is not found in the registry 
  * no error is returned.
  *
+ * @deprecated new code should use LwRegProcessConfigUsingAttributeRanges()
+ *  as this function does NOT restrict config values based on 
+ *  acceptable ranges defined in the registry
+ *
  * @param[in] pszConfigKey Registry key path
  * @param[in] pszPolicyKey Registry policy key path
  * @param[in] pConfig Configuration table specifying parameter names
