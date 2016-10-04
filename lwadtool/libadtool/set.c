@@ -63,6 +63,12 @@ DWORD ValidateAdtSetAttrAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
+    if (!action->setAttribute.attrName)
+    {
+        dwError = ADT_ERR_ARG_MISSING_NAME;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
     dwError = ProcessDash(&(action->setAttribute.dn));
     ADT_BAIL_ON_ERROR_NP(dwError);
 

@@ -1140,7 +1140,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.setAttribute.dn),
                0,
-               "DN",
+               "DN.[X]",
                NULL);
     MakeOption(&((*setAttrAction)[i++]),
                "attrName",
@@ -1148,13 +1148,13 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.setAttribute.attrName),
                0,
-               "Name of attribute",
+               "Name of attribute.[X]",
                NULL);
 
     MakeOption(&((*setAttrAction)[i++]),
                "attrValue",
                '\0',
-               POPT_ARG_STRING,
+               POPT_ARG_STRING | POPT_ARGFLAG_OPTIONAL,
                &(appContext->action.setAttribute.attrValue),
                0,
                "Value of attribute. Multi-value attributes are delimited with a semi-colon. To unset an attribute do not provide the attrValue argument.",
