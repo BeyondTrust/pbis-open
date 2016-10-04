@@ -258,14 +258,14 @@ DWORD ExecuteAdtSearchUserAction(IN AdtActionTP action)
     else {
         if (IsNVP(action->searchUser.name)) {
             dwError = LwAllocateStringPrintf(&filter,
-                                             "(&(objectClass=user)(%s))",
+                                             "(&(objectClass=user)(objectCategory=person)(%s))",
                                              action->searchUser.name);
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
         }
         else {
             dwError
                     = LwAllocateStringPrintf(&filter,
-                                             "(&(objectClass=user)(|(%s=%s)(CN=%s)))",
+                                             "(&(objectClass=user)(objectCategory=person)(|(%s=%s)(CN=%s)))",
                                              IsUPN(action->searchUser.name)
                                                      ? "userPrincipalName"
                                                      : "sAMAccountName",
