@@ -1318,7 +1318,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_INCLUDE_TABLE,
                *setAttrAction,
                AdtSetAttrAction,
-               ADT_SET_ATTR_ACT " - set attribute.",
+               ADT_SET_ATTR_ACT " - set/un-set attribute.",
                NULL);
 
     /*
