@@ -493,8 +493,78 @@ LwRegDeleteValueAttributesW(
     IN PCWSTR pwszValueName
     );
 
+/**
+ * @brief Update config item ranges with registry attributes.
+ *
+ * Update the ranges for each config item with the ranges 
+ * defined in the registry for that value. Only applies to 
+ * integer ranges.
+ *
+ * This is typically used in conjunction with 
+ * LwRegProcessConfig()
+ *
+ * @param pszConfigKey the path to the registry key
+ * @param pConfig an array of config item, registry values 
+ *  under the config key
+ * @param dwConfigEntries the number of config entries
+ *
+ * @return LW_ERROR_SUCCESS or error
+ */
+DWORD 
+LwRegUpdateConfigItemRange(
+    IN PCSTR pszConfigKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
+
+/**
+ * Read configuration values from the registry
+ *
+ * This function loops through a configuration table reading all given values
+ * from a registry key. If an entry is not found in the registry 
+ * no error is returned.
+ *
+ * @deprecated new code should use LwRegProcessConfigUsingAttributeRanges()
+ *  as this function does NOT restrict config values based on 
+ *  acceptable ranges defined in the registry
+ *
+ * @param[in] pszConfigKey Registry key path
+ * @param[in] pszPolicyKey Registry policy key path
+ * @param[in] pConfig Configuration table specifying parameter names
+ * @param[in] dwConfigEntries Number of table entries
+ *
+ * @return STATUS_SUCCESS, or appropriate error.
+ */
 DWORD
 LwRegProcessConfig(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
+
+/**
+ * Read configuration values from the registry
+ *
+ * This function loops through a configuration table reading all given values
+ * from a registry key. If an entry is not found in the registry 
+ * no error is returned.
+ *
+ * For REG_DWORD values with defined integer ranges, the returned
+ * value will be clamped to the range.
+ *
+ * This assumes ranges are defined on the pszConfigKey value and NOT
+ * on the pszPolicyKey value.
+ *
+ * @param[in] pszConfigKey Registry key path
+ * @param[in] pszPolicyKey Registry policy key path
+ * @param[in] pConfig Configuration table specifying parameter names
+ * @param[in] dwConfigEntries Number of table entries
+ *
+ * @return STATUS_SUCCESS, or appropriate error.
+ */
+DWORD
+LwRegProcessConfigUsingAttributeRanges(
     IN PCSTR pszConfigKey,
     IN PCSTR pszPolicyKey,
     IN OUT PLWREG_CONFIG_ITEM pConfig,
@@ -565,7 +635,9 @@ LwRegProcessConfig(
 #define RegDeleteValueAttributesA LwRegDeleteValueAttributesA
 #define RegDeleteValueAttributesW LwRegDeleteValueAttributesW
 
+#define RegUpdateConfigItemRange LwRegUpdateConfigItemRange
 #define RegProcessConfig LwRegProcessConfig
+#define RegProcessConfigUsingAttributeRanges LwRegProcessConfigUsingAttributeRanges
 
 #endif /* ! LW_STRICT_NAMESPACE */
 
