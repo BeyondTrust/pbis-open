@@ -3726,15 +3726,25 @@ LsaDmConnectDomain(
                 0,
                 NULL,
                 &pLocalDcInfo);
-            bIsNetworkError = LsaDmpIsNetworkError(dwError);
-            if (bIsNetworkError)
+            if (!dwError)
             {
-               if (time(NULL) > dwEnumTimeout)
-                 done = TRUE;
+               break;
+            }
+
+            // If enabled, determine if we have exceeded the trust 
+            // enumeration wait time.
+            if (time(NULL) > dwEnumTimeout)
+            {
+               done = TRUE;
             }
             else
-               done = TRUE;
+            {
+               // Wait for half a second and try connecting again.
+               struct timeval tv ={0,500000};
+               select(0, NULL, NULL, NULL, &tv);
+            }
         }
+
         BAIL_ON_LSA_ERROR(dwError);
         pActualDcInfo = pLocalDcInfo;
     }

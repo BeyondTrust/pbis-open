@@ -1374,7 +1374,7 @@ AD_Activate(
     dwError = LsaDmWrapLdapPingTcp(
                   pState->hDmState,
                   pState->pszDomainName);
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+    if ((LW_ERROR_DOMAIN_IS_OFFLINE == dwError) || (DNS_ERROR_BAD_PACKET == dwError))
     {
         bIsDomainOffline = TRUE;
         dwError = 0;
