@@ -746,6 +746,9 @@
             <default>
                 <value>1800</value>
             </default>
+            <accept>
+               <range min="60" max="1000000" />
+            </accept>
             <unit suffix="s" multiplier="1" />
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />
