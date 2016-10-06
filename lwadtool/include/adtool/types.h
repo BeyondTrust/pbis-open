@@ -88,7 +88,8 @@ typedef enum
   AdtResetComputerPasswordAction,
   AdtAddToGroupAction,
   AdtRemoveFromGroupAction,
-  AdtUnlockAccountAction
+  AdtUnlockAccountAction,
+  AdtSetAttrAction
 } AdtActionCode;
 
 /**
@@ -382,6 +383,15 @@ typedef struct AdtActionUnlockAccount {
     PSTR computer;            /* Computer name (DN/RDN, UPN, or SamAccountName) */
 } AdtActionUnlockAccountT, *AdtActionUnlockAccountTP;
 
+typedef struct AdtActionSetAttr {
+    AdtActionCode actionCode; /* Action code */
+    VOID *opaque;             /* Private data */
+    PSTR dn;                  /* DN/RDN, UPN, or SamAccountName */
+    PSTR attrName;            /* Attribute name. */
+    PSTR attrValue;           /* Attribute value */
+} AdtActionSetAttrT, *AdtActionSetAttrTP;
+
+
 /**
  * Action definition. TODO: Add LW Open actions.
  */
@@ -419,6 +429,7 @@ typedef union AdtAction {
     AdtActionAddToGroupT addToGroup;
     AdtActionRemoveFromGroupT removeFromGroup;
     AdtActionUnlockAccountT unlockAccount;
+    AdtActionSetAttrT  setAttribute;
 } AdtActionT, *AdtActionTP, **AdtActionTPP;
 
 typedef enum AdtOutputMode {
