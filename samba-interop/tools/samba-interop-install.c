@@ -1632,7 +1632,7 @@ main(
     }
     else if (mode == INSTALL)
     {
-        if (getuid() != 0)
+        if (geteuid() != 0)
         {
             fprintf(stderr, "Please use the root account to install the Samba interop libraries\n");
             goto cleanup;
@@ -1656,7 +1656,7 @@ main(
     }
     else if (mode == UNINSTALL)
     {
-        if (getuid() != 0)
+        if (geteuid() != 0)
         {
             fprintf(stderr, "Please use the root account to uninstall the Samba interop libraries\n");
             goto cleanup;
