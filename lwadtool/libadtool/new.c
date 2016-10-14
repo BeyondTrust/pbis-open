@@ -436,23 +436,21 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
                                         action->newUser.namePreWin2000,
                                         action->newUser.password);
         ADT_BAIL_ON_ERROR_NP(dwError);
-
-        if(action->newUser.isNoMustChangePasswd) {
-            dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            avpTime[0].attr = "pwdLastSet";
-            avpTime[0].vals[0] = "-1";
-
-            dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
-            //fprintf(stderr, "Setting time to %s\n", avpTime[0].vals[0]);
-            ADT_BAIL_ON_ERROR_NP(dwError);
-        }
-
     }
+
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    avpTime[0].attr = "pwdLastSet";
+
+    avpTime[0].vals[0] = action->newUser.isNoMustChangePasswd ? "-1" : "0";
+
+    dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
+
+    ADT_BAIL_ON_ERROR_NP(dwError);
 
     if(isSet) {
         dwError = AdtNetUserSetInfoFlags(appContext,

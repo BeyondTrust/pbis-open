@@ -523,13 +523,7 @@ CheckSambaVersion(
             BAIL_ON_LSA_ERROR(error);
         }
     }
-    else if (!strncmp(pVersionString, "4.0.", sizeof("4.0.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.1.", sizeof("4.1.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.2.", sizeof("4.2.") - 1))
+    else if (!strncmp(pVersionString, "4.", sizeof("4.") - 1))
     {
     }
     else
@@ -1490,6 +1484,7 @@ main(
     PCSTR pErrorSymbol = NULL;
     PSTR pVersion = NULL;
     BOOLEAN smbdExists = FALSE;
+    BOOLEAN force = FALSE;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
     {
@@ -1520,6 +1515,17 @@ main(
             if (mode == UNSET)
             {
                 mode = UNINSTALL;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--force"))
+        {
+            if (mode == INSTALL || mode== UNINSTALL)
+            {
+                force = TRUE;
             }
             else
             {
@@ -1615,18 +1621,27 @@ main(
     }
 
     error = CheckSambaVersion(pSmbdPath, &pVersion);
-    BAIL_ON_LSA_ERROR(error);
-
+    if (force == FALSE) 
+    {
+       BAIL_ON_LSA_ERROR(error);
+    }
+ 
     if (mode == CHECK_VERSION)
     {
         fprintf(stderr, "Samba version supported\n");
     }
     else if (mode == INSTALL)
     {
+        if (geteuid() != 0)
+        {
+            fprintf(stderr, "Please use the root account to install the Samba interop libraries\n");
+            goto cleanup;
+        }
+
         error = InstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 
-        if (!strncmp(pVersion, "3.0.", sizeof("3.0.") - 1))
+        if (pVersion && strncmp(pVersion, "3.0.", sizeof("3.0.") - 1) == 0)
         {
             // Only Samba 3.0.x needs this
             error = InstallLwiCompat(pSmbdPath);
@@ -1641,6 +1656,12 @@ main(
     }
     else if (mode == UNINSTALL)
     {
+        if (geteuid() != 0)
+        {
+            fprintf(stderr, "Please use the root account to uninstall the Samba interop libraries\n");
+            goto cleanup;
+        }
+
         error = UninstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 

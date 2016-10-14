@@ -23,7 +23,8 @@ make()
 	ldap_ops.c \
 	action_base.c \
 	ids.c \
-	net.c"
+	net.c \
+        set.c"
 
     mk_library \
 	LIB=adtool \

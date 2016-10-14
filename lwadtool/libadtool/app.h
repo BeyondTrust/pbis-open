@@ -87,6 +87,7 @@
 #define ADT_ADD_TO_GROUP_ACT            "add-to-group"
 #define ADT_REMOVE_FROM_GROUP_ACT       "remove-from-group"
 #define ADT_UNLOCK_ACCOUNT_ACT          "unlock-account"
+#define ADT_SET_ATTR_ACT                "set-attr"
 
 #define A_DESC_HEADER "Description: "
 #define A_EXAMPLE_HEADER "\n\nExample: "
@@ -472,6 +473,8 @@ extern DWORD InitAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD InitAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD InitAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD InitAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD InitAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' validate methods.
@@ -511,6 +514,8 @@ extern DWORD ValidateAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD ValidateAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD ValidateAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD ValidateAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD ValidateAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' execute method.
@@ -550,6 +555,8 @@ extern DWORD ExecuteAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' clean up methods.
@@ -591,6 +598,8 @@ extern DWORD CleanUpAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD CleanUpAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Error message buffer.

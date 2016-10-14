@@ -1129,10 +1129,43 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*unlockAccountAction)[i++])));
 
     /**
+     ** Set attribute options.
+     **/
+    i = 0;
+    struct poptOption **setAttrAction = MakeOptions(4);
+    ADT_BAIL_ON_ALLOC_FAILURE(setAttrAction);
+    MakeOption(&((*setAttrAction)[i++]),
+               "dn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.dn),
+               0,
+               "DN.[X]",
+               NULL);
+    MakeOption(&((*setAttrAction)[i++]),
+               "attrName",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.attrName),
+               0,
+               "Name of attribute.[X]",
+               NULL);
+
+    MakeOption(&((*setAttrAction)[i++]),
+               "attrValue",
+               '\0',
+               POPT_ARG_STRING | POPT_ARGFLAG_OPTIONAL,
+               &(appContext->action.setAttribute.attrValue),
+               0,
+               "Value of attribute. Multi-value attributes are delimited with a semi-colon. To unset an attribute do not provide the attrValue argument.",
+               NULL);
+    MakeOption(ADT_TABLEEND(&((*setAttrAction)[i++])));
+
+    /**
      * Open Edition options.
      */
     i = 0;
-    struct poptOption **openActionsTable = MakeOptions(19);
+    struct poptOption **openActionsTable = MakeOptions(20);
     ADT_BAIL_ON_ALLOC_FAILURE(openActionsTable);
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1278,6 +1311,16 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                AdtSearchUserAction,
                ADT_SEARCH_USER_ACT " - search for users, print DNs.",
                NULL);
+
+    MakeOption(&((*openActionsTable)[i++]),
+               NULL,
+               'O',
+               POPT_ARG_INCLUDE_TABLE,
+               *setAttrAction,
+               AdtSetAttrAction,
+               ADT_SET_ATTR_ACT " - set/un-set attribute.",
+               NULL);
+
     /*
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1349,6 +1392,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
         LW_SAFE_FREE_MEMORY(addToGroupAction);
         LW_SAFE_FREE_MEMORY(removeFromGroupAction);
         LW_SAFE_FREE_MEMORY(unlockAccountAction);
+        LW_SAFE_FREE_MEMORY(setAttrAction);
         /*
         LW_SAFE_FREE_MEMORY(enableComputerAction);
         LW_SAFE_FREE_MEMORY(disableComputerAction);
@@ -1618,6 +1662,18 @@ VOID PrintExamples() {
             "Delete the default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
+            NL_STR
+            "Modify an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""
+            NL_STR
+            "Modify a multi-value attribute using a semi-colon as the delimiter. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=group,OU=department,DC=company,DC=com --attrName member --attrValue \"CN=Test User,OU=department,DC=company,DC=com;CN=Test User2,OU=department,DC=company,DC=com\""
+            NL_STR
+            "Unset an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName"
             ;
 
     fprintf(stdout, "%s\n", s);
