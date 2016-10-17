@@ -59,6 +59,7 @@
 #include <iconv.h>
 #include <assert.h>
 #include <lwerror.h>
+#include <lw/errno.h>
 #include <reg/reg.h>
 #include <reg/lwreg.h>
 #include <lwstr.h>

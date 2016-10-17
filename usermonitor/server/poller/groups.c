@@ -595,6 +595,8 @@ UmnSrvFindDeletedGroupMembers(
     DWORD lastUpdatedLen = 0;
     PSTR pUserName = NULL;
 
+    UMN_LOG_DEBUG("Finding deleted local groups");
+
     dwError = RegQueryInfoKeyA(
                     hReg,
                     hMembers,
@@ -723,12 +725,8 @@ UmnSrvUpdateGroupMembers(
                         NULL,
                         &hMembers,
                         NULL);
-        BAIL_ON_UMN_ERROR(dwError);
     }
-    else
-    {
-        BAIL_ON_UMN_ERROR(dwError);
-    }
+    BAIL_ON_UMN_ERROR(dwError);
 
     for (iMember = 0; pGroup->gr_mem[iMember]; iMember++)
     {
@@ -853,6 +851,7 @@ UmnSrvUpdateGroup(
                     sizeof(dwNow));
     BAIL_ON_UMN_ERROR(dwError);
 
+    UMN_LOG_DEBUG("Updating local group membership");
     dwError = UmnSrvUpdateGroupMembers(
                     pEventlog,
                     hReg,
@@ -896,6 +895,7 @@ UmnSrvFindDeletedGroups(
     HKEY hMembers = NULL;
     PSTR pMembersName = NULL;
 
+    UMN_LOG_DEBUG("Finding deleted local groups");
     dwError = RegQueryInfoKeyA(
                     hReg,
                     hGroups,

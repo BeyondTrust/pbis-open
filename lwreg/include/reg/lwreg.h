@@ -53,6 +53,22 @@
 #include <reg/reg.h>
 #include <reg/lwntreg.h>
 
+// Registry error utility functions
+
+/**
+ * @brief Return TRUE if dwError is 
+ * a registry specific error.
+ *
+ * @param dwError
+ *
+ * @return TRUE if dwError is 
+ * a registry specific error.
+ */
+BOOLEAN
+LwRegIsRegistrySpecificError(
+    IN const DWORD dwError
+    );
+
 size_t
 LwRegGetErrorString(
     DWORD  dwError,
