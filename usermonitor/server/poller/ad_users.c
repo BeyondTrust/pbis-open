@@ -172,7 +172,7 @@ UmnSrvWriteADUserEvent(
 {
     DWORD dwError = 0;
     // Do not free. The field values are borrowed from other structures.
-    USER_CHANGE change = { { 0 } };
+    AD_USER_CHANGE change = { { 0 } };
     LW_EVENTLOG_RECORD record = { 0 };
     char oldTimeBuf[128] = { 0 };
     char newTimeBuf[128] = { 0 };
@@ -211,17 +211,64 @@ UmnSrvWriteADUserEvent(
 
     if (pNew)
     {
-        change.NewValue.pw_name = pNew->userInfo.pszUnixName;
-        change.NewValue.pw_passwd = pNew->userInfo.pszPasswd ?
-                                        pNew->userInfo.pszPasswd : "x";
+#if 0 
+        // TODO [DCM] verify each of these are available in the ADNewValue
+        change.NewValue.pw_passwd = pNew->userInfo.pszPasswd 
+                                        ? pNew->userInfo.pszPasswd 
+                                        : "x";
         change.NewValue.pw_uid = pNew->userInfo.uid;
         change.NewValue.pw_gid = pNew->userInfo.gid;
-        change.NewValue.pw_gecos = pNew->userInfo.pszGecos ?
-                                        pNew->userInfo.pszGecos : "";
+        change.NewValue.pw_gecos = pNew->userInfo.pszGecos 
+                                        ? pNew->userInfo.pszGecos 
+                                        : "";
         change.NewValue.pw_dir = pNew->userInfo.pszHomedir;
         change.NewValue.pw_shell = pNew->userInfo.pszShell;
         change.NewValue.pDisplayName = pNew->userInfo.pszDisplayName;
         change.NewValue.LastUpdated = Now;
+#endif
+
+        assert(pNew->type == LSA_OBJECT_TYPE_USER);
+
+        change.ADNewValue.pszDN = pNew->pszDN;
+        change.ADNewValue.pszObjectSid = pNew->pszObjectSid;
+        change.ADNewValue.enabled = pNew->enabled;
+        change.ADNewValue.bIsLocal = pNew->bIsLocal;
+        change.ADNewValue.pszNetbiosDomainName = pNew->pszNetbiosDomainName;
+        change.ADNewValue.pszSamAccountName = pNew->pszSamAccountName;
+        change.ADNewValue.pszPrimaryGroupSid = pNew->userInfo.pszPrimaryGroupSid;
+        change.ADNewValue.pszUPN = pNew->userInfo.pszUPN;
+        change.ADNewValue.pszAliasName = pNew->userInfo.pszAliasName;
+
+        change.ADNewValue.qwPwdLastSet = pNew->userInfo.qwPwdLastSet;
+        change.ADNewValue.qwMaxPwdAge = pNew->userInfo.qwMaxPwdAge;
+        change.ADNewValue.qwPwdExpires = pNew->userInfo.qwPwdExpires;
+        change.ADNewValue.qwAccountExpires = pNew->userInfo.qwAccountExpires;
+
+        change.ADNewValue.bIsGeneratedUPN = pNew->userInfo.bIsGeneratedUPN;
+        change.ADNewValue.bIsAccountInfoKnown = pNew->userInfo.bIsAccountInfoKnown;
+        change.ADNewValue.bPasswordExpired = pNew->userInfo.bPasswordExpired;
+        change.ADNewValue.bPasswordNeverExpires = pNew->userInfo.bPasswordNeverExpires;
+        change.ADNewValue.bPromptPasswordChange = pNew->userInfo.bPromptPasswordChange;
+        change.ADNewValue.bUserCanChangePassword = pNew->userInfo.bUserCanChangePassword;
+        change.ADNewValue.bAccountDisabled = pNew->userInfo.bAccountDisabled;
+        change.ADNewValue.bAccountExpired = pNew->userInfo.bAccountExpired;
+        change.ADNewValue.bAccountLocked = pNew->userInfo.bAccountLocked;
+
+        change.ADNewValue.uid = pNew->userInfo.uid;
+        change.ADNewValue.gid = pNew->userInfo.gid;
+        change.ADNewValue.pszUnixName = pNew->userInfo.pszUnixName;
+        change.ADNewValue.pszPasswd = pNew->userInfo.pszPasswd 
+                                        ? pNew->userInfo.pszPasswd
+                                        : "x";
+        change.ADNewValue.pszGecos = pNew->userInfo.pszGecos
+                                        ? pNew->userInfo.pszGecos
+                                        : "";
+        change.ADNewValue.pszShell = pNew->userInfo.pszShell;
+        change.ADNewValue.pszHomedir = pNew->userInfo.pszHomedir;
+
+        change.ADNewValue.pszDisplayName = pNew->userInfo.pszDisplayName;
+        change.ADNewValue.pszWindowsHomeFolder = pNew->userInfo.pszWindowsHomeFolder;
+        change.ADNewValue.pszLocalWindowsHomeFolder = pNew->userInfo.pszLocalWindowsHomeFolder; 
     }
 
     dwError = LwMbsToWc16s(
@@ -341,7 +388,7 @@ UmnSrvWriteADUserEvent(
                     pNew ? pNew->userInfo.pszDisplayName : "");
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = EncodeUserChange(
+    dwError = EncodeADUserChange(
                     &change,
                     &record.DataLen,
                     (PVOID*)&record.pData);

@@ -400,6 +400,131 @@ error:
     goto cleanup;
 }
 
+VOID
+FreeADUserInfoContents(
+    PAD_USER_INFO pValue
+    )
+{
+    // TODO - complete 
+#if 0
+    rpc_ss_client_free(pValue->pw_name);
+    rpc_ss_client_free(pValue->pw_passwd);
+    rpc_ss_client_free(pValue->pw_gecos);
+    rpc_ss_client_free(pValue->pw_dir);
+    rpc_ss_client_free(pValue->pw_shell);
+    rpc_ss_client_free(pValue->pDisplayName);
+#endif
+}
+
+VOID
+LW_USERMONITORLIB_API
+FreeADUserChange(
+    PAD_USER_CHANGE pValue
+    )
+{
+    if (pValue == NULL)
+    {
+        return;
+    }
+
+    FreeUserMonitorPasswdContents(&pValue->OldValue);
+    FreeADUserInfoContents(&pValue->ADNewValue);
+    rpc_ss_client_free(pValue);
+}
+
+DWORD
+LW_USERMONITORLIB_API
+DecodeADUserChange(
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PAD_USER_CHANGE* ppValue
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+    PAD_USER_CHANGE pValue = NULL;
+
+    idl_es_decode_buffer(
+            (idl_byte *)pBuffer,
+            sBufferLen,
+            &encodingHandle,
+            &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    DCETHREAD_TRY
+    AD_USER_CHANGE_Decode(encodingHandle, &pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+    *ppValue = pValue;
+
+cleanup:
+    return dwError;
+
+error:
+    if (pValue != NULL)
+    {
+        FreeADUserChange(pValue);
+    }
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+    goto cleanup;
+}
+
+DWORD
+LW_USERMONITORLIB_API
+EncodeADUserChange(
+    IN PAD_USER_CHANGE pValue,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+
+    idl_es_encode_dyn_buffer(
+        (idl_byte**) (void*) ppEncodedBuffer,
+        (idl_ulong_int*) pdwEncodedSize,
+        &encodingHandle,
+        &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    DCETHREAD_TRY
+    AD_USER_CHANGE_Encode(encodingHandle, pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+cleanup:
+    return dwError;
+
+error:
+
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+
+    goto cleanup;
+}
+
 #ifdef _WIN32
 void
 __RPC_USER
