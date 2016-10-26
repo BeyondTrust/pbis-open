@@ -211,22 +211,6 @@ UmnSrvWriteADUserEvent(
 
     if (pNew)
     {
-#if 0 
-        // TODO [DCM] verify each of these are available in the ADNewValue
-        change.NewValue.pw_passwd = pNew->userInfo.pszPasswd 
-                                        ? pNew->userInfo.pszPasswd 
-                                        : "x";
-        change.NewValue.pw_uid = pNew->userInfo.uid;
-        change.NewValue.pw_gid = pNew->userInfo.gid;
-        change.NewValue.pw_gecos = pNew->userInfo.pszGecos 
-                                        ? pNew->userInfo.pszGecos 
-                                        : "";
-        change.NewValue.pw_dir = pNew->userInfo.pszHomedir;
-        change.NewValue.pw_shell = pNew->userInfo.pszShell;
-        change.NewValue.pDisplayName = pNew->userInfo.pszDisplayName;
-        change.NewValue.LastUpdated = Now;
-#endif
-
         assert(pNew->type == LSA_OBJECT_TYPE_USER);
 
         change.ADNewValue.pszDN = pNew->pszDN;
@@ -269,6 +253,7 @@ UmnSrvWriteADUserEvent(
         change.ADNewValue.pszDisplayName = pNew->userInfo.pszDisplayName;
         change.ADNewValue.pszWindowsHomeFolder = pNew->userInfo.pszWindowsHomeFolder;
         change.ADNewValue.pszLocalWindowsHomeFolder = pNew->userInfo.pszLocalWindowsHomeFolder; 
+        change.ADNewValue.LastUpdated = Now;
     }
 
     dwError = LwMbsToWc16s(

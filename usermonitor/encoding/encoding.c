@@ -405,15 +405,21 @@ FreeADUserInfoContents(
     PAD_USER_INFO pValue
     )
 {
-    // TODO - complete 
-#if 0
-    rpc_ss_client_free(pValue->pw_name);
-    rpc_ss_client_free(pValue->pw_passwd);
-    rpc_ss_client_free(pValue->pw_gecos);
-    rpc_ss_client_free(pValue->pw_dir);
-    rpc_ss_client_free(pValue->pw_shell);
-    rpc_ss_client_free(pValue->pDisplayName);
-#endif
+    rpc_ss_client_free(pValue->pszDN);
+    rpc_ss_client_free(pValue->pszObjectSid);
+    rpc_ss_client_free(pValue->pszNetbiosDomainName);
+    rpc_ss_client_free(pValue->pszSamAccountName);
+    rpc_ss_client_free(pValue->pszPrimaryGroupSid);
+    rpc_ss_client_free(pValue->pszUPN);
+    rpc_ss_client_free(pValue->pszAliasName);
+    rpc_ss_client_free(pValue->pszUnixName);
+    rpc_ss_client_free(pValue->pszPasswd);
+    rpc_ss_client_free(pValue->pszGecos);
+    rpc_ss_client_free(pValue->pszShell);
+    rpc_ss_client_free(pValue->pszHomedir);
+    rpc_ss_client_free(pValue->pszDisplayName);
+    rpc_ss_client_free(pValue->pszWindowsHomeFolder);
+    rpc_ss_client_free(pValue->pszLocalWindowsHomeFolder);
 }
 
 VOID

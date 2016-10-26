@@ -123,6 +123,8 @@ typedef STRUCT _AD_USER_INFO
     PSTR pszDisplayName;
     PSTR pszWindowsHomeFolder;
     PSTR pszLocalWindowsHomeFolder;
+
+    DWORD LastUpdated;
 } AD_USER_INFO, *PAD_USER_INFO;
 
 typedef STRUCT USER_MONITOR_GROUP
