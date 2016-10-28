@@ -74,11 +74,18 @@ typedef STRUCT _USER_MONITOR_PASSWD
     DWORD LastUpdated;
 } USER_MONITOR_PASSWD, *PUSER_MONITOR_PASSWD;
 
+/* used when processing to discriminate between format changes */
+#define AD_USER_CHANGE_VERSION  "(v2)"
+#define AD_USER_INFO_VERSION 0
+
 /* 
  * AD user attributes
  */
 typedef STRUCT _AD_USER_INFO 
 {
+    // the version of this struct
+    DWORD version;
+
     // This is a subset of LSA_SECURITY_OBJECT, 
     // and sub LSA_SECURITY_OBJECT_USER_INFO 
     // struct

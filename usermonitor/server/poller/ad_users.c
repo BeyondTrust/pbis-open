@@ -213,6 +213,8 @@ UmnSrvWriteADUserEvent(
     {
         assert(pNew->type == LSA_OBJECT_TYPE_USER);
 
+        change.ADNewValue.version = AD_USER_INFO_VERSION;
+
         change.ADNewValue.pszDN = pNew->pszDN;
         change.ADNewValue.pszObjectSid = pNew->pszObjectSid;
         change.ADNewValue.enabled = pNew->enabled;
@@ -302,7 +304,7 @@ UmnSrvWriteADUserEvent(
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pEventCategory,
-                    L"AD User %hhs",
+                    L"AD User %hhs " AD_USER_CHANGE_VERSION ,
                     pOperation);
     BAIL_ON_UMN_ERROR(dwError);
 
