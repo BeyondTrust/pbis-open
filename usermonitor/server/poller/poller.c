@@ -149,7 +149,6 @@ UmnSrvTimespecSubtract(
 }
 
 
-
 /**
  * @brief Set pElapsed to TRUE if pTimespec has elapsed.
  *
@@ -359,9 +358,9 @@ UmnSrvPollerThreadRoutine(
     DWORD dwPeriodSecs = 0;
     
     char regErrMsg[256] = {0};
-    
-    BOOLEAN bMutexLocked = FALSE;
+    char fqdn[1024] = {0};
 
+    BOOLEAN bMutexLocked = FALSE;
 
     UMN_LOG_INFO("User poller thread started");
     dwError = pthread_mutex_lock(&gSignalPollerMutex);
@@ -428,6 +427,11 @@ UmnSrvPollerThreadRoutine(
         {
             dwError = UmnSrvNow(&periodStart, &now);
             BAIL_ON_UMN_ERROR(dwError);
+
+            // obtain the fully qualified domain name and use it throughout this iteration
+            UmnEvtFreeEventComputerName();
+            UmnEvtGetFQDN(fqdn, sizeof(fqdn));
+            UmnEvtSetEventComputerName(fqdn);
 
             dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
             if (dwError == ERROR_CANCELLED)

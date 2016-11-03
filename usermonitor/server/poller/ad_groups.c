@@ -171,7 +171,8 @@ UmnSrvWriteADGroupEvent(
         BAIL_ON_UMN_ERROR(dwError);
     }
 
-    // Leave computer NULL so it is filled in by the eventlog
+    // Do not free. This value is borrowed from other structures.
+    record.pComputer = (PWSTR)UmnEvtGetEventComputerName();
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pDescription,

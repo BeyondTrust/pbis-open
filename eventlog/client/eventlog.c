@@ -452,81 +452,6 @@ error:
 }
 
 
-
-/**
- * @brief Return the fully qualified hostname in the 
- * supplied buffer.
- *
- * Returns the fully qualified hostname, truncated if
- * necessary to fit the supplied buffer.
- *
- * @param [in] pszFQDNHostname the destination buffer 
- * @param [in] len the size of the destination buffer
- *
- * @return errno error codes, specifically ENAMETOOLONG 
- * if the fully qualified hostname was truncated to fit
- */
-DWORD
-GetFQDN(
-    char *pszFQDNHostname, 
-    size_t len) 
-{
-    DWORD dwError = 0;
-    char pszHostname[1024];
-
-    const struct addrinfo hints = {
-        .ai_flags = AI_CANONNAME | AI_ADDRCONFIG,
-        .ai_family = AF_UNSPEC,
-        .ai_socktype = 0,
-        .ai_protocol = 0,
-        .ai_canonname = NULL,
-        .ai_addr = NULL,
-        .ai_next = NULL
-    };
-
-    struct addrinfo *paddrs= NULL;
-    struct addrinfo *paddr = NULL;
-
-    dwError = gethostname(pszHostname, sizeof(pszHostname)); 
-    if (dwError) 
-    {
-        goto error;
-    }
-
-    dwError = getaddrinfo(pszHostname, NULL, &hints, &paddrs);
-    if (dwError) 
-    {
-        EVT_LOG_ERROR("Failed obtaining fully qualified domain name getaddrinfo: %s\n", gai_strerror(dwError));
-        goto error;
-    }
-
-    for(paddr = paddrs; paddr != NULL; paddr = paddrs->ai_next) {
-        if (paddr->ai_canonname) {
-            strncpy(pszFQDNHostname, paddr->ai_canonname, len - 1);
-            if (len > 0 ) {
-                pszFQDNHostname[len - 1] = '\0';
-            }
-
-            if (strlen(pszFQDNHostname) < strlen(paddr->ai_canonname)) {
-                dwError = ENAMETOOLONG;
-            }
-            
-            break;
-        }
-    }
-
-cleanup:
-    if (paddrs) {
-        freeaddrinfo(paddrs);
-    }
-
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-
 DWORD
 LwEvtWriteRecords(
     IN PLW_EVENTLOG_CONNECTION pConn,
@@ -535,7 +460,7 @@ LwEvtWriteRecords(
     )
 {
     volatile DWORD dwError = 0;
-    char pszHostname[1024]; 
+    char pszHostname[1024];
     PWSTR pwszHostname = NULL;
     DWORD index = 0;
 
@@ -545,13 +470,8 @@ LwEvtWriteRecords(
         {
             if (!pwszHostname)
             {
-                dwError = GetFQDN(pszHostname, sizeof(pszHostname));
-                if (dwError == ENAMETOOLONG) 
-                {
-                    EVT_LOG_DEBUG("Fully qualified host name was truncated.");
-                }
-
-                dwError = (dwError == ENAMETOOLONG) ? 0 : LwMapErrnoToLwError(dwError);
+                dwError = LwMapErrnoToLwError(
+                            gethostname(pszHostname, sizeof(pszHostname)));
                 BAIL_ON_EVT_ERROR(dwError);
 
                 dwError = LwMbsToWc16s(pszHostname, &pwszHostname);

@@ -59,6 +59,8 @@
 #include <iconv.h>
 #include <assert.h>
 #include <lwerror.h>
+#include <lw/errno.h>
+#include <lw/rtlstring.h>
 #include <reg/reg.h>
 #include <reg/lwreg.h>
 #include <lwstr.h>
@@ -80,3 +82,4 @@
 #include "ad_users_p.h"
 #include "groups_p.h"
 #include "ad_groups_p.h"
+#include "eventlog_utils.h"
