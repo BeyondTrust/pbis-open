@@ -219,6 +219,8 @@ UmnSrvUpdateAccountInfo(
     HANDLE hLsass = NULL;
     HANDLE hReg = NULL;
     HKEY hParameters = NULL;
+    BOOLEAN bLocalDBOpen = FALSE;
+
     // Do not free
     PSTR pDisableLsassEnum = NULL;
     DWORD lastUpdated = 0;
@@ -284,6 +286,7 @@ UmnSrvUpdateAccountInfo(
 
     setpwent();
     setgrent();
+    bLocalDBOpen = TRUE;
 
     dwError = UmnSrvUpdateUsers(
                     hLsass,
@@ -305,6 +308,7 @@ UmnSrvUpdateAccountInfo(
 
     endpwent();
     endgrent();
+    bLocalDBOpen = FALSE;
 
     dwError = UmnSrvUpdateADAccounts(
                     hLsass,
@@ -327,6 +331,11 @@ UmnSrvUpdateAccountInfo(
     BAIL_ON_UMN_ERROR(dwError);
     
 cleanup:
+    if (bLocalDBOpen) 
+    {
+        endpwent();
+        endgrent();
+    }
     if (hLsass)
     {
         LsaCloseServer(hLsass);
