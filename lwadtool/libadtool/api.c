@@ -265,6 +265,13 @@ static DWORD SetUpAction(IN AdtActionTP action) {
             appContext->actionCleanUpMethod = &CleanUpAdtUnlockAccountAction;
             break;
 
+        case (AdtSetAttrAction):
+            appContext->actionInitMethod = &InitAdtSetAttrAction;
+            appContext->actionValidateMethod = &ValidateAdtSetAttrAction;
+            appContext->actionExecuteMethod = &ExecuteAdtSetAttrAction;
+            appContext->actionCleanUpMethod = &CleanUpAdtSetAttrAction;
+            break;
+
         default:
             break;
     }
@@ -922,6 +929,9 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
         case (AdtUnlockAccountAction):
             return ADT_UNLOCK_ACCOUNT_ACT;
 
+        case (AdtSetAttrAction):
+            return ADT_SET_ATTR_ACT;
+
         default:
             break;
     }
@@ -1080,6 +1090,10 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
 
     if(!strcmp(name, ADT_UNLOCK_ACCOUNT_ACT)) {
         return AdtUnlockAccountAction;
+    }
+
+    if(!strcmp(name, ADT_SET_ATTR_ACT)) {
+        return AdtSetAttrAction;
     }
 
     return AdtBaseAction;

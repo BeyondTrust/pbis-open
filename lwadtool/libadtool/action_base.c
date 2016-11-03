@@ -189,30 +189,17 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
             appContext->workConn = &(appContext->searchConn);
         }
     }
-    else {
-        if (IsBackSlashPresent(*name)) {
-            p = strstr((PCSTR) *name, "\\");
+    else if(IsDNComp(*name)) 
+    {
+        dwError = LwStrDupOrNull((PCSTR) *name, &tmp);
+        ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
-            if (p) {
-                len = p - *name;
-                dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1),
-                                           OUT_PPVOID(&domainComp));
-                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+        LwStrToLower(tmp);
+        p = strstr((PCSTR) tmp, "dc=");
 
-                strncpy(domainComp, (PCSTR) *name, len);
-            }
-
-            if (!IsDotPresent(domainComp)) {
-                p = strstr((PCSTR) appContext->modifyConn.domainName, ".");
-
-                dwError
-                        = LwAllocateStringPrintf(&domain, "%s%s", domainComp, p);
-                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-            }
-            else {
-                dwError = LwStrDupOrNull((PCSTR) domainComp, &domain);
-                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-            }
+        if(p) {
+            dwError = GetDomainFromDN(*name, &domain);
+            ADT_BAIL_ON_ERROR_NP(dwError);
 
             if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
                 appContext->workConn = &(appContext->modifyConn);
@@ -221,30 +208,42 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
                 appContext->workConn = &(appContext->searchConn);
             }
         }
-        else {
-            if(IsDNComp(*name)) {
-                dwError = LwStrDupOrNull((PCSTR) *name, &tmp);
-                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+    }
+    else if (IsBackSlashPresent(*name)) 
+    {
+        p = strstr((PCSTR) *name, "\\");
 
-                LwStrToLower(tmp);
-                p = strstr((PCSTR) tmp, "dc=");
+        if (p) {
+            len = p - *name;
+            dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1),
+                                       OUT_PPVOID(&domainComp));
+            ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
-                if(p) {
-                    dwError = GetDomainFromDN(*name, &domain);
-                    ADT_BAIL_ON_ERROR_NP(dwError);
-
-                    if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
-                        appContext->workConn = &(appContext->modifyConn);
-                    }
-                    else {
-                        appContext->workConn = &(appContext->searchConn);
-                    }
-                }
-            }
-            else {
-                appContext->workConn = &(appContext->modifyConn);
-            }
+            strncpy(domainComp, (PCSTR) *name, len);
         }
+
+        if (!IsDotPresent(domainComp)) {
+            p = strstr((PCSTR) appContext->modifyConn.domainName, ".");
+
+            dwError
+                    = LwAllocateStringPrintf(&domain, "%s%s", domainComp, p);
+            ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+        }
+        else {
+            dwError = LwStrDupOrNull((PCSTR) domainComp, &domain);
+            ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+        }
+
+        if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
+            appContext->workConn = &(appContext->modifyConn);
+        }
+        else {
+            appContext->workConn = &(appContext->searchConn);
+        }
+    }
+    else 
+    {
+        appContext->workConn = &(appContext->modifyConn);
     }
 
     cleanup:
@@ -303,7 +302,9 @@ DWORD OpenADSearchConnectionDomain(IN AdtActionTP action, IN OUT PSTR *name)
         }
     }
     else {
-        if (IsBackSlashPresent(*name)) {
+        // Check if this is domain\name format
+        // #72263: A DN with escaped characters will contain a backslash so check it doesn't look like a DN
+        if (IsBackSlashPresent(*name) && !IsDNComp(*name)) {
             p = strstr((PCSTR) *name, "\\");
 
             if (p) {

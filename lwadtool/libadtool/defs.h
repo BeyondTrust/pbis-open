@@ -57,6 +57,8 @@
 #define LDAP_ATTRS_MAX 5000
 #define SID_CHARS_MAX 128
 
+#define ADT_LIST_DELIMITER  ";"     /* multi-list attribute separator */
+
 #define ADT_SAFE_LOG_STR(s) ((s)?(s):"(null)")
 
 #define ADT_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
