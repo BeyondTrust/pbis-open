@@ -1067,6 +1067,7 @@ UmnSrvUpdateADAccounts(
     PCSTR pIter = NULL;
     PSTR  pMember = NULL;
     PLW_HASH_TABLE pUsers = NULL;
+
     LWREG_CONFIG_ITEM ADConfigDescription[] =
     {
         {
@@ -1088,6 +1089,8 @@ UmnSrvUpdateADAccounts(
     PLSA_SECURITY_OBJECT pAllUsers = NULL;
     DWORD i = 0;
 
+    UMN_LOG_DEBUG("Updating AD users");
+    
     dwError = LwHashCreate(
                     100,
                     LwHashStringCompare,
@@ -1106,6 +1109,7 @@ UmnSrvUpdateADAccounts(
 
     if (pMemberList && pMemberList[0])
     {
+        UMN_LOG_DEBUG("RequireMembershipOf is set; will report on AD users belonging to RequireMembershipOf entries");
         pIter = pMemberList;
         while (*pIter != 0)
         {
@@ -1119,6 +1123,8 @@ UmnSrvUpdateADAccounts(
                     TRUE,
                     TRUE);
 
+
+            UMN_LOG_DEBUG("Adding users belonging to RequireMembershipOf entry %s", pMember);
             dwError = UmnSrvAddUsersFromMembership(
                             hLsass,
                             pUsers,
@@ -1130,6 +1136,8 @@ UmnSrvUpdateADAccounts(
     }
     else
     {
+
+        UMN_LOG_DEBUG("RequireMembershipOf is NOT set; will report on AD users based on joined cell/domain");
         dwError = LsaGetStatus2(
                         hLsass,
                         NULL,
@@ -1150,6 +1158,10 @@ UmnSrvUpdateADAccounts(
 
         if (pDomain || pCell)
         {
+            UMN_LOG_DEBUG("Reporting all users %s %s can login",
+                    (pCell) ? "in cell" : "accessible from domain",
+                    (pCell) ? pCell : pDomain);
+
             dwError = LwAllocateMemory(
                             sizeof(*pAllUsers),
                             (PVOID*)&pAllUsers);

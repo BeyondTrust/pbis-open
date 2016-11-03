@@ -614,6 +614,8 @@ UmnSrvFindDeletedUsers(
     DWORD lastUpdatedLen = 0;
     USER_MONITOR_PASSWD old = { 0 };
 
+    UMN_LOG_DEBUG("Finding deleted local users");
+
     dwError = RegQueryInfoKeyA(
                     hReg,
                     hUsers,
@@ -758,6 +760,7 @@ UmnSrvUpdateUsers(
 
     list.pdwIds = &uid;
 
+    UMN_LOG_DEBUG("Opening usermonitor Users key");
     dwError = RegOpenKeyExA(
                 hReg,
                 hParameters,
@@ -767,6 +770,7 @@ UmnSrvUpdateUsers(
                 &hUsers);
     BAIL_ON_UMN_ERROR(dwError);
 
+    UMN_LOG_DEBUG("Enumerating local users");
     while ((pUser = getpwent()) != NULL)
     {
         if (skipNoLogin && pUser->pw_shell &&
@@ -776,12 +780,14 @@ UmnSrvUpdateUsers(
             !strcmp(pUser->pw_shell, "/usr/bin/false") ||
             !strcmp(pUser->pw_shell, "/bin/false")))
         {
-            UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because their shell prevents them from logging in.",
+            UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because skipNoLogin set and their shell prevents them from logging in.",
                     LW_SAFE_LOG_STRING(pUser->pw_name), uid);
             continue;
         }
         uid = pUser->pw_uid;
 
+        UMN_LOG_DEBUG("Checking lsass for user '%s' (uid %d)", 
+                pUser->pw_name, pUser->pw_uid);
         dwError = LsaFindObjects(
                     hLsass,
                     NULL,
