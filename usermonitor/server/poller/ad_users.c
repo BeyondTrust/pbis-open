@@ -240,19 +240,19 @@ UmnSrvWriteADUserEvent(
         change.ADNewValue.bAccountExpired = pNew->userInfo.bAccountExpired;
         change.ADNewValue.bAccountLocked = pNew->userInfo.bAccountLocked;
 
-        change.ADNewValue.uid = pNew->userInfo.uid;
-        change.ADNewValue.gid = pNew->userInfo.gid;
-        change.ADNewValue.pszUnixName = pNew->userInfo.pszUnixName;
-        change.ADNewValue.pszPasswd = pNew->userInfo.pszPasswd 
+        change.ADNewValue.pw_uid = pNew->userInfo.uid;
+        change.ADNewValue.pw_gid = pNew->userInfo.gid;
+        change.ADNewValue.pw_name = pNew->userInfo.pszUnixName;
+        change.ADNewValue.pw_passwd = pNew->userInfo.pszPasswd 
                                         ? pNew->userInfo.pszPasswd
                                         : "x";
-        change.ADNewValue.pszGecos = pNew->userInfo.pszGecos
+        change.ADNewValue.pw_gecos = pNew->userInfo.pszGecos
                                         ? pNew->userInfo.pszGecos
                                         : "";
-        change.ADNewValue.pszShell = pNew->userInfo.pszShell;
-        change.ADNewValue.pszHomedir = pNew->userInfo.pszHomedir;
+        change.ADNewValue.pw_shell = pNew->userInfo.pszShell;
+        change.ADNewValue.pw_dir = pNew->userInfo.pszHomedir;
 
-        change.ADNewValue.pszDisplayName = pNew->userInfo.pszDisplayName;
+        change.ADNewValue.pDisplayName = pNew->userInfo.pszDisplayName;
         change.ADNewValue.pszWindowsHomeFolder = pNew->userInfo.pszWindowsHomeFolder;
         change.ADNewValue.pszLocalWindowsHomeFolder = pNew->userInfo.pszLocalWindowsHomeFolder; 
         change.ADNewValue.LastUpdated = Now;

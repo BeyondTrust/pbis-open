@@ -118,16 +118,17 @@ typedef STRUCT _AD_USER_INFO
     BOOL bAccountExpired;
     BOOL bAccountLocked;
 
-    // the UNIX attributes
-    DWORD uid;
-    DWORD gid;
-    PSTR pszUnixName;
-    PSTR pszPasswd;
-    PSTR pszGecos;
-    PSTR pszShell;
-    PSTR pszHomedir;
+    // the UNIX attributes 
+    DWORD pw_uid;
+    DWORD pw_gid;
+    PSTR pw_name;
+    PSTR pw_passwd;
+    PSTR pw_gecos;
+    PSTR pw_shell;
+    PSTR pw_dir;
 
-    PSTR pszDisplayName;
+    PSTR pDisplayName;
+
     PSTR pszWindowsHomeFolder;
     PSTR pszLocalWindowsHomeFolder;
 

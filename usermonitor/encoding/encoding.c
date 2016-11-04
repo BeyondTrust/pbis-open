@@ -412,12 +412,12 @@ FreeADUserInfoContents(
     rpc_ss_client_free(pValue->pszPrimaryGroupSid);
     rpc_ss_client_free(pValue->pszUPN);
     rpc_ss_client_free(pValue->pszAliasName);
-    rpc_ss_client_free(pValue->pszUnixName);
-    rpc_ss_client_free(pValue->pszPasswd);
-    rpc_ss_client_free(pValue->pszGecos);
-    rpc_ss_client_free(pValue->pszShell);
-    rpc_ss_client_free(pValue->pszHomedir);
-    rpc_ss_client_free(pValue->pszDisplayName);
+    rpc_ss_client_free(pValue->pw_name);
+    rpc_ss_client_free(pValue->pw_passwd);
+    rpc_ss_client_free(pValue->pw_gecos);
+    rpc_ss_client_free(pValue->pw_shell);
+    rpc_ss_client_free(pValue->pw_dir);
+    rpc_ss_client_free(pValue->pDisplayName);
     rpc_ss_client_free(pValue->pszWindowsHomeFolder);
     rpc_ss_client_free(pValue->pszLocalWindowsHomeFolder);
 }
