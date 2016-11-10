@@ -245,6 +245,8 @@ RegValidValueAttributes(
 
 
 /*Range 40700 - 41200 is reserved for registry specific error*/
+#define LWREG_ERROR_MIN_ERROR                                 40700
+
 #define LWREG_ERROR_NO_SUCH_KEY_OR_VALUE                      40700
 #define LWREG_ERROR_KEY_IS_ACTIVE                             40701
 #define LWREG_ERROR_DUPLICATE_KEYVALUENAME                    40702
@@ -272,6 +274,8 @@ RegValidValueAttributes(
 #define LWREG_ERROR_UNKNOWN                                   40727 //40188
 #define LWREG_ERROR_SYNTAX                                    40728 
 #define LWREG_ERROR_PARSE                                     40729
+
+#define LWREG_ERROR_MAX_ERROR                                 41200
 
 #endif /* __REG_H__ */
 

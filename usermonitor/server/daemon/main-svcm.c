@@ -114,13 +114,33 @@ SvcmStop(
     return 0;
 }
 
+NTSTATUS
+SvcmRefresh(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    DWORD dwError = 0;
+
+    UMN_LOG_VERBOSE("Refreshing configuration");
+    dwError = UmnSrvRefreshConfiguration();
+
+    if (dwError) {
+        UMN_LOG_WARNING("Failed refreshing configuration: error %d", dwError);
+    } else {
+        UMN_LOG_INFO("Succeeded refreshing configuration");
+    }
+
+    return dwError;
+}
+
 static LW_SVCM_MODULE gService =
 {
     .Size = sizeof(gService),
     .Init = SvcmInit,
     .Destroy = SvcmDestroy,
     .Start = SvcmStart,
-    .Stop = SvcmStop
+    .Stop = SvcmStop,
+    .Refresh = SvcmRefresh 
 };
 
 #define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(usermonitor)

@@ -58,6 +58,9 @@ cpp_quote("#if 0")
 #define STRUCT struct
 #endif
 
+/*
+ * UNIX struct passwd and related AD RFC2307 attributes
+ */
 typedef STRUCT _USER_MONITOR_PASSWD
 {
     PSTR pw_name;
@@ -71,6 +74,67 @@ typedef STRUCT _USER_MONITOR_PASSWD
     DWORD LastUpdated;
 } USER_MONITOR_PASSWD, *PUSER_MONITOR_PASSWD;
 
+/* used when processing to discriminate between format changes */
+#define AD_USER_CHANGE_VERSION  "(v2)"
+#define AD_USER_INFO_VERSION 0
+
+/* 
+ * AD user attributes
+ */
+typedef STRUCT _AD_USER_INFO 
+{
+    // the version of this struct
+    DWORD version;
+
+    // This is a subset of LSA_SECURITY_OBJECT, 
+    // and sub LSA_SECURITY_OBJECT_USER_INFO 
+    // struct
+    
+    PSTR pszDN;
+    PSTR pszObjectSid;
+    BOOL enabled;
+    BOOL bIsLocal;
+    PSTR pszNetbiosDomainName;
+    PSTR pszSamAccountName;
+    
+    // the LSA_SECURITY_OBJECT_USER_INFO
+    PSTR pszPrimaryGroupSid;
+    PSTR pszUPN;
+    PSTR pszAliasName;
+    
+    // NT time values 
+    UINT64 qwPwdLastSet;
+    UINT64 qwMaxPwdAge;
+    UINT64 qwPwdExpires;
+    UINT64 qwAccountExpires;
+
+    BOOL bIsGeneratedUPN;
+    BOOL bIsAccountInfoKnown;
+    BOOL bPasswordExpired;
+    BOOL bPasswordNeverExpires;
+    BOOL bPromptPasswordChange;
+    BOOL bUserCanChangePassword;
+    BOOL bAccountDisabled;
+    BOOL bAccountExpired;
+    BOOL bAccountLocked;
+
+    // the UNIX attributes 
+    DWORD pw_uid;
+    DWORD pw_gid;
+    PSTR pw_name;
+    PSTR pw_passwd;
+    PSTR pw_gecos;
+    PSTR pw_shell;
+    PSTR pw_dir;
+
+    PSTR pDisplayName;
+
+    PSTR pszWindowsHomeFolder;
+    PSTR pszLocalWindowsHomeFolder;
+
+    DWORD LastUpdated;
+} AD_USER_INFO, *PAD_USER_INFO;
+
 typedef STRUCT USER_MONITOR_GROUP
 {
     PSTR gr_name;
@@ -79,8 +143,10 @@ typedef STRUCT USER_MONITOR_GROUP
     DWORD LastUpdated;
 } USER_MONITOR_GROUP, *PUSER_MONITOR_GROUP;
 
+/* new, changed and deleted local users */
 typedef STRUCT _USER_CHANGE
 {
+    // unix passwd like attributes
     USER_MONITOR_PASSWD OldValue;
     USER_MONITOR_PASSWD NewValue;
 } USER_CHANGE, *PUSER_CHANGE;
@@ -99,6 +165,20 @@ typedef STRUCT _GROUP_MEMBERSHIP_CHANGE
     DWORD Gid;
     PSTR pGroupName;
 } GROUP_MEMBERSHIP_CHANGE, *PGROUP_MEMBERSHIP_CHANGE;
+
+/* new, changed and deleted AD users */
+typedef STRUCT _AD_USER_CHANGE
+{
+    // unix passwd like attributes
+    // (we don't currently store the 
+    // AD user attributes in the registry
+    // as the old values) 
+    USER_MONITOR_PASSWD OldValue;
+
+    // ad attributes/info
+    AD_USER_INFO ADNewValue;
+} AD_USER_CHANGE, *PAD_USER_CHANGE;
+
 
 #if !defined(_DCE_IDL_) && !defined(__midl)
 
@@ -180,6 +260,27 @@ FreeGroupMembershipChange(
     PGROUP_MEMBERSHIP_CHANGE pValue
     );
 
+VOID
+LW_USERMONITORLIB_API
+FreeADUserChange(
+    PAD_USER_CHANGE pValue
+    );
+
+DWORD
+LW_USERMONITORLIB_API
+DecodeADUserChange(
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PAD_USER_CHANGE* ppValue
+    );
+
+DWORD
+LW_USERMONITORLIB_API
+EncodeADUserChange(
+    IN PAD_USER_CHANGE pValue,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
+    );
 #ifdef __cplusplus
 }
 #endif

@@ -51,15 +51,15 @@
 
 VOID
 UmnSrvTimevalToTimespec(
-    OUT struct timespec *pDest,
-    IN struct timeval *pSrc
+    OUT struct timespec * const pDest,
+    IN struct timeval * const pSrc
     );
 
 VOID
 UmnSrvTimespecAdd(
-    OUT struct timespec *pDest,
-    IN struct timespec *pA,
-    IN struct timespec *pB
+    OUT struct timespec * const pDest,
+    IN struct timespec * const pA,
+    IN struct timespec * const pB
     );
 
 PVOID

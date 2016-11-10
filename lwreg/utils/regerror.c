@@ -523,3 +523,11 @@ RegNtLookupCode(
 
     return NULL;
 }
+
+BOOLEAN
+LwRegIsRegistrySpecificError(
+        IN const DWORD dwError
+        )
+{
+    return (dwError >= LWREG_ERROR_MIN_ERROR && dwError <= LWREG_ERROR_MAX_ERROR);
+}

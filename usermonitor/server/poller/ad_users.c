@@ -172,7 +172,7 @@ UmnSrvWriteADUserEvent(
 {
     DWORD dwError = 0;
     // Do not free. The field values are borrowed from other structures.
-    USER_CHANGE change = { { 0 } };
+    AD_USER_CHANGE change = { { 0 } };
     LW_EVENTLOG_RECORD record = { 0 };
     char oldTimeBuf[128] = { 0 };
     char newTimeBuf[128] = { 0 };
@@ -211,17 +211,51 @@ UmnSrvWriteADUserEvent(
 
     if (pNew)
     {
-        change.NewValue.pw_name = pNew->userInfo.pszUnixName;
-        change.NewValue.pw_passwd = pNew->userInfo.pszPasswd ?
-                                        pNew->userInfo.pszPasswd : "x";
-        change.NewValue.pw_uid = pNew->userInfo.uid;
-        change.NewValue.pw_gid = pNew->userInfo.gid;
-        change.NewValue.pw_gecos = pNew->userInfo.pszGecos ?
-                                        pNew->userInfo.pszGecos : "";
-        change.NewValue.pw_dir = pNew->userInfo.pszHomedir;
-        change.NewValue.pw_shell = pNew->userInfo.pszShell;
-        change.NewValue.pDisplayName = pNew->userInfo.pszDisplayName;
-        change.NewValue.LastUpdated = Now;
+        assert(pNew->type == LSA_OBJECT_TYPE_USER);
+
+        change.ADNewValue.version = AD_USER_INFO_VERSION;
+
+        change.ADNewValue.pszDN = pNew->pszDN;
+        change.ADNewValue.pszObjectSid = pNew->pszObjectSid;
+        change.ADNewValue.enabled = pNew->enabled;
+        change.ADNewValue.bIsLocal = pNew->bIsLocal;
+        change.ADNewValue.pszNetbiosDomainName = pNew->pszNetbiosDomainName;
+        change.ADNewValue.pszSamAccountName = pNew->pszSamAccountName;
+        change.ADNewValue.pszPrimaryGroupSid = pNew->userInfo.pszPrimaryGroupSid;
+        change.ADNewValue.pszUPN = pNew->userInfo.pszUPN;
+        change.ADNewValue.pszAliasName = pNew->userInfo.pszAliasName;
+
+        change.ADNewValue.qwPwdLastSet = pNew->userInfo.qwPwdLastSet;
+        change.ADNewValue.qwMaxPwdAge = pNew->userInfo.qwMaxPwdAge;
+        change.ADNewValue.qwPwdExpires = pNew->userInfo.qwPwdExpires;
+        change.ADNewValue.qwAccountExpires = pNew->userInfo.qwAccountExpires;
+
+        change.ADNewValue.bIsGeneratedUPN = pNew->userInfo.bIsGeneratedUPN;
+        change.ADNewValue.bIsAccountInfoKnown = pNew->userInfo.bIsAccountInfoKnown;
+        change.ADNewValue.bPasswordExpired = pNew->userInfo.bPasswordExpired;
+        change.ADNewValue.bPasswordNeverExpires = pNew->userInfo.bPasswordNeverExpires;
+        change.ADNewValue.bPromptPasswordChange = pNew->userInfo.bPromptPasswordChange;
+        change.ADNewValue.bUserCanChangePassword = pNew->userInfo.bUserCanChangePassword;
+        change.ADNewValue.bAccountDisabled = pNew->userInfo.bAccountDisabled;
+        change.ADNewValue.bAccountExpired = pNew->userInfo.bAccountExpired;
+        change.ADNewValue.bAccountLocked = pNew->userInfo.bAccountLocked;
+
+        change.ADNewValue.pw_uid = pNew->userInfo.uid;
+        change.ADNewValue.pw_gid = pNew->userInfo.gid;
+        change.ADNewValue.pw_name = pNew->userInfo.pszUnixName;
+        change.ADNewValue.pw_passwd = pNew->userInfo.pszPasswd 
+                                        ? pNew->userInfo.pszPasswd
+                                        : "x";
+        change.ADNewValue.pw_gecos = pNew->userInfo.pszGecos
+                                        ? pNew->userInfo.pszGecos
+                                        : "";
+        change.ADNewValue.pw_shell = pNew->userInfo.pszShell;
+        change.ADNewValue.pw_dir = pNew->userInfo.pszHomedir;
+
+        change.ADNewValue.pDisplayName = pNew->userInfo.pszDisplayName;
+        change.ADNewValue.pszWindowsHomeFolder = pNew->userInfo.pszWindowsHomeFolder;
+        change.ADNewValue.pszLocalWindowsHomeFolder = pNew->userInfo.pszLocalWindowsHomeFolder; 
+        change.ADNewValue.LastUpdated = Now;
     }
 
     dwError = LwMbsToWc16s(
@@ -270,7 +304,7 @@ UmnSrvWriteADUserEvent(
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pEventCategory,
-                    L"AD User %hhs",
+                    L"AD User %hhs " AD_USER_CHANGE_VERSION ,
                     pOperation);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -293,7 +327,8 @@ UmnSrvWriteADUserEvent(
         BAIL_ON_UMN_ERROR(dwError);
     }
 
-    // Leave computer NULL so it is filled in by the eventlog
+    // Do not free. This value is borrowed from other structures.
+    record.pComputer = (PWSTR)UmnEvtGetEventComputerName();
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pDescription,
@@ -341,7 +376,7 @@ UmnSrvWriteADUserEvent(
                     pNew ? pNew->userInfo.pszDisplayName : "");
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = EncodeUserChange(
+    dwError = EncodeADUserChange(
                     &change,
                     &record.DataLen,
                     (PVOID*)&record.pData);
@@ -1033,6 +1068,7 @@ UmnSrvUpdateADAccounts(
     PCSTR pIter = NULL;
     PSTR  pMember = NULL;
     PLW_HASH_TABLE pUsers = NULL;
+
     LWREG_CONFIG_ITEM ADConfigDescription[] =
     {
         {
@@ -1054,6 +1090,8 @@ UmnSrvUpdateADAccounts(
     PLSA_SECURITY_OBJECT pAllUsers = NULL;
     DWORD i = 0;
 
+    UMN_LOG_DEBUG("Updating AD users");
+    
     dwError = LwHashCreate(
                     100,
                     LwHashStringCompare,
@@ -1072,6 +1110,7 @@ UmnSrvUpdateADAccounts(
 
     if (pMemberList && pMemberList[0])
     {
+        UMN_LOG_DEBUG("RequireMembershipOf is set; will report on AD users belonging to RequireMembershipOf entries");
         pIter = pMemberList;
         while (*pIter != 0)
         {
@@ -1085,6 +1124,8 @@ UmnSrvUpdateADAccounts(
                     TRUE,
                     TRUE);
 
+
+            UMN_LOG_DEBUG("Adding users belonging to RequireMembershipOf entry %s", pMember);
             dwError = UmnSrvAddUsersFromMembership(
                             hLsass,
                             pUsers,
@@ -1096,6 +1137,8 @@ UmnSrvUpdateADAccounts(
     }
     else
     {
+
+        UMN_LOG_DEBUG("RequireMembershipOf is NOT set; will report on AD users based on joined cell/domain");
         dwError = LsaGetStatus2(
                         hLsass,
                         NULL,
@@ -1116,6 +1159,10 @@ UmnSrvUpdateADAccounts(
 
         if (pDomain || pCell)
         {
+            UMN_LOG_DEBUG("Reporting all users %s %s can login",
+                    (pCell) ? "in cell" : "accessible from domain",
+                    (pCell) ? pCell : pDomain);
+
             dwError = LwAllocateMemory(
                             sizeof(*pAllUsers),
                             (PVOID*)&pAllUsers);
