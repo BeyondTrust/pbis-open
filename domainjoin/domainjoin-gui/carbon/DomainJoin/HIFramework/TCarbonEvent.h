@@ -40,7 +40,7 @@
 				please do not use, install, modify or redistribute this Apple software.
 
 				In consideration of your agreement to abide by the following terms, and subject
-				to these terms, Apple grants you a personal, non-exclusive license, under AppleÕs
+				to these terms, Apple grants you a personal, non-exclusive license, under Appleï¿½s
 				copyrights in this original Apple software (the "Apple Software"), to use,
 				reproduce, modify and redistribute the Apple Software, with or without
 				modifications, in source and/or binary forms; provided that if you redistribute
@@ -68,7 +68,7 @@
 				(INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
 				ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-	Copyright © 2000-2005 Apple Computer, Inc., All Rights Reserved
+	Copyright ï¿½ 2000-2005 Apple Computer, Inc., All Rights Reserved
 */
 
 #ifndef TCarbonEvent_H_
@@ -83,23 +83,23 @@ struct InvalidEventParameterType {};
 template <class T> EventParamType EventDataType() throw( InvalidEventParameterType )
 	{ throw InvalidEventParameterType(); return 0; }
 
-template <> inline EventParamType EventDataType<WindowRef>() { return typeWindowRef; }
-template <> inline EventParamType EventDataType<ControlRef>() { return typeControlRef; }
-template <> inline EventParamType EventDataType<MenuRef>() { return typeMenuRef; }
-template <> inline EventParamType EventDataType<DragRef>() { return typeDragRef; }
+template <> inline EventParamType EventDataType<WindowRef>() throw( InvalidEventParameterType ) { return typeWindowRef; }
+template <> inline EventParamType EventDataType<ControlRef>() throw( InvalidEventParameterType ){ return typeControlRef; }
+template <> inline EventParamType EventDataType<MenuRef>() throw( InvalidEventParameterType ){ return typeMenuRef; }
+template <> inline EventParamType EventDataType<DragRef>() throw( InvalidEventParameterType ){ return typeDragRef; }
 
-template <> inline EventParamType EventDataType<HIPoint>() { return typeHIPoint; }
-template <> inline EventParamType EventDataType<HISize>() { return typeHISize; }
-template <> inline EventParamType EventDataType<HIRect>() { return typeHIRect; }
-template <> inline EventParamType EventDataType<Point>() { return typeQDPoint; }
-template <> inline EventParamType EventDataType<Rect>() { return typeQDRectangle; }
-template <> inline EventParamType EventDataType<RgnHandle>() { return typeQDRgnHandle; }
+template <> inline EventParamType EventDataType<HIPoint>() throw( InvalidEventParameterType ){ return typeHIPoint; }
+template <> inline EventParamType EventDataType<HISize>() throw( InvalidEventParameterType ){ return typeHISize; }
+template <> inline EventParamType EventDataType<HIRect>() throw( InvalidEventParameterType ){ return typeHIRect; }
+template <> inline EventParamType EventDataType<Point>() throw( InvalidEventParameterType ){ return typeQDPoint; }
+template <> inline EventParamType EventDataType<Rect>() throw( InvalidEventParameterType ){ return typeQDRectangle; }
+template <> inline EventParamType EventDataType<RgnHandle>() throw( InvalidEventParameterType ){ return typeQDRgnHandle; }
 
-template <> inline EventParamType EventDataType<Boolean>() { return typeBoolean; }
-template <> inline EventParamType EventDataType<UInt32>() { return typeUInt32; }
+template <> inline EventParamType EventDataType<Boolean>() throw( InvalidEventParameterType ){ return typeBoolean; }
+template <> inline EventParamType EventDataType<UInt32>() throw( InvalidEventParameterType ){ return typeUInt32; }
 
-template <> inline EventParamType EventDataType<HICommand>() { return typeHICommand; }
-template <> inline EventParamType EventDataType<HICommandExtended>() { return typeHICommand; }
+template <> inline EventParamType EventDataType<HICommand>() throw( InvalidEventParameterType ){ return typeHICommand; }
+template <> inline EventParamType EventDataType<HICommandExtended>() throw( InvalidEventParameterType ){ return typeHICommand; }
 
 class TCarbonEvent
 {

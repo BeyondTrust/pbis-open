@@ -783,11 +783,10 @@ enum {
     kDefaultDSBufferSize = 1024
 };
 
-ODRecordRef FindRecordByName(const char* pcszPlugin, const char* pcszRecordName, const char* pcszRecordType) {
+static ODRecordRef FindRecordByName(CFStringRef cfstrPlugin, const char* pcszRecordName, const char* pcszRecordType) {
         
    
     CFErrorRef cfError;
-    CFStringRef cfstrPlugin = CFStringCreateWithCString(kCFAllocatorDefault, pcszPlugin, kCFStringEncodingUTF8);
     long nResults = 0;
     ODRecordRef odFoundRecord = NULL;
     CFArrayRef cfResults = NULL;
@@ -803,11 +802,9 @@ ODRecordRef FindRecordByName(const char* pcszPlugin, const char* pcszRecordName,
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
     }
-    
-
 
     cfSearchValue = CFArrayCreate(kCFAllocatorDefault, cfValues, 1, &kCFTypeArrayCallBacks);
-     cfstrRecordType = CFStringCreateWithCString(kCFAllocatorDefault, pcszRecordType, kCFStringEncodingUTF8);
+    cfstrRecordType = CFStringCreateWithCString(kCFAllocatorDefault, pcszRecordType, kCFStringEncodingUTF8);
     cfLocalQuery = ODQueryCreateWithNode(kCFAllocatorDefault, localNode, cfstrRecordType, CFSTR(kDSNAttrRecordName), kODMatchEqualTo, cfSearchValue, NULL, 0, &cfError);
     if(cfError != NULL)
     {
@@ -834,10 +831,6 @@ ODRecordRef FindRecordByName(const char* pcszPlugin, const char* pcszRecordName,
     }
     
 error:
-    if(cfstrPlugin != NULL)
-    {
-        CFRelease(cfstrPlugin);        
-    }
     if(localNode != NULL)
     {
         CFRelease(localNode);
@@ -867,52 +860,78 @@ error:
     return odFoundRecord;
 }
 
+static
+CFStringRef
+CopyAttrFromRecord(ODRecordRef record, CFStringRef attr) 
+{
+    CFArrayRef values = ODRecordCopyValues(record, attr, NULL);
+    CFStringRef result = NULL;
+    
+    if (values) {
+        if (CFArrayGetCount(values) == 1) {
+            result = (CFStringRef)CFArrayGetValueAtIndex(values, 0);
+            CFRetain(result);
+        }
+        CFRelease(values);
+    }
+    
+    return result;
+}
+
 BOOLEAN
 LWIsUserInLocalGroup(
     char* pszUsername,
     const char* pszGroupname
     )
 {
-    FILE *fp;
-    char path[2048];
-    char command[2048];
-    sprintf(command, "dscl . -read /Groups/%s GroupMembership", pszGroupname);
+    ODRecordRef odGroup;
+    ODRecordRef odUser;
+    BOOLEAN bResult = false;
+    
+    if (pszUsername == NULL) return false;
+    if (pszGroupname == NULL) return false;
 
-    fp = popen(command, "r");
+    odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
+    odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
+    
+    if(odGroup != NULL && odUser != NULL)
+    {
+        CFStringRef uGuid = CopyAttrFromRecord(odUser, CFSTR(kDS1AttrGeneratedUID));
 
-    if(fp == NULL) {
-	LOG("Unable to find dscl command");
-        return FALSE;
-    }
+        if (uGuid != NULL) 
+        {
+            CFArrayRef members = ODRecordCopyValues(odGroup, CFSTR(kDSNAttrGroupMembers), NULL);
+            
+            if (members != NULL) 
+            {
+                int l = CFArrayGetCount(members);
+                int i;
 
-    while(fgets(path, sizeof(path), fp) != NULL) {
+                for (i=0; i<l; i++) 
+                {
+                    CFStringRef guid = (CFStringRef)CFArrayGetValueAtIndex(members, i);
+
+                    if (guid && CFStringCompare(guid, uGuid, 0) == 0) 
+                    {
+                        bResult = true;
+                        break;
+                    }
+                }
+                
+                CFRelease(members);
+            }
+
+            CFRelease(uGuid);
+        }
     }
     
-    pclose(fp);
-
-    char* account = strtok(path, " ");
-    account = strtok(NULL, " ");
-
-    while(account != NULL)
-    {
-        for(unsigned int i = 0; i < strlen(account); i++)
-        {	
-            if(isspace(account[i]) )
-            {
-                account[i] = '\0';
-                break;
-            }
-        }
-
-        if(strcasecmp(pszUsername, account) == 0)
-        {
-            return TRUE;
-        }
-
-        account = strtok(NULL, " ");
-    }
-
-    return FALSE;
+    if(odGroup != NULL) CFRelease(odGroup);
+    
+    if(odUser != NULL) CFRelease(odUser);
+        
+    LOG("LWIsUserInLocalGroup is %s in %s: bResult %d", pszUsername, pszGroupname, bResult);
+    
+    return bResult;
 }
 
 long
@@ -922,8 +941,8 @@ LWRemoveUserFromLocalGroup(
     )
 {
     CFErrorRef cfError;
-    ODRecordRef odGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);
-    ODRecordRef odUser = FindRecordByName("/Likewise - Active Directory", pszUsername, kDSStdRecordTypeUsers);
+    ODRecordRef odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
+    ODRecordRef odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
 
     long lResult = 0;    
     if(odGroup != NULL && odUser != NULL)
@@ -963,11 +982,11 @@ LWAddUserToLocalGroup(
     CFErrorRef cfError;
     
     //locate the admin group   
-    ODRecordRef adminGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);            
-    ODRecordRef recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeUsers);
+    ODRecordRef adminGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);            
+    ODRecordRef recordToAdd = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername,kDSStdRecordTypeUsers);
     if(recordToAdd == NULL)
     {
-        recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeGroups);
+        recordToAdd = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername,kDSStdRecordTypeGroups);
     }
 
     long lResult = 0;
