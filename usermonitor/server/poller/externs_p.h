@@ -59,4 +59,6 @@ extern BOOLEAN gbSignalPollerCreated;
 extern pthread_mutex_t gSignalPollerMutex;
 extern BOOLEAN gbSignalPollerMutexCreated;
 
+extern PWSTR gEventComputerName;
+
 #endif /* __EXTERNS_P_H__ */

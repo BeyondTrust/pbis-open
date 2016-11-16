@@ -8,4 +8,7 @@ interface usermonitor_encoding
 
     [encode] GROUP_MEMBERSHIP_CHANGE_Encode();
     [decode] GROUP_MEMBERSHIP_CHANGE_Decode();
+
+    [encode] AD_USER_CHANGE_Encode();
+    [decode] AD_USER_CHANGE_Decode();
 }

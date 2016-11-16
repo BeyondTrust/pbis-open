@@ -56,3 +56,5 @@ pthread_cond_t gSignalPoller;
 BOOLEAN gbSignalPollerCreated = FALSE;
 pthread_mutex_t gSignalPollerMutex;
 BOOLEAN gbSignalPollerMutexCreated = FALSE;
+
+PWSTR gEventComputerName;
