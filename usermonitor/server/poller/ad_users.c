@@ -409,7 +409,24 @@ UmnSrvWriteADUserValues(
     HKEY hUser,
     PLSA_SECURITY_OBJECT pUser
     )
-{                           
+{        
+    
+    /* This doesn't write the following attributes
+     * enabled
+     * bIsLocal
+     * type
+     * qwPwdLastSet
+     * qwMaxPwdAge
+     * qwPwdExpires
+     * qwAccountExpires
+     * bIsGeneratedUPN
+     * bIsAccountInfoKnown
+     * dwLmHashLen
+     * pLmHash
+     * dwNtHashLen
+     * pNtHash
+     */     
+    
     DWORD dwError = 0;
     DWORD dword = 0;
     PCSTR pString = NULL;
@@ -571,6 +588,129 @@ UmnSrvWriteADUserValues(
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);        
     
+    
+    pString = pUser->userInfo.pszPrimaryGroupSid;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_primarygroupsid",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError); 
+    
+    pString = pUser->userInfo.pszUPN;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_upn",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError); 
+    
+    pString = pUser->userInfo.pszAliasName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_aliasname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError); 
+    
+    dword = pUser->userInfo.bPasswordExpired;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_passwordexpired",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bPasswordNeverExpires;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_passwordneverexpires",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bPromptPasswordChange;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_promptpasswordchange",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bUserCanChangePassword;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_usercanchangepassword",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bAccountDisabled;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountdisabled",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bAccountExpired;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountexpired",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    dword = pUser->userInfo.bAccountLocked;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountLocked",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+                                              
     pString = pUser->userInfo.pszWindowsHomeFolder;
     if (!pString)
     {
@@ -586,9 +726,21 @@ UmnSrvWriteADUserValues(
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);        
     
-    
-    
-            
+    pString = pUser->userInfo.pszLocalWindowsHomeFolder;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_localwindowshomefolder",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);        
+                        
 cleanup:
     return dwError;
 
