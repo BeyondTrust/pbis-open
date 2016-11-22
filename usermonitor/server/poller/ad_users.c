@@ -194,16 +194,90 @@ UmnSrvReadADUser(
 {
     DWORD dwError = 0;
     PSTR pUserPath = NULL;
+
+    /* n.b. not all attributes are written to
+     * the registry, see UmnSrvWriteADUserValues()
+     */
     LWREG_CONFIG_ITEM userLayout[] =
     {
         {
-            "ad_dn",
+            "pw_name",
             FALSE,
             LwRegTypeString,
             0,
             -1,
             NULL,
-            &pADUser->pszDN,
+            &pADUser->pw_name,
+            NULL
+        },
+        {
+            "pw_passwd",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_passwd,
+            NULL
+        },
+        {
+            "pw_uid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_uid,
+            NULL
+        },
+        {
+            "pw_gid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gid,
+            NULL
+        },
+        {
+            "pw_gecos",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gecos,
+            NULL
+        },
+        {
+            "pw_dir",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_dir,
+            NULL
+        },
+        {
+            "pw_shell",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_shell,
+            NULL
+        },
+        {
+            "pDisplayname",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pDisplayName,
             NULL
         },
         {
@@ -216,27 +290,16 @@ UmnSrvReadADUser(
             &pADUser->pszObjectSid,
             NULL
         },
-#if 0
-        // these attributes are not tracked 
         {
-            "enabled",
+            "ad_dn",
             FALSE,
-            LwRegTypeBoolean,
+            LwRegTypeString,
             0,
             -1,
             NULL,
-            &pADUser->enabled,
+            &pADUser->pszDN,
             NULL
         },
-        {
-            "IsLocal",
-            FALSE,
-            LwRegTypeBoolean,
-            0,
-            -1,
-            NULL,
-        },
-#endif
         {
             "ad_netbiosdomainname",
             FALSE,
@@ -285,59 +348,6 @@ UmnSrvReadADUser(
             -1,
             NULL,
             &pADUser->pszAliasName,
-            NULL
-        },
-#if 0
-        // Registry config entry type enum does not include a UINT64/Qword
-        {
-            "ad_pwdlastset",
-            FALSE,
-            LwRegTypeQword,
-            0,
-            -1,
-            NULL,
-            &pADUser->qwPwdLastSet,
-            NULL
-        },
-        {
-            "ad_maxpwdage",
-            FALSE,
-            LwRegTypeQword,
-            0,
-            -1,
-            NULL,
-            &pADUser->qwMaxPwdAge,
-            NULL
-        },
-        {
-            "ad_pwdexpires",
-            FALSE,
-            LwRegTypeQword,
-            0,
-            -1,
-            NULL,
-            &pADUser->qwAccountExpires,
-            NULL
-        },
-#endif
-        {
-            "ad_isgeneratedupn",
-            FALSE,
-            LwRegTypeBoolean,
-            0,
-            -1,
-            NULL,
-            &pADUser->bIsGeneratedUPN,
-            NULL
-        },
-        {
-            "ad_bisaccountinfoknown",
-            FALSE,
-            LwRegTypeBoolean,
-            0,
-            -1,
-            NULL,
-            &pADUser->bIsAccountInfoKnown,
             NULL
         },
         {
@@ -408,86 +418,6 @@ UmnSrvReadADUser(
             -1,
             NULL,
             &pADUser->bAccountLocked,
-            NULL
-        },
-        {
-            "pw_uid",
-            FALSE,
-            LwRegTypeDword,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_uid,
-            NULL
-        },
-        {
-            "pw_gid",
-            FALSE,
-            LwRegTypeDword,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_gid,
-            NULL
-        },
-        {
-            "pw_name",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_name,
-            NULL
-        },
-        {
-            "pw_passwd",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_passwd,
-            NULL
-        },
-        {
-            "pw_gecos",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_gecos,
-            NULL
-        },
-        {
-            "pw_dir",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_dir,
-            NULL
-        },
-        {
-            "pw_shell",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pw_shell,
-            NULL
-        },
-        {
-            "ad_displayname",
-            FALSE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pADUser->pDisplayName,
             NULL
         },
         {
