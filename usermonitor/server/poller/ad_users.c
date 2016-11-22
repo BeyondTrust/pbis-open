@@ -48,6 +48,29 @@
 #define AD_PROVIDER_REGKEY "Services\\lsass\\Parameters\\Providers\\ActiveDirectory"
 #define AD_PROVIDER_POLICY_REGKEY "Policy\\" AD_PROVIDER_REGKEY
 
+VOID
+UmnSrvFreeADUserContents(
+    PAD_USER_INFO pUser
+    )
+{
+    LW_SAFE_FREE_MEMORY(pUser->pszDN);
+    LW_SAFE_FREE_MEMORY(pUser->pszObjectSid);
+    LW_SAFE_FREE_MEMORY(pUser->pszNetbiosDomainName);
+    LW_SAFE_FREE_MEMORY(pUser->pszSamAccountName);
+    LW_SAFE_FREE_MEMORY(pUser->pszPrimaryGroupSid);
+    LW_SAFE_FREE_MEMORY(pUser->pszUPN);
+    LW_SAFE_FREE_MEMORY(pUser->pszAliasName);
+    LW_SAFE_FREE_MEMORY(pUser->pszWindowsHomeFolder);
+    LW_SAFE_FREE_MEMORY(pUser->pszLocalWindowsHomeFolder);
+
+    LW_SAFE_FREE_MEMORY(pUser->pw_name);
+    LW_SAFE_FREE_MEMORY(pUser->pw_passwd);
+    LW_SAFE_FREE_MEMORY(pUser->pw_gecos);
+    LW_SAFE_FREE_MEMORY(pUser->pw_dir);
+    LW_SAFE_FREE_MEMORY(pUser->pw_shell);
+    LW_SAFE_FREE_MEMORY(pUser->pDisplayName);
+}
+
 static
 DWORD
 UmnSrvAddUsersFromMembership(
@@ -161,6 +184,7 @@ UmnSrvHashFreeObjectValue(
     }
 }
 
+
 DWORD
 UmnSrvReadADUser(
     PCSTR pParentKey,
@@ -170,11 +194,10 @@ UmnSrvReadADUser(
 {
     DWORD dwError = 0;
     PSTR pUserPath = NULL;
-    // TODO review all data types to ensure we can read them all correctly
     LWREG_CONFIG_ITEM userLayout[] =
     {
         {
-            "DN",
+            "ad_dn",
             FALSE,
             LwRegTypeString,
             0,
@@ -184,7 +207,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "ObjectSid",
+            "ad_objectsid",
             FALSE,
             LwRegTypeString,
             0,
@@ -193,6 +216,8 @@ UmnSrvReadADUser(
             &pADUser->pszObjectSid,
             NULL
         },
+#if 0
+        // these attributes are not tracked 
         {
             "enabled",
             FALSE,
@@ -210,11 +235,10 @@ UmnSrvReadADUser(
             0,
             -1,
             NULL,
-            &pADUser->bIsLocal,
-            NULL
         },
+#endif
         {
-            "NetbiosDomainName",
+            "ad_netbiosdomainname",
             FALSE,
             LwRegTypeString,
             0,
@@ -224,7 +248,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "SamAccountName",
+            "ad_samaccountname",
             FALSE,
             LwRegTypeString,
             0,
@@ -234,7 +258,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "PrimaryGroupSid",
+            "ad_primarygroupsid",
             FALSE,
             LwRegTypeString,
             0,
@@ -244,7 +268,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "UPN",
+            "ad_upn",
             FALSE,
             LwRegTypeString,
             0,
@@ -254,7 +278,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "AliasName",
+            "ad_aliasname",
             FALSE,
             LwRegTypeString,
             0,
@@ -264,9 +288,9 @@ UmnSrvReadADUser(
             NULL
         },
 #if 0
-        // Registry entry type enum does not support a UINT64/Qword
+        // Registry config entry type enum does not include a UINT64/Qword
         {
-            "PwdLastSet",
+            "ad_pwdlastset",
             FALSE,
             LwRegTypeQword,
             0,
@@ -276,7 +300,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "MaxPwdAge",
+            "ad_maxpwdage",
             FALSE,
             LwRegTypeQword,
             0,
@@ -286,7 +310,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "PwdExpires",
+            "ad_pwdexpires",
             FALSE,
             LwRegTypeQword,
             0,
@@ -297,7 +321,7 @@ UmnSrvReadADUser(
         },
 #endif
         {
-            "IsGeneratedUPN",
+            "ad_isgeneratedupn",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -307,7 +331,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "bIsAccountInfoKnown",
+            "ad_bisaccountinfoknown",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -317,7 +341,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "PasswordExpired",
+            "ad_passwordexpired",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -327,7 +351,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "PasswordNeverExpires",
+            "ad_passwordneverexpires",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -337,7 +361,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "PromptPasswordChange",
+            "ad_promptpasswordchange",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -347,7 +371,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "UserCanChangePassword",
+            "ad_usercanchangepassword",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -357,7 +381,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "AccountDisabled",
+            "ad_accountdisabled",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -367,7 +391,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "AccountExpired",
+            "ad_accountexpired",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -377,7 +401,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "AccountLocked",
+            "ad_accountlocked",
             FALSE,
             LwRegTypeBoolean,
             0,
@@ -386,9 +410,6 @@ UmnSrvReadADUser(
             &pADUser->bAccountLocked,
             NULL
         },
-        // TODO continue from here unix attributes
-        // pszWindowsHomeFolder
-        // pszLocalWindowsHomeFolder
         {
             "pw_uid",
             FALSE,
@@ -460,7 +481,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "pDisplayName",
+            "ad_displayname",
             FALSE,
             LwRegTypeString,
             0,
@@ -470,7 +491,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "pWindowsHomeFolder",
+            "ad_windowshomefolder",
             FALSE,
             LwRegTypeString,
             0,
@@ -480,7 +501,7 @@ UmnSrvReadADUser(
             NULL
         },
         {
-            "pLocalWindowsHomeFolder",
+            "ad_localwindowshomefolder",
             FALSE,
             LwRegTypeString,
             0,
@@ -527,12 +548,11 @@ error:
 }
 
 
-
 DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long PreviousRun,
-    PUSER_MONITOR_PASSWD pOld,
+    PAD_USER_INFO pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
     )
@@ -769,6 +789,7 @@ error:
     goto cleanup;
 }
 
+
 static
 DWORD
 UmnSrvWriteADUserValues(
@@ -963,6 +984,7 @@ error:
     goto cleanup;
 }
 
+
 static
 BOOLEAN
 UmnSrvStringsEqual(
@@ -981,6 +1003,28 @@ UmnSrvStringsEqual(
     return !strcmp(pStr1, pStr2);
 }
 
+
+static
+BOOLEAN
+UmnSrvADUserChanged(
+        const PAD_USER_INFO pOld,
+        const PLSA_SECURITY_OBJECT pUser
+        )
+{
+    // TODO extend to include AD user attributes
+    return (strcmp((pUser->userInfo.pszPasswd ?
+                        pUser->userInfo.pszPasswd : "x"),
+                    pOld->pw_passwd) ||
+                pUser->userInfo.uid != pOld->pw_uid ||
+                pUser->userInfo.gid != pOld->pw_gid ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszGecos, pOld->pw_gecos) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, pOld->pw_dir) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszShell, pOld->pw_shell) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName,
+                    pOld->pDisplayName));
+}
+
+
 static
 DWORD
 UmnSrvUpdateADUser(
@@ -994,7 +1038,7 @@ UmnSrvUpdateADUser(
 {
     DWORD dwError = 0;
     HKEY hKey = NULL;
-    USER_MONITOR_PASSWD old = { 0 };
+    AD_USER_INFO old = { 0 };
     DWORD dwNow = Now;
     PSTR pEncodedUser = NULL;
 
@@ -1067,22 +1111,13 @@ UmnSrvUpdateADUser(
     {
         BAIL_ON_UMN_ERROR(dwError);
 
-        dwError = UmnSrvReadUser(
+        dwError = UmnSrvReadADUser(
                         "AD Users",
                         pEncodedUser,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
 
-        if (strcmp((pUser->userInfo.pszPasswd ?
-                        pUser->userInfo.pszPasswd : "x"),
-                    old.pw_passwd) ||
-                pUser->userInfo.uid != old.pw_uid ||
-                pUser->userInfo.gid != old.pw_gid ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszGecos, old.pw_gecos) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, old.pw_dir) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszShell, old.pw_shell) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName,
-                    old.pDisplayName))
+        if (UmnSrvADUserChanged(&old, pUser))
         {
             UMN_LOG_INFO("User '%s' (uid %d) changed",
                             pUser->userInfo.pszUnixName, pUser->userInfo.uid);
@@ -1114,7 +1149,7 @@ UmnSrvUpdateADUser(
 
 cleanup:
     LW_SAFE_FREE_STRING(pEncodedUser);
-    UmnSrvFreeUserContents(&old);
+    UmnSrvFreeADUserContents(&old);
     if (hKey)
     {
         RegCloseKey(
@@ -1122,10 +1157,140 @@ cleanup:
                 hKey);
     }
     return dwError;
-    
+
 error:
     goto cleanup;
 }
+
+
+DWORD
+UmnSrvFindDeletedADUsers(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    PCSTR pUserKeyName,
+    HKEY hUsers,
+    long long Now
+    )
+{
+    DWORD dwError = 0;
+    DWORD subKeyCount = 0;
+    DWORD maxSubKeyLen = 0;
+    DWORD subKeyLen = 0;
+    DWORD i = 0;
+    PSTR pKeyName = NULL;
+    DWORD lastUpdated = 0;
+    DWORD lastUpdatedLen = 0;
+    AD_USER_INFO old = { 0 };
+
+    UMN_LOG_DEBUG("Finding deleted AD users");
+
+    dwError = RegQueryInfoKeyA(
+                    hReg,
+                    hUsers,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &subKeyCount,
+                    &maxSubKeyLen,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    maxSubKeyLen + 1,
+                    (PVOID *)&pKeyName);
+
+    for (i = 0; i < subKeyCount; i++)
+    {
+        if (gbPollerThreadShouldExit)
+        {
+            dwError = ERROR_CANCELLED;
+            BAIL_ON_UMN_ERROR(dwError);
+        }
+        subKeyLen = maxSubKeyLen;
+
+        dwError = RegEnumKeyExA(
+                        hReg,
+                        hUsers,
+                        i,
+                        pKeyName,
+                        &subKeyLen,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        pKeyName[subKeyLen] = 0;
+
+        lastUpdatedLen = sizeof(lastUpdated);
+        dwError = RegGetValueA(
+                        hReg,
+                        hUsers,
+                        pKeyName,
+                        "LastUpdated",
+                        0,
+                        NULL,
+                        (PBYTE)&lastUpdated,
+                        &lastUpdatedLen);
+        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            UMN_LOG_WARNING("User %s not completely written. The user monitor service may have previously terminated ungracefully.",
+                        LW_SAFE_LOG_STRING(pKeyName));
+            lastUpdated = 0;
+            dwError = 0;
+        }
+        else
+        {
+            BAIL_ON_UMN_ERROR(dwError);
+        }
+
+        if (lastUpdated < Now)
+        {
+            UmnSrvFreeADUserContents(&old);
+            dwError = UmnSrvReadADUser(
+                            pUserKeyName,
+                            pKeyName,
+                            &old);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            UMN_LOG_INFO("User '%s' deleted",
+                            old.pw_name);
+
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hUsers,
+                            pKeyName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = UmnSrvWriteADUserEvent(
+                            pEventlog,
+                            old.LastUpdated,
+                            &old,
+                            Now,
+                            NULL);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            // Make sure we don't skip the next key since this one was deleted
+            i--;
+            subKeyCount--;
+        }
+    }
+
+cleanup:
+    UmnSrvFreeADUserContents(&old);
+
+    LW_SAFE_FREE_STRING(pKeyName);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 static
 DWORD
@@ -1450,7 +1615,7 @@ UmnSrvUpdateADAccountsByHash(
         }
     }
 
-    dwError = UmnSrvFindDeletedUsers(
+    dwError = UmnSrvFindDeletedADUsers(
                     pEventlog,
                     hReg,
                     "AD Users",
@@ -1493,10 +1658,11 @@ cleanup:
     LwHashSafeFree(&pNameToUser);
     LwHashSafeFree(&pNameToGroup);
     return dwError;
-    
+
 error:
     goto cleanup;
 }
+
 
 DWORD
 UmnSrvUpdateADAccounts(
@@ -1536,7 +1702,7 @@ UmnSrvUpdateADAccounts(
     DWORD i = 0;
 
     UMN_LOG_DEBUG("Updating AD users");
-    
+
     dwError = LwHashCreate(
                     100,
                     LwHashStringCompare,

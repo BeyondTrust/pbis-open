@@ -118,7 +118,7 @@ typedef STRUCT _AD_USER_INFO
     BOOL bAccountExpired;
     BOOL bAccountLocked;
 
-    // the UNIX attributes 
+    // the UNIX attributes
     DWORD pw_uid;
     DWORD pw_gid;
     PSTR pw_name;

@@ -66,8 +66,8 @@ UmnSrvTimevalToTimespec(
  *
  * @return 0 for success, or errno error code
  */
-DWORD 
-static 
+DWORD
+static
 UmnSrvNow(
     OUT struct timespec * const pDestTimespec,
     OUT struct timeval * const pDestTimeval
@@ -152,8 +152,8 @@ UmnSrvTimespecSubtract(
 /**
  * @brief Set pElapsed to TRUE if pTimespec has elapsed.
  *
- * @param pTimespec 
- * @param pElapsed set to TRUE if pTimespec is <= 'now', 
+ * @param pTimespec
+ * @param pElapsed set to TRUE if pTimespec is <= 'now',
  *  FALSE otherwise, always FALSE on error
  * @return 0 for success, or errno error code
  */
@@ -162,9 +162,9 @@ static UmnSrvTimespecElapsed(
     IN struct timespec const * const pTimespec,
     OUT BOOLEAN * const pElapsed
     )
-{ 
+{
     DWORD dwError = ERROR_SUCCESS;
-    struct timeval now = {0}; 
+    struct timeval now = {0};
     struct timespec nowSpec = {0};
 
     *pElapsed = FALSE;
@@ -172,13 +172,13 @@ static UmnSrvTimespecElapsed(
     dwError = UmnSrvNow(&nowSpec, &now);
     BAIL_ON_UMN_ERROR(dwError);
 
-    *pElapsed = (nowSpec.tv_sec > pTimespec->tv_sec 
-                || (nowSpec.tv_sec == pTimespec->tv_sec 
-                    && nowSpec.tv_nsec >= pTimespec->tv_nsec)) 
+    *pElapsed = (nowSpec.tv_sec > pTimespec->tv_sec
+                || (nowSpec.tv_sec == pTimespec->tv_sec
+                    && nowSpec.tv_nsec >= pTimespec->tv_nsec))
         ? TRUE
         : FALSE;
 
-error: 
+error:
     return dwError;
 }
 
@@ -262,8 +262,8 @@ UmnSrvUpdateAccountInfo(
         dwError = 0;
     }
     BAIL_ON_UMN_ERROR(dwError);
-    
-    /* processing local users/groups so disable AD user/group enumeration */ 
+
+    /* processing local users/groups so disable AD user/group enumeration */
     pDisableLsassEnum = getenv("_DISABLE_LSASS_NSS_ENUMERATION");
     if (!pDisableLsassEnum || strcmp(pDisableLsassEnum, "1"))
     {
@@ -329,9 +329,9 @@ UmnSrvUpdateAccountInfo(
                     (PBYTE)&lastUpdated,
                     sizeof(lastUpdated));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
 cleanup:
-    if (bLocalDBOpen) 
+    if (bLocalDBOpen)
     {
         endpwent();
         endgrent();

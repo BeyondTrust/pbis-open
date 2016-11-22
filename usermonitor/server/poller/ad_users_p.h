@@ -48,6 +48,18 @@
 #ifndef __AD_USERS_P_H__
 #define __AD_USERS_P_H__
 
+VOID
+UmnSrvFreeADUserContents(
+    PAD_USER_INFO pUser
+    );
+
+DWORD
+UmnSrvReadADUser(
+    PCSTR pParentKey,
+    PCSTR pName,
+    PAD_USER_INFO pADUser
+    );
+
 DWORD
 UmnSrvUpdateADAccounts(
     HANDLE hLsass,
@@ -59,17 +71,10 @@ UmnSrvUpdateADAccounts(
     );
 
 DWORD
-UmnSrvReadADUser(
-    PCSTR pParentKey,
-    PCSTR pName,
-    PAD_USER_INFO pADUser
-    );
-
-DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long PreviousRun,
-    PUSER_MONITOR_PASSWD pOld,
+    PAD_USER_INFO pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
     );
