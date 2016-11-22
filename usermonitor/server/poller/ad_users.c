@@ -409,7 +409,7 @@ UmnSrvWriteADUserValues(
     HKEY hUser,
     PLSA_SECURITY_OBJECT pUser
     )
-{
+{                           
     DWORD dwError = 0;
     DWORD dword = 0;
     PCSTR pString = NULL;
@@ -510,7 +510,85 @@ UmnSrvWriteADUserValues(
                     (PBYTE) pString,
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
-
+    
+    pString = pUser->pszObjectSid;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_objectsid",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    pString = pUser->pszDN;
+    if (!pString)
+    {
+        pString = "";
+    }        
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_dn",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+    
+    pString = pUser->pszNetbiosDomainName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_netbiosdomainname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);        
+    
+    pString = pUser->pszSamAccountName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_samaccountname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);        
+    
+    pString = pUser->userInfo.pszWindowsHomeFolder;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_windowshomefolder",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);        
+    
+    
+    
+            
 cleanup:
     return dwError;
 
