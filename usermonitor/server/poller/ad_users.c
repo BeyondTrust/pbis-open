@@ -162,6 +162,373 @@ UmnSrvHashFreeObjectValue(
 }
 
 DWORD
+UmnSrvReadADUser(
+    PCSTR pParentKey,
+    PCSTR pName,
+    PAD_USER_INFO pADUser
+    )
+{
+    DWORD dwError = 0;
+    PSTR pUserPath = NULL;
+    // TODO review all data types to ensure we can read them all correctly
+    LWREG_CONFIG_ITEM userLayout[] =
+    {
+        {
+            "DN",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszDN,
+            NULL
+        },
+        {
+            "ObjectSid",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszObjectSid,
+            NULL
+        },
+        {
+            "enabled",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->enabled,
+            NULL
+        },
+        {
+            "IsLocal",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bIsLocal,
+            NULL
+        },
+        {
+            "NetbiosDomainName",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszNetbiosDomainName,
+            NULL
+        },
+        {
+            "SamAccountName",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszSamAccountName,
+            NULL
+        },
+        {
+            "PrimaryGroupSid",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszPrimaryGroupSid,
+            NULL
+        },
+        {
+            "UPN",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszUPN,
+            NULL
+        },
+        {
+            "AliasName",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszAliasName,
+            NULL
+        },
+#if 0
+        // Registry entry type enum does not support a UINT64/Qword
+        {
+            "PwdLastSet",
+            FALSE,
+            LwRegTypeQword,
+            0,
+            -1,
+            NULL,
+            &pADUser->qwPwdLastSet,
+            NULL
+        },
+        {
+            "MaxPwdAge",
+            FALSE,
+            LwRegTypeQword,
+            0,
+            -1,
+            NULL,
+            &pADUser->qwMaxPwdAge,
+            NULL
+        },
+        {
+            "PwdExpires",
+            FALSE,
+            LwRegTypeQword,
+            0,
+            -1,
+            NULL,
+            &pADUser->qwAccountExpires,
+            NULL
+        },
+#endif
+        {
+            "IsGeneratedUPN",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bIsGeneratedUPN,
+            NULL
+        },
+        {
+            "bIsAccountInfoKnown",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bIsAccountInfoKnown,
+            NULL
+        },
+        {
+            "PasswordExpired",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPasswordExpired,
+            NULL
+        },
+        {
+            "PasswordNeverExpires",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPasswordNeverExpires,
+            NULL
+        },
+        {
+            "PromptPasswordChange",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPromptPasswordChange,
+            NULL
+        },
+        {
+            "UserCanChangePassword",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bUserCanChangePassword,
+            NULL
+        },
+        {
+            "AccountDisabled",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountDisabled,
+            NULL
+        },
+        {
+            "AccountExpired",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountExpired,
+            NULL
+        },
+        {
+            "AccountLocked",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountLocked,
+            NULL
+        },
+        // TODO continue from here unix attributes
+        // pszWindowsHomeFolder
+        // pszLocalWindowsHomeFolder
+        {
+            "pw_uid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_uid,
+            NULL
+        },
+        {
+            "pw_gid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gid,
+            NULL
+        },
+        {
+            "pw_name",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_name,
+            NULL
+        },
+        {
+            "pw_passwd",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_passwd,
+            NULL
+        },
+        {
+            "pw_gecos",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gecos,
+            NULL
+        },
+        {
+            "pw_dir",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_dir,
+            NULL
+        },
+        {
+            "pw_shell",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_shell,
+            NULL
+        },
+        {
+            "pDisplayName",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pDisplayName,
+            NULL
+        },
+        {
+            "pWindowsHomeFolder",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszWindowsHomeFolder,
+            NULL
+        },
+        {
+            "pLocalWindowsHomeFolder",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszLocalWindowsHomeFolder,
+            NULL
+        },
+        {
+            "LastUpdated",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->LastUpdated,
+            NULL
+        },
+    };
+
+    UMN_LOG_VERBOSE("Reading previous values for user '%s'",
+                    pName);
+
+    dwError = LwAllocateStringPrintf(
+                    &pUserPath,
+                    "Services\\" SERVICE_NAME "\\Parameters\\%s\\%s",
+                    pParentKey,
+                    pName);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwRegProcessConfig(
+                pUserPath,
+                NULL,
+                userLayout,
+                sizeof(userLayout)/sizeof(userLayout[0]));
+    BAIL_ON_UMN_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pUserPath);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+
+DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long PreviousRun,

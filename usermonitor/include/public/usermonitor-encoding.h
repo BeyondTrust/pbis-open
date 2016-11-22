@@ -78,31 +78,31 @@ typedef STRUCT _USER_MONITOR_PASSWD
 #define AD_USER_CHANGE_VERSION  "(v2)"
 #define AD_USER_INFO_VERSION 0
 
-/* 
+/*
  * AD user attributes
  */
-typedef STRUCT _AD_USER_INFO 
+typedef STRUCT _AD_USER_INFO
 {
     // the version of this struct
     DWORD version;
 
-    // This is a subset of LSA_SECURITY_OBJECT, 
-    // and sub LSA_SECURITY_OBJECT_USER_INFO 
+    // This is a subset of LSA_SECURITY_OBJECT,
+    // and sub LSA_SECURITY_OBJECT_USER_INFO
     // struct
-    
+
     PSTR pszDN;
     PSTR pszObjectSid;
     BOOL enabled;
     BOOL bIsLocal;
     PSTR pszNetbiosDomainName;
     PSTR pszSamAccountName;
-    
+
     // the LSA_SECURITY_OBJECT_USER_INFO
     PSTR pszPrimaryGroupSid;
     PSTR pszUPN;
     PSTR pszAliasName;
-    
-    // NT time values 
+
+    // NT time values
     UINT64 qwPwdLastSet;
     UINT64 qwMaxPwdAge;
     UINT64 qwPwdExpires;
