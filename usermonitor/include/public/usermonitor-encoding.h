@@ -169,13 +169,7 @@ typedef STRUCT _GROUP_MEMBERSHIP_CHANGE
 /* new, changed and deleted AD users */
 typedef STRUCT _AD_USER_CHANGE
 {
-    // unix passwd like attributes
-    // (we don't currently store the
-    // AD user attributes in the registry
-    // as the old values)
-    USER_MONITOR_PASSWD OldValue;
-
-    // ad attributes/info
+    AD_USER_INFO OldValue;
     AD_USER_INFO ADNewValue;
 } AD_USER_CHANGE, *PAD_USER_CHANGE;
 
