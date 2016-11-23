@@ -42,7 +42,7 @@
  *        Public header
  *
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
- * 
+ *
  */
 #ifndef __USERMONITOR_H__
 #define __USERMONITOR_H__
@@ -170,9 +170,9 @@ typedef STRUCT _GROUP_MEMBERSHIP_CHANGE
 typedef STRUCT _AD_USER_CHANGE
 {
     // unix passwd like attributes
-    // (we don't currently store the 
+    // (we don't currently store the
     // AD user attributes in the registry
-    // as the old values) 
+    // as the old values)
     USER_MONITOR_PASSWD OldValue;
 
     // ad attributes/info

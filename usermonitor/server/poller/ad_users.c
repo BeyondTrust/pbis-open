@@ -727,8 +727,8 @@ UmnSrvWriteADUserValues(
     HKEY hUser,
     PLSA_SECURITY_OBJECT pUser
     )
-{        
-    
+{
+
     /* This doesn't write the following attributes
      * enabled
      * bIsLocal
@@ -743,8 +743,8 @@ UmnSrvWriteADUserValues(
      * pLmHash
      * dwNtHashLen
      * pNtHash
-     */     
-    
+     */
+
     DWORD dwError = 0;
     DWORD dword = 0;
     PCSTR pString = NULL;
@@ -845,7 +845,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE) pString,
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     pString = pUser->pszObjectSid;
     if (!pString)
     {
@@ -860,12 +860,12 @@ UmnSrvWriteADUserValues(
                     (PBYTE) pString,
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     pString = pUser->pszDN;
     if (!pString)
     {
         pString = "";
-    }        
+    }
     dwError = RegSetValueExA(
                     hReg,
                     hUser,
@@ -875,7 +875,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE) pString,
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     pString = pUser->pszNetbiosDomainName;
     if (!pString)
     {
@@ -889,8 +889,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError);        
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
     pString = pUser->pszSamAccountName;
     if (!pString)
     {
@@ -904,9 +904,9 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError);        
-    
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
+
     pString = pUser->userInfo.pszPrimaryGroupSid;
     if (!pString)
     {
@@ -920,8 +920,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError); 
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
     pString = pUser->userInfo.pszUPN;
     if (!pString)
     {
@@ -935,8 +935,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError); 
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
     pString = pUser->userInfo.pszAliasName;
     if (!pString)
     {
@@ -950,8 +950,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError); 
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
     dword = pUser->userInfo.bPasswordExpired;
     dwError = RegSetValueExA(
                     hReg,
@@ -962,7 +962,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bPasswordNeverExpires;
     dwError = RegSetValueExA(
                     hReg,
@@ -973,7 +973,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bPromptPasswordChange;
     dwError = RegSetValueExA(
                     hReg,
@@ -984,7 +984,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bUserCanChangePassword;
     dwError = RegSetValueExA(
                     hReg,
@@ -995,7 +995,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bAccountDisabled;
     dwError = RegSetValueExA(
                     hReg,
@@ -1006,7 +1006,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bAccountExpired;
     dwError = RegSetValueExA(
                     hReg,
@@ -1017,7 +1017,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
     dword = pUser->userInfo.bAccountLocked;
     dwError = RegSetValueExA(
                     hReg,
@@ -1028,7 +1028,7 @@ UmnSrvWriteADUserValues(
                     (PBYTE)&dword,
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
-                                              
+
     pString = pUser->userInfo.pszWindowsHomeFolder;
     if (!pString)
     {
@@ -1042,8 +1042,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError);        
-    
+    BAIL_ON_UMN_ERROR(dwError);
+
     pString = pUser->userInfo.pszLocalWindowsHomeFolder;
     if (!pString)
     {
@@ -1057,8 +1057,8 @@ UmnSrvWriteADUserValues(
                     REG_SZ,
                     (PBYTE) pString,
                     strlen(pString) + 1);
-    BAIL_ON_UMN_ERROR(dwError);        
-                        
+    BAIL_ON_UMN_ERROR(dwError);
+
 cleanup:
     return dwError;
 
@@ -1093,17 +1093,32 @@ UmnSrvADUserChanged(
         const PLSA_SECURITY_OBJECT pUser
         )
 {
-    // TODO extend to include AD user attributes
-    return (strcmp((pUser->userInfo.pszPasswd ?
+    return ( pUser->userInfo.bPasswordExpired != pOld->bPasswordExpired
+             || pUser->userInfo.bAccountDisabled != pOld->bAccountDisabled
+             || pUser->userInfo.bAccountExpired != pOld->bAccountExpired
+             || pUser->userInfo.bAccountLocked != pOld->bAccountLocked
+             || strcmp((pUser->userInfo.pszPasswd ?
                         pUser->userInfo.pszPasswd : "x"),
-                    pOld->pw_passwd) ||
-                pUser->userInfo.uid != pOld->pw_uid ||
-                pUser->userInfo.gid != pOld->pw_gid ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszGecos, pOld->pw_gecos) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, pOld->pw_dir) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszShell, pOld->pw_shell) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName,
-                    pOld->pDisplayName));
+                    pOld->pw_passwd)
+             || pUser->userInfo.uid != pOld->pw_uid
+             || pUser->userInfo.gid != pOld->pw_gid
+             || !UmnSrvStringsEqual(pUser->userInfo.pszGecos, pOld->pw_gecos)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, pOld->pw_dir)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszShell, pOld->pw_shell)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName, pOld->pDisplayName)
+             || !UmnSrvStringsEqual(pUser->pszDN, pOld->pszDN)
+             || !UmnSrvStringsEqual(pUser->pszObjectSid, pOld->pszObjectSid)
+             || !UmnSrvStringsEqual(pUser->pszNetbiosDomainName, pOld->pszNetbiosDomainName)
+             || !UmnSrvStringsEqual(pUser->pszSamAccountName, pOld->pszSamAccountName)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszPrimaryGroupSid, pOld->pszPrimaryGroupSid)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszUPN, pOld->pszUPN)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszAliasName, pOld->pszAliasName)
+             || pUser->userInfo.bPasswordNeverExpires != pOld->bPasswordNeverExpires
+             || pUser->userInfo.bPromptPasswordChange != pOld->bPromptPasswordChange
+             || pUser->userInfo.bUserCanChangePassword != pOld->bUserCanChangePassword
+             || !UmnSrvStringsEqual(pUser->userInfo.pszUnixName, pOld->pw_name)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszWindowsHomeFolder, pOld->pszWindowsHomeFolder)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszLocalWindowsHomeFolder, pOld->pszLocalWindowsHomeFolder));
 }
 
 
