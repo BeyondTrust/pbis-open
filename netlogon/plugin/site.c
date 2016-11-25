@@ -183,7 +183,7 @@ SitePluginReadRegistry(PSITE_PLUGIN_INTERFACE pInterface)
     {
         {
             "SiteName",
-            TRUE, /* Don't look at policy. */
+            TRUE, /* Look at policy in case this gets added to Group Policy later. */
             LwRegTypeString,
             0,
             -1,
