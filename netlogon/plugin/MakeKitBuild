@@ -1,6 +1,6 @@
 make() {
     mk_dlo \
-        DLO=dclist \
+        DLO=SiteName \
         INSTALLDIR="${MK_LIBDIR}/netlogon" \
         SOURCES="site.c" \
         INCLUDEDIRS=". ../include ../server/api/include" \

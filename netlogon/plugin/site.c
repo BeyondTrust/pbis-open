@@ -61,23 +61,6 @@ typedef struct _SITE_PLUGIN_RESULT
     LWNET_PLUGIN_SERVER_ADDRESS ServerAddress[0];
 } SITE_PLUGIN_RESULT, *PSITE_PLUGIN_RESULT;
 
-//
-// Prototypes
-//
-
-
-static
-VOID
-SitePluginFreeDcList(
-    LW_IN PLWNET_PLUGIN_INTERFACE pInterface,
-    LW_IN LW_OUT PLWNET_PLUGIN_SERVER_ADDRESS pDcArray,
-    LW_IN LW_DWORD dwDcCount
-    );
-
-//
-// Implementations
-//
-
 static
 DWORD
 SitePluginAlloc(
@@ -119,6 +102,16 @@ SitePluginCleanup(
 }
 
 static
+VOID
+SitePluginFreeResult(LW_IN PSITE_PLUGIN_RESULT pResult)
+{
+    if (pResult) {
+        if (pResult->pServerInfo) free(pResult->pServerInfo);
+        free(pResult);
+    }
+}
+
+static
 DWORD
 SitePluginGetDcList(
     LW_IN PLWNET_PLUGIN_INTERFACE pInterface,
@@ -153,11 +146,7 @@ SitePluginGetDcList(
 error:
     if (dwError)
     {
-        if (pResult) {
-            if (pResult->pServerInfo) free(pResult->pServerInfo);
-            free(pResult);
-            pResult = NULL;
-        }
+        SitePluginFreeResult(pResult);
         dwDcCount = 0;
     }
 
@@ -180,10 +169,7 @@ SitePluginFreeDcList(
     {
         PSITE_PLUGIN_RESULT pResult = LW_STRUCT_FROM_FIELD(pDcArray, SITE_PLUGIN_RESULT, ServerAddress);
 
-        if (pResult) {
-            if (pResult->pServerInfo) free(pResult->pServerInfo);
-            free(pResult);
-        }
+        SitePluginFreeResult(pResult);
     }
 }
 
