@@ -38,15 +38,15 @@
  *
  */
 
-#include "config.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
+#include "includes.h"
+
 #include "lwnet-plugin.h"
-#include "lwnet-utils.h"
 #include "lwerror.h"
 
 typedef struct _SITE_PLUGIN_INTERFACE 
