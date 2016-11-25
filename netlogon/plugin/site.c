@@ -96,7 +96,7 @@ SitePluginCleanup(
 
         if (ctx) {
             if (ctx->pszSiteName) free(ctx->pszSiteName);
-            free(pInterface);
+            free(ctx);
         }
     }
 }
