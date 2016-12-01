@@ -1895,6 +1895,9 @@ UmnSrvUpdateADAccounts(
             BAIL_ON_UMN_ERROR(dwError);
 
             pAllUsers->type = LSA_OBJECT_TYPE_USER;
+            
+            pAllUsers->userInfo.uid = -1;
+            pAllUsers->userInfo.gid = -1;
 
             dwError = LwAllocateString(
                             "S-INVALID",
