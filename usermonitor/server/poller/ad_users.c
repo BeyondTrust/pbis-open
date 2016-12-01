@@ -71,6 +71,19 @@ UmnSrvFreeADUserContents(
     LW_SAFE_FREE_MEMORY(pUser->pDisplayName);
 }
 
+/**
+ * @brief Report true if usermonitor considers the user "enabled",
+ * this controls whether usermonitor reports on this user.
+ */
+static inline
+BOOL
+UmnSrvUserIsEnabled(
+        const PLSA_SECURITY_OBJECT pUser
+        )
+{
+    return (pUser->enabled);
+}
+
 static
 DWORD
 UmnSrvAddUsersFromMembership(
@@ -110,9 +123,16 @@ UmnSrvAddUsersFromMembership(
 
     if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
-        if (ppObjects[0]->enabled &&
+        UMN_LOG_DEBUG("Processing AD user %s (%s)",
+                ppMembers[i]->pszSamAccountName,
+                ppMembers[i]->pszObjectSid);
+
+        if (UmnSrvUserIsEnabled(ppObjects[0]) &&
                 !LwHashExists(pUsers, ppObjects[0]->pszObjectSid))
         {
+            UMN_LOG_VERBOSE("Found AD user %s that can login",
+                        ppObjects[0]->userInfo.pszUnixName);
+
             dwError = LwHashSetValue(
                             pUsers,
                             ppObjects[0]->pszObjectSid,
@@ -123,6 +143,7 @@ UmnSrvAddUsersFromMembership(
     }
     else if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_GROUP)
     {
+        UMN_LOG_DEBUG("Querying membership of group %s", ppObjects[0]->pszSamAccountName);
         dwError = LsaQueryExpandedGroupMembers(
                         hLsass,
                         NULL,
@@ -133,9 +154,16 @@ UmnSrvAddUsersFromMembership(
                         &ppMembers);
         BAIL_ON_UMN_ERROR(dwError);
 
+        UMN_LOG_DEBUG("Group %s membership count %d", ppObjects[0]->pszSamAccountName, memberCount);
+
         for (i = 0; i < memberCount; i++)
         {
-            if (ppMembers[i]->enabled &&
+            UMN_LOG_DEBUG("Processing group %s member %s (%s)",
+                    ppObjects[0]->pszSamAccountName,
+                    ppMembers[i]->pszSamAccountName,
+                    ppMembers[i]->pszObjectSid);
+
+            if (UmnSrvUserIsEnabled(ppMembers[i]) &&
                     !LwHashExists(pUsers, ppMembers[i]->pszObjectSid))
             {
                 UMN_LOG_VERBOSE("Found AD user %s that can login because of group %s",
@@ -462,6 +490,7 @@ UmnSrvReadADUser(
                     pName);
     BAIL_ON_UMN_ERROR(dwError);
 
+    pADUser->version = AD_USER_INFO_VERSION;
     dwError = LwRegProcessConfig(
                 pUserPath,
                 NULL,
@@ -475,6 +504,165 @@ cleanup:
 
 error:
     goto cleanup;
+}
+
+static
+DWORD
+UmnSrvGetADUserEventDescription(PWSTR *ppszDescription,
+            PCSTR pOperation,
+            const char * const oldTimeBuf,
+            PAD_USER_INFO pOld,
+            const char * const newTimeBuf,
+            PLSA_SECURITY_OBJECT pNew)
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    dwError = LwAllocateWc16sPrintfW(
+                    ppszDescription,
+                    L"Between %hhs and %hhs, user '%hhs' was %hhs.\n"
+                    L"Passwd (from passwd struct)\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Uid\n"
+                    L"\tOld: %d\n"
+                    L"\tNew: %d\n"
+                    L"Primary group id\n"
+                    L"\tOld: %d\n"
+                    L"\tNew: %d\n"
+                    L"Gecos\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Home directory\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Shell\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Display Name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"DN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"SID\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Netbios domain name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Sam account name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Primary group SID\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"UPN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Alias name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Generated UPN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Password expired\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Password never expires\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Must change password\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Can change password\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account disabled\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account expired\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account locked\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Windows home folder\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Local Windows home folder\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs",
+                    oldTimeBuf,
+                    newTimeBuf,
+                    pOld ? pOld->pw_name : pNew->userInfo.pszUnixName,
+                    pOperation,
+                    pOld ? pOld->pw_passwd : "",
+                    pNew ? (pNew->userInfo.pszPasswd ?  pNew->userInfo.pszPasswd : "x") : "",
+                    pOld ? pOld->pw_uid : -1,
+                    pNew ? pNew->userInfo.uid : -1,
+                    pOld ? pOld->pw_gid : -1,
+                    pNew ? pNew->userInfo.gid : -1,
+                    pOld ? pOld->pw_gecos : "",
+                    (pNew && pNew->userInfo.pszGecos) ?  pNew->userInfo.pszGecos : "",
+                    pOld ? pOld->pw_dir : "",
+                    pNew ? pNew->userInfo.pszHomedir : "",
+                    pOld ? pOld->pw_shell : "",
+                    pNew ? pNew->userInfo.pszShell : "",
+                    pOld ? pOld->pDisplayName : "",
+                    pNew ? pNew->userInfo.pszDisplayName : "",
+
+                    pOld ? pOld->pszDN : "",
+                    (pNew && pNew->pszDN) ? pNew->pszDN : "",
+
+                    pOld ? pOld->pszObjectSid : "",
+                    (pNew && pNew->pszObjectSid) ? pNew->pszObjectSid : "",
+
+                    pOld ? pOld->pszNetbiosDomainName : "",
+                    (pNew && pNew->pszNetbiosDomainName) ? pNew->pszNetbiosDomainName : "",
+
+                    pOld ? pOld->pszSamAccountName : "",
+                    (pNew && pNew->pszSamAccountName) ? pNew->pszSamAccountName : "",
+
+                    pOld ? pOld->pszPrimaryGroupSid : "",
+                    (pNew && pNew->userInfo.pszPrimaryGroupSid) ? pNew->userInfo.pszPrimaryGroupSid : "",
+
+                    pOld ? pOld->pszUPN : "",
+                    (pNew && pNew->userInfo.pszUPN) ? pNew->userInfo.pszUPN : "",
+
+                    pOld ? pOld->pszAliasName : "",
+                    (pNew && pNew->userInfo.pszAliasName) ? pNew->userInfo.pszAliasName : "",
+
+                    pOld ? (pOld->bIsGeneratedUPN ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bIsGeneratedUPN ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPasswordExpired ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPasswordExpired ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPasswordNeverExpires ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPasswordNeverExpires ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPromptPasswordChange ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPromptPasswordChange ? "true" : "false") : "",
+
+                    pOld ? (pOld->bUserCanChangePassword ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bUserCanChangePassword ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountDisabled ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountDisabled ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountExpired ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountExpired ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountLocked ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountLocked ? "true" : "false") : "",
+
+                    pOld ? pOld->pszWindowsHomeFolder : "",
+                    (pNew && pNew->userInfo.pszWindowsHomeFolder) ? pNew->userInfo.pszWindowsHomeFolder : "",
+
+                    pOld ? pOld->pszLocalWindowsHomeFolder : "",
+                    (pNew && pNew->userInfo.pszLocalWindowsHomeFolder) ? pNew->userInfo.pszLocalWindowsHomeFolder : ""
+            );
+
+    return dwError;
 }
 
 
@@ -575,30 +763,22 @@ UmnSrvWriteADUserEvent(
         change.ADNewValue.LastUpdated = Now;
     }
 
-    dwError = LwMbsToWc16s(
-                    "Application",
-                    &record.pLogname);
+    dwError = LwMbsToWc16s( "Application", &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
     if (!PreviousRun)
     {
-        dwError = LwMbsToWc16s(
-                        "Success Audit",
-                        &record.pEventType);
+        dwError = LwMbsToWc16s( "Success Audit", &record.pEventType);
     }
     else
     {
-        dwError = LwMbsToWc16s(
-                        "Information",
-                        &record.pEventType);
+        dwError = LwMbsToWc16s( "Information", &record.pEventType);
     }
     BAIL_ON_UMN_ERROR(dwError);
 
     record.EventDateTime = Now;
 
-    dwError = LwMbsToWc16s(
-                    "User Monitor",
-                    &record.pEventSource);
+    dwError = LwMbsToWc16s( "User Monitor", &record.pEventSource);
     BAIL_ON_UMN_ERROR(dwError);
 
     if (pOld != NULL && pNew != NULL)
@@ -647,50 +827,12 @@ UmnSrvWriteADUserEvent(
     // Do not free. This value is borrowed from other structures.
     record.pComputer = (PWSTR)UmnEvtGetEventComputerName();
 
-    dwError = LwAllocateWc16sPrintfW(
-                    &record.pDescription,
-                    L"Between %hhs and %hhs, user '%hhs' was %hhs.\n"
-                    L"Passwd (from passwd struct)\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Uid\n"
-                    L"\tOld: %d\n"
-                    L"\tNew: %d\n"
-                    L"Primary group id\n"
-                    L"\tOld: %d\n"
-                    L"\tNew: %d\n"
-                    L"Gecos\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Home directory\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Shell\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Display Name\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs",
-                    oldTimeBuf,
-                    newTimeBuf,
-                    pOld ? pOld->pw_name : pNew->userInfo.pszUnixName,
-                    pOperation,
-                    pOld ? pOld->pw_passwd : "",
-                    pNew ? (pNew->userInfo.pszPasswd ?
-                                pNew->userInfo.pszPasswd : "x") : "",
-                    pOld ? pOld->pw_uid : -1,
-                    pNew ? pNew->userInfo.uid : -1,
-                    pOld ? pOld->pw_gid : -1,
-                    pNew ? pNew->userInfo.gid : -1,
-                    pOld ? pOld->pw_gecos : "",
-                    (pNew && pNew->userInfo.pszGecos) ?
-                        pNew->userInfo.pszGecos : "",
-                    pOld ? pOld->pw_dir : "",
-                    pNew ? pNew->userInfo.pszHomedir : "",
-                    pOld ? pOld->pw_shell : "",
-                    pNew ? pNew->userInfo.pszShell : "",
-                    pOld ? pOld->pDisplayName : "",
-                    pNew ? pNew->userInfo.pszDisplayName : "");
+    dwError = UmnSrvGetADUserEventDescription(&record.pDescription,
+            pOperation,
+            oldTimeBuf,
+            pOld,
+            newTimeBuf,
+            pNew);
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = EncodeADUserChange(
