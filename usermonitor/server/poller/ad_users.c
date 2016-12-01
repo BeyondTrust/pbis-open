@@ -71,6 +71,19 @@ UmnSrvFreeADUserContents(
     LW_SAFE_FREE_MEMORY(pUser->pDisplayName);
 }
 
+/**
+ * @brief Report true if usermonitor considers the user "enabled",
+ * this controls whether usermonitor reports on this user.
+ */
+static inline
+BOOL
+UmnSrvUserIsEnabled(
+        const PLSA_SECURITY_OBJECT pUser
+        )
+{
+    return (pUser->enabled);
+}
+
 static
 DWORD
 UmnSrvAddUsersFromMembership(
@@ -110,9 +123,16 @@ UmnSrvAddUsersFromMembership(
 
     if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
-        if (ppObjects[0]->enabled &&
+        UMN_LOG_DEBUG("Processing AD user %s (%s)",
+                ppMembers[i]->pszSamAccountName,
+                ppMembers[i]->pszObjectSid);
+
+        if (UmnSrvUserIsEnabled(ppObjects[0]) &&
                 !LwHashExists(pUsers, ppObjects[0]->pszObjectSid))
         {
+            UMN_LOG_VERBOSE("Found AD user %s that can login",
+                        ppObjects[0]->userInfo.pszUnixName);
+
             dwError = LwHashSetValue(
                             pUsers,
                             ppObjects[0]->pszObjectSid,
@@ -123,6 +143,7 @@ UmnSrvAddUsersFromMembership(
     }
     else if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_GROUP)
     {
+        UMN_LOG_DEBUG("Querying membership of group %s", ppObjects[0]->pszSamAccountName);
         dwError = LsaQueryExpandedGroupMembers(
                         hLsass,
                         NULL,
@@ -133,9 +154,16 @@ UmnSrvAddUsersFromMembership(
                         &ppMembers);
         BAIL_ON_UMN_ERROR(dwError);
 
+        UMN_LOG_DEBUG("Group %s membership count %d", ppObjects[0]->pszSamAccountName, memberCount);
+
         for (i = 0; i < memberCount; i++)
         {
-            if (ppMembers[i]->enabled &&
+            UMN_LOG_DEBUG("Processing group %s member %s (%s)",
+                    ppObjects[0]->pszSamAccountName,
+                    ppMembers[i]->pszSamAccountName,
+                    ppMembers[i]->pszObjectSid);
+
+            if (UmnSrvUserIsEnabled(ppMembers[i]) &&
                     !LwHashExists(pUsers, ppMembers[i]->pszObjectSid))
             {
                 UMN_LOG_VERBOSE("Found AD user %s that can login because of group %s",
