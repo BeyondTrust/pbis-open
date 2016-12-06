@@ -433,7 +433,7 @@ FreeADUserChange(
         return;
     }
 
-    FreeUserMonitorPasswdContents(&pValue->OldValue);
+    FreeADUserInfoContents(&pValue->OldValue);
     FreeADUserInfoContents(&pValue->ADNewValue);
     rpc_ss_client_free(pValue);
 }

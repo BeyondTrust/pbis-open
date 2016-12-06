@@ -591,7 +591,7 @@ cleanup:
                 hKey);
     }
     return dwError;
-    
+
 error:
     goto cleanup;
 }
@@ -615,7 +615,7 @@ UmnSrvFindDeletedUsers(
     DWORD lastUpdatedLen = 0;
     USER_MONITOR_PASSWD old = { 0 };
 
-    UMN_LOG_DEBUG("Finding deleted local users");
+    UMN_LOG_DEBUG("Finding deleted %s", pUserKeyName);
 
     dwError = RegQueryInfoKeyA(
                     hReg,
@@ -700,26 +700,13 @@ UmnSrvFindDeletedUsers(
                             pKeyName);
             BAIL_ON_UMN_ERROR(dwError);
 
-            if (!strcmp(pUserKeyName, "Users"))
-            {
-                dwError = UmnSrvWriteUserEvent(
-                                pEventlog,
-                                old.LastUpdated,
-                                &old,
-                                Now,
-                                NULL);
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            else
-            {
-                dwError = UmnSrvWriteADUserEvent(
-                                pEventlog,
-                                old.LastUpdated,
-                                &old,
-                                Now,
-                                NULL);
-                BAIL_ON_UMN_ERROR(dwError);
-            }
+            dwError = UmnSrvWriteUserEvent(
+                            pEventlog,
+                            old.LastUpdated,
+                            &old,
+                            Now,
+                            NULL);
+            BAIL_ON_UMN_ERROR(dwError);
 
             // Make sure we don't skip the next key since this one was deleted
             i--;
@@ -844,7 +831,7 @@ cleanup:
         RegCloseKey(hReg, hUsers);
     }
     return dwError;
-    
+
 error:
     goto cleanup;
 }
