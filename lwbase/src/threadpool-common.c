@@ -72,7 +72,7 @@ static const int SignalBlacklist[] =
 #endif
 #ifdef __LWI_AIX__
     /* Ignore the new SIGRECONFIG signal */
-    58
+    58,
 #endif
     0
 };
