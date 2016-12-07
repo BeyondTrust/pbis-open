@@ -832,6 +832,8 @@ RegisterTaskUnixSignal(
         {
             RingInit(&gSignal.pSubscribers[i]);
         }
+        
+        gSignal.maxSig = maxSig;
     }
 
     pBase = &gSignal.pSubscribers[Sig];
@@ -905,7 +907,7 @@ DispatchSignal(
     PRING pNext = NULL;
     PLW_SIGNAL_SUBSCRIPTION pSub = NULL;
 
-    if (!gSignal.pSubscribers)
+    if (!gSignal.pSubscribers || pInfo->si_signo > gSignal.maxSig || pInfo->si_signo < 0)
     {
         return;
     }
