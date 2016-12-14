@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -38,15 +38,27 @@
  * Abstract:
  *
  *        User monitor service for users and groups
- * 
+ *
  *        Functions internal to this package for enumerating and tracking
  *        AD users.
  *
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
- * 
+ *
  */
 #ifndef __AD_USERS_P_H__
 #define __AD_USERS_P_H__
+
+VOID
+UmnSrvFreeADUserContents(
+    PAD_USER_INFO pUser
+    );
+
+DWORD
+UmnSrvReadADUser(
+    PCSTR pParentKey,
+    PCSTR pName,
+    PAD_USER_INFO pADUser
+    );
 
 DWORD
 UmnSrvUpdateADAccounts(
@@ -62,7 +74,7 @@ DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long PreviousRun,
-    PUSER_MONITOR_PASSWD pOld,
+    PAD_USER_INFO pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
     );
