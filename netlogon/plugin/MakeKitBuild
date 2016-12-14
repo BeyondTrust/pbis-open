@@ -1,0 +1,9 @@
+make() {
+    mk_dlo \
+        DLO=SiteName \
+        INSTALLDIR="${MK_LIBDIR}/netlogon" \
+        SOURCES="site.c" \
+        INCLUDEDIRS=". ../include ../server/include ../server/api" \
+        HEADERDEPS="lwerror.h reg/lwreg.h reg/regutil.h" \
+        LIBDEPS="lwnetclientapi lwadvapi_nothr"
+}

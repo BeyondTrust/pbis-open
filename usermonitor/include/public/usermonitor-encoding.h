@@ -42,7 +42,7 @@
  *        Public header
  *
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
- * 
+ *
  */
 #ifndef __USERMONITOR_H__
 #define __USERMONITOR_H__
@@ -78,31 +78,31 @@ typedef STRUCT _USER_MONITOR_PASSWD
 #define AD_USER_CHANGE_VERSION  "(v2)"
 #define AD_USER_INFO_VERSION 0
 
-/* 
+/*
  * AD user attributes
  */
-typedef STRUCT _AD_USER_INFO 
+typedef STRUCT _AD_USER_INFO
 {
     // the version of this struct
     DWORD version;
 
-    // This is a subset of LSA_SECURITY_OBJECT, 
-    // and sub LSA_SECURITY_OBJECT_USER_INFO 
+    // This is a subset of LSA_SECURITY_OBJECT,
+    // and sub LSA_SECURITY_OBJECT_USER_INFO
     // struct
-    
+
     PSTR pszDN;
     PSTR pszObjectSid;
     BOOL enabled;
     BOOL bIsLocal;
     PSTR pszNetbiosDomainName;
     PSTR pszSamAccountName;
-    
+
     // the LSA_SECURITY_OBJECT_USER_INFO
     PSTR pszPrimaryGroupSid;
     PSTR pszUPN;
     PSTR pszAliasName;
-    
-    // NT time values 
+
+    // NT time values
     UINT64 qwPwdLastSet;
     UINT64 qwMaxPwdAge;
     UINT64 qwPwdExpires;
@@ -118,7 +118,7 @@ typedef STRUCT _AD_USER_INFO
     BOOL bAccountExpired;
     BOOL bAccountLocked;
 
-    // the UNIX attributes 
+    // the UNIX attributes
     DWORD pw_uid;
     DWORD pw_gid;
     PSTR pw_name;
@@ -169,13 +169,7 @@ typedef STRUCT _GROUP_MEMBERSHIP_CHANGE
 /* new, changed and deleted AD users */
 typedef STRUCT _AD_USER_CHANGE
 {
-    // unix passwd like attributes
-    // (we don't currently store the 
-    // AD user attributes in the registry
-    // as the old values) 
-    USER_MONITOR_PASSWD OldValue;
-
-    // ad attributes/info
+    AD_USER_INFO OldValue;
     AD_USER_INFO ADNewValue;
 } AD_USER_CHANGE, *PAD_USER_CHANGE;
 

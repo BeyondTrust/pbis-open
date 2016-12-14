@@ -137,6 +137,7 @@ package_pkg()
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/netlogon" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
                 "${MK_LIBDIR}/lsa-rpc" \
@@ -205,6 +206,7 @@ package_lpp()
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/netlogon" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
                 "${MK_LIBDIR}/lsa-rpc" \
@@ -326,6 +328,7 @@ open_files_prefix()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/netlogon/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwicompat_v*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
         "${MK_DATADIR}/rhel/*" \
