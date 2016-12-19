@@ -156,6 +156,7 @@ typedef struct _LW_SIGNAL_MULTIPLEX
     pthread_mutex_t Lock;
     NTSTATUS Status;
     BOOLEAN bExit;
+    int maxSig;
 } LW_SIGNAL_MULTIPLEX;
 
 #define LOCK_THREADS(m) (pthread_mutex_lock(&((m)->Lock)))
