@@ -1946,22 +1946,6 @@ static BOOLEAN PamModuleRemoveOnEnable( const char * phase, const char *control,
         return TRUE;
     }
 
-    // RALI
-    if (!strcmp(phase, "auth") && !strcmp(control, "requisite") && !strcmp(buffer, "pam_lwidentity_smartcard_prompt"))
-    {
-        DJ_LOG_ERROR("RALI PamModuleRemoveOnEnable  Looking at entry %s %s %s", phase, control, module);
-        return TRUE;
-    }
-
-    if (!strcmp(phase, "account") && !strcmp(control, "required"))
-        DJ_LOG_ERROR("RALII PamModuleRemoveOnEnable  Looking at entry %s %s %s %s", phase, control, module, buffer);
-
-    if (!strcmp(phase, "account") && !strcmp(control, "required") && !strcmp(buffer, "pam_lsass"))
-    {
-        DJ_LOG_ERROR("RALIIII PamModuleRemoveOnEnable  Looking at entry %s %s %s", phase, control, module);
-        return TRUE;
-    }
-
     return FALSE;
 }
 
@@ -2246,8 +2230,7 @@ static DWORD PamOldCenterisDisable(struct PamConf *conf, const char *service, co
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI PamOldCenterisDisable Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
         ceError = GetIncludeName(
@@ -2361,8 +2344,7 @@ static DWORD PamLwidentityDisable(struct PamConf *conf, const char *service, con
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI PamLwidentityDisable  Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
         ceError = GetIncludeName(
@@ -2545,8 +2527,7 @@ static void FixPromptingModule(struct PamConf *conf, const char *service, const 
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI FixPromptingModule Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
         if(PamModulePrompts(phase, module))
         {
             DJ_LOG_INFO("Making sure module %s uses the password stored by pam_lwidentity", module);
@@ -2703,8 +2684,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI PamLwidentityEnable Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
         ceError = GetIncludeName(
@@ -2828,7 +2808,6 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
         if(!strcmp(module, "pam_lwidentity_smartcard_prompt"))
             state->hasAddedSmartCardPrompt = TRUE;
 
-/* RALI 
         if(!state->hasAddedSmartCardPrompt && !strcmp(phase, "auth") &&
                 PamModulePrompts(phase, module))
         {
@@ -2844,7 +2823,6 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             GetModuleControl(lineObj, &module, &control);
             LW_TRY(exc, FixPromptingModule(conf, service, phase, state, line, &LW_EXC));
         }
-RALI */ 
 
         if(PamModuleAlwaysDeniesDomainLogins(phase, module, distro) && (
                     !strcmp(control, "required") ||
@@ -3225,14 +3203,10 @@ RALI */
             * account required pam_lwidentity unknown_ok
             * account sufficient pam_lwidentity
             */
-        //    LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, lwidentityLine, NULL));
-        //    lineObj = &conf->lines[lwidentityLine];
-        //    LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->control, lineObj->phase, "required"));
-        //    LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "unknown_ok"));
-        //
-            DJ_LOG_ERROR("RALI PamLwidentityEnable adding unknown option");
+            LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, lwidentityLine, NULL));
+            lineObj = &conf->lines[lwidentityLine];
+            LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->control, lineObj->phase, "required"));
             LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "unknown_ok"));
-             
         }
         else if(state->sawPromptingModule)
         {
@@ -3342,8 +3316,7 @@ static DWORD PamLwiPassPolicyDisable(struct PamConf *conf, const char *service, 
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI PamLwiPassPolicyDisable Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
         ceError = GetIncludeName(
@@ -3433,8 +3406,7 @@ static DWORD PamLwiPassPolicyEnable(struct PamConf *conf, const char *service, c
         lineObj = &conf->lines[line];
         GetModuleControl(lineObj, &module, &control);
 
-        // DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        DJ_LOG_ERROR("RALI PamLwiPassPolicyEnable Looking at entry %s %s %s %s", service, phase, control, module);
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
         ceError = GetIncludeName(

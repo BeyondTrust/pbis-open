@@ -9,7 +9,8 @@ Auth-Initial:
 	[success=end default=ignore]	pam_lsass.so
 Account-Type: Primary
 Account:
-	[success=end new_authtok_reqd=done default=ignore]	pam_lsass.so unknown_ok
+	[success=ok new_authtok_reqd=ok default=ignore]		pam_lsass.so unknown_ok
+	[success=end new_authtok_reqd=done default=ignore]	pam_lsass.so
 Session-Type: Additional
 Session:
 	optional	pam_lsass.so
