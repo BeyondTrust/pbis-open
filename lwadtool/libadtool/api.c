@@ -524,7 +524,7 @@ DWORD AdtCreateActionArgV(IN HANDLE context, IN INT argc, IN PCSTR *argv, OUT Ad
       return(dwError);
 
     error:
-      PrintUsage(appContext->fullCon, NULL, NULL, appContext->optionsCon);
+      PrintUsage(appContext->optionsCon, NULL, NULL, appContext->fullCon);
       goto cleanup;
 
     error2:
