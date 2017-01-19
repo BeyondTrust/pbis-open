@@ -271,7 +271,7 @@ _mk_do_fat()
         TARGET="$_fat_prefix.host.$_isa$_fat_suffix"
         "$@"
         mk_quote "$result"
-        _fat_parts="$_fat_parts $result"    
+        _fat_parts="$_fat_parts $result"
     done
 
     result="${_fat_parts# }"
@@ -290,7 +290,7 @@ _mk_process_headerdeps()
         else
             _mk_define_name "HAVE_${_header}"
             mk_get "$result"
-            
+
             if [ "$result" = "no" ]
             then
                 mk_fail "$1 depends on missing header $_header"
@@ -305,11 +305,11 @@ _mk_process_headerdeps()
 _mk_compile()
 {
     _object="${SOURCE%.*}${OSUFFIX}.${CANONICAL_SYSTEM%/*}.${CANONICAL_SYSTEM#*/}.o"
-    
+
     mk_resolve_target "${SOURCE}"
     _res="$result"
     mk_quote "$_res"
-    
+
     mk_target \
         TARGET="$_object" \
         DEPS="$DEPS $_INT_DEPS $result" \
@@ -331,7 +331,7 @@ _mk_compile_detect()
             mk_fail "unsupport source file type: .${SOURCE##*.}"
             ;;
     esac
-    
+
     _mk_compile
 }
 
@@ -340,13 +340,13 @@ mk_compile()
 {
     mk_push_vars SOURCE HEADERDEPS DEPS INCLUDEDIRS CPPFLAGS CFLAGS CXXFLAGS PIC OSUFFIX COMPILER SYSTEM="$MK_SYSTEM" CANONICAL_SYSTEM
     mk_parse_params
-    
+
     mk_canonical_system "$SYSTEM"
     CANONICAL_SYSTEM="$result"
 
     _mk_process_headerdeps "$SOURCE"
     _mk_compile_detect
-    
+
     mk_pop_vars
 }
 
@@ -356,7 +356,7 @@ _mk_verify_libdeps()
     do
         _mk_contains "$__dep" ${MK_INTERNAL_LIBS} && continue
         _mk_define_name "HAVE_LIB_${__dep}"
-        
+
         mk_get "$result"
 
         if [ "$result" = "no" ]
@@ -2072,7 +2072,7 @@ option()
     do
         _mk_define_name "MK_${_sys}_ISAS"
         mk_get "$result"
-        
+
         for _isa in ${result}
         do
             _mk_define_name "$_sys/${_isa}"
@@ -2080,7 +2080,7 @@ option()
 
             _mk_define_name "MK_${_sys}_OS"
             mk_get "$result"
-            
+
             _default_cc="$MK_DEFAULT_CC"
             _default_cxx="$MK_DEFAULT_CXX"
 
@@ -2121,14 +2121,14 @@ option()
                     _default_ldflags="-m32"
                     ;;
                 *-linux-ppc64)
-#                   n.b. compiling with -m64 produces 8 bytes longs, 
+#                   n.b. compiling with -m64 produces 8 bytes longs,
 #                   ensure un/marshalling code doesn't assume 4 byte longs
                     _default_cflags="-std=gnu99 -mcpu=powerpc64 -m64"
                     _default_cxxflags="-mcpu=powerpc64 -m64"
                     _default_ldflags="-m64"
                     ;;
                 *-linux-ppc64le)
-#                   n.b. compiling with -m64 produces 8 bytes longs, 
+#                   n.b. compiling with -m64 produces 8 bytes longs,
 #                   ensure un/marshalling code doesn't assume 4 byte longs
                     _default_cflags="-std=gnu99 -mcpu=powerpc64 -mlittle-endian -m64"
                     _default_cxxflags="-mcpu=powerpc64 -mlittle-endian -m64"
@@ -2164,6 +2164,15 @@ option()
                     _default_cxxflags="-mlp64"
                     _default_ldflags=""
                     ;;
+                *-linux-s390x)
+#                   n.b. by default gcc will default to -mzarch and -m64, which
+#                   produces 8 byte longs
+#                    _default_cflags="-m64"
+                    _default_cflags="-std=gnu99 -m64"
+#                    _default_cxxflags="-m64"
+                    _default_cxxflags="-std=gnu99 -m64"
+                    _default_ldflags=""
+                    ;;
                 *)
                     _default_cflags=""
                     _default_cxxflags=""
@@ -2171,7 +2180,7 @@ option()
                     mk_msg "Unknown platform ${MK_DEFAULT_CC}-${result}-${_isa} will use default compiler flags."
                     ;;
             esac
-            
+
             mk_option \
                 VAR="${_def}_CC" \
                 PARAM="program" \
@@ -2183,13 +2192,13 @@ option()
                 PARAM="program" \
                 DEFAULT="$_default_cxx" \
                 HELP="C++ compiler ($_sys/$_isa)"
-            
+
             mk_option \
                 VAR="${_def}_CPPFLAGS" \
                 PARAM="flags" \
                 DEFAULT="" \
                 HELP="C preprocessor flags ($_sys/$_isa)"
-            
+
             mk_option \
                 VAR="${_def}_CFLAGS" \
                 PARAM="flags" \
@@ -2201,7 +2210,7 @@ option()
                 PARAM="flags" \
                 DEFAULT="$_default_cxxflags" \
                 HELP="C++ compiler flags ($_sys/$_isa)"
-            
+
             mk_option \
                 VAR="${_def}_LDFLAGS" \
                 PARAM="flags" \

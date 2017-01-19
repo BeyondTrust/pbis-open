@@ -38,7 +38,7 @@
 # @function mk_multiarch_do
 # @brief Execute commands for multiple ISAs
 # @usage
-# 
+#
 # Executes a set of commands beginning with <funcref>mk_multiarch_do</funcref>
 # and ending with <funcref>mk_multiarch_done</funcref> for each ISA of the
 # host system.  During the configure phase, this allows running tests
@@ -101,7 +101,7 @@ mk_get_system_var()
 {
     mk_push_vars SYSTEM
     mk_parse_params
-    
+
     [ -z "$SYSTEM" ] && SYSTEM="$2"
 
     if [ "$MK_SYSTEM" = "$SYSTEM" ]
@@ -146,7 +146,7 @@ mk_set_system_var()
 mk_set_all_isas()
 {
     if [ "$MK_SYSTEM" = "${MK_SYSTEM%/*}" ]
-    then 
+    then
         for __isa in ${MK_ISAS}
         do
             mk_set_system_var SYSTEM="$MK_SYSTEM/$__isa" "$@"
@@ -159,7 +159,7 @@ mk_set_all_isas()
 #<
 # @brief Set target system
 # @usage sys
-# 
+#
 # Sets the system which will be the target of subsequent configure tests
 # or build products.  This is important for cross-compiling or multiarchitecture
 # builds.  The parameter <param>sys</param> may be either "host" to target
@@ -194,9 +194,9 @@ mk_system()
     mk_push_vars suffix canon var
     mk_canonical_system "$1"
     canon="$result"
-    
+
     MK_SYSTEM="$1"
-    
+
     # If we are changing the current system
     if [ "$MK_CANONICAL_SYSTEM" != "$canon" ]
     then
@@ -243,13 +243,13 @@ mk_canonical_system()
 mk_run_with_extended_library_path()
 {
     unset __env
-    
+
     case "$MK_BUILD_OS" in
         linux|*)
             __env="LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$1"
             ;;
     esac
-    
+
     shift
     env "$__env" "$@"
 }
@@ -263,7 +263,7 @@ _mk_declare_system()
             return 0
             ;;
     esac
-           
+
     MK_SYSTEM_VARS="$MK_SYSTEM_VARS $1"
 
     if ${_inherited}
@@ -281,7 +281,7 @@ _mk_declare_system()
         do
             _mk_define_name "$__target"
             _mk_declare_exported "$1_$result"
-        done        
+        done
     fi
 }
 
@@ -418,6 +418,9 @@ option()
                     ;;
                 ppc|ppc32|ppc64|ppc64le)
                     _default_MK_BUILD_ARCH="powerpc"
+                    ;;
+                s390x)
+                    _default_MK_BUILD_ARCH="s390x"
                     ;;
                 *)
                     mk_fail "unknown architecture: `uname -m`"
