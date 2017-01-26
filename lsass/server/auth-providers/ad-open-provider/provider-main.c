@@ -5421,8 +5421,9 @@ AD_InitializeOperatingMode(
                 pState->pszDomainName,
                 pszSamAccountName);
     }
-    // If we are offline, do the offline case
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+
+    // If we fail to initialize online, fallback to offline 
+    if (LW_ERROR_SUCCESS != dwError)
     {
         dwError = AD_OfflineInitializeOperatingMode(
                 &pProviderData,
