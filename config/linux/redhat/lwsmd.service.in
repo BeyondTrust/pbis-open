@@ -1,6 +1,6 @@
 [Unit]
 Description=BeyondTrust PBIS Service Manager
-After=network-online.target 
+After=network.target 
 
 [Service]
 Type=forking
