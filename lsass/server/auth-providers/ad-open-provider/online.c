@@ -2349,6 +2349,14 @@ AD_FilterNullEntries(
     size_t sInput = 0;
     size_t sOutput = 0;
 
+    if (psCount == NULL) return;
+
+    if (ppEntries == NULL)
+    {
+        *psCount = 0;
+        return;
+    }
+
     for (; sInput < *psCount; sInput++)
     {
         if (ppEntries[sInput] != NULL)
@@ -4110,11 +4118,9 @@ AD_OnlineFindObjects(
     )
 {
     DWORD dwError = 0;
-    PLSA_SECURITY_OBJECT* ppUnorderedObjects = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_OBJECT_TYPE type = LSA_OBJECT_TYPE_UNDEFINED;
     DWORD dwIndex = 0;
-    size_t sObjectCount = 0;
 
     switch(QueryType)
     {
@@ -4123,7 +4129,7 @@ AD_OnlineFindObjects(
             pContext,
             dwCount,
             (PSTR*) QueryList.ppszStrings,
-            &sObjectCount,
+            NULL,
             &ppObjects);
         BAIL_ON_LSA_ERROR(dwError);
         break;
@@ -4132,7 +4138,7 @@ AD_OnlineFindObjects(
             pContext,
             dwCount,
             (PSTR*) QueryList.ppszStrings,
-            &sObjectCount,
+            NULL,
             &ppObjects);
          BAIL_ON_LSA_ERROR(dwError);
          break;
@@ -4195,11 +4201,6 @@ AD_OnlineFindObjects(
     *pppObjects = ppObjects;
 
 cleanup:
-
-    if (ppUnorderedObjects)
-    {
-        LsaUtilFreeSecurityObjectList((DWORD) sObjectCount, ppUnorderedObjects);
-    }
 
     return dwError;
 
@@ -4632,6 +4633,25 @@ error:
     goto cleanup;
 }
 
+static
+BOOLEAN
+AD_ListContainsSid(PSTR* ppszSids, DWORD dwSidCount, PSTR pszSid)
+{
+    DWORD dwIndex;
+    
+    if (ppszSids == NULL || pszSid == NULL) return FALSE;
+    
+    for (dwIndex = 0; dwIndex < dwSidCount; dwIndex++)
+    {
+        if (ppszSids[dwIndex] && strcasecmp(ppszSids[dwIndex], pszSid) ==  0)
+        {
+            return TRUE;
+        }
+    }
+    
+    return FALSE;
+}
+
 DWORD
 AD_OnlineGetGroupMemberSids(
     IN PAD_PROVIDER_CONTEXT pContext,
@@ -4768,7 +4788,7 @@ AD_OnlineGetGroupMemberSids(
     {
         for (dwIndex = 0; dwIndex < sResultsCount; dwIndex++)
         {
-            if (ppResults[dwIndex])
+            if (ppResults[dwIndex] && !AD_ListContainsSid(ppszSids, dwSidCount, ppResults[dwIndex]->pszObjectSid))
             {
                 dwError = LwAllocateString(ppResults[dwIndex]->pszObjectSid, &ppszSids[dwSidCount++]);
                 BAIL_ON_LSA_ERROR(dwError);

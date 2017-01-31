@@ -262,6 +262,23 @@ AD_FreeHashObject(
     IN OUT const LW_HASH_ENTRY *pEntry
     );
 
+/**
+ * @brief Perform a lookup for security objects from the given list of DN values
+ * 
+ * Where possible this function will use the local cache to resolve security objects
+ * for the provided DN list. Where items are missing, expired or incomplete in the 
+ * local cache the security object will be queried from AD using LDAP calls.
+ * 
+ * The list of security objects returned in @p pppResults will be a sparse array 
+ * matching the DN values in the @p ppszDNList passed in.
+ * 
+ * @param pContext Handle to the provider context
+ * @param sCount Number of DN values in the @p ppszDNList array
+ * @param ppszDNList Array containing a list of DN values to query
+ * @param psResultsCount The number of security objects set in the sparse @p pppResults array
+ * @param pppResults Sparse array containing a list of security objects matching the @p ppszDNList values
+ * @return PBIS LSA error code
+ */
 DWORD
 AD_FindObjectsByDNList(
     IN PAD_PROVIDER_CONTEXT pContext,
@@ -295,6 +312,23 @@ AD_FindObjectBySid(
     OUT PLSA_SECURITY_OBJECT* ppResult
     );
 
+/**
+ * @brief Perform a lookup for security objects from the given list of SID values
+ * 
+ * Where possible this function will use the local cache to resolve security objects
+ * for the provided SID list. Where items are missing/expired or incomplete in the 
+ * local cache the security object will be queried from AD using LDAP calls.
+ * 
+ * The list of security objects returned in @p pppResults will be a sparse array 
+ * matching the SID values in the @p ppszSidList passed in.
+ * 
+ * @param pContext Handle to the provider context
+ * @param sCount Number of SID values in the @p ppszSidList array
+ * @param ppszSidList Array containing a list of SID values to query
+ * @param psResultsCount The number of security objects set in the sparse @p pppResults array
+ * @param pppResults Sparse array containing a list of security objects matching the @p ppszSidList values
+ * @return PBIS LSA error code
+ */
 DWORD
 AD_FindObjectsBySidList(
     IN PAD_PROVIDER_CONTEXT pContext,
