@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -50,7 +50,7 @@ static int LdapModSetStrValue(LDAPMod **mod,
         dwError = LwAllocateMemory(sizeof(LDAPMod),
                                    OUT_PPVOID(&m));
         BAIL_ON_LSA_ERROR(dwError);
-        
+
         m->mod_type   = NULL;
         m->mod_values = NULL;
         m->mod_op     = chg;

@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -38,7 +38,7 @@
  * Abstract:
  *
  *        Kerberos 5 keytab functions
- * 
+ *
  *        LDAP API
  *
  * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
@@ -162,7 +162,7 @@ KtLdapQuery(
             dwError = ERROR_DS_GENERIC_ERROR;
             BAIL_ON_LSA_ERROR(dwError);
         }
-        
+
         attr = ldap_first_attribute(pLd, entry, &ptr);
         if (attr)
         {
@@ -337,7 +337,7 @@ KtLdapGetKeyVersionA(
     LDAP *pLd = NULL;
     PSTR pszRealm = NULL;
     PSTR pszAcctName = NULL;
-    PSTR pszFilter = NULL;    
+    PSTR pszFilter = NULL;
     PSTR pszKvnoVal = NULL;
     DWORD dwKvno = 0;
 
