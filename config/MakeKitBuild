@@ -8,11 +8,22 @@ configure()
         MK_LIBEXECDIR \
         MK_BINDIR \
         MK_SBINDIR \
+        MK_SYSCONFDIR \
         LW_INITDIR \
         VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
         QFE="${LW_PRODUCT_QFE}" \
         BUILD="${LW_BUILD_ID:-0}" \
-        REVISION="${LW_BUILD_REVISION:-0}"
+        REVISION="${LW_BUILD_REVISION:-0}" \
+        MK_PROG_ARGS="--start-as-daemon" \
+        MK_KILLALL_OPTS="-TERM"
+
+
+    if [ "$LW_OEM_PROFILE" = "oem18" ]; then
+        MK_PROG_ARGS="--start-as-daemon --logfile /local/local1/errorlog/lwsmd.log --loglevel warning"
+        MK_KILLALL_OPTS="-e -TERM"
+        MK_PREFIX="/lw/likewise/lw-base"
+        MK_SYSCONFDIR="/etc/likewise"
+    fi
 
     for os in ${OPERATING_SYSTEMS}
     do

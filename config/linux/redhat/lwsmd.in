@@ -9,7 +9,7 @@
 
 PROG_DESC="PBIS Service Manager"
 PROG_BIN=@MK_SBINDIR@/lwsmd
-PROG_ARGS="--start-as-daemon"
+PROG_ARGS=@MK_PROG_ARGS@
 PROG_PATTERN="@MK_SBINDIR@/lwsmd|lw-container|lw-svcm-wrap"
 PIDFILE=
 SCRIPTNAME="lwsmd"
