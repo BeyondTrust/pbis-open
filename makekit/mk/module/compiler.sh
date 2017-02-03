@@ -2167,9 +2167,7 @@ option()
                 *-linux-s390x)
 #                   n.b. by default gcc will default to -mzarch and -m64, which
 #                   produces 8 byte longs
-#                    _default_cflags="-m64"
                     _default_cflags="-std=gnu99 -m64"
-#                    _default_cxxflags="-m64"
                     _default_cxxflags="-std=gnu99 -m64"
                     _default_ldflags=""
                     ;;

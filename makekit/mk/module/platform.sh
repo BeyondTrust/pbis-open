@@ -447,7 +447,7 @@ option()
             ;;
         "aix-powerpc")
             _default_MK_BUILD_ISAS="ppc32 ppc64"
-            ;; 
+            ;;
         *"-powerpc")
             _default_MK_BUILD_ISAS="ppc32 ppc64 ppc64le"
             ;;

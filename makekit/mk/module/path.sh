@@ -279,7 +279,7 @@ option()
                 linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64|linux-redhat-powerpc-ppc64|linux-redhat-powerpc-ppc64le|linux-*-s390x)
                     _default_libdir="${BASELIBDIR}64"
                     ;;
-                linux-debian-x86_64-x86_32)
+                linux-debian-x86_64-x86_32|linux-redhat-powerpc-ppc32)
                     _default_libdir="${BASELIBDIR}32"
                     ;;
                 solaris-*-sparc*-sparc_64)
@@ -334,7 +334,7 @@ option()
         PARAM="path" \
         DEFAULT="${PREFIX}/share" \
         HELP="Root data directory"
- 
+
     mk_option \
         VAR=DATADIR \
         OPTION=datadir \
