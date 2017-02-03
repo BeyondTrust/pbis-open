@@ -165,13 +165,13 @@ DNSGetInfoUsingGetIfAddrs(
     struct ifaddrs* pInterfaces = NULL;
     struct ifaddrs* pIter = NULL;
     PLW_INTERFACE_INFO pInterfaceInfo = NULL;
-    
+
     if (getifaddrs(&pInterfaces) < 0)
     {
         dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
-    
+
     for (pIter = pInterfaces; pIter; pIter = pIter->ifa_next)
     {
         if (IsNullOrEmptyString(pIter->ifa_name))
@@ -182,6 +182,12 @@ DNSGetInfoUsingGetIfAddrs(
 
         LWDNS_LOG_VERBOSE("Considering network interface [%s]",
                           pIter->ifa_name);
+
+        if (!pIter->ifa_addr)
+        {
+            LWDNS_LOG_VERBOSE("Skipping network interface [%s] with no address", pIter->ifa_name);
+            continue;
+        }
 
         if (pIter->ifa_addr->sa_family != AF_INET)
         {
