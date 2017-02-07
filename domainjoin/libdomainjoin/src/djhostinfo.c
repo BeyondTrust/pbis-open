@@ -993,11 +993,15 @@ FixNetworkInterfaces(
             {"/etc/sysconfig/network-scripts", "ifcfg-vswif[^.]*$"},
             // RHEL 7: network interface naming seems to be ensXX or enoXXXX, etc.
             {"/etc/sysconfig/network-scripts", "ifcfg-en[^.]*$"},
+            // RHEL 6 on zSeries: ctc adapter
+            {"/etc/sysconfig/network-scripts", "ifcfg-ctc[^.]*$"},
             {NULL, NULL}
         };
 
         // Find the ifcfg file
         pszPathifcfg = NULL;
+
+        DJ_LOG_VERBOSE("Searching for ifcfg file");
 
         for(iPath = 0; searchPaths[iPath].dir != NULL && pszPathifcfg == NULL; iPath++)
         {
@@ -1006,6 +1010,10 @@ FixNetworkInterfaces(
                 CTFreeStringArray(ppszPaths, nPaths);
                 ppszPaths = NULL;
             }
+
+            DJ_LOG_VERBOSE("Looking in dir '%s' for files matching '%s'",
+                    searchPaths[iPath].dir,
+                    searchPaths[iPath].glob);
 
             ceError = CTGetMatchingFilePathsInFolder(searchPaths[iPath].dir,
                                                          searchPaths[iPath].glob,
