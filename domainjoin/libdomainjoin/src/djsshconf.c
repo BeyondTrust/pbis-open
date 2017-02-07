@@ -257,7 +257,7 @@ static DWORD SetOption(struct SshConf *conf, const char *name, const char *value
     }
 
     /*If the option wasn't even in a comment, just add the option at the
-      end of the file
+      end of the file before Match blocks
       */
     if(!found)
     {
@@ -271,8 +271,20 @@ static DWORD SetOption(struct SshConf *conf, const char *name, const char *value
             &lineObj.value.value));
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrdup("",
             &lineObj.value.trailingSeparator));
-        BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_data,
-                    sizeof(struct SshLine), &lineObj, 1));
+        
+        line = FindOption(conf, 0, "Match");
+        if (line == -1)
+        {
+            BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_data,
+                        sizeof(struct SshLine), &lineObj, 1));
+        }
+        else 
+        {
+            // If there's a Match clause add the settings before this
+            BAIL_ON_CENTERIS_ERROR(ceError = CTArrayInsert(&conf->private_data,
+                        line, sizeof(struct SshLine), &lineObj, 1));
+        }
+
         memset(&lineObj, 0, sizeof(lineObj));
         conf->modified = 1;
     }
