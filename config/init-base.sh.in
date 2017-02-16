@@ -643,7 +643,7 @@ daemon_stop() {
             fi
             ;;
         UNKNOWN)
-            killall -TERM `basename ${PROG_BIN}`
+            killall @MK_KILLALL_OPTS@ `basename ${PROG_BIN}`
             status=$?
             ;;
     esac
