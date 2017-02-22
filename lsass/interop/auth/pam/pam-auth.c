@@ -335,6 +335,10 @@ pam_sm_authenticate(
 
                     if (pPamContext->pszLoginName && *pPamContext->pszLoginName)
                     {
+                        LSA_LOG_PAM_DEBUG(
+                                "Comparing Pam user '%s' with smartcard user %s",
+                                pPamContext->pszLoginName,
+                                pObject->userInfo.pszUnixName);
                         /*
                          * Verify that the passed-in username is the same as
                          * the smartcard user.
@@ -344,12 +348,17 @@ pam_sm_authenticate(
                                 pObject->userInfo.pszUnixName) != 0)
                         {
                             LSA_LOG_PAM_DEBUG(
-                                "Pam user '%s' does not match smartcard user",
-                                pPamContext->pszLoginName);
+                                "Pam user '%s' does not match smartcard user %s",
+                                pPamContext->pszLoginName,
+                                pObject->userInfo.pszUnixName);
                             LsaFreeSecurityObject(
                                 pObject);
                             pObject = NULL;
                         }
+                    }
+                    else
+                    {
+                        LSA_LOG_PAM_DEBUG( "pPamContext pszLoginName not valid");
                     }
                 }
                 else

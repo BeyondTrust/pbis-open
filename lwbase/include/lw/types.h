@@ -505,4 +505,9 @@ cpp_quote("#endif")
 
 #endif
 
+// krb5/src/plugins/preauth/pkinit/pkcs11.h struct ck_slot_info field 
+// slot description length is hardcoded to 64. Using the following define
+// for PBIS use.
+#define LW_CK_SLOT_DESCRIPTION_LEN 64
+
 #endif

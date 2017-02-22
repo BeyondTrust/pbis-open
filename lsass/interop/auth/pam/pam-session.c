@@ -61,6 +61,7 @@ pam_sm_open_session(
     HANDLE hLsaConnection = (HANDLE)NULL;
     PSTR pszLoginId = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
+    PSTR pszSmartCardReaderNull = NULL;
 
 #ifdef HAVE_PAM_PUTENV
     PSTR pszSmartCardReader = NULL;
@@ -106,16 +107,24 @@ pam_sm_open_session(
     /* pszSmartCardReader will be freed when the module is closed. */
     if (dwError == PAM_SUCCESS && pszSmartCardReader != NULL)
     {
+        // CK_SLOT_INFO slotDescription is not NULL terminated.
+        dwError = LwStrndup(pszSmartCardReader, LW_CK_SLOT_DESCRIPTION_LEN, &pszSmartCardReaderNull);
+        BAIL_ON_LSA_ERROR(dwError);
+        pszSmartCardReaderNull[LW_CK_SLOT_DESCRIPTION_LEN-1] = '\0';  //NULL terminate the string.
+
         dwError = LwAllocateStringPrintf(
             &pszSmartCardReaderEnv,
             "LW_SMART_CARD_READER=%s",
-            pszSmartCardReader);
+            pszSmartCardReaderNull);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pam_putenv(
             pamh,
             pszSmartCardReaderEnv);
         BAIL_ON_LSA_ERROR(dwError);
+
+        LwFreeString(pszSmartCardReaderNull);
+        pszSmartCardReaderNull = NULL;
     }
 #endif /* HAVE_PAM_PUTENV */
 
