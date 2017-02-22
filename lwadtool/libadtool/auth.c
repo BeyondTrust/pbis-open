@@ -421,7 +421,9 @@ DWORD ProcessK5Creds(IN AppContextTP appContext)
         }
 
         if (appContext->aopts.logonAs) {
-            dwError = LwAllocateStringPrintf(&ccPath, "/tmp/krb5cc_%s",
+            /* Include effective UID in credential cache path to avoid naming conflicts #86707 */
+            dwError = LwAllocateStringPrintf(&ccPath, "/tmp/krb5cc_%ld_%s",
+                                         (long)geteuid(),
                                          appContext->aopts.logonAs);
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
         }
