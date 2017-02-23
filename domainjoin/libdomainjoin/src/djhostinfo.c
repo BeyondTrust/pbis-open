@@ -891,9 +891,9 @@ DJConfigureDHCPService(
     /* Restart network */
 
     /*try init.d first, otherwise systemctl*/
-	bFileExists = FALSE;
-	CTCheckFileExists(ppszNetArgs[0], &bFileExists);
-	
+    bFileExists = FALSE;
+    CTCheckFileExists(ppszNetArgs[0], &bFileExists);
+
     if(bFileExists)
     {
         ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
@@ -902,7 +902,7 @@ DJConfigureDHCPService(
     {
         ceError = DJSpawnProcess(ppszSystemCtlArgs[0], ppszSystemCtlArgs, &pProcInfo);
     }
-    
+
     CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(pProcInfo, &status);
@@ -970,6 +970,8 @@ FixNetworkInterfaces(
 
     if (bDirExists) {
 
+        // network configuration scripts to look for, these generally exclude files
+        // containing . to exclude backup files
         struct
         {
             PCSTR dir;
@@ -993,8 +995,12 @@ FixNetworkInterfaces(
             {"/etc/sysconfig/network-scripts", "ifcfg-vswif[^.]*$"},
             // RHEL 7: network interface naming seems to be ensXX or enoXXXX, etc.
             {"/etc/sysconfig/network-scripts", "ifcfg-en[^.]*$"},
-            // RHEL 6 on zSeries: ctc adapter
+            // RHEL 6 on zSeries: ctc and hsi adapter
             {"/etc/sysconfig/network-scripts", "ifcfg-ctc[^.]*$"},
+            {"/etc/sysconfig/network-scripts", "ifcfg-hsi[^.]*$"},
+            // RHEL 7 on zSeries: enccw<bus_id> for both qeth and lcs
+            // e.g. enccw0.0.0700
+            {"/etc/sysconfig/network-scripts", "ifcfg-en.*[0-9a-fA-F]+$"},
             {NULL, NULL}
         };
 
