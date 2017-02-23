@@ -61,9 +61,9 @@ pam_sm_open_session(
     HANDLE hLsaConnection = (HANDLE)NULL;
     PSTR pszLoginId = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
-    PSTR pszSmartCardReaderNull = NULL;
 
 #ifdef HAVE_PAM_PUTENV
+    PSTR pszSmartCardReaderNull = NULL;
     PSTR pszSmartCardReader = NULL;
     PSTR pszSmartCardReaderEnv = NULL;
 #endif /* HAVE_PAM_PUTENV */
