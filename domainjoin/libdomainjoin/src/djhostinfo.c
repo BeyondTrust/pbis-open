@@ -1039,6 +1039,7 @@ FixNetworkInterfaces(
         }
 
         if (IsNullOrEmptyString(pszPathifcfg)) {
+            DJ_LOG_INFO("Failed to find any ifcfg file.");
             LW_CLEANUP_CTERR(exc, ERROR_FILE_NOT_FOUND);
         }
 
