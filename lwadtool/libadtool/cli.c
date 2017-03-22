@@ -528,7 +528,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
      * Action.
      */
     i = 0;
-    struct poptOption **newUserAction = MakeOptions(12);
+    struct poptOption **newUserAction = MakeOptions(13);
     ADT_BAIL_ON_ALLOC_FAILURE(newUserAction);
     MakeOption(&((*newUserAction)[i++]),
                "dn",
@@ -593,6 +593,14 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.newUser.password),
                0,
                "User\'s password. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*newUserAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newUser.keytab),
+               0,
+               "Generate a keytab file for the user. Specify /path/to/file.keytab.",
                NULL);
     MakeOption(&((*newUserAction)[i++]),
                "no-must-change-password",
@@ -705,7 +713,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*newOuAction)[i++])));
 
     i = 0;
-    struct poptOption **newComputerAction = MakeOptions(6);
+    struct poptOption **newComputerAction = MakeOptions(8);
     ADT_BAIL_ON_ALLOC_FAILURE(newComputerAction);
     MakeOption(&((*newComputerAction)[i++]),
                "dn",
@@ -746,6 +754,22 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.newComputer.dnsHostName),
                0,
                "Fully-Qualified DNS name of the computer",
+               NULL);
+    MakeOption(&((*newComputerAction)[i++]),
+               "password",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.password),
+               0,
+               "Computer\'s password. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*newComputerAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.keytab),
+               0,
+               "Generate a keytab file for the computer. Specify /path/to/file.keytab.",
                NULL);
     MakeOption(ADT_TABLEEND(&((*newComputerAction)[i++])));
 
@@ -988,7 +1012,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     */
 
     i = 0;
-    struct poptOption **resetUserPasswordAction = MakeOptions(5);
+    struct poptOption **resetUserPasswordAction = MakeOptions(6);
     ADT_BAIL_ON_ALLOC_FAILURE(resetUserPasswordAction);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "name",
@@ -1005,6 +1029,14 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.resetUserPassword.password),
                0,
                "User\'s password. If omitted only the password\'s properties may be changed but not the password itself. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*resetUserPasswordAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.resetUserPassword.keytab),
+               0,
+               "Modify/Generate a keytab file for the user. Specify /path/to/file.keytab.",
                NULL);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "no-must-change-password",

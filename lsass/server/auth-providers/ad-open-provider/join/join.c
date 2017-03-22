@@ -1966,6 +1966,8 @@ LsaSaveMachinePassword(
                                      &pwszPrincipal);
     BAIL_ON_LSA_ERROR(dwError);
 
+    KtLdapSetSaslMaxBufSize(LsaSrvSaslMaxBufSize());
+
     /* Get the directory base naming context first */
     dwError = KtLdapGetBaseDnW(pwszDCName, &pwszBaseDn);
     BAIL_ON_LSA_ERROR(dwError);

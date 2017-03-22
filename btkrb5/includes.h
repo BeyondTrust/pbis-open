@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright (c) BeyondTrust Software.  All rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -30,18 +30,13 @@
  *
  * Abstract:
  *
- *        
- *
- * Authors: Author: CORP\slavam
- * 
- * Created on: Mar 17, 2010
  *
  */
 
-#ifndef _LIB_ADTOOL_INCLUDES_H_
-#define _LIB_ADTOOL_INCLUDES_H_
+#ifndef _LIB_BT_KRB5_INCLUDES_H_
+#define _LIB_BT_KRB5_INCLUDES_H_
 
-#include "config.h"
+// #include "config.h"
 
 /* system includes */
 #include <stdio.h>
@@ -68,9 +63,10 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
-/* lwadvpi includes */
+/* lwadvapi includes */
+#include <bail.h>
 #include <lwstr.h>
-#include <lwfile.h>
+#include <lwdef.h>
 #include <lwmem.h>
 #include <lwerror.h>
 #include <lwldap.h>
@@ -78,32 +74,4 @@
 #include <lwsecurityidentifier.h>
 #include <lwkrb5.h>
 
-/* adtool includes */
-#include <adtool/types.h>
-
-/* netapi includes */
-#include "lw/lmaccess.h"
-#include "lw/lmmem.h"
-#include "lw/lmcreds.h"
-
-/* lsa includes */
-#include <lsa/lsa.h>
-
-/* netlogon includes */
-#include <lwnet.h>
-
-#include <btkrb5.h>
-
-/* local includes */
-#include "defs.h"
-#include "app.h"
-#include "error.h"
-#include "ldap_ops.h"
-#include "cli.h"
-#include "utils.h"
-#include "ids.h"
-#include "auth.h"
-#include "net.h"
-#include "gen_keytab.h"
-
-#endif /* _ADTOOL_INCLUDES_H_ */
+#endif /* _LWKRB5_INCLUDES_H_ */

@@ -46,6 +46,17 @@
 
 #include "includes.h"
 
+#define LW_LDAP_16MB  16777215
+#define LW_LDAP_1MB   1048575
+
+static DWORD gKtLdapSaslMaxBufSize = LW_LDAP_16MB;
+
+VOID KtLdapSetSaslMaxBufSize(DWORD dwMaxbufsize)
+{
+   gKtLdapSaslMaxBufSize = dwMaxbufsize;
+   return;
+}
+
 static
 DWORD
 KtLdapBind(
@@ -55,19 +66,21 @@ KtLdapBind(
 {
     const int version = LDAP_VERSION3;
     DWORD dwError = ERROR_SUCCESS;
+    DWORD dwMaxBufsize = 0;
     int lderr = 0;
+    ber_len_t maxbufsize = 0;
     PSTR pszUrl = NULL;
     LDAP *pLd = NULL;
 
     if (strchr(pszDc, ':'))
     {
         dwError = LwAllocateStringPrintf(&pszUrl, "ldap://[%s]", pszDc);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
     else
     {
         dwError = LwAllocateStringPrintf(&pszUrl, "ldap://%s", pszDc);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     lderr = ldap_initialize(&pLd,
@@ -84,8 +97,16 @@ KtLdapBind(
                             LDAP_OPT_OFF);
     BAIL_ON_LDAP_ERROR(lderr);
 
+    /* This tells ldap to retry when select returns with EINTR */
+    lderr = ldap_set_option( pLd, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
+    BAIL_ON_LDAP_ERROR(lderr);
+
+    dwMaxBufsize = gKtLdapSaslMaxBufSize;
+    lderr = ldap_set_option(pLd, LDAP_OPT_X_SASL_MAXBUFSIZE, &dwMaxBufsize);
+    BAIL_ON_LDAP_ERROR(lderr);
+
     dwError = LwLdapBindDirectorySasl(pLd, pszDc, FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppLd = pLd;
 
@@ -139,7 +160,7 @@ KtLdapQuery(
 
     dwError = LwAllocateString(pszAttrName,
                                &attrs[0]);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     lderr = ldap_search_ext_s(pLd,
                               pszBaseDn,
@@ -160,7 +181,7 @@ KtLdapQuery(
         if (entry == NULL)
         {
             dwError = ERROR_DS_GENERIC_ERROR;
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LW_ERROR(dwError);
         }
 
         attr = ldap_first_attribute(pLd, entry, &ptr);
@@ -171,7 +192,7 @@ KtLdapQuery(
             {
                 dwError = LwAllocateMemory(ppBv[0]->bv_len + 1,
                                            OUT_PPVOID(&pszAttrVal));
-                BAIL_ON_LSA_ERROR(dwError);
+                BAIL_ON_LW_ERROR(dwError);
 
                 memcpy(pszAttrVal, ppBv[0]->bv_val, ppBv[0]->bv_len);
             }
@@ -252,7 +273,7 @@ KtLdapGetBaseDnA(
 
     /* Bind to directory service on the DC */
     dwError = KtLdapBind(&pLd, pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Get naming context first */
     dwError = KtLdapQuery(pLd,
@@ -261,7 +282,7 @@ KtLdapGetBaseDnA(
                           pszFilter,
                           pszDefNamingCtxAttr,
                           &pszBaseDn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppszBaseDn = pszBaseDn;
 
@@ -295,15 +316,15 @@ KtLdapGetBaseDnW(
     PWSTR pwszBaseDn = NULL;
 
     dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = KtLdapGetBaseDnA(pszDcName, &pszBaseDn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pszBaseDn)
     {
         dwError = LwMbsToWc16s(pszBaseDn, &pwszBaseDn);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     *ppwszBaseDn = pwszBaseDn;
@@ -343,11 +364,11 @@ KtLdapGetKeyVersionA(
 
     /* Bind to directory service on the DC */
     dwError = KtLdapBind(&pLd, pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Extract a username by cutting off the realm part of principal */
     dwError = LwAllocateString(pszPrincipal, &pszAcctName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     LwStrChr(pszAcctName, '@', &pszRealm);
     pszRealm[0] = '\0';
@@ -357,7 +378,7 @@ KtLdapGetKeyVersionA(
                                      "(%s=%s)",
                                      pszSamAcctAttr,
                                      pszAcctName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Look for key version number attribute */
     dwError = KtLdapQuery(pLd,
@@ -366,12 +387,12 @@ KtLdapGetKeyVersionA(
                           pszFilter,
                           pszKvnoAttr,
                           &pszKvnoVal);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pszKvnoVal == NULL)
     {
         dwError = ERROR_FILE_NOT_FOUND;
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
     else
     {
@@ -414,16 +435,16 @@ KtLdapGetKeyVersionW(
     PSTR pszPrincipal = NULL;
 
     dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszBaseDn, &pszBaseDn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = KtLdapGetKeyVersionA(pszDcName, pszBaseDn, pszPrincipal, pdwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
 cleanup:
     LW_SAFE_FREE_STRING(pszDcName);
@@ -455,14 +476,14 @@ KtLdapGetSaltingPrincipalA(
 
     /* Bind to directory service on the DC */
     dwError = KtLdapBind(&pLd, pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Prepare ldap query filter */
     dwError = LwAllocateStringPrintf(&pszFilter,
                                      "(%s=%s)",
                                      pszSamAcctAttr,
                                      pszMachAcctName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Look for key version number attribute */
     dwError = KtLdapQuery(pLd,
@@ -471,7 +492,7 @@ KtLdapGetSaltingPrincipalA(
                           pszFilter,
                           pszUpnAttr,
                           &pszUpn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppszSalt = pszUpn;
 
@@ -511,24 +532,24 @@ KtLdapGetSaltingPrincipalW(
     PWSTR pwszSalt = NULL;
 
     dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszBaseDn, &pszBaseDn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszMachAcctName, &pszMachAcctName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = KtLdapGetSaltingPrincipalA(pszDcName,
                                          pszBaseDn,
                                          pszMachAcctName,
                                          &pszSalt);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pszSalt)
     {
         dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     *ppwszSalt = pwszSalt;

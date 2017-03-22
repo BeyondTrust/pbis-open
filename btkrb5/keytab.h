@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright BeyondTrust Software    2004-2016
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -29,77 +29,87 @@
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
- *        ktldap.h
+ *        keytab.h
  *
  * Abstract:
  *
  *        Kerberos 5 keytab functions
  *
- *        Simple LDAP client routines
- *
- * Authors: Rafal Szczesniak <rszczesniak@likewisesoftware.com>
- *
+ * Authors: pbis (pbis@beyondtrust.com)
+ * 
  */
 
-#ifndef __KTLDAP_H__
-#define __KTLDAP_H__
+#ifndef _BT_KEYTAB_H_
+#define _BT_KEYTAB_H_
+
+#include <lw/types.h>
 
 DWORD
-KtLdapGetBaseDnA(
-    PCSTR  pszDcName,
-    PSTR  *pszBaseDn
+KtKrb5AddKeyW(
+    PCWSTR pwszPrincipal,
+    PVOID pKey,
+    DWORD dwKeyLen,
+    PCWSTR pwszSalt,
+    PCWSTR pwszKtPath,
+    PCWSTR pwszDcName,
+    DWORD dwKeyVersion
     );
 
 DWORD
-KtLdapGetBaseDnW(
-    PCWSTR  pwszDcName,
-    PWSTR  *ppwszBaseDn
+KtKrb5GetKey(
+    PCSTR pszPrincipal,
+    PCSTR pszKtPath,
+    DWORD dwEncType,
+    PVOID *pKey,
+    DWORD *dwKeyLen
     );
 
 DWORD
-KtLdapGetKeyVersionA(
-    PCSTR   pszDcName,
-    PCSTR   pszBaseDn,
-    PCSTR   pszPrincipal,
-    PDWORD  pdwKvno
+KtKrb5RemoveKey(
+    PSTR pszPrincipal,
+    DWORD dwVer,
+    PSTR pszKtPath
     );
 
 DWORD
-KtLdapGetKeyVersionW(
-    PCWSTR   pwszDcName,
-    PCWSTR   pwszBaseDn,
-    PCWSTR   pwszPrincipal,
-    PDWORD   pdwKvno
+KtKrb5FormatPrincipalW(
+    PCWSTR pwszAccount,
+    PCWSTR pwszRealm,
+    PWSTR *ppwszPrincipal
     );
 
 DWORD
-KtLdapGetSaltingPrincipalA(
-    PCSTR   pszDcName,
-    PCSTR   pszBaseDn,
+KtKrb5GetUserSaltingPrincipalA(
+    PCSTR pszUserName,
+    PCSTR pszRealmName,
+    PCSTR pszDcName,
+    PCSTR pszBaseDn,
+    PSTR *pszSalt);
+
+DWORD
+KtKrb5GetSaltingPrincipalA(
+    PCSTR   pszMachineName,
     PCSTR   pszMachAcctName,
+    PCSTR   pszDnsDomainName,
+    PCSTR   pszRealmName,
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
     PSTR   *pszSalt
     );
 
 DWORD
-KtLdapGetSaltingPrincipalW(
-    PCWSTR  pwszDcName,
-    PCWSTR  pwszBaseDn,
-    PCWSTR  pwszMachAcctName,
-    PWSTR  *ppwszSalt
+KtKrb5GetSaltingPrincipalW(
+    PCWSTR   pwszMachineName,
+    PCWSTR   pwszMachAcctName,
+    PCWSTR   pwszDnsDomainName,
+    PCWSTR   pwszRealmName,
+    PCWSTR   pwszDcName,
+    PCWSTR   pwszBaseDn,
+    PWSTR   *pwszSalt
     );
 
-#endif /* __KTLDAP_H__ */
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+#endif /* _KEYTAB_H_ */

@@ -138,6 +138,13 @@ LwRemoveDuplicateInodes(
     IN OUT PSTR* ppszFoundPaths
     );
 
+DWORD
+LwCopyFileWithOriginalPerms(
+    PCSTR pszSrcPath,
+    PCSTR pszDstPath
+    );
+
+
 LW_END_EXTERN_C
 
 
