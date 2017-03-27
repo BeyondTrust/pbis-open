@@ -211,16 +211,27 @@ setup_selinux_policy_module()
         logfile "/etc/selinux/targeted/policy not present."
         return;
     fi
+    
+    RUNSCRIPT="run_or_fail "
+    if [ -x "/usr/sbin/getenforce" ]; then
+       SELinuxMode=`/usr/sbin/getenforce`
+       log "SELinux Mode: $SELinuxMode"
+       if [ "$SELinuxMode" = "Permissive" ]; then
+         RUNSCRIPT="run "
+       elif [ "$SELinuxMode" = "Disabled" ]; then
+         RUNSCRIPT="run "
+       fi
+    fi
 
     if [ "$DISTRO" = "rhel" -a "$VERSION" = "5.0" ]; then
         log 'SELinux Policy Module not required.'
     elif [ -f "@MK_DATADIR@/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module using @MK_DATADIR@/pbis.pp'
-        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
+        $RUNSCRIPT /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
     elif [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module'
-        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
+        $RUNSCRIPT /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
     else
       log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package.
