@@ -351,3 +351,96 @@ LwRtlCStringAllocateAppendPrintf(
     return status;
 }
 
+/**
+ * @brief Return current rounded up to a multiple of multiple
+ *
+ * n.b. this does NOT check for overflow
+ *
+ * @param current the current size
+ * @param multiple
+ *
+ * @return current rounded to a mutiple of multiple,
+ *  when mulitple is 0 or 1, current is returned
+ */
+static
+size_t
+round_to_multiple(
+    size_t current,
+    size_t multiple
+    )
+{
+    if (multiple == 0) {
+        return current;
+    }
+
+    size_t remainder = current % multiple;
+
+    return (remainder == 0)
+        ? current
+        : current + multiple - remainder;
+}
+
+/**
+ * @brief Grow the buffer if needed to accommodate the required number of characters
+ * (not including terminating null) and return the new size
+ *
+ * This reallocates the buffer; Failing to reallocate the buffer will leave buffer
+ * untouched and 0 will be returned.
+ *
+ * @param buffer
+ * @param current the current size
+ * @param multiple the buffer will be grown to a size which is a multiple of this value
+ * @param required the number of additional characters the buffer has to include
+ *  (not including the terminating null
+ *
+ * @return the size of the buffer, or 0 if the buffer could not be reallocated
+ */
+static
+size_t
+grow_buffer(
+    char **buffer,
+    size_t current_size,
+    size_t multiple,
+    size_t required
+    )
+{
+    const size_t used = strlen(*buffer);
+    const size_t remaining = current_size - used;
+
+    size_t new_size = 0;
+    char * new = NULL;
+
+    if (remaining >= (required + 1)) {
+        return current_size;
+    }
+
+    new_size = round_to_multiple(used + required + 1, multiple);
+    new = LwRtlMemoryRealloc((void *)*buffer, new_size);
+
+    if (!new) {
+        new_size = 0;
+    }
+
+    return new_size;
+}
+
+PSTR
+LwRtlCStringStrcatGrow(
+    IN OUT PSTR* buffer,
+    IN OUT size_t *current_size,
+    IN size_t multiple,
+    IN PCSTR src
+    )
+{
+    size_t new_buffer_size = grow_buffer(buffer, *current_size, multiple, strlen(src));
+
+    if (!new_buffer_size) {
+        /* needed to but failed to grow the buffer */
+        return NULL;
+    }
+
+    *current_size = new_buffer_size;
+    strcat(*buffer, src);
+    return *buffer;
+}
+

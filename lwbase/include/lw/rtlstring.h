@@ -124,6 +124,29 @@ LwRtlCStringAllocateAppendPrintf(
     ...
     );
 
+/**
+ * @brief Concatenate src to an existing allocated buffer, "growing"
+ * it if necessary.
+ *
+ * @param buffer
+ * @param current_size the current size; will be updated if the
+ * buffer is reallocated
+ * @param size_multiple the buffer will be grown to a size which is
+ * a multiple of this value, this can be used to avoid growing the
+ * buffer each time content is appended to the buffer
+ * @param src the string to concatenate
+ *
+ * @return pointer to the buffer, or NULL if the buffer could not be
+ * reallocated, in that case buffer and current_size will not be modified
+ */
+PSTR
+LwRtlCStringStrcatGrow(
+    IN OUT PSTR* buffer,
+    IN OUT size_t *current_size,
+    IN size_t multiple,
+    IN PCSTR src
+    );
+
 // wc16-style (null-terminated) strings
 
 size_t
