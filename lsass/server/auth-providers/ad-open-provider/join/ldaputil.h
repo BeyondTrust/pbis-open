@@ -39,6 +39,30 @@
         goto error;                 \
     }
 
+#define LW_GUID_COMPUTERS_CONTAINER "AA312825768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_DELETED_OBJECTS_CONTAINER "18E2EA80684F11D2B9AA00C04F79F805"
+
+#define LW_GUID_DOMAIN_CONTROLLERS_CONTAINER "A361B2FFFFD211D1AA4B00C04FD7D83A"
+
+#define LW_GUID_FOREIGNSECURITYPRINCIPALS_CONTAINER "22B70C67D56E4EFB91E9300FCA3DC1AA"
+
+#define LW_GUID_INFRASTRUCTURE_CONTAINER "2FBAC1870ADE11D297C400C04FD8D5CD"
+
+#define LW_GUID_LOSTANDFOUND_CONTAINER "AB8153B7768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_MICROSOFT_PROGRAM_DATA_CONTAINER "F4BE92A4C777485E878E9421D53087DB"
+
+#define LW_GUID_NTDS_QUOTAS_CONTAINER "6227F0AF1FC2410D8E3BB10615BB5B0F"
+
+#define LW_GUID_PROGRAM_DATA_CONTAINER "09460C08AE1E4A4EA0F64AEE7DAA1E5A"
+
+#define LW_GUID_SYSTEMS_CONTAINER "AB1D30F3768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_USERS_CONTAINER "A9D1CA15768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_MANAGED_SERVICE_ACCOUNTS_CONTAINER "1EB93889E40C45DF9F0C64D23BBB6237"
+
 int
 LdapMessageFree(
     LDAPMessage *msg
@@ -61,6 +85,13 @@ LdapGetDirectoryInfo(
     LDAPMessage **info,
     LDAPMessage **result,
     LDAP *ld
+    );
+
+wchar16_t*
+LdapGetWellKnownObject(
+    LDAP *ld, 
+    const wchar16_t *dn,
+    const char *wko
     );
 
 wchar16_t**
@@ -91,6 +122,7 @@ LdapAttrValSvcPrincipalName(
 int
 LdapMachAcctCreate(
     LDAP *ld,
+    const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou
     );
@@ -99,10 +131,8 @@ int
 LdapMachDnsNameSearch(
     LDAPMessage **out,
     LDAP *ld,
-    const wchar16_t *name,
-    const wchar16_t *dns_domain_name,
-    const wchar16_t *base,
-    PCWSTR pSchemaContext
+    const wchar16_t *fqdn,
+    const wchar16_t *base
     );
 
 int
