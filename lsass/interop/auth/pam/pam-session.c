@@ -110,7 +110,6 @@ pam_sm_open_session(
         // CK_SLOT_INFO slotDescription is not NULL terminated.
         dwError = LwStrndup(pszSmartCardReader, LW_CK_SLOT_DESCRIPTION_LEN, &pszSmartCardReaderNull);
         BAIL_ON_LSA_ERROR(dwError);
-        pszSmartCardReaderNull[LW_CK_SLOT_DESCRIPTION_LEN-1] = '\0';  //NULL terminate the string.
 
         dwError = LwAllocateStringPrintf(
             &pszSmartCardReaderEnv,

@@ -119,6 +119,76 @@ LwKrb5GetTgt(
                 NULL);
 }
 
+DWORD 
+LwKrb5VerifySmartCardUserPin(PCSTR pszUserPrincipalName, PCSTR pszPIN)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   DWORD dwGoodUntilTime = 0;
+   krb5_error_code ret = 0;
+   krb5_context ctx = NULL;
+   krb5_ccache cc = NULL;
+   krb5_creds credsRequest = {0};
+
+   if (pszUserPrincipalName == NULL)
+   {
+      dwError = LW_ERROR_NO_SUCH_USER;
+      BAIL_ON_LW_ERROR(dwError);
+   }
+
+   if (pszPIN == NULL)
+   {
+      dwError = LW_ERROR_INVALID_PARAMETER;
+      BAIL_ON_LW_ERROR(dwError);
+   }
+      
+   ret = krb5_init_context(&ctx);
+   BAIL_ON_KRB_ERROR(ctx, ret);
+   
+   // Generates a new filed based credentials cache in /tmp. The file will
+   // be owned by root and only accessible by root.
+   ret = krb5_cc_new_unique(
+              ctx,
+              "FILE",
+              "hint",
+              &cc);
+   BAIL_ON_KRB_ERROR(ctx, ret);
+
+   dwError = LwKrb5GetTgtWithSmartCard(
+                   pszUserPrincipalName,
+                   pszPIN,
+                   krb5_cc_get_name(ctx, cc),
+                   &dwGoodUntilTime);
+   BAIL_ON_LW_ERROR(dwError);
+
+   LW_RTL_LOG_DEBUG("Successfully retrieved TGT for %s", pszUserPrincipalName);
+
+//   ret = krb5_parse_name(ctx, pszServicePrincipal, &credsRequest.server);
+//   BAIL_ON_KRB_ERROR(ctx, ret);
+
+   ret = krb5_cc_get_principal(ctx, cc, &credsRequest.client);
+   BAIL_ON_KRB_ERROR(ctx, ret);
+
+cleanup:
+   if (cc)
+   {
+      krb5_cc_destroy(ctx, cc);
+   }
+
+   if (ctx)
+   {
+      krb5_free_cred_contents(ctx, &credsRequest);
+   }
+
+   if (ctx)
+      krb5_free_context(ctx);
+ 
+   return dwError;
+
+error:
+    goto cleanup;
+
+}
+
 DWORD
 LwKrb5GetTgtWithSmartCard(
     PCSTR  pszUserPrincipal,
@@ -367,7 +437,7 @@ cbKrb5Prompter(
                 goto error;
         }
 
-        LW_RTL_LOG_ERROR("cbKrb5Prompter(%s, %s): %s", name, banner,
+        LW_RTL_LOG_DEBUG("cbKrb5Prompter(%s, %s): %s", name, banner,
                 prompts[0].prompt);
 
         if (!strncmp(prompts[0].prompt, "Password for ", 13))
