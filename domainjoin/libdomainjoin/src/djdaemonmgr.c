@@ -319,6 +319,12 @@ DJManageDaemons(
 
         dwError = SetBooleanRegistryValue("Services\\autoenroll", "Autostart", FALSE);
         dwError = DJStopService("autoenroll");
+
+        dwError = SetBooleanRegistryValue("Services\\lwsc", "Autostart", FALSE);
+        dwError = DJStopService("lwsc");
+
+        dwError = SetBooleanRegistryValue("Services\\lwpkcs11", "Autostart", FALSE);
+        dwError = DJStopService("lwpkcs11");
     }
 
 cleanup:

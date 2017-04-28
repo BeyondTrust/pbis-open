@@ -145,6 +145,7 @@ package_pkg()
                 "${MK_LIBDIR}/lw-map-sec" \
                 "${MK_LIBDIR}/apache2.0" \
                 "${MK_LIBDIR}/apache2.2" \
+                "${MK_LIBDIR}/apache2.4" \
 
             mk_multiarch_do
                 mk_package_dirs "${MK_LIBDIR}"
@@ -328,6 +329,7 @@ open_files_prefix()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/apache2.4/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/netlogon/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwicompat_v*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
