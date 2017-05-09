@@ -69,7 +69,7 @@ make()
         SOURCES="$LSA_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lwadvapi.h" \
-        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt"
+        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt $LIB_DL"
 
     if [ "$LW_DEVICE_PROFILE" != "embedded" ]
     then

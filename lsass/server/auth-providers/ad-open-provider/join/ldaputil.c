@@ -184,6 +184,7 @@ LdapInitConnection(
     int lderr = LDAP_SUCCESS;
     LDAP *ld = NULL;
     unsigned int version;
+    ber_len_t maxbufsize = 0;
     char* ldap_srv = NULL;
     char* ldap_url = NULL;
 
@@ -216,6 +217,19 @@ LdapInitConnection(
     lderr = ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
     dwError = LwMapLdapErrorToLwError(lderr);
     BAIL_ON_LSA_ERROR(dwError);
+
+    /* This tells ldap to retry when select returns with EINTR */
+    lderr = ldap_set_option( ld, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
+    dwError = LwMapLdapErrorToLwError(lderr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    maxbufsize = LsaSrvSaslMaxBufSize();
+    lderr = ldap_set_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    dwError = LwMapLdapErrorToLwError(lderr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    lderr = ldap_get_option(ld, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxbufsize);
+    LSA_LOG_DEBUG("SASL_MAXBUFSIZE %d", maxbufsize);
 
     dwError = LwLdapBindDirectorySasl(
                   ld,
@@ -293,6 +307,62 @@ error:
     *info   = NULL;
     *result = NULL;
     goto cleanup;
+}
+
+
+wchar16_t *LdapGetWellKnownObject(LDAP *ld, const wchar16_t *dn, const char *wko)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    int lderr = LDAP_SUCCESS;
+    char *wko_attrs[] = { "wellKnownObjects", NULL };
+    LDAPMessage *wko_res = NULL;
+    LDAPMessage *wko_entry = NULL;
+    wchar16_t *wko_value = NULL;
+    char *basedn = NULL;
+
+    if (ld == NULL) return NULL;
+    if (dn == NULL) return NULL;
+    if (wko == NULL) return NULL;
+
+    dwError = LwWc16sToMbs(dn, &basedn);
+
+    if (basedn) {
+        lderr = ldap_search_ext_s(ld, basedn, LDAP_SCOPE_BASE, "(objectClass=*)", wko_attrs, 0, NULL, NULL, NULL, 0, &wko_res);
+
+        if (lderr == LDAP_SUCCESS) wko_entry = ldap_first_entry(ld, wko_res);
+
+        LW_SAFE_FREE_MEMORY(basedn);
+    }
+
+    if (wko_entry) {
+        struct berval **values = ldap_get_values_len(ld, wko_entry, "wellKnownObjects");
+
+        if (values) {
+            int i;
+
+            for (i = 0; values[i]; i++) {
+                const char *val = NULL;
+                
+                // wellKnownObjects is formatted as B:32:<GUUID>:<DN>
+                if (values[i]->bv_val && (val = strstr(values[i]->bv_val, wko)) != NULL) {
+                    val = strchr(val, ':');
+                    
+                    if (val) val++;
+                    
+                    dwError = LwMbsToWc16s(val, &wko_value);
+                }
+            }
+
+            ldap_value_free_len(values);
+        }
+    }
+
+    if (wko_res) LdapMessageFree(wko_res);
+
+    if (lderr != LDAP_SUCCESS) LSA_LOG_DEBUG("LDAP error code: %u (:s) ", lderr, ldap_err2string(lderr));
+    if (dwError != ERROR_SUCCESS) LSA_LOG_DEBUG("Error code: %u (symbol: %s)", dwError, LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError))); \
+
+    return wko_value;
 }
 
 
@@ -434,6 +504,7 @@ LdapAttrValSvcPrincipalName(
 int
 LdapMachAcctCreate(
     LDAP *ld,
+    const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou
     )
@@ -441,8 +512,6 @@ LdapMachAcctCreate(
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     wchar16_t *cn_name = NULL;
-    wchar16_t *machname = NULL;
-    size_t machname_len = 0;
     wchar16_t *dname = NULL;
     char *dn = NULL;
     wchar16_t *objclass[5] = {0};
@@ -454,25 +523,14 @@ LdapMachAcctCreate(
     LDAPMod *attrs[5];
 
     BAIL_ON_INVALID_POINTER(ld);
+    BAIL_ON_INVALID_POINTER(machine_name);
     BAIL_ON_INVALID_POINTER(machacct_name);
     BAIL_ON_INVALID_POINTER(ou);
-
-    dwError = LwAllocateWc16String(&machname,
-                                   machacct_name);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwWc16sLen(machname, &machname_len);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (machname_len)
-    {
-        machname[--machname_len] = 0;
-    }
 
     dwError = LwMbsToWc16s("cn", &cn_name);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dname = LdapAttrValDn(cn_name, machname, ou);
+    dname = LdapAttrValDn(cn_name, machine_name, ou);
     if (!dname)
     {
         dwError = ERROR_OUTOFMEMORY;
@@ -490,7 +548,7 @@ LdapMachAcctCreate(
 
     flags = LSAJOIN_ACCOUNTDISABLE | LSAJOIN_WORKSTATION_TRUST_ACCOUNT;
 
-    LdapModAddStrValue(&name_m, "name", machname);
+    LdapModAddStrValue(&name_m, "name", machine_name);
     LdapModAddStrValue(&samacct_m, "sAMAccountName", machacct_name);
     LdapModAddStrValue(&objectclass_m, "objectClass", objclass[0]);
     LdapModAddStrValue(&objectclass_m, "objectClass", objclass[1]);
@@ -513,7 +571,6 @@ error:
     LdapModFree(&objectclass_m);
     LdapModFree(&acctflags_m);
 
-    LW_SAFE_FREE_MEMORY(machname);
     LW_SAFE_FREE_MEMORY(dname);
     LW_SAFE_FREE_MEMORY(dn);
     LW_SAFE_FREE_MEMORY(cn_name);
@@ -530,17 +587,16 @@ int
 LdapMachDnsNameSearch(
     LDAPMessage **out,
     LDAP *ld,
-    const wchar16_t *name,
-    const wchar16_t *dns_domain_name,
-    const wchar16_t *base,
-    PCWSTR pSchemaContext
+    const wchar16_t *fqdn,
+    const wchar16_t *base
     )
 {
-    const wchar_t filter_fmt[] = L"(&(objectCategory=CN=Computer,%ws)(dNSHostName=%ws))";
+    const wchar_t filter_fmt[] = L"(&(objectClass=computer)(dNSHostName=%ws))";
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    wchar16_t *dnsname = NULL;
+    size_t filter_len = 0;
+    size_t dnsname_len = 0;
     char *basedn = NULL;
     wchar16_t *filterw16 = NULL;
     char *filter = NULL;
@@ -550,26 +606,25 @@ LdapMachDnsNameSearch(
 
     BAIL_ON_INVALID_POINTER(out);
     BAIL_ON_INVALID_POINTER(ld);
-    BAIL_ON_INVALID_POINTER(name);
-    BAIL_ON_INVALID_POINTER(dns_domain_name);
+    BAIL_ON_INVALID_POINTER(fqdn);
     BAIL_ON_INVALID_POINTER(base);
 
     dwError = LwWc16sToMbs(base, &basedn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dnsname = LdapAttrValDnsHostName(name, dns_domain_name);
-    if (!dnsname)
+    dnsname_len = wc16slen(fqdn);
+
+    filter_len = dnsname_len + (sizeof(filter_fmt)/sizeof(filter_fmt[0]));
+
+    dwError = LwAllocateMemory(sizeof(wchar16_t) * filter_len,
+                               OUT_PPVOID(&filterw16));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(filterw16, filter_len, filter_fmt, fqdn) < 0)
     {
-        dwError = ERROR_OUTOFMEMORY;
+        dwError = LwErrnoToWin32Error(errno);
         BAIL_ON_LSA_ERROR(dwError);
     }
-
-    dwError = LwAllocateWc16sPrintfW(
-                    &filterw16,
-                    filter_fmt, 
-                    pSchemaContext,
-                    dnsname);
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwWc16sToMbs(filterw16, &filter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -578,19 +633,24 @@ LdapMachDnsNameSearch(
                               sctrl, cctrl, NULL, 0, &res);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    *out = res;
+    if (ldap_first_entry(ld, res) == NULL) lderr = LDAP_NO_SUCH_OBJECT;
+    BAIL_ON_LDAP_ERROR(lderr);
 
 cleanup:
     LW_SAFE_FREE_MEMORY(filter);
     LW_SAFE_FREE_MEMORY(filterw16);
-    LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(basedn);
+
+    *out = res;
 
     return lderr;
 
 error:
+    if (res) {
+        LdapMessageFree(res);
+        res = NULL;
+    }
 
-    *out = NULL;
     goto cleanup;
 }
 
@@ -645,6 +705,9 @@ LdapMachAcctSearch(
                               sctrl, cctrl, NULL, 0, &res);
     BAIL_ON_LDAP_ERROR(lderr);
 
+    if (ldap_first_entry(ld, res) == NULL) lderr = LDAP_NO_SUCH_OBJECT;
+    BAIL_ON_LDAP_ERROR(lderr);
+
 cleanup:
     LW_SAFE_FREE_MEMORY(filter);
     LW_SAFE_FREE_MEMORY(filterw16);
@@ -655,7 +718,11 @@ cleanup:
     return lderr;
 
 error:
-    *out = NULL;
+    if (res) {
+        LdapMessageFree(res);
+        res = NULL;
+    }
+
     goto cleanup;
 }
 

@@ -122,6 +122,12 @@ LwKrb5GetTgt(
     );
 
 DWORD
+LwKrb5VerifySmartCardUserPin(
+    PCSTR pszUserPrincipalName, 
+    PCSTR pszPIN
+    );
+
+DWORD
 LwKrb5GetTgtWithSmartCard(
     PCSTR  pszUserPrincipal,
     PCSTR  pszPassword,

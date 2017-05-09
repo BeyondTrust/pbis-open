@@ -1216,6 +1216,16 @@ void DJCreateComputerAccount(
     {
         switch(dwError)
         {
+            case LW_ERROR_LDAP_ALREADY_EXISTS:
+                if (options->ouName) 
+                {
+                    LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists in the requested OU.");
+                }
+                else 
+                {
+                    LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists in the default container.");
+                }
+                break;
             case LW_ERROR_LDAP_NO_SUCH_OBJECT:
                 LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The OU is invalid.");
                 break;
