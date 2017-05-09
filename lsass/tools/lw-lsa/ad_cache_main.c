@@ -130,6 +130,7 @@ ad_cache_main(
     gid_t   gid = 0;
     bool    bForceOfflineDelete;
     DWORD   dwBatchSize = 10;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     if (argc < 2 ||
         (strcmp(argv[1], "--help") == 0) ||
@@ -159,6 +160,18 @@ ad_cache_main(
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaAdGetMachineAccountInfo(
+                    hLsaConnection,
+                    NULL,
+                    &pAccountInfo);
+
+    if (dwError == NERR_SetupNotJoined)
+    {
+        fprintf(stdout, "The computer is not joined to a domain; no cache to delete.\n");
+        dwError = 0;
+        goto cleanup;
+    }
 
     switch (dwAction)
     {
@@ -248,6 +261,11 @@ ad_cache_main(
 
 cleanup:
 
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
     }
@@ -296,7 +314,7 @@ error:
                 dwError,
                 LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)));
     }
-    
+
     goto cleanup;
 }
 
