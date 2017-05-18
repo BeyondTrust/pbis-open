@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -834,13 +834,13 @@ DJConfigureDHCPService(
             NULL
         };
 #endif
-    PSTR ppszSystemCtlArgs[] = 
+    PSTR ppszSystemCtlArgs[] =
     {
         "/bin/systemctl",
         "restart",
         "network"
     };
-    
+
     PPROCINFO pProcInfo = NULL;
     LONG status = 0;
     PSTR pszFinalPath = NULL;
@@ -986,6 +986,8 @@ FixNetworkInterfaces(
             //  /etc/sysconfig/network/ifcfg-ctc-bus-ccw-0.0.0004
             {"/etc/sysconfig/network", "ifcfg-qeth-bus.*\\.[0-9]\\+$"},
             {"/etc/sysconfig/network", "ifcfg-ctc-bus.*\\.[0-9]\\+$"},
+            // SLES 13 appears to use a scheme similar to RHEL7
+            {"/etc/sysconfig/network", "ifcfg-en[^.]*$"},
             // Redhat uses /etc/sysconfig/network-scripts/ifcfg-eth<number>
             {"/etc/sysconfig/network-scripts", "ifcfg-eth[^.]*$"},
             // RHEL 6 uses this
@@ -1603,7 +1605,7 @@ DJIsValidComputerName(
         LWHandle(&exc);
     }
 
-    if (ceError == ERROR_INVALID_COMPUTERNAME || 
+    if (ceError == ERROR_INVALID_COMPUTERNAME ||
             ceError == ERROR_INVALID_COMPUTERNAME)
     {
         ceError = ERROR_SUCCESS;
