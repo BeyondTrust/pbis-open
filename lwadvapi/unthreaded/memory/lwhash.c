@@ -533,6 +533,22 @@ LwHashFreeStringKey(
     }
 }
 
+VOID
+LwHashFreeStringEntry(
+    IN OUT const LW_HASH_ENTRY *pEntry
+    )
+{
+    if (pEntry->pKey)
+    {
+        LwFreeString(pEntry->pKey);
+    }
+
+    if (pEntry->pValue)
+    {
+        LwFreeString(pEntry->pValue);
+    }
+}
+
 int
 LwHashPVoidCompare(
     IN PCVOID pvData1,

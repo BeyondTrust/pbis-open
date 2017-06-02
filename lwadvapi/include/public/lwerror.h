@@ -803,6 +803,8 @@
 #define LW_ERROR_GP_LOAD_EXTENSIONS_FAILED                 50028
 #define LW_ERROR_GP_REFRESH_CONFIGURATION_FAILED           50029
 #define LW_ERROR_GP_XML_PROPERTY_NOT_FOUND                 50030
+#define LW_ERROR_GP_RSOP_FAILED                            50031
+#define LW_ERROR_GP_XML_ALLOC_FAILED                       50032
 
 LW_BEGIN_EXTERN_C
 

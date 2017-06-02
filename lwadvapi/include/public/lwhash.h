@@ -196,6 +196,14 @@ LwHashFreeStringKey(
     IN OUT const LW_HASH_ENTRY *pEntry
     );
 
+/**
+ * @brief Free a string hash entry, i.e. where both the key and value are strings.
+ */
+VOID
+LwHashFreeStringEntry(
+    IN OUT const LW_HASH_ENTRY *pEntry
+    );
+
 LW_END_EXTERN_C
 
 #endif /* __LWHASH_H__ */
