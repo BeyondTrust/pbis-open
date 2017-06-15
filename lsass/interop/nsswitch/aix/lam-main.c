@@ -106,8 +106,9 @@ error:
     goto cleanup;
 }
 
+static
 int
-LsaNssGetEntry(
+_LsaNssGetEntry(
         PSTR pszKey,
         PSTR pszTable,
         PSTR* ppszAttributes,
@@ -222,6 +223,26 @@ error:
     LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
+}
+
+int
+LsaNssGetEntry(
+        PSTR pszKey,
+        PSTR pszTable,
+        PSTR* ppszAttributes,
+        attrval_t* pResults,
+        int iAttrCount
+        )
+{
+    int rc = -1;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetEntry(pszKey, pszTable, ppszAttributes, pResults, iAttrCount);
+    
+    NSS_UNLOCK();
+    
+    return rc;
 }
 
 attrlist_t **

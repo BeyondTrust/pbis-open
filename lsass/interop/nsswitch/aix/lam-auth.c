@@ -32,8 +32,9 @@
 #include "lam-auth.h"
 #include "lam-user.h"
 
+static
 int
-LsaNssNormalizeUsername(
+_LsaNssNormalizeUsername(
     PSTR pszInput,
     PSTR pszOutput
     )
@@ -128,7 +129,25 @@ error:
 }
 
 int
-LsaNssAuthenticate(
+LsaNssNormalizeUsername(
+    PSTR pszInput,
+    PSTR pszOutput
+    )
+{
+    int rc = -1;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssNormalizeUsername(pszInput, pszOutput);
+
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
+int
+_LsaNssAuthenticate(
     PSTR pszUser,
     PSTR pszResponse,
     int* pReenter,
@@ -243,7 +262,27 @@ error:
 }
 
 int
-LsaNssIsPasswordExpired(
+LsaNssAuthenticate(
+    PSTR pszUser,
+    PSTR pszResponse,
+    int* pReenter,
+    PSTR* ppszOutputMessage
+    )
+{
+    int rc = -1;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssAuthenticate(pszUser, pszResponse, pReenter, ppszOutputMessage);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
+int
+_LsaNssIsPasswordExpired(
         PSTR pszUser,
         PSTR* ppszMessage
         )
@@ -327,7 +366,25 @@ error:
 }
 
 int
-LsaNssChangePassword(
+LsaNssIsPasswordExpired(
+        PSTR pszUser,
+        PSTR* ppszMessage
+        )
+{
+    int rc = -1;
+
+    NSS_LOCK();
+    
+    rc = _LsaNssIsPasswordExpired(pszUser, ppszMessage);
+
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
+int
+_LsaNssChangePassword(
         PSTR pszUser,
         PSTR pszOldPass,
         PSTR pszNewPass,
@@ -375,4 +432,22 @@ error:
     LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
+}
+
+int
+LsaNssChangePassword(
+        PSTR pszUser,
+        PSTR pszOldPass,
+        PSTR pszNewPass,
+        PSTR* ppszError)
+{
+    int rc = -1;
+
+    NSS_LOCK();
+    
+    rc = _LsaNssChangePassword(pszUser, pszOldPass, pszNewPass, ppszError);
+
+    NSS_UNLOCK();
+    
+    return rc;
 }

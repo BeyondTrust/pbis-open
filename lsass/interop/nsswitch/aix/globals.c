@@ -33,3 +33,5 @@
 LSA_NSS_STATE gNssState = {0};
 
 LSA_NSS_CACHED_HANDLE lsaConnection = { 0 };
+
+pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;

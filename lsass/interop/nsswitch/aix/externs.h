@@ -51,4 +51,8 @@ extern LSA_NSS_STATE gNssState;
 
 extern LSA_NSS_CACHED_HANDLE lsaConnection;
 
+extern pthread_mutex_t gLock;
+#define NSS_LOCK() pthread_mutex_lock(&gLock);
+#define NSS_UNLOCK() pthread_mutex_unlock(&gLock);
+
 #endif

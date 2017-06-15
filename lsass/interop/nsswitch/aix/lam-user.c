@@ -215,7 +215,8 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwUid(uid_t uid)
+static
+struct passwd *_LsaNssGetPwUid(uid_t uid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -263,7 +264,21 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwNam(PCSTR pszName)
+struct passwd *LsaNssGetPwUid(uid_t uid)
+{
+    struct passwd *rc;
+    
+    NSS_LOCK();
+
+    rc = _LsaNssGetPwUid(uid);
+    
+    NSS_UNLOCK();
+
+    return rc;
+}
+
+static
+struct passwd *_LsaNssGetPwNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -309,6 +324,19 @@ error:
     LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
+}
+
+struct passwd *LsaNssGetPwNam(PCSTR pszName)
+{
+    struct passwd *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetPwNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
 }
 
 DWORD

@@ -174,7 +174,8 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrGid(gid_t gid)
+static 
+struct group *_LsaNssGetGrGid(gid_t gid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -221,7 +222,21 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrNam(PCSTR pszName)
+struct group *LsaNssGetGrGid(gid_t gid)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrGid(gid);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static 
+struct group *_LsaNssGetGrNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -274,8 +289,22 @@ error:
     goto cleanup;
 }
 
+struct group *LsaNssGetGrNam(PCSTR pszName)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 struct group *
-LsaNssGetGrAcct(
+_LsaNssGetGrAcct(
         PVOID pId,
         int iType
         )
@@ -343,8 +372,26 @@ error:
     goto cleanup;
 }
 
+struct group *
+LsaNssGetGrAcct(
+        PVOID pId,
+        int iType
+        )
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrAcct(pId, iType);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 PSTR
-LsaNssGetGrSet(
+_LsaNssGetGrSet(
         PSTR pszName
         )
 {
@@ -408,6 +455,22 @@ error:
     LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
+}
+
+PSTR
+LsaNssGetGrSet(
+        PSTR pszName
+        )
+{
+    PSTR rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrSet(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
 }
 
 DWORD
