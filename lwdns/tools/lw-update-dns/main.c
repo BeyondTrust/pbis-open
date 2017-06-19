@@ -45,6 +45,8 @@ typedef struct _ARGS {
 #ifndef HAVE_HPUX_OS
     DWORD dwIPV6Count;
 #endif
+    PSTR *pDnsNameArray;
+    DWORD dwDnsCount;
     LWDNSLogLevel LogLevel;
     PFN_LWDNS_LOG_MESSAGE pfnLogger;
 } ARGS, *PARGS;
@@ -229,12 +231,34 @@ main(
 #endif
     }
 
-    dwError = DNSGetNameServers(
-                    pszHostFQDN,
-                    &pszZone,
-                    &pNameServerInfos,
-                    &dwNameServerInfoCount);
-    BAIL_ON_LWDNS_ERROR(dwError);
+    if (args.dwDnsCount > 0)
+    {
+         // Update the DNS provided by the user argument.
+         dwNameServerInfoCount = args.dwDnsCount;
+
+         dwError = DNSAllocateMemory(sizeof(LW_NS_INFO) * args.dwDnsCount,
+                        (PVOID*)&pNameServerInfos);
+         BAIL_ON_LWDNS_ERROR(dwError);
+         for (iAddr = 0; iAddr < args.dwDnsCount; iAddr++)
+         {
+             pNameServerInfos[iAddr].dwIP = 0;
+             DNSAllocateString(args.pDnsNameArray[iAddr], &pNameServerInfos[iAddr].pszNSHostName);
+         }
+         dwError = DNSAllocateString(
+                        pszUseDnsSuffix,
+                        &pszZone);
+         BAIL_ON_LWDNS_ERROR(dwError);
+    }
+    else
+    {
+       dwError = DNSGetNameServers(
+                       pszHostFQDN,
+                       &pszZone,
+                       &pNameServerInfos,
+                       &dwNameServerInfoCount);
+       BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
 
     if (!dwNameServerInfoCount)
     {
@@ -326,6 +350,8 @@ main(
         PSOCKADDR_IN pSockAddr = &args.pAddressArray[iAddr];
 
         dwError = DNSUpdatePtrSecure(
+                        args.pDnsNameArray,
+                        args.dwDnsCount,
                         pSockAddr,
                         pszHostFQDN);
         if (dwError)
@@ -439,6 +465,8 @@ ParseArgs(
     DWORD dwIPV6Count = 0;
 #endif
     DWORD dwIPV4Count = 0;
+    PSTR *pDnsNameArray = NULL;
+    DWORD dwDnsCount = 0;
     LWDNSLogLevel LogLevel = LWDNS_LOG_LEVEL_ERROR;
     PFN_LWDNS_LOG_MESSAGE pfnLogger = NULL;
     PCSTR pszProgramName = "update-dns";
@@ -606,6 +634,30 @@ ParseArgs(
 
             pszHostname[pszDot - pszHostFQDN] = 0;
         }
+        else if (!strcasecmp(pszArg, "--dnsserver"))
+        {
+
+            if (!HAVE_MORE_ARGS(argc, iArg, 1))
+            {
+                fprintf(stderr, "Missing argument for %s option.\n", pszArg);
+                ShowUsage(pszProgramName);
+                exit(1);
+            }
+
+            pszArg = argv[iArg + 1];
+            iArg++;
+
+            dwError = DNSReallocMemory(
+                            pDnsNameArray,
+                            OUT_PPVOID(&pDnsNameArray),
+                            sizeof(pDnsNameArray) * (dwDnsCount + 1));
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            dwError = DNSAllocateString(pszArg, &pDnsNameArray[dwDnsCount]);
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            dwDnsCount++;
+        }
         else if (!strcasecmp(pszArg, "--nocreds"))
         {
             bUseMachineCredentials = FALSE;
@@ -657,6 +709,8 @@ cleanup:
     pArgs->pAddress6Array = pAddress6Array;
     pArgs->dwIPV6Count = dwIPV6Count;
 #endif
+    pArgs->pDnsNameArray = pDnsNameArray;
+    pArgs->dwDnsCount = dwDnsCount;
     pArgs->LogLevel = LogLevel;
     pArgs->pfnLogger = pfnLogger;
     
@@ -674,6 +728,13 @@ error:
     dwIPV6Count = 0;
 #endif
     dwIPV4Count = 0;
+    for(iArg = 0; iArg < dwDnsCount; iArg++)
+    {
+       if (pDnsNameArray[iArg])
+        DNSFreeString(pDnsNameArray[iArg]);
+    }
+    LWDNS_SAFE_FREE_MEMORY(pDnsNameArray);
+    dwDnsCount = 0;
     LogLevel = LWDNS_LOG_LEVEL_ERROR;
     pfnLogger = NULL;
 
@@ -1084,6 +1145,10 @@ ShowUsage(
             "\t--fqdn FQDN\n"
             "\t\t\tFQDN to register.\n"
             "\n"
+            "\t--dnsserver FQDN/IP\n"
+            "\t\t\tSpecify which DNS server hosts the zone.\n"
+            "\t\t\tThis can be specified multiple times.\n"
+            "\n"
             "\t--nocreds\n"
             "\t\t\tDo not use domain credentials.\n"
             "\n"
@@ -1118,11 +1183,11 @@ PrintError(
 
     if (pErrorString && pErrorString[0])
     {
-        fprintf(stderr, "Failed to update DNS.  %s\n", pErrorString);
+        fprintf(stderr, "Failed to update DNS.  %s.\nRetry using --dnsserver option\n", pErrorString);
     }
     else
     {
-        fprintf(stderr, "Failed to update DNS. Error code [%d]\n", dwError);
+        fprintf(stderr, "Failed to update DNS. Error code [%d].\nRetry using --dnsserver option\n", dwError);
     }
 }
 

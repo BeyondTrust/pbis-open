@@ -429,6 +429,8 @@ error:
 
 DWORD
 DNSUpdatePtrSecure(
+    PSTR *pArgDnsNameArray,
+    DWORD dwArgDnsCount,
     PSOCKADDR_IN pAddr,
     PCSTR  pszHostnameFQDN
     )
@@ -443,6 +445,7 @@ DNSUpdatePtrSecure(
     DWORD   iNS = 0;
     HANDLE hDNSServer = (HANDLE)NULL;
     PCSTR pszAddress = NULL;
+    DWORD iAddr = 0;
 
     dwError = DNSGetPtrZoneForAddr(&pszPtrZone, pAddr);
     BAIL_ON_LWDNS_ERROR(dwError);
@@ -450,12 +453,34 @@ DNSUpdatePtrSecure(
     dwError = DNSGetPtrNameForAddr(&pszRecordName, pAddr);
     BAIL_ON_LWDNS_ERROR(dwError);
 
-    dwError = DNSGetNameServers(
-                    pszPtrZone,
-                    &pszZone,
-                    &pNameServerInfos,
-                    &dwNumNSInfos);
-    BAIL_ON_LWDNS_ERROR(dwError);
+    if (dwArgDnsCount > 0)
+    {
+         // Update the DNS provided by the user argument.
+         dwNumNSInfos = dwArgDnsCount;
+
+         dwError = DNSAllocateMemory(sizeof(LW_NS_INFO) * dwArgDnsCount,
+                        (PVOID*)&pNameServerInfos);
+         BAIL_ON_LWDNS_ERROR(dwError);
+         for (iAddr = 0; iAddr < dwArgDnsCount; iAddr++)
+         {
+             pNameServerInfos[iAddr].dwIP = 0;
+             DNSAllocateString(pArgDnsNameArray[iAddr], &pNameServerInfos[iAddr].pszNSHostName);
+         }
+
+         dwError = DNSAllocateString(
+                        pszPtrZone,
+                        &pszZone);
+         BAIL_ON_LWDNS_ERROR(dwError);
+    }
+    else
+   {
+       dwError = DNSGetNameServers(
+                       pszPtrZone,
+                       &pszZone,
+                       &pNameServerInfos,
+                       &dwNumNSInfos);
+       BAIL_ON_LWDNS_ERROR(dwError);
+    }
 
     for (; !bDNSUpdated && (iNS < dwNumNSInfos); iNS++)
     {
@@ -1081,7 +1106,7 @@ cleanup:
 
 error:
 
-    goto cleanup;
+    goto cleanup;
 }
 
 DWORD
@@ -1323,6 +1348,7 @@ DNSUpdatePtrV6Secure(
 
     dwError = DNSGetPtrNameForV6Addr(&pszRecordName, pAddr);
     BAIL_ON_LWDNS_ERROR(dwError);
+
 
     dwError = DNSGetNameServers(
                     pszPtrZone,
