@@ -323,7 +323,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the LWNET Agent.  Error code %u (%s).\n%s\n",
+                 "Failed communication with the PBIS Netlogon Agent.  Error code %u (%s).\n%s\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)),
                  szErrorBuf);
@@ -332,7 +332,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the LWNET Agent.  Error code %u (%s).\n",
+                 "Failed communication with the PBIS Netlogon Agent.  Error code %u (%s).\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)));
         }
