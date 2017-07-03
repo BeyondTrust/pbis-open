@@ -60,7 +60,7 @@ static
 NTSTATUS
 RdrSocketAcquireMid(
     PRDR_SOCKET pSocket,
-    USHORT* pusMid
+    ULONG64* pusMid
     );
 
 static
@@ -642,21 +642,21 @@ RdrSocketTransceive(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PSMB_PACKET pPacket = &pContext->Packet;
-    USHORT usMid = 0;
+    ULONG64 ullMid = 0;
     BOOLEAN bInLock = FALSE;
 
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
-    status = RdrSocketAcquireMid(pSocket, &usMid);
+    status = RdrSocketAcquireMid(pSocket, &ullMid);
     BAIL_ON_NT_STATUS(status);
 
     switch(pPacket->protocolVer)
     {
     case SMB_PROTOCOL_VERSION_1:
-        pPacket->pSMBHeader->mid = usMid;
+        pPacket->pSMBHeader->mid = (USHORT)ullMid;
         break;
     case SMB_PROTOCOL_VERSION_2:
-        pPacket->pSMB2Header->ullCommandSequence = SMB_HTOL64((ULONG64) usMid);
+        pPacket->pSMB2Header->ullCommandSequence = SMB_HTOL64(ullMid);
         break;
     default:
         status = STATUS_INTERNAL_ERROR;
@@ -664,7 +664,12 @@ RdrSocketTransceive(
         break;
     }
 
-    pContext->usMid = usMid;
+    /*
+     * Store sequence number so we can look up associated request.
+     * Note that we only need the lower 16 bits to distinguish between
+     * outstanding requests.
+     */
+    pContext->usMid = (USHORT)ullMid;
 
     RdrSocketQueue(pSocket, pContext);
 
@@ -1378,7 +1383,8 @@ RdrSocketDispatchPacket2(
     BAIL_ON_NT_STATUS(status);
 
     /*
-     * Even if we end up discarding the packet, apply any credits now
+     * Even if we end up discarding the packet, apply any credits now.
+     * Add the returned credits to usMaxSlots subtracting 1 for our usUsedSlots.
      */
     pSocket->usMaxSlots += pPacket->pSMB2Header->usCredits - 1;
 
@@ -1389,6 +1395,12 @@ RdrSocketDispatchPacket2(
             pPacket->pSMB2Header->error == STATUS_PENDING)
         {
             LWIO_LOG_DEBUG("Discarding interim response: %u", (unsigned int) pPacket->pSMB2Header->command);
+            /*
+             * The usMaxSlots credits calculation assumes we will be reducing the used count by 1 credit.
+             * For a STATUS_PENDING this is not true as the real response has not arrived yet.
+             * Ensure we don't account for credits twice.
+             */ 
+            pSocket->usMaxSlots++;
             goto cleanup;
         }
 
@@ -2027,7 +2039,7 @@ static
 NTSTATUS
 RdrSocketAcquireMid(
     PRDR_SOCKET pSocket,
-    USHORT* pusMid
+    ULONG64* pullMid
     )
 {
     NTSTATUS ntStatus = 0;
@@ -2038,7 +2050,7 @@ RdrSocketAcquireMid(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    *pusMid = pSocket->ullNextMid++;
+    *pullMid = pSocket->ullNextMid++;
 
 error:
 
@@ -2352,7 +2364,7 @@ cleanup:
 
     RdrFreePacket(pPacket);
     RdrFreeContext(pContext);
-
+    
     return FALSE;
 
 error:
