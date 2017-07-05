@@ -578,7 +578,8 @@ ShowUsage(
     fprintf(stdout, "\t--delete-user       Deletes one user from the cache\n");
     fprintf(stdout, "\t--delete-group      Deletes one group from the cache\n");
     fprintf(stdout, "\t--enum-users        Enumerates users in the cache\n");
-    fprintf(stdout, "\t--enum-groups       Enumerates groups in the cache\n\n");
+    fprintf(stdout, "\t--enum-groups       Enumerates groups in the cache\n");
+    fprintf(stdout, "\t--batchsize         Enumerate all entries retrieving objects from the cache in batches (default: 10)\n\n");
 }
 
 static
