@@ -42,7 +42,7 @@ configure()
     if [ "$DJ_GUI" = yes ] && [ "$MK_HOST_OS" = "darwin" ]
     then
         DJ_GUI_INTERFACE="carbon"
-    elif [ "$DJ_GUI" = yes ] && mk_pkg_config VARPREFIX=GTK glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
+    elif [ "$DJ_GUI" = yes ] && mk_pkg_config VARPREFIX=GTK glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0 xml2
     then
         DJ_GUI_INTERFACE="gtk"       
 

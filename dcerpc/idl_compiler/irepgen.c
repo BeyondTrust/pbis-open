@@ -1826,72 +1826,73 @@ static void IR_gen_pointer_rep
         tup_p = IR_gen_ptr_tup(ctx_p, type_p, inst_p);
     else
         tup_p = IR_gen_ptr_tup(ctx_p, type_p, NULL);
-	IR_process_tup(ctx_p, tup_p);
 
-	/*
-	 * If pointer is arrayified, generate array rep.
-	 * Otherwise, generate rep of pointee type.
-	 */
-	if (tup_p->flags & IR_ARRAYIFIED_PTR)
-	{
-		/* Propagate attributes to array rep type if necessary */
-		arr_rep_type_p = ptee_type_p->array_rep_type;
-		if (FE_TEST(ptee_type_p->fe_info->flags, FE_HAS_PTR))
-			FE_SET(arr_rep_type_p->fe_info->flags, FE_HAS_PTR);
+    IR_process_tup(ctx_p, tup_p);
 
-		/*
-		 * Parameter or field instance skips across pointer to array rep.
-		 * NOTE: The need for the 'flags' argument to IR_gen_type_rep stems
-		 * from here: The [string] attribute cannot be put on an array_rep_type
-		 * since other arrayified types without [string] can have the same
-		 * array_rep_type node.  If this reference to the array_rep_type is
-		 * stringified, it is captured in and passed thru the tuple flags.
-		 */
-		IR_gen_type_rep(ctx_p, arr_rep_type_p, inst_p, tup_p->flags);
-	}
-	else
-	{
-		/*
-		 * Generate rep of pointee type.  Note that if pointer is a toplevel
-		 * pointer whose pointee type is not a pointer or array, the instance
-		 * node address "skips across" the pointer to the pointee rep.  This
-		 * is also true for ANY poiner to a non-encapsulated union, where the
-		 * switch information which hangs off the instance node is needed when
-		 * processing the union type.
-		 */
-		if ( (ptee_type_p->kind == AST_disc_union_k && ptee_type_p->
-					type_structure.disc_union->discrim_name == NAMETABLE_NIL_ID)
+    /*
+     * If pointer is arrayified, generate array rep.
+     * Otherwise, generate rep of pointee type.
+     */
+    if (tup_p->flags & IR_ARRAYIFIED_PTR)
+    {
+            /* Propagate attributes to array rep type if necessary */
+            arr_rep_type_p = ptee_type_p->array_rep_type;
+            if (FE_TEST(ptee_type_p->fe_info->flags, FE_HAS_PTR))
+                    FE_SET(arr_rep_type_p->fe_info->flags, FE_HAS_PTR);
+
+            /*
+             * Parameter or field instance skips across pointer to array rep.
+             * NOTE: The need for the 'flags' argument to IR_gen_type_rep stems
+             * from here: The [string] attribute cannot be put on an array_rep_type
+             * since other arrayified types without [string] can have the same
+             * array_rep_type node.  If this reference to the array_rep_type is
+             * stringified, it is captured in and passed thru the tuple flags.
+             */
+            IR_gen_type_rep(ctx_p, arr_rep_type_p, inst_p, tup_p->flags);
+    }
+    else
+    {
+            /*
+             * Generate rep of pointee type.  Note that if pointer is a toplevel
+             * pointer whose pointee type is not a pointer or array, the instance
+             * node address "skips across" the pointer to the pointee rep.  This
+             * is also true for ANY poiner to a non-encapsulated union, where the
+             * switch information which hangs off the instance node is needed when
+             * processing the union type.
+             */
+            if ( (ptee_type_p->kind == AST_disc_union_k && ptee_type_p->
+                                    type_structure.disc_union->discrim_name == NAMETABLE_NIL_ID)
 #if 1
 /* Centeris change:
-     Handle the case of two levels of indirection to a union.  This should
-     be fixed to handle any number of levels.  A better solution would be to
-     always pass inst_p, and add checks for the inst_p->type == type_p
-     invariant everywhere else.
+ Handle the case of two levels of indirection to a union.  This should
+ be fixed to handle any number of levels.  A better solution would be to
+ always pass inst_p, and add checks for the inst_p->type == type_p
+ invariant everywhere else.
 */
-             ||
-             (ptee_type_p->kind == AST_pointer_k && 
-              ptee_type_p->type_structure.pointer->pointee_type->kind ==
-              AST_disc_union_k)
+         ||
+         (ptee_type_p->kind == AST_pointer_k && 
+          ptee_type_p->type_structure.pointer->pointee_type->kind ==
+          AST_disc_union_k)
 #endif
-				||
-				((ptee_type_p->kind != AST_pointer_k || ptee_type_p->
-				  type_structure.pointer->pointee_type->kind == AST_void_k
-				  || (ptee_type_p->type_structure.pointer->pointee_type->kind
-					  == AST_structure_k && AST_CONTEXT_RD_SET(ptee_type_p)))
-				 && ptee_type_p->kind != AST_array_k
-				 && IR_parent_scope(ctx_p) == IR_SCP_TOPLEVEL) )
-			ptee_inst_p = inst_p;
-		else
-			ptee_inst_p = NULL;
-		IR_gen_type_rep(ctx_p, ptee_type_p, ptee_inst_p, 0);
-	}
+                            ||
+                            ((ptee_type_p->kind != AST_pointer_k || ptee_type_p->
+                              type_structure.pointer->pointee_type->kind == AST_void_k
+                              || (ptee_type_p->type_structure.pointer->pointee_type->kind
+                                      == AST_structure_k && AST_CONTEXT_RD_SET(ptee_type_p)))
+                             && ptee_type_p->kind != AST_array_k
+                             && IR_parent_scope(ctx_p) == IR_SCP_TOPLEVEL) )
+                    ptee_inst_p = inst_p;
+            else
+                    ptee_inst_p = NULL;
+            IR_gen_type_rep(ctx_p, ptee_type_p, ptee_inst_p, 0);
+    }
 
-	/*
-	 * Generate IR_op_pointee_end_k tuple and maintain scope context.
-	 */
-	tup_p = IR_gen_irep_tup(ctx_p, IR_op_pointee_end_k);
-	tup_p->arg[IR_ARG_TYPE].type = type_p;
-	IR_process_tup(ctx_p, tup_p);
+    /*
+     * Generate IR_op_pointee_end_k tuple and maintain scope context.
+     */
+    tup_p = IR_gen_irep_tup(ctx_p, IR_op_pointee_end_k);
+    tup_p->arg[IR_ARG_TYPE].type = type_p;
+    IR_process_tup(ctx_p, tup_p);
 }
 
 

@@ -171,9 +171,10 @@ void rpc_ss_ndr_unmar_cs_array
                                         IDL_msp);
       else
         bounds_list = (IDL_bound_pair_t *)array_defn_ptr;
-        array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
-        w_storage_len = bounds_list[0].upper - bounds_list[0].lower + 1;
-        l_storage_len = w_storage_len;
+
+      array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
+      w_storage_len = bounds_list[0].upper - bounds_list[0].lower + 1;
+      l_storage_len = w_storage_len;
     }
     else    /* Conformant or open */
     {

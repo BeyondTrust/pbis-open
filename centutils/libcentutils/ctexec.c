@@ -284,9 +284,9 @@ CTSpawnProcessWithEnvironment(
 
     if (pid > 0) {
         /* parent */
-        if (fd0[0] >= 0) close(fd0[0]); fd0[0] = -1;
-        if (fd1[1] >= 0) close(fd1[1]); fd1[1] = -1;
-        if (fd2[1] >= 0) close(fd2[1]); fd2[1] = -1;
+        if (fd0[0] >= 0) { close(fd0[0]); fd0[0] = -1; }
+        if (fd1[1] >= 0) { close(fd1[1]); fd1[1] = -1; }
+        if (fd2[1] >= 0) { close(fd2[1]); fd2[1] = -1; }
 
         ceError = CTAllocateMemory(sizeof(PROCINFO), (PVOID*)&pProcInfo);
         BAIL_ON_CENTERIS_ERROR(ceError);
@@ -304,9 +304,9 @@ CTSpawnProcessWithEnvironment(
     if (pid == 0) {
 
         /* child -- must exit/abort and never bail via goto */
-        if (fd0[1] >= 0) close(fd0[1]); fd0[1] = -1;
-        if (fd1[0] >= 0) close(fd1[0]); fd1[0] = -1;
-        if (fd2[0] >= 0) close(fd2[0]); fd2[0] = -1;
+        if (fd0[1] >= 0) { close(fd0[1]); fd0[1] = -1; }
+        if (fd1[0] >= 0) { close(fd1[0]); fd1[0] = -1; }
+        if (fd2[0] >= 0) { close(fd2[0]); fd2[0] = -1; }
 
         if (fd0[0] != STDIN_FILENO) {
             if (dup2(fd0[0], STDIN_FILENO) != STDIN_FILENO) {
