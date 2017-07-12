@@ -3,7 +3,7 @@
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
 ###
-# chkconfig: 35 17 9
+# chkconfig: 35 17 61
 # description: Start and Stop PBIS Service Manager
 ###
 

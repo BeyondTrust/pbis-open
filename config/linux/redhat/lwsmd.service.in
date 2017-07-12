@@ -1,6 +1,7 @@
 [Unit]
 Description=BeyondTrust PBIS Service Manager
 After=network.target 
+Before=sshd.service
 
 [Service]
 Type=forking
