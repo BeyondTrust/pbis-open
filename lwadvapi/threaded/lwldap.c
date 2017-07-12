@@ -282,7 +282,7 @@ LwLdapOpenDirectoryServerSingleAttempt(
     LDAP * ld = NULL;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     int rc = LDAP_VERSION3;
-    int maxbufsize = LW_LDAP_16MB;
+    ber_len_t maxbufsize = LW_LDAP_16MB;
     DWORD dwPort = 389;
     struct timeval timeout = {0};
     BOOLEAN bLdapSeal = FALSE;

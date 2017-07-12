@@ -32,6 +32,8 @@
 #include "lam-user.h"
 #include "lam-group.h"
 
+static const int MAX_NUM_USERS = 500;
+
 DWORD
 LsaNssFindUserByAixName(
     HANDLE hLsaConnection,
@@ -215,7 +217,8 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwUid(uid_t uid)
+static
+struct passwd *_LsaNssGetPwUid(uid_t uid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -263,7 +266,21 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwNam(PCSTR pszName)
+struct passwd *LsaNssGetPwUid(uid_t uid)
+{
+    struct passwd *rc;
+    
+    NSS_LOCK();
+
+    rc = _LsaNssGetPwUid(uid);
+    
+    NSS_UNLOCK();
+
+    return rc;
+}
+
+static
+struct passwd *_LsaNssGetPwNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -311,6 +328,19 @@ error:
     goto cleanup;
 }
 
+struct passwd *LsaNssGetPwNam(PCSTR pszName)
+{
+    struct passwd *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetPwNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
 DWORD
 LsaNssListUsers(
         HANDLE hLsaConnection,
@@ -319,17 +349,26 @@ LsaNssListUsers(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     const DWORD dwInfoLevel = 0;
-    const DWORD dwEnumLimit = 10000;
+    const DWORD dwEnumLimit = MAX_NUM_USERS;
     DWORD dwIndex = 0;
+    DWORD dwTotalIndex = 0;
     DWORD dwUsersFound = 0;
     HANDLE hResume = (HANDLE)NULL;
-    size_t sRequiredMem = 0;
+    size_t sRequiredMem = 1;
+    size_t sUsedMem = 0;
     PLSA_USER_INFO_0* ppUserList = NULL;
     PSTR pszListStart = NULL;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
     // Do not free
     PSTR pszPos = NULL;
 
     LSA_LOG_PAM_DEBUG("Enumerating users");
+    
+    if (pDisabled) 
+    {
+        pResult->attr_flag = ENOENT;
+        goto error;
+    }
 
     dwError = LsaBeginEnumUsers(
                 hLsaConnection,
@@ -339,39 +378,64 @@ LsaNssListUsers(
                 &hResume);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaEnumUsers(
-                hLsaConnection,
-                hResume,
-                &dwUsersFound,
-                (PVOID**)&ppUserList);
-    BAIL_ON_LSA_ERROR(dwError);
+    do {
+        if (ppUserList != NULL)
+        {
+            LsaFreeUserInfoList(
+                    dwInfoLevel,
+                    (PVOID*)ppUserList,
+                    dwUsersFound);
 
-    if (dwUsersFound == dwEnumLimit)
-    {
-        pResult->attr_flag = ENOMEM;
-        goto error;
+            ppUserList = NULL;
+            dwUsersFound = 0;
+        }
+
+        dwError = LsaEnumUsers(
+                    hLsaConnection,
+                    hResume,
+                    &dwUsersFound,
+                    (PVOID**)&ppUserList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (dwUsersFound == 0) continue;
+
+        LSA_LOG_PAM_DEBUG("Found %u users", (unsigned int)dwUsersFound);
+
+        for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
+        {
+            if (ppUserList[dwIndex]->pszName) 
+            {
+                sRequiredMem += strlen(ppUserList[dwIndex]->pszName) + 1;
+            }
+        }
+
+        dwError = LwReallocMemory(
+                    pszListStart,
+                    (PVOID*)&pszListStart,
+                    sRequiredMem);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszPos = pszListStart + sUsedMem;
+
+        for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
+        {
+            if (ppUserList[dwIndex]->pszName) 
+            {
+                strcpy(pszPos, ppUserList[dwIndex]->pszName);
+                pszPos += strlen(pszPos) + 1;
+            }
+        }
+        
+        sUsedMem = pszPos - pszListStart;
+        
+        dwTotalIndex += dwUsersFound;
+        
+    } while (dwUsersFound > 0);
+    
+    if (pszPos) {
+        *pszPos++ = 0;
+        assert(pszPos == pszListStart + sRequiredMem);
     }
-
-    sRequiredMem = 1;
-    for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
-    {
-        sRequiredMem += strlen(ppUserList[dwIndex]->pszName) + 1;
-    }
-
-    dwError = LwAllocateMemory(
-                sRequiredMem,
-                (PVOID*)&pszListStart);
-    BAIL_ON_LSA_ERROR(dwError);
-    pszPos = pszListStart;
-
-    for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
-    {
-        strcpy(pszPos, ppUserList[dwIndex]->pszName);
-        pszPos += strlen(pszPos) + 1;
-    }
-    *pszPos++ = 0;
-
-    assert(pszPos == pszListStart + sRequiredMem);
 
     pResult->attr_un.au_char = pszListStart;
     pResult->attr_flag = 0;

@@ -143,7 +143,7 @@ DWORD ExecuteAdtMoveObjectAction(IN AdtActionTP action)
 
     if(!appContext->gopts.isPrintDN) {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "New DN: %s,%s", appContext->oName, action->moveObject.to);
+            PrintResult(appContext, LogLevelNone, "New DN: %s,%s\n", appContext->oName, action->moveObject.to);
         }
     }
 

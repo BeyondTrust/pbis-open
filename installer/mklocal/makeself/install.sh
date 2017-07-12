@@ -1289,7 +1289,7 @@ usage()
     echo "                  and delete all generated files)"
     echo "    info          show commands to do a manual install"
     echo ""
-    echo "  If not command is given, interactive mode is used."
+    echo "  If no command is given, interactive mode is used."
     echo ""
 }
 

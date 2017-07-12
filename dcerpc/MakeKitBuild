@@ -12,7 +12,7 @@ option()
             _default_AUTH=yes
             ;;
     esac
-        
+
 
     mk_option \
         OPTION=rpc-ncacn \
@@ -31,7 +31,7 @@ option()
         VAR=ENABLE_IP \
         DEFAULT="$_default_FULL" \
         HELP="Enable TCP/IP RPC support"
-    
+
     mk_option \
         OPTION=rpc-np \
         VAR=ENABLE_NP \
@@ -43,13 +43,13 @@ option()
         VAR=ENABLE_HTTP \
         DEFAULT="$_default_FULL" \
         HELP="Enable RPCHTTP support"
-    
+
     mk_option \
         OPTION=rpc-gss \
         VAR=ENABLE_GSS \
         DEFAULT="$_default_FULL" \
         HELP="Enable GSS RPC authentication support"
-    
+
     mk_option \
         OPTION=rpc-schannel \
         VAR=ENABLE_SCHANNEL \
@@ -182,6 +182,12 @@ configure()
             armel*)
                 target_cpu="$target_cpu armel"
                 ;;
+            s390x)
+                target_cpu="$target_cpu s390x"
+                ;;
+            *)
+                mk_warn "Unknown isa '${_isa}'"
+                ;;
         esac
     done
 
@@ -190,7 +196,7 @@ configure()
     mk_declare -o DCERPCD_SERVICE_TYPE="dword:00000002"
 
     rpc_feature_flags
-    
+
     MK_CFLAGS="$MK_CFLAGS -Wall"
 
     mk_declare -o \
@@ -278,7 +284,7 @@ configure()
     # Optional libraries
     mk_check_libraries \
         socket nsl dl pthread rt
-    
+
     # Required functions
     mk_check_functions \
         FAIL=yes \

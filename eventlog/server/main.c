@@ -203,6 +203,7 @@ cleanup:
     return (dwError);
 
 error:
+    EVT_LOG_ERROR("Failed to check allowed access.  Error code: [%u]", dwError);
     goto cleanup;
 }
 
@@ -821,6 +822,8 @@ EVTCreateAccessDescriptor(
                 SECURITY_DESCRIPTOR_REVISION));
     BAIL_ON_EVT_ERROR(dwError);
 
+    EVT_LOG_DEBUG("Resolving Read ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowReadTo));
+
     dwError = EVTStringSplit(
                 pszAllowReadTo,
                 &dwCount,
@@ -833,17 +836,20 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwReadCount,
                 &ppReadList);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    if (dwReadCount < dwCount)
+    
+    if (dwError || dwReadCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all read SIDs.  Error code: %u/%u [%u]", dwReadCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
         ppszArray,
         dwCount);
     ppszArray = NULL;
+
+    EVT_LOG_DEBUG("Resolving Write ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowWriteTo));
 
     dwError = EVTStringSplit(
                 pszAllowWriteTo,
@@ -857,17 +863,20 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwWriteCount,
                 &ppWriteList);
-    BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwWriteCount < dwCount)
+    if (dwError || dwWriteCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all write SIDs.  Error code: %u/%u [%u]", dwWriteCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
         ppszArray,
         dwCount);
     ppszArray = NULL;
+
+    EVT_LOG_DEBUG("Resolving Delete ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowDeleteTo));
 
     dwError = EVTStringSplit(
                 pszAllowDeleteTo,
@@ -881,11 +890,12 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwDeleteCount,
                 &ppDeleteList);
-    BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwDeleteCount < dwCount)
+    if (dwError || dwDeleteCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all delete SIDs.  Error code: %u/%u [%u]", dwDeleteCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
@@ -982,6 +992,8 @@ cleanup:
     return dwError;
 
 error:
+    EVT_LOG_ERROR("Failed to create access descriptor.  Error code: [%u]", dwError);
+    
     EVTFreeSecurityDescriptor(pDescriptor);
     *ppDescriptor = NULL;
     if (pbFullyResolved)

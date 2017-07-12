@@ -56,6 +56,7 @@ LsaNssCommonEnsureConnected(
     if (myPid != pConnection->owner &&
             pConnection->hLsaConnection != (HANDLE)NULL)
     {
+        // This connection was created by the parent process before a fork. 
         // Drop the connection
         LsaDropServer(pConnection->hLsaConnection);
         pConnection->hLsaConnection = NULL;
@@ -84,6 +85,7 @@ LsaNssCommonCloseConnection(
         }
         else
         {
+            // This connection was created by the parent process before a fork. 
             // Drop the connection
             dwError = LsaDropServer(pConnection->hLsaConnection);
         }

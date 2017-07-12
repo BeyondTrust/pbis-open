@@ -210,6 +210,28 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
         }
     }
 
+    if (action->resetUserPassword.keytab) 
+    {
+       BOOLEAN bExists = FALSE;
+       LwCheckFileExists(action->resetUserPassword.keytab, &bExists);
+
+       dwError = ModifyUserKeytabFile(action, avp[0].vals[0]);
+       if (dwError)
+       {
+          PrintResult(appContext, LogLevelNone, "Failed to %s keytab file for user %s.\n", (bExists ? "update":"create"), avp[0].vals[0]);
+
+       }
+       else
+       {
+          if (!appContext->gopts.isQuiet) 
+          {
+             PrintResult(appContext, LogLevelNone, "Keytab file %s for user %s.\n", (bExists ? "update":"created"), avp[0].vals[0]);
+          }
+
+       }
+
+    }
+    
     cleanup:
         if (avpTime) {
                 for (i = 0; avpTime[i].vals; ++i) {
@@ -232,6 +254,7 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
         }
 
         LW_SAFE_FREE_MEMORY(info);
+
 
         return dwError;
 

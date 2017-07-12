@@ -48,12 +48,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <time.h>
 #include <uuid/uuid.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #include <krb5.h>
 
@@ -66,11 +70,13 @@
 
 /* lwadvpi includes */
 #include <lwstr.h>
+#include <lwfile.h>
 #include <lwmem.h>
 #include <lwerror.h>
 #include <lwldap.h>
 #include <lwtime.h>
 #include <lwsecurityidentifier.h>
+#include <lwkrb5.h>
 
 /* adtool includes */
 #include <adtool/types.h>
@@ -86,6 +92,8 @@
 /* netlogon includes */
 #include <lwnet.h>
 
+#include <btkrb5.h>
+
 /* local includes */
 #include "defs.h"
 #include "app.h"
@@ -96,5 +104,6 @@
 #include "ids.h"
 #include "auth.h"
 #include "net.h"
+#include "gen_keytab.h"
 
 #endif /* _ADTOOL_INCLUDES_H_ */

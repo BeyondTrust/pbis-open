@@ -49,7 +49,6 @@
 #include "lsanss.h"
 #include "externs.h"
 
-static const int MAX_NUM_USERS = 500;
 static LSA_ENUMUSERS_STATE gEnumUsersState = {0};
 
 NSS_STATUS

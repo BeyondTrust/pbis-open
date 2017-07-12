@@ -1083,9 +1083,12 @@ ADLdap_GetGroupMembers(
                  pContext,
                  dwSidCount,
                  ppszLDAPValues,
-                 &sFoundCount,
+                 NULL,
                  &ppResults);
     BAIL_ON_LSA_ERROR(dwError);
+    
+    sFoundCount = dwSidCount;
+    AD_FilterNullEntries(ppResults, &sFoundCount);
 
     *psCount = sFoundCount;
     *pppResults = ppResults;
@@ -1428,13 +1431,12 @@ ADLdap_GetObjectGroupMembership(
                     pContext,
                     totalSidCount,
                     ppTotalSidList,
-                    &sNumGroupsFound,
+                    NULL,
                     &ppGroupInfoList);
     BAIL_ON_LSA_ERROR(dwError);
 
-    AD_FilterNullEntries(
-            ppGroupInfoList,
-            &sNumGroupsFound);
+    sNumGroupsFound = totalSidCount;
+    AD_FilterNullEntries(ppGroupInfoList, &sNumGroupsFound);
 
     // Determine primary group index
     if (pObject->type == LSA_OBJECT_TYPE_USER &&

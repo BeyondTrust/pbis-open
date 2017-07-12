@@ -1,8 +1,14 @@
+configure()
+{
+    mk_check_headers \
+       unistd.h sys/stat.h sys/types.h 
+}
+
 make()
 {
     COMMON_HEADERDEPS="adtool/types.h popt.h lw/types.h lw/attrs.h \
  lwstr.h lwmem.h lwerror.h lwldap.h lwtime.h lwsecurityidentifier.h krb5.h \
- lw/lmaccess.h lw/lmmem.h lw/lmcreds.h lsa/lsa.h lwnet.h"
+ lw/lmaccess.h lw/lmmem.h lw/lmcreds.h lsa/lsa.h lwnet.h btkrb5.h"
 
     LIBADTOOL_SOURCES="\
 	api.c \
@@ -24,12 +30,13 @@ make()
 	action_base.c \
 	ids.c \
 	net.c \
-        set.c"
+        set.c \
+        gen_keytab.c"
 
     mk_library \
 	LIB=adtool \
 	SOURCES="$LIBADTOOL_SOURCES" \
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="$COMMON_HEADERDEPS" \
-	LIBDEPS="lsaclient lsacommon lwbase krb5 gssapi_krb5 k5crypto ldap_r lber lwnetapi popt lwadvapi"
+	LIBDEPS="lsaclient lsacommon lwbase krb5 gssapi_krb5 k5crypto ldap_r lber btkrb5 lwnetapi popt lwadvapi"
 }

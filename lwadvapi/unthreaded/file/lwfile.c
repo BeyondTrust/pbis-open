@@ -749,6 +749,31 @@ error:
     return dwError;
 }
 
+DWORD
+LwCopyFileWithOriginalPerms(
+    PCSTR pszSrcPath,
+    PCSTR pszDstPath
+    )
+{
+    DWORD dwError = 0;
+    uid_t uid = 0;
+    gid_t gid = 0;
+    mode_t mode = 0;
+
+    dwError = LwGetOwnerAndPermissions(pszSrcPath, &uid, &gid, &mode);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwCopyFileWithPerms(pszSrcPath, pszDstPath, mode);
+    BAIL_ON_LW_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 #if HAVE_XATTR
 static
 ssize_t _listxattr(const char* path, char* namebuf, size_t size)

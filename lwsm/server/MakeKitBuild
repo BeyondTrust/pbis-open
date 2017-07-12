@@ -24,12 +24,22 @@ make()
         SERVER_GROUPS="$SERVER_GROUPS ../../lsass/server/lsassd/lsass"
     fi
    
+    case "$MK_BUILD_DISTRO" in
+        aix)
+            LWSM_LDFLAGS="-Wl,-bmaxdata:0x40000000"
+            ;;
+        *)
+            LWSM_LDFLAGS=""
+            ;;
+    esac
+
     mk_program \
         PROGRAM=lwsmd \
         SOURCES="$SERVER_SOURCES" \
         GROUPS="$SERVER_GROUPS" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
+        LDFLAGS="$LWSM_LDFLAGS" \
         LIBDEPS="\
             centutils crypto lwsmcommon lwmsg lwmsg_nothr lwioclient lwnetclientapi \
             regclient rsutils lwadvapi lwadvapi_nothr lwbase lwbase_nothr dcerpc $LIB_PTHREAD" \

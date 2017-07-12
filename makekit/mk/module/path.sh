@@ -40,7 +40,7 @@ DEPENDS="platform"
 # @var MK_PREFIX
 # @brief Install prefix for architecture-independent files
 # @export
-# 
+#
 # The filesystem prefix for architecture-indepenent files.
 # Used to construct the default install directories for
 # headers, shared data files, configuration files, etc.
@@ -50,7 +50,7 @@ DEPENDS="platform"
 # @var MK_EPREFIX
 # @brief Install prefix for architecture-dependent files
 # @export
-# 
+#
 # The filesystem prefix for architecture-depenent files.
 # Used to construct the default install directories for
 # executables, libraries, etc.
@@ -62,7 +62,7 @@ DEPENDS="platform"
 # @var MK_INCLUDEDIR
 # @brief Install directory for header files
 # @export
-# 
+#
 # The directory where public header files are installed.
 #
 # Defaults to <lit>$<varref>MK_PREFIX</varref>/include</lit>.
@@ -72,7 +72,7 @@ DEPENDS="platform"
 # @var MK_BINDIR
 # @brief Install directory for user executables
 # @export
-# 
+#
 # The directory where programs intended for use
 # by users are installed.
 #
@@ -83,7 +83,7 @@ DEPENDS="platform"
 # @var MK_SBINDIR
 # @brief Install directory for system executables
 # @export
-# 
+#
 # The directory where programs intended for use
 # by the operating system or root user are installed.
 #
@@ -94,7 +94,7 @@ DEPENDS="platform"
 # @var MK_LIBEXECDIR
 # @brief Install directory for program executables
 # @export
-# 
+#
 # The directory where programs intended for internal
 # use by other programs or libraries are installed.
 #
@@ -105,7 +105,7 @@ DEPENDS="platform"
 # @var MK_BASELIBDIR
 # @brief Base install directory for libraries
 # @export
-# 
+#
 # This path name is used as a template to construct the actual
 # install directory paths for libraries (<varref>MK_LIBDIR</varref>).
 # This distinction is important on multiarchitecture systems where
@@ -119,7 +119,7 @@ DEPENDS="platform"
 # @brief Install directory for libraries
 # @export
 # @system
-# 
+#
 # The directory where libraries are installed.  On multiarchitecture
 # systems that do not use "fat" binaries, this is a system-dependent
 # variable that has separate values for each ISA.  For example, on
@@ -232,7 +232,7 @@ option()
         PARAM="path" \
         DEFAULT="$PREFIX" \
         HELP="Architecture-dependent installation prefix"
-    
+
     mk_option \
         VAR=INCLUDEDIR \
         OPTION=includedir \
@@ -274,12 +274,12 @@ option()
         do
             _mk_define_name "host/$_isa"
             _var="LIBDIR_$result"
-            
+
             case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
-                linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64|linux-redhat-powerpc-ppc64|linux-redhat-powerpc-ppc64le)
+                linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64|linux-redhat-powerpc-ppc64|linux-redhat-powerpc-ppc64le|linux-*-s390x)
                     _default_libdir="${BASELIBDIR}64"
                     ;;
-                linux-debian-x86_64-x86_32)
+                linux-debian-x86_64-x86_32|linux-redhat-powerpc-ppc32)
                     _default_libdir="${BASELIBDIR}32"
                     ;;
                 solaris-*-sparc*-sparc_64)
@@ -302,9 +302,9 @@ option()
                     _default_libdir="${BASELIBDIR}"
                     ;;
             esac
-            
+
             _option="libdir-$(echo $_isa | tr '_' '-')"
-            
+
             mk_option \
                 OPTION="$_option" \
                 VAR="$_var"  \
@@ -320,7 +320,7 @@ option()
         PARAM="path" \
         DEFAULT="${_default_sysconfdir}" \
         HELP="System configuration directory"
-    
+
     mk_option \
         VAR=LOCALSTATEDIR \
         OPTION=localstatedir \
@@ -334,7 +334,7 @@ option()
         PARAM="path" \
         DEFAULT="${PREFIX}/share" \
         HELP="Root data directory"
-    
+
     mk_option \
         VAR=DATADIR \
         OPTION=datadir \

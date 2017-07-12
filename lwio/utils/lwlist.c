@@ -75,16 +75,40 @@ LwListIsEmpty(
     return (Head->Next == Head);
 }
 
+static
+BOOLEAN
+LwListContains(
+    IN LW_LIST_LINKS* Head,
+    IN LW_LIST_LINKS* Element
+)
+{
+    LW_LIST_LINKS* next;
+    
+    if (Head == NULL) return FALSE;
+    if (Element == NULL) return FALSE;
+    
+    for (next = Head->Next; (next != NULL) && (next != Head); next = next->Next) {
+        if (next == Element) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 VOID
 LwListInsertAfter(
     IN LW_LIST_LINKS* Head,
     IN LW_LIST_LINKS* Element
     )
 {
-    Element->Next = Head->Next;
-    Element->Prev = Head;
-    Head->Next->Prev = Element;
-    Head->Next = Element;
+    // Ensure we don't already have this entry in the list as it will corrupt the list pointers
+    if (LwListContains(Head, Element) == FALSE) {
+        Element->Next = Head->Next;
+        Element->Prev = Head;
+        Head->Next->Prev = Element;
+        Head->Next = Element;
+    }
 }
 
 VOID
@@ -93,10 +117,13 @@ LwListInsertBefore(
     IN LW_LIST_LINKS* Element
     )
 {
-    Element->Next = Head;
-    Element->Prev = Head->Prev;
-    Head->Prev->Next = Element;
-    Head->Prev = Element;
+    // Ensure we don't already have this entry in the list as it will corrupt the list pointers
+    if (LwListContains(Head, Element) == FALSE) {
+        Element->Next = Head;
+        Element->Prev = Head->Prev;
+        Head->Prev->Next = Element;
+        Head->Prev = Element;
+    }
 }
 
 VOID

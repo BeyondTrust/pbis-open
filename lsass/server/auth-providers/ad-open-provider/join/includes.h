@@ -58,6 +58,7 @@
 #include "lwsecurityidentifier.h"
 
 #include "lsautils.h"
+#include "lsasrvutils.h"
 #include "lsasrvapi.h"
 
 #include "lwtime.h"
@@ -73,7 +74,11 @@
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/krb5pac.h>
 
+#include <keytab.h>
+#include <ktldap.h>
+
 #include "lsajoin.h"
+#include "lsasrvutils.h"
 #include "join_p.h"
 #include <lsa/lsapstore-api.h>
 #include <ldap.h>
@@ -84,8 +89,6 @@
 #include <lwldap-error.h>
 #include "lsaldap_p.h"
 
-#include "keytab.h"
-#include "ktldap.h"
 
 #include <lber.h>
 

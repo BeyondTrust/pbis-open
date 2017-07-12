@@ -873,6 +873,11 @@ lwmsg_peer_session_new(
 
 done:
 
+    if (attr_destroy)
+    {
+        pthread_mutexattr_destroy(&attr);
+    }
+
     return status;
 
 error:
@@ -880,11 +885,6 @@ error:
     if (session)
     {
         peer_free_session(session);
-    }
-
-    if (attr_destroy)
-    {
-        pthread_mutexattr_destroy(&attr);
     }
 
     goto done;

@@ -31,6 +31,8 @@
 #include "includes.h"
 #include "lam-group.h"
 
+static const DWORD MAX_NUM_GROUPS = 500;
+
 void
 LsaNssFreeLastGroup(
         VOID
@@ -174,7 +176,8 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrGid(gid_t gid)
+static 
+struct group *_LsaNssGetGrGid(gid_t gid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -221,7 +224,21 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrNam(PCSTR pszName)
+struct group *LsaNssGetGrGid(gid_t gid)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrGid(gid);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static 
+struct group *_LsaNssGetGrNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -274,8 +291,22 @@ error:
     goto cleanup;
 }
 
+struct group *LsaNssGetGrNam(PCSTR pszName)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 struct group *
-LsaNssGetGrAcct(
+_LsaNssGetGrAcct(
         PVOID pId,
         int iType
         )
@@ -343,8 +374,26 @@ error:
     goto cleanup;
 }
 
+struct group *
+LsaNssGetGrAcct(
+        PVOID pId,
+        int iType
+        )
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrAcct(pId, iType);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 PSTR
-LsaNssGetGrSet(
+_LsaNssGetGrSet(
         PSTR pszName
         )
 {
@@ -410,6 +459,22 @@ error:
     goto cleanup;
 }
 
+PSTR
+LsaNssGetGrSet(
+        PSTR pszName
+        )
+{
+    PSTR rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrSet(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
 DWORD
 LsaNssListGroups(
         HANDLE hLsaConnection,
@@ -418,15 +483,26 @@ LsaNssListGroups(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     const DWORD dwInfoLevel = 0;
-    const DWORD dwEnumLimit = 100000;
+    const DWORD dwEnumLimit = MAX_NUM_GROUPS;
     DWORD dwIndex = 0;
+    DWORD dwTotalIndex = 0;
     DWORD dwGroupsFound = 0;
     HANDLE hResume = (HANDLE)NULL;
-    size_t sRequiredMem = 0;
+    size_t sRequiredMem = 1;
+    size_t sUsedMem = 0;
     PLSA_GROUP_INFO_0* ppGroupList = NULL;
     PSTR pszListStart = NULL;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
     // Do not free
     PSTR pszPos = NULL;
+
+    LSA_LOG_PAM_DEBUG("Enumerating groups");
+
+    if (pDisabled) 
+    {
+        pResult->attr_flag = ENOENT;
+        goto error;
+    }
 
     dwError = LsaBeginEnumGroups(
                 hLsaConnection,
@@ -436,47 +512,64 @@ LsaNssListGroups(
                 &hResume);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaEnumGroups(
-                hLsaConnection,
-                hResume,
-                &dwGroupsFound,
-                (PVOID**)&ppGroupList);
-    BAIL_ON_LSA_ERROR(dwError);
+    do {
+        if (ppGroupList != NULL)
+        {
+            LsaFreeGroupInfoList(
+                    dwInfoLevel,
+                    (PVOID*)ppGroupList,
+                    dwGroupsFound);
 
-    if (dwGroupsFound == dwEnumLimit)
-    {
-        pResult->attr_flag = ENOMEM;
-        goto error;
-    }
+            ppGroupList = NULL;
+            dwGroupsFound = 0;
+        }
 
-    sRequiredMem = 1;
-    for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
-    {
-        sRequiredMem += strlen(ppGroupList[dwIndex]->pszName) + 1;
-    }
-    if (dwIndex == 0)
-    {
-        sRequiredMem++;
-    }
+        dwError = LsaEnumGroups(
+                    hLsaConnection,
+                    hResume,
+                    &dwGroupsFound,
+                    (PVOID**)&ppGroupList);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateMemory(
-                sRequiredMem,
-                (PVOID*)&pszListStart);
-    BAIL_ON_LSA_ERROR(dwError);
-    pszPos = pszListStart;
+        if (dwGroupsFound == 0) continue;
 
-    for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
-    {
-        strcpy(pszPos, ppGroupList[dwIndex]->pszName);
-        pszPos += strlen(pszPos) + 1;
-    }
-    if (dwIndex == 0)
-    {
+        LSA_LOG_PAM_DEBUG("Found %u groups", (unsigned int)dwGroupsFound);
+
+        for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
+        {
+            if (ppGroupList[dwIndex]->pszName) 
+            {
+                sRequiredMem += strlen(ppGroupList[dwIndex]->pszName) + 1;
+            }
+        }
+
+        dwError = LwReallocMemory(
+                    pszListStart,
+                    (PVOID*)&pszListStart,
+                    sRequiredMem);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszPos = pszListStart + sUsedMem;
+
+        for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
+        {
+            if (ppGroupList[dwIndex]->pszName) 
+            {
+                strcpy(pszPos, ppGroupList[dwIndex]->pszName);
+                pszPos += strlen(pszPos) + 1;
+            }
+        }
+        
+        sUsedMem = pszPos - pszListStart;
+        
+        dwTotalIndex += dwGroupsFound;
+
+    } while (dwGroupsFound > 0);
+    
+    if (pszPos) {
         *pszPos++ = 0;
+        assert(pszPos == pszListStart + sRequiredMem);
     }
-    *pszPos++ = 0;
-
-    assert(pszPos == pszListStart + sRequiredMem);
 
     pResult->attr_un.au_char = pszListStart;
     pResult->attr_flag = 0;

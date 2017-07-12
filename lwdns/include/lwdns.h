@@ -220,6 +220,8 @@ DNSOpen(
 
 DWORD
 DNSUpdatePtrSecure(
+    PSTR *pArgDnsNameArray,
+    DWORD dwArgDnsCount,
     PSOCKADDR_IN pAddr,
     PCSTR  pszHostNameFQDN
     );

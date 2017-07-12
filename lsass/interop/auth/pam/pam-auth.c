@@ -52,6 +52,111 @@
 
 static BOOLEAN IsLocalUser(PCSTR pszLoginId);
 
+#ifdef HAVE_STRUCT_PAM_REPOSITORY
+static
+DWORD
+set_default_repository(
+    pam_handle_t* pamh,
+    PPAMCONTEXT pPamContext
+    )
+{
+    DWORD       dwError = 0;
+    BOOLEAN     bChangeRepository = FALSE;
+    struct      pam_repository *currentRepository = NULL;
+    HANDLE  hLsaConnection = (HANDLE)NULL;
+    PSTR    pszLoginId = NULL;
+    PLSA_USER_INFO_0 pUserInfo = NULL;
+    DWORD dwUserInfoLevel = 0;
+
+    pam_get_item(
+            pamh,
+            PAM_REPOSITORY,
+            (PAM_GET_ITEM_TYPE)&currentRepository);
+    
+    if (currentRepository == NULL)
+    {
+        if (!pPamContext->pamOptions.bLsassUsersOnly)
+        {
+            bChangeRepository = TRUE;
+        }
+        else
+        {
+            dwError = LsaPamGetLoginId(
+                            pamh,
+                            pPamContext,
+                            &pszLoginId,
+                            TRUE);
+            BAIL_ON_LSA_ERROR(dwError);
+
+
+            dwError = LsaOpenServer(&hLsaConnection);
+
+            if (dwError == ERROR_SUCCESS)
+            {
+                dwError = LsaFindUserByName(
+                                hLsaConnection,
+                                pszLoginId,
+                                dwUserInfoLevel,
+                                (PVOID*)&pUserInfo);
+                if (dwError == ERROR_SUCCESS)
+                {
+                    bChangeRepository = FALSE;
+                }
+                if (dwError == LW_ERROR_NO_SUCH_USER ||
+                        dwError == LW_ERROR_NOT_HANDLED)
+                {
+                    LSA_LOG_PAM_INFO("Not setting pam repository for unknown user %s", LSA_SAFE_LOG_STRING(pszLoginId));
+                    dwError = 0;
+                }
+                else
+                {
+                    LSA_LOG_PAM_INFO("Error %d looking up user %s", dwError, LSA_SAFE_LOG_STRING(pszLoginId));
+                    dwError = 0;
+                }
+            }
+            else
+            {
+                dwError = 0;
+            }
+        }
+    }
+    
+    if (bChangeRepository)
+    {
+        int iPamError = 0;
+        struct pam_repository files = { "files", NULL, 0 };
+    
+        iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        if (dwError)
+        {
+            LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %u]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+    /* This gets mapped to PAM_IGNORE */
+    dwError = LW_ERROR_NOT_HANDLED;
+    
+cleanup:
+    if (hLsaConnection != (HANDLE)NULL)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    if (pUserInfo) {
+        LsaFreeUserInfo(dwUserInfoLevel, (PVOID)pUserInfo);
+    }
+
+    LW_SAFE_FREE_STRING(pszLoginId);
+
+    return  dwError;
+
+error:
+    goto cleanup;
+}
+#endif
+
 int
 pam_sm_authenticate(
     pam_handle_t* pamh,
@@ -96,17 +201,36 @@ pam_sm_authenticate(
 
     if (LsaShouldIgnoreUser(pszLoginId))
     {
-        // Get the password and store in pam context, for the 
-        // next module in the pam stack using try_first_pass or
-        // use_first_pass 
-        dwError = LsaPamGetCurrentPassword(
-                pamh,
-                pPamContext,
-                "",
-                &pszPassword);
-
         LSA_LOG_PAM_WARNING("By passing lsass for ignore user %s", pszLoginId);
-        dwError = LW_ERROR_IGNORE_THIS_USER;
+        
+        /* If we are just overriding the default repository
+       (Solaris), only do that */
+        if (pPamContext->pamOptions.bSetDefaultRepository)
+        {
+#ifdef HAVE_STRUCT_PAM_REPOSITORY
+            dwError = set_default_repository(pamh, pPamContext);
+#else
+            dwError = LW_ERROR_INTERNAL;
+#endif
+        }
+        else if (pPamContext->pamOptions.bSmartCardPrompt)
+        {
+            dwError = LW_ERROR_IGNORE_THIS_USER;
+        }
+        else
+        {
+            // Get the password and store in pam context, for the 
+            // next module in the pam stack using try_first_pass or
+            // use_first_pass 
+            dwError = LsaPamGetCurrentPassword(
+                    pamh,
+                    pPamContext,
+                    "",
+                    &pszPassword);
+
+            dwError = LW_ERROR_IGNORE_THIS_USER;
+        }
+
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -120,79 +244,12 @@ pam_sm_authenticate(
        (Solaris), only do that */
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
-        bUseRegularAuthentication = FALSE;
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
-        BOOLEAN bChangeRepository = FALSE;
-        struct pam_repository *currentRepository = NULL;
-        pam_get_item(
-                pamh,
-                PAM_REPOSITORY,
-                (PAM_GET_ITEM_TYPE)&currentRepository);
-        if (currentRepository == NULL)
-        {
-            if (!pPamContext->pamOptions.bLsassUsersOnly)
-            {
-                bChangeRepository = TRUE;
-            }
-            else
-            {
-                dwError = LsaPamGetLoginId(
-                                pamh,
-                                pPamContext,
-                                &pszLoginId,
-                                TRUE);
-                BAIL_ON_LSA_ERROR(dwError);
-
-
-                dwError = LsaOpenServer(&hLsaConnection);
-
-                if (dwError == ERROR_SUCCESS)
-                {
-                    dwError = LsaFindUserByName(
-                                    hLsaConnection,
-                                    pszLoginId,
-                                    dwUserInfoLevel,
-                                    (PVOID*)&pUserInfo);
-                    if (dwError == ERROR_SUCCESS)
-                    {
-                        bChangeRepository = FALSE;
-                    }
-                    if (dwError == LW_ERROR_NO_SUCH_USER ||
-                            dwError == LW_ERROR_NOT_HANDLED)
-                    {
-                        LSA_LOG_PAM_INFO("Not setting pam repository for unknown user %s", LSA_SAFE_LOG_STRING(pszLoginId));
-                        dwError = 0;
-                    }
-                    else
-                    {
-                        LSA_LOG_PAM_INFO("Error %d looking up user %s", dwError, LSA_SAFE_LOG_STRING(pszLoginId));
-                        dwError = 0;
-                    }
-                }
-                else
-                {
-                    dwError = 0;
-                }
-            }
-        }
-        if (bChangeRepository)
-        {
-            struct pam_repository files = { "files", NULL, 0 };
-            iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
-            dwError = LsaPamUnmapErrorCode(iPamError);
-            if (dwError)
-            {
-                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %u]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-        }
-
-        /* This gets mapped to PAM_IGNORE */
-        dwError = LW_ERROR_NOT_HANDLED;
+        dwError = set_default_repository(pamh, pPamContext);
 #else
         dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
 #endif
+        BAIL_ON_LSA_ERROR(dwError);
     }
     else if (pPamContext->pamOptions.bSmartCardPrompt)
     {
@@ -278,6 +335,10 @@ pam_sm_authenticate(
 
                     if (pPamContext->pszLoginName && *pPamContext->pszLoginName)
                     {
+                        LSA_LOG_PAM_DEBUG(
+                                "Comparing Pam user '%s' with smartcard user %s",
+                                pPamContext->pszLoginName,
+                                pObject->userInfo.pszUnixName);
                         /*
                          * Verify that the passed-in username is the same as
                          * the smartcard user.
@@ -287,12 +348,17 @@ pam_sm_authenticate(
                                 pObject->userInfo.pszUnixName) != 0)
                         {
                             LSA_LOG_PAM_DEBUG(
-                                "Pam user '%s' does not match smartcard user",
-                                pPamContext->pszLoginName);
+                                "Pam user '%s' does not match smartcard user %s",
+                                pPamContext->pszLoginName,
+                                pObject->userInfo.pszUnixName);
                             LsaFreeSecurityObject(
                                 pObject);
                             pObject = NULL;
                         }
+                    }
+                    else
+                    {
+                        LSA_LOG_PAM_DEBUG( "pPamContext pszLoginName not valid");
                     }
                 }
                 else

@@ -5,13 +5,11 @@ make()
 	ldaputil.c       \
 	leave.c          \
 	lsakrb5smb.c     \
-	lsaldap.c        \
-	keytab.c         \
-	ktldap.c"
+	lsaldap.c"
 
     LSAJOIN_HEADERDEPS="\
         openssl/rand.h dce/rpc.h gssapi.h \
-        lwadvapi.h lw/base.h uuid/uuid.h ldap.h lwnet.h"
+        lwadvapi.h btkrb5.h lw/base.h uuid/uuid.h ldap.h lwnet.h"
 
     mk_group \
 	GROUP="lsajoin" \
@@ -19,6 +17,6 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS="include ../../../../include ../../../include" \
 	HEADERDEPS="$LSAJOIN_HEADERDEPS" \
-	LIBDEPS="krb5 k5crypto lber lsacommon lsarpc lwnetclientapi lsaclient lsaserverapi"
+	LIBDEPS="krb5 btkrb5 k5crypto lber lsacommon lsarpc lwnetclientapi lsaclient lsaserverapi"
 
 }

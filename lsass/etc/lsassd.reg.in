@@ -110,7 +110,7 @@
     doc = "Message displayed at console logon failed attempt"
 }
 "SmartCardServices" = {
-    default = sza:"gdm" "gnome-screensaver" "sudo"
+    default = sza:"gdm-password" "gdm" "gnome-screensaver" "sudo"
     doc = ""
 }
 "SmartCardPromptGecos" = {

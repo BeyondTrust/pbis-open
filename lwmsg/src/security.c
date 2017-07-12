@@ -105,7 +105,7 @@ lwmsg_security_token_equal(
     {
         return LWMSG_TRUE;
     }
-    else if (token->tclass != token->tclass)
+    else if (token->tclass != other->tclass)
     {
         return LWMSG_FALSE;
     }

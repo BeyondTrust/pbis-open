@@ -3081,6 +3081,16 @@ MemCacheRemoveMembershipsBySid(
     }
 }
 
+/**
+ * This function stores the Parent to Child relationships in the membership cache. 
+ * For a given Group, store the objects Child User and Group entries.
+ * 
+ * @param hDb Handle to the LSA Cache instance
+ * @param pszParentSid SID of the Parent Group
+ * @param sMemberCount Number of group membership entries
+ * @param ppMembers Array of sMemberCount group membership entries
+ * @return LSA status code
+ */
 DWORD
 MemCacheStoreGroupMembership(
     IN LSA_DB_HANDLE hDb,
@@ -3257,6 +3267,17 @@ error:
     goto cleanup;
 }
 
+/**
+ * This function stores the Child to Parent relationships in the membership cache. 
+ * For a given User or Group, store the objects Parent Group entries.
+ * 
+ * @param hDb Handle to the LSA Cache instance
+ * @param pszChildSid SID of the Child User/Group
+ * @param sMemberCount Number of group membership entries
+ * @param ppMembers Array of sMemberCount group membership entries
+ * @param bIsPacAuthoritative Flags the set of group memberships being from a PAC
+ * @return LSA status code 
+ */
 DWORD
 MemCacheStoreGroupsForUser(
     IN LSA_DB_HANDLE hDb,
@@ -3333,7 +3354,7 @@ MemCacheStoreGroupsForUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwHashGetValue(
-                    pConn->pParentSIDToMembershipList,
+                    pConn->pChildSIDToMembershipList,
                     pszChildSid,
                     (PVOID*)&pGuardian);
     if (dwError == ERROR_NOT_FOUND)
@@ -3350,7 +3371,7 @@ MemCacheStoreGroupsForUser(
 
         while(pPos != pGuardian)
         {
-            pExistingMembership = PARENT_NODE_TO_MEMBERSHIP(pPos);
+            pExistingMembership = CHILD_NODE_TO_MEMBERSHIP(pPos);
             if (pExistingMembership->membership.bIsInPac ||
                 pExistingMembership->membership.bIsDomainPrimaryGroup)
             {

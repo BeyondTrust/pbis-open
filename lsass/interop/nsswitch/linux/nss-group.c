@@ -50,7 +50,6 @@
 #include "externs.h"
 #include <assert.h>
 
-static const DWORD MAX_NUM_GROUPS = 500;
 static LSA_ENUMGROUPS_STATE gEnumGroupsState = {0};
 
 NSS_STATUS

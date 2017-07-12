@@ -316,6 +316,7 @@ typedef struct AdtActionNewUser {
     INT isNoCanChangePasswd;  /* User is not allowed to change password if set */
     INT isNoPasswdExpires;    /* Password never expires if set */
     INT isAccountEnabled;     /* Account is enabled if set */
+    PSTR keytab;              /* Generate a keytab file. */
 } AdtActionNewUserT, *AdtActionNewUserTP;
 
 typedef struct AdtActionNewGroup {
@@ -336,6 +337,8 @@ typedef struct AdtActionNewComputer {
     PSTR desc;    /* Description */
     PSTR namePreWin2000; /* Pre Windows-2000 name (samAccountName) */
     PSTR dnsHostName; /* Fully-Qualified Host Name of the computer */
+    PSTR password;
+    PSTR keytab;      /* Generate a keytab file. */
 } AdtActionNewComputerT, *AdtActionNewComputerTP;
 
 typedef struct AdtActionResetUserPassword {
@@ -346,6 +349,7 @@ typedef struct AdtActionResetUserPassword {
     INT isNoMustChangePasswd; /* If set user do not need to change password at next logon */
     INT isNoCanChangePasswd;  /* User is not allowed to change password if set */
     INT isNoPasswdExpires;    /* Password never expires if set */
+    PSTR keytab;              /* Update/generate a keytab file. */
 } AdtActionResetUserPasswordT, *ResetUserPasswordTP;
 
 typedef struct AdtActionEnableUser {

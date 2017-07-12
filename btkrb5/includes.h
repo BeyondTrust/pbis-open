@@ -1,10 +1,5 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
- * Copyright Likewise Software    2004-2008
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software.  All rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -29,30 +24,54 @@
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
  * Module Name:
  *
- *        externs.h
+ *        includes.h
  *
  * Abstract:
  *
- *        Name Server Switch (Likewise LSASS)
  *
- *        Declarations of extern global variables
- *
- * Authors: Kyle Stemen (kstemen@likewisesoftware.com)
  */
 
-#ifndef __LSA_NSS_AIX_EXTERNS_H__
-#define __LSA_NSS_AIX_EXTERNS_H__
+#ifndef _LIB_BT_KRB5_INCLUDES_H_
+#define _LIB_BT_KRB5_INCLUDES_H_
 
-extern LSA_NSS_STATE gNssState;
+// #include "config.h"
 
-extern LSA_NSS_CACHED_HANDLE lsaConnection;
+/* system includes */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
+#include <errno.h>
+#include <limits.h>
+#include <time.h>
+#include <uuid/uuid.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-extern pthread_mutex_t gLock;
-#define NSS_LOCK() pthread_mutex_lock(&gLock);
-#define NSS_UNLOCK() pthread_mutex_unlock(&gLock);
 
-#endif
+#include <krb5.h>
+
+/* popt includes */
+#include <popt.h>
+
+/* lwbase includes */
+#include <lw/types.h>
+#include <lw/attrs.h>
+
+/* lwadvapi includes */
+#include <bail.h>
+#include <lwstr.h>
+#include <lwdef.h>
+#include <lwmem.h>
+#include <lwerror.h>
+#include <lwldap.h>
+#include <lwtime.h>
+#include <lwsecurityidentifier.h>
+#include <lwkrb5.h>
+
+#endif /* _LWKRB5_INCLUDES_H_ */

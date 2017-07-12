@@ -40,6 +40,9 @@
 
 #include "includes.h"
 
+static
+DWORD  SetMachinePassword(IN AdtActionTP action);
+
 /***************************************************************************/
 /*                          New OU action                                  */
 /***************************************************************************/
@@ -477,6 +480,41 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
         }
     }
 
+    if (action->newUser.keytab)
+    {
+       dwError = CreateNewUserKeytabFile(action);
+       if (dwError)
+       {
+           PrintResult(appContext,
+                       LogLevelNone,
+                       "%s: Failed to create keytab file for user %s.\n",
+                       appContext->actionName, action->newUser.name);
+           // Ignore the failure. Leave it up to the admin to delete new user and retry or use
+           // adtool reset-user-password to try and create a keytab file for the user.
+           dwError = 0; 
+       }
+       else
+       {
+          if(!appContext->gopts.isQuiet) 
+          {
+              PrintResult(appContext,
+                          LogLevelNone,
+                          "%s: Keytab file created for user %s.\n",
+                          appContext->actionName, action->newUser.name);
+
+              if (!action->newUser.isNoMustChangePasswd)
+              {
+                  PrintResult(appContext,
+                              LogLevelInfo,
+                              "\tNote: Since --no-must-change-password option was not specified,\n"\
+                              "\tthe new user AD account was created with \"User must change password\n"\
+                              "\tat next logon\" enabled. The entries in the keytab file was generated\n"\
+                              "\tusing the password given on the command line.\n");
+              }
+          }
+       }
+    }
+
     cleanup:
         if (avpTime) {
             for (i = 0; avpTime[i].vals; ++i) {
@@ -750,6 +788,11 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
+    if((action->newComputer.keytab) && (!action->newComputer.password)) {
+        dwError = ADT_ERR_ARG_MISSING_PASSWD;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
     if(!action->newComputer.namePreWin2000) {
         dwError = LwStrDupOrNull(action->newComputer.name, &(action->newComputer.namePreWin2000));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
@@ -770,7 +813,7 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
     if(!action->newComputer.desc) {
         dwError = LwStrDupOrNull("adtool created", &(action->newComputer.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-    }   
+    }
 
     dn = NULL;
     name = NULL;
@@ -816,8 +859,8 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         action->newComputer.namePreWin2000,
         NULL
     };
-    
-     PSTR userAccountControl[] = {
+
+    PSTR userAccountControl[] = {
         "4128",
         NULL
     };
@@ -829,7 +872,7 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         { "sAMAccountName", samAccountName },
         { "description", desc },
         { "userAccountControl", userAccountControl },
-        { "dnsHostName", dnsHostName },        
+        { "dnsHostName", dnsHostName },
         { NULL, NULL }
     };
     
@@ -849,8 +892,6 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
     PrintStderr(appContext, LogLevelVerbose, "%s: Creating computer - done \n",
                 appContext->actionName);
 
-    // TODO: Set account controls and password here via RPC
-
     if(appContext->gopts.isPrintDN) {
         PrintResult(appContext, LogLevelNone, "%s\n", action->newComputer.dn);
     }
@@ -859,6 +900,39 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
             PrintResult(appContext, LogLevelNone, "Computer %s has been created.\n", action->newComputer.name);
         }
     }
+
+    if (action->newComputer.password)
+    {
+        dwError = SetMachinePassword(action);
+        ADT_BAIL_ON_ERROR_STR(dwError, "Password set failed");
+
+        PrintStderr(appContext, LogLevelVerbose, "Password set successfully.\n");
+    }
+
+    if (action->newComputer.keytab)
+    {
+
+       dwError = CreateNewComputerKeytabFile(action);
+       if (dwError)
+       {
+           PrintResult(appContext,
+                       LogLevelError,
+                       "%s: Failed to create keytab file for %s.\n",
+                       appContext->actionName, action->newComputer.name);
+           // Ignore the failure. Leave it up to the admin to delete new computer and retry.
+           dwError = 0;
+       }
+       else
+       {
+           PrintResult(appContext,
+                       LogLevelInfo,
+                       "%s: Keytab file created for computer %s.\n",
+                       appContext->actionName, action->newComputer.name);
+       }
+
+       
+    }
+
 
     cleanup:
         return dwError;
@@ -871,3 +945,75 @@ DWORD CleanUpAdtNewComputerAction(IN AdtActionTP action)
 {
     return CleanUpBaseAction(action);
 }
+
+
+static
+DWORD  SetMachinePassword(IN AdtActionTP action)
+{
+    DWORD dwError = 0;
+    PSTR pszPassword = NULL;
+    PSTR pszDn = NULL;
+    AttrValsT *avp = NULL;
+    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+
+    PrintStdout(appContext,
+                LogLevelVerbose,
+                "%s: SetMachinePassword. Name=%s Password=%s sAMAccountName=%s DnsHostName=%s\n",
+                appContext->actionName, 
+                action->newComputer.name,
+                action->newComputer.password,
+                action->newComputer.namePreWin2000,
+                action->newComputer.dnsHostName);
+
+    if (!action->newComputer.password)
+    {
+       dwError = ADT_ERR_ARG_MISSING_PASSWD;
+       ADT_BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwAllocateString(action->newComputer.password, &pszPassword);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    if (!action->newComputer.dn)
+    {
+       dwError = ADT_ERR_ARG_MISSING_DN;
+       ADT_BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwAllocateString(action->newComputer.dn, &pszDn);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    avp[0].attr = "samAccountName";
+
+    dwError = GetObjectAttrs(appContext, pszDn, avp);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    if(!avp[0].vals || !avp[0].vals[0]) 
+    {
+        dwError = ADT_ERR_FAILED_AD_GET_ATTR;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
+    dwError = AdtNetUserSetPassword(appContext, avp[0].vals[0], pszPassword);
+    ADT_BAIL_ON_ERROR(dwError);
+
+
+    PrintStdout(appContext, LogLevelVerbose,
+                "%s: SetMachinePassword. Changed password successfully.\n",
+                appContext->actionName);
+
+    cleanup:
+
+        LW_SAFE_FREE_MEMORY(pszPassword);
+        LW_SAFE_FREE_MEMORY(pszDn);
+
+        return dwError;
+
+    error:
+
+        goto cleanup;
+}
+

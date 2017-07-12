@@ -16,17 +16,22 @@ primarily intended for Linux & FreeBSD platforms.
 Before you begin, please read over this list of prerequisite development
 packages (depending on your Linux distro):
 
-* RedHat/Fedora - gcc, glibc-devel, pam-devel, ncurses-devel, flex, bison, rpm-build, rpm-devel, popt-devel, libxml2-devel, autoconf, automake, libtool
-  Optional packages: 
-  * libglade2-devel - To build domainjoin-gui GTK application
-  * 32bit development tools and libraries for compatibility packages when building on x86_64
-    * glibc-devel.i686, libgcc.i686, pam-devel.i686
+### RedHat/Fedora
+* gcc glibc-devel pam-devel ncurses-devel flex bison rpm-build rpm-devel popt-devel libxml2-devel autoconf automake libtool
 
-* Ubuntu - build-essential, fakeroot, devscripts, debhelper, autoconf, automake, libtool, libncurses5-dev, flex, bison, libpam0g-dev, libxml2-dev, libpopt-dev
-  Optional packages: 
-  * libglade2-dev - To build domainjoin-gui GTK application
-  * 32bit development tools and libraries for compatibility packages when building on x86_64
-    * ia32-libs, libc6-dev-i386, gcc-multilib
+#### Optional packages: 
+* libglade2-devel - To build domainjoin-gui GTK application
+* 32bit development tools and libraries for compatibility packages when building on x86_64
+  * glibc-devel.i686 libgcc.i686 pam-devel.i686
+
+### Ubuntu
+* build-essential fakeroot devscripts debhelper autoconf automake libtool libncurses5-dev flex bison libpam0g-dev libxml2-dev libpopt-dev
+
+#### Optional packages:
+* libglade2-dev - To build domainjoin-gui GTK application
+* 32bit development tools and libraries for compatibility packages when building on x86_64
+  * libc6-dev-i386 gcc-multilib libpam0g-dev:i386
+  * ia32-libs - replaced by lib32ncurses5 lib32z1
 
 Note: The default version of awk on some Ubuntu systems has a known bug
 which causes it to segfault when attempting to build.  You can work around

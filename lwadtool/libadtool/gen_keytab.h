@@ -1,10 +1,5 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
- * Copyright Likewise Software    2004-2008
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software.  All rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -29,30 +24,27 @@
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
  * Module Name:
  *
- *        externs.h
+ *        gen_keytab.h
  *
  * Abstract:
  *
- *        Name Server Switch (Likewise LSASS)
+ *        
  *
- *        Declarations of extern global variables
+ * Authors: Author: rali
+ * 
+ * Created on: Oct 13, 2016
  *
- * Authors: Kyle Stemen (kstemen@likewisesoftware.com)
  */
 
-#ifndef __LSA_NSS_AIX_EXTERNS_H__
-#define __LSA_NSS_AIX_EXTERNS_H__
+#ifndef _ADTOOL_GEN_KEYTAB_H_
+#define _ADTOOL_GEN_KEYTAB_H_
 
-extern LSA_NSS_STATE gNssState;
+extern DWORD CreateNewUserKeytabFile(AdtActionTP action);
+extern DWORD ModifyUserKeytabFile(AdtActionTP action, PSTR pszUserName);
 
-extern LSA_NSS_CACHED_HANDLE lsaConnection;
+extern DWORD CreateNewComputerKeytabFile(AdtActionTP action);
 
-extern pthread_mutex_t gLock;
-#define NSS_LOCK() pthread_mutex_lock(&gLock);
-#define NSS_UNLOCK() pthread_mutex_unlock(&gLock);
+#endif /* _ADTOOL_GEN_KEYTAB_H_ */
 
-#endif

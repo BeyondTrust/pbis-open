@@ -106,8 +106,9 @@ error:
     goto cleanup;
 }
 
+static
 int
-LsaNssGetEntry(
+_LsaNssGetEntry(
         PSTR pszKey,
         PSTR pszTable,
         PSTR* ppszAttributes,
@@ -224,6 +225,26 @@ error:
     goto cleanup;
 }
 
+int
+LsaNssGetEntry(
+        PSTR pszKey,
+        PSTR pszTable,
+        PSTR* ppszAttributes,
+        attrval_t* pResults,
+        int iAttrCount
+        )
+{
+    int rc = -1;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetEntry(pszKey, pszTable, ppszAttributes, pResults, iAttrCount);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
 attrlist_t **
 LsaNssGetSupportedAttrs(
         VOID
@@ -283,6 +304,8 @@ LsaNssGetSupportedAttrs(
 int
 LsaNssInitialize(struct secmethod_table *methods)
 {
+    struct stat buf;
+    
     memset(methods, 0, sizeof(*methods));
     methods->method_version = SECMETHOD_VERSION_520;
     methods->method_getgrgid = LsaNssGetGrGid;
@@ -294,11 +317,17 @@ LsaNssInitialize(struct secmethod_table *methods)
     methods->method_getentry = LsaNssGetEntry;
     methods->method_attrlist = LsaNssGetSupportedAttrs;
     methods->method_authenticate = LsaNssAuthenticate;
-    methods->method_normalize = LsaNssNormalizeUsername;
     methods->method_open = LsaNssOpen;
     methods->method_close = LsaNssClearState;
     methods->method_passwdexpired = LsaNssIsPasswordExpired;
     methods->method_chpass = LsaNssChangePassword;
+
+	/* Avoid normalizing account names as AIX now supports long account names */
+	/* Allow old behaviour to be used when /etc/pbis/lam_normalize exists */
+    if (stat("/etc/pbis/lam_normalize", &buf) == 0)
+    {
+        methods->method_normalize = LsaNssNormalizeUsername;
+    }
 
     memset(&gNssState, 0, sizeof(gNssState));
 

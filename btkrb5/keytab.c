@@ -117,7 +117,7 @@ KtKrb5GetDefaultKeytab(
                       (PVOID)pszDefName,
                       (PVOID*)&pszDefNameNew,
                       dwSize);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
 
         pszDefName = pszDefNameNew;
         pszDefNameNew = NULL;
@@ -146,7 +146,7 @@ KtKrb5GetDefaultKeytab(
 
     dwError = LwAllocateString(pszKtFilename,
                                ppszKtFile);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
 cleanup:
     if (ctx)
@@ -184,7 +184,7 @@ KtKrb5KeytabOpen(
     if (!pszKtFile)
     {
         dwError = KtKrb5GetDefaultKeytab(&pszKtFilename);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     dwError = LwAllocateStringPrintf(
@@ -192,7 +192,7 @@ KtKrb5KeytabOpen(
                   "%s:%s",
                   pszPrefix,
                   pszKtFile ? pszKtFile : pszKtFilename);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     ret = krb5_kt_resolve(ctx, pszKtName, &id);
     BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
@@ -250,7 +250,7 @@ KtKrb5SearchKeys(
             dwError = LwReallocMemory((PVOID)entries,
                                       (PVOID*)&entries,
                                       (dwCount + 1) * sizeof(krb5_keytab_entry));
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LW_ERROR(dwError);
 
             memset(&entries[dwCount], 0, sizeof(krb5_keytab_entry));
             dwCount++;
@@ -354,7 +354,7 @@ KtKrb5AddKeyA(
     if (!pszKtPath)
     {
         dwError = KtKrb5GetDefaultKeytab(&pszKtPathLocal);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
 
         pszKtPath = pszKtPathLocal;
     }
@@ -369,7 +369,7 @@ KtKrb5AddKeyA(
         if (dwKeytabFd < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LW_ERROR(dwError);
         }
 
         while (write(dwKeytabFd, &byte, 1) < 0)
@@ -377,7 +377,7 @@ KtKrb5AddKeyA(
             if (errno != EINTR)
             {
                 dwError = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(dwError);
+                BAIL_ON_LW_ERROR(dwError);
             }
         }
 
@@ -387,7 +387,7 @@ KtKrb5AddKeyA(
             if (errno != EINTR)
             {
                 dwError = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(dwError);
+                BAIL_ON_LW_ERROR(dwError);
             }
         }
 
@@ -397,14 +397,14 @@ KtKrb5AddKeyA(
             {
                 dwKeytabFd = -1;
                 dwError = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(dwError);
+                BAIL_ON_LW_ERROR(dwError);
             }
         }
         dwKeytabFd = -1;
     }
 
     dwError = KtKrb5KeytabOpen(RDWR_FILE, pszKtPath, &ctx, &kt);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /*
      * Try to find kvno by querying ldap directory, if no kvno was passed
@@ -412,7 +412,7 @@ KtKrb5AddKeyA(
     if (dwKeyVer == (unsigned int)(-1))
     {
         dwError = KtLdapGetBaseDnA(pszDcName, &pszBaseDn);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
 
         if (pszBaseDn)
         {
@@ -420,7 +420,7 @@ KtKrb5AddKeyA(
                                            pszBaseDn,
                                            pszPrincipal,
                                            &dwKvno);
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LW_ERROR(dwError);
 
             kvno = dwKvno;
         }
@@ -470,7 +470,7 @@ KtKrb5AddKeyA(
     }
     else
     {
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     /*
@@ -611,24 +611,24 @@ KtKrb5AddKeyW(
     PSTR pszDcName = NULL;
 
     dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16snToMbs((PWSTR)pKey,
                             &pszKey,
                             dwKeyLen + 1);
-    BAIL_ON_LSA_ERROR(dwError)
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pwszKtPath)
     {
         dwError = LwWc16sToMbs(pwszKtPath, &pszKtPath);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     dwError = LwWc16sToMbs(pwszSalt, &pszSalt);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = KtKrb5AddKeyA(pszPrincipal,
                             (PVOID)pszKey,
@@ -637,7 +637,7 @@ KtKrb5AddKeyW(
                             pszKtPath,
                             pszDcName,
                             dwKeyVersion);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pszPrincipal);
@@ -676,7 +676,7 @@ KtKrb5GetKey(
                                pszKtPath,
                                &ctx,
                                &ktid);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     ret = krb5_parse_name(ctx, pszPrincipal, &client);
     BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
@@ -688,7 +688,7 @@ KtKrb5GetKey(
 
     dwError = LwAllocateMemory((DWORD)entry.key.length,
                                OUT_PPVOID(&pKey));
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     memcpy(pKey, entry.key.contents, entry.key.length);
 
@@ -742,7 +742,7 @@ KtKrb5RemoveKey(
                                pszKtPath,
                                &ctx,
                                &ktid);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* Should enctypes be added to conditions ? */
     dwError = KtKrb5SearchKeys(ctx,
@@ -750,7 +750,7 @@ KtKrb5RemoveKey(
                                pszPrincipal,
                                &entries,
                                &dwCount);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     for (i = 0; i < dwCount; i++)
     {
@@ -808,7 +808,7 @@ KtKrb5FormatPrincipalA(
     {
         dwError = LwAllocateString(pszRealmName,
                                    &pszRealm);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
     else
     {
@@ -822,7 +822,7 @@ KtKrb5FormatPrincipalA(
                                      "%s@%s",
                                      pszAccount,
                                      pszRealm);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppszPrincipal = pszPrincipal;
 
@@ -867,22 +867,22 @@ KtKrb5FormatPrincipalW(
     PWSTR pwszPrincipal = NULL;
 
     dwError = LwWc16sToMbs(pwszAccount, &pszAccount);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     /* NULL realm is a valid argument of KtKrb5FormatPrincpal */
     if (pwszRealm)
     {
         dwError = LwWc16sToMbs(pwszRealm, &pszRealm);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     dwError = KtKrb5FormatPrincipalA(pszAccount,
                                      pszRealm,
                                      &pszPrincipal);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwMbsToWc16s(pszPrincipal, &pwszPrincipal);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppwszPrincipal = pwszPrincipal;
 
@@ -925,7 +925,7 @@ KtKrb5GetSaltingPrincipalA(
                                          pszBaseDn,
                                          pszMachAcctName,
                                          &pszSaltOut);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pszSaltOut)
     {
@@ -937,7 +937,7 @@ KtKrb5GetSaltingPrincipalA(
     {
         /* Use passed realm name */
         dwError = LwAllocateString(pszRealmName, &pszRealm);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
     else
     {
@@ -954,13 +954,13 @@ KtKrb5GetSaltingPrincipalA(
 
     /* Ensure host name lowercased */
     dwError = LwAllocateString(pszMachAcctName, &pszMachine);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     LwStrToLower(pszMachine);
 
     /* DNS name of the Realm and lowercased */
     dwError = LwAllocateString(pszRealm, &pszDnsRealm);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     LwStrToLower(pszDnsRealm);
     
@@ -972,7 +972,7 @@ KtKrb5GetSaltingPrincipalA(
                                      pszMachine,
                                      pszDnsRealm,
                                      pszRealm);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *pszSalt = pszSaltOut;
 
@@ -1017,29 +1017,29 @@ KtKrb5GetSaltingPrincipalW(
 
     dwError = LwWc16sToMbs(pwszMachineName,
                            &pszMachineName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszMachAcctName,
                            &pszMachAcctName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszDnsDomainName,
                            &pszDnsDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszDcName,
                            &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwWc16sToMbs(pwszBaseDn,
                            &pszBaseDn);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pwszRealmName)
     {
         dwError = LwWc16sToMbs(pwszRealmName,
                                &pszRealmName);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     dwError = KtKrb5GetSaltingPrincipalA(pszMachineName,
@@ -1049,12 +1049,12 @@ KtKrb5GetSaltingPrincipalW(
                                          pszDcName,
                                          pszBaseDn,
                                          &pszSalt);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     if (pszSalt)
     {
         dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
     }
 
     *ppwszSalt = pwszSalt;
@@ -1075,6 +1075,72 @@ error:
     goto cleanup;
 }
 
+KtKrb5GetUserSaltingPrincipalA(
+    PCSTR pszUserName,
+    PCSTR pszRealmName,
+    PCSTR pszDcName,
+    PCSTR pszBaseDn,
+    PSTR *pszSalt)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    krb5_error_code ret = 0;
+    PSTR pszSaltOut = NULL;
+    PSTR pszRealm = NULL;
+    krb5_context ctx = NULL;
+
+    /* Try to query for userPrincipalName attribute first */
+    dwError = KtLdapGetSaltingPrincipalA(pszDcName,
+                                         pszBaseDn,
+                                         pszUserName,
+                                         &pszSaltOut);
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (pszSaltOut)
+    {
+        *pszSalt = pszSaltOut;
+        goto cleanup;
+    }
+
+    if (pszRealmName)
+    {
+        /* Use passed realm name */
+        dwError = LwAllocateString(pszRealmName, &pszRealm);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    else
+    {
+        /* No realm name was passed so get the default */
+        ret = krb5_init_context(&ctx);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+
+        ret = krb5_get_default_realm(ctx, &pszRealm);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+    }
+
+    /* Ensure realm name uppercased */
+    LwStrToUpper(pszRealm);
+    
+    // Create salt as outlined here: https://msdn.microsoft.com/en-us/library/cc233883.aspx
+    // Salt User accounts: < DNS of the realm, converted to upper case> | <user name>
+    dwError = LwAllocateStringPrintf(&pszSaltOut, "%s%s", pszRealm, pszUserName);
+    BAIL_ON_LW_ERROR(dwError);
+
+    *pszSalt = pszSaltOut;
+
+cleanup:
+    if (ctx)
+    {
+        krb5_free_context(ctx);
+    }
+
+    LW_SAFE_FREE_MEMORY(pszRealm);
+
+    return dwError;
+
+error:
+    *pszSalt = NULL;
+    goto cleanup;
+}
 
 /*
 local variables:

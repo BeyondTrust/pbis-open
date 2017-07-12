@@ -95,7 +95,8 @@ LsaGetAccountName(
     const wchar16_t *machname,
     const wchar16_t *domain_controller_name,
     const wchar16_t *dns_domain_name,
-    wchar16_t       **account_name
+    wchar16_t       **account_name,
+    BOOLEAN         *exists
     );
 
 
@@ -175,8 +176,7 @@ DWORD
 LsaDirectoryConnect(
     PCWSTR pDomain,
     LDAP** ppLdConn,
-    PWSTR* ppDefaultContext,
-    PWSTR* ppSchemaContext
+    PWSTR* ppDefaultContext
     );
 
 
@@ -194,7 +194,8 @@ LsaMachAcctCreate(
     const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou,
-    int rejoin
+    BOOLEAN move,
+    BOOLEAN exists
     );
 
 
@@ -202,10 +203,8 @@ static
 DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
-    const wchar16_t *name,
+    const wchar16_t *fqdn,
     const wchar16_t *dn_context,
-    PCWSTR pSchemaContext,
-    const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     );
 
@@ -299,6 +298,17 @@ LsaJoinDomainUac(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    LSA_LOG_DEBUG("LsaJoinDomainUac(%s, %s, %s, %s, %s, ********, %s, %s, %s, %x, %x)", 
+            LSA_SAFE_LOG_STRING(pszHostname), 
+            LSA_SAFE_LOG_STRING(pszHostDnsDomain),
+            LSA_SAFE_LOG_STRING(pszDomain),
+            LSA_SAFE_LOG_STRING(pszOU),
+            LSA_SAFE_LOG_STRING(pszUsername),
+            LSA_SAFE_LOG_STRING(pszOSName),
+            LSA_SAFE_LOG_STRING(pszOSVersion),
+            LSA_SAFE_LOG_STRING(pszOSServicePack),
+            dwFlags, dwUac);
+
     if ( !(dwFlags & LSA_NET_JOIN_DOMAIN_NOTIMESYNC) )
     {
         dwError = LsaSyncTimeToDC(pszDomain);
@@ -375,9 +385,9 @@ LsaJoinDomainUac(
             pwszOSVersion,
             pwszOSServicePack);
     BAIL_ON_LSA_ERROR(dwError);
-
-   dwError = LsaPstoreSetDomainWTrustEnumerationWaitTime(pwszDomain);
-   BAIL_ON_LSA_ERROR(dwError);
+    
+    dwError = LsaPstoreSetDomainWTrustEnumerationWaitTime(pwszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
@@ -492,7 +502,6 @@ LsaJoinDomainInternal(
     LDAP *pLdap = NULL;
     PWSTR pwszMachineNameLc = NULL;    /* lower cased machine name */
     PWSTR pwszBaseDn = NULL;
-    PWSTR pwszSchemaDn = NULL;
     PWSTR pwszDn = NULL;
     PWSTR pwszDnsAttrName = NULL;
     PWSTR pwszDnsAttrVal[2] = {0};
@@ -510,8 +519,10 @@ LsaJoinDomainInternal(
     PWSTR pwszSupportedEncryptionTypesVal[2] = {0};
     DWORD dwSupportedEncryptionTypes = 0;
     PWSTR pwszSidStr = NULL;
+    PWSTR pwszComputerContainer = NULL;
     WCHAR wszUacVal[11] = {0};
     LW_PIO_CREDS pCreds = NULL;
+    BOOLEAN account_exists = FALSE;
 
     dwError = LwAllocateWc16String(&pwszMachineName,
                                    pwszHostname);
@@ -567,36 +578,46 @@ LsaJoinDomainInternal(
                              pwszMachineName,
                              pwszDCName,
                              pwszDnsDomain ? pwszDnsDomain : pwszDnsDomainName,
-                             &pwszMachineAcctName);
+                             &pwszMachineAcctName,
+                             &account_exists);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* If account_ou is specified pre-create disabled machine
+    dwError = LsaDirectoryConnect(
+                    pwszDCName,
+                    &pLdap,
+                    &pwszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pwszAccountOu == NULL)
+    {
+        pwszComputerContainer = pwszAccountOu = LdapGetWellKnownObject(pLdap, pwszBaseDn, LW_GUID_COMPUTERS_CONTAINER);
+    }
+    
+    /* Pre-create a disabled machine
        account object in given branch of directory. It will
        be reset afterwards by means of rpc calls */
     if (pwszAccountOu)
     {
-        dwError = LsaDirectoryConnect(
-                        pwszDCName,
-                        &pLdap,
-                        &pwszBaseDn,
-                        &pwszSchemaDn);
-        BAIL_ON_LSA_ERROR(dwError);
-
+        int move = (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED) == LSAJOIN_DOMAIN_JOIN_IF_JOINED ? TRUE : FALSE;
+        
+        // If a specific OU wasn't requested then we don't want to move the Computer account
+        if (pwszComputerContainer) move = FALSE;
+        
         dwError = LsaMachAcctCreate(
                       pLdap, 
-                      pwszMachineName, 
-                      pwszMachineAcctName, 
+                      pwszMachineName,
+                      pwszMachineAcctName,
                       pwszAccountOu,
-                      (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED));
+                      move, 
+                      account_exists);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaDirectoryDisconnect(pLdap);
-        pLdap = NULL;
-        BAIL_ON_LSA_ERROR(dwError);
-
-        LW_SAFE_FREE_MEMORY(pwszBaseDn);
-        LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     }
+
+    dwError = LsaDirectoryDisconnect(pLdap);
+    pLdap = NULL;
+    BAIL_ON_LSA_ERROR(dwError);
+    
+    LW_SAFE_FREE_MEMORY(pwszBaseDn);
 
     dwError = LsaGenerateMachinePassword(
                (PWSTR)pwszMachinePassword,
@@ -625,8 +646,7 @@ LsaJoinDomainInternal(
     dwError = LsaDirectoryConnect(
                     pwszDCName,
                     &pLdap,
-                    &pwszBaseDn,
-                    &pwszSchemaDn);
+                    &pwszBaseDn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaMachAcctSearch(
@@ -884,7 +904,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszMachineAcctName);
     LW_SAFE_FREE_MEMORY(pwszMachineNameLc);
     LW_SAFE_FREE_MEMORY(pwszBaseDn);
-    LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     LW_SAFE_FREE_MEMORY(pwszDn);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrName);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrVal[0]);
@@ -900,6 +919,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszDCName);
     LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesName);
     LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesVal[0]);
+    LW_SAFE_FREE_MEMORY(pwszComputerContainer);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -920,17 +940,18 @@ LsaGetAccountName(
     const wchar16_t *machname,
     const wchar16_t *domain_controller_name,
     const wchar16_t *dns_domain_name,
-    wchar16_t       **account_name
+    wchar16_t       **account_name,
+    BOOLEAN         *exists
     )
 {
     int err = ERROR_SUCCESS;
     LDAP *ld = NULL;
     wchar16_t *base_dn = NULL;
-    PWSTR pSchemaDn = NULL;
     wchar16_t *dn = NULL;
     wchar16_t *machname_lc = NULL;
     wchar16_t *samname = NULL;     /* short name valid for SAM account */
     wchar16_t *dnsname = NULL;
+    wchar16_t *fqdn = NULL;
     wchar16_t *hashstr = NULL;
     wchar16_t *samacctname = NULL; /* account name (with trailing '$') */
     UINT32    hash = 0;
@@ -942,6 +963,7 @@ LsaGetAccountName(
     size_t    machname_len = 0;
     size_t    samacctname_len = 0;
 
+    if (exists) *exists = FALSE;
 
     err = LwWc16sLen(machname, &machname_len);
     BAIL_ON_LSA_ERROR(err);
@@ -951,20 +973,24 @@ LsaGetAccountName(
 
     wc16slower(machname_lc);
 
+    fqdn = LdapAttrValDnsHostName(machname_lc, dns_domain_name);
+    if (!fqdn)
+    {
+        err = ERROR_OUTOFMEMORY;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     /* look for an existing account using the dns_host_name attribute */
     err = LsaDirectoryConnect(
                 domain_controller_name,
                 &ld,
-                &base_dn,
-                &pSchemaDn);
+                &base_dn);
     BAIL_ON_LSA_ERROR(err);
 
     err = LsaMachDnsNameSearch(
                 ld,
-                machname_lc,
+                fqdn,
                 base_dn,
-                pSchemaDn,
-                dns_domain_name,
                 &samname);
     if (err == ERROR_SUCCESS)
     {
@@ -974,6 +1000,8 @@ LsaGetAccountName(
         BAIL_ON_LSA_ERROR(err);
 
         samname[samname_len - 1] = 0;
+        
+        if (exists) *exists = TRUE;
     }
     else
     {
@@ -982,9 +1010,13 @@ LsaGetAccountName(
 
     if (!samname)
     {
+        LSA_LOG_DEBUG("Machine account not found with DNS name");
+        
         /* the host name is short enough to use as is */
         if (machname_len < 16)
         {
+            LSA_LOG_DEBUG("Machine account name length < 16");
+        
             if (sw16printfw(searchname,
                             sizeof(searchname)/sizeof(wchar16_t),
                             L"%ws$",
@@ -997,11 +1029,24 @@ LsaGetAccountName(
             err = LsaMachAcctSearch(ld, searchname, base_dn, NULL, &dnsname);
             if ( err != ERROR_SUCCESS || !dnsname)
             {
+                if (err == ERROR_SUCCESS)
+                {
+                    if (exists) *exists = TRUE;
+                    LSA_LOG_DEBUG("Machine account found with samAccountName but has no DNS name defined");
+                }
+                else
+                {
+                    LSA_LOG_DEBUG("Machine account not found with samAccountName");
+                }
+
                 err = ERROR_SUCCESS;
 
                 err = LwAllocateWc16String(&samname, machname);
                 BAIL_ON_LSA_ERROR(err);
             }
+
+            if (dnsname) LSA_LOG_DEBUG("Machine account found with different DNS name");
+            
             LW_SAFE_FREE_MEMORY(dnsname);
         }
     }
@@ -1015,6 +1060,8 @@ LsaGetAccountName(
       */
     if (!samname)
     {
+        LSA_LOG_DEBUG("Machine account name too long or found with wrong DNS name");
+
         dnsname = LdapAttrValDnsHostName(
                       machname_lc,
                       dns_domain_name);
@@ -1062,9 +1109,21 @@ LsaGetAccountName(
                 BAIL_ON_LSA_ERROR(err);
             }
 
+            LSA_LOG_DEBUG("Machine account checking hashed name");
+
             err = LsaMachAcctSearch(ld, searchname, base_dn, NULL, &dnsname);
             if ( err != ERROR_SUCCESS || !dnsname)
             {
+                if (err == ERROR_SUCCESS)
+                {
+                    if (exists) *exists = TRUE;
+                    LSA_LOG_DEBUG("Hashed Machine account found with samAccountName but has no DNS name defined");
+                }
+                else
+                {
+                    LSA_LOG_DEBUG("Hashed Machine account not found with samAccountName");
+                }
+
                 err = ERROR_SUCCESS;
 
                 err = LwAllocateWc16String(&samname, newname);
@@ -1076,6 +1135,8 @@ LsaGetAccountName(
         }
         if (offset == 100)
         {
+            LSA_LOG_ERROR("Failed to create unique Machine account name after 100 attempts");
+
             err = ERROR_DUP_NAME;
             goto error;
         }
@@ -1117,7 +1178,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(samname);
     LW_SAFE_FREE_MEMORY(base_dn);
-    LW_SAFE_FREE_MEMORY(pSchemaDn);
 
     return err;
 
@@ -1966,6 +2026,8 @@ LsaSaveMachinePassword(
                                      &pwszPrincipal);
     BAIL_ON_LSA_ERROR(dwError);
 
+    KtLdapSetSaslMaxBufSize(LsaSrvSaslMaxBufSize());
+
     /* Get the directory base naming context first */
     dwError = KtLdapGetBaseDnW(pwszDCName, &pwszBaseDn);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2423,8 +2485,7 @@ DWORD
 LsaDirectoryConnect(
     PCWSTR pDomain,
     LDAP** ppLdConn,
-    PWSTR* ppDefaultContext,
-    PWSTR* ppSchemaContext
+    PWSTR* ppDefaultContext
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -2436,12 +2497,10 @@ LsaDirectoryConnect(
     PWSTR pAttributeName = NULL;
     PWSTR* ppAttributeValue = NULL;
     PWSTR pDefaultContext = NULL;
-    PWSTR pSchemaContext = NULL;
 
     BAIL_ON_INVALID_POINTER(pDomain);
     BAIL_ON_INVALID_POINTER(ppLdConn);
     BAIL_ON_INVALID_POINTER(ppDefaultContext);
-    BAIL_ON_INVALID_POINTER(ppSchemaContext);
 
     dwError = LdapInitConnection(&pLdConn, pDomain, FALSE);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2463,30 +2522,8 @@ LsaDirectoryConnect(
     dwError = LwAllocateWc16String(&pDefaultContext, ppAttributeValue[0]);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(pAttributeName);
-    if (ppAttributeValue)
-    {
-        LdapAttributeValueFree(ppAttributeValue);
-        ppAttributeValue = NULL;
-    }
-
-    dwError = LwMbsToWc16s("schemaNamingContext",
-                           &pAttributeName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    ppAttributeValue = LdapAttributeGet(pLdConn, pInfo, pAttributeName, NULL);
-    if (ppAttributeValue == NULL) {
-        /* TODO: find more descriptive error code */
-        lderr = LDAP_NO_SUCH_ATTRIBUTE;
-        BAIL_ON_LDAP_ERROR(lderr);
-    }
-
-    dwError = LwAllocateWc16String(&pSchemaContext, ppAttributeValue[0]);
-    BAIL_ON_LSA_ERROR(dwError);
-
     *ppLdConn = pLdConn;
     *ppDefaultContext = pDefaultContext;
-    *ppSchemaContext = pSchemaContext;
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pAttributeName);
@@ -2515,11 +2552,9 @@ error:
         LdapCloseConnection(pLdConn);
     }
     LW_SAFE_FREE_MEMORY(pDefaultContext);
-    LW_SAFE_FREE_MEMORY(pSchemaContext);
 
     *ppLdConn = NULL;
     *ppDefaultContext = NULL;
-    *ppSchemaContext = NULL;
     goto cleanup;
 }
 
@@ -2542,7 +2577,8 @@ LsaMachAcctCreate(
     const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou,
-    int rejoin
+    BOOLEAN move,
+    BOOLEAN exists
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -2560,13 +2596,18 @@ LsaMachAcctCreate(
     BAIL_ON_INVALID_POINTER(machacct_name);
     BAIL_ON_INVALID_POINTER(ou);
 
-    lderr = LdapMachAcctCreate(ld, machacct_name, ou);
-    if (lderr == LDAP_ALREADY_EXISTS && rejoin) {
+    if (exists == FALSE)
+    {
+        lderr = LdapMachAcctCreate(ld, machine_name, machacct_name, ou);
+        BAIL_ON_LDAP_ERROR(lderr);
+    }
+    else if (move) 
+    {
         lderr = LdapGetDirectoryInfo(&info, &res, ld);
         BAIL_ON_LDAP_ERROR(lderr);
 
         dwError = LwMbsToWc16s("defaultNamingContext",
-                               &dn_context_name);
+                &dn_context_name);
         BAIL_ON_LSA_ERROR(dwError);
 
         dn_context_val = LdapAttributeGet(ld, info, dn_context_name, NULL);
@@ -2576,12 +2617,13 @@ LsaMachAcctCreate(
             goto error;
         }
 
-        lderr = LdapMachAcctSearch(&machacct, ld, machacct_name,
-                                   dn_context_val[0]);
+        lderr = LdapMachAcctSearch(&machacct, ld, machacct_name, dn_context_val[0]);
+
+        // If the machine account with this sAMAccountName doesn't exist then we have a naming conflict
+        if (lderr == LDAP_NO_SUCH_OBJECT) lderr = LDAP_ALREADY_EXISTS;
         BAIL_ON_LDAP_ERROR(lderr);
 
-        dwError = LwMbsToWc16s("distinguishedName",
-                               &dn_name);
+        dwError = LwMbsToWc16s("distinguishedName", &dn_name);
         BAIL_ON_LSA_ERROR(dwError);
 
         dn_val = LdapAttributeGet(ld, machacct, dn_name, NULL);
@@ -2633,10 +2675,8 @@ static
 DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
-    const wchar16_t *name,
+    const wchar16_t *fqdn,
     const wchar16_t *dn_context,
-    PCWSTR pSchemaContext,
-    const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     )
 {
@@ -2647,20 +2687,17 @@ LsaMachDnsNameSearch(
     wchar16_t **samacct_attr_val = NULL;
 
     BAIL_ON_INVALID_POINTER(ldconn);
-    BAIL_ON_INVALID_POINTER(name);
+    BAIL_ON_INVALID_POINTER(fqdn);
     BAIL_ON_INVALID_POINTER(dn_context);
-    BAIL_ON_INVALID_POINTER(dns_domain_name);
     BAIL_ON_INVALID_POINTER(samacct);
 
     *samacct = NULL;
-
+    
     lderr = LdapMachDnsNameSearch(
                 &res,
                 ldconn,
-                name,
-                dns_domain_name,
-                dn_context,
-                pSchemaContext);
+                fqdn,
+                dn_context);
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwMbsToWc16s("sAMAccountName",

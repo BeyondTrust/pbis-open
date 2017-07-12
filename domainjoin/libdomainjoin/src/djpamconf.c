@@ -2621,6 +2621,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
     char *pam_deny_option = NULL;
     StringBuffer comment;
     BOOLEAN doingPasswdForAIX = FALSE;
+    BOOLEAN doingPasswdForSolaris11 = FALSE;
     LWException *nestedException = NULL;
     PSTR newMessage = NULL;
     DWORD ceError = 0;
@@ -2694,6 +2695,17 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
         LW_CLEANUP_CTERR(exc, ceError);
         if(includeService != NULL)
         {
+#ifdef __LWI_SOLARIS__
+            /* For Solaris 11 the configuration has been moved into the pam_authtok_common 
+             * we need to be added before this to fix #81441 
+             */
+            if (!strcmp(phase, "password") && !strcmp(includeService, "pam_authtok_common"))
+            {
+                doingPasswdForSolaris11 = TRUE;
+                break;
+            }
+#endif
+            
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             state->includeLevel++;
             PamLwidentityEnable(testPrefix, distro, conf, includeService, phase, pam_lwidentity, state, &nestedException);
@@ -3223,6 +3235,11 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 /* Definitely use the new password */
                 LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "use_authtok"));
             }
+        }
+        if(doingPasswdForSolaris11)
+        {
+            /* Try the previously stacked password */
+            LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "try_first_pass"));
         }
         if(doingPasswdForAIX)
         {
