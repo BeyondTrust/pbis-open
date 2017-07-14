@@ -78,6 +78,9 @@ DsrEnumerateDomainTrusts(
                                         pwszServerName,
                                         Flags,
                                         &TrustList));
+    if (dwError) {
+        LSA_LOG_ALWAYS("cli_DsrEnumerateDomainTrusts: %d", (int)dwError);
+    }
     BAIL_ON_WIN_ERROR(dwError);
 
     ntStatus = NetrAllocateDomainTrusts(NULL,
