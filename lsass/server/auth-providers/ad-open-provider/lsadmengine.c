@@ -140,6 +140,9 @@ LsaDmEnginepDiscoverTrustsForDomain(
                                                 NETR_TRUST_FLAG_IN_FOREST),
                                                &pTrusts,
                                                &dwTrustCount);
+    if (dwError) {
+        LSA_LOG_ALWAYS("LsaDmWrapDsEnumerateDomainTrusts: %d", (int)dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     // There must be at least one trust (primary)
