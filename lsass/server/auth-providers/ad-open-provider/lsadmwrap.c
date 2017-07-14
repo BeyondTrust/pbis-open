@@ -583,6 +583,9 @@ LsaDmWrappDsEnumerateDomainTrustsCallback(
     dwError = LsaDmWrappAddTrailingDot(
                     pDcInfo->pszDomainControllerName,
                     &pszFqdnDC);
+    if (dwError) {
+        LSA_LOG_ALWAYS("LsaDmWrappAddTrailingDot: %d", (int)dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_DsEnumerateDomainTrusts(
@@ -592,6 +595,9 @@ LsaDmWrappDsEnumerateDomainTrustsCallback(
                     &pCtx->pTrusts,
                     &pCtx->dwCount,
                     pbIsNetworkError);
+    if (dwError) {
+        LSA_LOG_ALWAYS("AD_DsEnumerateDomainTrusts: %d", (int)dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

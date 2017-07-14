@@ -1163,11 +1163,17 @@ AD_DsEnumerateDomainTrusts(
     dwError = AD_SetSystemAccess(
                   pState,
                   &pOldToken);
+    if (dwError) {
+        LSA_LOG_ALWAYS("AD_SetSystemAccess: %d", (int)dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
     status = LwIoGetThreadCreds(&pCreds);
     dwError = LwNtStatusToWin32Error(status);
+    if (dwError) {
+        LSA_LOG_ALWAYS("LwIoGetThreadCreds: %d", (int)dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     status = NetrInitBindingDefault(&netr_b,
@@ -1200,6 +1206,9 @@ AD_DsEnumerateDomainTrusts(
         else
         {
             dwError = winError;
+    if (dwError) {
+        LSA_LOG_ALWAYS("DsrEnumerateDomainTrusts: %d", (int)dwError);
+    }
      
             if (AD_WinErrorIsConnectionError(winError))
             {
