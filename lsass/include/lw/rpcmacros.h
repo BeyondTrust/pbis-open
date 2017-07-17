@@ -102,7 +102,7 @@
         {                                                            \
             ntstat = LwRpcStatusToNtStatus(dceexc->match.value);     \
             winerr = LwNtStatusToWin32Error(ntstat);                 \
-            LSA_LOG_DEBUG("Converted DCERPC code 0x%08X to WINERR %d", \
+            LSA_LOG_ERROR("Converted DCERPC code 0x%08X to WINERR %d", \
                           dceexc->match.value,                       \
                           winerr);                                   \
         }                                                            \
