@@ -778,6 +778,7 @@ rpc__smb_socket_connect(
                 smb->info.creds);                       /* Security token */
     if (status)
     {
+        LW_RTL_LOG_ERROR("NtCreateFile %d", status);
         goto error;
     }
 
@@ -787,6 +788,7 @@ rpc__smb_socket_connect(
                 &sesskey);
     if (status)
     {
+        LW_RTL_LOG_ERROR("LwIoGetSessionKey %d", status);
         goto error;
     }
 
