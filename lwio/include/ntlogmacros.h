@@ -51,7 +51,7 @@
     do { \
         if (EE || status) \
         { \
-            LWIO_LOG_DEBUG("LEAVE_IF: -> 0x%08x (%s) (EE = %d)", status, LwNtStatusToName(status), EE); \
+            LWIO_LOG_ERROR("LEAVE_IF: -> 0x%08x (%s) (EE = %d)", status, LwNtStatusToName(status), EE); \
         } \
     } while (0)
 
@@ -59,7 +59,7 @@
     do { \
         if (EE || status) \
         { \
-            LWIO_LOG_DEBUG("LEAVE_IF: " Format " -> 0x%08x (%s) (EE = %d)", ## __VA_ARGS__, status, LwNtStatusToName(status), EE); \
+            LWIO_LOG_ERROR("LEAVE_IF: " Format " -> 0x%08x (%s) (EE = %d)", ## __VA_ARGS__, status, LwNtStatusToName(status), EE); \
         } \
     } while (0)
 
