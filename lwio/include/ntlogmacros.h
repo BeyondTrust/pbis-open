@@ -49,17 +49,17 @@
 
 #define LOG_LEAVE_IF_STATUS_EE(status, EE) \
     do { \
-        if (EE || status) \
+        if (EE || (status && status != LW_STATUS_PENDING)) \
         { \
-            LWIO_LOG_ERROR("LEAVE_IF: -> 0x%08x (%s) (EE = %d)", status, LwNtStatusToName(status), EE); \
+            LWIO_LOG_DEBUG("LEAVE_IF: -> 0x%08x (%s) (EE = %d)", status, LwNtStatusToName(status), EE); \
         } \
     } while (0)
 
 #define LOG_LEAVE_IF_STATUS_EE_EX(status, EE, Format, ...) \
     do { \
-        if (EE || status) \
+        if (EE || (status && status != LW_STATUS_PENDING)) \
         { \
-            LWIO_LOG_ERROR("LEAVE_IF: " Format " -> 0x%08x (%s) (EE = %d)", ## __VA_ARGS__, status, LwNtStatusToName(status), EE); \
+            LWIO_LOG_DEBUG("LEAVE_IF: " Format " -> 0x%08x (%s) (EE = %d)", ## __VA_ARGS__, status, LwNtStatusToName(status), EE); \
         } \
     } while (0)
 

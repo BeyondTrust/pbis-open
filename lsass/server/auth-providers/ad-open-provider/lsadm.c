@@ -3664,9 +3664,6 @@ LsaDmConnectDomain(
                       hDmState,
                       pszDnsDomainName,
                       &pszDnsForestName);
-    if (dwError) {
-        LSA_LOG_ALWAYS("LsaDmGetForestName: %d", (int)dwError);
-    }
         BAIL_ON_LSA_ERROR(dwError);
         if (!pszDnsForestName)
         {
@@ -3704,9 +3701,6 @@ LsaDmConnectDomain(
     if (IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_AUTH))
     {
         dwError = AD_MachineCredentialsCacheInitialize(pProviderState);
-    if (dwError) {
-        LSA_LOG_ALWAYS("AD_MachineCredentialsCacheInitialize: %d", (int)dwError);
-    }
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -3736,9 +3730,6 @@ LsaDmConnectDomain(
             {
                break;
             }
-    if (dwError) {
-        LSA_LOG_ALWAYS("LWNetGetDCNameExt: %d", (int)dwError);
-    }
 
             // If enabled, determine if we have exceeded the trust 
             // enumeration wait time.
@@ -3775,25 +3766,16 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
-    if (dwError) {
-        LSA_LOG_ALWAYS("pfConnectCallback: %d", (int)dwError);
-    }
     if ((dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED) ||
         (dwError == SEC_E_NO_CREDENTIALS))
     {
         dwError = ADRefreshMachineTGT(pProviderState, NULL);
-    if (dwError) {
-        LSA_LOG_ALWAYS("ADRefreshMachineTGT: %d", (int)dwError);
-    }
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,
                                     pActualDcInfo,
                                     pContext,
                                     &bIsNetworkError);
-    if (dwError) {
-        LSA_LOG_ALWAYS("pfConnectCallback: %d", (int)dwError);
-    }
     }
     if (!dwError)
     {
@@ -3834,9 +3816,6 @@ LsaDmConnectDomain(
         0,
         NULL,
         &pLocalDcInfo);
-    if (dwError) {
-        LSA_LOG_ALWAYS("LWNetGetDCNameExt: %d", (int)dwError);
-    }
     bIsNetworkError = LsaDmpIsNetworkError(dwError);
     BAIL_ON_LSA_ERROR(dwError);
     pActualDcInfo = pLocalDcInfo;
@@ -3852,25 +3831,16 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
-    if (dwError) {
-        LSA_LOG_ALWAYS("pfConnectCallback: %d", (int)dwError);
-    }
     if ((dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED) ||
         (dwError == SEC_E_NO_CREDENTIALS))
     {
         dwError = ADRefreshMachineTGT(pProviderState, NULL);
-    if (dwError) {
-        LSA_LOG_ALWAYS("ADRefreshMachineTGT: %d", (int)dwError);
-    }
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,
                                     pActualDcInfo,
                                     pContext,
                                     &bIsNetworkError);
-    if (dwError) {
-        LSA_LOG_ALWAYS("pfConnectCallback: %d", (int)dwError);
-    }
     }
     BAIL_ON_LSA_ERROR(dwError);
 

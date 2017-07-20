@@ -123,6 +123,6 @@ DNSMapHerrno(
         case TRY_AGAIN:
             return DNS_ERROR_TRY_AGAIN_LATER;
         default:
-            return ERROR_GEN_FAILURE + 1; // TEST CHANGING RC TO TRACK ERROR_GEN_FAILURE
+            return ERROR_GEN_FAILURE;
     }
 }
