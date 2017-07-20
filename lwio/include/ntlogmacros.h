@@ -49,7 +49,7 @@
 
 #define LOG_LEAVE_IF_STATUS_EE(status, EE) \
     do { \
-        if (EE || status && status) \
+        if (EE || status) \
         { \
             LWIO_LOG_DEBUG("LEAVE_IF: -> 0x%08x (%s) (EE = %d)", status, LwNtStatusToName(status), EE); \
         } \
