@@ -463,9 +463,9 @@ LsaDmEnginepDiscoverTrustsInternal(
     if (dwError != ERROR_SUCCESS)
     {
         LSA_LOG_ERROR(
-            "Fatal error enumerating trusts for domain %s. Error was %s (%u)\n",
+            "Error enumerating trusts for domain %s. Error was %s (%u)\n",
             pszDnsPrimaryDomainName,
-            LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError)),
+            LW_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
             dwError);
     }
     BAIL_ON_LSA_ERROR(dwError);
