@@ -53,6 +53,8 @@
 #include "lsasrvutils.h"
 #include "openssl/crypto.h"
 
+#include <ldap.h>
+
 #ifdef ENABLE_STATIC_PROVIDERS
 #ifdef ENABLE_AD
 extern DWORD LsaInitializeProvider_ActiveDirectory(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE*);
@@ -89,6 +91,10 @@ static unsigned long lsa_id_function(void) {
     return (unsigned long) pthread_self();
 }
 
+static void lsa_ldap_trace(const char *msg)
+{
+    LSA_LOG_TRACE("LDAP debug: %s", LSA_SAFE_LOG_STRING(msg));
+}
 
 NTSTATUS
 LsaSvcmInit(
@@ -99,6 +105,16 @@ LsaSvcmInit(
     DWORD dwError = 0;
     int num_locks = CRYPTO_num_locks();
     int i;
+    int debug_level = -1;
+
+    if (ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, lsa_ldap_trace) != LBER_OPT_SUCCESS) {
+        LW_RTL_LOG_WARNING("Failed to set LDAP logging hook");
+    }
+
+    if (ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug_level) != LDAP_SUCCESS)
+    {
+        LW_RTL_LOG_WARNING("Failed to set LDAP log level");
+    }
 
     gmutex_buf = calloc(num_locks, sizeof(pthread_mutex_t));
     if (gmutex_buf == NULL) dwError = LW_ERROR_OUT_OF_MEMORY;
