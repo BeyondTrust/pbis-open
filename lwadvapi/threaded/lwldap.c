@@ -2146,6 +2146,30 @@ LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
     return dwError;
 }
 
+DWORD
+LwLdapSetControl(    
+    IN HANDLE hDirectory,
+    IN PSTR pszIOD,
+    IN BOOLEAN bCritical,
+    IN BerValue *pbvValue
+    )
+{
+    DWORD dwError = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+
+    if (pszIOD) {
+        LDAPControl ctrl = {pszIOD, {0}, (char)bCritical};
+        LDAPControl *ctrls[2] = {&ctrl, NULL};
+
+        if (pbvValue) ctrl.ldctl_value = *pbvValue;
+
+        dwError = ldap_set_option(pDirectory->ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
+    } else {
+        dwError = ldap_set_option(pDirectory->ld, LDAP_OPT_SERVER_CONTROLS, NULL);
+    }
+
+    return dwError;
+}
 
 /*
 local variables:

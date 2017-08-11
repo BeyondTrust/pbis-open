@@ -48,8 +48,14 @@
  */
 
 #include "includes.h"
+#include "lwkrb5.h"
 #include <gssapi/gssapi_krb5.h>
 #include <lw/swab.h>
+#include <lw/swab.h>
+#include <lwio/io-types.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
 
 #define LW_GSS_LOG_CALL_FORMAT \
     "GSS API error calling %s(): majorStatus = 0x%08x, minorStatus = 0x%08x"
@@ -1307,7 +1313,6 @@ LwKrb5InitializeUserLoginCredentials(
     IN gid_t gid,
     IN LW_KRB5_LOGIN_FLAGS Flags,
     IN PCSTR pszServicePrincipal,
-    IN PCSTR pszSaltPrincipal,
     IN PCSTR pszServiceRealm,
     IN PCSTR pszServicePassword,
     OUT PVOID* ppNdrPacInfo,
@@ -1417,7 +1422,10 @@ LwKrb5InitializeUserLoginCredentials(
      * which encryption type was used in it. */
     ret = krb5_decode_ticket(&pTgsCreds->ticket, &pTgsTicket);
 
-    ret = krb5_parse_name(ctx, pszSaltPrincipal, &saltPrincipal);
+    ret = krb5_copy_principal(ctx, pTgsCreds->server, &saltPrincipal);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_set_principal_realm(ctx, saltPrincipal, pszServiceRealm);
     BAIL_ON_KRB_ERROR(ctx, ret);
 
     ret = krb5_principal2salt(ctx, saltPrincipal, &salt);
@@ -1712,6 +1720,521 @@ error:
     *pbNeedCredentials = bNeedCredentials;
 
     return dwError;
+}
+
+static
+DWORD
+LwAllocateSidAppendRid(
+    OUT PSID* ppSid,
+    IN PSID pDomainSid,
+    IN ULONG Rid
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
+    PSID pResultSid = NULL;
+    ULONG size = RtlLengthRequiredSid(pDomainSid->SubAuthorityCount + 1);
+
+    dwError = LwAllocateMemory(size, OUT_PPVOID(&pResultSid));
+    BAIL_ON_LW_ERROR(dwError);
+
+    status = RtlCopySid(size, pResultSid, pDomainSid);
+    dwError = LwNtStatusToWin32Error(status);
+    BAIL_ON_LW_ERROR(dwError);
+
+    status = RtlAppendRidSid(size, pResultSid, Rid);
+    dwError = LwNtStatusToWin32Error(status);
+    BAIL_ON_LW_ERROR(dwError);
+
+cleanup:
+    *ppSid = pResultSid;
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pResultSid);
+    goto cleanup;
+}
+
+static
+DWORD
+LwAllocateCStringFromSid(
+    OUT PSTR* ppszStringSid,
+    IN PSID pSid
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
+    PSTR pszStringSid = NULL;
+    PSTR pszResultStringSid = NULL;
+
+    status = RtlAllocateCStringFromSid(&pszStringSid, pSid);
+    dwError = LwNtStatusToWin32Error(status);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwAllocateString(pszStringSid, &pszResultStringSid);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LW_ERROR_SUCCESS;
+
+cleanup:
+    RTL_FREE(&pszStringSid);
+
+    *ppszStringSid = pszResultStringSid;
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_STRING(pszResultStringSid);
+    goto cleanup;
+}
+
+static
+DWORD
+LwKrb5PacRidsToSidStringList(
+    IN OPTIONAL PSID pDomainSid,
+    IN PRID_WITH_ATTRIBUTE_ARRAY pRids,
+    OUT PDWORD pdwSidCount,
+    OUT PSTR** pppszSidList
+    )
+{
+    DWORD dwError = 0;
+    PSID pDomainBasedSid = NULL;
+    DWORD i = 0;
+    DWORD dwSidCount = 0;
+    PSTR* ppszSidList = NULL;
+
+    if (!pDomainSid)
+    {
+        if (pRids->dwCount != 0)
+        {
+            dwError = LW_ERROR_INTERNAL;
+            BAIL_ON_LW_ERROR(dwError);
+        }
+        // No SIDs here, so return empty list.
+        dwError = 0;
+        goto error;
+    }
+
+    dwSidCount = pRids->dwCount;
+
+    dwError = LwAllocateMemory(sizeof(ppszSidList[0]) * dwSidCount,
+                                (PVOID*)&ppszSidList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwAllocateSidAppendRid(
+                    &pDomainBasedSid,
+                    pDomainSid,
+                    0);
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (i = 0; i < pRids->dwCount; i++)
+    {
+        pDomainBasedSid->SubAuthority[pDomainBasedSid->SubAuthorityCount - 1] =
+            pRids->pRids[i].dwRid;
+
+        dwError = LwAllocateCStringFromSid(
+                        &ppszSidList[i],
+                        pDomainBasedSid);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    *pdwSidCount = dwSidCount;
+    *pppszSidList = ppszSidList;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pDomainBasedSid);
+    return dwError;
+
+error:
+    *pdwSidCount = 0;
+    *pppszSidList = NULL;
+
+    LwFreeStringArray(ppszSidList, dwSidCount);
+    goto cleanup;
+}
+
+static
+DWORD
+LwKrb5PacRidToSidString(
+    IN OPTIONAL PSID pDomainSid,
+    IN DWORD dwRid,
+    OUT PSTR* ppszSid
+    )
+{
+    DWORD dwError = 0;
+    PSID pDomainBasedSid = NULL;
+    PSTR pszSid = NULL;
+
+    if (!pDomainSid)
+    {
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    dwError = LwAllocateSidAppendRid(
+                    &pDomainBasedSid,
+                    pDomainSid,
+                    0);
+    BAIL_ON_LW_ERROR(dwError);
+
+    pDomainBasedSid->SubAuthority[pDomainBasedSid->SubAuthorityCount - 1] = dwRid;
+
+    dwError = LwAllocateCStringFromSid(
+                    &pszSid,
+                    pDomainBasedSid);
+    BAIL_ON_LW_ERROR(dwError);
+
+    *ppszSid = pszSid;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pDomainBasedSid);
+    return dwError;
+
+error:
+    *ppszSid = NULL;
+
+    LwFreeMemory(ppszSid);
+    goto cleanup;
+}
+
+static
+DWORD
+LwKrb5PacAttributedSidsToSidStringList(
+    IN DWORD dwSidCount,
+    IN NetrSidAttr* pAttributedSids,
+    OUT PDWORD pdwSidCount,
+    OUT PSTR** pppszSidList,
+    OUT PDWORD* ppdwSidAttributeList
+    )
+{
+    DWORD dwError = 0;
+    DWORD i = 0;
+    PSTR* ppszSidList = NULL;
+    PDWORD pdwSidAttributeList = NULL;
+
+    dwError = LwAllocateMemory(sizeof(ppszSidList[0]) * dwSidCount,
+                                (PVOID*)&ppszSidList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(pdwSidAttributeList[0]) * dwSidCount,
+                                (PVOID*)&pdwSidAttributeList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (i = 0; i < dwSidCount;  i++)
+    {
+        dwError = LwAllocateCStringFromSid(
+                        &ppszSidList[i],
+                        pAttributedSids[i].sid);
+        BAIL_ON_LW_ERROR(dwError);
+
+        pdwSidAttributeList[i] = pAttributedSids[i].attribute;
+    }
+
+    *pdwSidCount = dwSidCount;
+    *pppszSidList = ppszSidList;
+    *ppdwSidAttributeList = pdwSidAttributeList;
+
+cleanup:
+    return dwError;
+
+error:
+    *pdwSidCount = 0;
+    *pppszSidList = NULL;
+    *ppdwSidAttributeList = NULL;
+
+    LwFreeStringArray(ppszSidList, dwSidCount);
+    LW_SAFE_FREE_MEMORY(pdwSidAttributeList);
+    goto cleanup;
+}
+
+static
+DWORD
+LwKrb5ExtractSidListsFromPac(
+    IN PAC_LOGON_INFO* pPac,
+    OUT PSTR* ppszUserSID,
+    OUT PSTR* ppszPrimaryGroup,
+    OUT PDWORD pdwGroupSidCount,
+    OUT PSTR** pppszGroupSidList,
+    OUT PDWORD pdwResourceSidCount,
+    OUT PSTR** pppszResourceSidList,
+    OUT PDWORD pdwExtraSidCount,
+    OUT PSTR** pppszExtraSidList,
+    OUT PDWORD* ppdwExtraSidAttributeList
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwGroupSidCount = 0;
+    PSTR* ppszGroupSidList = NULL;
+    DWORD dwResourceGroupSidCount = 0;
+    PSTR* ppszResourceGroupSidList = NULL;
+    DWORD dwExtraSidCount = 0;
+    PSTR* ppszExtraSidList = NULL;
+    PDWORD pdwExtraSidAttributeList = NULL;
+
+    // PAC group membership SIDs
+
+    if (ppszUserSID) {
+        dwError = LwKrb5PacRidToSidString(
+                pPac->info3.base.domain_sid,
+                pPac->info3.base.rid,
+                ppszUserSID);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    
+    if (ppszPrimaryGroup) {
+        dwError = LwKrb5PacRidToSidString(
+                pPac->info3.base.domain_sid,
+                pPac->info3.base.primary_gid,
+                ppszPrimaryGroup);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    
+    dwError = LwKrb5PacRidsToSidStringList(
+                    pPac->info3.base.domain_sid,
+                    &pPac->info3.base.groups,
+                    &dwGroupSidCount,
+                    &ppszGroupSidList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    // PAC resource domain group membership SIDs
+
+    dwError = LwKrb5PacRidsToSidStringList(
+                    pPac->res_group_dom_sid,
+                    &pPac->res_groups,
+                    &dwResourceGroupSidCount,
+                    &ppszResourceGroupSidList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    // PAC extra SIDs
+
+    dwError = LwKrb5PacAttributedSidsToSidStringList(
+                    pPac->info3.sidcount,
+                    pPac->info3.sids,
+                    &dwExtraSidCount,
+                    &ppszExtraSidList,
+                    &pdwExtraSidAttributeList);
+    BAIL_ON_LW_ERROR(dwError);
+
+cleanup:
+    if (dwError)
+    {
+        LwFreeStringArray(ppszGroupSidList, dwGroupSidCount);
+        dwGroupSidCount = 0;
+        ppszGroupSidList = NULL;
+        LwFreeStringArray(ppszResourceGroupSidList, dwResourceGroupSidCount);
+        dwResourceGroupSidCount = 0;
+        ppszResourceGroupSidList = NULL;
+        LwFreeStringArray(ppszExtraSidList, dwExtraSidCount);
+        dwExtraSidCount = 0;
+        ppszExtraSidList = NULL;
+        LW_SAFE_FREE_MEMORY(pdwExtraSidAttributeList);
+    }
+
+    *pdwGroupSidCount = dwGroupSidCount;
+    *pppszGroupSidList = ppszGroupSidList;
+    *pdwResourceSidCount = dwResourceGroupSidCount;
+    *pppszResourceSidList = ppszResourceGroupSidList;
+    *pdwExtraSidCount = dwExtraSidCount;
+    *pppszExtraSidList = ppszExtraSidList;
+    *ppdwExtraSidAttributeList = pdwExtraSidAttributeList;
+
+    return dwError;
+
+error:
+    // Handle error in cleanup for simplicity.
+    goto cleanup;
+}
+
+DWORD
+LwKrb5GroupMembershipFromPac(
+    IN PVOID pchLogonInfo,
+    IN DWORD dwFlags,
+    OUT PDWORD pdwMembershipCount,
+    OUT PSTR** pppszMembershipList
+    )
+{
+    DWORD dwError = 0;
+    PAC_LOGON_INFO* pPac = (PAC_LOGON_INFO*)pchLogonInfo;
+    DWORD dwGroupSidCount = 0;
+    PSTR pszAuthenticatedUsers = NULL;
+    PSTR pszUserSid = NULL;
+    PSTR* ppszUserSid = NULL;
+    PSTR pszPrimaryGroupSid = NULL;
+    PSTR* ppszPrimaryGroupSid = NULL;
+    PSTR* ppszGroupSidList = NULL;
+    DWORD dwResourceGroupSidCount = 0;
+    PSTR* ppszResourceGroupSidList = NULL;
+    DWORD dwExtraSidCount = 0;
+    PSTR* ppszExtraSidList = NULL;
+    PDWORD pdwExtraSidAttributeList = NULL;
+    DWORD i = 0;
+    DWORD dwIgnoreExtraSidCount = 0;
+    DWORD dwMembershipCount = 0;
+    PSTR* ppszMembershipList = NULL;
+    DWORD dwMembershipIndex = 0;
+    struct {
+        PDWORD pdwCount;
+        PSTR** pppszSidList;
+    } SidsToCombine[] = {
+        { &dwGroupSidCount, &ppszGroupSidList },
+        { &dwResourceGroupSidCount, &ppszResourceGroupSidList },
+        { &dwExtraSidCount, &ppszExtraSidList }
+    };
+    DWORD dwSidsToCombineIndex = 0;
+
+    if (dwFlags & LW_KRB5_PAC_INCLUDE_USER_SID) ppszUserSid = &pszUserSid;
+    
+    if (dwFlags & LW_KRB5_PAC_INCLUDE_PRIMARY_GROUP) ppszPrimaryGroupSid = &pszPrimaryGroupSid;
+    
+    if (dwFlags & LW_KRB5_PAC_INCLUDE_AUTHENTICATED_USERS) LwStrDupOrNull("S-1-5-11", &pszAuthenticatedUsers);
+    
+    dwError = LwKrb5ExtractSidListsFromPac(
+                    pPac,
+                    ppszUserSid,
+                    ppszPrimaryGroupSid,
+                    &dwGroupSidCount,
+                    &ppszGroupSidList,
+                    &dwResourceGroupSidCount,
+                    &ppszResourceGroupSidList,
+                    &dwExtraSidCount,
+                    &ppszExtraSidList,
+                    &pdwExtraSidAttributeList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (pszUserSid)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's PAC user SID is %s",
+                (unsigned long)pPac->info3.base.rid,
+                pszUserSid);
+    }
+
+    if (pszPrimaryGroupSid)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's PAC primary group SID is %s",
+                (unsigned long)pPac->info3.base.rid,
+                pszPrimaryGroupSid);
+    }
+
+    if (pszAuthenticatedUsers)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's PAC Authenticated Users SID is %s",
+                (unsigned long)pPac->info3.base.rid,
+                pszAuthenticatedUsers);
+    }
+
+    for (i = 0; i < dwGroupSidCount; i++)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's #%lu PAC group membership is %s",
+                        (unsigned long)pPac->info3.base.rid,
+                        (unsigned long)i,
+                        ppszGroupSidList[i]);
+    }
+
+    for (i = 0; i < dwResourceGroupSidCount; i++)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's #%lu PAC resource group membership is %s",
+                        (unsigned long)pPac->info3.base.rid,
+                        (unsigned long)i,
+                        ppszResourceGroupSidList[i]);
+    }
+
+    for (i = 0; i < dwExtraSidCount; i++)
+    {
+        LW_RTL_LOG_VERBOSE("rid %lu's #%lu PAC extra membership is %s (attributes = 0x%08x)",
+                        (unsigned long)pPac->info3.base.rid,
+                        (unsigned long)i,
+                        ppszExtraSidList[i],
+                        pdwExtraSidAttributeList[i]);
+
+        // Filter out unwanted SIDs.
+
+        // ISSUE-2008/11/03-dalmeida -- Revisit this piece.
+        // Apparently, we still let user sids through here.
+        // Perhaps we should not filterat all.
+
+        // universal groups seem to have this set to 7
+        // local groups seem to have this set to 0x20000007
+        // we don't want to treat sids from the sid history like groups.
+        if (pdwExtraSidAttributeList[i] != 7 &&
+            pdwExtraSidAttributeList[i] != 0x20000007)
+        {
+            LW_RTL_LOG_VERBOSE("Ignoring non-group SID %s (attribute is 0x%x)",
+                            ppszExtraSidList[i],
+                            pdwExtraSidAttributeList[i]);
+            LW_SAFE_FREE_STRING(ppszExtraSidList[i]);
+            dwIgnoreExtraSidCount++;
+        }
+    }
+
+    dwMembershipCount = (dwGroupSidCount + dwResourceGroupSidCount +
+                         dwExtraSidCount - dwIgnoreExtraSidCount);
+    
+    if (pszUserSid) dwMembershipCount++;
+    if (pszPrimaryGroupSid) dwMembershipCount++;
+    if (pszAuthenticatedUsers) dwMembershipCount++;
+
+    dwError = LwAllocateMemory(
+                    sizeof(ppszMembershipList[0]) * dwMembershipCount,
+                    (PVOID*)&ppszMembershipList);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwMembershipIndex = 0;
+    
+    if (pszUserSid) {
+        ppszMembershipList[dwMembershipIndex++] = pszUserSid;
+        pszUserSid = NULL;
+    }
+
+    if (pszPrimaryGroupSid) {
+        ppszMembershipList[dwMembershipIndex++] = pszPrimaryGroupSid;
+        pszPrimaryGroupSid = NULL;
+    }
+
+    if (pszAuthenticatedUsers) {
+        ppszMembershipList[dwMembershipIndex++] = pszAuthenticatedUsers;
+        pszAuthenticatedUsers = NULL;
+    }
+
+    for (dwSidsToCombineIndex = 0;
+         dwSidsToCombineIndex < sizeof(SidsToCombine)/sizeof(SidsToCombine[0]);
+         dwSidsToCombineIndex++)
+    {
+        DWORD dwSidCount = *SidsToCombine[dwSidsToCombineIndex].pdwCount;
+        for (i = 0; i < dwSidCount; i++)
+        {
+            PSTR* ppszSidList = *SidsToCombine[dwSidsToCombineIndex].pppszSidList;
+            if (ppszSidList[i])
+            {
+                ppszMembershipList[dwMembershipIndex] = ppszSidList[i];
+                ppszSidList[i] = NULL;
+                dwMembershipIndex++;
+            }
+        }
+    }
+
+    assert((dwMembershipCount) == dwMembershipIndex);
+
+    *pdwMembershipCount = dwMembershipCount;
+    dwMembershipCount = 0;
+    
+    *pppszMembershipList = ppszMembershipList;
+    ppszMembershipList = NULL;
+
+cleanup:
+    if (ppszMembershipList) LwFreeStringArray(ppszMembershipList, dwMembershipCount);
+    LwFreeStringArray(ppszGroupSidList, dwGroupSidCount);
+    LwFreeStringArray(ppszResourceGroupSidList, dwResourceGroupSidCount);
+    LwFreeStringArray(ppszExtraSidList, dwExtraSidCount);
+    LW_SAFE_FREE_MEMORY(pdwExtraSidAttributeList);
+    LW_SAFE_FREE_STRING(pszUserSid);
+    LW_SAFE_FREE_STRING(pszPrimaryGroupSid);
+    LW_SAFE_FREE_STRING(pszAuthenticatedUsers);
+
+    return dwError;
+
+error:
+    goto cleanup;
 }
 
 /*

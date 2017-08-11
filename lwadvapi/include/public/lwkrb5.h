@@ -172,7 +172,6 @@ LwKrb5InitializeUserLoginCredentials(
     IN gid_t gid,
     IN LW_KRB5_LOGIN_FLAGS Flags,
     IN PCSTR pszServicePrincipal,
-    IN PCSTR pszSaltPrincipal,
     IN PCSTR pszServiceRealm,
     IN PCSTR pszServicePassword,
     OUT PVOID* ppNdrPacInfo,
@@ -184,6 +183,39 @@ DWORD
 LwKrb5CheckInitiatorCreds(
     IN PCSTR pszTargetPrincipalName,
     OUT PBOOLEAN pbNeedCredentials
+    );
+
+/**
+ * @brief Find the PAC data in the supplied decoded and decrypted ticket.
+ *
+ * @param ctx
+ * @param pTgsTicket TGS ticket
+ * @param serviceKey key used to originally encrypt the TGS ticket
+ * @param ppchLogonInfo pointer to an RPC encoded PAC structure, NULL on error
+ * @param psLogonInfo the size of RPC encoded PAC structure, may be non-zero
+ *          on error
+ *
+ * @return LW_ERROR_SUCCESS on success, various LW errors on failure
+ */
+DWORD
+LwKrb5FindPac(
+    krb5_context ctx,
+    const krb5_ticket *pTgsTicket,
+    const krb5_keyblock *serviceKey,
+    OUT PVOID* ppchLogonInfo,
+    OUT size_t* psLogonInfo
+    );
+
+#define LW_KRB5_PAC_INCLUDE_USER_SID             0x00000001
+#define LW_KRB5_PAC_INCLUDE_PRIMARY_GROUP        0x00000002
+#define LW_KRB5_PAC_INCLUDE_AUTHENTICATED_USERS  0x00000004
+
+DWORD
+LwKrb5GroupMembershipFromPac(
+    IN PVOID pchLogonInfo,
+    IN DWORD dwFlags,
+    OUT PDWORD pdwMembershipCount,
+    OUT PSTR** pppszMembershipList
     );
 
 LW_END_EXTERN_C

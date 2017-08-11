@@ -348,6 +348,23 @@ RtlLengthAccessAllowedAce(
     );
 
 ///<
+/// Get size required for an ACCESS_ALLOWED_OBJECT_ACE.
+///
+/// This function gets the number of bytes required for an
+/// access allowed ACE (ACCESS_ALLOWED_OBJECT_ACE) given a particular SID and Flags.
+///
+/// @param[in] Sid - SID for ACE.
+/// @param[in] AceFlags - Flags for ACE.
+///
+/// @return Number of bytes required or 0 if arguments are invalid.
+///
+USHORT
+RtlLengthAccessAllowedObjectAce(
+    IN PSID Sid,
+    IN ULONG AceFlags
+    );
+
+///<
 /// Get size required for an ACCESS_DENIED_ACE.
 ///
 /// This function gets the number of bytes required for an
@@ -848,6 +865,17 @@ RtlGetSecurityInformationFromSddlCString(
     OUT SECURITY_INFORMATION* pSecInfo
     );
 
+VOID
+RtlpFreeAbsoluteSecurityDescriptor(
+    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+NTSTATUS
+RtlpCreateAbsSecDescFromRelative(
+    OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppAbsSecDesc,
+    IN  PSECURITY_DESCRIPTOR_RELATIVE pRelSecDesc
+    );
 
 LW_END_EXTERN_C
 

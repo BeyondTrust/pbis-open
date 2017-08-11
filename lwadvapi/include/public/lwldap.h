@@ -58,6 +58,9 @@
 #define LW_LDAP_OPT_SIGN_AND_SEAL  0x00000002
 #define LW_LDAP_OPT_ANNONYMOUS     0x00000004
 
+// Security descriptor flags control	Stateless
+#define LDAP_SERVER_SD_FLAGS_OID "1.2.840.113556.1.4.801"
+
 typedef void (*PFNLW_COOKIE_FREE)(PVOID);
 
 typedef struct __LW_SEARCH_COOKIE
@@ -369,6 +372,14 @@ LwLdapParseResultForReferrals(
 
 DWORD
 LwLdapSetOption(IN DWORD dwSaslMaxBufSize);
+
+DWORD
+LwLdapSetControl(    
+    IN HANDLE hDirectory,
+    IN PSTR pszIOD,
+    IN BOOLEAN bCritical,
+    IN BerValue *pbvValue
+    );
 
 LW_END_EXTERN_C
 

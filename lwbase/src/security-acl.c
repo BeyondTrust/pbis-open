@@ -49,17 +49,9 @@ RtlpValidAceHeader(
     IN PACE_HEADER Ace
     )
 {
-    // Note that we currently only support up to V2 ACEs.
-    // TODO-Perhaps also support label-type ACEs.
-    // TODO-Is it ok to explicitly disallow object/callback-type ACEs?
-    // TODO-Should even bother checking the ACE type?
     return (Ace &&
             (Ace->AceSize >= sizeof(ACE_HEADER)) &&
-            LW_IS_VALID_FLAGS(Ace->AceFlags, VALID_ACE_FLAGS_MASK) &&
-#if 0 // Currently disabled as the compiler complains about always true
-            (Ace->AceType >= ACCESS_MIN_MS_ACE_TYPE) &&
-#endif
-            (Ace->AceType <= ACCESS_MAX_MS_V2_ACE_TYPE));
+            LW_IS_VALID_FLAGS(Ace->AceFlags, VALID_ACE_FLAGS_MASK));
 }
 
 static
@@ -74,6 +66,42 @@ RtlpValidAccessAllowedAce(
     USHORT sizeRequired = 0;
 
     sizeRequired = RtlLengthAccessAllowedAce(Sid);
+    if (sizeRequired != AceSize)
+    {
+        status = STATUS_INVALID_ACL;
+        GOTO_CLEANUP();
+    }
+
+    if (!RtlValidSid(Sid))
+    {
+        status = STATUS_INVALID_SID;
+        GOTO_CLEANUP();
+    }
+
+    status = STATUS_SUCCESS;
+
+cleanup:
+    if (Status)
+    {
+        *Status = status;
+    }
+
+    return NT_SUCCESS(status) ? TRUE : FALSE;
+}
+    
+static
+BOOLEAN
+RtlpValidAccessAllowedObjectAce(
+    IN USHORT AceSize,
+    IN ULONG AceFlags,
+    IN PSID Sid,
+    OUT OPTIONAL PNTSTATUS Status
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    USHORT sizeRequired = 0;
+
+    sizeRequired = RtlLengthAccessAllowedObjectAce(Sid, AceFlags);
     if (sizeRequired != AceSize)
     {
         status = STATUS_INVALID_ACL;
@@ -130,6 +158,13 @@ RtlpVerifyAceEx(
         case SYSTEM_AUDIT_ACE_TYPE:
             validMask = VALID_SACL_ACCESS_MASK;
             break;
+        case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
+        case ACCESS_DENIED_OBJECT_ACE_TYPE:
+            validMask = VALID_DACL_ACCESS_MASK;
+            break;
+        case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
+            validMask = VALID_SACL_ACCESS_MASK;
+            break;
     }
 
     switch (Ace->AceType)
@@ -148,6 +183,25 @@ RtlpVerifyAceEx(
             RtlpValidAccessAllowedAce(
                     Ace->AceSize,
                     RtlpGetSidAccessAllowedAce(allowAce),
+                    &status);
+            GOTO_CLEANUP_ON_STATUS(status);
+            break;
+        }
+        case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
+        case ACCESS_DENIED_OBJECT_ACE_TYPE:
+        case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
+        {
+            // These are all isomorphic.
+            PACCESS_ALLOWED_OBJECT_ACE allowAce = (PACCESS_ALLOWED_OBJECT_ACE) Ace;
+            if (!LW_IS_VALID_FLAGS(allowAce->Mask, validMask))
+            {
+                status = STATUS_INVALID_ACL;
+                GOTO_CLEANUP();
+            }
+            RtlpValidAccessAllowedObjectAce(
+                    Ace->AceSize,
+                    allowAce->Flags,
+                    RtlpGetSidAccessAllowedObjectAce(allowAce),
                     &status);
             GOTO_CLEANUP_ON_STATUS(status);
             break;
@@ -180,6 +234,31 @@ RtlLengthAccessAllowedAce(
 {
     return (LW_FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart) +
             RtlLengthSid(Sid));
+}
+
+USHORT
+RtlLengthAccessAllowedObjectAce(
+    IN PSID Sid,
+    IN ULONG AceFlags
+    )
+{
+    USHORT Size = LW_FIELD_OFFSET(ACCESS_ALLOWED_OBJECT_ACE, ObjectType);
+    
+    switch (AceFlags) {
+        case 0:
+            break;
+        case ACE_OBJECT_TYPE_PRESENT:
+        case ACE_INHERITED_OBJECT_TYPE_PRESENT:
+            Size += sizeof(GUID);
+            break;
+        default:
+            Size += 2 * sizeof(GUID);
+            break;
+    }
+    
+    Size += RtlLengthSid(Sid);
+    
+    return ( Size );
 }
 
 USHORT
@@ -1718,6 +1797,26 @@ RtlpIsValidLittleEndianAclBuffer(
 
                 break;
             }
+            case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
+            case ACCESS_DENIED_OBJECT_ACE_TYPE:
+            case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
+            {
+                PACCESS_ALLOWED_OBJECT_ACE littleEndianAce = (PACCESS_ALLOWED_OBJECT_ACE) littlEndianAceHeader;
+                ACCESS_ALLOWED_OBJECT_ACE ace = { { 0 } };
+
+                ace.Header = aceHeader;
+                ace.Mask = LW_LTOH32(littleEndianAce->Mask);
+                ace.Flags = LW_LTOH32(littleEndianAce->Flags);
+
+                ace.SidStart = littleEndianAce->SidStart;
+                ace.ObjectType = littleEndianAce->ObjectType;
+                ace.InheritedObjectType = littleEndianAce->InheritedObjectType;
+
+                status = RtlpVerifyAceEx(&ace.Header, TRUE);
+                GOTO_CLEANUP_ON_STATUS(status);
+
+                break;
+            }
             default:
                 status = STATUS_INVALID_ACL;
                 GOTO_CLEANUP();
@@ -1863,6 +1962,57 @@ RtlpDecodeLittleEndianAcl(
                 RtlpDecodeLittleEndianSid(
                         (PSID) &littleEndianAce->SidStart,
                         (PSID) &ace->SidStart);
+                break;
+            }
+            case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
+            case ACCESS_DENIED_OBJECT_ACE_TYPE:
+            case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
+            {
+                PACCESS_ALLOWED_OBJECT_ACE littleEndianAce = (PACCESS_ALLOWED_OBJECT_ACE) littleEndianAceHeader;
+                PACCESS_ALLOWED_OBJECT_ACE ace = (PACCESS_ALLOWED_OBJECT_ACE) aceHeader;
+
+                ace->Mask = LW_LTOH32(littleEndianAce->Mask);
+                ace->Flags = LW_LTOH32(littleEndianAce->Flags);
+                
+                /*
+                 * GUID arrives with LE Data1 Data2 Data3 members. Libuuid assumes these are in Big Endian so we need to swap
+                 * byte ordering.
+                 */
+
+                switch (littleEndianAce->Flags) {
+                    case 0:
+                        RtlpDecodeLittleEndianSid(
+                                (PSID) &littleEndianAce->ObjectType,
+                                (PSID) &ace->ObjectType);
+                        break;
+                    case ACE_OBJECT_TYPE_PRESENT:
+                    case ACE_INHERITED_OBJECT_TYPE_PRESENT:
+                        ace->ObjectType.Data1 = _LW_SWAB32(littleEndianAce->ObjectType.Data1);
+                        ace->ObjectType.Data2 = _LW_SWAB16(littleEndianAce->ObjectType.Data2);
+                        ace->ObjectType.Data3 = _LW_SWAB16(littleEndianAce->ObjectType.Data3);
+                        memcpy(ace->ObjectType.Data4, littleEndianAce->ObjectType.Data4, sizeof(ace->ObjectType.Data4));
+
+                        RtlpDecodeLittleEndianSid(
+                                (PSID) &littleEndianAce->InheritedObjectType,
+                                (PSID) &ace->InheritedObjectType);
+                        break;
+                    default:
+                        ace->ObjectType.Data1 = _LW_SWAB32(littleEndianAce->ObjectType.Data1);
+                        ace->ObjectType.Data2 = _LW_SWAB16(littleEndianAce->ObjectType.Data2);
+                        ace->ObjectType.Data3 = _LW_SWAB16(littleEndianAce->ObjectType.Data3);
+                        memcpy(ace->ObjectType.Data4, littleEndianAce->ObjectType.Data4, sizeof(ace->ObjectType.Data4));
+
+                        ace->InheritedObjectType.Data1 = _LW_SWAB32(littleEndianAce->InheritedObjectType.Data1);
+                        ace->InheritedObjectType.Data2 = _LW_SWAB16(littleEndianAce->InheritedObjectType.Data2);
+                        ace->InheritedObjectType.Data3 = _LW_SWAB16(littleEndianAce->InheritedObjectType.Data3);
+                        memcpy(ace->InheritedObjectType.Data4, littleEndianAce->InheritedObjectType.Data4, sizeof(ace->InheritedObjectType.Data4));
+
+                        RtlpDecodeLittleEndianSid(
+                                (PSID) &littleEndianAce->SidStart,
+                                (PSID) &ace->SidStart);
+                        break;
+                }
+
                 break;
             }
             default:

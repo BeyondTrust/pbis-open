@@ -89,6 +89,31 @@ RtlpGetSidAccessAllowedAce(
     return (PSID) &Ace->SidStart;
 }
 
+inline
+static
+PSID
+RtlpGetSidAccessAllowedObjectAce(
+    IN PACCESS_ALLOWED_OBJECT_ACE Ace
+    )
+{
+    PSID psid = NULL;
+    
+    switch (Ace->Flags) {
+        case 0:
+            psid = (PSID) &Ace->ObjectType;
+            break;
+        case ACE_OBJECT_TYPE_PRESENT:
+        case ACE_INHERITED_OBJECT_TYPE_PRESENT:
+            psid = (PSID) &Ace->InheritedObjectType;
+            break;
+        default:
+            psid = (PSID) &Ace->SidStart;
+            break;
+    }
+    
+    return psid;
+}
+
 BOOLEAN
 RtlpIsValidLittleEndianSidBuffer(
     IN PVOID Buffer,
@@ -129,15 +154,4 @@ NTSTATUS
 RtlpDecodeLittleEndianAcl(
     IN PACL LittleEndianAcl,
     OUT PACL Acl
-    );
-
-NTSTATUS
-RtlpCreateAbsSecDescFromRelative(
-    OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppAbsSecDesc,
-    IN  PSECURITY_DESCRIPTOR_RELATIVE pRelSecDesc
-    );
-
-VOID
-RtlpFreeAbsoluteSecurityDescriptor(
-    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
     );

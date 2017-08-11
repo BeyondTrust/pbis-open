@@ -1807,7 +1807,7 @@ LsaEncryptPasswordBufferEx(
 
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    MD5_Update(&ctx, pSessionKey, 16);
+    MD5_Update(&ctx, pSessionKey, dwSessionKeyLen > 16 ? 16 : dwSessionKeyLen);
     MD5_Final(DigestedSessKey, &ctx);
 
     LSA_LOG_DEBUG("RC4_KEY structure is using %d bytes", sizeof(rc4_key));
