@@ -7,7 +7,7 @@
  *   NT status and Win32 error code mapping table
  *
  *   Some of these definitions were written from scratch.
- * 
+ *
  *   NT status codes are unsigned 32-bit hex values
  *
  *   Win32 error codes are unsigned 32-bit decimal values
@@ -401,6 +401,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_F
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_DELETE_FAILED_LIC_NOT_RELEASED , -1, "The domain leave completed but the computer account was not deleted because the license could not be released" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_CANNOT_DELETE , -1, "Cannot use --deleteAccount when the domain is offline." )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_USE_KEEPLICENSE , -1, "Cannot release license or delete account when domain is offline. Use --keepLicense to proceed with leave." )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GP_RSOP_FAILED, -1, "Could not complete GPO RSOP; check the logs for failed CSEs" )
 
 
 #include "lwerror-table-krb5.h"
