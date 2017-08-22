@@ -403,6 +403,51 @@ LwStripWhitespace(
 }
 
 void
+LwStripLeadingCharacters(
+    PSTR pszString,
+    CHAR character
+)
+{
+    PSTR pszNew = pszString;
+    PSTR pszTmp = pszString;
+
+    if (pszString == NULL || *pszString == '\0' || *pszString != character) {
+        return;
+    }
+
+    while (pszTmp != NULL && *pszTmp != '\0' && *pszTmp == character) {
+        pszTmp++;
+    }
+
+    while (pszTmp != NULL && *pszTmp != '\0') {
+        *pszNew++ = *pszTmp++;
+    }
+    *pszNew = '\0';
+}
+
+void
+LwStripTrailingCharacters(
+    PSTR pszString,
+    CHAR character
+)
+{
+    PSTR pszLastChar = NULL;
+    PSTR pszTmp = pszString;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pszString))
+        return;
+
+    while (pszTmp != NULL && *pszTmp != '\0') {
+        pszLastChar = ((*pszTmp == character) ? (pszLastChar ? pszLastChar : pszTmp) : NULL);
+        pszTmp++;
+    }
+
+    if (pszLastChar != NULL) {
+        *pszLastChar = '\0';
+    }
+}
+
+void
 LwStrToUpper(
     PSTR pszString
 )
@@ -1096,7 +1141,7 @@ LwURILdapDecode(
         *ppszAuthority = pszAuthority;
         pszAuthority = NULL;
     }
- 
+
     if (ppszPath)
     {
         *ppszPath = pszPathURLDecode;
