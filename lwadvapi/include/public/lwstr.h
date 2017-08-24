@@ -164,6 +164,18 @@ LwStripWhitespace(
     );
 
 LW_VOID
+LwStripLeadingCharacters(
+    PSTR pszString,
+    CHAR character
+    );
+
+LW_VOID
+LwStripTrailingCharacters(
+    PSTR pszString,
+    CHAR character
+    );
+
+LW_VOID
 LwStrToUpper(
     LW_IN LW_OUT LW_PSTR pszString
     );

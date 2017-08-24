@@ -404,7 +404,7 @@ grow_buffer(
     size_t required
     )
 {
-    const size_t used = strlen(*buffer);
+    const size_t used = (*buffer) ? strlen(*buffer) : 0;
     const size_t remaining = current_size - used;
 
     size_t new_size = 0;
@@ -419,6 +419,8 @@ grow_buffer(
 
     if (!new) {
         new_size = 0;
+    } else {
+        *buffer = new;
     }
 
     return new_size;
@@ -439,8 +441,12 @@ LwRtlCStringStrcatGrow(
         return NULL;
     }
 
+    /* new buffers won't be zero filled so must strcpy */
+    (*current_size == 0)
+        ? strcpy(*buffer, src)
+        : strcat(*buffer, src);
+
     *current_size = new_buffer_size;
-    strcat(*buffer, src);
     return *buffer;
 }
 
