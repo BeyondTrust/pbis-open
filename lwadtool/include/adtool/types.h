@@ -338,7 +338,8 @@ typedef struct AdtActionNewComputer {
     PSTR namePreWin2000; /* Pre Windows-2000 name (samAccountName) */
     PSTR dnsHostName; /* Fully-Qualified Host Name of the computer */
     PSTR password;
-    PSTR keytab;      /* Generate a keytab file. */
+    PSTR keytab;                   /* Generate a keytab file. */
+    PSTR servicePrincipalNameList; /* Set new computer account SPN attribute and keytab file.*/
 } AdtActionNewComputerT, *AdtActionNewComputerTP;
 
 typedef struct AdtActionResetUserPassword {

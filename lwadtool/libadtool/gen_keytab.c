@@ -39,13 +39,15 @@
  */
 
 #include "includes.h"
+#include <libgen.h>
 
 static 
 DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, PSTR pszPass, PSTR pszKeytab);
 
 static
 DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszName, PSTR pszPassword, 
-                                PSTR pszSamAccountName, PSTR pszDnsHostName, PSTR pszKeytab);
+                                PSTR pszSamAccountName, PSTR pszDnsHostName, PSTR pszKeytab,
+                                PSTR pszServicePrincipalNameList);
 
 static
 DWORD GetDomainDcName(AppContextTP appContext, PSTR pszDomainFromDN, PSTR *pszDcName);
@@ -100,23 +102,33 @@ DWORD CreateNewComputerKeytabFile(AdtActionTP action)
 {
    DWORD dwError = 0;
    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+   PSTR pszServicePrincipalNameList = NULL;
+
+   if (action->newComputer.servicePrincipalNameList)
+      LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
+   else
+      LwAllocateString(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
 
    PrintStdout(appContext,
                LogLevelVerbose,
-               "%s: CreateNewComputerKeytabFile. DN=%s Name=%s Password=%s sAMAccountName=%s DnsHostName=%s\n",
+               "%s: CreateNewComputerKeytabFile. DN=%s Name=%s Password=%s sAMAccountName=%s DnsHostName=%s Service Principal Name:%s\n",
                appContext->actionName,
                action->newComputer.dn,
                action->newComputer.name,
                action->newComputer.password,
                action->newComputer.namePreWin2000,
-               action->newComputer.dnsHostName);
+               action->newComputer.dnsHostName,
+               pszServicePrincipalNameList);
 
    dwError = CreateComputerKeytabEntry(appContext, action->newComputer.dn, action->newComputer.name, 
                                        action->newComputer.password, action->newComputer.namePreWin2000,
-                                       action->newComputer.dnsHostName, action->newComputer.keytab);
+                                       action->newComputer.dnsHostName, action->newComputer.keytab,
+                                       pszServicePrincipalNameList);
    ADT_BAIL_ON_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
     return dwError;
 
 error:
@@ -349,14 +361,13 @@ error:
     goto cleanup;
 }
 
-
 //****************************************************************************************
 //
 //****************************************************************************************
 static
 DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszMachineName, 
                                 PSTR pszPassword, PSTR pszMachineAccountName, PSTR pszDnsHostName,
-                                PSTR pszKeytab)
+                                PSTR pszKeytab, PSTR pszServicePrincipalNameList)
 {
     DWORD dwError = 0;
     size_t sPasswordLen = 0;
@@ -366,6 +377,9 @@ DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszMac
     PSTR pszPrincipal = NULL;
     PSTR pszFqdn = NULL;
     PSTR pszSalt = NULL;
+    PSTR pszServicePrincipalList = NULL;
+    PSTR pszServicePrincipalListSave = NULL;
+    PSTR pszSpn = NULL;
     PWSTR pwszSalt = NULL;
     PWSTR pwszFqdn = NULL;
     PWSTR pwszDcName = NULL;
@@ -383,13 +397,35 @@ DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszMac
     PWSTR pwszHostMachineUc = NULL;
     PWSTR pwszHostMachineLc = NULL;
     PWSTR pwszBuffer = NULL;
+    PWSTR pwszSpn = NULL;
     DWORD dwKnvo = 0;
+    BOOLEAN bIsServiceClass = FALSE;
+    BOOLEAN bDirExists = FALSE;
+    PSTR pszTmpKeytab = NULL;
+    PSTR pszDirName = NULL;
+    DWORD dwRetries = 0;
+    DWORD dwMaxRetries = 2;
 
-    wchar_t wszHostFqdnFmt[] = L"host/%ws.%ws";
-    wchar_t wszHostFmt[] = L"host/%ws";
-    wchar_t wszCifsFqdnFmt[] = L"cifs/%ws.%ws";
-    wchar_t wszCifsFmt[] = L"cifs/%ws";
+    wchar_t wszFqdnFmt[] = L"%ws/%ws.%ws@%ws";
+    wchar_t wszFmt[] = L"%ws/%ws@%ws";
+    wchar_t wszFmt2[] = L"%ws@%ws";
 
+
+    // Check if the directory exists. If not, create it.
+    dwError = LwStrDupOrNull(pszKeytab, &pszTmpKeytab);
+    ADT_BAIL_ON_ERROR(dwError);
+     
+    pszDirName = dirname(pszTmpKeytab);
+    dwError = LwCheckDirectoryExists(pszDirName, &bDirExists);
+    ADT_BAIL_ON_ERROR(dwError);
+   
+    if (!bDirExists)
+    {
+       dwError = LwCreateDirectory(pszDirName, 0755);
+       ADT_BAIL_ON_ERROR_STR(dwError, "Failed to create directory");
+    }
+
+    PrintStdout(appContext, LogLevelVerbose, "\tServicePrincipalName=%s\n",  pszServicePrincipalNameList);
     PrintStdout(appContext, LogLevelVerbose, "\tMachineName=%s\n",  pszMachineName);
     PrintStdout(appContext, LogLevelVerbose, "\tMachineAccountName=%s\n",  pszMachineAccountName);
 
@@ -466,8 +502,27 @@ DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszMac
     ADT_BAIL_ON_ERROR(dwError);
     PrintStdout(appContext, LogLevelVerbose, "\tPrincipal=%s\n",  pszPrincipal);
 
-    dwError = KtLdapGetKeyVersionA(pszDcName, pszBaseDn, pszPrincipal, &dwKnvo);
+    dwRetries = 0;
+    do
+    {
+       dwError = KtLdapGetKeyVersionA(pszDcName, pszBaseDn, pszPrincipal, &dwKnvo);
+       if (dwError == ERROR_FILE_NOT_FOUND)
+       {
+          // Possible race condition. The computer object may not be fully ready/created
+          // in AD. Pause and try again.
+          dwRetries++;
+          sleep(3); 
+       }
+    } while ((dwError == ERROR_FILE_NOT_FOUND) && (dwRetries < dwMaxRetries));
+
+    if (dwError == ERROR_FILE_NOT_FOUND)
+    {
+        dwError = LW_ERROR_SUCCESS;
+        dwKnvo = 2;
+        PrintStdout(appContext, LogLevelError, "Failed to get kvno from AD. Assuming kvno of 2");
+    }
     ADT_BAIL_ON_ERROR(dwError);
+
     PrintStdout(appContext, LogLevelVerbose, "\tknvo=%d\n",  dwKnvo);
 
     // The salt can come from one of two places. Either from AD or generated locally.
@@ -487,132 +542,110 @@ DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszMac
     PrintStdout(appContext, LogLevelVerbose, "\tSalt=%s\n",  pszSalt);
 
     dwError = BackupKeytabFile(pszKeytab);
-    ADT_BAIL_ON_ERROR(dwError);
+    ADT_BAIL_ON_ERROR_STR(dwError, "Failed to create backup keytab file");
 
     // Several keytab entries are written. An entry for each of supported encryption types.
 
     // Format: COMPUTERNAME$@REALM.NET
     //  
     dwError = KtKrb5AddKeyW( pwszPrincipal, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-
-    ADT_BAIL_ON_ERROR(dwError);
+    ADT_BAIL_ON_ERROR_STR(dwError, "Failed to add entry to keytab file");
 
     // Format:  computername@REALM.NET
     //
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, L"%ws", pwszMachineNameLc);
+    dwError = KtKrb5FormatPrincipalW(pwszMachineNameLc, pwszDomainFromDnUc, &pwszBuffer);
     ADT_BAIL_ON_ERROR(dwError);
 
     dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
     ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    // Format: host/COMPUTERNAME@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszHostFmt, pwszMachineNameUc);
-    ADT_BAIL_ON_ERROR(dwError);
+    pszServicePrincipalList = pszServicePrincipalNameList;
+    pszSpn = strtok_r(pszServicePrincipalList, ",", &pszServicePrincipalListSave);
+    while (pszSpn)
+    {
+        if (pwszSpn)
+        {
+           LW_SAFE_FREE_MEMORY(pwszSpn);
+           pwszSpn = NULL;
+        }
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+        // Strip any trailing slash from pszSpn and determine if its a full SPN or a service class.
+        // Distinguish between nfs, nfs/ and http/www.linuxcomputer.com.
+        GroomSpn(&pszSpn, &bIsServiceClass);
 
-    // Format:  host/computername@REALM.NEt
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszHostFmt, pwszMachineNameLc);
-    ADT_BAIL_ON_ERROR(dwError);
+        dwError = LwMbsToWc16s(pszSpn, &pwszSpn);
+        ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+        if (!bIsServiceClass)
+        {
+           // Add pszSpn as is with the realm appended.    
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFmt2, pwszSpn, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    // Format: host/computername.domain.net@REALM.NET
-    //   
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszHostFqdnFmt, pwszMachineNameLc, pwszDomainFromDnLc);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+           //
+           // Format: spn/COMPUTERNAME@REALM.NET
+           //
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFmt, pwszSpn, pwszMachineNameUc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    //Format:  host/COMPUTERNAME.domain.net@REALM.NET
-    //  
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszHostFqdnFmt, pwszMachineNameUc, pwszDomainFromDnLc);
-    ADT_BAIL_ON_ERROR(dwError);
+           // Format:  spn/computername@REALM.NEt
+           //
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFmt, pwszSpn, pwszMachineNameLc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    // host/COMPUTERNAME.DOMAIN.NET@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszHostFqdnFmt, pwszMachineNameUc, pwszDomainFromDnUc);
-    ADT_BAIL_ON_ERROR(dwError);
+           //
+           // Format: spn/computername.domain.net@REALM.NET
+           //   
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFqdnFmt, pwszSpn, pwszMachineNameLc, pwszDomainFromDnLc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    // cifs/COMPUTERNAME@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszCifsFmt, pwszMachineNameUc);
-    ADT_BAIL_ON_ERROR(dwError);
+           //
+           //Format:  spn/COMPUTERNAME.domain.net@REALM.NET
+           //  
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFqdnFmt, pwszSpn, pwszMachineNameUc, pwszDomainFromDnLc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    //
-    // cifs/computername@REALM.NEt
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszCifsFmt, pwszMachineNameLc);
-    ADT_BAIL_ON_ERROR(dwError);
+           //
+           //Format:  spn/COMPUTERNAME.DOMAIN.NET@REALM.NET
+           //
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFqdnFmt, pwszSpn, pwszMachineNameUc, pwszDomainFromDnUc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+        }
 
-    //
-    // cifs/computername.domain.net@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszCifsFqdnFmt, pwszMachineNameLc, pwszDomainFromDnLc);
-    ADT_BAIL_ON_ERROR(dwError);
-
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
-
-    //
-    // cifs/COMPUTERNAME.domain.net@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszCifsFqdnFmt, pwszMachineNameUc, pwszDomainFromDnLc);
-    ADT_BAIL_ON_ERROR(dwError);
-
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
-
-
-    //
-    // cifs/COMPUTERNAME.DOMAIN.NET@REALM.NET
-    //
-    LW_SAFE_FREE_MEMORY(pwszBuffer);
-    pwszBuffer = NULL;
-    dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszCifsFqdnFmt, pwszMachineNameUc, pwszDomainFromDnUc);
-    ADT_BAIL_ON_ERROR(dwError);
-
-    dwError = KtKrb5AddKeyW(pwszBuffer, pwszPassword, sPasswordLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
-    ADT_BAIL_ON_ERROR(dwError);
+        pszSpn = strtok_r(NULL, ",", &pszServicePrincipalListSave);
+    }
 
 cleanup:
 
@@ -638,6 +671,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszBaseDn);
     LW_SAFE_FREE_MEMORY(pwszKtPath);
     LW_SAFE_FREE_MEMORY(pwszBuffer);
+    LW_SAFE_FREE_MEMORY(pwszSpn);
 
     return dwError;
 
@@ -650,53 +684,19 @@ static
 DWORD GetDomainDcName(AppContextTP appContext, PSTR pszDomainFromDN, PSTR *pszDcName)
 {
     DWORD dwError = 0;
-    HANDLE hLsaConnection = (HANDLE) NULL;
-    PLSASTATUS pLsaStatus = NULL;
-    PLSA_AUTH_PROVIDER_STATUS pProviderStatus = NULL;
-    BOOLEAN bFound = FALSE;
-    DWORD i = 0;
+    PSTR dnsName = NULL;
+    PSTR pszIpAddr = NULL;
 
-    //
-    // Get the name of the domain controller for the domain.
-    //  
-    dwError = LsaOpenServer(&hLsaConnection);
+    dwError = FindAdServer(pszDomainFromDN, &pszIpAddr, &dnsName);
     ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = LsaGetStatus(hLsaConnection, &pLsaStatus);
+    dwError = LwAllocateString((PCSTR) dnsName, pszDcName);
     ADT_BAIL_ON_ERROR(dwError);
-
-    if( !pLsaStatus || !pLsaStatus->pAuthProviderStatusList || !pLsaStatus->pAuthProviderStatusList[0].pszDomain)
-    {
-       dwError = ADT_ERR_FAILED_TO_LOCATE_DOMAIN;
-       ADT_BAIL_ON_ERROR(dwError);
-    }
-
-    pProviderStatus = pLsaStatus->pAuthProviderStatusList;
-    for (i = 0; i < pProviderStatus->dwNumTrustedDomains && !bFound; i++)
-    {
-        if (!strncmp(pszDomainFromDN, pProviderStatus->pTrustedDomainInfoArray[i].pszDnsDomain, strlen(pszDomainFromDN)))
-        {
-             dwError = LwAllocateString((PCSTR) pProviderStatus->pTrustedDomainInfoArray[i].pDCInfo->pszName, pszDcName);
-             ADT_BAIL_ON_ERROR(dwError);
-
-             bFound = TRUE;
-        }
-    }
-
-    if (!bFound)
-    {
-        // Weird. Coudn't find the domain controller for the domain.
-        dwError = ADT_ERR_FAILED_TO_LOCATE_AD;
-        ADT_BAIL_ON_ERROR(dwError);
-    }
 
 cleanup:
 
-    if (hLsaConnection != (HANDLE) NULL)
-        LsaCloseServer(hLsaConnection);
-
-    if (pLsaStatus)
-      LsaFreeStatus(pLsaStatus);
+    LW_SAFE_FREE_STRING(pszIpAddr);
+    LW_SAFE_FREE_STRING(dnsName);
 
     return dwError;
 

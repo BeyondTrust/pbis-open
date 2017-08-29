@@ -43,6 +43,9 @@
 static
 DWORD  SetMachinePassword(IN AdtActionTP action);
 
+static
+DWORD SetNewComputerSPNAttribute(IN AdtActionTP action);
+
 /***************************************************************************/
 /*                          New OU action                                  */
 /***************************************************************************/
@@ -737,6 +740,85 @@ DWORD InitAdtNewComputerAction(IN AdtActionTP action)
     return InitBaseAction(action);
 }
 
+// Input:  nfs, NFS, http/linuxhostbox, host, HOST/, http/linuxhostbox2
+// Output: NFS, HOST, http/linuxhostbox, http/linuxhostbox2
+static
+VOID GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
+{
+   BOOLEAN bIsServiceClass = FALSE;
+   PSTR pszServicePrincipalNameList = NULL;
+   PSTR saveStrPtr = NULL;
+   PSTR aStr = NULL;
+   PSTR isStrThere = NULL;
+   PSTR pszTempStr = NULL;
+   PSTR pszNewServicePrincipalNameList = NULL;
+   PSTR pszFqdnList = NULL;
+   PSTR pszServiceClassList = NULL;
+
+   if (action->newComputer.servicePrincipalNameList)
+     LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
+   else
+     LwAllocateString(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+
+   // Tokenize the user provided SPN list checking for duplicates SPN values and 
+   // upper casing SPN.
+   aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
+   while (aStr != NULL)
+   {
+      GroomSpn(&aStr, &bIsServiceClass);
+
+      if (bIsServiceClass)
+      {
+         LwStrToUpper(aStr);
+         LwStrStr(pszServiceClassList, aStr, &isStrThere);
+         if (!isStrThere)
+         {
+            if (pszServiceClassList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszServiceClassList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+ 
+            LW_SAFE_FREE_STRING(pszServiceClassList);
+            pszServiceClassList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+      else
+      {
+         LwStrStr(pszFqdnList, aStr, &isStrThere);
+         if ((!isStrThere) || (strlen(aStr) != (strlen(isStrThere))))
+         {
+            if (pszFqdnList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszFqdnList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+
+            LW_SAFE_FREE_STRING(pszFqdnList);
+            pszFqdnList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+
+      aStr = strtok_r(NULL, ",", &saveStrPtr);
+   }
+
+
+   if (pszFqdnList && pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s,%s", pszServiceClassList, pszFqdnList);
+   else if (pszFqdnList && !pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszFqdnList);
+   else
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszServiceClassList);
+
+   // pszNewServicePrincipalNameList contains non-duplicated, uppercase service class.
+   // Fully qualified SPN is added as is.
+   *ppGroomedServicePrincipalList = pszNewServicePrincipalNameList;
+
+   LW_SAFE_FREE_STRING(pszFqdnList);
+   LW_SAFE_FREE_STRING(pszServiceClassList);
+
+   return;
+}
 
 DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
 {
@@ -909,30 +991,39 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         PrintStderr(appContext, LogLevelVerbose, "Password set successfully.\n");
     }
 
+    // If --spn option not provided, then default is host.
+    dwError = SetNewComputerSPNAttribute(action);
+    if (dwError)
+    {
+       PrintResult(appContext,
+                   LogLevelNone,
+                   "%s: Failed to update %s service principal name attribute.\n",
+                   appContext->actionName, action->newComputer.name);
+       ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
     if (action->newComputer.keytab)
     {
 
        dwError = CreateNewComputerKeytabFile(action);
        if (dwError)
        {
-           PrintResult(appContext,
-                       LogLevelError,
-                       "%s: Failed to create keytab file for %s.\n",
-                       appContext->actionName, action->newComputer.name);
-           // Ignore the failure. Leave it up to the admin to delete new computer and retry.
-           dwError = 0;
+          PrintResult(appContext,
+                      LogLevelError,
+                      "%s: Failed to create keytab file %s for %s.\n",
+                      appContext->actionName, action->newComputer.keytab, action->newComputer.name);
+          // Ignore the failure. Leave it up to the admin to delete new computer account and retry.
+          dwError = 0;
        }
        else
        {
            PrintResult(appContext,
                        LogLevelInfo,
-                       "%s: Keytab file created for computer %s.\n",
-                       appContext->actionName, action->newComputer.name);
+                       "%s: Keytab file %s created for computer %s.\n",
+                       appContext->actionName, action->newComputer.keytab, action->newComputer.name);
        }
 
-       
     }
-
 
     cleanup:
         return dwError;
@@ -1017,3 +1108,106 @@ DWORD  SetMachinePassword(IN AdtActionTP action)
         goto cleanup;
 }
 
+static
+DWORD SetNewComputerSPNAttribute(IN AdtActionTP action)
+{
+   DWORD dwError = 0;
+   DWORD dwMaxValues = 100;
+   DWORD i, j = 0;
+   PSTR aStr = NULL;
+   PSTR saveStrPtr = NULL;
+   PSTR pszDn = NULL;
+   PSTR pszDomainFromDn = NULL;
+   PSTR pszMachineName = NULL;
+   AttrValsT *avp = NULL;
+   AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+   BOOLEAN bIsServiceClass = FALSE;
+   PSTR pszServicePrincipalNameList = NULL;
+
+   GroomSpnList(action, &pszServicePrincipalNameList);
+
+   PrintStdout(appContext, LogLevelVerbose,
+               "%s: Setting SPN Attribute using: %s\n",
+               appContext->actionName, pszServicePrincipalNameList);
+
+   dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
+   ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+   dwError = LwStrDupOrNull("servicePrincipalName", &avp[0].attr);
+   ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateMemory(dwMaxValues * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    for (i = 0; i < dwMaxValues; i++)
+       avp[0].vals[i] = NULL;
+
+   dwError = LwStrDupOrNull(action->newComputer.dn, &pszDn);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   dwError = LwStrDupOrNull(action->newComputer.name, &pszMachineName);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   LwStrToLower(pszMachineName);
+
+   dwError = GetDomainFromDN(pszDn, &pszDomainFromDn);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   LwStrToLower(pszDomainFromDn);
+
+   aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
+   i = 0;
+   while ((aStr != NULL) && (i < dwMaxValues))
+   {
+      GroomSpn(&aStr, &bIsServiceClass);
+      if (bIsServiceClass)
+      {
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i], "%s/%s", aStr, pszMachineName);
+         ADT_BAIL_ON_ERROR(dwError);
+
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i+1],"%s/%s.%s", aStr, pszMachineName, pszDomainFromDn);
+         ADT_BAIL_ON_ERROR(dwError);
+         i+=2;
+      }
+      else
+      {
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i], "%s", aStr);
+         ADT_BAIL_ON_ERROR(dwError);
+         i++; 
+      }
+      aStr = strtok_r(NULL, ",", &saveStrPtr);
+   }
+ 
+   dwError = ModifyADObject(appContext, pszDn, avp, 2);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   PrintStdout(appContext, LogLevelVerbose,
+               "%s: Successfully updated servicePrincipalName.\n",
+               appContext->actionName);
+
+cleanup:
+   LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
+   LW_SAFE_FREE_MEMORY(pszDn);
+   LW_SAFE_FREE_MEMORY(pszMachineName);
+   LW_SAFE_FREE_MEMORY(pszDomainFromDn);
+
+   if (avp)
+   {
+      for (i = 0; avp[i].vals; ++i)
+      {
+         for (j = 0; avp[i].vals[j]; ++j)
+            LW_SAFE_FREE_MEMORY(avp[i].vals[j]);
+
+         LW_SAFE_FREE_MEMORY(avp[i].vals);
+     }
+
+     LW_SAFE_FREE_MEMORY(avp);
+   }
+
+
+
+   return dwError;
+
+error:
+   goto cleanup;
+}

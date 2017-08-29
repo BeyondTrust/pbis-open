@@ -41,6 +41,9 @@
 #ifndef _AD_TOOL_UTILS_H_
 #define _AD_TOOL_UTILS_H_
 
+#define DEFAULT_SERVICE_PRINCIPAL_NAME_LIST "host"
+
+
 /**
  * Get name component from UPN or Domain\User string.
  *
@@ -281,5 +284,8 @@ extern DWORD StrArray2StrExcluding(IN PSTR *s, IN INT ind, OUT PSTR *out);
  * @return 0 on success; error code on error.
  */
 extern DWORD Str2Ull(IN PCSTR pStr, IN register INT base, OUT unsigned long long int *res);
+
+extern VOID GroomSpn(PSTR *ppszSpn, BOOLEAN *bIsServiceClass);
+
 
 #endif /* _AD_TOOL_UTILS_H_ */

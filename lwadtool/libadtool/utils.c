@@ -1290,3 +1290,36 @@ Str2Ull(IN PCSTR pStr, IN register INT base, OUT unsigned long long int *res)
     error:
         goto cleanup;
 }
+
+// Distinguish between nfs, nfs/ and http/www.linuxcomputer.com. If it is
+// service class name with trailing slash, then strip the slash.
+VOID
+GroomSpn(PSTR *ppszSpn, BOOLEAN *bIsServiceClass)
+{
+   PSTR pszHasPeriod = NULL;
+   PSTR pszHasSlash = NULL;
+
+   LwStripLeadingWhitespace(*ppszSpn);
+   LwStripTrailingWhitespace(*ppszSpn);
+
+   LwStrChr(*ppszSpn, '.', &pszHasPeriod);
+   if (pszHasPeriod)
+   {
+     *bIsServiceClass = FALSE;
+     return;
+   }
+
+   LwStrChr(*ppszSpn, '/', &pszHasSlash);
+   if ((pszHasSlash) && (strlen(pszHasSlash) == 1))
+   {
+      *pszHasSlash = '\0';
+      *bIsServiceClass = TRUE;
+   }
+   else if ((pszHasSlash) && (strlen(pszHasSlash) >= 1))
+     *bIsServiceClass = FALSE;
+   else
+     *bIsServiceClass = TRUE;
+
+   return;
+}
+

@@ -713,7 +713,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*newOuAction)[i++])));
 
     i = 0;
-    struct poptOption **newComputerAction = MakeOptions(8);
+    struct poptOption **newComputerAction = MakeOptions(9);
     ADT_BAIL_ON_ALLOC_FAILURE(newComputerAction);
     MakeOption(&((*newComputerAction)[i++]),
                "dn",
@@ -769,8 +769,18 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.newComputer.keytab),
                0,
-               "Generate a keytab file for the computer. Specify /path/to/file.keytab.",
+               "Generate a keytab file for the computer. Specify /path/to/file.keytab. By default keytab file is generated with host service class",
                NULL);
+
+    MakeOption(&((*newComputerAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.servicePrincipalNameList),
+               0,
+               "Set new computer account service principal name attribute. A comma separated list can be specified (eg. \"nfs, host/\"). If this option is not specified the default is host. For an empty SPN attribute use --spn \"\".",
+               NULL);
+
     MakeOption(ADT_TABLEEND(&((*newComputerAction)[i++])));
 
     i = 0;
