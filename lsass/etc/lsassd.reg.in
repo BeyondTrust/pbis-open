@@ -162,6 +162,11 @@
     default = "%H/local/%D/%U"
     doc = ""
 }
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
+}
 "RemoteHomeDirTemplate" = {
     default = ""
     doc = ""
@@ -312,6 +317,11 @@
     default = "%H/local/%D/%U"
     doc = "Format string for user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U)."
 }
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
+}
 "CreateHomeDir" = {
     default = dword:00000001
     doc = ""
@@ -406,6 +416,11 @@
 "HomeDirTemplate" = {
     default = "%H/local/%D/%U"
     doc = ""
+}
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
 }
 "RegisterTcpIp" = {
     default = dword:00000000

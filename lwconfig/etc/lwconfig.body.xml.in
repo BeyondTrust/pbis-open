@@ -479,6 +479,20 @@
         </registry>
     </capability>
     <capability>
+        <name>HomeDirForceLowercase</name>
+        <description>Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured, /etc/pbis/user-override file takes precedence.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirForceLowercase"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirForceLowercase" >
+            <description>Set true if home directory to be created in lower case.</description>
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
         <name>HomeDirPrefix</name>
         <description>Prefix path for user's home directory. This value is used in place of the %H in the HomeDirTemplate setting. Value must be an absolute path.</description>
         <registry type="string"
