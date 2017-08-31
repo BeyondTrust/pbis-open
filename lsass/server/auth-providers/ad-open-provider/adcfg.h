@@ -76,6 +76,8 @@
            bInLock = FALSE;                                \
         }
 
+#define DEFAULT_SERVICE_PRINCIPAL_NAME_LIST "HOST"
+
 DWORD
 AD_ReadRegistry(
     IN OPTIONAL PCSTR pszDomainName,
@@ -148,6 +150,12 @@ AD_GetUnprovisionedModeRemoteHomeDirTemplate(
 DWORD
 AD_GetMachinePasswordSyncPwdLifetime(
     IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+DWORD
+AD_GetServicePrincipalNameList(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT PSTR*  ppszServicePrincipalNameList
     );
 
 DWORD
@@ -346,6 +354,9 @@ void
 AD_ConfigLockRelease(
     PLSA_AD_PROVIDER_STATE pState
     );
+
+DWORD
+AD_GetServicePrincipalNameFromRegistry(PSTR* ppszServicePrincipalNameList);
 
 #endif /* __AD_CFG_H__ */
 

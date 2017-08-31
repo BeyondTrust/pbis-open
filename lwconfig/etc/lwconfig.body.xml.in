@@ -463,6 +463,20 @@
         </registry>
     </capability>
     <capability>
+        <name>ServicePrincipalName</name>
+        <description>Update the local krb5 keytab file and computer account service principal name attribute in AD with the provided list of instances. Changes take affect upon domain join. Default adds host service class.</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\ServicePrincipalName"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\ServicePrincipalName" >
+            <description>Example: nfs/,http/wwww.linuxcomputer.com</description>
+            <default>
+                <value>host</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply inform="Domainjoin required to update the computer object's SPN" />
+        </registry>
+    </capability>
+    <capability>
         <name>MemoryCacheSizeCap</name>
         <description>The maximum bytes to use for the in-memory cache. Old data will be purged if the total cache size exceeds this limit. A value of 0 indicates no limit.</description>
         <registry type="dword"

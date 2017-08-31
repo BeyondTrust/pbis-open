@@ -322,11 +322,15 @@ KtKrb5AddKeyA(
     DWORD  dwKeyVer
     )
 {
-    const krb5_enctype enc[] = { ENCTYPE_DES_CBC_CRC,
-                                 ENCTYPE_DES_CBC_MD5,
-                                 ENCTYPE_ARCFOUR_HMAC,
+    const krb5_enctype enc[] = { ENCTYPE_AES256_CTS_HMAC_SHA1_96,
                                  ENCTYPE_AES128_CTS_HMAC_SHA1_96,
-                                 ENCTYPE_AES256_CTS_HMAC_SHA1_96 };
+                                 ENCTYPE_ARCFOUR_HMAC,
+                                 ENCTYPE_DES_CBC_MD5,
+                                 ENCTYPE_DES_CBC_CRC };
+                                
+                               
+                              
+                             
     DWORD dwError = ERROR_SUCCESS;
     PSTR pszBaseDn = NULL;
     krb5_error_code ret = 0;
@@ -1075,6 +1079,7 @@ error:
     goto cleanup;
 }
 
+DWORD
 KtKrb5GetUserSaltingPrincipalA(
     PCSTR pszUserName,
     PCSTR pszRealmName,

@@ -186,6 +186,10 @@
     doc = "Machine password expiration lifespan in seconds."
     range = integer:3600-31536000
 }
+"ServicePrincipalName" = {
+    default = sza:"host"
+    doc = "Update krb5 keytab file with list of instances. Changes take affect upon domain join or MachinePasswordLifespan. Host instance is always added to keytab file"
+}
 "AssumeDefaultDomain" = {
     default = @DEFAULT_AD_PROVIDER_ASSUME_DEFAULT_DOMAIN@
     doc = "Apply domain name prefix to account name at logon"

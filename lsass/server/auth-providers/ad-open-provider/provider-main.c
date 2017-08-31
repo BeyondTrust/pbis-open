@@ -2395,6 +2395,7 @@ AD_JoinDomain(
     PSTR pszCanonicalDnsDomainName = NULL;
     PSTR pszCanonicalHostname = NULL;
     PSTR pszCanonicalHostDnsDomain = NULL;
+    PSTR pszServicePrincipalNameList = NULL;
 
     if (peerUID != 0)
     {
@@ -2501,6 +2502,10 @@ AD_JoinDomain(
     dwError = LsaPstoreDeletePasswordInfoA(pszCanonicalDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_GetServicePrincipalNameFromRegistry(
+                &pszServicePrincipalNameList); 
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaJoinDomainUac(
         pszCanonicalHostname,
         pszCanonicalHostDnsDomain,
@@ -2512,7 +2517,8 @@ AD_JoinDomain(
         pRequest->pszOSVersion,
         pRequest->pszOSServicePack,
         pRequest->dwFlags,
-        pRequest->dwUac);
+        pRequest->dwUac,
+        pszServicePrincipalNameList);
     BAIL_ON_LSA_ERROR(dwError);
 
     // All old RPC connections are keyed with the old machine account
@@ -2542,6 +2548,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszCanonicalHostname);
     LW_SAFE_FREE_MEMORY(pszCanonicalHostDnsDomain);
     LW_SAFE_FREE_MEMORY(pszMessage);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
 
     AD_DereferenceProviderState(pStateMinimal);
     AD_DereferenceProviderState(pState);
@@ -5821,7 +5828,7 @@ LsaAdProviderLogConfigReloadEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "Likewise authentication service provider configuration settings have been reloaded.\r\n\r\n" \
+                 "PBIS authentication service provider configuration settings have been reloaded.\r\n\r\n" \
                  "     Authentication provider:           %s\r\n" \
                  "     Current settings are...\r\n" \
                  "     Cache entry expiry (secs):         %u\r\n" \

@@ -198,6 +198,7 @@ ADChangeMachinePasswordInThreadLock(
     )
 {
     DWORD dwError = 0;
+    PSTR  pszServicePrincipalNameList = NULL;
 
     LSA_LOG_VERBOSE("Changing machine password for %s", pState->pszDomainName);
 
@@ -208,7 +209,13 @@ ADChangeMachinePasswordInThreadLock(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMachineChangePassword(pState->pszDomainName);
+    dwError = AD_GetServicePrincipalNameList(
+                  pState,
+                  &pszServicePrincipalNameList);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaMachineChangePassword(pState->pszDomainName,
+                                       pszServicePrincipalNameList);
     if (dwError)
     {
         LSA_LOG_ERROR("Error: Failed to change machine password for %s (error = %u)", pState->pszDomainName, dwError);
@@ -229,6 +236,7 @@ ADChangeMachinePasswordInThreadLock(
     }
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
 
     return dwError;
 

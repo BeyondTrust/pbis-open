@@ -83,6 +83,7 @@ typedef struct _LSA_AD_CONFIG {
     BOOLEAN             bSyncSystemTime;
     BOOLEAN             bRefreshUserCreds;
     DWORD               dwMachinePasswordSyncLifetime;
+    PSTR                pszServicePrincipalNameList;
     PSTR                pszUserDomainPrefix;
     PSTR                pszShell;
     PSTR                pszHomedirPrefix;
@@ -90,7 +91,7 @@ typedef struct _LSA_AD_CONFIG {
     PSTR                pszRemoteHomeDirTemplate;
     DWORD               dwUmask;
     PSTR                pszSkelDirs;
-    PLW_DLINKED_LIST        pUnresolvedMemberList;
+    PLW_DLINKED_LIST    pUnresolvedMemberList;
     PSTR                pszaIgnoreUserNameList;
     PSTR                pszaIgnoreGroupNameList;
     AD_CELL_SUPPORT     CellSupport;

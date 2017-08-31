@@ -1444,6 +1444,14 @@ CapabilityApply(
 
                 LW_SAFE_FREE_STRING(pszCommand);
             }
+            xszCommand = xmlGetProp(child, (const xmlChar*)"inform");
+            if (xszCommand)
+            {
+                if (bVerbose)
+                  fprintf(stdout, "%s\n", xszCommand);
+                xmlFree(xszCommand);
+                xszCommand = NULL;
+            }
         }
     }
 

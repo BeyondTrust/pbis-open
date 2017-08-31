@@ -77,7 +77,8 @@ LsaJoinDomainUac(
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
     LSA_NET_JOIN_FLAGS dwFlags,
-    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac,
+    PSTR pszServicePrincipalNameList
     );
 
 DWORD
@@ -102,7 +103,8 @@ LsaDisableDomainGroupMembership(
 
 DWORD
 LsaMachineChangePassword(
-    IN OPTIONAL PCSTR pszDnsDomainName
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    IN PSTR           pszServicePrincipalNameList
     );
 
 DWORD

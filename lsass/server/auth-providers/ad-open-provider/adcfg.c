@@ -77,6 +77,13 @@ AD_SetConfig_RequireMembershipOf(
     );
 
 static
+VOID
+AD_SetConfig_ServicePrincipalNameList(
+    PLSA_AD_CONFIG pConfig, 
+    PCSTR pszServicePrincipalNameMultiString
+    );
+
+static
 DWORD
 AD_SetConfig_MachinePasswordLifespan(
     PLSA_AD_CONFIG pConfig,
@@ -90,7 +97,6 @@ AD_SetConfig_DomainManager_TrustExceptionList(
     PLSA_AD_CONFIG pConfig,
     PCSTR pszTrustsListMultiString
     );
-
 
 DWORD
 AD_TransferConfigContents(
@@ -124,6 +130,7 @@ AD_InitializeConfig(
     pConfig->dwCacheEntryExpirySecs   = AD_CACHE_ENTRY_EXPIRY_DEFAULT_SECS;
     pConfig->dwCacheSizeCap           = 0;
     pConfig->dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
+    pConfig->pszServicePrincipalNameList = NULL;
     pConfig->dwUmask          = AD_DEFAULT_UMASK;
 
     pConfig->bEnableEventLog = FALSE;
@@ -205,6 +212,7 @@ AD_FreeConfigContents(
     LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreUserNameList);
     LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreGroupNameList);
     LW_SAFE_FREE_STRING(pConfig->pszUserDomainPrefix);
+    LW_SAFE_FREE_STRING(pConfig->pszServicePrincipalNameList);
 
     if (pConfig->pUnresolvedMemberList)
     {
@@ -246,6 +254,7 @@ AD_ReadRegistry(
     DWORD dwMachinePasswordSyncLifetime = 0;
     PSTR pszExcludeTrustsListMultiString = NULL;
     PSTR pszIncludeTrustsListMultiString = NULL;
+    PSTR pszServicePrincipalNameMultiString = NULL;
     LSA_AD_CONFIG StagingConfig;
 
     const PCSTR CellSupport[] = {
@@ -327,6 +336,16 @@ AD_ReadRegistry(
             MAXDWORD, /* AD_MACHINE_PASSWORD_SYNC_MAXIMUM_SECS] */
             NULL,
             &dwMachinePasswordSyncLifetime,
+            NULL
+        },
+        {
+            "ServicePrincipalName",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszServicePrincipalNameMultiString,
             NULL
         },
         {
@@ -669,6 +688,8 @@ AD_ReadRegistry(
              pszIncludeTrustsListMultiString :
              pszExcludeTrustsListMultiString));
 
+    AD_SetConfig_ServicePrincipalNameList(&StagingConfig, pszServicePrincipalNameMultiString);
+
     AD_ReadRegistryForDomain(pszDomainName, &StagingConfig);
 
     AD_TransferConfigContents(&StagingConfig, pConfig);
@@ -680,6 +701,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszUnresolvedMemberList);
     LW_SAFE_FREE_STRING(pszExcludeTrustsListMultiString);
     LW_SAFE_FREE_STRING(pszIncludeTrustsListMultiString);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameMultiString);
 
     AD_FreeConfigContents(&StagingConfig);
 
@@ -957,6 +979,63 @@ error:
     goto cleanup;
 }
 
+static
+VOID
+AD_SetConfig_ServicePrincipalNameList(
+    PLSA_AD_CONFIG pConfig, 
+    PCSTR pszServicePrincipalNameMultiString
+    )
+{
+    DWORD dwError = 0;
+    PSTR *ppszServicePrincipalNameList = NULL;
+    DWORD dwServicePrincipalNameCount = 0;
+    PSTR pszTmpList = NULL;
+    PSTR pszNewList = NULL;
+    DWORD i = 0;
+
+    dwError = AD_ConvertMultiStringToStringArray(
+                    pszServicePrincipalNameMultiString,
+                    &ppszServicePrincipalNameList,
+                    &dwServicePrincipalNameCount);
+
+    // Convert string array to a comma separated string.
+    for (i = 0; i < dwServicePrincipalNameCount; i++)
+    {
+        if (pszNewList)
+        {
+           dwError = LwAllocateStringPrintf(&pszTmpList, "%s,%s", pszNewList, ppszServicePrincipalNameList[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+           LW_SAFE_FREE_STRING(pszNewList);
+           pszNewList = pszTmpList;
+        }
+        else
+        {
+           dwError = LwAllocateStringPrintf(&pszNewList, "%s", ppszServicePrincipalNameList[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+    if (pszNewList)
+       pConfig->pszServicePrincipalNameList = pszNewList;
+    else
+    {
+       LwStrDupOrNull(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pConfig->pszServicePrincipalNameList);
+    }
+
+
+cleanup:
+
+    if (ppszServicePrincipalNameList)
+    {
+       LwFreeStringArray(ppszServicePrincipalNameList,
+                         dwServicePrincipalNameCount);
+    }
+
+    return;
+
+error:
+    goto cleanup;
+}
 
 static
 DWORD
@@ -1214,6 +1293,24 @@ AD_GetMachinePasswordSyncPwdLifetime(
     LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwMachinePasswordSyncPwdLifetime;
+}
+
+DWORD
+AD_GetServicePrincipalNameList(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT PSTR* ppszServicePrincipalNameList
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+    dwError = LwStrDupOrNull(
+                    pState->config.pszServicePrincipalNameList,
+                    ppszServicePrincipalNameList);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return dwError;
 }
 
 DWORD
@@ -2152,4 +2249,82 @@ AD_ConfigLockRelease(
 
     status = pthread_rwlock_unlock(pState->pConfigLock);
     LW_ASSERT(status == 0);
+}
+
+DWORD
+AD_GetServicePrincipalNameFromRegistry(PSTR* ppszServicePrincipalNameList)
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PSTR pszServicePrincipalNameMultiString = NULL;
+    PSTR *ppszServicePrincipalNameArray = NULL;
+    DWORD dwServicePrincipalNameCount = 0;
+    PSTR pszTmpList = NULL;
+    PSTR pszNewList = NULL;
+    DWORD i = 0;
+
+    LWREG_CONFIG_ITEM ADConfigDescription[] =
+    {
+        {
+            "ServicePrincipalName",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszServicePrincipalNameMultiString,
+            NULL
+        }
+    };
+
+    dwError = RegProcessConfig(
+                AD_PROVIDER_REGKEY,
+                AD_PROVIDER_POLICY_REGKEY,
+                ADConfigDescription,
+                sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_ConvertMultiStringToStringArray(
+                    pszServicePrincipalNameMultiString,
+                    &ppszServicePrincipalNameArray,
+                    &dwServicePrincipalNameCount);
+
+    // Convert string array to a comma separated string.
+    for (i = 0; i < dwServicePrincipalNameCount; i++)
+    {
+        if (pszNewList)
+        {
+           dwError = LwAllocateStringPrintf(&pszTmpList, "%s,%s", pszNewList, ppszServicePrincipalNameArray[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+           LW_SAFE_FREE_STRING(pszNewList);
+           pszNewList = pszTmpList;
+        }
+        else
+        {
+           dwError = LwAllocateStringPrintf(&pszNewList, "%s", ppszServicePrincipalNameArray[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+        }        
+    }
+
+    if (pszNewList)
+    {
+      *ppszServicePrincipalNameList = pszNewList;
+    }
+    else
+    {
+      LwStrDupOrNull(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, ppszServicePrincipalNameList);
+    }
+ 
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameMultiString);
+    if (ppszServicePrincipalNameArray)
+    {
+       LwFreeStringArray(ppszServicePrincipalNameArray, 
+                         dwServicePrincipalNameCount);
+    }
+
+    return dwError;
+error:
+
+    goto cleanup;
 }
