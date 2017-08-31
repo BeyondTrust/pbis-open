@@ -2,7 +2,7 @@ Name: 		@PKG_OPEN_RPM_NAME@
 Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
-License: 	Likewise Proprietary
+License: 	GPLv2
 URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 Group: 		System Environment/Daemons
 Prereq: grep, sh-utils, @PKG_OPEN_UPGRADE_RPM_NAME@
