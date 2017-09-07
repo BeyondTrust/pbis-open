@@ -960,7 +960,7 @@ LwSmDispatchSetLogInfo(
             dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
             break;
         case LW_SM_LOGGER_SYSLOG:
-            dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
+            dwError = LwSmSetLoggerToSyslog(pReq->pFacility, pReq->pszTarget);
             break;
         case LW_SM_LOGGER_DEFAULT:
             if (!pReq->pFacility)

@@ -201,6 +201,35 @@ error:
     return dwError;
 }
 
+
+/**
+ * @brief Validates the supplied name is a supported syslog facility, and sets
+ * ppszSyslogFacility to the normalized facility name, i.e. the lower case name
+ *
+ * @return LW_ERROR_INVALID_PARAMETER or LW_ERROR_SUCCESS
+ */
+static
+DWORD
+LwSmSyslogTargetFacility(
+    PCSTR pszName,
+    PSTR *ppszSyslogFacility
+    )
+{
+    PLW_SM_SYSLOG_FACILITY pFacility = NULL;
+    pFacility = LwSmGetSyslogFacilityByName(pszName);
+
+    if (pFacility == NULL)
+    {
+        return LW_ERROR_INVALID_PARAMETER;
+    }
+
+    /* slightly better to cast away constness then
+     * copying/freeing */
+    *ppszSyslogFacility = (PSTR)pFacility->name;
+    return LW_ERROR_SUCCESS;
+}
+
+
 static
 VOID
 LwSmHandleSigint(
@@ -241,12 +270,12 @@ LwSmConfigureSignals(
         if (sigaddset(&set, blockSignals[i]) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_ERROR(dwError); 
+            BAIL_ON_ERROR(dwError);
         }
     }
 
     dwError = LwMapErrnoToLwError(pthread_sigmask(SIG_SETMASK, &set, NULL));
-    BAIL_ON_ERROR(dwError); 
+    BAIL_ON_ERROR(dwError);
 
     intAction.sa_handler = LwSmHandleSigint;
     intAction.sa_flags = 0;
@@ -294,7 +323,7 @@ LwSmWaitSignals(
         if (sigaddset(&set, waitSignals[i]) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_ERROR(dwError); 
+            BAIL_ON_ERROR(dwError);
         }
     }
 
@@ -406,7 +435,7 @@ LwSmList(
 
         dwError = LwWc16sToMbs(ppwszServiceNames[i], &pszServiceName);
         BAIL_ON_ERROR(dwError);
-        
+
         if (!gState.bQuiet)
         {
             printf("%s", pszServiceName);
@@ -439,7 +468,7 @@ LwSmList(
         hHandle = NULL;
         BAIL_ON_ERROR(dwError);
 
-        LW_SAFE_FREE_MEMORY(pszServiceName);    
+        LW_SAFE_FREE_MEMORY(pszServiceName);
     }
 
 cleanup:
@@ -473,13 +502,13 @@ LwSmStartOnly(
     DWORD dwError = 0;
     PWSTR pwszServiceName = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
-    
+
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     if (!gState.bQuiet)
     {
         printf("Starting service: %s\n", pArgv[1]);
@@ -487,9 +516,9 @@ LwSmStartOnly(
 
     dwError = LwSmStartService(hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
 
     if (hHandle)
@@ -523,10 +552,10 @@ LwSmStart(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmQueryServiceDependencyClosure(hHandle, &ppwszDependencies);
     BAIL_ON_ERROR(dwError);
 
@@ -544,7 +573,7 @@ LwSmStart(
             {
                 dwError = LwWc16sToMbs(ppwszDependencies[i], &pszTemp);
                 BAIL_ON_ERROR(dwError);
-                
+
                 printf("Starting service dependency: %s\n", pszTemp);
                 LW_SAFE_FREE_MEMORY(pszTemp);
             }
@@ -565,9 +594,9 @@ LwSmStart(
 
     dwError = LwSmStartService(hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
     LW_SAFE_FREE_MEMORY(pszTemp);
 
@@ -603,13 +632,13 @@ LwSmStopOnly(
     DWORD dwError = 0;
     PWSTR pwszServiceName = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
-    
+
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     if (!gState.bQuiet)
     {
         printf("Stopping service: %s\n", pArgv[1]);
@@ -617,9 +646,9 @@ LwSmStopOnly(
 
     dwError = LwSmStopService(hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
 
     if (hHandle)
@@ -652,10 +681,10 @@ LwSmStop(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmQueryServiceReverseDependencyClosure(hHandle, &ppwszDependencies);
     BAIL_ON_ERROR(dwError);
 
@@ -673,7 +702,7 @@ LwSmStop(
             {
                 dwError = LwWc16sToMbs(ppwszDependencies[i], &pszTemp);
                 BAIL_ON_ERROR(dwError);
-                
+
                 printf("Stopping service reverse dependency: %s\n", pszTemp);
                 LW_SAFE_FREE_MEMORY(pszTemp);
             }
@@ -694,9 +723,9 @@ LwSmStop(
 
     dwError = LwSmStopService(hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
     LW_SAFE_FREE_MEMORY(pszTemp);
 
@@ -746,11 +775,11 @@ LwSmRestart(
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
-    BAIL_ON_ERROR(dwError); 
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwSmQueryServiceReverseDependencyClosure(hHandle, &ppwszReverseDeps);
     BAIL_ON_ERROR(dwError);
- 
+
     count = LwSmStringListLength(ppwszReverseDeps);
 
     dwError = LwAllocateMemory(sizeof(*pStatus) * count, OUT_PPVOID(&pStatus));
@@ -806,7 +835,7 @@ LwSmRestart(
             {
                 dwError = LwWc16sToMbs(ppwszDependencies[i], &pszTemp);
                 BAIL_ON_ERROR(dwError);
-                
+
                 printf("Starting service dependency: %s\n", pszTemp);
                 LW_SAFE_FREE_MEMORY(pszTemp);
             }
@@ -900,12 +929,12 @@ LwSmDoRefresh(
     DWORD dwError = 0;
     PWSTR pwszServiceName = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
-    
+
     if (argc > 1)
     {
         dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
         BAIL_ON_ERROR(dwError);
-    
+
         dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
         BAIL_ON_ERROR(dwError);
 
@@ -960,13 +989,13 @@ LwSmInfo(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmQueryServiceInfo(hHandle, &pInfo);
     BAIL_ON_ERROR(dwError);
-    
+
     printf("Service: %s\n", pArgv[1]);
 
     dwError = LwWc16sToMbs(pInfo->pwszDescription, &pszTemp);
@@ -1060,7 +1089,7 @@ LwSmInfo(
     }
 
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
     LW_SAFE_FREE_MEMORY(pszTemp);
 
@@ -1091,13 +1120,13 @@ LwSmStatus(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmQueryServiceStatus(hHandle, &status);
     BAIL_ON_ERROR(dwError);
-    
+
     if (!gState.bQuiet)
     {
         switch (status.state)
@@ -1117,7 +1146,7 @@ LwSmStatus(
     *pRet = status.state;
 
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
 
     if (hHandle)
@@ -1266,7 +1295,7 @@ LwSmWaitThread(
     DWORD dwError = 0;
     LW_SERVICE_HANDLE hHandle = pData;
     LW_SERVICE_STATUS status = {0};
-    
+
     while (status.state != LW_SERVICE_STATE_STOPPED &&
            status.state != LW_SERVICE_STATE_DEAD)
     {
@@ -1309,10 +1338,10 @@ LwSmProxy(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwMapErrnoToLwError(pthread_create(
                                       &waitThread,
                                       NULL,
@@ -1322,7 +1351,7 @@ LwSmProxy(
 
     dwError = LwMapErrnoToLwError(pthread_detach(waitThread));
     BAIL_ON_ERROR(dwError);
-    
+
     if (!gState.bQuiet)
     {
         printf("Proxying for service: %s\n", pArgv[1]);
@@ -1378,7 +1407,7 @@ LwSmFindServiceWithPid(
     {
         dwError = LwSmAcquireServiceHandle(ppwszServiceNames[i], &hHandle);
         BAIL_ON_ERROR(dwError);
-    
+
         dwError = LwSmQueryServiceStatus(hHandle, &status);
         BAIL_ON_ERROR(dwError);
 
@@ -1442,10 +1471,10 @@ LwSmGdb(
 
     dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = LwSmQueryServiceStatus(hHandle, &status);
     BAIL_ON_ERROR(dwError);
 
@@ -1498,7 +1527,7 @@ LwSmGdb(
 
     dwError = LwAllocateStringPrintf(&pszPid, "%lu", (unsigned long) status.pid);
     BAIL_ON_ERROR(dwError);
-    
+
     if (execlp("gdb", "gdb", pszExecutablePath, pszPid, NULL) < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
@@ -1585,14 +1614,14 @@ LwSmSetLog(
     PSTR pFacility = NULL;
     PSTR pszTarget = NULL;
     PWSTR pServiceName = NULL;
-    
-    const LW_BOOLEAN persistFlag = 
+
+    const LW_BOOLEAN persistFlag =
         (pArgv[1] && (strcmp(pArgv[1], "--persist") == 0
                     || strcmp(pArgv[1], "-p") == 0))
-        ? LW_TRUE 
+        ? LW_TRUE
         : LW_FALSE;
 
-    if (persistFlag) 
+    if (persistFlag)
     {
         argc--;
         pArgv++;
@@ -1612,12 +1641,12 @@ LwSmSetLog(
         dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
         BAIL_ON_ERROR(dwError);
     }
-    else 
+    else
     {
         /* specifying lwsdm itself via service of '-' */
-        if (persistFlag == LW_TRUE) 
+        if (persistFlag == LW_TRUE)
         {
-            if (!gState.bQuiet) 
+            if (!gState.bQuiet)
             {
               printf("Saving log settings for service %s is not supported\n", LWSMD_SERVICE);
             }
@@ -1643,7 +1672,7 @@ LwSmSetLog(
     else if (!strcasecmp(pArgv[3], "file"))
     {
         if (argc < 5)
-        {     
+        {
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_ERROR(dwError);
         }
@@ -1654,6 +1683,12 @@ LwSmSetLog(
     {
         type = LW_SM_LOGGER_SYSLOG;
         pszTarget = NULL;
+
+        if (pArgv[4])
+        {
+            dwError = LwSmSyslogTargetFacility(pArgv[4], &pszTarget);
+            BAIL_ON_ERROR(dwError);
+        }
     }
     else
     {
@@ -1815,13 +1850,13 @@ LwSmCmdSetLogLevel(
     LW_SERVICE_HANDLE hHandle = NULL;
     PWSTR pServiceName = NULL;
 
-    const LW_BOOLEAN persistFlag = 
+    const LW_BOOLEAN persistFlag =
         (pArgv[1] && (strcmp(pArgv[1], "--persist") == 0
                     || strcmp(pArgv[1], "-p") == 0))
         ? LW_TRUE
         : LW_FALSE;
 
-    if (persistFlag) 
+    if (persistFlag)
     {
         argc--;
         pArgv++;
@@ -1840,11 +1875,11 @@ LwSmCmdSetLogLevel(
 
         dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
         BAIL_ON_ERROR(dwError);
-    } 
-    else 
+    }
+    else
     {
         /* specifying lwsdm itself via service of '-' */
-        if (persistFlag == LW_TRUE) 
+        if (persistFlag == LW_TRUE)
         {
             if (!gState.bQuiet)
             {
@@ -2188,8 +2223,10 @@ LwSmUsage(
            "    status <service>           Get the status of a service\n"
            "    get-log <service> [ <facility> ]\n"
            "                               List logging state given service and optional facility\n"
-           "    set-log-target [-p, --persist] <service> <facility> <type> [ <target> ]\n"
+           "    set-log-target [-p, --persist] <service> <facility> <type> [ <target> | <syslog facility> ]\n"
            "                               Set log target for a given service and facility\n"
+           "                               For log target type of 'file' the target specifies the log file path\n"
+           "                               For log target type of 'syslog' you can supply an optional syslog facility, e.g. local3\n"
            "                               -p, --persist save the log type/target so it will be used when the service starts\n"
            "                               --persist cannot be used with service lwsmd, i.e. where service is -\n"
            "    set-log-level [-p, --persist] <service> <facility> <level>\n"

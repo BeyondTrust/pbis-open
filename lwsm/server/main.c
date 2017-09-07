@@ -40,7 +40,7 @@
 #include "ctexec.h"
 
 #define LWSM_FIPS_MODE_PATH CONFIGDIR "/fipsmode"
-     
+
 PLW_THREAD_POOL gpPool;
 
 SM_GLOBAL_STATE gState =
@@ -129,7 +129,7 @@ static
 int
 LwSmFIPsMode(
     VOID
-    );        
+    );
 
 int
 main(
@@ -186,12 +186,12 @@ main(
 
     /* Initialize logging subsystem */
     LwSmLogInit();
-    
+
     /* Set up logging */
     dwError = LwSmConfigureLogging(gState.pName);
     BAIL_ON_ERROR(dwError);
 
-    if (fips_mode) 
+    if (fips_mode)
     {
         SM_LOG_ALWAYS("***** running with FIPs mode enabled *****");
     }
@@ -457,7 +457,7 @@ LwSmDaemonize(
 
         exit(dwError ? 1 : 0);
     }
-    
+
     /* We are the intermediate background process.
        Isolate ourselves from the state of the foreground process
        by changing directory, becoming a session leader,
@@ -533,7 +533,7 @@ LwSmNotify(
     DWORD dwError = 0;
     int ret = 0;
 
-    do 
+    do
     {
         ret = write(gState.notifyPipe[1], &Error, sizeof(Error));
     } while (ret < 0 && errno == EINTR);
@@ -630,12 +630,12 @@ error:
     LwRtlExitMain(STATUS_UNSUCCESSFUL);
 }
 
-static 
-void 
+static
+void
 KillProcessGroup(
     void *data)
 {
-   CTRunCommand("/opt/pbis/libexec/lwkill.sh kill-internal"); 
+   CTRunCommand("/opt/pbis/libexec/lwkill.sh kill-internal");
 }
 
 static
@@ -644,7 +644,7 @@ Shutdown(
     PVOID pUnused
     )
 {
-    const unsigned int timerDelaySeconds = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS; 
+    const unsigned int timerDelaySeconds = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS;
     PLW_TIMER pShutdownTimer = LwTimerInitialize("lwsmd", &KillProcessGroup, NULL, timerDelaySeconds);
     DWORD dwError = 0;
 
@@ -657,13 +657,13 @@ Shutdown(
         dwError = LwSmShutdownServices();
         BAIL_ON_ERROR(dwError);
     }
-    
+
     /* Stop IPC server */
     dwError = LwSmStopIpcServer();
     BAIL_ON_ERROR(dwError);
 
 error:
-    if (pShutdownTimer) 
+    if (pShutdownTimer)
     {
         SM_LOG_INFO("Services were stopped, cancelling shutdown timer");
         LwTimerCancel(pShutdownTimer);
@@ -672,7 +672,7 @@ error:
 
     LwRtlExitMain((dwError) ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS);
 }
- 
+
 
 static
 VOID
@@ -702,7 +702,7 @@ MainTask(
 
         status = LwRtlSetTaskUnixSignal(pTask, SIGHUP, TRUE);
         BAIL_ON_ERROR(status);
-        
+
         status = LwRtlQueueWorkItem(gpPool, Startup, NULL, 0);
         BAIL_ON_ERROR(status);
 
@@ -735,7 +735,7 @@ MainTask(
                 break;
             }
         }
-        
+
         *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
     }
 
@@ -824,7 +824,7 @@ LwSmConfigureLogging(
     }
     else if (gState.bSyslog || gState.bStartAsDaemon || (gState.bContainer && !gState.pGroup))
     {
-        dwError = LwSmSetLoggerToSyslog(NULL);
+        dwError = LwSmSetLoggerToSyslog(NULL, NULL);
         BAIL_ON_ERROR(dwError);
     }
     else
@@ -914,7 +914,7 @@ LwSmIpcInit(
         gState.pIpcContext,
         LwSmLogIpc,
         NULL);
-    
+
     dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContainerProtocol));
     BAIL_ON_ERROR(dwError);
 
@@ -1138,7 +1138,7 @@ LwSmShutdownServices(
 
     dwError = LwSmTableEnumerateEntries(&ppwszServiceNames);
     BAIL_ON_ERROR(dwError);
-    
+
     for (i = 0; ppwszServiceNames[i]; i++)
     {
         dwError = LwSmTableGetEntry(ppwszServiceNames[i], &pEntry);
@@ -1148,7 +1148,7 @@ LwSmShutdownServices(
         if (dwError)
         {
             /* Ignore errors and try to shut down everything we can */
-            SM_LOG_WARNING("Could not shut down service; ignoring error: %s (%u)\n", 
+            SM_LOG_WARNING("Could not shut down service; ignoring error: %s (%u)\n",
                     LwWin32ExtErrorToName(dwError), (unsigned int) dwError);
             dwError = 0;
         }
@@ -1234,7 +1234,7 @@ LwSmFIPsMode(
     int fips_mode = 0;
 
     fp = fopen(LWSM_FIPS_MODE_PATH, "r");
-    
+
     if (fp) {
         int fm = 0;
         int rc = fscanf(fp, "%d", &fm);

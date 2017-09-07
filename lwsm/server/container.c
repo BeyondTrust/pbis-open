@@ -1760,7 +1760,14 @@ ContainerSrvStart(
         BAIL_ON_ERROR(dwError);
         break;
     case LW_SM_LOGGER_SYSLOG:
-        dwError = LwSmSetLoggerToSyslog(NULL);
+        /* log target if set is a syslog facility */
+        if (pReq->pLogTarget)
+        {
+            dwError = LwWc16sToMbs(pReq->pLogTarget, &pLogTarget);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        dwError = LwSmSetLoggerToSyslog(NULL, pLogTarget);
         BAIL_ON_ERROR(dwError);
         break;
     }
@@ -1915,7 +1922,7 @@ ContainerSrvSetLogTarget(
         dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
         break;
     case LW_SM_LOGGER_SYSLOG:
-        dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
+        dwError = LwSmSetLoggerToSyslog(pReq->pFacility, pReq->pszTarget);
         break;
     case LW_SM_LOGGER_DEFAULT:
         if (!pReq->pFacility)

@@ -1,8 +1,17 @@
+configure()
+{
+    # check for the existence of LOG_FTP and LOG_AUTHPRIV
+    mk_config_header "config.h"
+    mk_check_types \
+        HEADERDEPS="syslog.h" \
+        LOG_FTP LOG_AUTHPRIV
+}
+
 make()
 {
     mk_library \
         LIB=lwsmcommon \
-        SOURCES="protocol.c util.c" \
+        SOURCES="protocol.c util.c lwsmsyslog.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
         LIBDEPS="lwadvapi lwmsg"

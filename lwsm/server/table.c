@@ -54,7 +54,7 @@ LwSmTableFreeEntry(
     PSM_TABLE_ENTRY pEntry
     );
 
-static SM_TABLE gServiceTable = 
+static SM_TABLE gServiceTable =
 {
     .lock = PTHREAD_MUTEX_INITIALIZER,
     .pLock = &gServiceTable.lock,
@@ -88,7 +88,7 @@ LwSmTableGetEntry(
          pLink = LwSmLinkNext(pLink))
     {
         pEntry = STRUCT_FROM_MEMBER(pLink, SM_TABLE_ENTRY, link);
-        
+
         if (LwRtlWC16StringIsEqual(pEntry->pInfo->pwszName, pwszName, TRUE))
         {
             pEntry->dwRefCount++;
@@ -214,7 +214,7 @@ LwSmTableAddEntry(
     pEntry->bValid = TRUE;
 
     dwError = LwSmCopyServiceInfo(pInfo, &pEntry->pInfo);
-    
+
     dwError = LwMapErrnoToLwError(pthread_mutex_init(&pEntry->lock, NULL));
     BAIL_ON_ERROR(dwError);
     pEntry->pLock = &pEntry->lock;
@@ -351,7 +351,7 @@ LwSmTableRetainEntry(
     LOCK(bTableLocked, gServiceTable.pLock);
 
     ++pEntry->dwRefCount;
-    
+
     UNLOCK(bTableLocked, gServiceTable.pLock);
 }
 
@@ -446,7 +446,7 @@ LwSmTableStartEntry(
 
                 dwError = LwWc16sToMbs(pEntry->pInfo->pwszName, &pszServiceName);
                 BAIL_ON_ERROR(dwError);
-                
+
                 SM_LOG_INFO("Starting service: %s", pszServiceName);
 
                 if (pEntry->bDirty)
@@ -625,7 +625,7 @@ LwSmTableGetEntryStatus(
     BOOLEAN bLocked = FALSE;
 
     LOCK(bLocked, pEntry->pLock);
-    
+
     if (!pEntry->bValid)
     {
         dwError = LW_ERROR_INVALID_HANDLE;
@@ -634,9 +634,9 @@ LwSmTableGetEntryStatus(
 
     dwError = LwSmTablePollEntry(pEntry, pStatus);
     BAIL_ON_ERROR(dwError);
-    
+
 error:
-    
+
     UNLOCK(bLocked, pEntry->pLock);
 
     return dwError;
@@ -912,7 +912,7 @@ LwSmTableNotifyEntryStateChanged(
     PSM_ENTRY_NOTIFY pNotify = NULL;
     PSTR pServiceName = NULL;
     time_t now = 0;
-    
+
     LOCK(bLocked, pEntry->pLock);
 
     for (pLink = LwSmLinkBegin(&pEntry->waiters);
@@ -1038,16 +1038,16 @@ LwSmTableRegisterEntryNotify(
     {
         dwError = LwAllocateMemory(sizeof(*pNotify), OUT_PPVOID(&pNotify));
         BAIL_ON_ERROR(dwError);
-        
+
         LwSmLinkInit(&pNotify->link);
         pNotify->pfnNotifyEntryStateChange = pfnNotifyEntryStateChange;
         pNotify->pData = pData;
-        
+
         LwSmLinkInsertBefore(&pEntry->waiters, &pNotify->link);
     }
-    
+
 cleanup:
-    
+
     UNLOCK(bLocked, pEntry->pLock);
 
     return dwError;
@@ -1071,7 +1071,7 @@ LwSmTableUnregisterEntryNotify(
     PSM_LINK pLink = NULL;
     PSM_LINK pNext = NULL;
     PSM_ENTRY_NOTIFY pNotify = NULL;
-    
+
     LOCK(bLocked, pEntry->pLock);
 
     for (pLink = LwSmLinkBegin(&pEntry->waiters);
@@ -1141,15 +1141,15 @@ LwSmTableGetEntryDependencyClosureHelper(
 
             pwszDepName = NULL;
         }
-        
+
         LwSmTableReleaseEntry(pDepEntry);
         pDepEntry = NULL;
     }
 
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszDepName);
-    
+
     if (pInfo)
     {
         LwSmCommonFreeServiceInfo(pInfo);
@@ -1238,7 +1238,7 @@ LwSmTableGetEntryReverseDependencyClosureHelper(
                 ppwszAllServices,
                 pppwszServiceList);
             BAIL_ON_ERROR(dwError);
-            
+
             dwError = LwAllocateWc16String(&pwszDepName, pDepInfo->pwszName);
             BAIL_ON_ERROR(dwError);
 

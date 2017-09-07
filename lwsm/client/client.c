@@ -7,7 +7,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -401,7 +401,7 @@ error:
 
     goto cleanup;
 }
-   
+
 DWORD
 LwSmQueryServiceStatus(
     LW_SERVICE_HANDLE hHandle,
@@ -655,15 +655,15 @@ LwSmQueryServiceDependencyClosureHelper(
 
             pwszDepName = NULL;
         }
-        
+
         LwSmReleaseServiceHandle(hDepHandle);
         hDepHandle = NULL;
     }
 
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszDepName);
-    
+
     if (pInfo)
     {
         LwSmCommonFreeServiceInfo(pInfo);
@@ -747,7 +747,7 @@ LwSmQueryServiceReverseDependencyClosureHelper(
                 ppwszAllServices,
                 pppwszServiceList);
             BAIL_ON_ERROR(dwError);
-            
+
             dwError = LwAllocateWc16String(&pwszDepName, pDepInfo->pwszName);
             BAIL_ON_ERROR(dwError);
 

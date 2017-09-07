@@ -7,7 +7,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -37,8 +37,8 @@
  */
 
 /**
- * @file 
- * @brief Server side (lwsmd) definitions of lwsm functionality 
+ * @file
+ * @brief Server side (lwsmd) definitions of lwsm functionality
  */
 #ifndef __LWSM_SERVER_H__
 #define __LWSM_SERVER_H__
@@ -105,10 +105,10 @@ typedef struct _SM_TABLE_ENTRY
     /* Data */
     void* pData;
     /* Reference count
-       
+
        This is the number of holders of a reference to
        this entry -- in particular, by service handles.
-       
+
        The reference count is protected by the table lock
        and not the entry lock */
     DWORD volatile dwRefCount;
@@ -120,7 +120,7 @@ typedef struct _SM_TABLE_ENTRY
 typedef struct _SM_TABLE
 {
     pthread_mutex_t  lock;
-    pthread_mutex_t* pLock; 
+    pthread_mutex_t* pLock;
     SM_LINK entries;
 } SM_TABLE;
 
@@ -257,7 +257,7 @@ LwSmTableAddEntry(
     );
 
 /**
- * @brief Update the service info for the service entry 
+ * @brief Update the service info for the service entry
  * with the supplied information as indicated by the mask.
  */
 DWORD
@@ -382,7 +382,7 @@ LwSmRegistryEnumServices(
     PWSTR** pppwszNames
     );
 
-    
+
 DWORD
 LwSmRegistryReadServiceInfo(
     HANDLE hReg,
@@ -394,13 +394,13 @@ LwSmRegistryReadServiceInfo(
  * @brief Write a string value to the registry
  *
  * Writes a string value to the specified registry key.
- * The key may be a path, but must exist. 
+ * The key may be a path, but must exist.
  *
  * @param [in] hReg the registry handle
  * @param [in] pRootKey the root key handle
  * @param [in] pszParentKey the registry key to which the value will be written
- * @param [in] pszValueName the value name 
- * @param [in] pszValue the value 
+ * @param [in] pszValueName the value name
+ * @param [in] pszValue the value
  */
 DWORD
 LwSmRegistryWriteStringA(
@@ -500,7 +500,8 @@ LwSmSetLoggerToPath(
 
 DWORD
 LwSmSetLoggerToSyslog(
-    PCSTR pFacility
+    PCSTR pFacility,
+    PCSTR pSyslogFacility
     );
 
 DWORD

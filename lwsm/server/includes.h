@@ -77,5 +77,6 @@
 
 #include "server.h"
 #include "lwptimer.h"
+#include "lwsmsyslog.h"
 
 #endif

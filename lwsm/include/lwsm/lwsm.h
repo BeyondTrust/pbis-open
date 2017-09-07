@@ -7,7 +7,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -160,29 +160,29 @@ typedef enum _LW_SERVICE_STATE
      * @hideinitializer
      */
     LW_SERVICE_STATE_RUNNING = 0,
-    /** 
+    /**
      * @brief Service is stopped
      * @hideinitializer
      */
     LW_SERVICE_STATE_STOPPED = 1,
-    /** 
+    /**
      * @brief Service is starting
      * @hideinitializer
      */
     LW_SERVICE_STATE_STARTING = 2,
-    /** 
+    /**
      * @brief Service is stopping
      * @hideinitializer
      */
     LW_SERVICE_STATE_STOPPING = 3,
-    /** 
+    /**
      * @brief Service is paused
      * @hideinitializer
      */
     LW_SERVICE_STATE_PAUSED = 4,
     /**
      * @brief Service is pining for the fjords
-     * @hideinitializer 
+     * @hideinitializer
      */
     LW_SERVICE_STATE_DEAD = 5
 } LW_SERVICE_STATE, *PLW_SERVICE_STATE;
@@ -194,27 +194,27 @@ typedef enum _LW_SERVICE_STATE
  */
 typedef enum _LW_SERVICE_TYPE
 {
-    /** 
+    /**
      * @brief Service is a legacy executable
      * @hideinitializer
      */
     LW_SERVICE_TYPE_LEGACY_EXECUTABLE = 0,
-    /** 
-     * @brief Service is an lwsm-aware executable 
+    /**
+     * @brief Service is an lwsm-aware executable
      * @hideinitializer
      */
     LW_SERVICE_TYPE_EXECUTABLE = 1,
-    /** 
+    /**
      * @brief Service is a module for a container
      * @hideinitializer
      */
     LW_SERVICE_TYPE_MODULE = 2,
-    /** 
+    /**
      * @brief Service is a driver
      * @hideinitializer
      */
     LW_SERVICE_TYPE_DRIVER = 3,
-    /** 
+    /**
      * @brief Service is a dummy stub
      * @hideinitializer
      */
@@ -228,7 +228,7 @@ typedef enum _LW_SERVICE_TYPE
  */
 typedef enum _LW_SERVICE_HOME
 {
-    /** 
+    /**
      * @brief Service is running in a standalone process
      * @hideinitializer
      */
@@ -259,18 +259,18 @@ typedef enum _LW_SERVICE_HOME
  */
 typedef enum _LW_SERVICE_INFO_MASK
 {
-    /** 
+    /**
      * @brief Update name
      * @hideinitializer
      */
     LW_SERVICE_INFO_MASK_NAME             = 0x01,
     /**
-     * @brief Update description 
+     * @brief Update description
      * @hideinitializer
      */
     LW_SERVICE_INFO_MASK_DESCRIPTION      = 0x02,
     /**
-     * @brief Update type 
+     * @brief Update type
      * @hideinitializer
      */
     LW_SERVICE_INFO_MASK_TYPE             = 0x04,
@@ -315,7 +315,7 @@ typedef enum _LW_SERVICE_INFO_MASK
      */
     LW_SERVICE_INFO_MASK_LOG              = 0x400,
     /**
-     * @brief Update service shutdown timeout  
+     * @brief Update service shutdown timeout
      * @hideinitializer
      */
     LW_SERVICE_INFO_MASK_SHUTDOWN_TIMEOUT = 0x800,
@@ -368,7 +368,7 @@ typedef struct _LW_SERVICE_INFO
     /** @brief Core dump size limit */
     LW_DWORD dwCoreSize;
     /** @brief Shutdown time out in seconds */
-    LW_DWORD uShutdownTimeout; 
+    LW_DWORD uShutdownTimeout;
 } LW_SERVICE_INFO, *PLW_SERVICE_INFO;
 
 typedef const LW_SERVICE_INFO* PCLW_SERVICE_INFO;
@@ -547,12 +547,12 @@ DWORD
 LwSmStopService(
     LW_SERVICE_HANDLE hHandle
     );
-   
+
 /**
  * @brief Get service status
  *
  * Gets the current status of the service represented by the given service handle.
- * 
+ *
  * @param[in] hHandle the service handle
  * @param[out] pStatus the status of the service
  * @retval LW_ERROR_SUCCESS success
@@ -734,7 +734,7 @@ LwSmFreeLogFacilityList(
  * Gets the service info structore of the service represented by the given
  * service handle.  The structure should be freed with #LwSmFreeServiceInfo()
  * when done.
- * 
+ *
  * @param[in] hHandle the service handle
  * @param[out] ppInfo the info structure for the service
  * @retval LW_ERROR_SUCCESS success
