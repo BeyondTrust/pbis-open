@@ -127,7 +127,6 @@ lw_openssl()
         for _isa in ${MK_HOST_ISAS}
         do
             mk_system "host/$_isa"
-
             _lw_openssl "$@"
             mk_quote "$result"
 
@@ -284,24 +283,35 @@ configure_openssl()
             host_string="darwin64-ppc-cc"
             ;;
         solaris-sparc_32)
+            # If not defined, solaris 8 build box will use make faciity
+            # which does not support the -j option. The openssl/Configure
+            # script checks if MAKE env exists and if not uses make. If
+            # openssl/Configure is successful then openssl/include/*.h files
+            # are generated.
+            export MAKE=gmake
             host_string="solaris-sparcv9-gcc"
             extra_args="-static-libgcc"
             ;;
         solaris-x86_32)
+            export MAKE=gmake
             host_string="solaris-x86-gcc"
             extra_args="no-asm -static-libgcc"
             ;;
         aix-ppc32)
+            export MAKE=gmake
             host_string="aix-gcc"
             extra_args="no-asm -static-libgcc"
             ;;
         hpux-ia64_32)
+            export MAKE=gmake
             host_string="hpux-ia64-gcc"
             ;;
         hpux-ia64_64)
+            export MAKE=gmake
             host_string="hpux64-ia64-gcc"
             ;;
         hpux-hppa32)
+            export MAKE=gmake
             host_string="hpux-parisc2-gcc"
             extra_args="-DOPENSSL_USE_IPV6=0"
             ;;
