@@ -1313,6 +1313,7 @@ LwKrb5InitializeUserLoginCredentials(
     IN gid_t gid,
     IN LW_KRB5_LOGIN_FLAGS Flags,
     IN PCSTR pszServicePrincipal,
+    IN PCSTR pszSaltPrincipal,
     IN PCSTR pszServiceRealm,
     IN PCSTR pszServicePassword,
     OUT PVOID* ppNdrPacInfo,
@@ -1422,7 +1423,10 @@ LwKrb5InitializeUserLoginCredentials(
      * which encryption type was used in it. */
     ret = krb5_decode_ticket(&pTgsCreds->ticket, &pTgsTicket);
 
-    ret = krb5_copy_principal(ctx, pTgsCreds->server, &saltPrincipal);
+    /* For a machine with a long host name, the Service Principal name does not work for the Salt.
+     * Instead we need to use the Machine Account name.
+     */
+    ret = krb5_parse_name(ctx, pszSaltPrincipal, &saltPrincipal);
     BAIL_ON_KRB_ERROR(ctx, ret);
 
     ret = krb5_set_principal_realm(ctx, saltPrincipal, pszServiceRealm);
