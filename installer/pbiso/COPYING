@@ -12,6 +12,7 @@ listed below are covered under separate license agreements:
     libuuid from e2fsprogs - BSD
     libiconv - LGPLv2
     OpenSSL - BSD
+    linenoise - BSD 2-clause "Simplified" License
 
 For more details and for the full text for each of these 
 licenses, read the LICENSES and COPYING files included with 

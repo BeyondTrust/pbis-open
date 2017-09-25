@@ -11,6 +11,7 @@ agreements:
 - libtdb - LGPLv2
 - libuuid - BSD License
 - libxml2 - MIT License
+- linenoise - BSD 2-clause "Simplified" License
 - mod_auth_kerb - BSD License
 - mod_auth_pam - BSD License
 - openldap - OpenLDAP Public License

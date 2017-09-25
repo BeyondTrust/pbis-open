@@ -53,7 +53,7 @@ package_rpm()
         mk_rpm_sub_done
     mk_rpm_done
 }
-      
+
 package_freebsd()
 {
     mk_freebsd_do \
@@ -65,7 +65,7 @@ package_freebsd()
         POSTINST="freebsd/postinstall.in" \
         PRERM="freebsd/preuninstall.in" \
         POSTRM="freebsd/postuninstall.in"
-        
+
         open_files
         open_files_compat
 
@@ -268,7 +268,7 @@ package_mac()
                    mac/Resources/English.lproj/ReadMe.txt \
                    mac/Resources/English.lproj/License.txt" \
         BINRESOURCES="mac/Resources/English.lproj/background.gif"
-    
+
         mk_macpkg_sub_do SUBPACKAGE=image
             open_files
             # No separate GUI package
@@ -287,7 +287,7 @@ make()
         @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
         @lwio @libschannel @dcerpc @centutils @lwsm @lwadtool \
         @eventlog @lsass @reapsysl @lwdns @lwnetapi @opensoap\
-        @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
+        @linenoise @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
         @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
         @reskit @usermonitor @mod_auth_kerb @krb5_plugins @btkrb5"
 

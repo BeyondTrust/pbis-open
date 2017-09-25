@@ -3,7 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl libxml2 \
-                libedit libtdb opensoap"
+                libedit libtdb opensoap linenoise"
 
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
@@ -27,7 +27,7 @@ defaults()
         LOCALSTATEDIR="/private/var"
         SYSCONFDIR="/private/etc/pbis"
     fi
-    
+
     # Fail on warnings
     MK_FAIL_ON_WARN=yes
 }
@@ -39,21 +39,21 @@ option()
 
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite popt libedit"
+            default_bundled="linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite popt libedit"
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2 opensoap"
+            default_bundled="linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2 opensoap"
             if [ "$MK_PACKAGE_RPM" = "yes" ]
             then
                 default_selinux="yes"
             fi
             ;;
         darwin-*)
-            default_bundled="libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            default_bundled="linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
             ;;
         *)
-            default_bundled="libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            default_bundled="linenoise libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
             ;;
     esac
 
@@ -88,7 +88,7 @@ option()
     _LW_BUNDLED="$LW_BUNDLED"
 
     unset LW_BUNDLED
-    
+
     for i in ${_LW_BUNDLED}
     do
         case "$i" in
@@ -247,7 +247,7 @@ make()
     do
         lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
     done
-            
+
     mk_target \
         TARGET="@bundled" \
         DEPS="$bundled_targets"
@@ -266,7 +266,7 @@ make()
                 [ "$subdir" != "package" -a "$subdir" != "installer" ] &&
                     _local_targets="$_local_targets @$subdir"
             done
-            
+
             mk_target \
                 TARGET="@all-local" \
                 DEPS="$_local_targets"
@@ -321,7 +321,7 @@ lw_print_features()
     printf -- "\n---\nConfiguration summary\n---\n\n"
 
     set -- ${MK_HOST_ISAS}
-    
+
     if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
     then
         lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
