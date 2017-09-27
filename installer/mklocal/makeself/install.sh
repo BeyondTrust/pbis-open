@@ -10,7 +10,7 @@ ERR_PACKAGE_COULD_NOT_INSTALL=2
 ERR_PACKAGE_NOT_INSTALLED=3
 ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
-OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd" 
+OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd"
 DAEMONS="lwsmd"
 DAEMON_PATTERN="lwsmd|lsassd|dcerpcd|eventlogd|lwiod|netlogond|lwregd|srvsvcd|lwrdrd|lw-container|lw-svcm-wrap"
 likewise_bindir="/opt/likewise/bin"
@@ -143,7 +143,7 @@ stop_daemons()
         done
     fi
 
-    generic_daemon_wait 60 
+    generic_daemon_wait 60
     generic_daemon_kill
 }
 
@@ -881,6 +881,11 @@ remove_likewise_directories()
     fi
 }
 
+do_install_failure_info()
+{
+    log_info "The install has not completed. Correct any errors and reinstall by running `pwd`/`basename $0` install"
+}
+
 do_install()
 {
     log_info "Installing packages and old packages will be removed"
@@ -893,6 +898,7 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error uninstalling $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         fi
@@ -903,6 +909,7 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error installing $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         else
@@ -930,6 +937,7 @@ do_install()
         err=$?
         if [ $err -ne 0 ]; then
             log_info "Error uninstalling obsolete packages $pkgList"
+            do_install_failure_info
             exit 1
         fi
     fi
@@ -948,10 +956,12 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error installing $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         else
             log_info "Missing package file for $INSTALL_BASE_PACKAGE"
+            do_install_failure_info
             exit 1
         fi
     fi
@@ -1075,7 +1085,7 @@ do_uninstall()
     fi
 
     if [ -d "${likewise_bindir}" ]; then
-       setup_initdir_likewise 
+       setup_initdir_likewise
        stop_daemons
        stop_daemons_on_reboot
     fi
@@ -1194,7 +1204,7 @@ prompt_yes_no()
         echo "${_prompt} (${_allowed})" | tr '\n' ' '
         read _answer
 
-        _answer=`echo ${_answer} | tr [A-Z] [a-z]`
+        _answer=`echo ${_answer} | tr [:upper:] [:lower:]`
         case "${_answer}" in
             y|ye|yes)
                 answer=yes
@@ -1216,6 +1226,41 @@ prompt_yes_no()
     done
 }
 
+prompt_yes_no_view()
+{
+    _prompt="$1"
+    _allowed="yes/no/view"
+    _default="yes"
+
+    answer=""
+    until test -n "${answer}" ; do
+
+        # Solaris has issues with echo -n, so the tr turns the trailing
+        # newline into a space, thus emulating echo -n
+
+        echo "${_prompt} (${_allowed})" | tr '\n' ' '
+        read _answer
+
+        _answer=`echo ${_answer} | tr [:upper:] [:lower:]`
+        case "${_answer}" in
+            y|ye|yes)
+                answer=yes
+                ;;
+            n|no)
+                answer=no
+                ;;
+            v|vi|vie|view)
+                answer=view
+                ;;
+            '')
+                if [ -n "${_default}" ]; then
+                    answer="${_default}"
+                fi
+                ;;
+        esac
+    done
+}
+
 do_interactive()
 {
     if [ "x${PAGER}" = "x" ]; then
@@ -1223,31 +1268,26 @@ do_interactive()
     fi
 
     if [ -f "${DIRNAME}/EULA" ]; then
-        cat "${DIRNAME}/EULA" | ${PAGER}
-        prompt_yes_no "Do you accept the terms of these licenses?"
-        if [ "x$answer" != "xyes" ]; then
-            echo "License not accepted."
-            exit 1
-        fi
+        answer=""
+
+        until [ "x$answer" = "xyes" ]; do
+            prompt_yes_no_view "Do you accept the terms of the EULA (default yes)?"
+            case "${answer}" in
+                yes)
+                    ;;
+                no)
+                    echo "License not accepted."
+                    exit 1
+                    ;;
+                view)
+                    cat "${DIRNAME}/EULA" | ${PAGER}
+                    ;;
+            esac
+        done
 
         echo ""
         echo "License accepted."
         echo ""
-    fi
-
-    prompt_yes_no "Would you like to install package for legacy links? (i.e.  /opt/likewise/bin/lw-find-user-by-name -> /opt/pbis/bin/find-user-by-name)"
-    if [ "x$answer" = "xyes" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE="yes"
-    elif [ "x$answer" = "xno" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE="no"
-    elif [ "x$answer" = "xauto" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE=""
-    fi
-
-    prompt_yes_no "Would you like to install now?"
-    if [ "x$answer" != "xyes" ]; then
-        do_info
-        exit 0
     fi
 }
 
@@ -1273,7 +1313,7 @@ usage()
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
     echo "    --legacy         install the legacy package"
-    echo "    --no-legacy      do not install the legacy package"
+    echo "    --no-legacy      do not install the legacy package (default)"
 
     if [ "${OS_TYPE}" = "solaris" ]; then
         echo "    --all-zones      install to all zones (default)"
@@ -1298,7 +1338,7 @@ main_install()
     OPT_DONT_JOIN=""
     OPT_SOLARIS_CURRENT_ZONE=""
     OPT_IGNORE_SPECIFIC_OS=""
-    OPT_INSTALL_LEGACY_PACKAGE=""
+    OPT_INSTALL_LEGACY_PACKAGE="no"
 
     ECHO_DIRNAME=""
 
@@ -1346,24 +1386,10 @@ main_install()
                 shift 1
                 ;;
             --legacy)
-                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
-                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "yes" ]; then
-                        echo "Cannot use $1 with --legacy"
-                        usage
-                        exit 1
-                    fi
-                fi
                 OPT_INSTALL_LEGACY_PACKAGE="yes"
                 shift 1
                 ;;
             --no-legacy)
-                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
-                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "no" ]; then
-                        echo "Cannot use $1 with --no-legacy"
-                        usage
-                        exit 1
-                    fi
-                fi
                 OPT_INSTALL_LEGACY_PACKAGE="no"
                 shift 1
                 ;;
