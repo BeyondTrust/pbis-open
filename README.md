@@ -75,29 +75,41 @@ you will need to start lwsmd and import registry files manually:
 ## PBIS Registry Service
 
 The PBIS Registry Service (lwregd) is the configuration data store
-used by all PBIS services.  You can view and modify the registry
-settings by running /opt/pbis/bin/lwregshell as the root user.  For
-example:
+used by all PBIS services.  PBIS provides several ways to view and
+modify the registry settings:
+    - /opt/pbis/bin/edit-reg
+    - /opt/pbis/bin/regshell
 
-    $ sudo /opt/pbis/bin/lwregshell
+edit-reg allows you to modify registry settings in your preferred text editor.
+For example:
+
+    $ sudo /opt/pbis/bin/edit-reg
+
+regshell provides the ability to interactively display and modify settings.
+For example:
+
+    $ sudo /opt/pbis/bin/regshell
     > cd hkey_this_machine\\services
-    
+
     hkey_this_machine\services> dir
     [hkey_this_machine\services]
     [HKEY_THIS_MACHINE\Services\lsass]
     ...
-    
+
     hkey_this_machine\services> cd lsass
-    
+
     hkey_this_machine\services\lsass> dir
     Arguments    REG_SZ   "lsassd --syslog"
     Dependencies REG_SZ   "netlogon lwio lwreg rdr"
     Description  REG_SZ    "PBIS Security and Authentication Subsystem"
     Path         REG_SZ    "/opt/pbis/sbin/lsassd"
     Type         REG_DWORD 0x00000001 (1)
-    
+
     [HKEY_THIS_MACHINE\Services\lsass\Parameters]
 
+NOTE: incorrectly configuring the PBIS registry can prevent PBIS from starting
+and/or prevent user authentication.  Use caution when modifying existing
+settings.
 
 ## PBIS Service Manager
 
