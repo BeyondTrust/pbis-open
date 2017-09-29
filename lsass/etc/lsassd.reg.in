@@ -208,6 +208,14 @@
     default = sza:""
     doc = "Restrict logon access to computer to specific users or group members, or SIDs"
 }
+"HostAccessTemplate" = {
+    default = sza:""
+    doc = "List of host access template filters to be used for Host Access Control."
+}
+"HostAccessGroup" = {
+    default = sza:""
+    doc = "List of groups to be used for Host Access Control."
+}
 "CreateK5Login" = {
     default = @DEFAULT_AD_PROVIDER_CREATE_K5LOGIN@
     doc = "Whether .k5login file is to be created upon user logon"
@@ -298,6 +306,8 @@
     doc = "Whether to add domain groups to local groups when joining a domain"
     range = boolean
 }
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HostAccess]
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]
 "Id" = {

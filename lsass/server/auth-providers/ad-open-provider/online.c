@@ -841,201 +841,6 @@ error:
 
 static
 DWORD
-AD_PacRidsToSidStringList(
-    IN OPTIONAL PSID pDomainSid,
-    IN PRID_WITH_ATTRIBUTE_ARRAY pRids,
-    OUT PDWORD pdwSidCount,
-    OUT PSTR** pppszSidList
-    )
-{
-    DWORD dwError = 0;
-    PSID pDomainBasedSid = NULL;
-    DWORD i = 0;
-    DWORD dwSidCount = 0;
-    PSTR* ppszSidList = NULL;
-
-    if (!pDomainSid)
-    {
-        if (pRids->dwCount != 0)
-        {
-            dwError = LW_ERROR_INTERNAL;
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        // No SIDs here, so return empty list.
-        dwError = 0;
-        goto error;
-    }
-
-    dwSidCount = pRids->dwCount;
-
-    dwError = LwAllocateMemory(sizeof(ppszSidList[0]) * dwSidCount,
-                                (PVOID*)&ppszSidList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaAllocateSidAppendRid(
-                    &pDomainBasedSid,
-                    pDomainSid,
-                    0);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (i = 0; i < pRids->dwCount; i++)
-    {
-        pDomainBasedSid->SubAuthority[pDomainBasedSid->SubAuthorityCount - 1] =
-            pRids->pRids[i].dwRid;
-
-        dwError = LsaAllocateCStringFromSid(
-                        &ppszSidList[i],
-                        pDomainBasedSid);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    *pdwSidCount = dwSidCount;
-    *pppszSidList = ppszSidList;
-
-cleanup:
-    LW_SAFE_FREE_MEMORY(pDomainBasedSid);
-    return dwError;
-
-error:
-    *pdwSidCount = 0;
-    *pppszSidList = NULL;
-
-    LwFreeStringArray(ppszSidList, dwSidCount);
-    goto cleanup;
-}
-
-static
-DWORD
-AD_PacAttributedSidsToSidStringList(
-    IN DWORD dwSidCount,
-    IN NetrSidAttr* pAttributedSids,
-    OUT PDWORD pdwSidCount,
-    OUT PSTR** pppszSidList,
-    OUT PDWORD* ppdwSidAttributeList
-    )
-{
-    DWORD dwError = 0;
-    DWORD i = 0;
-    PSTR* ppszSidList = NULL;
-    PDWORD pdwSidAttributeList = NULL;
-
-    dwError = LwAllocateMemory(sizeof(ppszSidList[0]) * dwSidCount,
-                                (PVOID*)&ppszSidList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwAllocateMemory(sizeof(pdwSidAttributeList[0]) * dwSidCount,
-                                (PVOID*)&pdwSidAttributeList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (i = 0; i < dwSidCount;  i++)
-    {
-        dwError = LsaAllocateCStringFromSid(
-                        &ppszSidList[i],
-                        pAttributedSids[i].sid);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pdwSidAttributeList[i] = pAttributedSids[i].attribute;
-    }
-
-    *pdwSidCount = dwSidCount;
-    *pppszSidList = ppszSidList;
-    *ppdwSidAttributeList = pdwSidAttributeList;
-
-cleanup:
-    return dwError;
-
-error:
-    *pdwSidCount = 0;
-    *pppszSidList = NULL;
-    *ppdwSidAttributeList = NULL;
-
-    LwFreeStringArray(ppszSidList, dwSidCount);
-    LW_SAFE_FREE_MEMORY(pdwSidAttributeList);
-    goto cleanup;
-}
-
-static
-DWORD
-AD_SidStringListsFromPac(
-    IN PAC_LOGON_INFO* pPac,
-    OUT PDWORD pdwGroupSidCount,
-    OUT PSTR** pppszGroupSidList,
-    OUT PDWORD pdwResourceSidCount,
-    OUT PSTR** pppszResourceSidList,
-    OUT PDWORD pdwExtraSidCount,
-    OUT PSTR** pppszExtraSidList,
-    OUT PDWORD* ppdwExtraSidAttributeList
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwGroupSidCount = 0;
-    PSTR* ppszGroupSidList = NULL;
-    DWORD dwResourceGroupSidCount = 0;
-    PSTR* ppszResourceGroupSidList = NULL;
-    DWORD dwExtraSidCount = 0;
-    PSTR* ppszExtraSidList = NULL;
-    PDWORD pdwExtraSidAttributeList = NULL;
-
-    // PAC group membership SIDs
-
-    dwError = AD_PacRidsToSidStringList(
-                    pPac->info3.base.domain_sid,
-                    &pPac->info3.base.groups,
-                    &dwGroupSidCount,
-                    &ppszGroupSidList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    // PAC resource domain group membership SIDs
-
-    dwError = AD_PacRidsToSidStringList(
-                    pPac->res_group_dom_sid,
-                    &pPac->res_groups,
-                    &dwResourceGroupSidCount,
-                    &ppszResourceGroupSidList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    // PAC extra SIDs
-
-    dwError = AD_PacAttributedSidsToSidStringList(
-                    pPac->info3.sidcount,
-                    pPac->info3.sids,
-                    &dwExtraSidCount,
-                    &ppszExtraSidList,
-                    &pdwExtraSidAttributeList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-cleanup:
-    if (dwError)
-    {
-        LwFreeStringArray(ppszGroupSidList, dwGroupSidCount);
-        dwGroupSidCount = 0;
-        ppszGroupSidList = NULL;
-        LwFreeStringArray(ppszResourceGroupSidList, dwResourceGroupSidCount);
-        dwResourceGroupSidCount = 0;
-        ppszResourceGroupSidList = NULL;
-        LwFreeStringArray(ppszExtraSidList, dwExtraSidCount);
-        dwExtraSidCount = 0;
-        ppszExtraSidList = NULL;
-        LW_SAFE_FREE_MEMORY(pdwExtraSidAttributeList);
-    }
-
-    *pdwGroupSidCount = dwGroupSidCount;
-    *pppszGroupSidList = ppszGroupSidList;
-    *pdwResourceSidCount = dwResourceGroupSidCount;
-    *pppszResourceSidList = ppszResourceGroupSidList;
-    *pdwExtraSidCount = dwExtraSidCount;
-    *pppszExtraSidList = ppszExtraSidList;
-    *ppdwExtraSidAttributeList = pdwExtraSidAttributeList;
-
-    return dwError;
-
-error:
-    // Handle error in cleanup for simplicity.
-    goto cleanup;
-}
-
-static
-DWORD
 AD_PacMembershipFilterWithLdap(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_TRUST_DIRECTION dwTrustDirection,
@@ -1224,25 +1029,10 @@ AD_CacheGroupMembershipFromPac(
     time_t now = 0;
     DWORD dwGroupSidCount = 0;
     PSTR* ppszGroupSidList = NULL;
-    DWORD dwResourceGroupSidCount = 0;
-    PSTR* ppszResourceGroupSidList = NULL;
-    DWORD dwExtraSidCount = 0;
-    PSTR* ppszExtraSidList = NULL;
-    PDWORD pdwExtraSidAttributeList = NULL;
     DWORD i = 0;
-    DWORD dwIgnoreExtraSidCount = 0;
     DWORD dwMembershipCount = 0;
     PLSA_GROUP_MEMBERSHIP* ppMemberships = NULL;
     DWORD dwMembershipIndex = 0;
-    struct {
-        PDWORD pdwCount;
-        PSTR** pppszSidList;
-    } SidsToCombine[] = {
-        { &dwGroupSidCount, &ppszGroupSidList },
-        { &dwResourceGroupSidCount, &ppszResourceGroupSidList },
-        { &dwExtraSidCount, &ppszExtraSidList }
-    };
-    DWORD dwSidsToCombineIndex = 0;
     PLSA_GROUP_MEMBERSHIP pMembershipBuffers = NULL;
     PSTR pszPrimaryGroupSid = NULL;
 
@@ -1253,64 +1043,9 @@ AD_CacheGroupMembershipFromPac(
     dwError = LsaGetCurrentTimeSeconds(&now);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_SidStringListsFromPac(
-                    pPac,
-                    &dwGroupSidCount,
-                    &ppszGroupSidList,
-                    &dwResourceGroupSidCount,
-                    &ppszResourceGroupSidList,
-                    &dwExtraSidCount,
-                    &ppszExtraSidList,
-                    &pdwExtraSidAttributeList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (i = 0; i < dwGroupSidCount; i++)
-    {
-        LSA_LOG_VERBOSE("uid %lu's #%lu PAC group membership is %s",
-                        (unsigned long)pUserInfo->userInfo.uid,
-                        (unsigned long)i,
-                        ppszGroupSidList[i]);
-    }
-
-    for (i = 0; i < dwResourceGroupSidCount; i++)
-    {
-        LSA_LOG_VERBOSE("uid %lu's #%lu PAC resource group membership is %s",
-                        (unsigned long)pUserInfo->userInfo.uid,
-                        (unsigned long)i,
-                        ppszResourceGroupSidList[i]);
-    }
-
-    for (i = 0; i < dwExtraSidCount; i++)
-    {
-        LSA_LOG_VERBOSE("uid %lu's #%lu PAC extra membership is %s (attributes = 0x%08x)",
-                        (unsigned long)pUserInfo->userInfo.uid,
-                        (unsigned long)i,
-                        ppszExtraSidList[i],
-                        pdwExtraSidAttributeList[i]);
-
-        // Filter out unwanted SIDs.
-
-        // ISSUE-2008/11/03-dalmeida -- Revisit this piece.
-        // Apparently, we still let user sids through here.
-        // Perhaps we should not filterat all.
-
-        // universal groups seem to have this set to 7
-        // local groups seem to have this set to 0x20000007
-        // we don't want to treat sids from the sid history like groups.
-        if (pdwExtraSidAttributeList[i] != 7 &&
-            pdwExtraSidAttributeList[i] != 0x20000007)
-        {
-            LSA_LOG_VERBOSE("Ignoring non-group SID %s (attribute is 0x%x)",
-                            ppszExtraSidList[i],
-                            pdwExtraSidAttributeList[i]);
-            LW_SAFE_FREE_STRING(ppszExtraSidList[i]);
-            dwIgnoreExtraSidCount++;
-        }
-    }
-
-    // Allocate one extra for NULL entry
-    dwMembershipCount = (dwGroupSidCount + dwResourceGroupSidCount +
-                         dwExtraSidCount - dwIgnoreExtraSidCount + 1);
+    dwError = LwKrb5GroupMembershipFromPac(pPac, 0, &dwGroupSidCount, &ppszGroupSidList);
+    
+    dwMembershipCount = dwGroupSidCount + 1;
 
     dwError = LwAllocateMemory(
                     sizeof(ppMemberships[0]) * dwMembershipCount,
@@ -1323,25 +1058,18 @@ AD_CacheGroupMembershipFromPac(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwMembershipIndex = 0;
-    for (dwSidsToCombineIndex = 0;
-         dwSidsToCombineIndex < sizeof(SidsToCombine)/sizeof(SidsToCombine[0]);
-         dwSidsToCombineIndex++)
+    for (i = 0; i < dwGroupSidCount; i++)
     {
-        DWORD dwSidCount = *SidsToCombine[dwSidsToCombineIndex].pdwCount;
-        for (i = 0; i < dwSidCount; i++)
+        PLSA_GROUP_MEMBERSHIP* ppMembership = &ppMemberships[dwMembershipIndex];
+        PLSA_GROUP_MEMBERSHIP pMembership = &pMembershipBuffers[dwMembershipIndex];
+        if (ppszGroupSidList[i])
         {
-            PLSA_GROUP_MEMBERSHIP* ppMembership = &ppMemberships[dwMembershipIndex];
-            PLSA_GROUP_MEMBERSHIP pMembership = &pMembershipBuffers[dwMembershipIndex];
-            PSTR* ppszSidList = *SidsToCombine[dwSidsToCombineIndex].pppszSidList;
-            if (ppszSidList[i])
-            {
-                *ppMembership = pMembership;
-                pMembership->version.qwDbId = -1;
-                pMembership->pszParentSid = ppszSidList[i];
-                pMembership->pszChildSid = pUserInfo->pszObjectSid;
-                pMembership->bIsInPac = TRUE;
-                dwMembershipIndex++;
-            }
+            *ppMembership = pMembership;
+            pMembership->version.qwDbId = -1;
+            pMembership->pszParentSid = ppszGroupSidList[i];
+            pMembership->pszChildSid = pUserInfo->pszObjectSid;
+            pMembership->bIsInPac = TRUE;
+            dwMembershipIndex++;
         }
     }
 
@@ -1399,9 +1127,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ppMemberships);
     LW_SAFE_FREE_MEMORY(pMembershipBuffers);
     LwFreeStringArray(ppszGroupSidList, dwGroupSidCount);
-    LwFreeStringArray(ppszResourceGroupSidList, dwResourceGroupSidCount);
-    LwFreeStringArray(ppszExtraSidList, dwExtraSidCount);
-    LW_SAFE_FREE_MEMORY(pdwExtraSidAttributeList);
     LW_SAFE_FREE_STRING(pszPrimaryGroupSid);
 
     return dwError;
@@ -4633,25 +4358,6 @@ error:
     goto cleanup;
 }
 
-static
-BOOLEAN
-AD_ListContainsSid(PSTR* ppszSids, DWORD dwSidCount, PSTR pszSid)
-{
-    DWORD dwIndex;
-    
-    if (ppszSids == NULL || pszSid == NULL) return FALSE;
-    
-    for (dwIndex = 0; dwIndex < dwSidCount; dwIndex++)
-    {
-        if (ppszSids[dwIndex] && strcasecmp(ppszSids[dwIndex], pszSid) ==  0)
-        {
-            return TRUE;
-        }
-    }
-    
-    return FALSE;
-}
-
 DWORD
 AD_OnlineGetGroupMemberSids(
     IN PAD_PROVIDER_CONTEXT pContext,
@@ -4788,7 +4494,7 @@ AD_OnlineGetGroupMemberSids(
     {
         for (dwIndex = 0; dwIndex < sResultsCount; dwIndex++)
         {
-            if (ppResults[dwIndex] && !AD_ListContainsSid(ppszSids, dwSidCount, ppResults[dwIndex]->pszObjectSid))
+            if (ppResults[dwIndex] && !LwStringArrayContains(ppszSids, dwSidCount, ppResults[dwIndex]->pszObjectSid, FALSE))
             {
                 dwError = LwAllocateString(ppResults[dwIndex]->pszObjectSid, &ppszSids[dwSidCount++]);
                 BAIL_ON_LSA_ERROR(dwError);

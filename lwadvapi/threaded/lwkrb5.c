@@ -2087,6 +2087,14 @@ LwKrb5GroupMembershipFromPac(
     };
     DWORD dwSidsToCombineIndex = 0;
 
+    if (pPac == NULL)
+    {
+        LW_RTL_LOG_ERROR("Missing PAC for group memberships");
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+
     if (dwFlags & LW_KRB5_PAC_INCLUDE_USER_SID) ppszUserSid = &pszUserSid;
     
     if (dwFlags & LW_KRB5_PAC_INCLUDE_PRIMARY_GROUP) ppszPrimaryGroupSid = &pszPrimaryGroupSid;
@@ -2240,6 +2248,117 @@ cleanup:
 error:
     goto cleanup;
 }
+
+DWORD
+LwKrb5GetPACForCredentialCache(
+    IN PCSTR  pszCachePath,
+    OUT PVOID* ppchLogonInfo,
+    OUT size_t* psLogonInfo
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+
+    krb5_error_code ret = 0;
+    krb5_context ctx = NULL;
+    krb5_ccache cc = NULL;
+    krb5_keytab kt = NULL;
+
+    krb5_principal client_principal = NULL;
+    krb5_creds tgs_creds = { 0 };
+    krb5_creds *tgs_ticket = NULL;
+    krb5_ticket *tgs_ticket_decrypted = NULL;
+
+    krb5_keytab_entry entry = { 0 };
+
+    PVOID pNdrPacInfo = NULL;
+    size_t ndrPacInfoSize = 0;
+    
+    ret = krb5_init_context(&ctx);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_cc_resolve(ctx, pszCachePath, &cc);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_kt_default(ctx, &kt);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_cc_get_principal(ctx, cc, &client_principal);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_copy_principal(ctx, client_principal, &tgs_creds.server);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+    ret = krb5_copy_principal(ctx, client_principal, &tgs_creds.client);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    LW_RTL_LOG_TRACE("Requesting TGS with PAC");
+    ret = krb5_get_credentials(ctx, 0, cc, &tgs_creds, &tgs_ticket);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_decode_ticket(&tgs_ticket->ticket, &tgs_ticket_decrypted);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_server_decrypt_ticket_keytab(ctx, kt, tgs_ticket_decrypted);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_kt_get_entry(ctx, kt, client_principal, 0, tgs_ticket_decrypted->enc_part.enctype, &entry);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+    
+    dwError = LwKrb5FindPac(ctx, tgs_ticket_decrypted, &entry.key, &pNdrPacInfo, &ndrPacInfoSize);
+    if (dwError != 0) {
+        // error will already be logged
+        goto error;
+    }
+
+    *ppchLogonInfo = pNdrPacInfo;
+    *psLogonInfo = ndrPacInfoSize;
+
+    pNdrPacInfo = NULL;
+
+cleanup:
+
+    if (ctx) {
+        if (cc) {
+            krb5_cc_close(ctx, cc);
+        }
+
+        if (kt) {
+            krb5_kt_close(ctx, kt);
+        }
+        
+        if (client_principal) {
+            krb5_free_principal(ctx, client_principal);
+        }
+        
+        krb5_free_cred_contents(ctx, &tgs_creds);
+        
+        if (tgs_ticket) {
+            krb5_free_creds(ctx, tgs_ticket);
+        }
+
+        if (tgs_ticket_decrypted) {
+            krb5_free_ticket(ctx, tgs_ticket_decrypted);
+            tgs_ticket_decrypted = NULL;
+        }
+
+        krb5_free_keytab_entry_contents(ctx, &entry);
+        
+        krb5_free_context(ctx);
+    }
+
+    if (pNdrPacInfo) {
+        LW_SAFE_FREE_MEMORY(pNdrPacInfo);
+        pNdrPacInfo = NULL;
+    }
+
+    return dwError;
+
+error:
+    *ppchLogonInfo = NULL;
+    *psLogonInfo = 0;
+    
+    goto cleanup;
+}
+
 
 /*
 local variables:

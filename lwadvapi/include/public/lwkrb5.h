@@ -207,16 +207,43 @@ LwKrb5FindPac(
     OUT size_t* psLogonInfo
     );
 
+// Flags for use in LwKrb5GroupMembershipFromPac
 #define LW_KRB5_PAC_INCLUDE_USER_SID             0x00000001
 #define LW_KRB5_PAC_INCLUDE_PRIMARY_GROUP        0x00000002
 #define LW_KRB5_PAC_INCLUDE_AUTHENTICATED_USERS  0x00000004
 
+/**
+ * @brief Extract the Group Membership SIDs from the PAC.
+ *
+ * @param PAC blob
+ * @param dwFlags flags to determine what extra SIDs to include in the list
+ * @param pdwMembershipCount number of SIDs returned in pppszMembershipList
+ * @param pppszMembershipList array of SID strings
+ *
+ * @return c
+ */
 DWORD
 LwKrb5GroupMembershipFromPac(
     IN PVOID pchLogonInfo,
     IN DWORD dwFlags,
     OUT PDWORD pdwMembershipCount,
     OUT PSTR** pppszMembershipList
+    );
+
+/**
+ * @brief Use the credentials associated with the Credential Cache to determine the PAC
+ * 
+ * @param pszCachePath Location of the krb5 Credential Cache
+ * @param ppchLogonInfo PAC blob to return
+ * @param psLogonInfo Size of the PAC blob returned
+ * 
+ * @return pppszMembershipList
+ */
+DWORD
+LwKrb5GetPACForCredentialCache(
+    IN PCSTR  pszCachePath,
+    OUT PVOID* ppchLogonInfo,
+    OUT size_t* psLogonInfo
     );
 
 LW_END_EXTERN_C

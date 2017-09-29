@@ -47,6 +47,8 @@
 
 #include "includes.h"
 
+#include "ktldap.h"
+
 #define RDONLY_FILE  "FILE"
 #define RDWR_FILE  "WRFILE"
 

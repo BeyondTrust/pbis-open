@@ -1623,7 +1623,7 @@ LwLdapGetStringsWithExtDnResult(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
-    PSTR *ppszLDAPValues = NULL;
+    struct berval **ppszLDAPValues = NULL;
     PSTR *ppszValues = NULL;
     INT iNum = 0;
     DWORD dwNumValues = 0;
@@ -1633,10 +1633,10 @@ LwLdapGetStringsWithExtDnResult(
     pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
     LW_BAIL_ON_INVALID_POINTER(pMessage);
 
-    ppszLDAPValues = (PSTR*)ldap_get_values(pDirectory->ld, pMessage, pszFieldName);
+    ppszLDAPValues = ldap_get_values_len(pDirectory->ld, pMessage, pszFieldName);
     if (ppszLDAPValues)
     {
-        iNum = ldap_count_values(ppszLDAPValues);
+        iNum = ldap_count_values_len(ppszLDAPValues);
         if (iNum < 0)
         {
             dwError = LW_ERROR_LDAP_ERROR;
@@ -1652,12 +1652,21 @@ LwLdapGetStringsWithExtDnResult(
             {
                 if (bDoSidParsing)
                 {
-                    dwError = LwLdapParseExtendedDNResult(ppszLDAPValues[iValue], &ppszValues[dwNumValues]);
+                    // Check if the value looks like a binary SID representation
+                    if (ppszLDAPValues[iValue]->bv_val[0] == SID_REVISION)
+                    {
+                        dwError = LwSidBytesToString((UCHAR*)ppszLDAPValues[iValue]->bv_val, ppszLDAPValues[iValue]->bv_len, &ppszValues[dwNumValues]);                        
+                    }
+                    else
+                    {
+                        dwError = LwLdapParseExtendedDNResult(ppszLDAPValues[iValue]->bv_val, &ppszValues[dwNumValues]);
+                    }
+
                     BAIL_ON_LW_ERROR(dwError);
                 }
                 else
                 {
-                    dwError = LwAllocateString(ppszLDAPValues[iValue], &ppszValues[dwNumValues]);
+                    dwError = LwAllocateString(ppszLDAPValues[iValue]->bv_val, &ppszValues[dwNumValues]);
                     BAIL_ON_LW_ERROR(dwError);
                 }
                 if (ppszValues[dwNumValues])
@@ -1673,7 +1682,7 @@ LwLdapGetStringsWithExtDnResult(
 
 cleanup:
     if (ppszLDAPValues) {
-        ldap_value_free(ppszLDAPValues);
+        ldap_value_free_len(ppszLDAPValues);
     }
 
     return dwError;

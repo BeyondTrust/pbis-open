@@ -124,8 +124,8 @@ UmnSrvAddUsersFromMembership(
     if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
         UMN_LOG_DEBUG("Processing AD user %s (%s)",
-                ppMembers[i]->pszSamAccountName,
-                ppMembers[i]->pszObjectSid);
+                ppObjects[0]->pszSamAccountName,
+                ppObjects[0]->pszObjectSid);
 
         if (UmnSrvUserIsEnabled(ppObjects[0]) &&
                 !LwHashExists(pUsers, ppObjects[0]->pszObjectSid))
@@ -1914,10 +1914,18 @@ UmnSrvUpdateADAccounts(
     )
 {
     DWORD dwError = 0;
-    PSTR pMemberList = NULL;
-    PCSTR pIter = NULL;
+    DWORD k = 0;
+    PSTR  pRequireMemberList = NULL;
+    PSTR  pHostAccessGroup = NULL;
     PSTR  pMember = NULL;
     PLW_HASH_TABLE pUsers = NULL;
+    DWORD dwRequireMemberListCount = 0;
+    DWORD dwHostAccessGroupCount = 0;
+    DWORD dwMemberListCount = 0;
+    PSTR* ppHostAccessGroupArray = NULL;
+    PSTR* ppRequireMemberListArray = NULL;
+    PSTR* ppMemberListArray = NULL;
+
 
     LWREG_CONFIG_ITEM ADConfigDescription[] =
     {
@@ -1928,9 +1936,19 @@ UmnSrvUpdateADAccounts(
             0,
             MAXDWORD,
             NULL,
-            &pMemberList,
+            &pRequireMemberList,
             NULL
         },
+        {
+            "HostAccessGroup",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pHostAccessGroup,
+            NULL
+        }
     };
     PLSASTATUS pLsaStatus = NULL;
     // Do not free
@@ -1958,32 +1976,41 @@ UmnSrvUpdateADAccounts(
                 sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (pMemberList && pMemberList[0])
+    dwError = LwConvertMultiStringToStringArray(pRequireMemberList,
+                                                &ppRequireMemberListArray,
+                                                &dwRequireMemberListCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwConvertMultiStringToStringArray(pHostAccessGroup,
+                                                &ppHostAccessGroupArray,
+                                                &dwHostAccessGroupCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwMergeStringArray(
+                     ppRequireMemberListArray, dwRequireMemberListCount,
+                     ppHostAccessGroupArray,   dwHostAccessGroupCount,
+                     &ppMemberListArray,       &dwMemberListCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    if (dwMemberListCount > 0)
     {
-        UMN_LOG_DEBUG("RequireMembershipOf is set; will report on AD users belonging to RequireMembershipOf entries");
-        pIter = pMemberList;
-        while (*pIter != 0)
-        {
-            dwError = LwStrDupOrNull(
-                            pIter,
-                            &pMember);
-            BAIL_ON_UMN_ERROR(dwError);
+       for(k = 0; k < dwMemberListCount; k++)
+       {
+          UMN_LOG_DEBUG("RequireMembershipOf is set; will report on AD users belonging to RequireMembershipOf entries");
 
-            LwStripWhitespace(
-                    pMember,
-                    TRUE,
-                    TRUE);
+          dwError = LwStrDupOrNull(ppMemberListArray[k], &pMember);
+          BAIL_ON_UMN_ERROR(dwError);
 
+          LwStripWhitespace( pMember, TRUE, TRUE);
 
-            UMN_LOG_DEBUG("Adding users belonging to RequireMembershipOf entry %s", pMember);
-            dwError = UmnSrvAddUsersFromMembership(
-                            hLsass,
-                            pUsers,
-                            pMember);
-            BAIL_ON_UMN_ERROR(dwError);
-
-            pIter += strlen(pIter) + 1;
-        }
+          UMN_LOG_DEBUG("Adding users belonging to RequireMembershipOf entry %s", pMember);
+          dwError = UmnSrvAddUsersFromMembership(
+                               hLsass,
+                               pUsers,
+                               pMember);
+          BAIL_ON_UMN_ERROR(dwError);
+          LW_SAFE_FREE_STRING(pMember);
+       }
     }
     else
     {
@@ -2105,13 +2132,19 @@ cleanup:
     {
         LsaFreeStatus(pLsaStatus);
     }
-    LW_SAFE_FREE_STRING(pMemberList);
     LW_SAFE_FREE_STRING(pMember);
     LwHashSafeFree(&pUsers);
     if (pAllUsers)
     {
         LsaFreeSecurityObject(pAllUsers);
     }
+
+    LW_SAFE_FREE_STRING(pRequireMemberList);
+    LW_SAFE_FREE_STRING(pHostAccessGroup);
+    LwFreeStringArray(ppRequireMemberListArray, dwRequireMemberListCount);
+    LwFreeStringArray(ppHostAccessGroupArray, dwHostAccessGroupCount);
+    LwFreeStringArray(ppMemberListArray, dwMemberListCount);
+
     return dwError;
 
 error:

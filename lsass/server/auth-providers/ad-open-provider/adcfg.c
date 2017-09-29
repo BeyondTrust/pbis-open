@@ -865,65 +865,6 @@ error:
 
 static
 DWORD
-AD_ConvertMultiStringToStringArray(
-    IN PCSTR pszMultiString,
-    OUT PSTR** pppszStringArray,
-    OUT PDWORD pdwCount
-    )
-{
-    DWORD dwError = 0;
-    PSTR* ppszStringArray = NULL;
-    DWORD dwCount = 0;
-    PCSTR pszIter = NULL;
-    DWORD dwIndex = 0;
-
-    dwCount = 0;
-    for (pszIter = pszMultiString;
-         pszIter && *pszIter;
-         pszIter += strlen(pszIter) + 1)
-    {
-        dwCount++;
-    }
-
-    if (dwCount)
-    {
-        dwError = LwAllocateMemory(
-                        dwCount * sizeof(*ppszStringArray),
-                        OUT_PPVOID(&ppszStringArray));
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwIndex = 0;
-    for (pszIter = pszMultiString;
-         pszIter && *pszIter;
-         pszIter += strlen(pszIter) + 1)
-    {
-        dwError = LwAllocateString(pszIter, &ppszStringArray[dwIndex]);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwIndex++;
-    }
-
-    LSA_ASSERT(dwIndex == dwCount);
-
-cleanup:
-
-    *pppszStringArray = ppszStringArray;
-    *pdwCount = dwCount;
-
-    return dwError;
-
-error:
-
-    LwFreeStringArray(ppszStringArray, dwCount);
-    ppszStringArray = NULL;
-    dwCount = 0;
-
-    goto cleanup;
-}
-
-static
-DWORD
 AD_SetConfig_RequireMembershipOf(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
@@ -993,7 +934,7 @@ AD_SetConfig_ServicePrincipalNameList(
     PSTR pszNewList = NULL;
     DWORD i = 0;
 
-    dwError = AD_ConvertMultiStringToStringArray(
+    dwError = LwConvertMultiStringToStringArray(
                     pszServicePrincipalNameMultiString,
                     &ppszServicePrincipalNameList,
                     &dwServicePrincipalNameCount);
@@ -1084,7 +1025,7 @@ AD_SetConfig_DomainManager_TrustExceptionList(
     PCSTR pszTrustsListMultiString
     )
 {
-    return AD_ConvertMultiStringToStringArray(
+    return LwConvertMultiStringToStringArray(
                     pszTrustsListMultiString,
                     &pConfig->DomainManager.ppszTrustExceptionList,
                     &pConfig->DomainManager.dwTrustExceptionCount);
@@ -2283,7 +2224,7 @@ AD_GetServicePrincipalNameFromRegistry(PSTR* ppszServicePrincipalNameList)
                 sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_ConvertMultiStringToStringArray(
+    dwError = LwConvertMultiStringToStringArray(
                     pszServicePrincipalNameMultiString,
                     &ppszServicePrincipalNameArray,
                     &dwServicePrincipalNameCount);

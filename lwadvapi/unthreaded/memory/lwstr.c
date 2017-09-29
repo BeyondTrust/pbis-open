@@ -102,45 +102,305 @@ LwFreeString(
     LwFreeMemory(pszString);
 }
 
+/*
+ * Spare input string array is supported.
+ * Use LwFreeStringArray() to release new string array.
+ */
 DWORD
 LwDuplicateStringArray(
-    PSTR** pppNewStringArray,
+    PSTR** ppszaNewStringArray,
     PDWORD pdwNewCount,
-    PSTR* ppStringArray,
+    PSTR* pszaStringArray,
     DWORD dwCount
     )
 {
     DWORD dwError = 0;
-    PSTR* ppNewStringArray = NULL;
+    PSTR* pszaNewStringArray = NULL;
     DWORD dwNewCount = 0;
 
     if (dwCount)
     {
         DWORD i = 0;
 
-        dwError = LwAllocateMemory(
-                        dwCount * sizeof(*ppNewStringArray),
-                        OUT_PPVOID(&ppNewStringArray));
+        dwError = LwAllocateStringArray(&pszaNewStringArray, dwCount);
         BAIL_ON_LW_ERROR(dwError);
 
         dwNewCount = dwCount;
 
         for (i = 0; i < dwCount; i++)
         {
-            dwError = LwAllocateString(
-                            ppStringArray[i],
-                            &ppNewStringArray[i]);
-            BAIL_ON_LW_ERROR(dwError);
+            if (pszaStringArray[i])
+            {
+               dwError = LwAllocateString(
+                               pszaStringArray[i],
+                               &pszaNewStringArray[i]);
+               BAIL_ON_LW_ERROR(dwError);
+            }
         }
     }
 
 cleanup:
 
-    *pppNewStringArray = ppNewStringArray;
+    *ppszaNewStringArray = pszaNewStringArray;
     if (pdwNewCount)
     {
         *pdwNewCount = dwNewCount;
     }
+
+    return dwError;
+
+error:
+
+    LwFreeStringArray(pszaNewStringArray, dwNewCount);
+    pszaNewStringArray = NULL;
+    dwNewCount = 0;
+
+    goto cleanup;
+}
+
+/* Merge the given string arrays into ArrayOut.
+ * Sparse input string arrays are supported.
+ * Use LwFreeStringArray() to release out string array.
+ */
+DWORD
+LwMergeStringArray(
+   IN  PSTR* ppStrArrayA,     IN  DWORD  dwStrArrayACount,
+   IN  PSTR* ppStrArrayB,     IN  DWORD  dwStrArrayBCount,
+   OUT PSTR** pppStrArrayOut, OUT DWORD* pdwStrArrayOutCount)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   DWORD dwStrArrayOutCount = 0;
+   DWORD i = 0;
+   DWORD dwIndexOut = 0;
+   PSTR* ppStrArrayOut = NULL;
+
+   if ((dwStrArrayACount) && (dwStrArrayBCount == 0))
+   {
+      dwError = LwDuplicateStringArray(pppStrArrayOut, pdwStrArrayOutCount,
+                                       ppStrArrayA, dwStrArrayACount);
+      BAIL_ON_LW_ERROR(dwError);
+      goto cleanup;
+   }
+
+   if ((dwStrArrayBCount) && (dwStrArrayACount == 0))
+   {
+      dwError = LwDuplicateStringArray(pppStrArrayOut, pdwStrArrayOutCount,
+                                       ppStrArrayB, dwStrArrayBCount);
+      BAIL_ON_LW_ERROR(dwError);
+      goto cleanup;
+   }
+
+   dwStrArrayOutCount = dwStrArrayBCount + dwStrArrayACount;
+
+   dwError = LwAllocateStringArray(&ppStrArrayOut, dwStrArrayOutCount);
+   BAIL_ON_LW_ERROR(dwError);
+
+   for(i = 0; i < dwStrArrayACount; i++)
+   {
+      if (ppStrArrayA[i])
+      {
+         dwError = LwAllocateString(ppStrArrayA[i], &ppStrArrayOut[i]);
+         BAIL_ON_LW_ERROR(dwError);
+      }
+   }
+
+   dwIndexOut = i;
+   for(i = 0; i < dwStrArrayBCount; i++)
+   {
+      if (ppStrArrayB[i])
+      {
+         dwError = LwAllocateString(ppStrArrayB[i], &ppStrArrayOut[dwIndexOut]);
+         BAIL_ON_LW_ERROR(dwError);
+      }
+        
+      dwIndexOut++;
+   }
+
+   *pppStrArrayOut = ppStrArrayOut;
+   *pdwStrArrayOutCount = dwStrArrayOutCount;
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+
+}
+
+static
+int
+_LwSafeStringCompare(PSTR pszA, PSTR pszB)
+{
+    int cmp = 0;
+    
+    if (pszA)
+    {
+        if (pszB)
+        {
+            cmp = strcmp(pszA, pszB);
+        }
+        else
+        {
+            cmp = 1;
+        }
+    }
+    else
+    {
+        if (pszB)
+        {
+            cmp = -1;
+        }
+    }
+    
+    return cmp;
+}
+
+static
+void
+_LwSortMergeStringArray(PSTR* pszaA, PSTR* pszaB, DWORD dwLeft, DWORD dwRight, DWORD dwEnd, BOOLEAN bAscend)
+{
+    DWORD dwL = dwLeft;
+    DWORD dwR = dwRight;
+    DWORD i = 0;
+    
+    for (i = dwLeft; i < dwEnd; i++)
+    {
+        if (bAscend)
+        {
+            if (dwL < dwRight && (dwR >= dwEnd || _LwSafeStringCompare(pszaA[dwL], pszaA[dwR]) <= 0))
+            {
+                pszaB[i] = pszaA[dwL++];
+            }
+            else
+            {
+                pszaB[i] = pszaA[dwR++];
+            }
+        }
+        else
+        {
+            if (dwL < dwRight && (dwR >= dwEnd || _LwSafeStringCompare(pszaA[dwL], pszaA[dwR]) >= 0))
+            {
+                pszaB[i] = pszaA[dwL++];
+            }
+            else
+            {
+                pszaB[i] = pszaA[dwR++];
+            }
+        }
+    }
+}
+
+DWORD
+LwSortStringArray(
+    IN PSTR* pszaList, 
+    IN DWORD dwCount,
+    BOOLEAN bAscend
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PSTR* pszaTmp = NULL;
+    PSTR* pszaA[2] = {0};
+    PSTR* pszaA1 = NULL;
+    DWORD dwWidth = 0;
+    DWORD i = 0;
+    
+    if (dwCount > 1)
+    {
+        dwError = LwAllocateStringArray(&pszaTmp, dwCount);
+        BAIL_ON_LW_ERROR(dwError);
+        
+        pszaA[0] = pszaList;
+        pszaA[1] = pszaTmp;
+                
+        for (dwWidth = 1; dwWidth < dwCount; dwWidth = 2 * dwWidth)
+        {
+            for (i = 0; i < dwCount; i = i + 2 * dwWidth)
+            {
+                _LwSortMergeStringArray(pszaA[0], pszaA[1], i, LW_MIN(i + dwWidth, dwCount), LW_MIN(i + (2 * dwWidth), dwCount), bAscend);
+            }
+            
+            pszaA1 = pszaA[1];
+            pszaA[1] = pszaA[0];
+            pszaA[0] = pszaA1;
+        }
+        
+        if (pszaA[0] != pszaList)
+        {
+            for (i = 0; i < dwCount; i++)
+            {
+                pszaList[i] = pszaTmp[i];
+            }
+        }
+    }
+
+cleanup:
+    // Don't use LwFreeStringArray as we share the strings with pszaList
+    LwFreeMemory(pszaTmp);
+
+    return dwError;
+
+error:
+    goto cleanup;
+
+}
+
+DWORD
+LwConvertListToStringArray(
+    OUT PSTR** pppNewStringArray,
+    OUT PDWORD pdwNewCount,
+    IN PCSTR pszMultiString,
+    IN PCSTR pszDelim
+    )
+{
+
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszToken = NULL;
+    PSTR pszValues = NULL;
+    PSTR pszStrtokState = NULL;
+    PSTR* ppNewStringArray = NULL;
+    PCSTR pszD, pszV;
+    DWORD dwNewCount = 0;
+    DWORD dwCount = 0;
+    
+    if (pppNewStringArray == NULL || pdwNewCount == NULL || pszMultiString == NULL || pszDelim == NULL) 
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    // Count the number of values
+    for (pszD = pszDelim; *pszD != '\0'; pszD++) 
+    {
+        for (pszV = pszMultiString; *pszV != '\0'; pszV++) {
+            if (*pszV == *pszD) dwNewCount++;
+        }
+    }
+    // Allow for final entry if list is not blank
+    if (*pszMultiString) dwNewCount++;
+
+    dwError = LwAllocateStringArray(&ppNewStringArray, dwNewCount);
+    BAIL_ON_LW_ERROR(dwError);
+    
+    pszStrtokState = NULL;
+    
+    dwError = LwAllocateString(pszMultiString, &pszValues);
+    BAIL_ON_LW_ERROR(dwError);
+
+    pszToken = strtok_r(pszValues, pszDelim, &pszStrtokState);
+
+    while (pszToken && *pszToken && dwCount < dwNewCount)
+    {
+        dwError = LwAllocateString(pszToken, &ppNewStringArray[dwCount++]);
+        BAIL_ON_LW_ERROR(dwError);
+
+        pszToken = strtok_r(NULL, pszDelim, &pszStrtokState);
+    }
+
+cleanup:
+    LW_SAFE_FREE_STRING(pszValues);
+
+    *pppNewStringArray = ppNewStringArray;
+    *pdwNewCount = dwCount;
 
     return dwError;
 
@@ -151,6 +411,167 @@ error:
     dwNewCount = 0;
 
     goto cleanup;
+}
+
+DWORD
+LwConvertMultiStringToStringArray(
+    IN PCSTR pszMultiString,
+    OUT PSTR** pppszStringArray,
+    OUT PDWORD pdwCount
+    )
+{
+    DWORD dwError = 0;
+    PSTR* ppszStringArray = NULL;
+    DWORD dwCount = 0;
+    PCSTR pszIter = NULL;
+    DWORD dwIndex = 0;
+
+    dwCount = 0;
+    for (pszIter = pszMultiString;
+         pszIter && *pszIter;
+         pszIter += strlen(pszIter) + 1)
+    {
+        dwCount++;
+    }
+
+    dwError = LwAllocateStringArray(&ppszStringArray, dwCount);
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (dwCount)
+    {
+        dwIndex = 0;
+        for (pszIter = pszMultiString;
+             pszIter && *pszIter;
+             pszIter += strlen(pszIter) + 1)
+        {
+            dwError = LwAllocateString(pszIter, &ppszStringArray[dwIndex]);
+            BAIL_ON_LW_ERROR(dwError);
+
+            dwIndex++;
+        }
+    }
+
+    LW_ASSERT(dwIndex == dwCount);
+
+cleanup:
+
+    *pppszStringArray = ppszStringArray;
+    *pdwCount = dwCount;
+
+    return dwError;
+
+error:
+
+    LwFreeStringArray(ppszStringArray, dwCount);
+    ppszStringArray = NULL;
+    dwCount = 0;
+
+    goto cleanup;
+}
+
+DWORD
+LwAllocateStringArray(
+    OUT PSTR** pppNewStringArray,
+    IN DWORD dwCount
+    )
+{
+
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR* ppNewStringArray = NULL;
+
+    // Allocate space for dwNewCount entries plus a NULL terminator
+    dwError = LwAllocateMemory(
+                    (dwCount + 1) * sizeof(*ppNewStringArray),
+                    OUT_PPVOID(&ppNewStringArray));
+    BAIL_ON_LW_ERROR(dwError);
+    
+cleanup:
+    *pppNewStringArray = ppNewStringArray;
+
+    return dwError;
+
+error:
+
+    LwFreeStringArray(ppNewStringArray, dwCount);
+    ppNewStringArray = NULL;
+
+    goto cleanup;
+}
+
+BOOLEAN
+LwStringArrayContains(
+        IN PSTR* pszaList, 
+        IN DWORD dwCount, 
+        IN PSTR pszStr, 
+        IN BOOLEAN bCaseSensitive)
+{
+    DWORD dwIndex;
+    
+    if (pszaList == NULL) return FALSE;
+    
+    for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
+    {
+        if (pszaList[dwIndex])
+        {
+            if (bCaseSensitive)
+            {
+                if (strcmp(pszaList[dwIndex], pszStr) ==  0)
+                {
+                    return TRUE;                
+                } 
+            }
+            else if (strcasecmp(pszaList[dwIndex], pszStr) ==  0)
+            {
+                return TRUE;                                
+            }
+        }
+        else if (pszStr == NULL)
+        {
+            return TRUE;
+        }
+    }
+    
+    return FALSE;
+}
+
+BOOLEAN
+LwStringArrayCompare(
+        IN PSTR* pszaList1, 
+        IN DWORD dwCount1, 
+        IN PSTR* pszaList2, 
+        IN DWORD dwCount2)
+{
+    DWORD dwIndex;
+    int cmp = 0;
+    
+    cmp = dwCount1 - dwCount2;
+
+    if (cmp != 0) return cmp;
+    if (pszaList1 == NULL && pszaList2 == NULL) return 0;
+    if (pszaList1 == NULL) return -1;
+    if (pszaList2 == NULL) return 1;
+    
+    for (dwIndex = 0; dwIndex < dwCount1 && cmp == 0; dwIndex++)
+    {
+        if (pszaList1[dwIndex])
+        {
+            if (pszaList2[dwIndex])
+            {
+                cmp = strcmp(pszaList1[dwIndex], pszaList2[dwIndex]);
+            }
+            else 
+            {
+                cmp = 1;
+            }
+
+        }
+        else if (pszaList2[dwIndex])
+        {
+            cmp = -1;
+        }
+    }
+    
+    return cmp;
 }
 
 void

@@ -45,6 +45,7 @@ make()
 	find_user_by_name_main.c \
 	get_metrics_main.c \
 	get_status_main.c \
+	host-access-control.c \
 	list_groups_for_user_main.c \
 	lw_ypcat_main.c \
 	lw_ypmatch_main.c \
@@ -68,8 +69,8 @@ make()
         PROGRAM=lsa \
         SOURCES="$LSA_SOURCES" \
         INCLUDEDIRS=". ../../include" \
-        HEADERDEPS="lwadvapi.h" \
-        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt $LIB_DL"
+        HEADERDEPS="lwadvapi.h reg/lwreg.h" \
+        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr regclient rsutils popt $LIB_DL"
 
     if [ "$LW_DEVICE_PROFILE" != "embedded" ]
     then

@@ -112,12 +112,68 @@ LwFreeString(
     LW_PSTR pszString
     );
 
+/*
+ * Spare input string array is supported.
+ * Use LwFreeStringArray() to release new string array.
+ */
 LW_DWORD
 LwDuplicateStringArray(
     OUT PSTR** pppNewStringArray,
     OUT PDWORD pdwNewCount,
     IN PSTR* ppStringArray,
     IN DWORD dwCount
+    );
+
+DWORD
+LwConvertMultiStringToStringArray(
+    IN PCSTR pszMultiString,
+    OUT PSTR** pppszStringArray,
+    OUT PDWORD pdwCount
+    );
+
+/* Merge the given string arrays into ArrayOut.
+ * Sparse input string arrays are supported.
+ * Use LwFreeStringArray() to release out string array.
+ */
+DWORD
+LwMergeStringArray(
+   IN  PSTR* ppStrArrayA,     IN  DWORD  dwStrArrayACount,
+   IN  PSTR* ppStrArrayB,     IN  DWORD  dwStrArrayBCount,
+   OUT PSTR** pppStrArrayOut, OUT DWORD* pdwStrArrayOutCount);
+
+DWORD
+LwAllocateStringArray(
+    OUT PSTR** pppNewStringArray,
+    IN DWORD dwCount
+    );
+
+DWORD
+LwConvertListToStringArray(
+    OUT PSTR** pppNewStringArray,
+    OUT PDWORD pdwNewCount,
+    IN PCSTR pszMultiString,
+    IN PCSTR pszDelim
+    );
+
+BOOLEAN
+LwStringArrayContains(
+        IN PSTR* pszaList, 
+        IN DWORD dwCount, 
+        IN PSTR pszStr, 
+        IN BOOLEAN bCaseSensitive);
+
+BOOLEAN
+LwStringArrayCompare(
+        IN PSTR* pszaList1, 
+        IN DWORD dwCount1, 
+        IN PSTR* pszaList2, 
+        IN DWORD dwCount2);
+
+DWORD
+LwSortStringArray(
+    IN PSTR* pszaList, 
+    IN DWORD dwCount,
+    BOOLEAN bAscend
     );
 
 void
