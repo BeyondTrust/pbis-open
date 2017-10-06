@@ -1979,7 +1979,7 @@ RtlpDecodeLittleEndianAcl(
                  * byte ordering.
                  */
 
-                switch (littleEndianAce->Flags) {
+                switch (ace->Flags) {
                     case 0:
                         RtlpDecodeLittleEndianSid(
                                 (PSID) &littleEndianAce->ObjectType,
