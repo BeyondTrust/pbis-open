@@ -346,8 +346,10 @@ open_files_prefix()
         "${MK_DATADIR}/fedora/15/*" \
         "${MK_DATADIR}/fedora/14/*" \
         "${MK_DATADIR}/fedora/13/*" \
-        "${LW_CONFIGDIR}/*.reg" \
-        "${MK_PREFIX}/data/VERSION"
+        "${LW_CONFIGDIR}/*.reg"     \
+        "${MK_PREFIX}/data/VERSION" \
+        "${MK_PREFIX}/data/COPYING" \
+        "${MK_PREFIX}/data/LICENSES"
 }
 
 open_files_usr()

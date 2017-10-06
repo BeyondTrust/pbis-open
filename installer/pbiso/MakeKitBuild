@@ -1,5 +1,17 @@
 MODULES="sfx dmg"
 
+configure()
+{
+    mk_declare -o \
+        VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
+        QFE="${LW_PRODUCT_QFE}" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+
+    mk_output_file COPYING
+    mk_output_file LICENSES
+}
+
 make()
 {
     case "$MK_HOST_OS" in

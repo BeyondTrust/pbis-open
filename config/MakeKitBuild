@@ -11,6 +11,7 @@ configure()
         MK_SYSCONFDIR \
         LW_INITDIR \
         VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
+        FULL_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}.${LW_BUILD_ID:-0}" \
         QFE="${LW_PRODUCT_QFE}" \
         BUILD="${LW_BUILD_ID:-0}" \
         REVISION="${LW_BUILD_REVISION:-0}" \
@@ -33,6 +34,8 @@ configure()
     done
 
     mk_output_file VERSION
+    mk_output_file COPYING
+    mk_output_file LICENSES
     mk_output_file init-base.sh
     mk_output_file lwkill.sh
 }
@@ -50,6 +53,14 @@ make()
 
     mk_stage \
         SOURCE="VERSION" \
+        DESTDIR="${MK_PREFIX}/data"
+
+    mk_stage \
+        SOURCE="COPYING" \
+        DESTDIR="${MK_PREFIX}/data"
+
+    mk_stage \
+        SOURCE="LICENSES" \
         DESTDIR="${MK_PREFIX}/data"
 
     mk_stage DESTDIR="${MK_PREFIX}/mib" likewise-platform.mib
