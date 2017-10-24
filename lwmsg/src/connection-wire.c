@@ -78,6 +78,14 @@
 #    define CMSG_LEN(len) (CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
 #endif
 
+#ifdef HAVE_FSTAT64
+#   define FSTAT fstat64
+#   define FSTAT_BUF struct stat64
+#else
+#   define FSTAT fstat
+#   define FSTAT_BUF struct stat
+#endif
+
 static void
 lwmsg_connection_packet_ntoh(ConnectionPacket* packet)
 {
@@ -1166,11 +1174,11 @@ lwmsg_connection_finish_recv_connect(
         /* Otherwise, use the explicit auth method */
         if (packet->contents.greeting.flags & CONNECTION_GREETING_AUTH_LOCAL)
         {
-            struct stat statbuf;
+            FSTAT_BUF statbuf;
 
             BAIL_ON_ERROR(status = lwmsg_connection_dequeue_fd(assoc, &fd));
             
-            if (fstat(fd, &statbuf))
+            if (FSTAT(fd, &statbuf))
             {
                 BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
             }
@@ -1398,11 +1406,11 @@ lwmsg_connection_finish_recv_accept(
         /* Otherwise, use the explicit auth method */
         if (packet->contents.greeting.flags & CONNECTION_GREETING_AUTH_LOCAL)
         {
-            struct stat statbuf;
+            FSTAT_BUF statbuf;
 
             BAIL_ON_ERROR(status = lwmsg_connection_dequeue_fd(assoc, &fd));
             
-            if (fstat(fd, &statbuf))
+            if (FSTAT(fd, &statbuf))
             {
                 BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
             }
