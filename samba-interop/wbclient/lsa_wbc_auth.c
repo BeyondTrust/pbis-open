@@ -541,6 +541,16 @@ wbcAuthenticateUserEx(
     /* Sanity and setup */
 
     BAIL_ON_NULL_PTR_PARAM(params, dwErr);
+    
+    if (params->level == WBC_AUTH_USER_LEVEL_PAC)
+    {
+        // Samba now makes a call with WBC_AUTH_USER_LEVEL_PAC to prime the cache with the PAC
+        // PBIS currently does not implement or require this functionality.
+        // As this is merely a cache priming mechanism it is safe to ignore.
+        return WBC_ERR_SUCCESS;
+    }
+
+
     BAIL_ON_NULL_PTR_PARAM(params->account_name, dwErr);
 
     dwErr = LwAllocateMemory(sizeof(LSA_AUTH_USER_PARAMS), (PVOID*)&pLsaParams);
