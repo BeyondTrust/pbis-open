@@ -446,7 +446,23 @@ lwmsg_archive_close(
 
     if (archive->fd != -1)
     {
-        close(archive->fd);
+        if (archive->disp & LWMSG_ARCHIVE_WRITE)
+        {
+            /* Ensure content written to the archive file is flushed to disk */
+            if (fsync(archive->fd) < 0)
+            {
+                status = RAISE_ERRNO(&archive->base.context);
+            }
+        }
+        
+        if (close(archive->fd) < 0)
+        {
+            if (status != LWMSG_STATUS_SUCCESS)
+            {
+                status = RAISE_ERRNO(&archive->base.context);
+            }
+        }
+
         archive->fd = -1;
     }
 

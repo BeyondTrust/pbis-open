@@ -533,6 +533,13 @@ MemCacheLoadFile(
         status = 0;
         goto cleanup;
     }
+    else if (status != LWMSG_STATUS_SUCCESS)
+    {
+        // If the cache file is corrupt, log a warning and continue with no cache.
+        LSA_LOG_WARNING("The in-memory cache file is corrupt");
+        status = 0;
+        goto cleanup;
+    }
     dwError = MAP_LWMSG_ERROR(status);
     BAIL_ON_LSA_ERROR(dwError);
 
