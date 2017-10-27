@@ -35,7 +35,10 @@
 /*
  * Force inclusion of SVID stuff since we need it if we're compiling in
  * gcc-wall wall mode
+ *
+ * Use both _SVID_SOURCE AND _DEFAULT_SOURCE (glibc 2.20 +) to avoid warnings
  */
+#define _DEFAULT_SOURCE
 #define _SVID_SOURCE
 
 #include "config.h"
