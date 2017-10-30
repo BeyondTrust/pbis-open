@@ -51,6 +51,8 @@
 # v2.9.3  2015-09-18 RCA add additional AIX and additional information to gather
 # v2.10   2015-10-21 RCA add auto-detection of logfiles from syslog.conf/rsyslog.conf (no syslog-ng yet)
 # v2.11   2015-12-16 RCA add --performance flag
+# v2.11.1 2016-08-17 RCA add 8.5 and 8.6 detection and fix group policy testing with --gpagent and --gpo
+# v2.12   2017-10-30 RCA fix logfile break on OSX
 #
 # Data structures explained at bottom of file
 #
@@ -77,7 +79,7 @@ use sigtrap qw (handler cleanup old-interface-signals normal-signals);
 
 
 # Define global variables
-my $gVer = "2.11.0";
+my $gVer = "2.12";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -1761,8 +1763,8 @@ sub determineOS($$) {
     $info->{logfiles}=[];
     foreach my $facility (("kern", "daemon", "auth")) {
         my @logs=findLogFile($facility);
-        push(@{$info->{logfiles}}, @logs) if (@logs);
-        if ($facility eq "daemon") {
+        push(@logs, $info->{logpath}."/".$info->{logfile});
+        if ($facility eq "daemon" and $#logs > 0) {
             $info->{logpath} = dirname($logs[0]);
             $info->{logfile} = basename($logs[0]);
             logInfo("Found $info->{logfile} via syslog config.");
@@ -3039,6 +3041,9 @@ sub main() {
 
     if (defined($opt->{gpagentd} and $opt->{gpagentd} == 1)) {
         $opt->{gpo} = 1;  #turn on GPO testing since we're doing gpagentd logging.
+    }
+    if (defined($opt->{gpo} and $opt->{gpo} == 1)) {
+        $opt->{gpagentd} = 1;  #turn on GPO testing since we're doing gpagentd logging.
     }
 
     if (defined($opt->{verbose})) {
