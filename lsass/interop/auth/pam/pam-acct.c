@@ -90,7 +90,7 @@ pam_sm_acct_mgmt(
 
     if (LsaShouldIgnoreUser(pszLoginId))
     {
-        LSA_LOG_PAM_WARNING("By passing lsass for ignore user %s", pszLoginId);
+        LSA_LOG_PAM_WARNING("Bypassing lsass for ignore user %s", pszLoginId);
         dwError = LW_ERROR_IGNORE_THIS_USER;
         BAIL_ON_LSA_ERROR(dwError);
     }

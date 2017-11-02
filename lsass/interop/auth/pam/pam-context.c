@@ -103,6 +103,9 @@ LsaPamGetContext(
                     argv,
                     &pPamContext->pamOptions);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pPamContext->pamOptions.bDebug)
+       LsaPamSetLogLevel(LSA_PAM_LOG_LEVEL_DEBUG);
     
     *ppPamContext = pPamContext;
     
@@ -182,6 +185,10 @@ LsaPamGetOptions(
         else if (!strcasecmp(argv[iArg], "no_require_membership"))
         {
             pPamOptions->bNoRequireMembership = TRUE;
+        }
+        else if (!strcasecmp(argv[iArg], "debug"))
+        {
+            pPamOptions->bDebug = TRUE;
         }
     }
     

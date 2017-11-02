@@ -64,6 +64,7 @@ typedef struct _PAMOPTIONS
     BOOLEAN bPromptGecos;
     BOOLEAN bDisablePasswordChange;
     BOOLEAN bNoRequireMembership;
+    BOOLEAN bDebug;
     
 } PAMOPTIONS, *PPAMOPTIONS;
 

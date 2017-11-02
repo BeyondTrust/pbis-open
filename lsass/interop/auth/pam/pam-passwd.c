@@ -64,15 +64,36 @@ pam_sm_chauthtok(
     PSTR pszPassword = NULL;
     PPAMCONTEXT pPamContext = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
+    PSTR pszLoginId = NULL;
     int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("pam_sm_chauthtok::begin");
+
+    dwError = LsaPamGetContext(
+                    pamh,
+                    flags,
+                    argc,
+                    argv,
+                    &pPamContext);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaPamGetLoginId(
+            pamh,
+            pPamContext,
+            &pszLoginId,
+            TRUE);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        dwError = LW_ERROR_IGNORE_THIS_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LsaPamGetConfig(&pConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaPamSetLogLevel(pConfig->dwLogLevel);
-
 
     if (!(flags & PAM_UPDATE_AUTHTOK) &&
         !(flags & PAM_PRELIM_CHECK))
@@ -118,6 +139,7 @@ pam_sm_chauthtok(
 cleanup:
 
     LW_SECURE_FREE_STRING(pszPassword);
+    LW_SAFE_FREE_STRING(pszLoginId);
 
     if (pConfig)
     {
@@ -161,6 +183,10 @@ error:
     if (dwError ==  LW_ERROR_NO_SUCH_USER)
     {
         LSA_LOG_PAM_DEBUG("pam_sm_chauthtok failed since the user could not be found [error code: %u]", dwError);
+    }
+    else if (dwError == LW_ERROR_IGNORE_THIS_USER)
+    {
+        LSA_LOG_PAM_WARNING("pam_sm_chauthtok bypassing lsass for ignore user %s", pszLoginId);
     }
     else
     {
