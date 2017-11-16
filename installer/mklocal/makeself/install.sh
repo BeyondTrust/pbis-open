@@ -863,6 +863,11 @@ package_purge()
     return $?
 }
 
+get_prefix_dir()
+{
+    echo "${PREFIX}"
+}
+
 remove_likewise_directories()
 {
     if [ -d "/opt/likewise" ]
@@ -1017,16 +1022,15 @@ do_install()
 
 do_postinstall_messages()
 {
+    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
+    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     RUN_JOIN_GUI="1"
-    guimsg=""
 
     if [ "$1" != 'interactive' ]; then
         RUN_JOIN_GUI=""
     fi
 
-    if [ -x "/opt/pbis/bin/domainjoin-gui" ]; then
-        guimsg="domainjoin-gui or "
-    else
+    if [ ! -x "$domainjoin_gui" ]; then
         RUN_JOIN_GUI=""
     fi
 
@@ -1034,7 +1038,8 @@ do_postinstall_messages()
         RUN_JOIN_GUI=""
     fi
 
-    domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+    command="`get_prefix_dir`/bin/lsa ad-get-machine account"
+    domain=`$command 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
 
     if [ -n "$domain" ]; then
         log_info ""
@@ -1047,13 +1052,18 @@ do_postinstall_messages()
     log_info ""
 
     if [ -z "$domain" ]; then
-        log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
-        log_info "with Active Directory credentials. Example:"
-        log_info "domainjoin-cli join MYDOMAIN.COM MyJoinAccount"
+        log_info "As root, run domainjoin-cli to join a domain so you can log on"
+        log_info "with Active Directory credentials."
+        log_info "Example:"
+        log_info ""
+        log_info "$domainjoin_cli join MYDOMAIN.COM MyJoinAccount"
         log_info ""
 
         if [ -n "$RUN_JOIN_GUI" ]; then
-            /opt/pbis/bin/domainjoin-gui >/dev/null 2>&1 &
+	    log_info "Or use the domainjoin-gui located at:"
+	    log_info "$domainjoin_gui"
+	    log_info ""
+	    $domainjoin_gui >/dev/null 2>&1 &
         fi
     fi
 }
