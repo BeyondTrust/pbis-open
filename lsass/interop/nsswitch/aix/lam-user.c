@@ -551,6 +551,10 @@ LsaNssGetUserAttr(
                     &pResult->attr_un.au_char);
         BAIL_ON_LSA_ERROR(dwError);
     }
+    else if (!strcmp(pszAttribute, S_DAEMONCHK))
+    {
+        pResult->attr_un.au_int = 0;
+    }
     else if (!strcmp(pszAttribute, S_LOCKED))
     {
         pResult->attr_un.au_int = pInfo->bAccountLocked;
