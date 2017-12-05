@@ -1,11 +1,33 @@
-PowerBroker Identity Services - Open Edition
+PowerBroker Identity Services
 --------
+To join an Active Directory domain, run
 
-To join an Active Directory domain using a command-line interface, run:
+	/opt/pbis/bin/domainjoin-cli join
 
-        /opt/pbis/bin/domainjoin-cli
+To query the computers state
 
-Documentation for this software is available at the following locations:
+	/opt/pbis/bin/domainjoin-cli query
 
-        /opt/pbis/docs
-        http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/Resources/Documentation-Library
+To list PBIS services
+
+	/opt/pbis/bin/lwsm list
+
+To list users
+
+	/opt/pbis/bin/enum-users
+
+Additional tools located at
+
+	/opt/pbis/bin/
+
+To leave the domain
+
+	/opt/pbis/bin/domainjoin-cli leave
+
+To uninstall
+
+	/opt/pbis/bin/uninstall.sh purge
+
+For more information please visit
+
+	www.beyondtrust.com
