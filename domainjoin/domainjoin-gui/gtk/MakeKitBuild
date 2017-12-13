@@ -4,6 +4,8 @@ make()
        common.c joindialog.c joinprogress.c \
        statusdialog.c joinauth.c joinerror.c main.c"
 
+    GTK_CFLAGS="$GTK_CFLAGS -DGLIB_DISABLE_DEPRECATION_WARNINGS"
+
     mk_program \
 	PROGRAM=domainjoin-gui \
 	SOURCES="$GTK_SOURCES" \
