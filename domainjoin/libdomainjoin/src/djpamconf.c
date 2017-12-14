@@ -1910,13 +1910,6 @@ static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char 
      */
     if(!strcmp(buffer, "pam_aix"))
         return FALSE;
-    /* libpam_unix.so.1 on HP-UX will prompt with "System Password:" if the
-       existing password is incorrect. The module name will get normalized to
-       pam_unix, which Linux systems also use (but it works on them). So the
-       prefix of the unnormalized module name is also checked.
-       */
-    if(!strcmp(buffer, "pam_unix") && CTStrStartsWith(moduleBasename, "lib"))
-        return FALSE;
 
     /* pam_unix2 on OpenSuse 11, and SLES 9.x is known to not support this
      * option. The man page also says it is not supported. No distros that use
