@@ -14,6 +14,7 @@ OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd
 DAEMONS="lwsmd"
 DAEMON_PATTERN="lwsmd|lsassd|dcerpcd|eventlogd|lwiod|netlogond|lwregd|srvsvcd|lwrdrd|lw-container|lw-svcm-wrap"
 likewise_bindir="/opt/likewise/bin"
+INSTALL_DIR="/opt/pbis"
 
 ## Have to set the path for HP-UX boot process
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:$PATH
@@ -70,9 +71,9 @@ setup_initdir_likewise()
     esac
 }
 
-# return the pids of obsolete daemons, 
+# return the pids of obsolete daemons,
 # lwsmd and lw-container processes
-generic_daemon_spawn_pids() 
+generic_daemon_spawn_pids()
 {
     case "${OS_TYPE}" in
         freebsd)
@@ -99,7 +100,7 @@ generic_daemon_wait() {
     process_pids="`generic_daemon_spawn_pids`"
     i=1
     LAST=$1
-    if [ "$process_pids" ] 
+    if [ "$process_pids" ]
     then
         while [ "$i" -le "$LAST" ]; do
             process_pids="`generic_daemon_spawn_pids`"
@@ -348,9 +349,9 @@ do_setup()
 
     check_specific_os
 
-    libdir=/opt/pbis/lib
-    if [ -x /opt/pbis/lib64 ]; then
-        libdir=/opt/pbis/lib64
+    libdir=${INSTALL_DIR}/lib
+    if [ -x ${INSTALL_DIR}/lib64 ]; then
+        libdir=${INSTALL_DIR}/lib64
     fi
     for i in "$LD_LIBRARY_PATH" "$LIBPATH" "$SHLIB_PATH"; do
         if [ -n "$i" ]; then
@@ -799,7 +800,7 @@ package_purge_solaris()
 
 remove_extra_files()
 {
-    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/lib/likewise.old /var/lib/lwidentity /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
+    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/lib/likewise.old /var/lib/lwidentity /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ${INSTALL_DIR} ; do
         if [ -d "$file" ]; then
             echo "Removing directory $file"
             /bin/rm -rf "$file"
@@ -1127,7 +1128,7 @@ do_purge()
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
     else
-        domainjoin_cli=/opt/pbis/bin/domainjoin-cli
+        domainjoin_cli=${INSTALL_DIR}/bin/domainjoin-cli
         if [ -x "$domainjoin_cli" ]; then
             $domainjoin_cli leave > /dev/null 2>&1
         fi
@@ -1296,7 +1297,7 @@ do_interactive()
         done
 
         echo ""
-        echo "License accepted."
+        echo "License accepted. License agreement can be found at ${INSTALL_DIR}/data/EULA"
         echo ""
     fi
 }
