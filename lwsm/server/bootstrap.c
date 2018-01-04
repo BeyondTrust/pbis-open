@@ -63,6 +63,7 @@ LwSmBootstrap(
     )
 {
     DWORD dwError = 0;
+    char * debugBootstrap = NULL;
     PLW_SERVICE_INFO pInfo = NULL;
     PSM_BOOTSTRAP_SERVICE pService = NULL;
     PSM_TABLE_ENTRY pEntry = NULL;
@@ -78,6 +79,10 @@ LwSmBootstrap(
 
         dwError = LwAllocateMemory(sizeof(*pInfo), OUT_PPVOID(&pInfo));
         BAIL_ON_ERROR(dwError);
+
+        debugBootstrap = getenv("PBIS_DEBUG_BOOTSTRAP");
+
+        pInfo->DefaultLogLevel = (debugBootstrap) ? LW_SM_LOG_LEVEL_DEBUG : LW_SM_LOG_LEVEL_DEFAULT;
 
         pInfo->type = pService->type;
 
