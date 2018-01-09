@@ -206,6 +206,7 @@ DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
     const wchar16_t *fqdn,
+    const wchar16_t *machname,
     const wchar16_t *dn_context,
     wchar16_t **samacct
     );
@@ -1165,6 +1166,7 @@ LsaGetAccountName(
     err = LsaMachDnsNameSearch(
                 ld,
                 fqdn,
+                machname_lc,
                 base_dn,
                 &samname);
     if (err == ERROR_SUCCESS)
@@ -2803,6 +2805,7 @@ DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
     const wchar16_t *fqdn,
+    const wchar16_t *machname,
     const wchar16_t *dn_context,
     wchar16_t **samacct
     )
@@ -2820,11 +2823,23 @@ LsaMachDnsNameSearch(
 
     *samacct = NULL;
     
+    // Attempt to find the computer account using the CN and FQDN (improve performance for pre-staged accounts and re-joining)
     lderr = LdapMachDnsNameSearch(
                 &res,
                 ldconn,
                 fqdn,
+                machname,
                 dn_context);
+
+    if (lderr != LDAP_SUCCESS) {
+        // Couldn't find using the CN so try the old dNSHostName search
+        lderr = LdapMachDnsNameSearch(
+                    &res,
+                    ldconn,
+                    fqdn,
+                    NULL,
+                    dn_context);        
+    }
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwMbsToWc16s("sAMAccountName",

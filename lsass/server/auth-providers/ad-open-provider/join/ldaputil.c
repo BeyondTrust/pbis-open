@@ -588,15 +588,17 @@ LdapMachDnsNameSearch(
     LDAPMessage **out,
     LDAP *ld,
     const wchar16_t *fqdn,
+    const wchar16_t *cn,
     const wchar16_t *base
     )
 {
-    const wchar_t filter_fmt[] = L"(&(objectClass=computer)(dNSHostName=%ws))";
+    const wchar_t filter_cn_fmt[] = L"(&(objectCategory=Computer)(cn=%ws)(dNSHostName=%ws))";
+    const wchar_t filter_fmt[] = L"(&(objectCategory=Computer)(dNSHostName=%ws))";
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     size_t filter_len = 0;
-    size_t dnsname_len = 0;
+    ssize_t sprintf_len = 0;
     char *basedn = NULL;
     wchar16_t *filterw16 = NULL;
     char *filter = NULL;
@@ -612,15 +614,22 @@ LdapMachDnsNameSearch(
     dwError = LwWc16sToMbs(base, &basedn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dnsname_len = wc16slen(fqdn);
+    if (cn) {
+        filter_len = wc16slen(cn) + wc16slen(fqdn) + (sizeof(filter_cn_fmt)/sizeof(filter_cn_fmt[0]));
+    } else {
+        filter_len = wc16slen(fqdn) + (sizeof(filter_fmt)/sizeof(filter_fmt[0]));
+    }
 
-    filter_len = dnsname_len + (sizeof(filter_fmt)/sizeof(filter_fmt[0]));
-
-    dwError = LwAllocateMemory(sizeof(wchar16_t) * filter_len,
-                               OUT_PPVOID(&filterw16));
+    dwError = LwAllocateMemory(sizeof(wchar16_t) * filter_len, OUT_PPVOID(&filterw16));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (sw16printfw(filterw16, filter_len, filter_fmt, fqdn) < 0)
+    if (cn) {
+        sprintf_len = sw16printfw(filterw16, filter_len, filter_cn_fmt, cn, fqdn);
+    } else {
+        sprintf_len = sw16printfw(filterw16, filter_len, filter_fmt, fqdn);
+    }
+
+    if (sprintf_len < 0)
     {
         dwError = LwErrnoToWin32Error(errno);
         BAIL_ON_LSA_ERROR(dwError);
@@ -663,7 +672,7 @@ LdapMachAcctSearch(
     const wchar16_t *base
     )
 {
-    const wchar_t filter_fmt[] = L"(&(objectClass=computer)(sAMAccountName=%ws))";
+    const wchar_t filter_fmt[] = L"(&(objectCategory=computer)(sAMAccountName=%ws))";
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;

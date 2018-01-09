@@ -132,6 +132,7 @@ LdapMachDnsNameSearch(
     LDAPMessage **out,
     LDAP *ld,
     const wchar16_t *fqdn,
+    const wchar16_t *machname,
     const wchar16_t *base
     );
 
