@@ -65,14 +65,20 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
     fprintf(stdout, "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>]\n\n");
     fprintf(stdout, (isEnterprise)
+
             ? "    leave [--enable <module> --disable <module> ...] [--keepLicense] [user name] [password]\n"
               "    leave [--enable <module> --disable <module> ...] [--deleteAccount <user name> [<password>]]\n"
             : "    leave [--enable <module> --disable <module> ...] [--deleteAccount <user name> [<password>]]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "  Example:\n");
-    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
+    fprintf(stdout, "Note: domainjoin-cli will prompt for missing parameters like <domain name>, <user name> and/or <organizationalUnit>.\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  Examples:\n");
+    fprintf(stdout, "    domainjoin-cli join\n");
+    fprintf(stdout, "    domainjoin-cli join --ou\n");
+    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n");
+    fprintf(stdout, "    domainjoin-cli join --ou Eng/Dev MYDOMAIN.COM MyJoinAccount\n\n");
 }
 
 static
@@ -321,7 +327,7 @@ char * ouHintsCallback(const char *buffer, int *color, int *bold)
 {
     *color = 34; /* blue */
     *bold = 1;
-    return " [Existing organizational unit, e.g. Engineering/pbis]";
+    return " [Top down path to existing OU (organizational unit), e.g. Eng/pbis/dev]";
 }
 
 void DoJoin(int argc, char **argv, int columns, LWException **exc)

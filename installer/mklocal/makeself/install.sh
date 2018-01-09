@@ -1053,8 +1053,10 @@ do_postinstall_messages()
     log_info ""
 
     if [ -z "$domain" ]; then
-        log_info "As root, run domainjoin-cli to join a domain so you can log on"
-        log_info "with Active Directory credentials."
+        log_info "Run domainjoin-cli to join a domain to allow log on with Active Directory";
+        log_info "credentials. domainjoin-cli will prompt for missing parameters."
+        log_info "Run domainjoin-cli --help for more information."
+        log_info ""
         log_info "Example:"
         log_info ""
         log_info "$domainjoin_cli join MYDOMAIN.COM MyJoinAccount"
