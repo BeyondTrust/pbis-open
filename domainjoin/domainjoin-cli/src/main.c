@@ -42,6 +42,10 @@
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
+const char *LN_COMPUTER_NAME_HISTORY_FILE = ".pbis-djname-hist";
+const char *LN_JOINLEAVE_HISTORY_FILE = ".pbis-djjoin-hist";
+const int LN_MAX_HISTORY_LEN = 64;
+
 static
 void
 ShowUsage(const BOOLEAN isEnterprise)
@@ -118,6 +122,68 @@ linenoise_strip_whitespace(
     }
 
     return input;
+}
+
+/* return the home directory or NULL if there is
+ * any error,
+ *
+ * the returned string should be freed */
+char *homeDirectory()
+{
+    char *home = NULL;
+    char *ret = NULL;
+    struct passwd *pw = NULL;
+
+    if (!(home = getenv("HOME")))
+    {
+        pw = getpwuid(geteuid());
+        if (pw)
+        {
+            home = pw->pw_dir;
+        }
+    }
+
+    LwStrDupOrNull(home, &ret);
+    return ret;
+}
+
+static
+char *
+linenoise_history_file(const char *filename)
+{
+    PSTR historyFile = NULL;
+    DWORD dwError = ERROR_SUCCESS;
+
+    char *homeDir = homeDirectory();
+    if (homeDir)
+    {
+        dwError = LwAllocateStringPrintf(&historyFile, "%s/%s", homeDir, filename);
+    }
+    else
+    {
+        dwError = LwStrDupOrNull(filename, &historyFile);
+    }
+    BAIL_ON_CENTERIS_ERROR(dwError);
+
+cleanup:
+    CT_SAFE_FREE_STRING(homeDir);
+    return historyFile;
+
+
+error:
+    CT_SAFE_FREE_STRING(historyFile);
+    goto cleanup;
+}
+
+/* Add to linenoise history if not null or empty */
+static
+void
+linenoise_history_add(const char *line)
+{
+    if (line && *line)
+    {
+        linenoiseHistoryAdd(line);
+    }
 }
 
 static
@@ -342,13 +408,23 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     size_t i;
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
-
+    PSTR joinLeaveHistoryFile = NULL;
 
     DJZeroJoinProcessOptions(&options);
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
     memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
+
+    /* initialize linenoise history; if we couldn't allocate a history
+     * file name, we just won't be able to load/persist history between
+     * runs */
+    linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+    joinLeaveHistoryFile = linenoise_history_file(LN_JOINLEAVE_HISTORY_FILE);
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistoryLoad(joinLeaveHistoryFile);
+    }
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
@@ -502,6 +578,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     {
         linenoiseSetHintsCallback(ouHintsCallback);
         options.ouName = linenoise_strip_whitespace("Computer object location (OU): ");
+        linenoise_history_add(options.ouName);
         linenoiseSetHintsCallback(NULL);
 
         if (LW_IS_NULL_OR_EMPTY_STR(options.ouName))
@@ -521,6 +598,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     else
     {
         options.domainName = linenoise_strip_whitespace("AD Domain: ");
+        linenoise_history_add(options.domainName);
         DJ_LOG_INFO("    Domain: [%s]", options.domainName);
     }
 
@@ -535,6 +613,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     else if (mustSupplyUsername)
     {
         options.username = linenoise_strip_whitespace("Username: ");
+        linenoise_history_add(options.username);
         DJ_LOG_INFO("    Username: [%s]", options.username);
     }
 
@@ -661,6 +740,11 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     DJ_LOG_INFO("Join SUCCESS");
 
 cleanup:
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistorySave(joinLeaveHistoryFile);
+    }
+
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
@@ -668,6 +752,7 @@ cleanup:
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);
+    CT_SAFE_FREE_STRING(joinLeaveHistoryFile);
 }
 
 void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWException **exc)
@@ -682,6 +767,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
     int passwordIndex = -1;
+    PSTR joinLeaveHistoryFile = NULL;
 
     DJZeroJoinProcessOptions(&options);
     memset(&enableModules, 0, sizeof(enableModules));
@@ -691,6 +777,16 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
 
     // Enterprise default is to release the license
     options.releaseLicense = isEnterprise;
+
+    /* initialize linenoise history; if we couldn't allocate a history
+     * file name, we just won't be able to load/persist history between
+     * runs */
+    linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+    joinLeaveHistoryFile = linenoise_history_file(LN_JOINLEAVE_HISTORY_FILE);
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistoryLoad(joinLeaveHistoryFile);
+    }
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
@@ -901,6 +997,11 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     DJ_LOG_INFO("Leave SUCCESS");
 
 cleanup:
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistorySave(joinLeaveHistoryFile);
+    }
+
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
@@ -908,6 +1009,7 @@ cleanup:
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);
+    CT_SAFE_FREE_STRING(joinLeaveHistoryFile);
 }
 
 #ifndef ENABLE_MINIMAL
@@ -1283,12 +1385,30 @@ int main(
         }
         else
         {
+            PSTR setNameHistoryFile = NULL;
+            setNameHistoryFile = linenoise_history_file(LN_COMPUTER_NAME_HISTORY_FILE);
+
+            linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+            if (setNameHistoryFile)
+            {
+                linenoiseHistoryLoad(setNameHistoryFile);
+            }
+
             /* n.b. ignoring this leak */
             pComputerName = linenoise_strip_whitespace("Computer name: ");
             if (!pComputerName)
             {
                 pComputerName = "";
             }
+
+            linenoise_history_add(pComputerName);
+
+            if (setNameHistoryFile)
+            {
+                linenoiseHistorySave(setNameHistoryFile);
+            }
+
+            CT_SAFE_FREE_STRING(setNameHistoryFile);
         }
 
         pDomainSuffix = strchr(pComputerName, '.');
