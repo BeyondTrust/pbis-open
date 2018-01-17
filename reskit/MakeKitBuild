@@ -1,8 +1,7 @@
 configure()
 {
     mk_declare -o \
-        MK_LIBEXECDIR \
-        MK_DOCDIR
+        MK_LIBEXECDIR
 
     lw_define_feature_macros
 }
@@ -10,12 +9,5 @@ configure()
 make()
 {
     mk_stage DESTDIR="${MK_LIBEXECDIR}" SOURCE="pbis-support.pl"
-    mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-open-installation-and-administration-guide.pdf"
-
-    if [ "$MK_HOST_OS" = "darwin" ]
-    then
-        mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-ten-minute-setup-guide-for-mac.pdf"
-    else
-        mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-quick-start-guide-for-linux.pdf"
-    fi
+    mk_stage DESTDIR="${MK_LIBEXECDIR}" SOURCE="offline-join.pl"
 }
