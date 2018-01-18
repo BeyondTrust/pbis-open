@@ -76,13 +76,27 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "Note: domainjoin-cli will prompt for missing parameters like <domain name>, <user name> and/or <organizationalUnit>.\n\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "  Examples:\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  This example shows three different non-interactive domain joins. Each uses the supplied domain\n");
+    fprintf(stdout, "  and AD user name. The second and third examples show joining to an OU within the domain, specified\n");
+    fprintf(stdout, "  in AD canonical name (without the domain prefix), and Distinguised Name (DN) formats.\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n");
+    fprintf(stdout, "    domainjoin-cli join --ou Eng/Dev MYDOMAIN.COM MyJoinAccount\n");
+    fprintf(stdout, "    domainjoin-cli join --ou OU=Dev,OU=Eng,DC=MYDOMAIN,DC=COM MYDOMAIN.COM MyJoinAccount\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  This example shows how domainjoin-cli will prompt for the domain, user name and OU parameters if\n");
+    fprintf(stdout, "  they are not supplied. In the first example, domainjoin-cli will prompt for domain and user name.\n");
+    fprintf(stdout, "  In the second, domainjoin-cli will prompt for the domain, user name and OU. In the final example,\n");
+    fprintf(stdout, "  domainjoin-cli will prompt for the OU and user name. Here -- is used to indicate the OU parameter\n");
+    fprintf(stdout, "  is not supplied, otherwise domainjoin-cli would parse MYDOMAIN.COM as the OU.\n");
+    fprintf(stdout, "\n");
     fprintf(stdout, "    domainjoin-cli join\n");
     fprintf(stdout, "    domainjoin-cli join --ou\n");
-    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n");
-    fprintf(stdout, "    domainjoin-cli join --ou Eng/Dev MYDOMAIN.COM MyJoinAccount\n\n");
+    fprintf(stdout, "    domainjoin-cli join --ou -- MYDOMAIN.COM \n");
+    fprintf(stdout, "\n");
 }
 
 static
@@ -393,7 +407,7 @@ char * ouHintsCallback(const char *buffer, int *color, int *bold)
 {
     *color = 34; /* blue */
     *bold = 1;
-    return " [Top down path to existing OU (organizational unit), e.g. Eng/pbis/dev]";
+    return " [e.g. Eng/pbis/dev | OU=Dev,OU=Eng,DC=MYDOMAIN,DC=COM]";
 }
 
 void DoJoin(int argc, char **argv, int columns, LWException **exc)
