@@ -211,6 +211,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaParseIgnoreList(
     PSTR pIgnoreList,
@@ -257,11 +258,14 @@ LsaParseIgnoreList(
                             pToken,
                             &pTokenCopy);
             BAIL_ON_LSA_ERROR(dwError);
+            
             dwError = LwHashSetValue(
                             pIgnoreHash,
                             pTokenCopy,
                             pTokenCopy);
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LSA_ERROR(dwError); 
+            
+            pTokenCopy = NULL;
         }
 
         pToken = strtok_r(NULL, "\r\n", &pSavePtr);
@@ -269,17 +273,21 @@ LsaParseIgnoreList(
 
 
 cleanup:
+    LW_SAFE_FREE_STRING(pTokenCopy);
+
     if (dwError)
     {
         LwHashSafeFree(&pIgnoreHash);
     }
     *ppIgnoreHash = pIgnoreHash;
+
     return dwError;
 
 error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaReadSystemGroupList(
     IN PCSTR pFileName,
@@ -391,6 +399,7 @@ error:
 #endif /* HAVE_FGETGRENT_R */
 }
 
+static
 DWORD
 LsaReadSystemUserList(
     IN PCSTR pFileName,
@@ -593,6 +602,48 @@ LsaShouldIgnoreUser(
     {
         return (LwHashExists(gpUserIgnoreHash, pszName));
     }
+    return FALSE;
+}
+
+BOOLEAN
+LsaShouldIgnoreUserInfo(
+    PVOID        pUserInfo
+    )
+{
+    // Ignore errors
+    LsaReadIgnoreHashes();
+
+    if (gpUserIgnoreHash)
+    {
+        if (pUserInfo)
+        {
+            PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+
+            return (LwHashExists(gpUserIgnoreHash, pUserInfo_0->pszName));
+        }
+    }
+
+    return FALSE;
+}
+
+BOOLEAN
+LsaShouldIgnoreGroupInfo(
+    PVOID        pGroupInfo
+    )
+{
+    // Ignore errors
+    LsaReadIgnoreHashes();
+
+    if (gpGroupIgnoreHash)
+    {
+        if (pGroupInfo)
+        {
+            PLSA_GROUP_INFO_0 pGroupInfo_0 = (PLSA_GROUP_INFO_0)pGroupInfo;
+
+            return (LwHashExists(gpGroupIgnoreHash, pGroupInfo_0->pszName));
+        }
+    }
+
     return FALSE;
 }
 

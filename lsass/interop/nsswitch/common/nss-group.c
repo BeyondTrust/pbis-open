@@ -352,6 +352,7 @@ LsaNssCommonGroupGetgrent(
     int                       ret = NSS_STATUS_NOTFOUND;
     HANDLE hLsaConnection = pConnection->hLsaConnection;
     PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
+    BOOLEAN bIgnoreEntry;
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -360,56 +361,75 @@ LsaNssCommonGroupGetgrent(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    if (!pEnumGroupsState->bTryAgain)
+    do
     {
-        if (!pEnumGroupsState->idxGroup ||
-            (pEnumGroupsState->idxGroup >= pEnumGroupsState->dwNumGroups))
+        bIgnoreEntry = FALSE;
+
+        if (!pEnumGroupsState->bTryAgain)
         {
-            if (pEnumGroupsState->ppGroupInfoList) {
-                LsaFreeGroupInfoList(
-                   pEnumGroupsState->dwGroupInfoLevel,
-                   pEnumGroupsState->ppGroupInfoList,
-                   pEnumGroupsState->dwNumGroups);
-                pEnumGroupsState->ppGroupInfoList = NULL;
-                pEnumGroupsState->dwNumGroups = 0;
-                pEnumGroupsState->idxGroup = 0;
+            if (!pEnumGroupsState->idxGroup ||
+                    (pEnumGroupsState->idxGroup >= pEnumGroupsState->dwNumGroups))
+            {
+                if (pEnumGroupsState->ppGroupInfoList)
+                {
+                    LsaFreeGroupInfoList(
+                            pEnumGroupsState->dwGroupInfoLevel,
+                            pEnumGroupsState->ppGroupInfoList,
+                            pEnumGroupsState->dwNumGroups);
+                    pEnumGroupsState->ppGroupInfoList = NULL;
+                    pEnumGroupsState->dwNumGroups = 0;
+                    pEnumGroupsState->idxGroup = 0;
+                }
+
+                if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+                {
+                    ret = MAP_LSA_ERROR(pErrorNumber,
+                            LsaEnumGroups(
+                            hLsaConnection,
+                            pEnumGroupsState->hResume,
+                            &pEnumGroupsState->dwNumGroups,
+                            &pEnumGroupsState->ppGroupInfoList));
+                    BAIL_ON_NSS_ERROR(ret);
+                }
             }
 
-            if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+        }
+
+        if (pEnumGroupsState->dwNumGroups)
+        {
+            PLSA_GROUP_INFO_1 pGroupInfo =
+                    (PLSA_GROUP_INFO_1)*(pEnumGroupsState->ppGroupInfoList + pEnumGroupsState->idxGroup);
+
+            if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+            {
+                bIgnoreEntry = TRUE;
+            }
+            else 
             {
                 ret = MAP_LSA_ERROR(pErrorNumber,
-                               LsaEnumGroups(
-                                   hLsaConnection,
-                                   pEnumGroupsState->hResume,
-                                   &pEnumGroupsState->dwNumGroups,
-                                   &pEnumGroupsState->ppGroupInfoList));
+                        LsaNssWriteGroupInfo(
+                        pEnumGroupsState->dwGroupInfoLevel,
+                        pGroupInfo,
+                        pResultGroup,
+                        &pszBuf,
+                        bufLen));
                 BAIL_ON_NSS_ERROR(ret);
+                
+                ret = NSS_STATUS_SUCCESS;
+            }
+            
+            pEnumGroupsState->idxGroup++;
+        }
+        else
+        {
+            ret = NSS_STATUS_UNAVAIL;
+
+            if (pErrorNumber)
+            {
+                *pErrorNumber = ENOENT;
             }
         }
-
-    }
-
-    if (pEnumGroupsState->dwNumGroups) {
-        PLSA_GROUP_INFO_1 pGroupInfo =
-            (PLSA_GROUP_INFO_1)*(pEnumGroupsState->ppGroupInfoList+pEnumGroupsState->idxGroup);
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaNssWriteGroupInfo(
-                                pEnumGroupsState->dwGroupInfoLevel,
-                                pGroupInfo,
-                                pResultGroup,
-                                &pszBuf,
-                                bufLen));
-        BAIL_ON_NSS_ERROR(ret);
-        pEnumGroupsState->idxGroup++;
-
-        ret = NSS_STATUS_SUCCESS;
-    } else {
-        ret = NSS_STATUS_UNAVAIL;
-
-        if (pErrorNumber) {
-            *pErrorNumber = ENOENT;
-        }
-    }
+    } while (bIgnoreEntry);
 
     pEnumGroupsState->bTryAgain = FALSE;
 
@@ -466,8 +486,7 @@ LsaNssCommonGroupGetgrgid(
     PVOID pGroupInfo = NULL;
     DWORD dwGroupInfoLevel = 1;
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -479,6 +498,12 @@ LsaNssCommonGroupGetgrgid(
                             dwGroupInfoLevel,
                             &pGroupInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteGroupInfo(
@@ -530,8 +555,7 @@ LsaNssCommonGroupGetgrnam(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -543,6 +567,12 @@ LsaNssCommonGroupGetgrnam(
                             dwGroupInfoLevel,
                             &pGroupInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteGroupInfo(

@@ -297,6 +297,7 @@ LsaNssCommonPasswdGetpwent(
     int  ret = NSS_STATUS_NOTFOUND;
     HANDLE hLsaConnection = pConnection->hLsaConnection;
     PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
+    BOOLEAN bIgnoreEntry;
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -304,55 +305,73 @@ LsaNssCommonPasswdGetpwent(
                             LW_ERROR_INVALID_LSA_CONNECTION);
         BAIL_ON_NSS_ERROR(ret);
     }
-    
-    if (!pEnumUsersState->bTryAgain)
+
+    do
     {
-        if (!pEnumUsersState->idxUser ||
-            (pEnumUsersState->idxUser >= pEnumUsersState->dwNumUsers))
+        bIgnoreEntry = FALSE;
+
+        if (!pEnumUsersState->bTryAgain)
         {
-            if (pEnumUsersState->ppUserInfoList) {
-                LsaFreeUserInfoList(
-                   pEnumUsersState->dwUserInfoLevel,
-                   pEnumUsersState->ppUserInfoList,
-                   pEnumUsersState->dwNumUsers);
-                pEnumUsersState->ppUserInfoList = NULL;
-                pEnumUsersState->dwNumUsers = 0;
-                pEnumUsersState->idxUser = 0;
+            if (!pEnumUsersState->idxUser ||
+                    (pEnumUsersState->idxUser >= pEnumUsersState->dwNumUsers))
+            {
+                if (pEnumUsersState->ppUserInfoList)
+                {
+                    LsaFreeUserInfoList(
+                            pEnumUsersState->dwUserInfoLevel,
+                            pEnumUsersState->ppUserInfoList,
+                            pEnumUsersState->dwNumUsers);
+                    pEnumUsersState->ppUserInfoList = NULL;
+                    pEnumUsersState->dwNumUsers = 0;
+                    pEnumUsersState->idxUser = 0;
+                }
+                if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+                {
+                    ret = MAP_LSA_ERROR(pErrorNumber,
+                            LsaEnumUsers(
+                            hLsaConnection,
+                            pEnumUsersState->hResume,
+                            &pEnumUsersState->dwNumUsers,
+                            &pEnumUsersState->ppUserInfoList));
+                    BAIL_ON_NSS_ERROR(ret);
+                }
             }
-            if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+        }
+
+        if (pEnumUsersState->dwNumUsers)
+        {
+            PLSA_USER_INFO_0 pUserInfo =
+                    (PLSA_USER_INFO_0)*(pEnumUsersState->ppUserInfoList + pEnumUsersState->idxUser);
+
+            if (LsaShouldIgnoreUserInfo(pUserInfo))
+            {
+                bIgnoreEntry = TRUE;
+            }
+            else 
             {
                 ret = MAP_LSA_ERROR(pErrorNumber,
-                               LsaEnumUsers(
-                                   hLsaConnection,
-                                   pEnumUsersState->hResume,
-                                   &pEnumUsersState->dwNumUsers,
-                                   &pEnumUsersState->ppUserInfoList));
+                        LsaNssWriteUserInfo(
+                        pEnumUsersState->dwUserInfoLevel,
+                        pUserInfo,
+                        pResultUser,
+                        &pszBuf,
+                        bufLen));
                 BAIL_ON_NSS_ERROR(ret);
+                
+                ret = NSS_STATUS_SUCCESS;
+            }
+
+            pEnumUsersState->idxUser++;
+        }
+        else
+        {
+            ret = NSS_STATUS_UNAVAIL;
+            if (pErrorNumber)
+            {
+                *pErrorNumber = ENOENT;
             }
         }
-    }
-
-    if (pEnumUsersState->dwNumUsers) {
-        PLSA_USER_INFO_0 pUserInfo =
-            (PLSA_USER_INFO_0)*(pEnumUsersState->ppUserInfoList+pEnumUsersState->idxUser);
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaNssWriteUserInfo(
-                                pEnumUsersState->dwUserInfoLevel,
-                                pUserInfo,
-                                pResultUser,
-                                &pszBuf,
-                                bufLen));
-        BAIL_ON_NSS_ERROR(ret);
-
-        pEnumUsersState->idxUser++;
-
-        ret = NSS_STATUS_SUCCESS;
-    } else {
-        ret = NSS_STATUS_UNAVAIL;
-        if (pErrorNumber) {
-            *pErrorNumber = ENOENT;
-        }
-    }
+    } while (bIgnoreEntry);
 
     pEnumUsersState->bTryAgain = FALSE;
 
@@ -421,8 +440,7 @@ LsaNssCommonPasswdGetpwnam(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -433,6 +451,12 @@ LsaNssCommonPasswdGetpwnam(
                             dwUserInfoLevel,
                             &pUserInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreUserInfo(pUserInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteUserInfo(
@@ -475,8 +499,7 @@ LsaNssCommonPasswdGetpwuid(
     PVOID pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -487,6 +510,12 @@ LsaNssCommonPasswdGetpwuid(
                             dwUserInfoLevel,
                             &pUserInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreUserInfo(pUserInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteUserInfo(

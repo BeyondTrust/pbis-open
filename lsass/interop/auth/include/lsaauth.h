@@ -246,6 +246,16 @@ LsaShouldIgnoreUser(
     PCSTR pszName
     );
 
+BOOLEAN
+LsaShouldIgnoreUserInfo(
+    PVOID        pUserInfo
+    );
+
+BOOLEAN
+LsaShouldIgnoreGroupInfo(
+    PVOID        pGroupInfo
+    );
+
 VOID
 LsaFreeIgnoreHashes(VOID);
 
