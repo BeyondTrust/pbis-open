@@ -10,7 +10,7 @@ make()
             lwsecurityidentifier.c \
             lwtime.c \
             lwptimer.c " \
-        INCLUDEDIRS=". ../include ../include/public" \
+        INCLUDEDIRS=". ../include ../include/public ../../lwio/include ../../lsass/include" \
         HEADERDEPS="krb5.h ldap.h lwmsg/lwmsg.h sasl/sasl.h lw/base.h" \
         LIBDEPS="krb5 gssapi_krb5 k5crypto ldap_r lwbase $LIB_RT"
 }

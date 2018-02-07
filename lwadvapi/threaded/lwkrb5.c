@@ -51,7 +51,6 @@
 #include "lwkrb5.h"
 #include <gssapi/gssapi_krb5.h>
 #include <lw/swab.h>
-#include <lw/swab.h>
 #include <lwio/io-types.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
