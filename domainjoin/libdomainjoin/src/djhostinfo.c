@@ -838,7 +838,8 @@ DJConfigureDHCPService(
     {
         "/bin/systemctl",
         "restart",
-        "network"
+        "network",
+        NULL
     };
 
     PPROCINFO pProcInfo = NULL;
