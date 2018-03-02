@@ -265,6 +265,7 @@ typedef DWORD (*PFNOPENHANDLE)(
 
 typedef DWORD (*PFN_LSA_PROVIDER_GET_SMARTCARD_USER_OBJECT)(
     IN HANDLE hProvider,
+    IN OPTIONAL PCSTR pszSmartcardUser,    
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     );

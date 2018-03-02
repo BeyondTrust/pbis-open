@@ -61,6 +61,7 @@ typedef struct _PAMOPTIONS
     BOOLEAN bLsassUsersOnly;
     BOOLEAN bUnknownOK;
     BOOLEAN bSmartCardPrompt;
+    BOOLEAN bSmartCardAuth;
     BOOLEAN bPromptGecos;
     BOOLEAN bDisablePasswordChange;
     BOOLEAN bNoRequireMembership;

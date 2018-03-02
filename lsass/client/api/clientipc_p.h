@@ -233,9 +233,10 @@ LsaTransactCloseEnum(
 
 DWORD
 LsaTransactGetSmartCardUserObject(
-    HANDLE hServer,
-    PLSA_SECURITY_OBJECT* ppObject,
-    PSTR* ppszSmartCardReader
+    IN HANDLE hServer,
+    IN OPTIONAL PCSTR ppszSmartCardUser,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
     );
 
 DWORD

@@ -182,7 +182,7 @@ lwmsg_test_log_function(
             break;
         }
 
-        Mu_Interface_Event(filename, line, mu_level, "%s", message);
+        mu_interface_event(filename, line, mu_level, "%s", message);
     }
 
     return LWMSG_TRUE;

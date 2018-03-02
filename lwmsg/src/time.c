@@ -37,7 +37,9 @@
  */
 
 #include "config.h"
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 #include <time.h>
 #include <errno.h>
 

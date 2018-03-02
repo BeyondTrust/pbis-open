@@ -680,6 +680,18 @@
         </registry>
     </capability>
     <capability>
+        <name>SmartcardRedirector</name>
+        <description>Smartcard redirector services will not be used when disabled</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRedirector"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRedirector" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
         <name>SmartcardRequiredForLogin</name>
         <description>Smartcard will be required for login</description>
         <registry type="boolean"

@@ -65,7 +65,7 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
-    fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--ignore-pam] [--enable <module> --disable <module> ...]\n");
+    fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--nogssapi] [--ignore-pam] [--enable <module> --disable <module> ...]\n");
     fprintf(stdout, "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
     fprintf(stdout, "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>]\n\n");
     fprintf(stdout, (isEnterprise)
@@ -456,6 +456,8 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             options.disableTimeSync = TRUE;
         else if(!strcmp(argv[0], "--multiple"))
             options.enableMultipleJoins = TRUE;
+        else if(!strcmp(argv[0], "--nogssapi"))
+            options.disableGSSAPI = TRUE;
         else if(!strcmp(argv[0], "--nohosts"))
         {
             PCSTR module = "hostname";

@@ -113,6 +113,10 @@
     default = sza:"gdm-password" "gdm" "gnome-screensaver" "sudo"
     doc = ""
 }
+"SmartCardRemoteServices" = {
+    default = sza:"sudo" "sshd" "sshd-kbdint"
+    doc = ""
+}
 "SmartCardPromptGecos" = {
     default = sza:"gdm"
     doc = ""

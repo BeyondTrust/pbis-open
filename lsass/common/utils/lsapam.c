@@ -132,6 +132,12 @@ LsaUtilFreePamConfigContents(
         }
         LW_SAFE_FREE_MEMORY(pConfig->ppszSmartCardServices);
 
+        for (i = 0; i < pConfig->dwNumSmartCardRemoteServices; ++i)
+        {
+            LW_SAFE_FREE_STRING(pConfig->ppszSmartCardRemoteServices[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pConfig->ppszSmartCardRemoteServices);
+
         for (i = 0; i < pConfig->dwNumSmartCardPromptGecos; ++i)
         {
             LW_SAFE_FREE_STRING(pConfig->ppszSmartCardPromptGecos[i]);

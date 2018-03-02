@@ -30,6 +30,7 @@ make()
         status.c \
         context.c \
         util.c \
+        util-os.c \
         time.c \
         xnet.c \
         security.c \

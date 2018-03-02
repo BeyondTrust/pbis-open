@@ -91,7 +91,7 @@ lwmsg_context_default_realloc (
     {
         if (new_size > old_size)
         {
-            memset(nobj + old_size, 0, new_size - old_size);
+            memset((unsigned char*)nobj + old_size, 0, new_size - old_size);
         }
         *new_object = nobj;
         return LWMSG_STATUS_SUCCESS;

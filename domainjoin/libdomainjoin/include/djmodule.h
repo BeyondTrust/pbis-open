@@ -91,6 +91,8 @@ struct _JoinProcessOptions
     BOOLEAN releaseLicense;
     BOOLEAN deleteAccount;
 
+    BOOLEAN disableGSSAPI;
+
     BOOLEAN setAssumeDefaultDomain;
     // TRUE means that lsass will be configured to append a domain prefix so user logons
     // can be with short account names.

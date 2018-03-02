@@ -115,7 +115,7 @@ lwmsg_time_is_positive(
     LWMsgTime* time
     )
 {
-    return (time->seconds >= 0 && time->microseconds >= 0);
+    return (time->seconds >= 0 && time->microseconds >= 0) ? LWMSG_TRUE : LWMSG_FALSE;
 }
 
 static inline
@@ -124,7 +124,7 @@ lwmsg_time_is_zero(
     LWMsgTime* time
     )
 {
-    return (time->seconds == 0 && time->microseconds == 0);
+    return (time->seconds == 0 && time->microseconds == 0) ? LWMSG_TRUE : LWMSG_FALSE;
 }
 
 

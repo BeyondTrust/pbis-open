@@ -750,8 +750,13 @@ static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
         &command, "%s%s %s -o %s=yes -o BadOption=yes 2>&1",
         rootPrefix, binary, testFlag, optionName));
+    
+    DJ_LOG_VERBOSE("Running test: %s", command);
 
     ceError = CTCaptureOutput(command, &commandOutput);
+
+    DJ_LOG_VERBOSE("Results: %s", commandOutput);
+
     /* Some versions of sshd will return an error code because an invalid
        option was passed, but not all will. */
     if(ceError == ERROR_BAD_COMMAND)
@@ -764,7 +769,7 @@ static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, 
         goto cleanup;
     }
 
-    if(strstr(commandOutput, "BadOption") == NULL)
+    if(strstr(commandOutput, "BadOption") == NULL && strstr(commandOutput, "badoption") == NULL)
     {
         DJ_LOG_INFO("Sshd does not support -o");
         goto cleanup;
@@ -998,25 +1003,45 @@ static QueryResult UpdateSshdConf(struct SshConf *conf, PCSTR testPrefix,
                 }
             }
         }
-        for(i = 0; optionalSshdOptions[i] != NULL; i++)
-        {
-            PCSTR option = optionalSshdOptions[i];
-            LW_TRY(exc, supported = TestOption(testPrefix, conf, binaryPath, "-t", option, &LW_EXC));
-            if(supported)
+        
+        if (options->disableGSSAPI) {
+            conf->modified = FALSE;
+            LW_CLEANUP_CTERR(exc, RemoveOption(conf, "GSSAPIAuthentication"));
+            if(conf->modified)
             {
-                conf->modified = FALSE;
-                LW_CLEANUP_CTERR(exc, SetOption(conf, option, "yes"));
-                if(conf->modified)
+                if(changeDescription != NULL)
                 {
-                    modified = TRUE;
-                    temp = optionalOptions;
-                    optionalOptions = NULL;
-                    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&optionalOptions, "%s\t%s\n", temp, option));
-                    CT_SAFE_FREE_STRING(temp);
+                    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+                                changeDescription,
+                                "In %s, GSSAPIAuthentication will be removed.\n",
+                                conf->filename));
+                }
+                result = NotConfigured;
+            }
+            else
+                result = FullyConfigured;
+        } else {
+            for(i = 0; optionalSshdOptions[i] != NULL; i++)
+            {
+                PCSTR option = optionalSshdOptions[i];
+                LW_TRY(exc, supported = TestOption(testPrefix, conf, binaryPath, "-t", option, &LW_EXC));
+                if(supported)
+                {
+                    conf->modified = FALSE;
+                    LW_CLEANUP_CTERR(exc, SetOption(conf, option, "yes"));
+                    if(conf->modified)
+                    {
+                        modified = TRUE;
+                        temp = optionalOptions;
+                        optionalOptions = NULL;
+                        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&optionalOptions, "%s\t%s\n", temp, option));
+                        CT_SAFE_FREE_STRING(temp);
+                    }
                 }
             }
+
+            result = FullyConfigured;
         }
-        result = FullyConfigured;
         if(strlen(optionalOptions) > 0)
         {
             temp = optionalOptions;

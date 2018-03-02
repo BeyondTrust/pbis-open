@@ -1893,12 +1893,14 @@ LsaSrvIpcGetSmartCardUserObject(
     )
 {
     DWORD dwError = 0;
+    PLSA2_IPC_GET_SMART_CARD_USER_REQ pReq = (PLSA2_IPC_GET_SMART_CARD_USER_REQ)pIn->data;
     PLSA2_IPC_GET_SMART_CARD_USER_RES pRes = NULL;
     PLSA_SECURITY_OBJECT pObject = NULL;
     PSTR pszSmartCardReader = NULL;
 
     dwError = LsaSrvGetSmartCardUserObject(
         LsaSrvIpcGetSessionData(pCall),
+        pReq->pszSmartcardUser,
         &pObject, &pszSmartCardReader);
 
     if (!dwError)

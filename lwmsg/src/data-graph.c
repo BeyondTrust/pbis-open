@@ -355,7 +355,7 @@ lwmsg_data_visit_graph_indirect(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     size_t count = 0;
     size_t i;
-    void* element;
+	unsigned char* element;
     LWMsgTypeIter inner;
 
     lwmsg_type_enter(iter, &inner);

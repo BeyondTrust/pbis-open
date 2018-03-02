@@ -983,6 +983,8 @@ MU_TEST(LwPrintf, LwPrintfW16AllocateString)
                 3,
                 L"abc");
     MU_ASSERT(!wc16scmp(pOutput, expectedOutput));
+    MU_ASSERT(error == 0);
+
     free(pOutput);
 }
 

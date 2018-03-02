@@ -4,9 +4,9 @@ Priority: 260
 Conflicts: winbind
 Auth-Type: Primary
 Auth:
-	[success=end default=ignore]	pam_lsass.so try_first_pass
+	[success=end default=ignore]	pam_lsass.so try_first_pass smartcard
 Auth-Initial:
-	[success=end default=ignore]	pam_lsass.so
+	[success=end default=ignore]	pam_lsass.so smartcard
 Account-Type: Primary
 Account:
 	[success=ok new_authtok_reqd=ok default=ignore]		pam_lsass.so unknown_ok

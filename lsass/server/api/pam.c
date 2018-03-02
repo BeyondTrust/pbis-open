@@ -35,8 +35,10 @@ LsaSrvGetPamConfig(
     LSA_PAM_CONFIG PamConfig = { 0 };
     PLSA_PAM_CONFIG pPamConfig = NULL;
     PSTR pszSmartCardServices = NULL;
+    PSTR pszSmartCardRemoteServices = NULL;
     PSTR pszSmartCardPromptGecos = NULL;
     DWORD dwSmartCardServicesSize = 0;
+    DWORD dwSmartCardRemoteServicesSize = 0;
     DWORD dwSmartCardPromptGecosSize = 0;
     DWORD dwCount;
 
@@ -92,6 +94,16 @@ LsaSrvGetPamConfig(
             NULL,
             &pszSmartCardServices,
             &dwSmartCardServicesSize
+        },
+        {
+            "SmartCardRemoteServices",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            0,
+            NULL,
+            &pszSmartCardRemoteServices,
+            &dwSmartCardRemoteServicesSize
         },
         {
             "SmartCardPromptGecos",
@@ -153,18 +165,35 @@ LsaSrvGetPamConfig(
                 sizeof(ConfigDescription)/sizeof(ConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = RegByteArrayToMultiStrsA(
-            (PBYTE) pszSmartCardServices,
-            dwSmartCardServicesSize,
-            &PamConfig.ppszSmartCardServices);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (LsaSrvSmartCardEnabled()) {
+        dwError = RegByteArrayToMultiStrsA(
+                (PBYTE) pszSmartCardServices,
+                dwSmartCardServicesSize,
+                &PamConfig.ppszSmartCardServices);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwCount = 0;
-    while (PamConfig.ppszSmartCardServices[dwCount] != NULL)
-    {
-         ++dwCount;
+        dwCount = 0;
+        while (PamConfig.ppszSmartCardServices[dwCount] != NULL)
+        {
+             ++dwCount;
+        }
+        PamConfig.dwNumSmartCardServices = dwCount;
     }
-    PamConfig.dwNumSmartCardServices = dwCount;
+
+    if (LsaSrvRemoteSmartCardEnabled()) {
+        dwError = RegByteArrayToMultiStrsA(
+                (PBYTE) pszSmartCardRemoteServices,
+                dwSmartCardRemoteServicesSize,
+                &PamConfig.ppszSmartCardRemoteServices);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwCount = 0;
+        while (PamConfig.ppszSmartCardRemoteServices[dwCount] != NULL)
+        {
+             ++dwCount;
+        }
+        PamConfig.dwNumSmartCardRemoteServices = dwCount;
+    }
 
     dwError = RegByteArrayToMultiStrsA(
             (PBYTE) pszSmartCardPromptGecos,
@@ -184,6 +213,7 @@ LsaSrvGetPamConfig(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszSmartCardServices);
+    LW_SAFE_FREE_STRING(pszSmartCardRemoteServices);
     LW_SAFE_FREE_STRING(pszSmartCardPromptGecos);
 
     *ppPamConfig = pPamConfig;

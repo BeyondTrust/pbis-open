@@ -648,6 +648,7 @@ typedef struct __LSA_AUTH_USER_PAM_PARAMS
     LW_PCSTR pszLoginName;
     LW_PCSTR pszPassword;
     LW_PCSTR pszPamSource;
+    LW_PCSTR pszRemoteHost;
 } LSA_AUTH_USER_PAM_PARAMS, *PLSA_AUTH_USER_PAM_PARAMS;
 
 #define LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE   0x00000001
@@ -737,6 +738,8 @@ typedef struct _LSA_PAM_CONFIG
     LW_PSTR pszAccessDeniedMessage;
     LW_DWORD dwNumSmartCardServices;
     LW_PSTR *ppszSmartCardServices;
+    LW_DWORD dwNumSmartCardRemoteServices;
+    LW_PSTR *ppszSmartCardRemoteServices;
     LW_DWORD dwNumSmartCardPromptGecos;
     LW_PSTR *ppszSmartCardPromptGecos;
     LW_PSTR pszActiveDirectoryPasswordPrompt;
@@ -2102,6 +2105,7 @@ LsaAddUser2(
 LW_DWORD
 LsaGetSmartCardUserObject(
     LW_IN LW_HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     LW_OUT PLSA_SECURITY_OBJECT* ppObject,
     LW_OUT LW_PSTR* ppszSmartCardReader
     );
@@ -2112,6 +2116,8 @@ LsaGetSmartCardUserObject(
 
 #define LSA_PROVIDER_TAG_LOCAL "lsa-local-provider"
 #define LSA_PROVIDER_TAG_AD "lsa-activedirectory-provider"
+
+#define LSA_SMARTCARD_REDIRECTOR_TAG "[LWSCR]"
 
 /*@}*/
 

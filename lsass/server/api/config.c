@@ -148,6 +148,8 @@ LsaSrvApiInitConfig(
     pConfig->dwSaslMaxBufSize = 16777215;  // 16MB
     pConfig->cDomainSeparator = '\\';
     pConfig->cSpaceReplacement = '^';
+    pConfig->bEnableSmartCard = FALSE;
+    pConfig->bEnableRemoteSmartCard = FALSE;
 
     return 0;
 }
@@ -302,11 +304,17 @@ LsaSrvApiTransferConfigContents(
     PLSA_SRV_API_CONFIG pDest
     )
 {
+    BOOLEAN bEnableSmartCard = pDest->bEnableSmartCard;
+    BOOLEAN bEnableRemoteSmartCard = pDest->bEnableRemoteSmartCard;
+    
     LsaSrvApiFreeConfigContents(pDest);
 
     *pDest = *pSrc;
 
     LsaSrvApiFreeConfigContents(pSrc);
+
+    pDest->bEnableSmartCard = bEnableSmartCard;
+    pDest->bEnableRemoteSmartCard = bEnableRemoteSmartCard;
 
     return 0;
 }
@@ -392,6 +400,54 @@ LsaSrvSaslMaxBufSize(VOID)
     pthread_mutex_unlock(&gAPIConfigLock);
 
     return dwResult;
+}
+
+BOOLEAN
+LsaSrvSmartCardEnabled(VOID)
+{
+    BOOLEAN rv = FALSE;
+
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    rv = gAPIConfig.bEnableSmartCard;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+
+    return rv;
+}
+
+VOID
+LsaSrvSmartCardEnable(BOOLEAN v)
+{
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    gAPIConfig.bEnableSmartCard = v;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+}
+
+BOOLEAN
+LsaSrvRemoteSmartCardEnabled(VOID)
+{
+    BOOLEAN rv = FALSE;
+
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    rv = gAPIConfig.bEnableRemoteSmartCard;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+
+    return rv;
+}
+
+VOID
+LsaSrvRemoteSmartCardEnable(BOOLEAN v)
+{
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    gAPIConfig.bEnableRemoteSmartCard = v;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
 }
 
 

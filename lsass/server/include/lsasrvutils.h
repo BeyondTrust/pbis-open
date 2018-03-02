@@ -233,6 +233,26 @@ LsaSrvSaslMaxBufSize(
     VOID
     );
 
+BOOLEAN
+LsaSrvSmartCardEnabled(
+    VOID
+    );
+
+VOID
+LsaSrvSmartCardEnable(
+    BOOLEAN v
+    );
+
+BOOLEAN
+LsaSrvRemoteSmartCardEnabled(
+    VOID
+    );
+
+VOID
+LsaSrvRemoteSmartCardEnable(
+    BOOLEAN v
+    );
+
 
 VOID
 LsaSrvLogUserIDConflictEvent(

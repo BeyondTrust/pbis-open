@@ -1417,6 +1417,7 @@ error:
 DWORD
 LsaTransactGetSmartCardUserObject(
     HANDLE hServer,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     PLSA_SECURITY_OBJECT* ppObject,
     PSTR* ppszSmartCardReader
     )
@@ -1426,12 +1427,17 @@ LsaTransactGetSmartCardUserObject(
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
+    LSA2_IPC_GET_SMART_CARD_USER_REQ getSmartCardUserRequest;
     LSA2_IPC_GET_SMART_CARD_USER_RES* getSmartCardUserResponse;
 
     dwError = LsaIpcAcquireCall(hServer, &pCall);
     BAIL_ON_LSA_ERROR(dwError);
+    
+    getSmartCardUserRequest.pszSmartcardUser = pszSmartcardUser;
+    
 
     in.tag = LSA2_Q_GET_SMARTCARD_USER_OBJECT;
+    in.data = &getSmartCardUserRequest;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out,
                 NULL, NULL));

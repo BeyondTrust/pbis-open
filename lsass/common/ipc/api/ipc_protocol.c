@@ -705,6 +705,9 @@ static LWMsgTypeSpec gLsaIPCGetPamConfigSpec[] =
     LWMSG_MEMBER_UINT32(LSA_PAM_CONFIG, dwNumSmartCardServices),
     LWMSG_MEMBER_POINTER(LSA_PAM_CONFIG, ppszSmartCardServices, LWMSG_PSTR),
     LWMSG_ATTR_LENGTH_MEMBER(LSA_PAM_CONFIG, dwNumSmartCardServices),
+    LWMSG_MEMBER_UINT32(LSA_PAM_CONFIG, dwNumSmartCardRemoteServices),
+    LWMSG_MEMBER_POINTER(LSA_PAM_CONFIG, ppszSmartCardRemoteServices, LWMSG_PSTR),
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_PAM_CONFIG, dwNumSmartCardRemoteServices),
     LWMSG_MEMBER_UINT32(LSA_PAM_CONFIG, dwNumSmartCardPromptGecos),
     LWMSG_MEMBER_POINTER(LSA_PAM_CONFIG, ppszSmartCardPromptGecos, LWMSG_PSTR),
     LWMSG_ATTR_LENGTH_MEMBER(LSA_PAM_CONFIG, dwNumSmartCardPromptGecos),
@@ -1079,6 +1082,14 @@ static LWMsgTypeSpec gLsa2IpcDeleteObjectReqSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsa2IpcGetSmartCardUserObjectReqSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA2_IPC_GET_SMART_CARD_USER_REQ),
+    LWMSG_MEMBER_PSTR(LSA2_IPC_GET_SMART_CARD_USER_REQ, pszSmartcardUser),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLsa2IpcGetSmartCardUserObjectResSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA2_IPC_GET_SMART_CARD_USER_RES),
@@ -1186,7 +1197,7 @@ static LWMsgProtocolSpec gLsaIPCSpec[] =
     LWMSG_MESSAGE(LSA2_R_ADD_USER, NULL),
     LWMSG_MESSAGE(LSA2_Q_MODIFY_USER, gLsa2IpcModifyUserReqSpec),
     LWMSG_MESSAGE(LSA2_R_MODIFY_USER, NULL),
-    LWMSG_MESSAGE(LSA2_Q_GET_SMARTCARD_USER_OBJECT, NULL),
+    LWMSG_MESSAGE(LSA2_Q_GET_SMARTCARD_USER_OBJECT, gLsa2IpcGetSmartCardUserObjectReqSpec),
     LWMSG_MESSAGE(LSA2_R_GET_SMARTCARD_USER_OBJECT, gLsa2IpcGetSmartCardUserObjectResSpec),
     LWMSG_MESSAGE(LSA_PRIVS_Q_ENUM_PRIVILEGES_SIDS, gLsaPrivsIPCEnumPrivilegesSidsReqSpec),
     LWMSG_MESSAGE(LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS, gLsaPrivsIPCEnumPrivilegesSidsRespSpec),

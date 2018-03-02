@@ -248,6 +248,7 @@ LocalFindObjects(
 DWORD
 LocalGetSmartCardUserObject(
     IN HANDLE hProvider,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     );

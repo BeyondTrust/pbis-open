@@ -748,7 +748,7 @@ lwmsg_data_marshal_flat(
     LWMsgBuffer mbuf;
 
     mbuf.base = buffer;
-    mbuf.end = buffer + length;
+    mbuf.end = ((unsigned char*)buffer) + length;
     mbuf.cursor = buffer;
     mbuf.wrap = NULL;
 
@@ -773,8 +773,8 @@ lwmsg_data_marshal_alloc_wrap(
 
     offset = buffer->cursor - buffer->base;
     buffer->base = newmem;
-    buffer->cursor = newmem + offset;
-    buffer->end = newmem + newlen;
+    buffer->cursor = buffer->base + offset;
+    buffer->end = buffer->base + newlen;
 
 error:
 

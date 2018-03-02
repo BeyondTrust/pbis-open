@@ -618,6 +618,7 @@ LSASS_API
 DWORD
 LsaGetSmartCardUserObject(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     )
@@ -630,6 +631,7 @@ LsaGetSmartCardUserObject(
 
     dwError = LsaTransactGetSmartCardUserObject(
         hLsaConnection,
+        pszSmartcardUser,
         ppObject,
         ppszSmartCardReader);
     BAIL_ON_LSA_ERROR(dwError);

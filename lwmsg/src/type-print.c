@@ -69,7 +69,7 @@ print_wrap(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    int i;
+    unsigned int i;
     unsigned char indent[1] = {' '};
 
     if (info->newline)
@@ -299,7 +299,7 @@ lwmsg_type_print_enum(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t i = 0;
+    uint16_t i = 0;
     LWMsgVariantRep* var = NULL;
 
     if (!rep->info.enum_rep.definition->seen)

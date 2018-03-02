@@ -75,7 +75,7 @@ print_wrap(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    int i;
+    unsigned int i;
     unsigned char indent[1] = {' '};
 
     if (info->newline)
@@ -392,7 +392,7 @@ lwmsg_data_print_string(
              * strings that are shorter than the array.
              */
             const char *s = input_string;
-            int i;
+            size_t i;
 
             for (i = 0; i < input_length; ++i)
             {

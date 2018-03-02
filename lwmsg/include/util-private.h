@@ -317,7 +317,7 @@ lwmsg_ring_is_empty(
 {
     lwmsg_ring_sanity(ring);
 
-    return ring->next == ring;
+    return (ring->next == ring) ? LWMSG_TRUE: LWMSG_FALSE;
 }
 
 LWMsgStatus
@@ -524,6 +524,8 @@ lwmsg_strdup(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    char *d;
+
 
     if (!src)
     {
@@ -536,7 +538,9 @@ lwmsg_strdup(
                       strlen(src) + 1,
                       (void**) (void*) dst));
 
-    strcpy(*dst, src);
+    d = *dst;
+
+    while( (*d++ = *src++) );
 
 error:
 

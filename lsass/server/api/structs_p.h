@@ -63,6 +63,8 @@ typedef struct __LSA_SRV_API_CONFIG
     DWORD dwSaslMaxBufSize;
     char cDomainSeparator;
     char cSpaceReplacement;
+    BOOLEAN bEnableSmartCard;
+    BOOLEAN bEnableRemoteSmartCard;
 } LSA_SRV_API_CONFIG, *PLSA_SRV_API_CONFIG;
 
 #endif /* __STRUCTS_H__ */

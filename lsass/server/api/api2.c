@@ -2273,6 +2273,7 @@ error:
 DWORD
 LsaSrvGetSmartCardUserObject(
     IN HANDLE hServer,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     )
@@ -2300,6 +2301,7 @@ LsaSrvGetSmartCardUserObject(
 
         dwError = pProvider->pFnTable->pfnGetSmartCardUserObject(
                                         hProvider,
+                                        pszSmartcardUser,
                                         ppObject,
                                         ppszSmartCardReader);
         if (dwError == LW_ERROR_SUCCESS)
