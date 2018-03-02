@@ -72,14 +72,6 @@ ConvertDSAttributeValuesToMCXValues(
     );
 
 LONG
-SaveMCXValuesForGPOSettingType(
-    PMCXVALUE            pMCXValueList,
-    PGROUP_POLICY_OBJECT pGPO,
-    DWORD                dwPolicyType,
-    PCSTR                pszUserUPN
-    );
-
-LONG
 ConvertMCXSettingsToMCXValues(
     PCSTR      pszPolicyPath,
     DWORD      dwPolicyType,
@@ -89,13 +81,6 @@ ConvertMCXSettingsToMCXValues(
 LONG
 GetHomeDirectoryDockMCXValue(
     PMCXVALUE * ppMCXValueList
-    );
-
-LONG
-GetMCXValuesForGPOSettingType(
-    PGROUP_POLICY_OBJECT pGPO,
-    DWORD                dwPolicyType,
-    PMCXVALUE *          ppMCXValueList
     );
 
 LONG
@@ -278,11 +263,6 @@ FreeObjectList(
     DWORD                 dwCount,
     PLSA_SECURITY_OBJECT* ppObjects
     );
-
-DWORD
-SetupMCXLoginScriptsSupport(
-    );
-
 
 #endif /* __ADUTILS_H__ */
 

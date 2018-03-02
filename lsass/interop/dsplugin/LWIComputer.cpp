@@ -39,7 +39,6 @@ CreateLWIComputer(
     PCSTR szEthernetID,
     PCSTR szIPaddress,
     PCSTR szKeyword,
-	PMCXVALUE pMCXValues,
     PLWICOMPUTER* ppLWIComputer
     )
 {
@@ -93,12 +92,6 @@ CreateLWIComputer(
         macError = LwAllocateString(szKeyword, &pComputer->keywords[0]);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
-    if (pMCXValues)
-    {
-        macError = CopyMCXValueList(pMCXValues, &pComputer->pMCXValues);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
 	    
     *ppLWIComputer = pComputer;
     pComputer = NULL;
@@ -146,9 +139,6 @@ FreeLWIComputer(PLWICOMPUTER pLWIComputer)
         }
         LwFreeMemory(pLWIComputer->URLs);
     }
-	
-	if (pLWIComputer->pMCXValues)
-	    FreeMCXValueList(pLWIComputer->pMCXValues);
-        
+	        
     LwFreeMemory(pLWIComputer);
 }

@@ -36,14 +36,6 @@ extern "C" {
 
 #define LWE_MIN(a, b) ((a < b)?(a):(b))
 
-#undef USE_SYSLOG
-
-#ifdef USE_SYSLOG
-void LogMessageV(const char *Format, va_list Args)
-{
-    vsyslog(LOG_ERR, Format, Args);
-}
-#else
 static void LogMessageToDsLog(const char *format, ...)
 {
     va_list args;
@@ -54,38 +46,51 @@ static void LogMessageToDsLog(const char *format, ...)
 
 void LogMessageV(const char *Format, va_list Args)
 {
-    char* output = NULL;
+    const char* pszFile = "/var/lib/pbis/lwedsplugin.syslog";
+    BOOLEAN bDirExists = FALSE;
+    
+    LwCheckFileTypeExists(pszFile, LWFILE_REGULAR, &bDirExists);    
 
-    // Note: DSDebugLog eventually calls CString::Vsprintf (inside DirectoryServer's
-    // CoreFramework/Private/CString.cpp), which is not compatible with sprintf
-    // despite the documentation in Apple's "Open Directory Reference").
-    // To avoid compatibility issues, we will do our own formatting first.
-    //
-    // We also discovered another bug in CString::Vsprintf where a '%' in string
-    // that we are formatting with %s can cause a crash.  So we must make sure that
-    // there are no '%'s in the string that we are trying to output.
-    //
-
-    vasprintf(&output, Format, Args);
-    if (output)
+   
+    if(bDirExists)
     {
-        for (char *p = output; *p; p++)
-        {
-            if ('%' == *p)
-            {
-                *p = '*';
-            }
-        }
-
-        LogMessageToDsLog("%s", output);
-        free(output);
+        vsyslog(LOG_ERR, Format, Args);        
     }
     else
-    {
-        LogMessageToDsLog("*** Failed to allocate memory while formatting log message ***");
+    {            
+        char* output = NULL;
+
+        // Note: DSDebugLog eventually calls CString::Vsprintf (inside DirectoryServer's
+        // CoreFramework/Private/CString.cpp), which is not compatible with sprintf
+        // despite the documentation in Apple's "Open Directory Reference").
+        // To avoid compatibility issues, we will do our own formatting first.
+        //
+        // We also discovered another bug in CString::Vsprintf where a '%' in string
+        // that we are formatting with %s can cause a crash.  So we must make sure that
+        // there are no '%'s in the string that we are trying to output.
+        //
+
+        vasprintf(&output, Format, Args);
+        if (output)
+        {
+            for (char *p = output; *p; p++)
+            {
+                if ('%' == *p)
+                {
+                    *p = '*';
+                }
+            }
+
+            LogMessageToDsLog("%s", output);
+            free(output);
+        }
+        else
+        {
+            LogMessageToDsLog("*** Failed to allocate memory while formatting log message ***");
+        }
     }
 }
-#endif
+
 
 void LogMessage(const char *Format, ...)
 {

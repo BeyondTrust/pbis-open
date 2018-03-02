@@ -42,7 +42,7 @@
 
 #define DC_PREFIX "dc="
 
-typedef gss_ctx_id_t CtxtHandle, *PCtxtHandle;
+
 
 #define BAIL_ON_SEC_ERROR(dwMajorStatus, dwMinorStatus)       \
     if ((dwMajorStatus!= GSS_S_COMPLETE) &&                   \

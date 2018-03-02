@@ -63,21 +63,6 @@ ADUComputeModifiedList(
     PGROUP_POLICY_OBJECT pGPOExistingList,
     PGROUP_POLICY_OBJECT * ppGPOModifiedList
     );
-
-DWORD
-ADUGetAllMCXGPOList(
-    HANDLE hDirectory,
-    PCSTR  pszObjectDN,
-    PGROUP_POLICY_OBJECT * ppGPOList
-    );
-
-DWORD
-ADUGetMCXGPO(
-    HANDLE hDirectory,
-    PCSTR  pszObjectDN,
-    PCSTR  pszGPOName,
-    PGROUP_POLICY_OBJECT * ppGPOList
-    );
     
 DWORD
 ADUPrependGPList(

@@ -45,8 +45,7 @@ CreateLWIComputerGroup(
     PCSTR szGUID,
     int  primaryId,
     PCSTR szComputer,
-    PCSTR szComputerGUID,
-	PMCXVALUE pMCXValues,
+    PCSTR szComputerGUID,	
     PLWICOMPUTERGROUP* ppLWIComputerGroup
     );
     

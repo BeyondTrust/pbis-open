@@ -1,3 +1,6 @@
+LW_ALL_BUNDLED="openssl cyrus-sasl openldap libiconv popt \
+                libuuid sqlite curl \
+                libedit libtdb opensoap linenoise"
 make()
 {
     BUNDLE_DIR="${MK_LIBDIR}/LWDSPlugin.dsplug"
@@ -28,7 +31,6 @@ make()
         macadutil/api.c \
         macadutil/adinfo.c \
         macadutil/aduserinfo.c \
-        macadutil/adukrb5.c \
         macadutil/aducopy.c \
         macadutil/cfgparser.c \
         macadutil/credcontext.c \
@@ -37,7 +39,6 @@ make()
         macadutil/gpcache.c \
         macadutil/gss.c \
         macadutil/macerror.c \
-        macadutil/mcxutil.c \
         macadutil/notify.c \
         macadutil/netinfo.c \
         macadutil/policyutils.c \
@@ -54,8 +55,8 @@ make()
         INCLUDEDIRS=". ../../include ../auth/include" \
         CFLAGS="$LWDS_CFLAGS" \
         CXXFLAGS="$LWDS_CFLAGS -Wno-deprecated -Wno-deprecated-declarations -fvisibility-inlines-hidden" \
-        HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h krb5.h" \
-        LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient lsaauth" \
+        HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h" \
+        LIBDEPS="lwnetclientapi lwioclient lwadvapi lsacommon lsaclient lsaauth" \
         LDFLAGS="-framework CoreFoundation"
 
     mk_target \

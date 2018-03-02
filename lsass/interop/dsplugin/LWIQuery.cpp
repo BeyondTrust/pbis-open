@@ -99,57 +99,6 @@ LWIQuery::~LWIQuery()
 }
 
 long
-CopyMCXValueList(
-    PMCXVALUE pValueList,
-    PMCXVALUE* ppValueListCopy
-    )
-{
-    long macError = eDSNoErr;
-    PMCXVALUE pValueListNew = NULL;
-    PMCXVALUE pPrev = NULL;
-
-    while (pValueList)
-    {
-        PMCXVALUE pNew = NULL;
-
-        macError = LwAllocateMemory(sizeof(MCXVALUE), (PVOID*) &pNew);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        if (pValueList->iValLen)
-        {
-            macError = LwAllocateMemory(pValueList->iValLen, (PVOID*)&pNew->pValueData);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-
-            memcpy(pNew->pValueData, pValueList->pValueData, pValueList->iValLen);
-            pNew->iValLen = pValueList->iValLen;
-        }
-
-        if (pPrev)
-        {
-            pPrev->pNext = pNew;
-        }
-        else
-        {
-            pValueListNew = pNew;
-        }
-
-        pPrev = pNew;
-        pNew = NULL;
-
-        pValueList = pValueList->pNext;
-    }
-
-    *ppValueListCopy = pValueListNew;
-    pValueListNew = NULL;
-
-cleanup:
-
-    FreeMCXValueList(pValueListNew);
-
-    return macError;
-}
-
-long
 LWIQuery::Create(
     bool bGetValues,
     bool bAllowIOContinue,
@@ -1164,8 +1113,7 @@ LWIQuery::QueryAllUserInformation(const char* pszName)
                                  NULL, /* OrigHomeDirectory */
                                  "/bin/bash", /* Shell */
                                  USER_UID_GPO,
-                                 GROUP_GID_GPO,
-                                 NULL, /* MCXValues */
+                                 GROUP_GID_GPO,                                 
                                  NULL, /* UserADInfo */
                                  &pUser);
         GOTO_CLEANUP_ON_MACERROR(macError);
@@ -1190,8 +1138,7 @@ long
 LWIQuery::QueryAllGroupInformation(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWIGROUP pGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
     DWORD dwNumGroupsFound = 0;
@@ -1229,8 +1176,6 @@ LWIQuery::QueryAllGroupInformation(const char* pszName)
 
         if (IsMCXSettingEnabledForGPO(pGPO, USER_GROUP_POLICY))
         {
-            macError = GetMCXValuesForGPOSettingType(pGPO, USER_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
                                       NULL, /* Name as queried */
@@ -1240,7 +1185,6 @@ LWIQuery::QueryAllGroupInformation(const char* pszName)
                                       NULL, /* Member user name - not set for this group */
                                       GROUP_GID_GPO_ID,
                                       GROUP_GID_GPO,
-                                      pMCXValueList,
                                       &pGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1258,7 +1202,7 @@ cleanup:
         FreeObjectList(dwNumGroupsFound, ppGroupObjects);
     }
 
-    FreeMCXValueList(pMCXValueList);
+
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
     return macError;
@@ -1271,7 +1215,6 @@ LWIQuery::GetGPOComputerList(
 {
     MACERROR  macError = eDSNoErr;
     PLWICOMPUTERLIST pComputerList = NULL;
-    PMCXVALUE pMCXValueList = NULL;
     char      szGPOName[256] = { 0 };
     char      szGPOGUID[256] = { 0 };
     FILE *    fp = NULL;
@@ -1337,9 +1280,7 @@ LWIQuery::GetGPOComputerList(
         LOG("Adding GPO computer list for computer with (Name: %s GUID: %s)", szGPOName, szGPOGUID);
          
         sprintf(szPolicyPath, "%s/%s/%s", LWDS_GPO_CACHE_DIR, szGPOGUID, LWDS_COMPUTER_MCX_CSE_GUID);
-
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, MACHINE_GROUP_POLICY, &pMCXValueList);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        
             
         macError = CreateLWIComputerList(szGPOName,
                                          szGPOName,
@@ -1347,7 +1288,7 @@ LWIQuery::GetGPOComputerList(
                                          szGPOGUID,
                                          UNSET_GID_UID_ID,
                                          pszHostname,
-                                         pMCXValueList,
+
                                          &pComputerList);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1362,7 +1303,7 @@ cleanup:
 
     /* All these free functions test for null parameter */
     FreeLWIComputerList(pComputerList);
-    FreeMCXValueList(pMCXValueList);
+
         
     LW_SAFE_FREE_STRING(pszHostname);
     
@@ -1377,7 +1318,7 @@ LWIQuery::QueryAllComputerListInformation(const char* pszName)
 {
     long macError = eDSNoErr;
     PLWICOMPUTERLIST pComputerList = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
     if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
@@ -1411,17 +1352,13 @@ LWIQuery::QueryAllComputerListInformation(const char* pszName)
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-
+        {            
             macError = CreateLWIComputerList("List of Computers managed by GPO",
                                              "GPOComputerList",
                                              COMPUTER_LIST_COMMENT,
                                              COMPUTER_LIST_UID_ID,
                                              COMPUTER_LIST_UID,
-                                             "GPOComputer",
-                                             pMCXValueList,
+                                             "GPOComputer",                                             
                                              &pComputerList);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1432,7 +1369,7 @@ LWIQuery::QueryAllComputerListInformation(const char* pszName)
 
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
+
     FreeLWIComputerList(pComputerList);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
@@ -1445,8 +1382,7 @@ LWIQuery::GetGPOComputerGroups(
     )
 {
     MACERROR  macError = eDSNoErr;
-    PLWICOMPUTERGROUP pComputerGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWICOMPUTERGROUP pComputerGroup = NULL;    
     char      szGPOName[256] = { 0 };
     char      szGPOGUID[256] = { 0 };
     PNETADAPTERINFO pTempNetInfo = _pNetAdapterList;
@@ -1521,9 +1457,7 @@ LWIQuery::GetGPOComputerGroups(
         LOG("Adding GPO computer group for computer with (Name: %s GUID: %s)", szGPOName, szGPOGUID);
          
         sprintf(szPolicyPath, "%s/%s/%s", LWDS_GPO_CACHE_DIR, szGPOGUID, LWDS_COMPUTER_MCX_CSE_GUID);
-            
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+                    
             
         macError = CreateLWIComputerGroup(szGPOName,
                                           szGPOName,
@@ -1531,8 +1465,7 @@ LWIQuery::GetGPOComputerGroups(
                                           szGPOGUID,
                                           UNSET_GID_UID_ID,
                                           pszHostname,
-                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
-                                          pMCXValueList,
+                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,                                          
                                           &pComputerGroup);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1546,8 +1479,7 @@ LWIQuery::GetGPOComputerGroups(
 cleanup:
 
     /* All these free functions test for null parameter */
-    FreeLWIComputerGroup(pComputerGroup);
-    FreeMCXValueList(pMCXValueList);
+    FreeLWIComputerGroup(pComputerGroup);    
     
     if (fp)
     {
@@ -1563,8 +1495,7 @@ long
 LWIQuery::QueryAllComputerGroupInformation(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWICOMPUTERGROUP pComputerGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWICOMPUTERGROUP pComputerGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
     if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
@@ -1598,10 +1529,7 @@ LWIQuery::QueryAllComputerGroupInformation(const char* pszName)
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-
+        {            
             macError = CreateLWIComputerGroup("Group of Computers managed by GPO",
                                               "GPOComputerGroup",
                                               COMPUTER_GROUP_COMMENT,
@@ -1609,7 +1537,6 @@ LWIQuery::QueryAllComputerGroupInformation(const char* pszName)
                                               COMPUTER_GROUP_UID,
                                               "GPOComputer",
                                               COMPUTER_MAC_GPO,
-                                              pMCXValueList,
                                               &pComputerGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1620,7 +1547,6 @@ LWIQuery::QueryAllComputerGroupInformation(const char* pszName)
 
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
     FreeLWIComputerGroup(pComputerGroup);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
@@ -1680,8 +1606,7 @@ LWIQuery::QueryUserInformationByName(const char* pszName)
                                  NULL, /* OrigHomeDirectory */
                                  "/bin/bash", /* Shell */
                                  USER_UID_GPO,
-                                 GROUP_GID_GPO,
-                                 NULL, /* MCXValues */
+                                 GROUP_GID_GPO,                                 
                                  NULL, /* UserADInfo */
                                  &pUser);
         GOTO_CLEANUP_ON_MACERROR(macError);
@@ -1758,7 +1683,6 @@ LWIQuery::QueryUserInformationByGeneratedUID(const char* pszGUID)
                                  "/bin/bash", /* Shell */
                                  USER_UID_GPO,
                                  GROUP_GID_GPO,
-                                 NULL, /* MCXValues */
                                  NULL, /* UserADInfo */
                                  &pUser);
         GOTO_CLEANUP_ON_MACERROR(macError);
@@ -1801,8 +1725,7 @@ LWIQuery::QueryUserInformationByPrimaryGroupID(const char* pszPrimaryGID)
                                  NULL, /* OrigHomeDirectory */
                                  "/bin/bash", /* Shell */
                                  USER_UID_GPO,
-                                 GROUP_GID_GPO,
-                                 NULL, /* MCXValues */
+                                 GROUP_GID_GPO,                                 
                                  NULL, /* UserADInfo */
                                  &pUser);
         GOTO_CLEANUP_ON_MACERROR(macError);
@@ -1846,8 +1769,7 @@ long
 LWIQuery::QueryGroupInformationById(gid_t gid)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWIGROUP pGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
     if (gid == GROUP_GID_GPO)
@@ -1867,9 +1789,7 @@ LWIQuery::QueryGroupInformationById(gid_t gid)
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, USER_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, USER_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
                                       NULL, /* Name as queried */
@@ -1879,7 +1799,7 @@ LWIQuery::QueryGroupInformationById(gid_t gid)
                                       NULL, /* Member user name - not set for this group */
                                       GROUP_GID_GPO_ID,
                                       GROUP_GID_GPO,
-                                      pMCXValueList,
+
                                       &pGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1895,7 +1815,7 @@ LWIQuery::QueryGroupInformationById(gid_t gid)
 
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
+
     FreeLWIGroup(pGroup);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
@@ -2110,503 +2030,15 @@ cleanup:
     return macError;
 }
 
-static
-PMCXVALUE
-CombineMCXValueLists(
-    PMCXVALUE pPrependList,
-    PMCXVALUE pExistingList
-    )
-{
-    PMCXVALUE pTemp = pPrependList;
-    PMCXVALUE pPrev = NULL;
 
-    while (pTemp)
-    {
-        pPrev = pTemp;
 
-        pTemp = pTemp->pNext;
-    }
 
-    if (pPrev)
-    {
-        pPrev->pNext = pExistingList;
-        pTemp = pPrependList;
-    }
-    else
-    {
-        pTemp = pExistingList;
-    }
 
-    return pTemp;
-}
 
-static
-MACERROR
-GetMCXValueInfo(
-    PMCXVALUE pItem,
-    PSTR* ppszKeyName
-    )
-{
-    MACERROR  macError = eDSNoErr;
-    PSTR pszKeyName = NULL;
-    PSTR pKey = NULL;
-    PSTR pKeyEnd = NULL;
-    PSTR pBuf = NULL;
-    int len = 0;
 
-    pBuf = pItem->pValueData;
-    len = pItem->iValLen;
 
-    pKey = strnstr(pBuf, "<key>mcx_application_data</key>", len);
 
-    if (pKey)
-    {
-        pBuf = pKey + strlen("<key>mcx_application_data</key>");
-        len = pItem->iValLen - (pBuf - pItem->pValueData);
 
-        pKey = strnstr(pBuf, "<key>", len);
-
-        if (pKey)
-        {
-            pBuf = pKey + strlen("<key>");
-            len = pItem->iValLen - (pBuf - pItem->pValueData);
-
-            pKeyEnd = strnstr(pBuf, "</key>", len);
-
-            if (pKeyEnd)
-            {
-                macError = LwAllocateMemory((pKeyEnd - pBuf + 1) * sizeof(char), (PVOID*)&pszKeyName);           
-                GOTO_CLEANUP_ON_MACERROR(macError);
-
-                strncpy(pszKeyName, pBuf, pKeyEnd - pBuf);
-                *ppszKeyName = pszKeyName;
-            }
-            else
-            {
-                macError = eDSOperationFailed;
-            }
-        }
-        else
-        {
-            macError = eDSOperationFailed;
-        }
-    }
-    else
-    {
-        macError = eDSOperationFailed;
-    }
-
-cleanup:
-
-    return macError;
-}
-
-static
-bool
-IsDuplicateMCXValue(
-    PMCXVALUE pItem1,
-    PMCXVALUE pItem2
-    )
-{
-    MACERROR  macError = eDSNoErr;
-    bool bMatch = false;
-    PSTR pszKeyNameItem1 = NULL;
-    PSTR pszKeyNameItem2 = NULL;
-
-    macError = GetMCXValueInfo(pItem1, &pszKeyNameItem1);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    macError = GetMCXValueInfo(pItem2, &pszKeyNameItem2);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    if (!strcasecmp(pszKeyNameItem1, pszKeyNameItem2))
-    {
-        bMatch = true;
-    }
-
-cleanup:
-
-    LW_SAFE_FREE_STRING(pszKeyNameItem1);
-    LW_SAFE_FREE_STRING(pszKeyNameItem2);
-
-    return bMatch;
-}
-
-static
-PMCXVALUE
-FindAndRemoveDuplicateFromMCXValuesList(
-    PMCXVALUE pItem,
-    PMCXVALUE pList
-    )
-{
-    PMCXVALUE pCurrent = pList;
-    PMCXVALUE pPrev = NULL;
-    PMCXVALUE pTemp = NULL;
-    PMCXVALUE pNewList = NULL;
-
-    while (pCurrent)
-    {
-        if (IsDuplicateMCXValue(pItem, pCurrent))
-        {
-            pTemp = pCurrent;
-
-            if (pPrev)
-            {
-                pPrev->pNext = pCurrent->pNext;
-            }
-
-            pCurrent = pCurrent->pNext;
-            pTemp->pNext = NULL;
-            FreeMCXValueList(pTemp);
-        }
-        else
-        {
-            pPrev = pCurrent;
-            pCurrent = pCurrent->pNext;
-        }
-
-        if (!pNewList)
-        {
-            pNewList = pPrev;
-        }
-    }
-
-    return pNewList;
-}
-
-static
-PMCXVALUE
-AddToMCXValuesList(
-    PMCXVALUE pItem,
-    PMCXVALUE pList
-    )
-{
-    PMCXVALUE pCurrent = pList;
-    PMCXVALUE pPrev = NULL;
-
-    while (pCurrent)
-    {
-        pPrev = pCurrent;
-        pCurrent = pCurrent->pNext;
-    }
-
-    if (pPrev)
-    {
-        pPrev->pNext = pItem;
-    }
-    else
-    {
-        return pItem;
-    }
-
-    return pList;
-}
-
-static
-PMCXVALUE
-RemoveDuplicateMCXValuesFromList(
-    PMCXVALUE pMCXValueList
-    )
-{
-    PMCXVALUE pNewList = NULL;
-    PMCXVALUE pCurrent = pMCXValueList;
-    PMCXVALUE pTemp = NULL;
-
-    while (pCurrent)
-    {
-        pTemp = pCurrent;
-        pCurrent = FindAndRemoveDuplicateFromMCXValuesList(pTemp, pCurrent->pNext);
-        pTemp->pNext = NULL;
-
-        pNewList = AddToMCXValuesList(pTemp, pNewList);
-    }
-
-    return pNewList;
-}
-
-static
-BOOLEAN
-IsMCXValueForSection(
-    PCSTR pszMCXSectionName,
-    PMCXVALUE pItem
-    )
-{
-    MACERROR  macError = eDSNoErr;
-    BOOLEAN bMatch = FALSE;
-    PSTR pszKeyNameItem = NULL;
-
-    macError = GetMCXValueInfo(pItem, &pszKeyNameItem);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    if (!strcasecmp(pszMCXSectionName, pszKeyNameItem))
-    {
-        bMatch = TRUE;
-    }
-
-cleanup:
-
-    LW_SAFE_FREE_STRING(pszKeyNameItem);
-
-    return bMatch;
-}
-
-static
-BOOLEAN
-FindGPOGroupMCXSetting(
-    PCSTR     pszMCXSectionName,
-    PMCXVALUE pMCXValueList
-    )
-{
-    PMCXVALUE pCurrent = pMCXValueList;
-    BOOLEAN fFound = FALSE;
-
-    while (pCurrent)
-    {
-        if (IsMCXValueForSection(pszMCXSectionName, pCurrent))
-        {
-            fFound = TRUE;
-            break;
-        }
-        else
-        {
-            pCurrent = pCurrent->pNext;
-        }
-    }
-
-    return fFound;
-}
-
-static
-long
-GetGPOGroupMCXSettingsForUser_HighPriorityOnly(
-    const char* pszName,
-    uid_t       uid,
-    PMCXVALUE * ppMCXValueList,
-    LWE_DS_FLAGS Flags
-    )
-{
-    MACERROR  macError = eDSNoErr;
-    PMCXVALUE pMCXValueList = NULL;
-    PMCXVALUE pHomeDirDockValue = NULL;
-    char      szUserGPOFile[PATH_MAX] = { 0 };
-    char      szGPOName[256] = { 0 };
-    char      szGPOGUID[256] = { 0 };
-    FILE *    fp = NULL;
-    int       iStage = 0;
-    BOOLEAN   fContainsDockSettings = FALSE;
-    BOOLEAN   fContainsLoginWindowSettings = FALSE;
-    
-    if (!pszName || !uid)
-    {
-        LOG("Called with invalid parameter");
-        goto cleanup;
-    }
-
-    if (Flags & LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK)
-    {
-        macError = GetHomeDirectoryDockMCXValue(&pHomeDirDockValue);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    sprintf(szUserGPOFile, "/var/lib/pbis/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
-
-    /* Get list of GPOs that apply to user by parsing .lwe-user-mcx for specific user*/
-    fp = fopen(szUserGPOFile, "r");
-    
-    while (fp)
-    {
-        if ( NULL == fgets( szGPOName,
-                            sizeof(szGPOName),
-                            fp) ) {
-            if (feof(fp)) {
-                break;
-            }
-
-            macError = LwErrnoToWin32Error(errno);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        LwStripWhitespace(szGPOName, TRUE, TRUE);
-        iStage = 1;
-        
-        if ( NULL == fgets( szGPOGUID,
-                            sizeof(szGPOGUID),
-                            fp) ) {
-            if (feof(fp)) {
-                break;
-            }
-
-            macError = LwErrnoToWin32Error(errno);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        LwStripWhitespace(szGPOGUID, TRUE, TRUE);
-        iStage = 2;
-    }
- 
-    if (iStage == 2)
-    {
-        char szPolicyPath[PATH_MAX] = { 0 };
-        
-        LOG("Adding user group MCX settings to user (%s) from GPO (Name: %s GUID: %s)", pszName, szGPOName, szGPOGUID);
-         
-        sprintf(szPolicyPath, "/var/lib/pbis/grouppolicy/user-cache/%ld/%s/%s", (long)uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
-
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, USER_GROUP_POLICY, &pMCXValueList);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    fContainsLoginWindowSettings = FindGPOGroupMCXSetting("com.apple.loginwindow", pMCXValueList);
-    fContainsDockSettings = FindGPOGroupMCXSetting("com.apple.dock", pMCXValueList);
-
-    if (!fContainsLoginWindowSettings && !fContainsDockSettings)
-    {
-        /* Add additional MCX settings plist data to create a dock folder for the home directory URL */
-        if (pHomeDirDockValue)
-        {
-            pMCXValueList = CombineMCXValueLists(pMCXValueList, pHomeDirDockValue);
-            pHomeDirDockValue = NULL;
-        }
-    }
-
-    /* If there is more than one plist item for a given key (com.apple.dock for example),
-       then the Mac will show assertions. We need to strip out any possible duplicates. */
-    pMCXValueList = RemoveDuplicateMCXValuesFromList(pMCXValueList);
-
-    *ppMCXValueList = pMCXValueList;
-    pMCXValueList = NULL;
-
-cleanup:
-
-    FreeMCXValueList(pMCXValueList);
-    FreeMCXValueList(pHomeDirDockValue);
-    
-    if (fp)
-        fclose(fp);
-
-    return macError;
-}
-
-static
-long
-GetGPOGroupMCXSettingsForUser_Combined(
-    const char* pszName,
-    uid_t       uid,
-    PMCXVALUE * ppMCXValueList,
-    LWE_DS_FLAGS Flags
-    )
-{
-    MACERROR  macError = eDSNoErr;
-    PMCXVALUE pMCXValueList = NULL;
-    PMCXVALUE pHomeDirDockValue = NULL;
-    char      szUserGPOFile[PATH_MAX] = { 0 };
-    char      szGPOName[256] = { 0 };
-    char      szGPOGUID[256] = { 0 };
-    FILE *    fp = NULL;
-    BOOLEAN   fContainsDockSettings = FALSE;
-    BOOLEAN   fContainsLoginWindowSettings = FALSE;
-    
-    if (!pszName || !uid)
-    {
-        LOG("Called with invalid parameter");
-        goto cleanup;
-    }
-
-    if (Flags & LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK)
-    {
-        macError = GetHomeDirectoryDockMCXValue(&pHomeDirDockValue);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    sprintf(szUserGPOFile, "/var/lib/pbis/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
-
-    /* Get list of GPOs that apply to user by parsing .lwe-user-mcx for specific user*/
-    fp = fopen(szUserGPOFile, "r");
-    
-    while (fp)
-    {
-        char szPolicyPath[PATH_MAX] = { 0 };
-        PMCXVALUE pNewList = NULL;
-
-        if ( NULL == fgets( szGPOName,
-                            sizeof(szGPOName),
-                            fp) ) {
-            if (feof(fp)) {
-                break;
-            }
-
-            macError = LwErrnoToWin32Error(errno);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        LwStripWhitespace(szGPOName, TRUE, TRUE);
-        
-        if ( NULL == fgets( szGPOGUID,
-                            sizeof(szGPOGUID),
-                            fp) ) {
-            if (feof(fp)) {
-                break;
-            }
-
-            macError = LwErrnoToWin32Error(errno);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        LwStripWhitespace(szGPOGUID, TRUE, TRUE);
-        
-        sprintf(szPolicyPath, "/var/lib/pbis/grouppolicy/user-cache/%ld/%s/%s", (long) uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
-
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, USER_GROUP_POLICY, &pNewList);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-         
-        LOG("Adding user group MCX settings to user (%s) from GPO (Name: %s GUID: %s)", pszName, szGPOName, szGPOGUID);
-
-        pMCXValueList = CombineMCXValueLists(pNewList, pMCXValueList);
-    }
-
-    fContainsLoginWindowSettings = FindGPOGroupMCXSetting("com.apple.loginwindow", pMCXValueList);
-    fContainsDockSettings = FindGPOGroupMCXSetting("com.apple.dock", pMCXValueList);
-
-    if (!fContainsLoginWindowSettings && !fContainsDockSettings)
-    {
-        /* Add additional MCX settings plist data to create a dock folder for the home directory URL */
-        if (pHomeDirDockValue)
-        {
-            pMCXValueList = CombineMCXValueLists(pMCXValueList, pHomeDirDockValue);
-            pHomeDirDockValue = NULL;
-        }
-    }
-
-    /* If there is more than one plist item for a given key (com.apple.dock for example),
-       then the Mac will show assertions. We need to strip out any possible duplicates. */
-    pMCXValueList = RemoveDuplicateMCXValuesFromList(pMCXValueList);
-
-    *ppMCXValueList = pMCXValueList;
-    pMCXValueList = NULL;
-
-cleanup:
-
-    FreeMCXValueList(pMCXValueList);
-    
-    if (fp)
-        fclose(fp);
-
-    return macError;
-}
-
-long
-LWIQuery::GetGPOGroupMCXSettingsForUser(
-    const char* pszName,
-    uid_t       uid,
-    PMCXVALUE * ppMCXValueList,
-    LWE_DS_FLAGS Flags
-    )
-{
-    if (Flags & LWE_DS_FLAG_MERGE_MODE_MCX)
-    {
-        return GetGPOGroupMCXSettingsForUser_Combined(pszName, uid, ppMCXValueList, Flags);
-    }
-    else
-    {
-        return GetGPOGroupMCXSettingsForUser_HighPriorityOnly(pszName, uid, ppMCXValueList, Flags);
-    }
-}
 
 long
 LWIQuery::GetHomeDirectoryProtocolXmlAndMountPath(
@@ -2828,8 +2260,7 @@ LWIQuery::QueryGroupsForUserByName(
     )
 {
     MACERROR macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWIGROUP pGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
@@ -2850,10 +2281,7 @@ LWIQuery::QueryGroupsForUserByName(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, USER_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, USER_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-
+        {            
             macError = CreateLWIGroup("Group of Users managed by GPO",
                                       NULL, /* Name as queried */
                                       NULL, /* Password */
@@ -2861,8 +2289,7 @@ LWIQuery::QueryGroupsForUserByName(
                                       USER_GROUP_COMMENT,
                                       NULL, /* Member user name - not set for this group */
                                       GROUP_GID_GPO_ID,
-                                      GROUP_GID_GPO,
-                                      pMCXValueList,
+                                      GROUP_GID_GPO,                                      
                                       &pGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -2885,7 +2312,6 @@ cleanup:
         FreeObjectList(1, ppUserObjects);
     }
 
-    FreeMCXValueList(pMCXValueList);
     FreeLWIGroup(pGroup);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
@@ -2898,8 +2324,7 @@ LWIQuery::QueryGroupsForUserById(
     )
 {
     MACERROR macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWIGROUP pGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
@@ -2920,9 +2345,7 @@ LWIQuery::QueryGroupsForUserById(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, USER_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, USER_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
                                       NULL, /* Name as queried */
@@ -2931,8 +2354,7 @@ LWIQuery::QueryGroupsForUserById(
                                       USER_GROUP_COMMENT,
                                       NULL, /* Member user name - not set for this group */
                                       GROUP_GID_GPO_ID,
-                                      GROUP_GID_GPO,
-                                      pMCXValueList,
+                                      GROUP_GID_GPO,                                      
                                       &pGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -2955,7 +2377,6 @@ cleanup:
         FreeObjectList(1, ppUserObjects);
     }
 
-    FreeMCXValueList(pMCXValueList);
     FreeLWIGroup(pGroup);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
@@ -3003,8 +2424,7 @@ LWIQuery::GetGroupInformationByName(
     )
 {
     long macError = eDSNoErr;
-    PLWIGROUP pUserGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWIGROUP pUserGroup = NULL;    
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
 
@@ -3025,9 +2445,7 @@ LWIQuery::GetGroupInformationByName(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, USER_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, USER_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
                                       NULL, /* Name as queried */
@@ -3036,8 +2454,7 @@ LWIQuery::GetGroupInformationByName(
                                       USER_GROUP_COMMENT,
                                       NULL, /* Member user name - not set for this group */
                                       GROUP_GID_GPO_ID,
-                                      GROUP_GID_GPO,
-                                      pMCXValueList,
+                                      GROUP_GID_GPO,                                      
                                       &pUserGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -3069,7 +2486,6 @@ cleanup:
         FreeObjectList(1, ppGroupObjects);
     }
 
-    FreeMCXValueList(pMCXValueList);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
     FreeLWIGroup(pUserGroup);
 
@@ -3083,8 +2499,7 @@ LWIQuery::GetComputerListByName(
     )
 {
     long macError = eDSNoErr;
-    PLWICOMPUTERLIST pComputerList = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PLWICOMPUTERLIST pComputerList = NULL;    
     PSTR pszGPOGUID = NULL;
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PSTR pszHostname = NULL;
@@ -3116,17 +2531,14 @@ LWIQuery::GetComputerListByName(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIComputerList("List of Computers managed by GPO",
                                              "GPOComputerList",
                                              COMPUTER_LIST_COMMENT,
                                              COMPUTER_LIST_UID_ID,
                                              COMPUTER_LIST_UID,
-                                             "GPOComputer",
-                                             pMCXValueList,
+                                             "GPOComputer",                                    
                                              &pComputerList);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3148,9 +2560,7 @@ LWIQuery::GetComputerListByName(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIComputerList("List of Computers managed by GPO",
                                               "GPOComputerList",
@@ -3158,7 +2568,7 @@ LWIQuery::GetComputerListByName(
                                               COMPUTER_LIST_UID_ID,
                                               COMPUTER_LIST_UID,
                                               "GPOComputer",
-                                              pMCXValueList,
+                                              
                                               &pComputerList);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3170,18 +2580,14 @@ LWIQuery::GetComputerListByName(
         macError = LookupComputerListGPO(pszName, &pszGPOGUID);
         GOTO_CLEANUP_ON_MACERROR(macError);
         
-        snprintf(szPolicyPath, sizeof(szPolicyPath), "%s/%s/%s", LWDS_GPO_CACHE_DIR, pszGPOGUID, LWDS_COMPUTER_MCX_CSE_GUID);
-        
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, MACHINE_GROUP_POLICY, &pMCXValueList);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        snprintf(szPolicyPath, sizeof(szPolicyPath), "%s/%s/%s", LWDS_GPO_CACHE_DIR, pszGPOGUID, LWDS_COMPUTER_MCX_CSE_GUID);                
         
         macError = CreateLWIComputerList(pszName,
                                          pszName,
                                          COMPUTER_LIST_COMMENT,
                                          pszGPOGUID,
                                          UNSET_GID_UID_ID,
-                                         pszHostname,
-                                         pMCXValueList,
+                                         pszHostname,                                         
                                          &pComputerList);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3197,7 +2603,6 @@ LWIQuery::GetComputerListByName(
 cleanup:
 
     /* All these free functions test for null parameter */
-    FreeMCXValueList(pMCXValueList);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
     LW_SAFE_FREE_STRING(pszGPOGUID);
     LW_SAFE_FREE_STRING(pszHostname);
@@ -3213,7 +2618,7 @@ LWIQuery::GetComputerGroupByName(
 {
     long macError = eDSNoErr;
     PLWICOMPUTERGROUP pComputerGroup = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+  
     PSTR pszGPOGUID = NULL;
     PGROUP_POLICY_OBJECT pGPO = NULL;
     PNETADAPTERINFO pTempNetInfo = _pNetAdapterList;
@@ -3246,9 +2651,7 @@ LWIQuery::GetComputerGroupByName(
         }
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
-        {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+        {            
 
             macError = CreateLWIComputerGroup("Group of Computers managed by GPO",
                                               "GPOComputerGroup",
@@ -3256,8 +2659,7 @@ LWIQuery::GetComputerGroupByName(
                                               COMPUTER_GROUP_UID_ID,
                                               COMPUTER_GROUP_UID,
                                               "GPOComputer",
-                                              COMPUTER_MAC_GPO,
-                                              pMCXValueList,
+                                              COMPUTER_MAC_GPO,                                              
                                               &pComputerGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3280,8 +2682,7 @@ LWIQuery::GetComputerGroupByName(
 
         if (IsMCXSettingEnabledForGPO(pGPO, MACHINE_GROUP_POLICY))
         {
-            macError = GetMCXValuesForGPOSettingType(pGPO, MACHINE_GROUP_POLICY, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+            
 
             macError = CreateLWIComputerGroup("Group of Computers managed by GPO",
                                               "GPOComputerGroup",
@@ -3289,8 +2690,7 @@ LWIQuery::GetComputerGroupByName(
                                               COMPUTER_GROUP_UID_ID,
                                               COMPUTER_GROUP_UID,
                                               "GPOComputer",
-                                              COMPUTER_MAC_GPO,
-                                              pMCXValueList,
+                                              COMPUTER_MAC_GPO,                                              
                                               &pComputerGroup);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3303,10 +2703,7 @@ LWIQuery::GetComputerGroupByName(
         GOTO_CLEANUP_ON_MACERROR(macError);
             
         snprintf(szPolicyPath, sizeof(szPolicyPath), "%s/%s/%s", LWDS_GPO_CACHE_DIR, pszGPOGUID, LWDS_COMPUTER_MCX_CSE_GUID);
-
-        macError = ConvertMCXSettingsToMCXValues(szPolicyPath, MACHINE_GROUP_POLICY, &pMCXValueList);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
+        
         while (pTempNetInfo)
         {
             if (pTempNetInfo->pszName)
@@ -3331,8 +2728,7 @@ LWIQuery::GetComputerGroupByName(
                                           pszGPOGUID,
                                           UNSET_GID_UID_ID,
                                           pszHostname,
-                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
-                                          pMCXValueList,
+                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,                                          
                                           &pComputerGroup);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3347,8 +2743,7 @@ LWIQuery::GetComputerGroupByName(
     
 cleanup:
 
-    /* All these free functions test for null parameter */
-    FreeMCXValueList(pMCXValueList);
+    /* All these free functions test for null parameter */    
     LW_SAFE_FREE_STRING(pszGPOGUID);
     LW_SAFE_FREE_STRING(pszHostname);
     GPA_SAFE_FREE_GPO_LIST(pGPO);
@@ -3399,7 +2794,6 @@ LWIQuery::GetComputerByName(
                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                          pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                          pszHostname,
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3412,7 +2806,6 @@ LWIQuery::GetComputerByName(
                                          COMPUTER_MAC_GPO,
                                          COMPUTER_LOOPBACK_IP,
                                          NULL, /* Not aliased, no keyword */
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3425,7 +2818,6 @@ LWIQuery::GetComputerByName(
                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                          pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                          pszHostname,
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3438,7 +2830,6 @@ LWIQuery::GetComputerByName(
                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                          pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                          pszHostname,
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3459,7 +2850,6 @@ LWIQuery::GetComputerByName(
                                          pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                          pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                          pszHostname,
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3472,7 +2862,6 @@ LWIQuery::GetComputerByName(
                                          COMPUTER_MAC_GPO,
                                          COMPUTER_LOOPBACK_IP,
                                          NULL, /* Not aliased, no keyword */
-                                         NULL,
                                          &pComputer);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
@@ -3529,7 +2918,6 @@ LWIQuery::GetComputerByENetAddress(
                                      COMPUTER_MAC_GPO,
                                      COMPUTER_LOOPBACK_IP,
                                      NULL, /* Not aliased, no keyword */
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3542,7 +2930,6 @@ LWIQuery::GetComputerByENetAddress(
                                      pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                      pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                      pszHostname,
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3603,7 +2990,6 @@ LWIQuery::GetComputerByIPAddress(
                                      COMPUTER_MAC_GPO,
                                      COMPUTER_LOOPBACK_IP,
                                      NULL, /* Not aliased, no keyword */
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3616,7 +3002,6 @@ LWIQuery::GetComputerByIPAddress(
                                      pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                      pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                      pszHostname,
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3659,7 +3044,6 @@ LWIQuery::GetComputerByGeneratedUID(
                                      COMPUTER_MAC_GPO,
                                      COMPUTER_LOOPBACK_IP,
                                      NULL, /* Not aliased, no keyword */
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3690,7 +3074,6 @@ LWIQuery::GetComputerByGeneratedUID(
                                      pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                      pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                      pszHostname,
-                                     NULL,
                                      &pComputer);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -3716,7 +3099,6 @@ LWIQuery::GetComputerByGeneratedUID(
                                                  pTempNetInfo ? pTempNetInfo->pszENetAddress : NULL,
                                                  pTempNetInfo ? pTempNetInfo->pszIPAddress : COMPUTER_LOOPBACK_IP,
                                                  pszHostname,
-                                                 NULL,
                                                  &pComputer);
                     GOTO_CLEANUP_ON_MACERROR(macError);
                     break;
@@ -6048,8 +5430,7 @@ LWIQuery::AddUserRecordHelper(
 {
     long macError = eDSNoErr;
     PLWIUSER pUser = NULL;
-    PAD_USER_ATTRIBUTES padUserInfo = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PAD_USER_ATTRIBUTES padUserInfo = NULL;    
     PSTR pszUserName = NULL;
     PSTR pszNFSHomeDirectory = NULL;
     PSTR pszHomeDirectory = NULL;
@@ -6091,10 +5472,7 @@ LWIQuery::AddUserRecordHelper(
         /* User does not have a homeDirectory attribute set, so don't bother adding
            MCXSetting for Force Local Home Directory on Startup Disk */
         Flags = Flags & ~LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK;
-    }
-
-    macError = GetGPOGroupMCXSettingsForUser(pUserObject->userInfo.pszUnixName, pUserObject->userInfo.uid, &pMCXValueList, Flags);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    }  
 
     macError = CreateLWIUser(pUserObject->userInfo.pszUnixName, /* Record Name */
                              pszUserName, /* Display name */
@@ -6108,8 +5486,7 @@ LWIQuery::AddUserRecordHelper(
                              pszOriginalHomeDirectory,
                              pUserObject->userInfo.pszShell,
                              pUserObject->userInfo.uid,
-                             pUserObject->userInfo.gid,
-                             pMCXValueList,
+                             pUserObject->userInfo.gid,                             
                              padUserInfo,
                              &pUser);
     GOTO_CLEANUP_ON_MACERROR(macError);
@@ -6119,8 +5496,7 @@ LWIQuery::AddUserRecordHelper(
 
 cleanup:
 
-    FreeLWIUser(pUser);
-    FreeMCXValueList(pMCXValueList);
+    FreeLWIUser(pUser);   
     FreeADUserInfo(padUserInfo);
     LW_SAFE_FREE_STRING(pszNFSHomeDirectory);
     LW_SAFE_FREE_STRING(pszHomeDirectory);
@@ -6188,8 +5564,7 @@ LWIQuery::AddGroupRecordHelper(
                               NULL, /* Comment */
                               pMembers,
                               NULL, /* Generated UID - Computed automatically later */
-                              pGroupObject->groupInfo.gid,
-                              NULL, /* MCXValues */
+                              pGroupObject->groupInfo.gid,                              
                               &pGroup);
     GOTO_CLEANUP_ON_MACERROR(macError);
 

@@ -51,8 +51,7 @@ CreateLWIUser(
     PCSTR pszOrigHomeDirectory,
     PCSTR pszShell,
     uid_t uid,
-    gid_t gid,
-    PMCXVALUE pMCXValues,
+    gid_t gid,    
     PAD_USER_ATTRIBUTES padUserADInfo,
     PLWIUSER* ppLWIUser
     );

@@ -95,13 +95,12 @@ FreeUserAttributes(
 DWORD
 CacheUserAttributes(
     uid_t uid,
-    PGPUSER_AD_ATTRS pUserADAttrs
+    PLSA_SECURITY_OBJECT pUserADAttrs
     );
 
 DWORD
 CollectCurrentADAttributesForUser(
-    PSTR pszUserUPN,
-    PSTR pszUserDomain,
+    PSTR pszUserUPN,    
     PSTR pszMessage,
     BOOLEAN bOnlineLogon
     );

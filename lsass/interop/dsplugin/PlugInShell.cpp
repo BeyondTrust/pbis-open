@@ -29,6 +29,7 @@
 #define MAC_OS_X_VERSION_NAME_10_10 "Yosemite"
 #define MAC_OS_X_VERSION_NAME_10_11 "El Capitan"
 #define MAC_OS_X_VERSION_NAME_10_12 "Sierra"
+#define MAC_OS_X_VERSION_NAME_10_13 "High Sierra"
 
 // Local helper functions
 //
@@ -40,11 +41,6 @@ static long GetDomainJoinState(
         PSTR* ppszDomain
         );
 
-static long GetGPONodes(
-        PCSTR pszDomain,
-        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-        PBOOLEAN pbOffline
-        );
 
 static long UpdateGPONodes(
         PCSTR pszDomain,
@@ -339,6 +335,11 @@ long PlugInShell_Initialize(void)
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SIERRA;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_12;
         }
+        else if (strstr(pszVersion, "10.13.") == pszVersion)
+        {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_HIGH_SIERRA;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_13;
+        }
         else
         {
             isUnsupported = true;
@@ -388,6 +389,9 @@ long PlugInShell_Initialize(void)
         } else if (strstr(pszVersion, "16.") == pszVersion) {
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SIERRA;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_12;
+        } else if (strstr(pszVersion, "17.") == pszVersion) {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_HIGH_SIERRA;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_13;
         } else {
             isUnsupported = true;
         }
@@ -529,11 +533,6 @@ long PlugInShell_Initialize(void)
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     LWICRC::Initialize();
-
-    // Allow WGM policy options to define Login/Logoff Hook scripts. We do this to automatically support settings
-    // we get from group policies.
-    macError = SetupMCXLoginScriptsSupport();
-    GOTO_CLEANUP_ON_MACERROR(macError);
 
     GlobalState.IsInitialized = true;
     GlobalState.PluginState = kInitialized | kInactive;
@@ -956,7 +955,7 @@ long PlugInShell_PeriodicTask(void)
     PSTR pszDomain = NULL;
     BOOLEAN bOffline = false;
     static int offlineTimerCount = 0;
-    static PSTR pszCurrentAllowedAdminsList = NULL;
+    static PSTR pszCurrentAllowedAdminsList = NULL;   
 
     // No enter/leave logging since function is called every 30 seconds
     // or so (on Mac OS X 10.4.7).
@@ -990,8 +989,7 @@ long PlugInShell_PeriodicTask(void)
 
     if (offlineTimerCount == 0)
     {
-        macError = GetGPONodes(pszDomain, &pCurrentGPOs, &bOffline);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        
 
         if (bOffline)
         {
@@ -1222,7 +1220,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszDomain);
     GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
 
-
+    LOG_LEAVE("--> %d", macError);
     return macError;
 }
 
@@ -1468,45 +1466,6 @@ cleanup:
     return macError;
 }
 
-static long GetGPONodes(
-        PCSTR pszDomain,
-        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-        PBOOLEAN pbOffline
-    )
-{
-    long macError = eDSNoErr;
-    PGROUP_POLICY_OBJECT pCurrentGPOs = NULL;
-    BOOLEAN bOffline = false;
-
-    if (pszDomain)
-    {
-        macError = EnumWorkgroupManagerEnabledGPOs(pszDomain, &pCurrentGPOs);
-        if (macError == eDSReceiveFailed ||
-                macError == eDSBogusServer ||
-                macError == eDSSendFailed ||
-            macError == eDSAuthMasterUnreachable)
-        {
-            LOG("EnumWorkgroupManagerEnableGPOs failed %d, treating as okay", macError);
-            bOffline = true;
-            macError = eDSNoErr;
-        }
-        else if (macError)
-        {
-            LOG("EnumWorkgroupManagerEnableGPOs failed unexpectedly (error = %d)", macError);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-    }
-
-    *pbOffline = bOffline;
-    *ppCurrentGPOs = pCurrentGPOs;
-    pCurrentGPOs = NULL;
-
-cleanup:
-
-    GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
-
-    return macError;
-}
 
 static long UpdateGPONodes(
         PCSTR pszDomain,

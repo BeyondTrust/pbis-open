@@ -786,8 +786,7 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
     int valueCount = 0;
     int i = 0;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PDSATTRIBUTE pAttribute = NULL;    
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     valueCount = dsDataListGetNodeCount(pSetAttributeValues->fInAttrValueList);
@@ -867,32 +866,12 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
 
     pAttribute = pRecord->pAttributeListHead;
 
-    while (pAttribute)
-    {
-        if (!strcmp(pAttribute->pszName, kDS1AttrMCXSettings))
-        {
-            macError = ConvertDSAttributeValuesToMCXValues(pAttribute->pValueListHead, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        pAttribute = pAttribute->pNext;
-    }
-
-    macError = SaveMCXValuesForGPOSettingType(pMCXValueList, pDirNode->pDirNodeGPO, dwPolicyType, pDirNode->pszDirNodeUserUPN);
-    if (macError)
-    {
-        LOG("Error saving MCX values to GPO, record (%s) of node (%s) auth is (%s). Got actual error %d, going to return eDSNotAuthorized",
-            pRecord->pszName, pDirNode->pszDirNodePath, pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "Unknown", macError);
-        macError = eDSNotAuthorized;
-    }
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
     /* Mark this pRecord not dirty since we have saved off changes to AD */
     pRecord->fDirty = FALSE;
 
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
+
     
     if (pszAttribute)
     {
@@ -924,8 +903,7 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
     PDSRECORD pRecord = NULL;
     RecordRefMapIter iter;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PDSATTRIBUTE pAttribute = NULL;   
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     macError = GetDataNodeString(pSetAttributeValue->fInAttrType, &pszAttribute);
@@ -985,33 +963,12 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
         pRecord->pszName, pDirNode->pszDirNodePath, pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "Unknown");
 
     pAttribute = pRecord->pAttributeListHead;
-
-    while (pAttribute)
-    {
-        if (!strcmp(pAttribute->pszName, kDS1AttrMCXSettings))
-        {
-            macError = ConvertDSAttributeValuesToMCXValues(pAttribute->pValueListHead, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        pAttribute = pAttribute->pNext;
-    }
-
-    macError = SaveMCXValuesForGPOSettingType(pMCXValueList, pDirNode->pDirNodeGPO, dwPolicyType, pDirNode->pszDirNodeUserUPN);
-    if (macError)
-    {
-        LOG("Error saving MCX values to GPO, record (%s) of node (%s) auth is (%s). Got actual error %d, going to return eDSNotAuthorized",
-            pRecord->pszName, pDirNode->pszDirNodePath, pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "Unknown", macError);
-        macError = eDSNotAuthorized;
-    }
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
+    
     /* Mark this pRecord not dirty since we have saved off changes to AD */
     pRecord->fDirty = FALSE;
 
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
 
     if (pszAttribute)
     {
@@ -1084,8 +1041,7 @@ LWIRecordQuery::FlushRecord(sFlushRecord* pFlushRecord)
     PDSRECORD pRecord = NULL;
     RecordRefMapIter iter;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;
-    PMCXVALUE pMCXValueList = NULL;
+    PDSATTRIBUTE pAttribute = NULL;    
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     LOG_ENTER("fType = %d, fResult = %d, fInRecRef = %d",
@@ -1129,29 +1085,9 @@ LWIRecordQuery::FlushRecord(sFlushRecord* pFlushRecord)
 
     pAttribute = pRecord->pAttributeListHead;
 
-    while (pAttribute)
-    {
-        if (!strcmp(pAttribute->pszName, kDS1AttrMCXSettings))
-        {
-            macError = ConvertDSAttributeValuesToMCXValues(pAttribute->pValueListHead, &pMCXValueList);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        pAttribute = pAttribute->pNext;
-    }
-
-    macError = SaveMCXValuesForGPOSettingType(pMCXValueList, pDirNode->pDirNodeGPO, dwPolicyType, pDirNode->pszDirNodeUserUPN);
-    if (macError)
-    {
-        LOG("Error saving MCX values to GPO, record (%s) of node (%s) auth is (%s). Got actual error %d, going to return eDSNotAuthorized",
-            pRecord->pszName, pDirNode->pszDirNodePath, pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "Unknown", macError);
-        macError = eDSNotAuthorized;
-    }
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
 cleanup:
 
-    FreeMCXValueList(pMCXValueList);
+
 
     LOG_LEAVE("--> %d", macError);
 

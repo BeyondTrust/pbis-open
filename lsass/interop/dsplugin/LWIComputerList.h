@@ -44,8 +44,7 @@ CreateLWIComputerList(
     PCSTR szComment,
     PCSTR szGUID,
     int   primaryId,
-    PCSTR szComputer,
-	PMCXVALUE pMCXValues,
+    PCSTR szComputer,	
     PLWICOMPUTERLIST* ppLWIComputerList
     );
     

@@ -47,8 +47,7 @@ CreateLWIGroup(
     PCSTR          pszComment,
     PLWIMEMBERLIST pMemberList,
     PCSTR          pszGeneratedUID,
-    gid_t          gid,
-    PMCXVALUE      pMCXValues,
+    gid_t          gid,    
     PLWIGROUP* ppLWIGroup
     );
     

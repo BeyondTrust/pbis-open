@@ -70,20 +70,6 @@ ADUGetVersionFromUserAndComputer(
     WORD wComputer
     );
 
-DWORD
-ADUGetAllMCXPolicies(
-    HANDLE hDirectory,
-    PCSTR  pszDN,
-    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
-    );
-
-DWORD
-ADUGetMCXPolicy(
-    HANDLE hDirectory,
-    PCSTR  pszDN,
-    PCSTR  pszGPOName,
-    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
-    );
 
 DWORD
 ADUGetPolicyInformation(

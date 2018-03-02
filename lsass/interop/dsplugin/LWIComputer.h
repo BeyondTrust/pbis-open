@@ -46,7 +46,6 @@ CreateLWIComputer(
     PCSTR szEthernetID,
     PCSTR szIPaddress,
     PCSTR szKeyword,
-	PMCXVALUE pMCXValues,
     PLWICOMPUTER* ppLWIComputer
     );
     

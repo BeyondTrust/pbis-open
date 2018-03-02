@@ -939,17 +939,17 @@ LWIDirNodeQuery::DoDirNodeAuth(
                     LOG("Failed to add user (%s) to staff group with error: %d", username, macError);
                     macError = eDSNoErr;
                 }
-            }
-
+            }           
+          
             /* Get AD user attributes and cache them for offline access */
             LOG("Going to collect current AD user attributes for user %s", username);
-            macError = CollectCurrentADAttributesForUser(pszUPN, pszUserDomainFQDN, pszMessage, isOnlineLogon);
+            macError = CollectCurrentADAttributesForUser(username, pszMessage, isOnlineLogon);
             if (macError)
             {
                 LOG("Failed to get user (%s) AD attributes with error: %d", username, macError);
                 macError = eDSNoErr;
-            }
-			
+            }                       
+            		
             /* Now handle notifying Group Policy agent about user logon activity */
             if (isAuthOnly == false)
             {

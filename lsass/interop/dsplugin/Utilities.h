@@ -44,6 +44,11 @@ LWCaptureOutput(
     );
 
 void LogMessageV(const char *Format, va_list Args);
+/*
+ * Will log a message to either /var/log/opendirectoryd.log or /var/log/syslog.
+ * If /var/lib/pbis/lwedsplugin.syslog is present then logging goes to syslog, 
+ * otherwise if opendirectorylogging is set to debug it will go to opendirectoryd.log
+ */
 void LogMessage(const char *Format, ...);
 void LogBuffer(void* Buffer, int Length);
 const char* StateToString(unsigned long State);

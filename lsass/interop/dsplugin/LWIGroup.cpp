@@ -39,8 +39,7 @@ CreateLWIGroup(
     PCSTR          pszComment,
     PLWIMEMBERLIST pMemberList,
     PCSTR          pszGeneratedUID,
-    gid_t          gid,
-    PMCXVALUE      pMCXValues,
+    gid_t          gid,    
     PLWIGROUP*     ppLWIGroup
     )
 {
@@ -154,12 +153,7 @@ CreateLWIGroup(
     }
     
     pGroup->gr_gid = gid;
-
-    if (pMCXValues)
-    {
-        macError = CopyMCXValueList(pMCXValues, &pGroup->pMCXValues);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
+   
     
     *ppLWIGroup = pGroup;
     pGroup = NULL;
@@ -212,8 +206,6 @@ FreeLWIGroup(PLWIGROUP pLWIGroup)
         if (pLWIGroup->guid)
             LW_SAFE_FREE_STRING(pLWIGroup->guid);
 	
-	    if (pLWIGroup->pMCXValues)
-	        FreeMCXValueList(pLWIGroup->pMCXValues);
 
         LwFreeMemory(pLWIGroup);
     }

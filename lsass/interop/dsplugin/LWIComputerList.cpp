@@ -38,7 +38,6 @@ CreateLWIComputerList(
     PCSTR szGUID,
     int   primaryId,
     PCSTR szComputer,
-    PMCXVALUE pMCXValues,
     PLWICOMPUTERLIST* ppLWIComputerList
     )
 {
@@ -80,13 +79,7 @@ CreateLWIComputerList(
         
         macError = LwAllocateString(szComputer, &pComputerList->computers[0]);
         GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    if (pMCXValues)
-    {
-        macError = CopyMCXValueList(pMCXValues, &pComputerList->pMCXValues);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
+    }        
     
     pComputerList->primaryId = primaryId;
     
@@ -126,8 +119,6 @@ FreeLWIComputerList(PLWICOMPUTERLIST pLWIComputerList)
             LwFreeMemory(pLWIComputerList->computers);
         }
 	
-	    if (pLWIComputerList->pMCXValues)
-	        FreeMCXValueList(pLWIComputerList->pMCXValues);
     
         LwFreeMemory(pLWIComputerList);
     }

@@ -302,74 +302,6 @@ error:
     goto cleanup;
 }
 
-DWORD
-CreateLwIoCredsFromKrb5UserCache(
-    uid_t uid,
-    LW_PIO_CREDS *ppCreds
-    )
-{
-    DWORD dwError = 0;
-    krb5_error_code ret = 0;
-    krb5_context ctx = NULL;
-    krb5_ccache cc = NULL;
-    krb5_principal client_principal = NULL;
-    PSTR pszCachePath = NULL;
-    PSTR pszPrincipal = NULL;
-    LW_PIO_CREDS pCreds = NULL;
-
-    dwError = LwAllocateStringPrintf(&pszCachePath, "/tmp/krb5cc_%u", uid);
-    BAIL_ON_ERROR(dwError);
-
-    ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_resolve(ctx, pszCachePath, &cc);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_get_principal(ctx, cc, &client_principal);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    if (client_principal->realm.length && client_principal->data->length)
-    {
-        dwError = LwAllocateStringPrintf(&pszPrincipal, "%s@%s",
-                client_principal->data->data, client_principal->realm.data);
-        BAIL_ON_ERROR(dwError);
-    }
-    else
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = LwIoCreateKrb5CredsA(pszPrincipal, pszCachePath, &pCreds);
-    BAIL_ON_ERROR(dwError);
-
-    *ppCreds = pCreds;
-
-cleanup:
-
-    if (ctx)
-    {
-        if(client_principal)
-        {
-            krb5_free_principal(ctx, client_principal);
-        }
-        krb5_free_context(ctx);
-    }
-    LW_SAFE_FREE_STRING(pszPrincipal);
-    LW_SAFE_FREE_STRING(pszCachePath);
-    return dwError;
-
-error:
-
-    if (pCreds)
-    {
-        LwIoDeleteCreds(pCreds);
-        pCreds = NULL;
-    }
-    goto cleanup;
-}
-
 VOID
 ConvertPath(
     IN uid_t uid,
@@ -379,33 +311,11 @@ ConvertPath(
     OUT PSTR *ppszPath
     )
 {
-    LW_PIO_CREDS pUserCreds = NULL;
-    LW_PIO_CREDS pOldCreds = NULL;
     PSTR pszServer = NULL;
     PSTR pszShare = NULL;
     PSTR pszPath = NULL;
 
-    CreateLwIoCredsFromKrb5UserCache(uid, &pUserCreds);
-    if (pUserCreds)
-    {
-        LwIoGetThreadCreds(&pOldCreds);
-        if (LwIoSetThreadCreds(pUserCreds) != 0)
-        {
-            LwIoDeleteCreds(pUserCreds);
-            pUserCreds = NULL;
-        }
-    }
-
     ConvertPathInternal(pszOriginalUncPath, &pszServer, &pszShare, &pszPath);
-
-    if(pUserCreds)
-    {
-        LwIoSetThreadCreds(pOldCreds);
-        pOldCreds = NULL;
-
-        LwIoDeleteCreds(pUserCreds);
-        pUserCreds = NULL;
-    }
 
     if (ppszServer)
     {

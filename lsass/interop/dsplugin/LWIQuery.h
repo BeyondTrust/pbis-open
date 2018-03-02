@@ -37,9 +37,6 @@
 #include "LWIComputer.h"
 #include "LWIComputerList.h"
 #include "LWIComputerGroup.h"
-
-long CopyMCXValueList(PMCXVALUE pValueList, PMCXVALUE* pValueListCopy);
-
 	
 class LWIQuery
 {

@@ -38,8 +38,7 @@ CreateLWIComputerGroup(
     PCSTR szGUID,
     int   primaryId,
     PCSTR szComputer,
-    PCSTR szComputerGUID,
-    PMCXVALUE pMCXValues,
+    PCSTR szComputerGUID,    
     PLWICOMPUTERGROUP* ppLWIComputerGroup
     )
 {
@@ -98,13 +97,7 @@ CreateLWIComputerGroup(
         
         macError = LwAllocateString(szComputerGUID, &pComputerGroup->members[0]);
         GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    
-    if (pMCXValues)
-    {
-        macError = CopyMCXValueList(pMCXValues, &pComputerGroup->pMCXValues);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
+    }        
 	    
     pComputerGroup->primaryId = primaryId;
     
@@ -160,10 +153,7 @@ FreeLWIComputerGroup(PLWICOMPUTERGROUP pLWIComputerGroup)
                 LW_SAFE_FREE_STRING(pLWIComputerGroup->membership[index]);
             }
             LwFreeMemory(pLWIComputerGroup->membership);
-        }
-	
-	    if (pLWIComputerGroup->pMCXValues)
-	        FreeMCXValueList(pLWIComputerGroup->pMCXValues);
+        }		    
 
         LwFreeMemory(pLWIComputerGroup);
     }

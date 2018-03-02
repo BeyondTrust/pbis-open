@@ -45,8 +45,7 @@ CreateLWIUser(
     PCSTR pszOrigHomeDirectory,
     PCSTR pszShell,
     uid_t uid,
-    gid_t gid,
-    PMCXVALUE pMCXValues,
+    gid_t gid,    
     PAD_USER_ATTRIBUTES padUserADInfo,
     PLWIUSER* ppLWIUser
     )
@@ -127,12 +126,6 @@ CreateLWIUser(
         macError = LwAllocateString(pszShell, &pUser->pw_shell);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-
-    if (pMCXValues)
-    {
-        macError = CopyMCXValueList(pMCXValues, &pUser->pMCXValues);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
     
     if (padUserADInfo)
     {
@@ -179,9 +172,7 @@ FreeLWIUser(PLWIUSER pLWIUser)
         if (pLWIUser->pw_orig_nfs_home_dir)
             LW_SAFE_FREE_STRING(pLWIUser->pw_orig_nfs_home_dir);
         if (pLWIUser->pw_shell)
-            LW_SAFE_FREE_STRING(pLWIUser->pw_shell);
-	    if (pLWIUser->pMCXValues)
-	        FreeMCXValueList(pLWIUser->pMCXValues);
+            LW_SAFE_FREE_STRING(pLWIUser->pw_shell);	    
         if (pLWIUser->padUserInfo)
             FreeADUserInfo(pLWIUser->padUserInfo);
 
