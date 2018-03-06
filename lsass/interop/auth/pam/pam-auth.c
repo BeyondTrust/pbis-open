@@ -674,7 +674,6 @@ pam_sm_authenticate(
     else if (pPamContext->pamOptions.bSmartCardPrompt)
     {
         dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
 
         /*
          * Prompt for the smart card PIN, or the password if no smart card
@@ -688,7 +687,7 @@ pam_sm_authenticate(
          * allocation failures).  This entry is marked "requisite", so
          * that if it fails the whole authentication sequence will fail.
          */
-        dwError = sm_prompt(pamh, pConfig, pPamContext, hLsaConnection, &ctx, &pObject);
+        if (dwError == LW_ERROR_SUCCESS) dwError = sm_prompt(pamh, pConfig, pPamContext, hLsaConnection, &ctx, &pObject);
 
         if (dwError == LW_ERROR_SUCCESS && pObject != NULL)
         {
