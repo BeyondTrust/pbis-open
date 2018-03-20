@@ -148,6 +148,7 @@ configure()
             mk_msg "Building OEM $LW_OEM_PROFILE configuration"
             LW_APPLICATION_INTEGRATION="no"
             LW_SAMBA_INTEROP="no"
+            DJ_GUI_INTERFACE="no"
             mk_skip_subdir gssapps
             mk_skip_subdir docs
             mk_skip_subdir lwupgrade

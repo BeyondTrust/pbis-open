@@ -2,11 +2,18 @@ SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui scripts"
 
 option()
 {
+    default_dj_gui="no"
+
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        default_dj_gui="yes"
+    fi
+
     mk_option \
         OPTION=dj-gui \
         PARAM='yes|no' \
         VAR=DJ_GUI \
-        DEFAULT="yes" \
+        DEFAULT="$default_dj_gui" \
         HELP="Build domainjoin GUI"
 }
 
@@ -33,12 +40,6 @@ configure()
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define DATADIR "\"$MK_DATADIR\""
 
-    if [ "$LW_OEM_PROFILE" = "oem15" ]
-    then
-       DJ_GUI=no
-       mk_msg "domainjoin-gui: $DJ_GUI"
-    fi
-
     if [ "$DJ_GUI" = yes ] && [ "$MK_HOST_OS" = "darwin" ]
     then
         DJ_GUI_INTERFACE="carbon"
@@ -55,7 +56,8 @@ configure()
             gtk_file_chooser_dialog_new
     else
         DJ_GUI_INTERFACE="no"
-		mk_skip_subdir domainjoin-gui
+            mk_msg "domainjoin-gui: no"
+            mk_skip_subdir domainjoin-gui
     fi
 
     mk_msg "GUI interface: $DJ_GUI_INTERFACE"
