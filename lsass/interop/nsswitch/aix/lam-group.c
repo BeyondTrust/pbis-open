@@ -822,7 +822,7 @@ LsaNssGetGroupAttr(
 
     if (!strcmp(pszAttribute, S_ID))
     {
-        pResult->attr_un.au_long = pInfo->gid;
+        pResult->attr_un.au_int = pInfo->gid;
     }
     else if (!strcmp(pszAttribute, S_PWD))
     {

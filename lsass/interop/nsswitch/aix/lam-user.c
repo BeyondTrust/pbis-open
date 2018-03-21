@@ -479,11 +479,11 @@ LsaNssGetUserAttr(
 
     if (!strcmp(pszAttribute, S_ID))
     {
-        pResult->attr_un.au_long = pInfo->uid;
+        pResult->attr_un.au_int = pInfo->uid;
     }
     else if (!strcmp(pszAttribute, S_PGID))
     {
-        pResult->attr_un.au_long = pInfo->gid;
+        pResult->attr_un.au_int = pInfo->gid;
     }
     else if (!strcmp(pszAttribute, S_PWD))
     {
@@ -553,7 +553,7 @@ LsaNssGetUserAttr(
     }
     else if (!strcmp(pszAttribute, S_DAEMONCHK))
     {
-        pResult->attr_un.au_int = 0;
+        pResult->attr_un.au_int = 1;
     }
     else if (!strcmp(pszAttribute, S_LOCKED))
     {
