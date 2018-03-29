@@ -342,6 +342,7 @@ LWIQuery::ProcessUserAttributes(
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrNFSHomeDirectory);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrHomeDirectory);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrOriginalHomeDirectory);
+        LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrSMBHome);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrOriginalNFSHomeDirectory);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrPassword);
         // LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrPasswordPlus);                - skipped
@@ -450,6 +451,10 @@ LWIQuery::ProcessUserAttributes(
                     break;
                 case LWIAttrLookup::idx_kDSNAttrOriginalHomeDirectory:
                     macError = SetOriginalHomeDirectory(pRecord, pUser, bSetValue);
+                    GOTO_CLEANUP_ON_MACERROR(macError);
+                    break;
+                case LWIAttrLookup::idx_kDSNAttrSMBHome:
+                    macError = SetSMBHomeDirectory(pRecord, pUser, bSetValue);
                     GOTO_CLEANUP_ON_MACERROR(macError);
                     break;
                 case LWIAttrLookup::idx_kDS1AttrOriginalNFSHomeDirectory:
@@ -2081,7 +2086,7 @@ LWIQuery::GetHomeDirectoryProtocolXmlAndMountPath(
     if (Flags & LWE_DS_FLAG_USE_AD_UNC_FOR_HOME_LOCATION_SMB)
     {
         macError = LwAllocateStringPrintf(&pszHomeDirectoryXML,
-                                          "<home_dir><url>smb://%s/%s</url><path>%s</path></home_dir>",
+                                          "<home_dir><url>smb://%s/%s/%s</url><path></path></home_dir>",
                                           pszServer,
                                           pszShare,
                                           pszPath ? pszPath : "");
@@ -2090,7 +2095,7 @@ LWIQuery::GetHomeDirectoryProtocolXmlAndMountPath(
     else if (Flags & LWE_DS_FLAG_USE_AD_UNC_FOR_HOME_LOCATION_AFP)
     {
         macError = LwAllocateStringPrintf(&pszHomeDirectoryXML,
-                                          "<home_dir><url>afp://%s/%s</url><path>%s</path></home_dir>",
+                                          "<home_dir><url>afp://%s/%s/%s</url><path></path></home_dir>",
                                           pszServer,
                                           pszShare,
                                           pszPath ? pszPath : "");
@@ -3394,6 +3399,28 @@ LWIQuery::SetOriginalHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool
         else
         {
             macError = AddAttribute(kDSNAttrOriginalHomeDirectory, pRecord, &pAttribute);
+        }
+    }
+
+    return macError;
+}
+
+long
+LWIQuery::SetSMBHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
+{
+    //kDS1AttrSMBHome
+    long macError = eDSNoErr;
+    PDSATTRIBUTE pAttribute = NULL;
+
+    if (pUser && pUser->padUserInfo && pUser->padUserInfo->pszHomeDirectory)
+    {
+        if (bSetValue)
+        {
+            macError = AddAttributeAndValue(kDS1AttrSMBHome, pUser->padUserInfo->pszHomeDirectory, pRecord, &pAttribute);
+        }
+        else
+        {
+            macError = AddAttribute(kDS1AttrSMBHome, pRecord, &pAttribute);
         }
     }
 
@@ -4948,12 +4975,12 @@ LWIQuery::SetProfile(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
     {
         if (bSetValue)
         {
-            macError = AddAttributeAndValue(K_DS_ATTR_HOME_DIRECTORY, pUser->padUserInfo->pszHomeDirectory, pRecord, &pAttribute);
+            macError = AddAttributeAndValue(kDSNAttrHomeDirectory, pUser->padUserInfo->pszHomeDirectory, pRecord, &pAttribute);
             if (macError) goto exit;
         }
         else
         {
-            macError = AddAttribute(K_DS_ATTR_HOME_DIRECTORY, pRecord, &pAttribute);
+            macError = AddAttribute(kDSNAttrHomeDirectory, pRecord, &pAttribute);
             if (macError) goto exit;
         }
     }

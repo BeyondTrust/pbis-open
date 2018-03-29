@@ -135,6 +135,8 @@ protected:
     static long SetHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetOriginalNFSHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetOriginalHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
+    static long SetSMBHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
+
     static long SetPassword(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetPassword(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
     static long SetPasswordPlus(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);

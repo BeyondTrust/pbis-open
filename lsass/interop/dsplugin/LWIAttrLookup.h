@@ -177,7 +177,8 @@ public:
         idx_K_DS_ATTR_MAX_PWD_AGE_DAYS,      // 91
         idx_K_DS_ATTR_MIN_PWD_AGE_DAYS,      // 92
         idx_K_DS_ATTR_DAYS_TILL_PWD_EXPIRES, // 93
-        idx_sentinel                         // 94
+        idx_kDSNAttrSMBHome,                 // 94
+        idx_sentinel                         // 95
     }  Index_t;
     
 
