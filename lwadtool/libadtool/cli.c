@@ -1649,6 +1649,7 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a move-object --from OU=OldName,DC=department,DC=company,DC=com --to OU=NewName,OU=TestOU,DC=department,DC=company,DC=com"
             NL_STR
+#ifdef __ADTOOL_ENTERPRISE__
             "Add group TestGroup to PowerBroker Cell in TestOU:"
             NL_STR2
             "adtool -a add-to-cell --dn OU=TestOU,DC=department,DC=company,DC=com --group=TestGroup"
@@ -1705,6 +1706,7 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
             NL_STR
+#endif
             "Modify an attribute. Note: Attribute value validation is not done. Use with care:"
             NL_STR2
             "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""

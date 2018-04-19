@@ -33,7 +33,7 @@
  *        Application context definitions.
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 23, 2010
  *
  */
@@ -60,7 +60,7 @@
 #define ADT_SEARCH_CELLS_ACT             "search-cells"
 #define ADT_LOOKUP_CELL_ACT             "lookup-cell"
 #define ADT_LOOKUP_CELL_USER_ACT        "lookup-cell-user"
-#define ADT_lOOKUP_CELL_GROUP_ACT       "lookup-cell-group"
+#define ADT_LOOKUP_CELL_GROUP_ACT       "lookup-cell-group"
 #define ADT_DELETE_CELL_ACT             "delete-cell"
 
 /**

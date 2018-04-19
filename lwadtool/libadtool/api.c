@@ -33,7 +33,7 @@
  *        Application data and adtool syntax definitions.
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 23, 2010
  *
  */
@@ -273,6 +273,8 @@ static DWORD SetUpAction(IN AdtActionTP action) {
             break;
 
         default:
+            dwError = ADT_ERR_INVALID_ACTION;
+            ADT_BAIL_ON_ERROR_NP(dwError);
             break;
     }
 
@@ -513,7 +515,11 @@ DWORD AdtCreateActionArgV(IN HANDLE context, IN INT argc, IN PCSTR *argv, OUT Ad
             }
 
             dwError = SetUpAction(&(appContext->action));
-            ADT_BAIL_ON_ERROR2(dwError);
+            if (dwError == ADT_ERR_INVALID_ACTION) {
+                EXIT_ABNORMALLY;
+            } else {
+                ADT_BAIL_ON_ERROR2(dwError);
+            }
 
             EXIT_NORMALLY;
         }
@@ -824,6 +830,7 @@ PCSTR AdtGetErrorMsg(IN DWORD dwError)
  */
 PCSTR AdtGetActionName(IN AdtActionCode code) {
     switch (code) {
+#ifdef __ADTOOL_ENTERPRISE__
         /**
          * Enterprise edition.
          */
@@ -861,7 +868,11 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
             return ADT_LOOKUP_CELL_USER_ACT;
 
         case (AdtLookupCellGroupAction):
-            return ADT_lOOKUP_CELL_GROUP_ACT;
+            return ADT_LOOKUP_CELL_GROUP_ACT;
+
+        case (AdtDeleteCellAction):
+            return ADT_DELETE_CELL_ACT;
+#endif
 
         case (AdtMoveObjectAction):
             return ADT_MOVE_OBJECT_ACT;
@@ -880,9 +891,6 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
 
         case (AdtDeleteObjectAction):
             return ADT_DELETE_OBJECT_ACT;
-
-        case (AdtDeleteCellAction):
-            return ADT_DELETE_CELL_ACT;
 
         case (AdtSearchUserAction):
             return ADT_SEARCH_USER_ACT;
@@ -956,12 +964,18 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
       name[i] = tolower(name[i]);
     }
 
+#ifdef __ADTOOL_ENTERPRISE__
+
     if(!strcmp(name, ADT_NEW_CELL_ACT)) {
         return AdtNewCellAction;
     }
 
     if(!strcmp(name, ADT_EDIT_CELL_ACT)) {
         return AdtEditCellAction;
+    }
+
+    if(!strcmp(name, ADT_DELETE_CELL_ACT)) {
+        return AdtDeleteCellAction;
     }
 
     if(!strcmp(name, ADT_EDIT_CELL_USER_ACT)) {
@@ -1000,9 +1014,10 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
         return AdtLookupCellUserAction;
     }
 
-    if(!strcmp(name, ADT_lOOKUP_CELL_GROUP_ACT)) {
+    if(!strcmp(name, ADT_LOOKUP_CELL_GROUP_ACT)) {
         return AdtLookupCellGroupAction;
     }
+#endif
 
     if(!strcmp(name, ADT_MOVE_OBJECT_ACT)) {
         return AdtMoveObjectAction;
@@ -1026,10 +1041,6 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
 
     if(!strcmp(name, ADT_DELETE_OBJECT_ACT)) {
         return AdtDeleteObjectAction;
-    }
-
-    if(!strcmp(name, ADT_DELETE_CELL_ACT)) {
-        return AdtDeleteCellAction;
     }
 
     if(!strcmp(name, ADT_SEARCH_USER_ACT)) {
