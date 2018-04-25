@@ -355,7 +355,7 @@ PRIVATE void rpc__cn_add_new_iovector_elmt
          * Then adjust iovector so that we have only 2 elements:
          * the header plus the current stub data.
          */
-        if (RPC_CN_CREP_IOVLEN (call_rep) > (call_rep->sec != NULL) ? 3 : 2)
+        if (RPC_CN_CREP_IOVLEN (call_rep) > ((call_rep->sec != NULL) ? 3 : 2))
         {
             /*
              * rpc__cn_dealloc_buffered_data will always skip the

@@ -348,7 +348,7 @@ ProcessExportedKeyInfo(
 
     for (iCount = 0; iCount < dwValuesCount; iCount++)
     {
-        memset(pwszValueName, 0, MAX_KEY_LENGTH);
+        memset(pwszValueName, 0, MAX_KEY_LENGTH * sizeof(WCHAR));
         dwValueNameLen = MAX_KEY_LENGTH;
         memset(value, 0, dwValueLenMax);
         dwValueLen = dwValueLenMax;

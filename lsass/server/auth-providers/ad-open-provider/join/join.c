@@ -791,7 +791,7 @@ LsaJoinDomainInternal(
                sizeof(pwszMachinePassword)/sizeof(pwszMachinePassword[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pwszMachinePassword[0] == '\0')
+    if (!pwszMachinePassword[0] || *pwszMachinePassword[0] == '\0')
     {
         BAIL_ON_NT_STATUS(STATUS_INTERNAL_ERROR);
     }
