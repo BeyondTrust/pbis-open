@@ -34,9 +34,12 @@
 
 #include <config.h>
 
+#if 0
+/* Remove redundant work around for AIX WEXITSTATUS macro */
 /* Work around AIX WEXITSTATUS macro */
 #if defined(_AIX) && defined(_ALL_SOURCE)
 #undef _ALL_SOURCE
+#endif
 #endif
 
 /* Work around HP-UX WEXITSTATUS macro */

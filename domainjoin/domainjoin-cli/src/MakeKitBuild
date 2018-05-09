@@ -11,7 +11,7 @@ make()
         PROGRAM=domainjoin-cli \
         SOURCES="djcli.c main.c" \
         INCLUDEDIRS="../include ../../include ../../libdomainjoin/include" \
-        HEADERDEPS="ctbase.h" \
+        HEADERDEPS="djdistroinfo.h ctbase.h linenoise.h" \
         LIBDEPS="lsaclient centutils domainjoin lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwsm linenoise"
 
     if [ "$MK_HOST_OS" = "darwin" ]

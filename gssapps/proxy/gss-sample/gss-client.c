@@ -377,8 +377,10 @@ static int client_establish_context(
     else
     {
         if (send_token(s, TOKEN_NOOP, empty_token) < 0)
+		{
             ret = -1;
-            goto error;
+            goto error;			
+		}
     }
 
 error:

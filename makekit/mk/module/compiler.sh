@@ -1967,10 +1967,10 @@ EOF
         } > .check.c
         if _mk_build_test 'compile-keep' .check.c
         then
-            if strings .check.o | grep "aArDvArKsOaP" >/dev/null
+            if strings -a .check.o | grep "aArDvArKsOaP" >/dev/null
             then
                 result="big"
-            elif strings .check.o | grep "zEbRaBrUsH" >/dev/null
+            elif strings -a .check.o | grep "zEbRaBrUsH" >/dev/null
             then
                 result="little"
             else

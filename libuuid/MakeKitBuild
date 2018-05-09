@@ -30,6 +30,11 @@ configure()
     mk_check_libraries \
         socket
 
+     if [ "$MK_HOST_OS" = "aix" -a $MK_HOST_DISTRO_VERSION = "6.1" ]
+     then
+         mk_define AIX_6 1
+     fi
+
      if [ "$MK_HOST_OS" = "solaris" -a $MK_HOST_DISTRO_VERSION = "11" ]
      then
          mk_define SOLARIS_11 1

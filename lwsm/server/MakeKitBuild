@@ -1,6 +1,6 @@
 make()
 {
-    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h lwnet.h"
+    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h lwnet.h ctexec.h"
     SERVER_SOURCES="\
         container.c \
         table.c \

@@ -13,5 +13,6 @@ make()
 
     mk_library \
         LIB=linenoise \
+        HEADERDEPS="linenoise.h" \
         SOURCES="linenoise.c"
 }
