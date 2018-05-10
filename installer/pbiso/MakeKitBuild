@@ -38,7 +38,7 @@ make()
                 DMG="pbis-open-${LW_VERSION}" \
                 VOLNAME="pbis-open" \
                 TEMPLATE="dmg-template.tar.bz2" \
-                PACKAGES="pbis-open pbis-open-legacy"
+                PACKAGES="pbis-open"
             ;;
     esac
 }
@@ -49,7 +49,7 @@ sfx_solaris()
         SFX="pbis-open-${LW_VERSION}" \
         FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
-        PACKAGES="PBISopen PBISopeng PBISopenl" \
+        PACKAGES="PBISopen PBISopeng" \
         UPGRADE="PBISopeng" \
         LEGACY="PBISopenl" \
         OBSOLETE="LikewiseBase LikewiseDomainjoin \
@@ -83,7 +83,7 @@ sfx_generic()
         SFX="pbis-open-${LW_VERSION}" \
         FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
-        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE pbis-open-legacy" \
+        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE" \
         UPGRADE="pbis-open-upgrade" \
         LEGACY="pbis-open-legacy" \
         OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin \

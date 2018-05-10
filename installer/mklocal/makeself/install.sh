@@ -992,18 +992,9 @@ do_install()
         if [ "$OPT_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
             DO_INSTALL_LEGACY_PACKAGE="yes"
         fi
-
         if [ "$DO_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
-            pkgName=`package_file_exists $INSTALL_LEGACY_PACKAGE`
-            if [ $? -eq 0 ]; then
-                package_install "$pkgName"
-               err=$?
-                if [ $err -ne 0 ]; then
-                    log_info "Error installing $pkgName"
-                fi
-            else
-                log_info "Missing package file $pkgName for $INSTALL_LEGACY_PACKAGE"
-            fi
+            log_info ""
+            log_info "Nothing done for --legacy option. No longer supported"
         fi
     fi
 
@@ -1018,6 +1009,7 @@ do_install()
         cp "${DIRNAME}/response" /var/lib/pbis/uninstall/response
     fi
 
+    log_info ""
     log_info "Installing Packages was successful"
 }
 
@@ -1325,8 +1317,6 @@ usage()
     echo "    --dir <DIR>      base directory where this script is located"
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
-    echo "    --legacy         install the legacy package"
-    echo "    --no-legacy      do not install the legacy package (default)"
 
     if [ "${OS_TYPE}" = "solaris" ]; then
         echo "    --all-zones      install to all zones (default)"

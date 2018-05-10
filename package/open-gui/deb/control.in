@@ -17,10 +17,3 @@ Replaces: @PKG_OPEN_GUI_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-domainjoin-gui (<< 6.2),
  pbis-open-domainjoin-gui (<< @PKG_DEB_VERSION@),
 Description: Desktop utility for joining Active Directory domains
-
-Package: likewise-domainjoin-gui
-Depends: @PKG_OPEN_GUI_DEB_NAME@, ${misc:Depends}
-Architecture: all
-Section: oldlibs
-Description: transitional dummy package
-  This is a transitional dummy package. It can safely be removed.
