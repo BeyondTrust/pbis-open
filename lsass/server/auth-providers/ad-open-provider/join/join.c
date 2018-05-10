@@ -660,7 +660,7 @@ LsaJoinDomainInternal(
     LsaPolicyInformation *pLsaPolicyInfo = NULL;
     PWSTR pwszMachineName = NULL;
     PWSTR pwszMachineAcctName = NULL;
-    PWSTR pwszMachinePassword[MACHPASS_LEN+1] = {0};
+    WCHAR pwszMachinePassword[MACHPASS_LEN+1] = {0};
     PWSTR pwszDomainName = NULL;
     PSID pDomainSid = NULL;
     PWSTR pwszDnsDomainName = NULL;
