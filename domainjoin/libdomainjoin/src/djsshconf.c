@@ -1004,7 +1004,7 @@ static QueryResult UpdateSshdConf(struct SshConf *conf, PCSTR testPrefix,
             }
         }
         
-        if (options->disableGSSAPI) {
+        if (options && options->disableGSSAPI) {
             conf->modified = FALSE;
             LW_CLEANUP_CTERR(exc, RemoveOption(conf, "GSSAPIAuthentication"));
             if(conf->modified)
