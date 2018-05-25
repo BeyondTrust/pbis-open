@@ -96,6 +96,10 @@ typedef enum
 #include <pwd.h>
 #include <grp.h>
 
+#ifdef HAVE_SHADOW_H
+#include <shadow.h>
+#endif
+
 #include "lsasystem.h"
 #include "lsa/lsa.h"
 #include "lsadef.h"
@@ -165,6 +169,15 @@ LsaNssWriteUserInfo(
     DWORD        dwUserInfoLevel,
     PVOID        pUserInfo,
     passwd_ptr_t pResultUser,
+    char**       ppszBuf,
+    int          bufLen
+    );
+
+DWORD
+LsaNssWriteShadowInfo(
+    DWORD        dwUserInfoLevel,
+    PVOID        pUserInfo,
+    spwd_ptr_t   pResultUser,
     char**       ppszBuf,
     int          bufLen
     );
@@ -239,6 +252,26 @@ LsaNssCommonPasswdGetpwuid(
     PLSA_NSS_CACHED_HANDLE pConnection,
     uid_t uid,
     struct passwd * pResultUser,
+    char * pszBuf,
+    size_t bufLen,
+    int * pErrorNumber
+    );
+
+NSS_STATUS
+LsaNssCommonShadowGetspent(
+    PLSA_NSS_CACHED_HANDLE  pConnection,
+    PLSA_ENUMUSERS_STATE    pEnumUsersState,
+    struct spwd *           pResultUser,
+    char*                   pszBuf,
+    size_t                  bufLen,
+    int*                    pErrorNumber
+    );
+
+NSS_STATUS
+LsaNssCommonShadowGetspnam(
+    PLSA_NSS_CACHED_HANDLE pConnection,
+    const char * pszLoginId,
+    struct spwd * pResultUser,
     char * pszBuf,
     size_t bufLen,
     int * pErrorNumber

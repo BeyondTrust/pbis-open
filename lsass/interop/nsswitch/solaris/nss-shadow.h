@@ -33,67 +33,27 @@
  *
  * Module Name:
  *
- *        nss-main.c
+ *        nss-shadow.h
  *
  * Abstract:
  * 
  *        Name Server Switch (Likewise LSASS)
  * 
- *        Main Entry Points
+ *        Handle NSS User Information
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
 
+#ifndef __LSA_NSS_SOLARIS_SHADOW_H__
+#define __LSA_NSS_SOLARIS_SHADOW_H__
+
 #include "lsanss.h"
-#include "nss-user.h"
-#include "nss-shadow.h"
-#include "nss-group.h"
-#include "nss-netgrp.h"
-
-/* The addition of this symbol indicates to NSCD that we are NSS2 compatible 
- * To support this the various user and group routines have been modified to return
- * the etc files format for the passwd/group entities when being called by NSCD
- */
-void *_nss_lsass_version = 0;
 
 nss_backend_t*
-_nss_lsass_passwd_constr(
-    const char* pszDbName,
-    const char* pszSrcName,
-    const char* pszCfgStr
-    )
-{
-    return LsaNssSolarisPasswdCreateBackend();
-}
+LsaNssSolarisShadowCreateBackend(
+    void			       
+    );
 
-nss_backend_t*
-_nss_lsass_shadow_constr(
-    const char* pszDbName,
-    const char* pszSrcName,
-    const char* pszCfgStr
-    )
-{
-    return LsaNssSolarisShadowCreateBackend();
-}
-
-nss_backend_t*
-_nss_lsass_group_constr(
-    const char* pszDbName,
-    const char* pszSrcName,
-    const char* pszCfgStr
-    )
-{
-    return LsaNssSolarisGroupCreateBackend();
-}
-
-nss_backend_t*
-_nss_lsass_netgroup_constr(
-    const char* pszDbName,
-    const char* pszSrcName,
-    const char* pszCfgStr
-    )
-{
-    return LsaNssSolarisNetgroupCreateBackend();
-}
+#endif

@@ -50,6 +50,8 @@
 
 static const int MAX_NUM_USERS = 500;
 
+#define PBIS_PASSWD_STR "PBIS"
+
 VOID
 LsaNssClearEnumUsersState(
     HANDLE hLsaConnection,
@@ -88,6 +90,8 @@ LsaNssComputeUserStringLength(
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszPasswd)) {
        dwLength += strlen(pUserInfo->pszPasswd) + 1;
+    } else {
+        dwLength += sizeof(PBIS_PASSWD_STR);
     }
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell)) {
@@ -105,6 +109,26 @@ LsaNssComputeUserStringLength(
 #ifdef HAVE_STRUCT_PASSWD_PW_CLASS
    dwLength++;
 #endif
+
+    return dwLength;
+}
+
+DWORD
+LsaNssComputeShadowStringLength(
+    PLSA_USER_INFO_0 pUserInfo
+    )
+{
+    DWORD dwLength = 0;
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszName)) {
+       dwLength += strlen(pUserInfo->pszName) + 1;
+    }
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszPasswd)) {
+       dwLength += strlen(pUserInfo->pszPasswd) + 1;
+    } else {
+        dwLength += sizeof(PBIS_PASSWD_STR);
+    }
 
     return dwLength;
 }
@@ -168,7 +192,7 @@ LsaNssWriteUserInfo(
            pszMarker += dwLen + 1;
         }
         else {
-           PCSTR pszPBIS = "PBIS";
+           PCSTR pszPBIS = PBIS_PASSWD_STR;
            dwLen = strlen(pszPBIS);
            memcpy(pszMarker, pszPBIS, dwLen);
            pResultUser->pw_passwd = pszMarker;
@@ -214,12 +238,106 @@ LsaNssWriteUserInfo(
         // etc passwd format expects: "pw_name:pw_passwd:pw_uid:pw_gid:pw_gecos:pw_dir:pw_shell"
         len = snprintf(pszMarker, bufLen, "%s:%s:%lu:%lu:%s:%s:%s",
                 PASSWD_SAFE_STRING(pUserInfo_0->pszName, ""),
-                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, "PBIS"),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, PBIS_PASSWD_STR),
                 (unsigned long)pUserInfo_0->uid,
                 (unsigned long)pUserInfo_0->gid,
                 PASSWD_SAFE_STRING(pUserInfo_0->pszGecos, ""),
                 PASSWD_SAFE_STRING(pUserInfo_0->pszHomedir, ""),
                 PASSWD_SAFE_STRING(pUserInfo_0->pszShell, "")
+        );
+
+        if (len < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else if (len >= bufLen)
+        {
+            dwError = LW_ERROR_NULL_BUFFER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LsaNssWriteShadowInfo(
+    DWORD        dwUserInfoLevel,
+    PVOID        pUserInfo,
+    spwd_ptr_t   pResultUser,
+    char**       ppszBuf,
+    int          bufLen)
+{
+    DWORD dwError = 0;
+    PLSA_USER_INFO_0 pUserInfo_0 = NULL;
+    PSTR  pszMarker = NULL;
+    DWORD dwLen = 0;
+
+    if (dwUserInfoLevel != 0) {
+        dwError = LW_ERROR_UNSUPPORTED_USER_LEVEL;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if(!ppszBuf)
+    {
+        dwError = LW_ERROR_NULL_BUFFER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    pszMarker = *ppszBuf;
+
+    pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+
+    if (LsaNssComputeShadowStringLength(pUserInfo_0) > bufLen) {
+       dwError = LW_ERROR_INSUFFICIENT_BUFFER;
+       BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    memset(pszMarker, 0, bufLen);
+
+    /* Solaris NSS2 passes a NULL result to indicate it requires an etc files formatted result for NSCD */
+    if (pResultUser)
+    {
+        memset(pResultUser , 0, sizeof(struct spwd));
+
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszName)) {
+           dwLen = strlen(pUserInfo_0->pszName);
+           memcpy(pszMarker, pUserInfo_0->pszName, dwLen);
+           pResultUser->sp_namp = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+
+        if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo_0->pszPasswd)) {
+           dwLen = strlen(pUserInfo_0->pszPasswd);
+           memcpy(pszMarker, pUserInfo_0->pszPasswd, dwLen);
+           pResultUser->sp_pwdp = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+        else {
+           PCSTR pszPBIS = PBIS_PASSWD_STR;
+           dwLen = strlen(pszPBIS);
+           memcpy(pszMarker, pszPBIS, dwLen);
+           pResultUser->sp_pwdp = pszMarker;
+           pszMarker += dwLen + 1;
+        }
+
+        // TODO What else can we set?
+    }
+    else
+    {
+        int len;
+
+        // etc shadow format expects: "sp_namp:sp_pwdp:sp_lstchg:sp_min:sp_max:sp_warn:sp_inact:sp_expire:sp_flag"
+        len = snprintf(pszMarker, bufLen, "%s:%s:::::::",
+                PASSWD_SAFE_STRING(pUserInfo_0->pszName, ""),
+                PASSWD_SAFE_STRING(pUserInfo_0->pszPasswd, PBIS_PASSWD_STR)
         );
 
         if (len < 0)
@@ -533,6 +651,193 @@ cleanup:
         LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
     }
 
+    return ret;
+
+error:
+
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
+    {
+        LsaNssCommonCloseConnection(pConnection);
+    }
+
+    goto cleanup;
+}
+
+NSS_STATUS
+LsaNssCommonShadowGetspent(
+    PLSA_NSS_CACHED_HANDLE  pConnection,
+    PLSA_ENUMUSERS_STATE    pEnumUsersState,
+    struct spwd *           pResultUser,
+    char*                   pszBuf,
+    size_t                  bufLen,
+    int*                    pErrorNumber
+    )
+{
+    int  ret = NSS_STATUS_NOTFOUND;
+    HANDLE hLsaConnection = pConnection->hLsaConnection;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
+    BOOLEAN bIgnoreEntry;
+
+    if (hLsaConnection == (HANDLE)NULL)
+    {
+        ret = MAP_LSA_ERROR(pErrorNumber,
+                            LW_ERROR_INVALID_LSA_CONNECTION);
+        BAIL_ON_NSS_ERROR(ret);
+    }
+
+    do
+    {
+        bIgnoreEntry = FALSE;
+
+        if (!pEnumUsersState->bTryAgain)
+        {
+            if (!pEnumUsersState->idxUser ||
+                    (pEnumUsersState->idxUser >= pEnumUsersState->dwNumUsers))
+            {
+                if (pEnumUsersState->ppUserInfoList)
+                {
+                    LsaFreeUserInfoList(
+                            pEnumUsersState->dwUserInfoLevel,
+                            pEnumUsersState->ppUserInfoList,
+                            pEnumUsersState->dwNumUsers);
+                    pEnumUsersState->ppUserInfoList = NULL;
+                    pEnumUsersState->dwNumUsers = 0;
+                    pEnumUsersState->idxUser = 0;
+                }
+                if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+                {
+                    ret = MAP_LSA_ERROR(pErrorNumber,
+                            LsaEnumUsers(
+                            hLsaConnection,
+                            pEnumUsersState->hResume,
+                            &pEnumUsersState->dwNumUsers,
+                            &pEnumUsersState->ppUserInfoList));
+                    BAIL_ON_NSS_ERROR(ret);
+                }
+            }
+        }
+
+        if (pEnumUsersState->dwNumUsers)
+        {
+            PLSA_USER_INFO_0 pUserInfo =
+                    (PLSA_USER_INFO_0)*(pEnumUsersState->ppUserInfoList + pEnumUsersState->idxUser);
+
+            if (LsaShouldIgnoreUserInfo(pUserInfo))
+            {
+                bIgnoreEntry = TRUE;
+            }
+            else 
+            {
+                ret = MAP_LSA_ERROR(pErrorNumber,
+                        LsaNssWriteShadowInfo(
+                        pEnumUsersState->dwUserInfoLevel,
+                        pUserInfo,
+                        pResultUser,
+                        &pszBuf,
+                        bufLen));
+                BAIL_ON_NSS_ERROR(ret);
+                
+                ret = NSS_STATUS_SUCCESS;
+            }
+
+            pEnumUsersState->idxUser++;
+        }
+        else
+        {
+            ret = NSS_STATUS_UNAVAIL;
+            if (pErrorNumber)
+            {
+                *pErrorNumber = ENOENT;
+            }
+        }
+    } while (bIgnoreEntry);
+
+    pEnumUsersState->bTryAgain = FALSE;
+
+cleanup:
+
+    return ret;
+
+error:
+
+    if ((ret == NSS_STATUS_TRYAGAIN) && pErrorNumber && (*pErrorNumber == ERANGE))
+    {
+        pEnumUsersState->bTryAgain = TRUE;
+    }
+    else
+    {
+        LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
+        
+        if ( hLsaConnection != (HANDLE)NULL)
+        {
+            if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
+            {
+                LsaNssCommonCloseConnection(pConnection);
+            }
+        }
+    }
+
+    if (bufLen && pszBuf)
+    {
+        memset(pszBuf, 0, bufLen);
+    }
+
+    goto cleanup;
+}
+
+NSS_STATUS
+LsaNssCommonShadowGetspnam(
+    PLSA_NSS_CACHED_HANDLE pConnection,
+    const char * pszLoginId,
+    struct spwd * pResultUser,
+    char * pszBuf,
+    size_t bufLen,
+    int * pErrorNumber
+    )
+{
+    int ret;
+    HANDLE hLsaConnection = NULL;
+    PVOID pUserInfo = NULL;
+    DWORD dwUserInfoLevel = 0;
+
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
+
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
+
+    ret = MAP_LSA_ERROR(pErrorNumber,
+                        LsaFindUserByName(
+                            hLsaConnection,
+                            pszLoginId,
+                            dwUserInfoLevel,
+                            &pUserInfo));
+    BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreUserInfo(pUserInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
+
+    ret = MAP_LSA_ERROR(pErrorNumber,
+                        LsaNssWriteShadowInfo(
+                            dwUserInfoLevel,
+                            pUserInfo,
+                            pResultUser,
+                            &pszBuf,
+                            bufLen));
+    BAIL_ON_NSS_ERROR(ret);
+
+cleanup:
+
+    if (pUserInfo) {
+        LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
+    }
     return ret;
 
 error:

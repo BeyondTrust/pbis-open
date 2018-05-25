@@ -305,6 +305,10 @@ typedef struct _LSA_STRING_BUFFER
 typedef struct passwd * passwd_ptr_t;
 typedef struct group  * group_ptr_t;
 
+#ifdef HAVE_SHADOW_H
+typedef struct spwd * spwd_ptr_t;
+#endif
+
 typedef enum
 {
     LsaMetricSuccessfulAuthentications    =  0,
