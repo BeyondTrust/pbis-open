@@ -173,6 +173,7 @@ LsaNssWriteUserInfo(
     int          bufLen
     );
 
+#ifdef HAVE_SHADOW_H
 DWORD
 LsaNssWriteShadowInfo(
     DWORD        dwUserInfoLevel,
@@ -181,6 +182,7 @@ LsaNssWriteShadowInfo(
     char**       ppszBuf,
     int          bufLen
     );
+#endif
 
 VOID
 LsaNssClearEnumGroupsState(
@@ -257,6 +259,7 @@ LsaNssCommonPasswdGetpwuid(
     int * pErrorNumber
     );
 
+#ifdef HAVE_SHADOW_H
 NSS_STATUS
 LsaNssCommonShadowGetspent(
     PLSA_NSS_CACHED_HANDLE  pConnection,
@@ -276,6 +279,8 @@ LsaNssCommonShadowGetspnam(
     size_t bufLen,
     int * pErrorNumber
     );
+#endif
+
 
 NSS_STATUS
 LsaNssCommonGroupSetgrent(

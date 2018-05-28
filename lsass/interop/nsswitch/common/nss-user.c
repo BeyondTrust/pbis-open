@@ -67,7 +67,7 @@ LsaNssClearEnumUsersState(
             );
         pState->ppUserInfoList = (HANDLE)NULL;
     }
-    
+
     if (hLsaConnection && pState->hResume != (HANDLE)NULL)
     {
         LsaEndEnumUsers(hLsaConnection, pState->hResume);
@@ -267,6 +267,7 @@ error:
     goto cleanup;
 }
 
+#ifdef HAVE_SHADOW_H
 DWORD
 LsaNssWriteShadowInfo(
     DWORD        dwUserInfoLevel,
@@ -360,6 +361,7 @@ error:
 
     goto cleanup;
 }
+#endif
 
 NSS_STATUS
 LsaNssCommonPasswdSetpwent(
@@ -374,7 +376,7 @@ LsaNssCommonPasswdSetpwent(
             LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
-    
+
     LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
 
     ret = MAP_LSA_ERROR(NULL,
@@ -465,7 +467,7 @@ LsaNssCommonPasswdGetpwent(
             {
                 bIgnoreEntry = TRUE;
             }
-            else 
+            else
             {
                 ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteUserInfo(
@@ -475,7 +477,7 @@ LsaNssCommonPasswdGetpwent(
                         &pszBuf,
                         bufLen));
                 BAIL_ON_NSS_ERROR(ret);
-                
+
                 ret = NSS_STATUS_SUCCESS;
             }
 
@@ -506,7 +508,7 @@ error:
     else
     {
         LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
-        
+
         if ( hLsaConnection != (HANDLE)NULL)
         {
             if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
@@ -663,6 +665,7 @@ error:
     goto cleanup;
 }
 
+#ifdef HAVE_SHADOW_H
 NSS_STATUS
 LsaNssCommonShadowGetspent(
     PLSA_NSS_CACHED_HANDLE  pConnection,
@@ -726,7 +729,7 @@ LsaNssCommonShadowGetspent(
             {
                 bIgnoreEntry = TRUE;
             }
-            else 
+            else
             {
                 ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteShadowInfo(
@@ -736,7 +739,7 @@ LsaNssCommonShadowGetspent(
                         &pszBuf,
                         bufLen));
                 BAIL_ON_NSS_ERROR(ret);
-                
+
                 ret = NSS_STATUS_SUCCESS;
             }
 
@@ -767,7 +770,7 @@ error:
     else
     {
         LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
-        
+
         if ( hLsaConnection != (HANDLE)NULL)
         {
             if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
@@ -849,3 +852,4 @@ error:
 
     goto cleanup;
 }
+#endif
