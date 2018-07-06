@@ -92,6 +92,8 @@ LsaUtilInitializePamConfig(
                     LSA_PAM_OTHER_PASSWORD_PROMPT,
                     &pConfig->pszOtherPasswordPrompt);
 
+    pConfig->bNssApplyAccessControl = FALSE;
+
 cleanup:
 
     return dwError;

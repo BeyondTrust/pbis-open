@@ -136,7 +136,7 @@ LsaSrvGetPamConfig(
             &PamConfig.pszLocalPasswordPrompt,
             NULL                                                            
         },
-          {
+        {
             
             "OtherPasswordPrompt",
             TRUE,
@@ -146,6 +146,16 @@ LsaSrvGetPamConfig(
             NULL,
             &PamConfig.pszOtherPasswordPrompt,
             NULL                                                            
+        },
+        {
+            "NssApplyAccessControl",
+            TRUE,
+            LwRegTypeBoolean,
+            0,
+            0,
+            NULL,
+            &PamConfig.bNssApplyAccessControl,
+            NULL
         },
         
     };

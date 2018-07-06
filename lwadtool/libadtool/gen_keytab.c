@@ -42,7 +42,9 @@
 #include <libgen.h>
 
 static 
-DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, PSTR pszPass, PSTR pszKeytab);
+DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, 
+                            PSTR pszPass, PSTR pszKeytab, 
+                            PSTR pszServicePrincipalNameList);
 
 static
 DWORD CreateComputerKeytabEntry(AppContextTP appContext, PSTR pszDn, PSTR pszName, PSTR pszPassword, 
@@ -60,15 +62,62 @@ DWORD ModifyUserKeytabFile(AdtActionTP action, PSTR pszUserName)
 {
    DWORD dwError = 0;
    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+   PSTR pszName = NULL;
+   PSTR pszPassword = NULL;
+   PSTR pszKeytab = NULL;
+   PSTR pszServicePrincipalNameList = NULL;
+
+   if (action->base.actionCode == AdtNewUserAction)
+   {
+      LwAllocateString(action->newUser.name, &pszName);
+      LwAllocateString(action->newUser.password, &pszPassword);
+      LwAllocateString(action->newUser.keytab, &pszKeytab);
+
+      if (action->newUser.servicePrincipalNameList)
+         LwAllocateString(action->newUser.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+         LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   } 
+   else if (action->base.actionCode == AdtResetUserPasswordAction)
+   {
+      LwAllocateString(action->resetUserPassword.name, &pszName);
+      LwAllocateString(action->resetUserPassword.password, &pszPassword);
+      LwAllocateString(action->resetUserPassword.keytab, &pszKeytab);
+
+      if (action->resetUserPassword.servicePrincipalNameList)
+         LwAllocateString(action->resetUserPassword.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+         LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else
+   {
+      dwError = ADT_ERR_ACTION_NOT_SUPPORTED;
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+
+   PrintStdout(appContext,
+               LogLevelVerbose,
+               "%s: ModifyUserKeytabFile. DN=%s Name=%s Password=%s Keytab=%s Service Principal Name(s)=%s\n",
+               appContext->actionName,
+               pszName,
+               pszUserName,
+               pszPassword,
+               pszKeytab,
+               pszServicePrincipalNameList);
 
    dwError = CreateUserKeytabEntry(appContext,
-                                   action->resetUserPassword.name, 
+                                   pszName, 
                                    pszUserName, 
-                                   action->resetUserPassword.password,
-                                   action->resetUserPassword.keytab);
+                                   pszPassword,
+                                   pszKeytab,
+                                   pszServicePrincipalNameList);
    ADT_BAIL_ON_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszName);
+    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SAFE_FREE_STRING(pszKeytab);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
     return dwError;
 
 error:
@@ -82,12 +131,43 @@ DWORD CreateNewUserKeytabFile(AdtActionTP action)
 {
    DWORD dwError = 0;
    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+   PSTR pszServicePrincipalNameList = NULL;
+   PSTR pszUserName = NULL;
 
-   dwError = CreateUserKeytabEntry(appContext, action->newUser.dn, action->newUser.name,
-                                   action->newUser.password, action->newUser.keytab);
+   if (action->newUser.servicePrincipalNameList)
+      LwAllocateString(action->newUser.servicePrincipalNameList, &pszServicePrincipalNameList);
+   else
+      LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+
+   if (action->newUser.namePreWin2000)
+   {
+      dwError = LwAllocateString(action->newUser.namePreWin2000, &pszUserName);
+   }
+   else
+   {
+      dwError = LwAllocateString(action->newUser.name, &pszUserName);
+   }
+   ADT_BAIL_ON_ERROR(dwError);
+
+   PrintStdout(appContext,
+               LogLevelVerbose,
+               "%s: CreateNewUserKeytabFile. DN=%s Name=%s Password=%s Keytab=%s Service Principal Name(s)=%s\n",
+               appContext->actionName,
+               action->newUser.dn,
+               pszUserName,
+               action->newUser.password,
+               action->newUser.keytab,
+               pszServicePrincipalNameList);
+
+   dwError = CreateUserKeytabEntry(appContext, action->newUser.dn, pszUserName,
+                                   action->newUser.password, action->newUser.keytab,
+                                   pszServicePrincipalNameList);
    ADT_BAIL_ON_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszUserName);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
     return dwError;
 
 error:
@@ -107,11 +187,11 @@ DWORD CreateNewComputerKeytabFile(AdtActionTP action)
    if (action->newComputer.servicePrincipalNameList)
       LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
    else
-      LwAllocateString(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+      LwAllocateString(DEFAULT_COMPUTER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
 
    PrintStdout(appContext,
                LogLevelVerbose,
-               "%s: CreateNewComputerKeytabFile. DN=%s Name=%s Password=%s sAMAccountName=%s DnsHostName=%s Service Principal Name:%s\n",
+               "%s: CreateNewComputerKeytabFile. DN=%s Name=%s Password=%s sAMAccountName=%s DnsHostName=%s Service Principal Name(s)=%s\n",
                appContext->actionName,
                action->newComputer.dn,
                action->newComputer.name,
@@ -223,7 +303,8 @@ error:
 // Keytab path: Keytab file path. If the file already exists, a backup is first created.
 //****************************************************************************************
 static
-DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, PSTR pszPass, PSTR pszKeytab)
+DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, 
+                            PSTR pszPass, PSTR pszKeytab, PSTR pszServicePrincipalNameList)
 {
     DWORD dwError = 0;
     size_t sPassLen = 0;
@@ -235,14 +316,25 @@ DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, P
     PSTR pszUserName = NULL;
     PSTR pszDomainFromDN = NULL;
     PSTR pszSalt = NULL;
+    PSTR pszServicePrincipalList = NULL;
+    PSTR pszServicePrincipalListSave = NULL;
+    PSTR pszSpn = NULL;
     PWSTR pwszPass = NULL;
-    PWSTR pwszDomainFromDN = NULL;
+    PWSTR pwszDomainFromDn = NULL;
+    PWSTR pwszDomainFromDnUc = NULL;
+    PWSTR pwszDomainFromDnLc = NULL;
     PWSTR pwszDcName = NULL;
     PWSTR pwszKtPath = NULL;
     PWSTR pwszSalt = NULL;
     PWSTR pwszUserName = NULL;
-    PWSTR pwszPrincipal = NULL;
+    PWSTR pwszBuffer = NULL;
+    PWSTR pwszSpn = NULL;
     DWORD dwKnvo = 0;
+    BOOLEAN bIsServiceClass = FALSE;
+
+    wchar_t wszFqdnFmt[] = L"%ws/%ws.%ws@%ws";
+    wchar_t wszFmt[] = L"%ws/%ws@%ws";
+    wchar_t wszFmt2[] = L"%ws@%ws";
 
     PrintStdout(appContext, LogLevelVerbose, "Creating user keytab entry.\n\tDN=%s\n\tuser=%s\n\tpassword=%s\n\tkeytab-file=%s\n", 
                   pszDN,
@@ -278,8 +370,18 @@ DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, P
     dwError = GetDomainFromDN(pszDn, &pszDomainFromDN);
     ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = LwMbsToWc16s(pszDomainFromDN, &pwszDomainFromDN);
+    dwError = LwMbsToWc16s(pszDomainFromDN, &pwszDomainFromDn);
     ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateWc16String(&pwszDomainFromDnLc, pwszDomainFromDn);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    LwWc16sToLower(pwszDomainFromDnLc);
+
+    dwError = LwAllocateWc16String(&pwszDomainFromDnUc, pwszDomainFromDn);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    LwWc16sToUpper(pwszDomainFromDnUc);
 
     PrintStdout(appContext, LogLevelVerbose, "\tDomain=%s\n",  pszDomainFromDN);
 
@@ -302,13 +404,25 @@ DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, P
 
     PrintStdout(appContext, LogLevelVerbose, "\tBaseDN=%s\n",  pszBaseDn);
 
+    // The salt can come from one of two places. Either from AD or generated locally.
+    dwError = KtKrb5GetUserSaltingPrincipalA(pszUserName, NULL, pszDcName, pszBaseDn, &pszSalt); 
+    ADT_BAIL_ON_ERROR(dwError);
+
+    PrintStdout(appContext, LogLevelVerbose, "\tSalt=%s\n",  pszSalt);
+
+    dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = BackupKeytabFile(pszKeytab);
+    ADT_BAIL_ON_ERROR(dwError)
+
     //
     // The principal name is username@DOMAIN.NET
     //
-    dwError = KtKrb5FormatPrincipalW(pwszUserName, pwszDomainFromDN, &pwszPrincipal);
+    dwError = KtKrb5FormatPrincipalW(pwszUserName, pwszDomainFromDn, &pwszBuffer);
     ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
+    dwError = LwWc16sToMbs(pwszBuffer, &pszPrincipal);
     ADT_BAIL_ON_ERROR(dwError);
 
     PrintStdout(appContext, LogLevelVerbose, "\tPrincipal=%s\n",  pszPrincipal);
@@ -321,21 +435,75 @@ DWORD CreateUserKeytabEntry(AppContextTP appContext, PSTR pszDN, PSTR pszName, P
 
     PrintStdout(appContext, LogLevelVerbose, "\tknvo=%d\n",  dwKnvo);
 
-    // The salt can come from one of two places. Either from AD or generated locally.
-    dwError = KtKrb5GetUserSaltingPrincipalA(pszUserName, NULL, pszDcName, pszBaseDn, &pszSalt); 
-    ADT_BAIL_ON_ERROR(dwError);
-
-    PrintStdout(appContext, LogLevelVerbose, "\tSalt=%s\n",  pszSalt);
-
-    dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
-    ADT_BAIL_ON_ERROR(dwError);
-
-    dwError = BackupKeytabFile(pszKeytab);
-    ADT_BAIL_ON_ERROR(dwError);
-
     // Several keytab entries are written. An entry for each of supported encryption types.
-    dwError = KtKrb5AddKeyW( pwszPrincipal, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+    dwError = KtKrb5AddKeyW( pwszBuffer, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
     ADT_BAIL_ON_ERROR(dwError);
+
+    pszServicePrincipalList = pszServicePrincipalNameList;
+    pszSpn = strtok_r(pszServicePrincipalList, ",", &pszServicePrincipalListSave);
+
+    while (pszSpn)
+    {
+        LW_SAFE_FREE_MEMORY(pwszSpn);
+        pwszSpn = NULL;
+
+        LW_SAFE_FREE_MEMORY(pwszBuffer);
+        pwszBuffer = NULL;
+
+        // Strip any trailing slash from pszSpn and determine if its a full SPN or a service class.
+        // Distinguish between nfs, nfs/ and http/www.linuxcomputer.com.
+        GroomSpn(&pszSpn, &bIsServiceClass);
+
+        dwError = LwMbsToWc16s(pszSpn, &pwszSpn);
+        ADT_BAIL_ON_ERROR(dwError);
+
+        if (!bIsServiceClass)
+        {
+           // Add pszSpn as is with the realm appended.    
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFmt2, pwszSpn, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+           //
+           // Format: spn/username@REALM.NET
+           //
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFmt, pwszSpn, pwszUserName, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           //
+           // Format: spn/username.domain.net@REALM.NET
+           //   
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFqdnFmt, pwszSpn, pwszUserName, pwszDomainFromDnLc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           //
+           //Format:  spn/username.DOMAIN.NET@REALM.NET
+           //  
+           LW_SAFE_FREE_MEMORY(pwszBuffer);
+           pwszBuffer = NULL;
+           dwError = LwAllocateWc16sPrintfW(&pwszBuffer, wszFqdnFmt, pwszSpn, pwszUserName, pwszDomainFromDnUc, pwszDomainFromDnUc);
+           ADT_BAIL_ON_ERROR(dwError);
+
+           dwError = KtKrb5AddKeyW(pwszBuffer, pwszPass, sPassLen, pwszKtPath, pwszSalt, pwszDcName, dwKnvo);
+           ADT_BAIL_ON_ERROR(dwError);
+
+        }
+
+        pszSpn = strtok_r(NULL, ",", &pszServicePrincipalListSave);
+
+    }
 
 cleanup:
 
@@ -349,11 +517,15 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszDomainFromDN);
     LW_SAFE_FREE_MEMORY(pwszDcName);
     LW_SAFE_FREE_MEMORY(pwszPass);
-    LW_SAFE_FREE_MEMORY(pwszDomainFromDN);
+    LW_SAFE_FREE_MEMORY(pwszDomainFromDn);
+    LW_SAFE_FREE_MEMORY(pwszDomainFromDnUc);
+    LW_SAFE_FREE_MEMORY(pwszDomainFromDnLc);
     LW_SAFE_FREE_MEMORY(pszDcAddress);
     LW_SAFE_FREE_MEMORY(pszPrincipal);
-    LW_SAFE_FREE_MEMORY(pwszPrincipal);
     LW_SAFE_FREE_MEMORY(pwszKtPath);
+    LW_SAFE_FREE_MEMORY(pwszBuffer);
+    LW_SAFE_FREE_MEMORY(pwszSpn);
+
 
     return dwError;
 

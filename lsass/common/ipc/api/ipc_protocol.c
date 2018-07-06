@@ -714,6 +714,7 @@ static LWMsgTypeSpec gLsaIPCGetPamConfigSpec[] =
     LWMSG_MEMBER_PSTR(LSA_PAM_CONFIG, pszActiveDirectoryPasswordPrompt),
     LWMSG_MEMBER_PSTR(LSA_PAM_CONFIG, pszLocalPasswordPrompt),
     LWMSG_MEMBER_PSTR(LSA_PAM_CONFIG, pszOtherPasswordPrompt),
+    LWMSG_MEMBER_UINT32(LSA_PAM_CONFIG, bNssApplyAccessControl),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };

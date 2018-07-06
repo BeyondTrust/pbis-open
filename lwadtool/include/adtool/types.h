@@ -317,6 +317,7 @@ typedef struct AdtActionNewUser {
     INT isNoPasswdExpires;    /* Password never expires if set */
     INT isAccountEnabled;     /* Account is enabled if set */
     PSTR keytab;              /* Generate a keytab file. */
+    PSTR servicePrincipalNameList; /* Set new user account SPN attribute and keytab file.*/
 } AdtActionNewUserT, *AdtActionNewUserTP;
 
 typedef struct AdtActionNewGroup {
@@ -351,6 +352,7 @@ typedef struct AdtActionResetUserPassword {
     INT isNoCanChangePasswd;  /* User is not allowed to change password if set */
     INT isNoPasswdExpires;    /* Password never expires if set */
     PSTR keytab;              /* Update/generate a keytab file. */
+    PSTR servicePrincipalNameList; /* Modify user account SPN attribute and keytab file.*/
 } AdtActionResetUserPasswordT, *ResetUserPasswordTP;
 
 typedef struct AdtActionEnableUser {

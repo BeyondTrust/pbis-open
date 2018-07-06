@@ -80,12 +80,14 @@ DWORD ValidateAdtResetUserPasswordAction(IN AdtActionTP action)
 
     SwitchToSearchConnection(action);
 
-    /*
-    if (!action->resetUserPassword.password) {
-        dwError = ADT_ERR_ARG_MISSING_PASSWD;
+    // If reset-user-password has keytab option and not the spn, then
+    // need to flag it as an error for now until we pull down the
+    // SPN attribute from AD in order to generate the keytab file.
+    if ((action->resetUserPassword.keytab) &&
+        (!action->resetUserPassword.servicePrincipalNameList)) {
+        dwError = ADT_ERR_ARG_MISSING_SPN_FOR_KEYTAB;
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
-    */
 
     if (action->resetUserPassword.password) {
         dwError = ProcessADUserPassword(&(action->resetUserPassword.password));
@@ -111,6 +113,7 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
     PUSER_INFO_4 info = NULL;
     AttrValsT *avp = NULL;
     AttrValsT *avpTime = NULL;
+    PSTR pszSamAccountName = NULL;
 
     dwError = LocateADUser(appContext, &(action->resetUserPassword.name));
     ADT_BAIL_ON_ERROR_NP(dwError);
@@ -128,11 +131,13 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
+    pszSamAccountName = avp[0].vals[0];
+
     PrintStderr(appContext,
                 LogLevelVerbose,
                 "%s: Reading password properties of user %s ...\n",
                 appContext->actionName,
-                avp[0].vals[0]);
+                pszSamAccountName);
 
     dwError = AdtNetUserGetInfo4(appContext, avp[0].vals[0], &info);
     ADT_BAIL_ON_ERROR_NP(dwError);
@@ -146,11 +151,11 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
                 LogLevelVerbose,
                 "%s: Changing password properties of user %s ...\n",
                 appContext->actionName,
-                avp[0].vals[0]);
+                pszSamAccountName);
 
     if (action->resetUserPassword.password) {
         dwError = AdtNetUserSetPassword(appContext,
-                                        avp[0].vals[0],
+                                        pszSamAccountName,
                                         action->resetUserPassword.password);
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
@@ -187,7 +192,7 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
     info->usri4_flags &= ~UF_PASSWD_NOTREQD;
 
     dwError = AdtNetUserSetInfoFlags(appContext,
-                                     avp[0].vals[0],
+                                     pszSamAccountName,
                                      info->usri4_flags);
     ADT_BAIL_ON_ERROR_NP(dwError);
 
@@ -206,32 +211,46 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
             PrintResult(appContext,
                         LogLevelNone,
                         "Password properties have been changed for user %s\n",
-                        avp[0].vals[0]);
+                        pszSamAccountName);
         }
+    }
+
+    if (action->resetUserPassword.servicePrincipalNameList) 
+    {
+       dwError = SetObjectSPNAttribute(action, pszSamAccountName);
+       if (dwError)
+       {
+           PrintResult(appContext, LogLevelNone, "Failed to update SPN attribute. %s\n", AdtGetErrorMsg(dwError));
+       }
+       else
+       {
+           if (!appContext->gopts.isQuiet)
+           {
+              PrintResult(appContext, LogLevelNone, "Successfully updated SPN attribute\n");
+           }
+       }
     }
 
     if (action->resetUserPassword.keytab) 
     {
        BOOLEAN bExists = FALSE;
        LwCheckFileExists(action->resetUserPassword.keytab, &bExists);
-
-       dwError = ModifyUserKeytabFile(action, avp[0].vals[0]);
+       
+       dwError = ModifyUserKeytabFile(action, pszSamAccountName);
        if (dwError)
        {
-          PrintResult(appContext, LogLevelNone, "Failed to %s keytab file for user %s.\n", (bExists ? "update":"create"), avp[0].vals[0]);
-
+           PrintResult(appContext, LogLevelNone, "Failed to %s keytab file for user %s.\n", (bExists ? "update":"create"), pszSamAccountName);
        }
        else
        {
-          if (!appContext->gopts.isQuiet) 
-          {
-             PrintResult(appContext, LogLevelNone, "Keytab file %s for user %s.\n", (bExists ? "update":"created"), avp[0].vals[0]);
+           if (!appContext->gopts.isQuiet) 
+           {
+              PrintResult(appContext, LogLevelNone, "Keytab file %s for user %s.\n", (bExists ? "update":"created"), pszSamAccountName);
           }
-
        }
 
     }
-    
+
     cleanup:
         if (avpTime) {
                 for (i = 0; avpTime[i].vals; ++i) {
@@ -254,7 +273,6 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
         }
 
         LW_SAFE_FREE_MEMORY(info);
-
 
         return dwError;
 

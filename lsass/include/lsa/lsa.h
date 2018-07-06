@@ -745,6 +745,7 @@ typedef struct _LSA_PAM_CONFIG
     LW_PSTR pszActiveDirectoryPasswordPrompt;
     LW_PSTR pszLocalPasswordPrompt;
     LW_PSTR pszOtherPasswordPrompt;
+    LW_BOOLEAN bNssApplyAccessControl;
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 /**

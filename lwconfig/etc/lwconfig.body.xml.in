@@ -238,6 +238,19 @@
             <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
+    <capability>
+        <name>NssApplyAccessControl</name>
+        <description>Filter users returned by NSS based on RequireMembershipOf</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\PAM\NssApplyAccessControl"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\PAM\NssApplyAccessControl" >
+            <description>Filter users returned by NSS based on RequireMembershipOf</description>
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
     <xi:include href="file://@lwconfigdir@/lwconfig_lsass_pam.xml">
        <xi:fallback></xi:fallback>
     </xi:include>

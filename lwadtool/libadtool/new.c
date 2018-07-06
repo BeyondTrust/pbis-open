@@ -43,9 +43,6 @@
 static
 DWORD  SetMachinePassword(IN AdtActionTP action);
 
-static
-DWORD SetNewComputerSPNAttribute(IN AdtActionTP action);
-
 /***************************************************************************/
 /*                          New OU action                                  */
 /***************************************************************************/
@@ -305,14 +302,20 @@ DWORD ValidateAdtNewUserAction(IN AdtActionTP action)
     dwError = ProcessADUserPassword(&(action->newUser.password));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
+    if((action->newUser.keytab) && (!action->newUser.password)) {
+        dwError = ADT_ERR_ARG_MISSING_PASSWD;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
+
     dn = NULL;
     name = NULL;
 
     cleanup:
+        LW_SAFE_FREE_MEMORY(tmp);
         return dwError;
 
     error:
-        LW_SAFE_FREE_MEMORY(tmp);
         LW_SAFE_FREE_MEMORY(dn);
         LW_SAFE_FREE_MEMORY(name);
 
@@ -481,6 +484,19 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
                         "%s: Account has been created for user %s.\n",
                         appContext->actionName, action->newUser.name);
         }
+    }
+
+    // If --spn option not provided, then default is an empty 
+    // servicePrincipalNameAttribute.
+    dwError = SetObjectSPNAttribute(action, NULL);
+    if (dwError)
+    {
+       PrintResult(appContext,
+                   LogLevelNone,
+                   "%s: Failed to update %s service principal name attribute.%s\n",
+                   appContext->actionName, action->newUser.name,
+                   AdtGetErrorMsg(dwError));
+       dwError = LW_ERROR_SUCCESS;
     }
 
     if (action->newUser.keytab)
@@ -743,8 +759,9 @@ DWORD InitAdtNewComputerAction(IN AdtActionTP action)
 // Input:  nfs, NFS, http/linuxhostbox, host, HOST/, http/linuxhostbox2
 // Output: NFS, HOST, http/linuxhostbox, http/linuxhostbox2
 static
-VOID GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
+DWORD GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
 {
+   DWORD dwError = LW_ERROR_SUCCESS;
    BOOLEAN bIsServiceClass = FALSE;
    PSTR pszServicePrincipalNameList = NULL;
    PSTR saveStrPtr = NULL;
@@ -755,13 +772,35 @@ VOID GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
    PSTR pszFqdnList = NULL;
    PSTR pszServiceClassList = NULL;
 
-   if (action->newComputer.servicePrincipalNameList)
-     LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
+   if (action->base.actionCode == AdtNewComputerAction)
+   {
+      if (action->newComputer.servicePrincipalNameList)
+        LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_COMPUTER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else if (action->base.actionCode == AdtNewUserAction)
+   {
+      if (action->newUser.servicePrincipalNameList)
+        LwAllocateString(action->newUser.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else if (action->base.actionCode == AdtResetUserPasswordAction)
+   {
+      if (action->resetUserPassword.servicePrincipalNameList)
+        LwAllocateString(action->resetUserPassword.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
    else
-     LwAllocateString(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   {
+     dwError = ADT_ERR_ACTION_NOT_SUPPORTED;
+     ADT_BAIL_ON_ERROR_NP(dwError);
+   }
 
-   // Tokenize the user provided SPN list checking for duplicates SPN values and 
-   // upper casing SPN.
+   // Tokenize the user provided SPN list checking for duplicates SPN values
+   // and upper casing SPN.
    aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
    while (aStr != NULL)
    {
@@ -802,22 +841,28 @@ VOID GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
       aStr = strtok_r(NULL, ",", &saveStrPtr);
    }
 
-
    if (pszFqdnList && pszServiceClassList)
      LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s,%s", pszServiceClassList, pszFqdnList);
    else if (pszFqdnList && !pszServiceClassList)
      LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszFqdnList);
-   else
+   else if (pszServiceClassList)
      LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszServiceClassList);
+   else
+     pszNewServicePrincipalNameList = NULL;
 
    // pszNewServicePrincipalNameList contains non-duplicated, uppercase service class.
    // Fully qualified SPN is added as is.
    *ppGroomedServicePrincipalList = pszNewServicePrincipalNameList;
 
+cleanup:
    LW_SAFE_FREE_STRING(pszFqdnList);
    LW_SAFE_FREE_STRING(pszServiceClassList);
 
-   return;
+   return dwError;
+
+error:
+   goto cleanup;
+
 }
 
 DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
@@ -992,14 +1037,15 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
     }
 
     // If --spn option not provided, then default is host.
-    dwError = SetNewComputerSPNAttribute(action);
+    dwError = SetObjectSPNAttribute(action, NULL);
     if (dwError)
     {
        PrintResult(appContext,
                    LogLevelNone,
-                   "%s: Failed to update %s service principal name attribute.\n",
-                   appContext->actionName, action->newComputer.name);
-       ADT_BAIL_ON_ERROR_NP(dwError);
+                   "%s: Failed to update %s service principal name attribute. %s\n",
+                   appContext->actionName, action->newComputer.name,
+                   AdtGetErrorMsg(dwError));
+       dwError = LW_ERROR_SUCCESS;
     }
 
     if (action->newComputer.keytab)
@@ -1108,8 +1154,7 @@ DWORD  SetMachinePassword(IN AdtActionTP action)
         goto cleanup;
 }
 
-static
-DWORD SetNewComputerSPNAttribute(IN AdtActionTP action)
+DWORD SetObjectSPNAttribute(IN AdtActionTP action, IN PCSTR pszUserName)
 {
    DWORD dwError = 0;
    DWORD dwMaxValues = 100;
@@ -1124,7 +1169,11 @@ DWORD SetNewComputerSPNAttribute(IN AdtActionTP action)
    BOOLEAN bIsServiceClass = FALSE;
    PSTR pszServicePrincipalNameList = NULL;
 
-   GroomSpnList(action, &pszServicePrincipalNameList);
+   dwError = GroomSpnList(action, &pszServicePrincipalNameList);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   if (pszServicePrincipalNameList == NULL)
+    goto cleanup;
 
    PrintStdout(appContext, LogLevelVerbose,
                "%s: Setting SPN Attribute using: %s\n",
@@ -1142,11 +1191,35 @@ DWORD SetNewComputerSPNAttribute(IN AdtActionTP action)
     for (i = 0; i < dwMaxValues; i++)
        avp[0].vals[i] = NULL;
 
-   dwError = LwStrDupOrNull(action->newComputer.dn, &pszDn);
-   ADT_BAIL_ON_ERROR(dwError);
+   if (action->base.actionCode == AdtNewComputerAction)
+   {
+      dwError = LwStrDupOrNull(action->newComputer.dn, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
 
-   dwError = LwStrDupOrNull(action->newComputer.name, &pszMachineName);
-   ADT_BAIL_ON_ERROR(dwError);
+      dwError = LwStrDupOrNull(action->newComputer.name, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else if (action->base.actionCode == AdtNewUserAction)
+   {
+      dwError = LwStrDupOrNull(action->newUser.dn, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
+
+      dwError = LwStrDupOrNull(action->newUser.name, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else if (action->base.actionCode == AdtResetUserPasswordAction)
+   {
+      dwError = LwStrDupOrNull(action->resetUserPassword.name, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
+
+      dwError = LwStrDupOrNull(pszUserName, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else
+   {
+     dwError = ADT_ERR_ACTION_NOT_SUPPORTED;
+     ADT_BAIL_ON_ERROR(dwError);
+   }
 
    LwStrToLower(pszMachineName);
 
@@ -1203,7 +1276,6 @@ cleanup:
 
      LW_SAFE_FREE_MEMORY(avp);
    }
-
 
 
    return dwError;

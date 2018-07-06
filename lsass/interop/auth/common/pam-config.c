@@ -258,13 +258,13 @@ LsaParseIgnoreList(
                             pToken,
                             &pTokenCopy);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             dwError = LwHashSetValue(
                             pIgnoreHash,
                             pTokenCopy,
                             pTokenCopy);
-            BAIL_ON_LSA_ERROR(dwError); 
-            
+            BAIL_ON_LSA_ERROR(dwError);
+
             pTokenCopy = NULL;
         }
 
@@ -527,7 +527,7 @@ LsaReadIgnoreHashes()
         dwError = LwMapErrnoToLwError(errno);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if (tCurrentTime < gtIgnoreHashLastUpdated +
             LSA_IGNORE_LIST_UPDATE_INTERVAL)
     {
@@ -605,25 +605,93 @@ LsaShouldIgnoreUser(
     return FALSE;
 }
 
+static
+BOOLEAN
+LsaCheckAccessAllowed(PCSTR pszName)
+{
+    DWORD dwError = 0;
+    BOOLEAN bAllowed = FALSE;
+    HANDLE hLsaConnection = NULL;
+
+    if (pszName)
+    {
+        dwError = LsaOpenServer(&hLsaConnection);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LsaCheckUserInList(hLsaConnection, pszName, NULL);
+        if (dwError == LW_STATUS_SUCCESS)
+        {
+            bAllowed = TRUE;
+        }
+    }
+
+cleanup:
+    if (hLsaConnection != NULL)
+    {
+        LsaCloseServer(hLsaConnection);
+        hLsaConnection = NULL;
+    }
+
+    return bAllowed;
+
+error:
+
+    goto cleanup;
+}
+
 BOOLEAN
 LsaShouldIgnoreUserInfo(
     PVOID        pUserInfo
     )
 {
+    BOOLEAN bShouldIgnore = FALSE;
+    time_t tCurrentTime = 0;
+    static time_t stIgnoreConfigLastUpdated = 0;
+    static BOOLEAN sbCheckAccessDenied = FALSE;
+
+    if (pUserInfo == NULL) return TRUE;
+
     // Ignore errors
     LsaReadIgnoreHashes();
+    
+    time(&tCurrentTime);
+
+    // Currently this is only called from NSS.
+    // Higher level NSS_LOCK code should ensure this is thread safe.
+    if (tCurrentTime < stIgnoreConfigLastUpdated || 
+            tCurrentTime > stIgnoreConfigLastUpdated + 
+            LSA_IGNORE_LIST_UPDATE_INTERVAL)
+    {
+        PLSA_PAM_CONFIG pConfig = NULL;
+
+        LsaPamGetConfig(&pConfig);
+
+        if (pConfig)
+        {
+            sbCheckAccessDenied = pConfig->bNssApplyAccessControl;
+
+            LsaPamFreeConfig(pConfig);
+        }
+
+        stIgnoreConfigLastUpdated = tCurrentTime;
+    }
 
     if (gpUserIgnoreHash)
     {
-        if (pUserInfo)
-        {
-            PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+        PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
 
-            return (LwHashExists(gpUserIgnoreHash, pUserInfo_0->pszName));
+        bShouldIgnore = LwHashExists(gpUserIgnoreHash, pUserInfo_0->pszName);
+    }
+
+    if (bShouldIgnore == FALSE && sbCheckAccessDenied) {
+        PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+
+        if (LsaCheckAccessAllowed(pUserInfo_0->pszName) == FALSE) {
+            bShouldIgnore = TRUE;
         }
     }
 
-    return FALSE;
+    return bShouldIgnore;
 }
 
 BOOLEAN

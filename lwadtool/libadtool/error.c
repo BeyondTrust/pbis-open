@@ -319,6 +319,10 @@ static AdtErrorMapT AdtErrorMap[] = {
         "Failed to read data from stdin"
     },
     {
+        ADT_ERR_ARG_MISSING_SPN_FOR_KEYTAB,
+        "Must specify service principal name (--spn) when using krb5 keytab file"
+    },
+    {
         0,
         NULL
     }

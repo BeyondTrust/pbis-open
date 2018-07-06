@@ -434,6 +434,12 @@ extern BOOL IsMultiForestMode(IN AdtActionTP action);
  */
 extern PSTR GetCurrentNtTime();
 
+/*
+ * Set the servicePrincipalName attribute in AD.
+ */
+extern DWORD SetObjectSPNAttribute(IN AdtActionTP action, IN PCSTR pszUserName);
+
+
 /**
  * Actions' initialization methods.
  */

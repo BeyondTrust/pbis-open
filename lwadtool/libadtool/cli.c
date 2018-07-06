@@ -528,7 +528,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
      * Action.
      */
     i = 0;
-    struct poptOption **newUserAction = MakeOptions(13);
+    struct poptOption **newUserAction = MakeOptions(14);
     ADT_BAIL_ON_ALLOC_FAILURE(newUserAction);
     MakeOption(&((*newUserAction)[i++]),
                "dn",
@@ -552,7 +552,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.newUser.name),
                0,
-               "Logon name of the new user.  (use \'-\' for stdin input) [X]",
+               "Logon name of the new user. Sets upn attribute. (use \'-\' for stdin input) [X]",
                NULL);
     MakeOption(&((*newUserAction)[i++]),
                "pre-win-2000-name",
@@ -593,6 +593,14 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.newUser.password),
                0,
                "User\'s password. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*newUserAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newUser.servicePrincipalNameList),
+               0,
+               "Set new user account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, http/\"). Default is an empty SPN attribute.",
                NULL);
     MakeOption(&((*newUserAction)[i++]),
                "keytab-file",
@@ -763,14 +771,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                0,
                "Computer\'s password. (use \'-\' for stdin input)",
                NULL);
-    MakeOption(&((*newComputerAction)[i++]),
-               "keytab-file",
-               '\0',
-               POPT_ARG_STRING,
-               &(appContext->action.newComputer.keytab),
-               0,
-               "Generate a keytab file for the computer. Specify /path/to/file.keytab. By default keytab file is generated with host service class",
-               NULL);
+
 
     MakeOption(&((*newComputerAction)[i++]),
                "spn",
@@ -778,7 +779,16 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.newComputer.servicePrincipalNameList),
                0,
-               "Set new computer account service principal name attribute. A comma separated list can be specified (eg. \"nfs, host/\"). If this option is not specified the default is host. For an empty SPN attribute use --spn \"\".",
+               "Set new computer account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, host/\"). Default is --spn=\"host\". For an empty SPN attribute use --spn=\"\".",
+               NULL);
+
+    MakeOption(&((*newComputerAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.keytab),
+               0,
+               "Generate a keytab file for the computer. Specify /path/to/file.keytab. By default keytab file is generated with \"host\" service class",
                NULL);
 
     MakeOption(ADT_TABLEEND(&((*newComputerAction)[i++])));
@@ -1022,7 +1032,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     */
 
     i = 0;
-    struct poptOption **resetUserPasswordAction = MakeOptions(6);
+    struct poptOption **resetUserPasswordAction = MakeOptions(7);
     ADT_BAIL_ON_ALLOC_FAILURE(resetUserPasswordAction);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "name",
@@ -1039,6 +1049,14 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.resetUserPassword.password),
                0,
                "User\'s password. If omitted only the password\'s properties may be changed but not the password itself. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*resetUserPasswordAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.resetUserPassword.servicePrincipalNameList),
+               0,
+               "Modify user account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, http/\").",
                NULL);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "keytab-file",
