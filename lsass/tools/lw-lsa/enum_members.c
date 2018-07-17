@@ -57,7 +57,7 @@ static struct
     DWORD dwCount;
     LSA_QUERY_LIST QueryList;
     BOOLEAN bShowUsage;
-} gState = 
+} gState =
 {
     .pszTargetProvider = NULL,
     .FindFlags = 0,
@@ -153,9 +153,8 @@ ShowUsage(
         "    --by-sid                Specify groups by SID.\n"
         "    --by-nt4                Specify groups by NT4-style domain-qualified name.\n"
         "    --by-alias              Specify groups by alias (must specify object type).\n"
-        "    --by-upn                Specify groups by user principal name.\n"
         "    --by-unix-id            Specify groups by UID or GID (must specify object type).\n"
-        "    --by-name               Specify groups by generic name (NT4, alias, or UPN accepted). This is the default. \n"
+        "    --by-name               Specify groups by generic name (NT4, or alias accepted). This is the default. \n"
         "\n"
         "Query flags:\n"
         "    --nss                  Omit data not necessary for NSS layer.\n"
@@ -209,11 +208,6 @@ ParseArguments(
             dwError = SetQueryType(LSA_QUERY_TYPE_BY_ALIAS);
             BAIL_ON_LSA_ERROR(dwError);
         }
-        else if (!strcmp(ppszArgv[i], "--by-upn"))
-        {
-            dwError = SetQueryType(LSA_QUERY_TYPE_BY_UPN);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
         else if (!strcmp(ppszArgv[i], "--by-unix-id"))
         {
             dwError = SetQueryType(LSA_QUERY_TYPE_BY_UNIX_ID);
@@ -231,7 +225,7 @@ ParseArguments(
         else if (!strcmp(ppszArgv[i], "--provider"))
         {
             i++;
-                
+
             if (i >= argc)
             {
                 dwError = LW_ERROR_INVALID_PARAMETER;
@@ -289,7 +283,7 @@ ResolveSid(
             SingleList.ppszStrings = &QueryList.ppszStrings[dwIndex];
             break;
         }
-        
+
         dwError = LsaFindObjects(
             hLsa,
             gState.pszTargetProvider,
@@ -309,7 +303,7 @@ ResolveSid(
     }
 
 error:
-    
+
     if (ppObjects)
     {
         LsaFreeSecurityObjectList(1, ppObjects);
@@ -400,7 +394,7 @@ EnumMembers(
                 gState.FindFlags,
                 pszSid);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             for (;;)
             {
                 dwError = LsaEnumMembers(
@@ -415,12 +409,12 @@ EnumMembers(
                     break;
                 }
                 BAIL_ON_LSA_ERROR(dwError);
-                
+
                 dwError = ResolveMembers(hLsa, dwCount, ppszMembers, &ppObjects);
                 BAIL_ON_LSA_ERROR(dwError);
-                
+
                 for (dwIndex = 0; dwIndex < dwCount; dwIndex++, dwTotalIndex++)
-                {                  
+                {
                     if (ppObjects[dwIndex])
                     {
                         if (ppObjects[dwIndex]->type == gState.ObjectType || gState.ObjectType == LSA_OBJECT_TYPE_UNDEFINED)
@@ -440,7 +434,7 @@ EnumMembers(
                 LsaFreeSidList(dwCount, ppszMembers);
                 ppszMembers = NULL;
             }
-            
+
             LW_SAFE_FREE_MEMORY(pszSid);
             LsaCloseEnum(hLsa, hEnum);
             hEnum = NULL;
@@ -460,7 +454,7 @@ cleanup:
     {
         LsaFreeSidList(dwCount, ppszMembers);
     }
-    
+
     if (hEnum)
     {
         LsaCloseEnum(hLsa, hEnum);
@@ -502,7 +496,7 @@ EnumMembersMain(
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
         }
-        
+
         dwError = EnumMembers();
         BAIL_ON_LSA_ERROR(dwError);
     }
