@@ -915,6 +915,9 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
+    dwError = ProcessDash(&(action->newComputer.password));
+    ADT_BAIL_ON_ERROR_NP(dwError);
+
     if((action->newComputer.keytab) && (!action->newComputer.password)) {
         dwError = ADT_ERR_ARG_MISSING_PASSWD;
         ADT_BAIL_ON_ERROR_NP(dwError);
