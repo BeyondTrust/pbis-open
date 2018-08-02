@@ -1,0 +1,67 @@
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
+
+/*
+ * Copyright Beyondtrust Software    2018
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.  You should have received a copy of the GNU General
+ * Public License along with this program.  If not, see 
+ * <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+/*
+ * The purpose of this module is to communicate with a Password Safe server
+ * to pull down credentials for a user. Refer to the Pasword Safe API User
+ * Guide. The steps used for retrieving a password are:
+ *
+ * 0) Retrieve configuration information from a file
+ * 1) POST <base>/Auth/SignAppin
+ * 2) GET<base>/ManagedAccounts
+ * 3) POST <base>/Requests
+ * 4) GET <base>/Credentials/{requestId}
+ * 5) PUT <base>/Requests/{requestId}/Checkin
+ * 6) POST <base>/Auth/Signout
+ * 
+ * Step 3) returns a requestId which is used in steps 4) and 5).
+ *
+ * For each of the steps, the corresponding functions below are:
+ *
+ * 0) PbpsApiGetConfig()
+ * 1) PbpsApiSignIn()
+ * 2) PbpsApiManagedAccountsGet()
+ * 3) PbpsApiRequestId()
+ * 4) PbpsApiCredentialsGet()
+ * 5) PbpsApiRequestCheckin()
+ * 6) PbpsApiSignOut()
+ *
+ * Functions 0 to 6 should not be called directly from outside the djpbps/
+ * directory. 
+ *
+ * Instead PbpsApiGetCredentials() is a wrapper around steps 0 to 6 and as such
+ * should be invoked at domainjoin join and leave. 
+ *
+ * /opt/pbis/bin/domainjoin-cli join --ou <OU> --configFile <aConfigFile> DOMAIN.NET
+ * 
+ * /opt/pbis/bin/domainjoin-cli leave --deleteAccount --configFile <aConfigFile>
+ *
+ */
+

@@ -28,12 +28,22 @@ make()
        src/djsshconf.c    \
        src/djddns.c \
        src/djdaemonmgr.c \
-       src/djdaemonmgr_nonmac.c"
+       src/djdaemonmgr_nonmac.c \
+       src/djpbps/pbpsLog.c \
+       src/djpbps/pbpsUtil.c \
+       src/djpbps/pbpsConfig.c \
+       src/djpbps/pbpsCredentials.c \
+       src/djpbps/pbpsManagedAccounts.c \
+       src/djpbps/pbpsRequestId.c \
+       src/djpbps/pbpsSignInOut.c \
+       src/djpbps/pbps.c"
 
     mk_library \
 	LIB=domainjoin \
 	SOURCES="$DJ_SOURCES" \
-	INCLUDEDIRS="include ../include" \
+	INCLUDEDIRS="include ../include ../../lwadvapi/include ../../tomlc99" \
 	HEADERDEPS="lsa/lsa.h lsa/ad.h ctbase.h eventlog.h lwsm/lwsm.h" \
-	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm rsutils"
+	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm rsutils tomlc99"
+
+    mk_stage DESTDIR="${MK_SYSCONFDIR}" SOURCE="src/djpbps/djpbps.config.template"
 }

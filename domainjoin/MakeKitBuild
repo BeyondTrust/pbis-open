@@ -29,7 +29,7 @@ configure()
         hpux-ia64_64)
             ;;
         *)
-            MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+            MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
             ;;
     esac
 

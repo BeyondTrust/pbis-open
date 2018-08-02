@@ -1,0 +1,88 @@
+#
+# This file is a template used by the /opt/pbis/bin/domainjoin-cli
+# command to obtain the necessary credentials from PasswordSafe needed
+# to execute a PBIS agent domain join.
+#
+# Using the information provided in this file, domainjoin-cli will
+# contact the Password Safe server and obtain the password for
+# the AD user account.
+#
+# The certificates mentioned below are obtained from the Password Safe
+# server using the following steps.
+#   - Login PasswordSafe web console PasswordSafe_URL/diagnostics
+#   - Select Certificates tab.
+#   - Select "Export Client Certificate"
+#   The generated file is in PFX format which you'll need to convert to
+#   PEM format. This file contains the client certificate and private key.
+#
+#   Convert from PFX to PEM format using openssl:
+#   > openssl pkcs12 -in client.pfx -out client.pem -nodes
+#     Enter Import Password: <password used to export client certificate>
+#
+#   Using an editor, edit client.pem and copy and paste the client 
+#   certificate and private key to the ClientCertificate attribute in this
+#   file.  
+#
+#   From the Certificate Authority(CA), obtain a CA certificate and add
+#   the certificate section to the ServerCertificate attribute in this file.
+
+
+[Version]
+Template = 1  # Do not modify.
+
+[DomainJoin]
+# User account to use for domain join. In addition, this account must 
+# also be a managed account in Password Safe with API access enabled.
+DomainJoinUser = '<AD user account>'
+
+
+[PasswordSafe]
+# Password Safe URL
+ServerUrl = '<URL>'   # eg. https://server-name
+
+# From Password Safe web console Configuration->Users & Groups->User Group.
+# Check box "Enable Application API"
+RunAsUser = '<API User>'
+
+# Optional. Needed if Password Safe web console shows "User Password Required"
+# is checked in Configuration->API Registration. Uncomment if required.
+#RunAsUserPassword = '<API User Password>'
+
+# From Password Safe web console Configuration->API Registration->Key
+ApiKey = '<API Key>' #eg. 4b2c430dbe2b6aff66b016cc8e11b0f78b4d7cc426d3fd4c53c92a261226fbe8ce8f0b5f42974789210420196c6539135c492834123c93ed6f7d53023dfa9a4a'
+
+# Minutes PBPS credential is valid until it expires.
+# Optional. Valid range is between 1 and 10079 inclusive.
+# Default is 1 minute. Uncomment if required.
+#DurationMinutes = 1
+
+# Client Certificate.
+# Optional. Needed if Password Safe web console shows "Client Certificate
+# Required" is checked in Configuration->API Registration.
+# If given, the certificate is stored in /etc/pbis/pbpsClient.pem.
+# Default is not to use the client certificate.
+# Uncomment if required.
+#ClientCertificate = """
+#-----BEGIN PRIVATE KEY-----
+#   ...
+#   ...
+#   ...
+#-----END PRIVATE KEY-----
+#-----BEGIN CERTIFICATE-----
+#   ...
+#   ...
+#   ...
+#-----END CERTIFICATE-----
+#"""
+
+# CA Certificate
+# Optional. Specify if PBIS agent should verify PBPS server.
+# If given, the certificate is stored in /etc/pbis/pbpsCA.pem.
+# Default is not to verify. Uncomment if required.
+#CACertificate = """
+#-----BEGIN CERTIFICATE-----
+#   ...
+#   ...
+#   ...
+#-----END CERTIFICATE-----
+#"""

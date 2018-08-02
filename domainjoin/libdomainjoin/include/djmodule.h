@@ -111,6 +111,7 @@ struct _JoinProcessOptions
 
     // Range is zero to 3600 seconds. Zero disables the functionality.
     DWORD dwTrustEnumerationWaitSeconds;
+    PSTR pszConfigFile;
 };
 
 //A struct that defines a join module.

@@ -289,7 +289,7 @@ make()
         @eventlog @lsass @reapsysl @lwdns @lwnetapi @opensoap\
         @linenoise @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
         @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
-        @reskit @usermonitor @mod_auth_kerb @krb5_plugins @btkrb5"
+        @reskit @usermonitor @mod_auth_kerb @krb5_plugins @btkrb5 @tomlc99"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
@@ -349,7 +349,8 @@ open_files_prefix()
         "${LW_CONFIGDIR}/*.reg"     \
         "${MK_PREFIX}/data/VERSION" \
         "${MK_PREFIX}/data/COPYING" \
-        "${MK_PREFIX}/data/LICENSES"
+        "${MK_PREFIX}/data/LICENSES" \
+        "${MK_SYSCONFDIR}/djpbps.config.template"
 }
 
 open_files_usr()

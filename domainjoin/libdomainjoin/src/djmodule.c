@@ -118,6 +118,7 @@ void DJFreeJoinProcessOptions(JoinProcessOptions *options)
     CT_SAFE_FREE_STRING(options->userDomainPrefix);
     CT_SAFE_FREE_STRING(options->username);
     CT_SAFE_FREE_STRING(options->password);
+    CT_SAFE_FREE_STRING(options->pszConfigFile);
 
     for(i = 0; i < options->moduleStates.size; i++)
     {
