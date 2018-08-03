@@ -1,0 +1,18 @@
+---
+
+:unity:
+    :suite_setup: ""
+    :suite_teardown: "  return num_failures;"
+
+:cmock:
+    :mock_path: "."
+    :callback_after_arg_check: true
+    :plugins:
+    - 'ignore'
+    - 'ignore_arg'
+    - 'return_thru_ptr'
+    :treat_as_void:
+        - 'VOID'
+...
+
+

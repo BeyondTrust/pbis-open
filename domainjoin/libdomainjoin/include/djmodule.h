@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -51,6 +51,14 @@ typedef enum _ModuleDisposition
     IgnoreModule = 2
 } ModuleDisposition;
 
+// a tri-bool for enable/force
+typedef enum _EnableForceBoolean
+{
+    False = 0,
+    True  = 1,
+    Force = 2
+} EnableForceBoolean;
+
 struct _JoinModule;
 typedef struct _JoinModule JoinModule;
 
@@ -70,9 +78,11 @@ struct _JoinProcessOptions;
 typedef struct _JoinProcessOptions JoinProcessOptions;
 typedef void (*WarningFunction)(const JoinProcessOptions *options, const char *title, const char *message);
 
-//Options filled in by the UI in order to communicate with the join modules.
+// Options filled in by the UI in order to communicate with the join modules.
 struct _JoinProcessOptions
 {
+    BOOLEAN isEnterprise;
+
     PSTR domainName;
     PSTR shortDomainName;
     PSTR computerName;
@@ -81,7 +91,7 @@ struct _JoinProcessOptions
     PSTR password;
     DWORD uacFlags;
     void *userData;
-    //TRUE if joining to AD, FALSE if leaving
+    // TRUE if joining to AD, FALSE if leaving
     BOOLEAN joiningDomain;
     BOOLEAN showTraces;
     BOOLEAN disableTimeSync;
@@ -94,23 +104,38 @@ struct _JoinProcessOptions
     BOOLEAN disableGSSAPI;
 
     BOOLEAN setAssumeDefaultDomain;
-    // TRUE means that lsass will be configured to append a domain prefix so user logons
-    // can be with short account names.
-    // FALSE means that logons will require a UPN or NT4 style domain user account.
+
+    // TRUE - lsass will be configured to append a domain prefix so user logons
+    // can use short account names.
+    // FALSE - logons will require a UPN or NT4 style domain user account.
     BOOLEAN assumeDefaultDomain;
+
     // Optional alternate user domain prefix used with assumeDefaultDomain (true) setting.
     // If null, the computer domain name prefix is assumed.
     PSTR userDomainPrefix;
 
     WarningFunction warningCallback;
-    /* Contains modules that are enabled and disabled by the user, but does
-     * not contain NA modules. This list is populated from the moduleTable.
-     * The data type inside of the array is ModuleState.
-    */
+
+    // Contains modules that are enabled and disabled by the user, but does not
+    // contain NA modules. This list is populated from the moduleTable.  The
+    // data type inside of the array is ModuleState.
     DynamicArray moduleStates;
 
     // Range is zero to 3600 seconds. Zero disables the functionality.
     DWORD dwTrustEnumerationWaitSeconds;
+
+    // assumed default cell mode - act like default cell mode even if no cells exist
+    // FALSE - no support for this mode
+    // TRUE  - enable this mode if a named/default cell is not found
+    // FORCE - force this mode even if a named/default cell exists
+    EnableForceBoolean assumeDefaultCellMode;
+
+    // unprovisioned mode
+    // FALSE - no support for this mode
+    // TRUE  - enable this mode if a named/default cell is not found
+    // FORCE - force this mode even if a named/default cell exists
+    EnableForceBoolean unprovisionedMode;
+
     PSTR pszConfigFile;
 };
 

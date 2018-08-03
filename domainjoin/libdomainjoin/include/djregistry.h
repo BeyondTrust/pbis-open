@@ -32,8 +32,15 @@
 #ifndef __DJREGISTRY_H
 #define __DJREGISTRY_H
 
-DWORD DeleteTreeFromRegistry(
+DWORD
+DeleteTreeFromRegistry(
     PCSTR path
+    );
+
+DWORD
+DeleteValueFromRegistry(
+    PCSTR path,
+    PCSTR name
     );
 
 DWORD

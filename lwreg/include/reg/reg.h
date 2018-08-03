@@ -252,7 +252,7 @@ RegValidValueAttributes(
 #define LWREG_ERROR_DUPLICATE_KEYVALUENAME                    40702
 #define LWREG_ERROR_FAILED_DELETE_HAS_SUBKEY                  40703
 #define LWREG_ERROR_UNKNOWN_DATA_TYPE                         40704
-#define LWREG_ERROR_BEYOUND_MAX_KEY_OR_VALUE_LENGTH           40705
+#define LWREG_ERROR_BEYOND_MAX_KEY_OR_VALUE_LENGTH            40705
 #define LWREG_ERROR_NO_MORE_KEYS_OR_VALUES                    40706
 #define LWREG_ERROR_INVALID_NAME                              40707
 #define LWREG_ERROR_INVALID_CONTEXT                           40708
@@ -272,7 +272,7 @@ RegValidValueAttributes(
 #define LWREG_ERROR_NOT_HANDLED                               40725 //40017
 #define LWREG_ERROR_UNEXPECTED_TOKEN                          40726 //40062
 #define LWREG_ERROR_UNKNOWN                                   40727 //40188
-#define LWREG_ERROR_SYNTAX                                    40728 
+#define LWREG_ERROR_SYNTAX                                    40728
 #define LWREG_ERROR_PARSE                                     40729
 
 #define LWREG_ERROR_MAX_ERROR                                 41200

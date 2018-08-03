@@ -335,7 +335,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
     PSTR exceptionTitle = NULL;
     LWException *moduleException = NULL;
 
-    // Before running the modules, make sure that all of the 
+    // Before running the modules, make sure that all of the
     // necessary modules are enabled.
     LW_TRY(exc, DJCheckRequiredEnabled(options, &LW_EXC));
 

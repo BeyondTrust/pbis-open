@@ -289,7 +289,7 @@ LsaGetSecurityIdentifierHashedRid(
     return LsaHashSecurityIdentifierToId(pSecurityIdentifier, dwHashedRid);
 }
 
-// The UID is a DWORD constructued using a non-cryptographic hash
+// The UID is a DWORD constructed using a non-cryptographic hash
 // of the User's domain SID and user RID.
 DWORD
 LsaHashSecurityIdentifierToId(

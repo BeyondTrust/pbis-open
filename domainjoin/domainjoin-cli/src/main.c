@@ -70,10 +70,13 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--nogssapi] [--ignore-pam] [--enable <module> --disable <module> ...]\n");
-    fprintf(stdout, "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
-    fprintf(stdout, "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>]\n\n");
     fprintf(stdout, (isEnterprise)
-
+            ?       "                  [--assumeDefaultCell {auto|no|force}] [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n"
+            :       "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
+    fprintf(stdout, (isEnterprise)
+            ?       "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>] [--unprovisioned {auto|no|force}]\n\n"
+            :       "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>]\n\n");
+    fprintf(stdout, (isEnterprise)
             ? "    leave [--enable <module> --disable <module> ...] [--keepLicense] [user name] [password]\n"
               "    leave [--enable <module> --disable <module> ...] [--deleteAccount <user name> [<password>]]\n"
               "    leave [--enable <module> --disable <module> ...] [--deleteAccount --configFile <configuration file>]\n"
@@ -228,7 +231,7 @@ FillMissingPassword(
     }
     else
     {
-        DJ_LOG_WARNING("Retrieved password from envionmental variable");
+        DJ_LOG_WARNING("Retrieved password from environmental variable");
         ceError = CTStrdup(pszEnvPassword, &pszPassword);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
@@ -415,6 +418,37 @@ char * ouHintsCallback(const char *buffer, int *color, int *bold)
     return " [e.g. Eng/pbis/dev | OU=Dev,OU=Eng,DC=MYDOMAIN,DC=COM]";
 }
 
+static
+BOOLEAN isOptionValueEnabled(const char *value) {
+    return (!strcasecmp(value, "auto")
+            || !strcasecmp(value, "automatic")
+            || !strcasecmp(value, "dynamic")
+            || !strcasecmp(value, "on"));
+}
+
+static
+BOOLEAN isOptionValueDisabled(const char *value) {
+    return (!strcasecmp(value, "no")
+            || !strcasecmp(value, "false")
+            || !strcasecmp(value, "disable")
+            || !strcasecmp(value, "disabled")
+            || !strcasecmp(value, "off"));
+}
+
+static
+BOOLEAN isOptionValueForced(const char *value) {
+    return (!strcasecmp(value, "force"));
+}
+
+static void DJValidateJoinOptions(JoinProcessOptions *pOptions, LWException **exc)
+{
+    if (pOptions->isEnterprise
+            && pOptions->assumeDefaultCellMode > False
+            && pOptions->unprovisionedMode > False) {
+        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "You cannot enable both --assumeDefaultCell and --unprovisioned modes; please specify only one.", "");
+    }
+}
+
 void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWException **exc)
 {
     JoinProcessOptions options;
@@ -432,6 +466,8 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
     PSTR joinLeaveHistoryFile = NULL;
 
     DJZeroJoinProcessOptions(&options);
+    options.isEnterprise = isEnterprise;
+
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
     memset(&ignoreModules, 0, sizeof(ignoreModules));
@@ -541,14 +577,11 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
             DJ_LOG_INFO("Domainjoin invoked with option --assumeDefaultDomain");
             options.setAssumeDefaultDomain = TRUE;
 
-            if (!strcasecmp(argv[1], "yes") || !strcasecmp(argv[1], "true") ||
-                !strcasecmp(argv[1], "on"))
+            if (isOptionValueEnabled(argv[1]))
             {
                 options.assumeDefaultDomain = TRUE;
             }
-            else if (!strcasecmp(argv[1], "no") ||
-                !strcasecmp(argv[1], "false") ||
-                !strcasecmp(argv[1], "off"))
+            else if (isOptionValueDisabled(argv[1]))
             {
                 options.assumeDefaultDomain = FALSE;
             }
@@ -585,6 +618,54 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
             argv++;
             argc--;
         }
+        else if(!strcmp(argv[0], "--assumeDefaultCell") && isEnterprise)
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option %s %s", argv[0], argv[1]);
+
+            if (isOptionValueEnabled(argv[1]))
+            {
+                options.assumeDefaultCellMode = True;
+            }
+            else if (isOptionValueDisabled(argv[1]))
+            {
+                options.assumeDefaultCellMode = False;
+            }
+            else if (isOptionValueForced(argv[1]))
+            {
+                options.assumeDefaultCellMode = Force;
+            }
+            else
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            argv++;
+            argc--;
+        }
+        else if(!strcmp(argv[0], "--unprovisioned") && isEnterprise)
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option %s %s", argv[0], argv[1]);
+
+            if (isOptionValueEnabled(argv[1]))
+            {
+                options.unprovisionedMode = True;
+            }
+            else if (isOptionValueDisabled(argv[1]))
+            {
+                options.unprovisionedMode = False;
+            }
+            else if (isOptionValueForced(argv[1]))
+            {
+                options.unprovisionedMode = Force;
+            }
+            else
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            argv++;
+            argc--;
+        }
         else if ((!strcmp(argv[0], "--configFile")) && isEnterprise)
         {
             if (argc > 1 && strncmp("--", argv[1], 2))
@@ -609,6 +690,9 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
         argv++;
         argc--;
     }
+
+    DJ_LOG_INFO("Validating join options.");
+    LW_TRY(exc, DJValidateJoinOptions(&options, &LW_EXC));
 
     DJ_LOG_INFO("Domainjoin invoked with %d arg(s) to the join command:", argc);
 
@@ -832,6 +916,8 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     PSTR joinLeaveHistoryFile = NULL;
 
     DJZeroJoinProcessOptions(&options);
+    options.isEnterprise = isEnterprise;
+
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
     memset(&ignoreModules, 0, sizeof(ignoreModules));
