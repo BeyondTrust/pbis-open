@@ -1,5 +1,26 @@
 SUBDIRS="include"
 
+configure()
+{
+   if [ "${MK_BUILD_OS}" = "darwin" ]
+   then
+      for buildSize in ${MK_BUILD_ISAS};    
+      do
+        case "${buildSize}" in
+            x86_32)
+               mk_define PBIS_CURL_INCLUDE_32 "\"../curl/build_host_x86_32/include/curl/curlbuild.h\""
+               ;;
+            x86_64)
+               mk_define PBIS_CURL_INCLUDE_64 "\"../curl/build_host_x86_64/include/curl/curlbuild.h\""
+               ;;
+            *)
+               ;;
+        esac
+      done
+   fi
+}
+
+
 make()
 {
     DJ_SOURCES="\
@@ -43,7 +64,7 @@ make()
 	SOURCES="$DJ_SOURCES" \
 	INCLUDEDIRS="include ../include ../../lwadvapi/include ../../tomlc99" \
 	HEADERDEPS="lsa/lsa.h lsa/ad.h ctbase.h eventlog.h lwsm/lwsm.h" \
-	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm rsutils tomlc99"
+	LIBDEPS="centutils curl lwnetclientapi regclient eventlog lsaclient lwsm rsutils tomlc99"
 
     mk_stage DESTDIR="${MK_SYSCONFDIR}" SOURCE="src/djpbps/djpbps.config.template"
 }

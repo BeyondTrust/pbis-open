@@ -31,6 +31,14 @@
 #define _PBPS_INT_H_
 
 #include "DomainJoinConfig.h"
+#ifdef __LWI_DARWIN__
+#ifdef _MK_HOST_X86_32
+#include PBIS_CURL_INCLUDE_32
+#endif
+#ifdef _MK_HOST_X86_64
+#include PBIS_CURL_INCLUDE_64
+#endif
+#endif
 #include <bail.h>
 #include <lwdef.h>
 #include <stdio.h>

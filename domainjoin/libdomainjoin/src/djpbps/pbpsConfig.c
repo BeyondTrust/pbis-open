@@ -60,7 +60,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
 
    if (!bExists)
    {
-      dwError = LW_ERROR_AUTOENROLL_FILE_NOT_FOUND;
+      dwError = ERROR_FILE_NOT_FOUND;
       BAIL_ON_LW_ERROR(dwError);
    }
 
