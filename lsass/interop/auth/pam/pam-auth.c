@@ -328,16 +328,11 @@ DWORD sm_prompt(pam_handle_t* pamh,
     {
         LSA_LOG_PAM_DEBUG("Checking for smart card");
 
-        dwError = LsaOpenServer(&hLsaConnection);
-
-        if (dwError == LW_ERROR_SUCCESS)
-        {
-            dwError = LsaFindUserByName(
-                    hLsaConnection,
-                    ctx->pszLoginId,
-                    dwUserInfoLevel,
-                    (PVOID*) & pTokenUserInfo);
-        }
+        dwError = LsaFindUserByName(
+                hLsaConnection,
+                ctx->pszLoginId,
+                dwUserInfoLevel,
+                (PVOID*) & pTokenUserInfo);
 
         if (dwError == LW_ERROR_SUCCESS)
         {
