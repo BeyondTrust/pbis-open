@@ -22,6 +22,7 @@ agreements:
 - openssl - OpenSSL License
 - popt - MIT License
 - sqlite - Public Domain
+- tomlc99 - MIT License
 - MakeKit - BSD License
 
 For more details and for the full text for each of these licenses, read the
