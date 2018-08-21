@@ -404,7 +404,9 @@ error:
 
 typedef struct PbpsApiSearchFor_s
 {
+  PSTR pszHostname;
   PSTR pszJoinAccount;
+  BOOLEAN bFoundMatch;
   PbpsApiManagedAccount_t *pJoinAccount;
 } PbpsApiSearchFor_t;
 
@@ -412,6 +414,8 @@ typedef struct PbpsApiSearchFor_s
  * Search link list of managed accounts. If a match is found, pUserData
  * is updated with a newly allocated PbpsApiManagedAccount_t. As
  * such, the caller will need to free the memory.
+ * Full match is based on SystemName and AccountNameFull or AccountName.
+ * Failing a full match then only consider AccountNameFull or AccountName.
  *
  */
 static
@@ -424,23 +428,55 @@ PbpsApiManagedAccountSearch(PVOID pItem,
    PbpsApiSearchFor_t *needle = (PbpsApiSearchFor_t*) pUserData;
    PbpsApiManagedAccount_t *pDestAccount = NULL;
 
-   if (needle->pJoinAccount != NULL)
+   if (needle->bFoundMatch)
    {
-      // Already found it
+      // Found an exact match of SystemName and AccountNameFull/
+      // AccountName
       goto cleanup;
    }
 
-   if ((strcmp(needle->pszJoinAccount, pAccount->pszAccountNameFull) == 0) ||
-       (strcmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0))
+   if ((strcasecmp(needle->pszHostname, pAccount->pszSystemName) == 0) && 
+         ((strcasecmp(needle->pszJoinAccount, pAccount->pszAccountNameFull) == 0) ||
+         (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0)))
    {
-      DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found %s", needle->pszJoinAccount);
-      //Allocate and copy pAccount into needle->pJoinAccount
-      dwError = PbpsApiAccountCopy(pAccount, &pDestAccount);
-      BAIL_ON_LW_ERROR(dwError);
+       //Allocate and copy pAccount into needle->pJoinAccount
+       dwError = PbpsApiAccountCopy(pAccount, &pDestAccount);
+       BAIL_ON_LW_ERROR(dwError);
 
-      needle->pJoinAccount = pDestAccount;
+       if (needle->pJoinAccount != NULL)
+       {
+          PbpsApiManagedAccountFree(needle->pJoinAccount);
+          needle->pJoinAccount = NULL;
+       }
+
+       needle->pJoinAccount = pDestAccount;
+
+       // No need to keep looking since we've found an entry which
+       // meets all the criteria.
+       needle->bFoundMatch = TRUE;
+
+       DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found system %s with account %s", 
+                      needle->pszHostname, 
+                      needle->pszJoinAccount);
    }
+   else if ((strcasecmp(needle->pszJoinAccount, pAccount->pszAccountNameFull) == 0) ||
+            (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0))
+   {
+      if (needle->pJoinAccount == NULL)
+      {
+         // Grab the first entry in the link list matching accountName
+         // or accountNameFull. But keep looking for another entry
+         // with matching SystemName.
+         // Allocate and copy pAccount into needle->pJoinAccount
+         dwError = PbpsApiAccountCopy(pAccount, &pDestAccount);
+         BAIL_ON_LW_ERROR(dwError);
+         needle->pJoinAccount = pDestAccount;
 
+         DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found account %s", 
+                         needle->pszJoinAccount);
+      }
+   }
+   
 cleanup:
    return;
 
@@ -464,8 +500,13 @@ PbpsApiGetJoinAccount(
    DWORD dwError = LW_ERROR_SUCCESS;
    PbpsApiSearchFor_t needle;
 
+   needle.bFoundMatch = FALSE;
    needle.pszJoinAccount = pszJoinAccount;
+   needle.pszHostname = NULL;
    needle.pJoinAccount = NULL;
+   
+   dwError = DJGetComputerName(&needle.pszHostname);
+   BAIL_ON_LW_ERROR(dwError);
 
    LwDLinkedListForEach(pApi->session.pManagedAccountList, 
                       &PbpsApiManagedAccountSearch,
@@ -480,6 +521,9 @@ PbpsApiGetJoinAccount(
    }
 
 cleanup:
+
+   LW_SAFE_FREE_STRING(needle.pszHostname);
+
    return dwError;
 error:
    *ppAccount = NULL;

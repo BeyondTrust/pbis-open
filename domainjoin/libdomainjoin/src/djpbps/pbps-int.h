@@ -57,6 +57,7 @@
 #include <ctbase.h>
 #include <ctfileutils.h>
 #include <djlogger.h>
+#include <djhostinfo.h>
 
 
 // Certificates in the domain join configuration file needs to be 
