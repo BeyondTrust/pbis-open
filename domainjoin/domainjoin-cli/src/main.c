@@ -115,9 +115,9 @@ ShowUsageInternal(const BOOLEAN isEnterprise)
 
     fprintf(stdout, "  Internal debug commands:\n");
     fprintf(stdout, "    fixfqdn\n");
-    fprintf(stdout, "    configure { --enable | --disable } pam [--testprefix <dir>]\n");
-    fprintf(stdout, "    configure { --enable | --disable } nsswitch [--testprefix <dir>]\n");
-    fprintf(stdout, "    configure { --enable | --disable } ssh [--testprefix <dir>]\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] pam\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] nsswitch\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] ssh\n");
     fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] [--long <longdomain>] [--short <shortdomain>] krb5\n");
     fprintf(stdout, "    configure { --enable | --disable } eventfwdd\n");
     fprintf(stdout, "    configure { --enable | --disable } reapsysld\n");
@@ -125,7 +125,6 @@ ShowUsageInternal(const BOOLEAN isEnterprise)
     fprintf(stdout, "    get_arch\n");
     fprintf(stdout, "    get_distro\n");
     fprintf(stdout, "    get_distro_version\n");
-    fprintf(stdout, "    raise_error <error code | error name | 0xhex error code>\n");
     fprintf(stdout, "\n");
 }
 

@@ -1047,7 +1047,7 @@ do_postinstall_messages()
     if [ -z "$domain" ]; then
         log_info "Run domainjoin-cli to join a domain to allow log on with Active Directory";
         log_info "credentials. domainjoin-cli will prompt for missing parameters."
-        log_info "Run domainjoin-cli --help for more information."
+        log_info "Run domainjoin-cli --help, or man domainjoin-cli for more information."
         log_info ""
         log_info "Example:"
         log_info ""

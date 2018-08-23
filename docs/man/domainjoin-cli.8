@@ -1,246 +1,364 @@
-.\"     Title: domainjoin-cli
-.\"    Author: 
-.\" Generator: DocBook XSL Stylesheets v1.72.0 <http://docbook.sf.net/>
-.\"      Date: 03/14/2008
-.\"    Manual: 
-.\"    Source: 
-.\"
-.TH "DOMAINJOIN\-CLI" "8" "03/14/2008" "" ""
-.\" disable hyphenation
-.nh
-.\" disable justification (adjust text to left margin only)
-.ad l
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "DOMAINJOIN\-CLI" "8" "August 2018" "" ""
+.
 .SH "NAME"
-domainjoin\-cli \- Join a host to an Active Directory domain
+\fBdomainjoin\-cli\fR \- Join a host to an Active Directory domain
+.
 .SH "SYNOPSIS"
-.HP 15
-\fBdomainjoin\-cli\fR [\fIoptions\fR] join [\fB\-\-ou\fR\ \fIorganizational_unit\fR]
-.br
-[\fB\-\-enable\fR\ \fImodule\fR...] [\fB\-\-disable\fR\ \fImodule\fR...]
-.br
-[\fB\-\-preview\fR] [\fB\-\-advanced\fR] [\fB\-\-details\fR\ \fImodule\fR]
-.br
-\fIdomain\fR \fIusername\fR [\fIpassword\fR]
-.HP 15
-\fBdomainjoin\-cli\fR [\fIoptions\fR] leave
-.br
-[\fB\-\-enable\fR\ \fImodule\fR...] [\fB\-\-disable\fR\ \fImodule\fR...]
-.br
-[\fB\-\-preview\fR] [\fB\-\-advanced\fR] [\fB\-\-details\fR\ \fImodule\fR]
-.br
-[\fIusername\fR\ [\fIpassword\fR]]
-.HP 15
+\fBdomainjoin\-cli\fR [\fIoptions\fR] join [\fIjoinoptions\fR] [\fIdomain\fR] [\fIusername\fR] [\fIpassword\fR]
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] leave [\fIleaveoptions\fR] [\fIusername\fR] [\fIpassword\fR]
+.
+.P
 \fBdomainjoin\-cli\fR [\fIoptions\fR] query
-.HP 15
+.
+.P
 \fBdomainjoin\-cli\fR [\fIoptions\fR] fixfqdn
-.HP 15
+.
+.P
 \fBdomainjoin\-cli\fR [\fIoptions\fR] setname \fIname\fR
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] configure [\fIconfigureoptions\fR]
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] get_os_type
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] get_arch
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] get_distro
+.
+.P
+\fBdomainjoin\-cli\fR [\fIoptions\fR] get_distro_version
+.
 .SH "DESCRIPTION"
-.PP
-
-\fBdomainjoin\-cli\fR
-is the command\-line version of the
-\fILikewise\fR
-AD domain join tool. In a basic invocation,
-\fBdomainjoin\-cli\fR
-will join the current machine into an AD domain, enable authentication of AD users, and enable group policy if it is available.
-.PP
-For systems with sensitive configurations,
-\fBdomainjoin\-cli\fR
-offers fine\-grained control over modifications to system configuration files that are typically required during a join, such as editing
-\fI/etc/nsswitch.conf\fR
-or the system PAM setup.
-.SH "USAGE"
-.SS "Commands"
-.PP
-
-\fBdomainjoin\-cli\fR
-supports the following major modes of operation:
-.PP
-join
-.RS 4
-Joins the machine to the AD domain
-\fIdomain\fR
-and configures AD authentication and group policy (where applicable). This operation requires valid AD credentials for
-\fIdomain\fR
-to be specified as
-\fIusername\fR
-and
-\fIpassword\fR. If
-\fIpassword\fR
-is not specified on the command line,
-\fBdomainjoin\-cli\fR
-will prompt you for it.
-.sp
-
-\fBdomainjoin\-cli\fR
-supports joining the machine to a specific OU (Organizational Unit) with
-\fB\-\-ou\fR \fIorganizational_unit\fR.
-.RE
-.PP
-leave
-.RS 4
-Leaves the currently\-joined AD domain and deconfigures AD authentication and group policy (where applicable).
-.sp
-In order to actually disable the machine account in AD, either administrative credentials for
-\fIdomain\fR
-or the same credentials originally used to join the machine must be specified as
-\fIusername\fR
-and
-\fIpassword\fR. If
-\fIpassword\fR
-is not specified on the command line,
-\fBdomainjoin\-cli\fR
-will prompt you for it.
-.sp
-If no credentials are specified, the machine will no longer behave as a member of
-\fIdomain\fR
-but its machine account will remain enabled in AD.
-.RE
-.PP
-query
-.RS 4
-Displays information about the currently\-joined AD domain and OU.
-.RE
-.PP
-fixfqdn
-.RS 4
-Makes local configuration modifications necessary to ensure that the fully\-qualified domain name of the machine is forward\- and backward\-resolvable. This can work around domain join issues on networks with sub\-optimal DNS setups.
-.RE
-.PP
-setname
-.RS 4
-Changes the hostname of this machine to
-\fIname\fR. As it is necessary to have a unique, non\-generic name before joining AD, this operation is provided as a convenient way to quickly rename this computer before performing a join.
-.RE
-.SS "Common options"
-.PP
-\fB\-\-log\fR \fIfilename\fR
-.RS 4
-Log details about the operation to
-\fIfile\fR. If
-\fIfile\fR
-is ".", logging is directed to the console.
-.RE
-.PP
-\fB\-\-loglevel\fR <error | warning | info | verbose >
-.RS 4
-Specifies the level of logging information which should be written to the log file.
-.RE
-.PP
+\fBdomainjoin\-cli\fR is the BeyondTrust PBIS AD domain join tool\. \fBdomainjoin\-cli\fR will join the current machine to an AD domain, and enable the authentication of AD users\.
+.
+.P
+\fBdomainjoin\-cli\fR offers fine\-grained control over modifications to system configuration files that are typically required during a join, such as editing \fB/etc/nsswitch\.conf\fR or the system PAM setup (see JOIN and LEAVE commands)\.
+.
+.SH "OPTIONS"
+\fB\-\-log\fR \fIfile\fR
+.
+.IP
+Log details about the operation to \fIfile\fR\. If \fIfile\fR is \fB\'\.\'\fR logging is directed to the console\. By default, operations are logged to \fB/var/log/domainjoin\-cli\.log\fR or \fB/var/adm/domainjoin\-cli\.log\fR\.
+.
+.P
+\fB\-\-loglevel\fR \fIerror\fR|\fIwarning\fR|\fIinfo\fR|\fIverbose\fR
+.
+.IP
+Specifies the level of logging information which should be written to the log file\. The default log level is \fIwarning\fR\.
+.
+.P
 \fB\-\-help\fR
-.RS 4
-Displays brief usage and help information. No operation is performed.
-.RE
-.SS "Join and leave options"
-.PP
+.
+.IP
+Displays brief usage and help information\.
+.
+.P
+\fB\-\-help\-internal\fR
+.
+.IP
+Displays internal debugging and configuration commands\. See CONFIGURATION AND DEBUGGING COMMANDS\.
+.
+.SH "JOIN COMMAND"
+\fBdomainjoin\-cli\fR [\fIoptions\fR] join [\fIjoinoptions\fR] [\fIdomain\fR] [\fIusername\fR] [\fIpassword\fR]
+.
+.P
+Joins the machine to the AD domain \fIdomain\fR and configures AD authentication\. This operation requires valid AD credentials for \fIdomain\fR to be specified as \fIusername\fR and \fIpassword\fR\. If \fIusername\fR or \fIpassword\fR are not specified on the command line, \fBdomainjoin\-cli\fR will prompt for them\.
+.
+.P
+The join command supports the following options:
+.
+.P
 \fB\-\-ou\fR \fIorganizational_unit\fR
-.RS 4
-Joins the machine to the OU
-\fIorganizational_unit\fR
-instead of the default "Computers" OU. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied. This option has no effect when leaving a domain.
-.RE
-.PP
+.
+.IP
+Joins the machine to the OU \fIorganizational_unit\fR instead of the default "Computers" OU\. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied\. \fBNote:\fR Group policy support is an \fBPBIS Enterprise\fR feature\. If the \fIorganizational_unit\fR is not supplied, you will be prompted for it\. \fB\-\-\fR can be used to indicate the OU value is not supplied and to separate it from subsequent parameters\.
+.
+.P
+\fB\-\-assumeDefaultDomain\fR \fByes\fR|\fBno\fR
+.
+.IP
+If enabled, apply the default domain prefix to user and group names at logon\. Enabling this allows logons to use short names, i\.e\. \fBaccount\fR in addition to \fBdomainname\e\eaccount\fR\. This can also be set via \fB/opt/pbis/bin/config\fR or via Group Policy (see \fBAuthorization and Identification \- Lsass: Prepend default domain name for AD users and groups\fR)\.
+.
+.P
+\fB\-\-userDomainPrefix\fR \fIshortdomainname\fR
+.
+.IP
+Domain short name prefix to be used when \fB\-\-assumeDefaultDomain\fR is enabled\.
+.
+.P
+\fB\-\-uac\-flags\fR \fIflags\fR
+.
+.IP
+The \fBuserAccountControl\fR flags on the created computer account\. Defaults to \fBWORKSTATION_TRUST_ACCOUNT\fR (0x1000)
+.
+.P
+\fB\-\-trustEnumerationWaitSeconds\fR \fIseconds\fR
+.
+.IP
+The number of seconds to wait for trust enumeration on startup to complete\. Range of 0 (disabled) to 1000 seconds\.
+.
+.P
 \fB\-\-enable\fR \fImodule\fR
-.RS 4
-Explicitly enables the configuration module
-\fImodule\fR
-during the join or leave operation.
-.RE
-.PP
+.
+.IP
+Explicitly enables the configuration of \fImodule\fR during the join operation\.
+.
+.P
 \fB\-\-disable\fR \fImodule\fR
-.RS 4
-Explicitly disables the configuration module
-\fImodule\fR
-during the join or leave operation.
-.sp
-Note that some modules are necessary for the proper operation of
-\fILikewise\fR
-while joined to AD. If you attempt to disable such a module,
-\fBdomainjoin\-cli\fR
-will refuse to proceed with a join operation.
-.sp
-For some modules, it is possible to make the relevant configuration changes by hand;
-\fBdomainjoin\-cli\fR
-will inform you of the necessary changes and will proceed with the module disabled if it detects that the changes have been made.
-.RE
-.PP
+.
+.IP
+Explicitly disables the configuration of \fImodule\fR during the join operation\.
+.
+.IP
+\fBNote\fR that some modules are necessary for the proper operation of PBIS while joined to AD\. If you attempt to disable such a module, \fBdomainjoin\-cli\fR will refuse to proceed with a join operation\.
+.
+.IP
+For some modules, it is possible to make the relevant configuration changes by hand; \fBdomainjoin\-cli\fR will inform you of the necessary changes and will proceed with the module disabled if it detects that the changes have been made\.
+.
+.P
 \fB\-\-details\fR \fImodule\fR
-.RS 4
-Provide details about module
-\fImodule\fR
-and what specific configuration changes it would perform during a join or leave operation. No actual operation is performed.
-.RE
-.PP
+.
+.IP
+Provide details about \fImodule\fR and what specific configuration changes it would perform during a join operation\. No actual operation is performed\.
+.
+.P
 \fB\-\-preview\fR
-.RS 4
-Provide a summary of what configuration modules would be run during a join or leave operation. No actual operation is performed.
-.RE
-.PP
+.
+.IP
+Provide a summary of what configuration modules would be run during a join operation\. No actual operation is performed\.
+.
+.P
+\fB\-\-notimesync\fR
+.
+.IP
+Do not synchronize the computer\'s time with the domain controller\.
+.
+.P
+\fB\-\-nohosts\fR
+.
+.IP
+Disables the \fBhostname\fR module\. See \fBDOMAINJOIN MODULES\fR\.
+.
+.P
+\fB\-\-nogssapi\fR
+.
+.IP
+Remove the \fBGSSAPIAuthentication\fR option from the modified sshd config file\.
+.
+.P
+\fB\-\-ignore\-pam\fR
+.
+.IP
+Disables the \fBpam\fR module\. See \fBDOMAINJOIN MODULES\fR\.
+.
+.SH "LEAVE COMMAND"
+\fBdomainjoin\-cli\fR [\fIoptions\fR] leave [leaveoptions] [\fIusername\fR] [\fIpassword\fR]
+.
+.P
+Leaves the currently\-joined AD domain and deconfigures AD authentication and group policy (where applicable)\.
+.
+.P
+In order to disable the machine account in AD, either administrative credentials for \fIdomain\fR or the same credentials originally used to join the machine must be specified as \fIusername\fR and \fIpassword\fR\. If \fIpassword\fR is not specified on the command line, \fBdomainjoin\-cli\fR will prompt you for it\.
+.
+.P
+If no credentials are specified, the machine will no longer behave as a member of \fIdomain\fR but it\'s machine account will remain enabled in AD\.
+.
+.P
+The leave command supports the following options:
+.
+.P
+\fB\-\-deleteAccount\fR \fIusername\fR [\fIpassword\fR]
+.
+.IP
+Delete the computer account after the computer leaves the domain\. If \fIpassword\fR is not specified on the command line, \fBdomainjoin\-cli\fR will prompt you for it\.
+.
+.P
+\fB\-\-enable\fR \fImodule\fR
+.
+.IP
+Explicitly enables the configuration of \fImodule\fR during the leave operation\.
+.
+.P
+\fB\-\-disable\fR \fImodule\fR
+.
+.IP
+Explicitly disables the configuration of \fImodule\fR during the leave operation\.
+.
+.P
+\fB\-\-details\fR \fImodule\fR
+.
+.IP
+Provide details about \fImodule\fR and what specific configuration changes it would perform during the leave operation\. No actual operation is performed\.
+.
+.P
+\fB\-\-preview\fR
+.
+.IP
+Provide a summary of what configuration modules would be run during the leave operation\. No actual operation is performed\.
+.
+.P
 \fB\-\-advanced\fR
-.RS 4
-Turns on debugging information during leave and join operations and provides more verbose output when using
-\fB\-\-preview\fR. This is generally only helpful when diagnosing unusual system or network configuration issues.
-.RE
+.
+.IP
+Turns on debugging information during the leave operation and provides more verbose output when using \fI\fB\-\-preview\fR\fR\. This is generally only helpful when diagnosing unusual system or network configuration issues\.
+.
+.SH "DOMAINJOIN MODULES"
+\fBdomainjoin\-cli\fR includes the following modules:
+.
+.IP "\(bu" 4
+\fBbash\fR \- fixes the bash prompt for backslashes in usernames
+.
+.IP "\(bu" 4
+\fBdsplugin\fR \- enables the PBIS directory services plugin on a Mac computer
+.
+.IP "\(bu" 4
+\fBfirewall\fR \- opens ports to the domain controller
+.
+.IP "\(bu" 4
+\fBgdm\fR \- fixes gdm presession script for spaces in usernames
+.
+.IP "\(bu" 4
+\fBjoin\fR \- joins the computer to Active Directory
+.
+.IP "\(bu" 4
+\fBkrb5\fR \- configures krb5\.conf
+.
+.IP "\(bu" 4
+\fBhostname\fR \- sets the computer hostname
+.
+.IP "\(bu" 4
+\fBlam\-auth\fR \- configures LAM for Active Directory authentication
+.
+.IP "\(bu" 4
+\fBleave\fR \- deletes the machine account in Active Directory
+.
+.IP "\(bu" 4
+\fBpam\-mode\fR \- switches authentication from LAM to PAM
+.
+.IP "\(bu" 4
+\fBpam\fR \- configures pam\.d and pam\.conf
+.
+.IP "\(bu" 4
+\fBnsswitch\fR \- enables or disables PBIS nsswitch module
+.
+.IP "\(bu" 4
+\fBssh\fR \- configures ssh and sshd
+.
+.IP "\(bu" 4
+\fBstart\fR \- starts services after configuration
+.
+.IP "\(bu" 4
+\fBstop\fR \- stops services so that the system can be configured
+.
+.IP "" 0
+.
+.SH "QUERY COMMAND"
+\fBdomainjoin\-cli\fR [\fIoptions\fR] query
+.
+.P
+Displays information about the currently\-joined AD domain and OU\. If the computer is not joined to a domain, only the hostname is shown\.
+.
+.SH "FIXFQDN COMMAND"
+\fBdomainjoin\-cli\fR [\fIoptions\fR] fixfqdn
+.
+.P
+Makes local configuration modifications necessary to ensure that the fully\-qualified domain name of the machine is forward\- and backward\-resolvable\. This can work around domain join issues on networks with sub\-optimal DNS setups\.
+.
+.SH "SETNAME COMMAND"
+\fBdomainjoin\-cli\fR [\fIoptions\fR] setname \fIhostname\fR
+.
+.P
+Changes the hostname of this machine to \fIhostname\fR\. As it is necessary to have a unique, non\-generic name before joining AD, this operation is provided as a convenient way to quickly rename this computer before performing a join\.
+.
+.SH "CONFIGURATION AND DEBUGGING COMMANDS"
+\fBdomainjoin\-cli\fR includes commands for debugging the domain\-join process and for configuring or preconfiguring a module\. For example, run the configure command to preconfigure a system before you join a domain—a useful strategy when you are deploying PBIS in a virtual environment and you need to preconfigure the nsswitch, ssh, or PAM module of the target computers to avoid restarting them after they are added to the domain\.
+.
+.P
+The following \fBconfigure\fR commands are supported\.
+.
+.P
+\fBNote\fR: the \fB\-\-testprefix\fR option supports testing of system configuration file changes\. If supplied, the \fB\-\-testprefix\fR \fIdirectory\fR will be prepended to the path of the configuration file target\. \.e\.g\. \fBconfigure\fR \fB\-\-enable\fR \fB\-\-testdirectory\fR \fB/testconfig\fR \fBnsswitch\fR will make changes to the \fB/testconfig/etc/nsswitch\.conf\fR file instead of \fB/etc/nsswitch\.conf\fR file\.
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] pam
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] nsswitch
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] ssh
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] [\-\-long \fIlongdomain\fR] [\-\-short \fIshortdomain\fR] krb5
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] eventfwdd
+.
+.IP "\(bu" 4
+\fBconfigure\fR \fB\-\-enable\fR | \fB\-\-disable\fR [\-\-testprefix \fIdirectory\fR] reapsysld
+.
+.IP "" 0
+.
+.P
+The following debug commands display information about the host machine and OS:
+.
+.IP "\(bu" 4
+\fBget_os_type\fR
+.
+.IP "\(bu" 4
+\fBget_arch\fR
+.
+.IP "\(bu" 4
+\fBget_distro\fR
+.
+.IP "\(bu" 4
+\fBget_distro_version\fR
+.
+.IP "" 0
+.
 .SH "EXAMPLES"
-.PP
-Example invocations of
-\fBdomainjoin\-cli\fR
-and their effects follow:
-.sp
-.RS 4
-.nf
-$ domainjoin\-cli join sales.my\-company.com Administrator@sales rosebud
-.fi
-.RE
-.PP
-Joins the AD domain
-sales.my\-company.com
-using
-Administrator
-as the username and
-rosebud
-as the password. This is the typical join scenario.
-.sp
-.RS 4
-.nf
-$ domainjoin\-cli \-\-log . leave
-.fi
-.RE
-.PP
-Leaves the current AD domain without attempting to disable the machine account as no user credentials were specified. Information about the process will be logged to the console at the default logging level.
-.sp
-.RS 4
-.nf
-$ domainjoin\-cli join \-\-disable nsswitch sales.my\-company.com Administrator@sales
-.fi
-.RE
-.PP
-Joins the AD domain
-sales.my\-company.com
-using
-Administrator
-as the username and prompting for the password. If possible, nsswitch configuration will not be modified.
-.sp
-.RS 4
-.nf
-$ domainjoin\-cli join \-\-preview sales.my\-company.com Administrator@sales rosebud
-.fi
-.RE
-.PP
-Show what configuration modules would be run when joining the AD domain
-sales.my\-company.com.
-.sp
-.RS 4
-.nf
-$ domainjoin\-cli join \-\-details pam sales.my\-company.com Administrator@sales rosebud
-.fi
-.RE
-.PP
-Show what changes would be made to the system by the
-pam
-module when joining the AD domain
-sales.my\-company.com.
+Example invocations of \fBdomainjoin\-cli\fR and their effects follow:
+.
+.P
+\fB$ domainjoin\-cli join sales\.my\-company\.com Administrator rosebud\fR
+.
+.IP
+Joins the AD domain \fBsales\.my\-company\.com\fR using \fBAdministrator\fR as the username and \fBrosebud\fR as the password\. This is the typical join scenario\.
+.
+.P
+\fB$ domainjoin\-cli \-\-log \. leave\fR
+.
+.IP
+Leaves the current AD domain without attempting to disable the machine account as no user credentials were specified\. Information about the process will be logged to the console at the default logging level\.
+.
+.P
+\fB$ domainjoin\-cli join \-\-disable nsswitch sales\.my\-company\.com Administrator\fR
+.
+.IP
+Joins the AD domain \fBsales\.my\-company\.com\fR using \fBAdministrator\fR as the username and prompting for the password\. If possible, nsswitch configuration will not be modified\.
+.
+.P
+\fB$ domainjoin\-cli join \-\-preview sales\.my\-company\.com Administrator rosebud\fR
+.
+.IP
+Show what configuration modules would be run when joining the AD domain \fBsales\.my\-company\.com\fR\.
+.
+.P
+\fB$ domainjoin\-cli join \-\-details pam sales\.my\-company\.com Administrator rosebud\fR
+.
+.IP
+Show what changes would be made to the system by the \fBpam\fR module when joining the AD domain \fBsales\.my\-company\.com\fR\.
+.
+.SH "SEE ALSO"
+The full documentation for PBIS is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
+.
 .SH "VERSION"
-.PP
-This man page is correct for Likewise Open version 4.1.
+PBIS version 8\.7 +\.
