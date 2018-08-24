@@ -112,6 +112,8 @@ DWORD PbpsApiSignIn(PbpsApi_t *pApi)
                responseBuffer.buffer,
                responseBuffer.size);
 
+  pApi->session.bDoSignout = TRUE;
+
 cleanup:
    LW_SAFE_FREE_STRING(pszUrl);
  
@@ -140,6 +142,9 @@ DWORD PbpsApiSignOut(PbpsApi_t *pApi)
    PSTR pszFunction = "Auth/SignOut";
 
    responseBuffer_t responseBuffer;
+
+   if (!pApi->session.bDoSignout)
+     return dwError;
 
    responseBuffer.buffer = NULL;
    responseBuffer.size = 0;

@@ -57,6 +57,7 @@
 #include <ctbase.h>
 #include <ctfileutils.h>
 #include <djlogger.h>
+#include <djpbps.h>
 #include <djhostinfo.h>
 
 
@@ -86,7 +87,7 @@
  */
 #define PBPSAPI_MINIMUM_DURATION_MINUTES 1
 #define PBPSAPI_MAXIMUM_DURATION_MINUTES 10079
-#define PBPSAPI_DEFAULT_DURATION_MINUTES PBPSAPI_MINIMUM_DURATION_MINUTES
+#define PBPSAPI_DEFAULT_DURATION_MINUTES 2
 
 #define CURL_HEADER_AUTH_FORMAT  "Authorization: PS-Auth key=%s;runas=%s;"
 #define CURL_HEADER_AUTH_PWD_NEEDLE  "pwd=["
@@ -123,6 +124,9 @@ typedef struct PbpsApiConfig_s
 
 typedef struct PbpsApiSession_s
 {
+   BOOLEAN           bDoSignout;
+   BOOLEAN           bDoCheckin;
+   DWORD             dwRequestId;
    CURL              *pCurlHandle;
    struct curl_slist *pHeaderList;
    PLW_DLINKED_LIST  pManagedAccountList;  // Fill-in by GET ManagedAccounts
@@ -185,7 +189,7 @@ extern DWORD PbpsApiSignIn(PbpsApi_t *pApi);
 extern DWORD PbpsApiRequestId(PbpsApi_t *pApi, DWORD *pdwRequestId);
 extern DWORD PbpsApiCredentialsGet(PbpsApi_t *pApi, DWORD dwRequestId, 
                                    PSTR *ppszCredentials);
-extern DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi, DWORD dwRequestId);
+extern DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi);
 extern DWORD PbpsApiSignOut(PbpsApi_t *pApi);
 
 
@@ -193,9 +197,9 @@ extern DWORD PbpsApiManagedAccountsGet(PbpsApi_t *pApi);
 extern VOID  PbpsApiManagedAccountFree(PbpsApiManagedAccount_t *pAccount);
 extern VOID  PbpsManagedAccountListFree(PLW_DLINKED_LIST pManagedAccountList);
 extern DWORD PbpsApiGetJoinAccount(
-           PbpsApi_t *pApi,
-           PSTR pszJoinAccount,
-           PbpsApiManagedAccount_t **ppAccount);
+                 PbpsApi_t *pApi,
+                 PSTR pszJoinAccount,
+                 PbpsApiManagedAccount_t **ppAccount);
 
 #endif  // _PBPS_INT_H_
 

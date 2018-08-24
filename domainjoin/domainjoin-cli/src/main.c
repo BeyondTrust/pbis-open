@@ -65,7 +65,7 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "    setname <computer name>\n");
     fprintf(stdout, (isEnterprise)
             ? "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n"
-              "    join [join options] [--ou <organizationalUnit>] <domain name> --configFile <configuration file]\n"
+              "    join [join options] [--ou <organizationalUnit>] --configFile <configuration file> <domain name>\n"
             : "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
@@ -463,6 +463,7 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
     PSTR joinLeaveHistoryFile = NULL;
+    PPbpsApiHandle_t pPbpsApiHandle = NULL;
 
     DJZeroJoinProcessOptions(&options);
     options.isEnterprise = isEnterprise;
@@ -763,10 +764,11 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
     {
         CT_SAFE_FREE_STRING(options.username);
         CT_SAFE_FREE_STRING(options.password);
-        LW_CLEANUP_CTERR(exc, PbpsApiGetCredentials(
+        LW_CLEANUP_CTERR(exc, PbpsApiCredentialGet(
                                  options.pszConfigFile,
                                  &options.username,
-                                 &options.password));
+                                 &options.password,
+                                 &pPbpsApiHandle));
     }
 
     options.joiningDomain = TRUE;
@@ -888,6 +890,8 @@ cleanup:
         linenoiseHistorySave(joinLeaveHistoryFile);
     }
 
+    PbpsApiCredentialRelease(&pPbpsApiHandle);
+
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
@@ -913,6 +917,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     PSTR wrapped = NULL;
     int passwordIndex = -1;
     PSTR joinLeaveHistoryFile = NULL;
+    PPbpsApiHandle_t pPbpsApiHandle = NULL;
 
     DJZeroJoinProcessOptions(&options);
     options.isEnterprise = isEnterprise;
@@ -1064,10 +1069,11 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     {
         CT_SAFE_FREE_STRING(options.username);
         CT_SAFE_FREE_STRING(options.password);
-        LW_CLEANUP_CTERR(exc, PbpsApiGetCredentials(
+        LW_CLEANUP_CTERR(exc, PbpsApiCredentialGet(
                                  options.pszConfigFile,
                                  &options.username,
-                                 &options.password));
+                                 &options.password,
+                                 &pPbpsApiHandle));
     }
 
 
@@ -1191,6 +1197,8 @@ cleanup:
     {
         linenoiseHistorySave(joinLeaveHistoryFile);
     }
+
+    PbpsApiCredentialRelease(&pPbpsApiHandle);
 
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);

@@ -141,6 +141,9 @@ DWORD PbpsApiRequestId(PbpsApi_t *pApi, DWORD *pdwRequestId)
 
   DJ_LOG_INFO("%s requestId:%d", pszFunction, dwRequestId);
 
+  pApi->session.bDoCheckin = TRUE;
+  pApi->session.dwRequestId = dwRequestId;
+
   *pdwRequestId = dwRequestId;
 
 
@@ -166,7 +169,7 @@ error:
  *  PUT  Request Checkin
  *
  */
-DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi, DWORD dwRequestId)
+DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi)
 {
    DWORD dwError = LW_ERROR_SUCCESS;
    CURLcode curlResult = CURLE_OK;
@@ -178,11 +181,16 @@ DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi, DWORD dwRequestId)
    responseBuffer.buffer = NULL;
    responseBuffer.size = 0;
 
+   if (!pApi->session.bDoCheckin)
+     return dwError;
+
    readBuffer.buffer = pszDomainJoinCheckInReason;
    readBuffer.size = strlen(pszDomainJoinCheckInReason);
 
    dwError = LwAllocateStringPrintf(
-               &pszUrl, "%s/Requests/%d/Checkin", pApi->config.pszUrlBase, dwRequestId);
+               &pszUrl, "%s/Requests/%d/Checkin", 
+               pApi->config.pszUrlBase, 
+               pApi->session.dwRequestId);
    BAIL_ON_LW_ERROR(dwError);
 
    curlResult = curl_easy_setopt(pApi->session.pCurlHandle, CURLOPT_URL, pszUrl);

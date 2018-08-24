@@ -53,8 +53,8 @@ ApiKey = '<API Key>' #eg. 4b2c430dbe2b6aff66b016cc8e11b0f78b4d7cc426d3fd4c53c92a
 
 # Minutes PBPS credential is valid until it expires.
 # Optional. Valid range is between 1 and 10079 inclusive.
-# Default is 1 minute. Uncomment if required.
-#DurationMinutes = 1
+# Default is 2 minutes. Uncomment if required.
+#DurationMinutes = 2
 
 # Client Certificate.
 # Optional. Needed if Password Safe web console shows "Client Certificate

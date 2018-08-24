@@ -32,20 +32,22 @@
 
 /*
  * Using the config file, get credentials from the PasswordSafe server
- * for the user in the config file.
- * Updates pointer to username and password
+ * for the domain join user in the config file.
+ * Updates pointer to username, password and a API handle subsequently used 
+ * to release the credentials with PasswordSafe.
  */
+
 DWORD
-PbpsApiGetCredentials(PSTR pszConfigFile,
-                   PSTR *ppszUsername,
-                   PSTR *ppszPassword)
+PbpsApiCredentialGet(PSTR pszConfigFile,
+                     PSTR *ppszUsername,
+                     PSTR *ppszPassword,
+                     PPbpsApiHandle_t *ppPbpsApiHandle)
 {
+
    DWORD dwError = LW_ERROR_SUCCESS;
    PbpsApi_t *pApi = NULL;
    DWORD dwRequestId = 0;
    PSTR pszCredentials = NULL;
-   BOOLEAN bDoCheckIn = FALSE;
-   BOOLEAN bDoSignOut = FALSE;
 
    dwError =  PbpsApiInitialize(&pApi);
    BAIL_ON_LW_ERROR(dwError);
@@ -64,15 +66,11 @@ PbpsApiGetCredentials(PSTR pszConfigFile,
    dwError = PbpsApiSignIn(pApi);
    BAIL_ON_LW_ERROR(dwError);
 
-   bDoSignOut = TRUE;
-
    dwError = PbpsApiManagedAccountsGet(pApi);
    BAIL_ON_LW_ERROR(dwError);
 
    dwError = PbpsApiRequestId(pApi, &dwRequestId);
    BAIL_ON_LW_ERROR(dwError);
-
-   bDoCheckIn = TRUE;
 
    dwError = PbpsApiCredentialsGet(pApi, dwRequestId, &pszCredentials);
    BAIL_ON_LW_ERROR(dwError);
@@ -80,34 +78,54 @@ PbpsApiGetCredentials(PSTR pszConfigFile,
    dwError = LwStrDupOrNull(pApi->config.pszJoinAccount, ppszUsername);
    BAIL_ON_LW_ERROR(dwError);
 
+   *ppszPassword = pszCredentials;
+   *ppPbpsApiHandle = pApi;
+
    fprintf(stdout,
            "Successfully retrieved credentials for %s\n",
            pApi->config.pszJoinAccount);
 
-   *ppszPassword  = pszCredentials;
-
 cleanup:
-   if (bDoCheckIn)
-   {
-      // Ignore the return code since we've already successfully retrieved 
-      // pasword safe credentials. Error msgs would already have been 
-      // logged.
-      PbpsApiRequestIdCheckin(pApi, dwRequestId);
-   }
 
-   if (bDoSignOut)
-      PbpsApiSignOut(pApi);
+   return dwError;
+
+error:
+
+    fprintf(stderr, "Failed to retrieve credentials\n");
+
+    LW_SAFE_FREE_STRING(pszCredentials);
+    PbpsApiRelease(pApi);
+
+    goto cleanup;
+}
+
+
+
+VOID
+PbpsApiCredentialRelease(PPbpsApiHandle_t *ppPbpsApiHandle)
+{
+   PbpsApi_t *pApi = NULL;
+
+   if (*ppPbpsApiHandle == NULL)
+     goto cleanup;
+
+   pApi = *ppPbpsApiHandle;
+
+   // Ignore the return code since we've already successfully retrieved 
+   // pasword safe credentials. Error msgs would already have been 
+   // logged.
+   PbpsApiRequestIdCheckin(pApi);
+
+   PbpsApiSignOut(pApi);
 
    PbpsApiCurlDebugStop(pApi);
 
    PbpsApiRelease(pApi);
 
-   return dwError;
+   *ppPbpsApiHandle = NULL;
 
-error:
-   fprintf(stdout, "Failed to retrieved credentials\n");
+cleanup:
 
-   goto cleanup;
+   return;
 }
-
 

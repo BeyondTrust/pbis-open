@@ -33,9 +33,18 @@
 #include <lwdef.h>
 #include <lwstr.h>
 
-extern DWORD PbpsApiGetCredentials(
-                PSTR pszPbpsConfigFile, 
-                PSTR *ppszUsername,
-                PSTR *ppszPassword);
+typedef PVOID PPbpsApiHandle_t;  // An opaque type for internal use.
+
+extern
+DWORD
+PbpsApiCredentialGet(
+      PSTR pszConfigFile, 
+      PSTR *ppszUsername,
+      PSTR *ppszPassword,
+      PPbpsApiHandle_t *ppPbpsApiHandle);
+
+extern
+VOID
+PbpsApiCredentialRelease(PPbpsApiHandle_t *ppPbpsApiHandle);
 
 #endif

@@ -52,6 +52,9 @@ PbpsApiInitialize(PbpsApi_t **ppApi)
    pApiTmp->config.pszCertFileClient = NULL;
    pApiTmp->config.pszCertFileCA = NULL;
 
+   pApiTmp->session.bDoSignout = FALSE;
+   pApiTmp->session.bDoCheckin = FALSE;
+   pApiTmp->session.dwRequestId = 0;
    pApiTmp->session.pCurlHandle = NULL;
    pApiTmp->session.pHeaderList = NULL;
    pApiTmp->session.pManagedAccountList = NULL;
