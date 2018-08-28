@@ -138,6 +138,13 @@
          LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)), \
          (long)(hServer? ((PLSA_SRV_API_STATE)hServer)->peerPID : getpid()))
 
+#define LSA_LOG_VERBOSE_API_FAILED(hServer, dwError, szFmt, ...) \
+    LSA_LOG_VERBOSE("Failed to " szFmt " -> error = %u, symbol = %s, client pid = %ld", \
+         ## __VA_ARGS__, \
+         dwError, \
+         LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)), \
+         (long)(hServer? ((PLSA_SRV_API_STATE)hServer)->peerPID : getpid()))
+
 #define LSA_LOG_VERBOSE_ENTRY_NOT_FOUND(hServer, dwError, szFmt, ...) \
     LSA_LOG_VERBOSE("Failed to " szFmt " -> error = no such entry, client pid = %ld", \
          ## __VA_ARGS__, \
