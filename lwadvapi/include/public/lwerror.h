@@ -387,6 +387,7 @@
 #define LW_ERROR_LDAP_ASSERTION_FAILED                     40353
 #define LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN             40354
 #define LW_ERROR_IGNORE_THIS_USER                          40355
+#define LW_ERROR_LDAP_RENAME_FAILED                        40356
 
 
 #define LW_ERROR_UID_TOO_LOW                               40400

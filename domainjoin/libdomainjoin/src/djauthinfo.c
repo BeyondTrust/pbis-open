@@ -1264,6 +1264,9 @@ the dnsHostName and/or servicePrincipalName(SPN) attribute in its Active Directo
 Once the problem is resolved, you may join the computer to the \"%s\" domain.\n", options->domainName, options->domainName);
                 LW_RAISE_EX(exc, LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN, "Lsass Error", duplicateSPNErrorMsg);
                 break;
+            case LW_ERROR_LDAP_RENAME_FAILED:
+                LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists and could not be moved to the requested OU. Please verify the requested OU exists.");
+                break;
             default:
                 LW_RAISE_LSERR(exc, dwError);
                 break;
