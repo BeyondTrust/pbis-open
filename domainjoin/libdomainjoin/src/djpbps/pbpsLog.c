@@ -111,7 +111,7 @@ PbpsHttpErrorToLwError(PbpsErrorCode_t pbpsErrorCode)
            return LW_ERROR_NO_SUCH_OBJECT;
 
         case PBPS_HTTP_CONFLICTING_REQUESTS:
-           return LW_ERROR_NOT_HANDLED;
+           return LW_ERROR_DOMAINJOIN_PASSWORD_REQUEST_CONFLICT;
 
         case PBPS_HTTP_API_VERSION_DISABLED:
            return LW_ERROR_SERVICE_NOT_AVAILABLE;

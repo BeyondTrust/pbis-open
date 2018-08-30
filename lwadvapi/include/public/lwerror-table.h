@@ -410,6 +410,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_OUT_OF_RANGE, -1, "A
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_INVALID_CERTIFICATE, -1, "Certificate in domain join configuration file is not valid")
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_CANT_VERIFY_CERTIFICATE, -1, "Cannot verify PasswordSafe server using certificate in domain join configuration file")
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CANNOT_RESOLVE_HOST, -1, "Cannot resolve host")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_PASSWORD_REQUEST_CONFLICT, -1, "Conflicting request exists. This user or another user has already requested a password for the specified account")
 
 
 #include "lwerror-table-krb5.h"
