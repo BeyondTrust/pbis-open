@@ -435,6 +435,18 @@ BOOLEAN isOptionValueDisabled(const char *value) {
 }
 
 static
+BOOLEAN isOptionValueOn(const char *value) {
+    return (!strcasecmp(value, "yes")
+            || !strcasecmp(value, "on")
+            || !strcasecmp(value, "true"));
+}
+
+static
+BOOLEAN isOptionValueOff(const char *value) {
+    return isOptionValueDisabled(value);
+}
+
+static
 BOOLEAN isOptionValueForced(const char *value) {
     return (!strcasecmp(value, "force"));
 }
@@ -577,11 +589,11 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
             DJ_LOG_INFO("Domainjoin invoked with option --assumeDefaultDomain");
             options.setAssumeDefaultDomain = TRUE;
 
-            if (isOptionValueEnabled(argv[1]))
+            if (isOptionValueOn(argv[1]))
             {
                 options.assumeDefaultDomain = TRUE;
             }
-            else if (isOptionValueDisabled(argv[1]))
+            else if (isOptionValueOff(argv[1]))
             {
                 options.assumeDefaultDomain = FALSE;
             }
