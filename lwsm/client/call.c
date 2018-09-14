@@ -68,7 +68,7 @@ __LwSmIpcCallInit(
                                    (LWMsgEndpointType)LWMSG_CONNECTION_MODE_LOCAL,
                                    SM_ENDPOINT));
     BAIL_ON_ERROR(dwError);
-    
+
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect(
                                    gpClient,
                                    &gpSession));
@@ -85,11 +85,13 @@ error:
     if (gpClient)
     {
         lwmsg_peer_delete(gpClient);
+        gpClient = NULL;
     }
     
     if (gpProtocol)
     {
         lwmsg_protocol_delete(gpProtocol);
+        gpProtocol = NULL;
     }
 
     goto cleanup;
