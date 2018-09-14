@@ -101,6 +101,13 @@ RegLexClose(
             RegMemoryFree(pLexHandle->curToken.pszValue);
             pLexHandle->curToken.pszValue = NULL;
         }
+
+        if (pLexHandle->prevToken.pszValue)
+        {
+            RegMemoryFree(pLexHandle->prevToken.pszValue);
+            pLexHandle->prevToken.pszValue = NULL;
+        }
+
         RegMemoryFree(pLexHandle);
     }
 }

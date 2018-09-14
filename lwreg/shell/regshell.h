@@ -59,6 +59,8 @@
 #include <lw/rtlstring.h>
 #include <lw/rtlmemory.h>
 
+#include <linenoise.h>
+
 #include <regutils.h>
 #include <regdef.h>
 #include <regclient.h>
@@ -174,7 +176,7 @@ typedef struct _REGSHELL_PARSE_STATE
 
     // Overrides pszDefaultKey when root key path is specified
     PSTR pszFullRootKeyName;
-    PSTR pszFullKeyPath; 
+    PSTR pszFullKeyPath;
     REGSHELL_TAB_COMPLETION_STATE tabState;
     BOOLEAN bBracketPrefix;
     DWORD dwTabPressCount;
@@ -194,7 +196,7 @@ typedef struct __REG_EXPORT_STATE
     FILE* fp;
     PBYTE pRootKeySecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE];
     ULONG ulRootKeySecDescLen;
-    DWORD dwExportFormat; 
+    DWORD dwExportFormat;
 }REG_EXPORT_STATE, *PREG_EXPORT_STATE;
 
 

@@ -25,9 +25,9 @@ make()
         case "$MK_HOST_OS:$MK_HOST_ARCH" in
             hpux:ia64)
                 LW_UNPACK_TARGETS="\
-                    $MK_PREFIX/lib/liblinenoise.sl.0.0 \
-                    $MK_PREFIX/lib/liblinenoise.sl.0 \
-                    $MK_PREFIX/lib/liblinenoise.sl \
+                    $MK_PREFIX/lib/liblinenoise-mob.sl.0.0 \
+                    $MK_PREFIX/lib/liblinenoise-mob.sl.0 \
+                    $MK_PREFIX/lib/liblinenoise-mob.sl \
                     $MK_PREFIX/lib/libuuid.sl.0.0 \
                     $MK_PREFIX/lib/libuuid.sl.0 \
                     $MK_PREFIX/lib/libiconv.sl.7.0 \

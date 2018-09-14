@@ -2,7 +2,7 @@ configure()
 {
     mk_config_header "include/config.h"
 
-    mk_check_library linenoise
+    mk_check_library linenoise-mob
 }
 
 make()
@@ -12,7 +12,7 @@ make()
         SOURCES="djcli.c main.c" \
         INCLUDEDIRS="../include ../../include ../../libdomainjoin/include" \
         HEADERDEPS="djdistroinfo.h ctbase.h linenoise.h" \
-        LIBDEPS="lsaclient centutils domainjoin lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwsm linenoise"
+        LIBDEPS="lsaclient centutils domainjoin lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwsm linenoise-mob"
 
     if [ "$MK_HOST_OS" = "darwin" ]
     then

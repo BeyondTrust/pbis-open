@@ -10,7 +10,7 @@ This software is provided under the terms of the GNU General Public License (GPL
 - libtdb - LGPLv2
 - libuuid - BSD License
 - libxml2 - MIT License
-- linenoise - BSD 2-clause "Simplified" License
+- linenoise-mob - BSD 2-clause "Simplified" License
 - mod_auth_kerb - BSD License
 - mod_auth_pam - BSD License
 - openldap - OpenLDAP Public License

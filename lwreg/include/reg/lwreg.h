@@ -56,12 +56,12 @@
 // Registry error utility functions
 
 /**
- * @brief Return TRUE if dwError is 
+ * @brief Return TRUE if dwError is
  * a registry specific error.
  *
  * @param dwError
  *
- * @return TRUE if dwError is 
+ * @return TRUE if dwError is
  * a registry specific error.
  */
 BOOLEAN
@@ -512,21 +512,21 @@ LwRegDeleteValueAttributesW(
 /**
  * @brief Update config item ranges with registry attributes.
  *
- * Update the ranges for each config item with the ranges 
- * defined in the registry for that value. Only applies to 
+ * Update the ranges for each config item with the ranges
+ * defined in the registry for that value. Only applies to
  * integer ranges.
  *
- * This is typically used in conjunction with 
+ * This is typically used in conjunction with
  * LwRegProcessConfig()
  *
  * @param pszConfigKey the path to the registry key
- * @param pConfig an array of config item, registry values 
+ * @param pConfig an array of config item, registry values
  *  under the config key
  * @param dwConfigEntries the number of config entries
  *
  * @return LW_ERROR_SUCCESS or error
  */
-DWORD 
+DWORD
 LwRegUpdateConfigItemRange(
     IN PCSTR pszConfigKey,
     IN OUT PLWREG_CONFIG_ITEM pConfig,
@@ -537,11 +537,11 @@ LwRegUpdateConfigItemRange(
  * Read configuration values from the registry
  *
  * This function loops through a configuration table reading all given values
- * from a registry key. If an entry is not found in the registry 
+ * from a registry key. If an entry is not found in the registry
  * no error is returned.
  *
  * @deprecated new code should use LwRegProcessConfigUsingAttributeRanges()
- *  as this function does NOT restrict config values based on 
+ *  as this function does NOT restrict config values based on
  *  acceptable ranges defined in the registry
  *
  * @param[in] pszConfigKey Registry key path
@@ -563,7 +563,7 @@ LwRegProcessConfig(
  * Read configuration values from the registry
  *
  * This function loops through a configuration table reading all given values
- * from a registry key. If an entry is not found in the registry 
+ * from a registry key. If an entry is not found in the registry
  * no error is returned.
  *
  * For REG_DWORD values with defined integer ranges, the returned

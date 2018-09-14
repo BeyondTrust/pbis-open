@@ -1,6 +1,6 @@
 LW_ALL_BUNDLED="openssl cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl \
-                libedit libtdb opensoap linenoise"
+                libedit libtdb opensoap"
 make()
 {
     BUNDLE_DIR="${MK_LIBDIR}/LWDSPlugin.dsplug"

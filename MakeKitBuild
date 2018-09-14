@@ -3,7 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl libxml2 \
-                libedit libtdb opensoap linenoise tomlc99"
+                linenoise-mob libtdb opensoap tomlc99"
 
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
@@ -39,21 +39,21 @@ option()
 
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="tomlc99 linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite popt libedit"
+            default_bundled="tomlc99 linenoise-mob libuuid openssl krb5 cyrus-sasl openldap sqlite popt"
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="tomlc99 linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libedit libtdb libxml2 opensoap"
+            default_bundled="tomlc99 linenoise-mob libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libtdb libxml2 opensoap"
             if [ "$MK_PACKAGE_RPM" = "yes" ]
             then
                 default_selinux="yes"
             fi
             ;;
         darwin-*)
-            default_bundled="tomlc99 linenoise libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            default_bundled="tomlc99 linenoise-mob libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libtdb"
             ;;
         *)
-            default_bundled="tomlc99 linenoise libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libedit libtdb"
+            default_bundled="tomlc99 linenoise-mob libiconv libuuid openssl krb5 cyrus-sasl openldap sqlite curl popt libxml2 libtdb"
             ;;
     esac
 

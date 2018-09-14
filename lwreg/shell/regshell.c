@@ -43,16 +43,21 @@
 #include "regshell.h"
 #include <locale.h>
 #include <pwd.h>
-#include "histedit.h"
 
 #if 0
 #define _LW_DEBUG 1
 #endif
 #define REGSHELL_ESC_CHAR '|'
+#define REGSHELL_MAX_HISTORY_ENTRIES 100
+
+#define LINENOISE_SUCCESS 0
+#define LINENOISE_ERROR -1
+#define HISTORY_SUCCESS LINENOISE_SUCCESS
+#define HISTORY_ERROR   LINENOISE_ERROR
 
 static int gCaughtSignal;
 
-typedef struct _EDITLINE_CLIENT_DATA
+typedef struct _REGSHELL_CLIENT_DATA
 {
     int continuation;
     PREGSHELL_PARSE_STATE pParseState;
@@ -64,14 +69,18 @@ typedef struct _EDITLINE_CLIENT_DATA
     DWORD dwCompleteMatchesLen;
     DWORD dwEnteredTextLen;
     REGSHELL_TAB_COMPLETION_E ePrevState;
-} EDITLINE_CLIENT_DATA, *PEDITLINE_CLIENT_DATA;
+} REGSHELL_CLIENT_DATA, *PREGSHELL_CLIENT_DATA;
+
+/* client parsing/editing data that is shared between the
+ * interactive editing routine and the tab completion routine */
+static PREGSHELL_CLIENT_DATA gpcl_data = NULL;
+
 
 void
 pfnRegShellSignal(int signal)
 {
     gCaughtSignal = signal;
 }
-  
 
 
 PSTR
@@ -285,7 +294,6 @@ RegShellSetValue(
         {
             dwError = LWREG_ERROR_DUPLICATE_KEYVALUENAME;
             BAIL_ON_REG_ERROR(dwError);
-            
         }
         type = rsItem->type;
     }
@@ -322,6 +330,7 @@ error:
     goto cleanup;
 }
 
+
 DWORD
 RegShellDumpByteArray(
     PBYTE pByteArray,
@@ -343,6 +352,7 @@ cleanup:
 error:
     goto cleanup;
 }
+
 
 DWORD
 RegShellImportFile(
@@ -516,7 +526,7 @@ RegShellExportFile(
                           HKEY_THIS_MACHINE);
             BAIL_ON_REG_ERROR(dwError);
 
-            pszDefaultKey = strchr(rsItem->keyName, '\\'); 
+            pszDefaultKey = strchr(rsItem->keyName, '\\');
             if (pszDefaultKey)
             {
                 pszDefaultKey++;
@@ -538,7 +548,7 @@ RegShellExportFile(
                                            NULL,
                                            NULL);
         BAIL_ON_REG_ERROR(dwError);
-        
+
         if (pszFullPath && strcmp(pszFullPath, "\\") != 0)
         {
             dwError = RegOpenKeyExA(
@@ -742,8 +752,8 @@ RegShellListValues(
                     BAIL_ON_REG_ERROR(dwError);
                     if (!ppszMultiStrArray[0])
                     {
-                        /* 
-                         * Just print the type for a reg_multi_sz 
+                        /*
+                         * Just print the type for a reg_multi_sz
                          * with no values.
                          */
                         printf("%*sREG_MULTI_SZ\n",
@@ -769,7 +779,7 @@ RegShellListValues(
                                    dwMultiIndex,
                                    pszEscapedValue);
                             LWREG_SAFE_FREE_MEMORY(pszEscapedValue);
-    
+
                         }
                     }
                     RegFreeMultiStrsA(ppszMultiStrArray);
@@ -1036,10 +1046,10 @@ RegShellProcessCmd(
                             LWREG_ERROR_NO_SUCH_KEY_OR_VALUE &&
                             !pParseState->pszDefaultRootKeyName)
                         {
-                            pParseState->pszDefaultRootKeyName = 
+                            pParseState->pszDefaultRootKeyName =
                                 strdup(HKEY_THIS_MACHINE);
                         }
-                              
+
                         dwError = RegShellIsValidKey(
                                       pParseState->hReg,
                                       pParseState->pszDefaultRootKeyName,
@@ -1087,7 +1097,7 @@ RegShellProcessCmd(
                 {
                     printf("[%s\\%s]\n\n",
                             RegShellGetRootKey(pParseState),
-                            RegShellGetDefaultKey(pParseState) ? 
+                            RegShellGetDefaultKey(pParseState) ?
                                 RegShellGetDefaultKey(pParseState) : "");
                 }
                 else
@@ -1202,6 +1212,7 @@ error:
     RegLexClose(pParseState->lexHandle);
     RegIOClose(pParseState->ioHandle);
     LWREG_SAFE_FREE_MEMORY(pParseState);
+
     goto cleanup;
 }
 
@@ -1261,7 +1272,7 @@ RegShellStrcmpLen(
          index++)
     {
         ;
-    } 
+    }
     if (dwMatchMaxLen)
     {
         if (pszHaystackStr[dwMatchMaxLen] == '\0')
@@ -1277,7 +1288,7 @@ RegShellStrcmpLen(
     {
         *pdwExtentLen = index;
     }
-    
+
 cleanup:
     return dwError;
 error:
@@ -1289,7 +1300,7 @@ void RegShellFreeStrList(
     PSTR *ppszList)
 {
     DWORD i = 0;
- 
+
     if (ppszList)
     {
         for (i=0; ppszList[i]; i++)
@@ -1342,7 +1353,7 @@ RegShellCompletionMatch(
                       (PVOID*)&ppMatchArgs);
         BAIL_ON_REG_ERROR(dwError);
     }
- 
+
     dwStrLen = strlen(pszMatchStr);
     if (dwStrLen>0 && pszMatchStr[dwStrLen-1] == '\\')
     {
@@ -1417,7 +1428,7 @@ RegShellCompletionMatch(
             dwMaxCommonLenIndex = i;
             dwPrevMaxCommonLen = dwMaxCommonLen;
         }
-                      
+
     }
     *pppMatchArgs = ppMatchArgs;
     *pdwMatchArgsLen = dwMatchArgsLen;
@@ -1428,97 +1439,6 @@ cleanup:
 
 error:
     RegShellCmdlineParseFree( dwMatchArgsLen, ppMatchArgs);
-    goto cleanup;
-}
-
-
-
-
-void RegShellSetInputLine(EditLine *el, PSTR pszInput)
-{
-    el_insertstr(el, pszInput);
-}
-
-
-void RegShellSetSubStringInputLine(
-    EditLine *el, 
-    PSTR pszSubString,
-    PSTR pszInput,
-    PDWORD pdwLenAppended)
-{
-    DWORD dwLenSubString = 0;
-    DWORD dwLenInput = 0;
-    DWORD dwLenAppended = 0;
-
-    if (pszInput)
-    {
-        if (pszSubString)
-        {
-            dwLenSubString = strlen(pszSubString);
-        }
-        dwLenInput = strlen(pszInput);
-
-        if (dwLenSubString < dwLenInput)
-        {
-            el_insertstr(el, &pszInput[dwLenSubString]);
-            dwLenAppended = strlen(&pszInput[dwLenSubString]);
-        }
-    }
-    else
-    {
-        /* No substring prefix, so just set substring as the complete value */
-        el_insertstr(el, pszSubString);
-        dwLenAppended = strlen(pszSubString);
-    }
-    *pdwLenAppended = dwLenAppended;
-}
-
-
-VOID
-RegShellPrependStringInput(EditLine *inel, PSTR pszPrefix, PSTR pszCursor)
-{
-    PSTR pszTmp = NULL;
-    LineInfo *el = (LineInfo *) el_line(inel);
-
-    if (pszCursor && *pszCursor)
-    {
-        pszTmp = strstr(el->buffer, pszCursor);
-    }
-    if (pszTmp)
-    {
-        el->cursor = pszTmp;
-    }
-    el_insertstr(inel, pszPrefix);
-
-    if (pszTmp)
-    {
-        el->cursor = el->lastchar;
-    }
-}
-
-
-DWORD RegShellCompleteGetInput(EditLine *el, PSTR *ppszLine)
-{
-
-    const LineInfo *lineInfoCtx = el_line(el);
-    DWORD dwError = CC_ERROR;
-    DWORD dwLineLen = 0;
-    PSTR pszLine = NULL;
-
-    dwLineLen = lineInfoCtx->cursor - lineInfoCtx->buffer;
-    if (dwLineLen == 0)
-    {
-        return dwError;
-    }
-    dwError = RegAllocateMemory(sizeof(*pszLine) * (dwLineLen+1),
-                               (PVOID*)&pszLine);
-    BAIL_ON_REG_ERROR(dwError);
-    strncat(pszLine, lineInfoCtx->buffer, dwLineLen);
-    *ppszLine = pszLine;
-
-cleanup:
-    return dwError;
-error:
     goto cleanup;
 }
 
@@ -1538,7 +1458,7 @@ DWORD RegShellSplitCmdParam(
     BAIL_ON_INVALID_POINTER(pszInput);
     BAIL_ON_INVALID_POINTER(ppszOutCmd);
     BAIL_ON_INVALID_POINTER(ppszOutParam);
-    dwLen = strlen((char *) pszInput); 
+    dwLen = strlen((char *) pszInput);
     if (dwLen == 0)
     {
         dwError = EINVAL;
@@ -1583,12 +1503,6 @@ cleanup:
 
 error:
     goto cleanup;
-}
-
-
-void RegShellCompletePrint(EditLine *el, PREGSHELL_PARSE_STATE pParseState)
-{
-    el_set(el, EL_REFRESH);
 }
 
 
@@ -1646,7 +1560,7 @@ RegShellGetLongestValidKey(
      *        p=Services, r=lsa
      *        p=Services\lsass, r=Par
      *        p=NULL, r=NULL dwError=40700
-     *        
+     *
      */
 
 
@@ -1658,7 +1572,7 @@ RegShellGetLongestValidKey(
 
     if (dwError)
     {
-        /* 
+        /*
          * Is there a \ separator in pszPath? No, then pszPath is the
          * return residual value.
          */
@@ -1676,7 +1590,7 @@ RegShellGetLongestValidKey(
                           &pszTmp[1]);
             BAIL_ON_REG_ERROR(dwError);
             *pszTmp = '\0';
-  
+
             /*
              * Test modified pszPath (less residual) for validity. If this is
              * not a valid subkey, then the entire path is bogus.
@@ -1694,7 +1608,7 @@ RegShellGetLongestValidKey(
     }
     else
     {
-        /* 
+        /*
          * A valid path ending in \ means this IS the subkey.
          * A valid path without a terminating \ could be ambiguous,
          * so return the stuff after \ as residual for subsequent
@@ -1714,7 +1628,7 @@ RegShellGetLongestValidKey(
             }
         }
     }
-    
+
     *ppszRetSubKey = pszPath;
     *ppszResidualSubKey = pszResidual;
 cleanup:
@@ -1723,8 +1637,6 @@ cleanup:
 error:
     goto cleanup;
 }
-
-
 
 
 DWORD
@@ -1747,26 +1659,6 @@ cleanup:
 
 error:
     goto cleanup;
-}
-
-
-/* Add \ line termination if one does not already exist */
-void
-RegShellInputLineTerminate(
-    EditLine *el, 
-    PSTR pszInLine)
-{
-    DWORD dwLen = 0;
-
-    if (pszInLine)
-    {
-        dwLen = strlen(pszInLine);
-        if (dwLen > 0 && pszInLine[dwLen-1] != '\\')
-        {
-            RegShellSetInputLine(el, "\\");
-        }
-    }
-    
 }
 
 
@@ -1818,7 +1710,7 @@ RegShellGetSubKeyValue(
         }
     }
 
- 
+
 cleanup:
     *ppszRetSubKey = pszRetSubKey;
 
@@ -1828,23 +1720,82 @@ error:
 }
 
 
-unsigned char
+static
+NTSTATUS
+RegShellAddCompletion(linenoiseCompletions *completions,
+        PCSTR pszFormat,
+        ...
+        )
+{
+    NTSTATUS ntStatus = LW_STATUS_SUCCESS;
+    PSTR completion = NULL;
+    va_list args;
+
+    va_start(args, pszFormat);
+
+    /* should only fail if there is insufficient memory */
+    ntStatus = LwRtlCStringAllocatePrintfV(&completion, pszFormat, args);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    linenoiseAddCompletion(completions, completion);
+
+cleanup:
+    va_end(args);
+
+    /* linenoise makes a copy of the supplied completion string,
+     * so we must always free it */
+    LWREG_SAFE_FREE_STRING(completion);
+
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+
+/* Add \ line termination if one does not already exist */
+void
+RegShellCompletionInputLineTerminate(
+    PSTR pszInLine,
+    linenoiseCompletions *lc)
+{
+    DWORD dwLen = 0;
+    NTSTATUS ntStatus = 0;
+
+    if (pszInLine)
+    {
+        dwLen = strlen(pszInLine);
+        if (dwLen > 0 && pszInLine[dwLen-2] != '\\')
+        {
+            ntStatus = RegShellAddCompletion(lc, "%s\\", pszInLine);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+    }
+
+error:
+    return;
+}
+
+
+/* tab complete the user entered input; this only "completes" registry keys */
+void
 pfnRegShellCompleteCallback(
-    EditLine *el,
-    int ch)
+    const char *buf,
+    linenoiseCompletions *completions)
 {
     BOOLEAN bProcessingCommand = TRUE;
-    DWORD dwError = CC_ERROR;
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = LW_STATUS_SUCCESS;
     DWORD dwRootKeysCount = 0;
     DWORD i = 0;
     DWORD dwMatchArgsLen = 0;
     DWORD dwMatchBestIndex = 0;
     DWORD dwMatchBestLen = 0;
     DWORD dwSubKeyLen = 0;
-    DWORD dwLenAppended = 0;
     PREGSHELL_PARSE_STATE pParseState = NULL;
-    PEDITLINE_CLIENT_DATA cldata = NULL;
+    PREGSHELL_CLIENT_DATA cldata = NULL;
     PSTR pszInLine = NULL;
+    PSTR pszTmpLine = NULL;
     PWSTR *ppwszRootKeys = NULL;
     PSTR pszCommand = NULL;
     PSTR pszTmp = NULL;
@@ -1857,18 +1808,18 @@ pfnRegShellCompleteCallback(
     PWSTR *ppwszSubKeys = NULL;
     PSTR *ppMatchArgs = NULL;
 
-    el_get(el, EL_CLIENTDATA, (void *) &cldata);
+    cldata = gpcl_data;
     BAIL_ON_INVALID_HANDLE(cldata);
     BAIL_ON_INVALID_HANDLE(cldata->pParseState);
     BAIL_ON_INVALID_HANDLE(cldata->pParseState->hReg);
 
     pParseState = cldata->pParseState;
 
-    dwError = RegShellCompleteGetInput(el, &pszInLine);
+    dwError = LwRtlCStringDuplicate(&pszInLine, buf);
     BAIL_ON_REG_ERROR(dwError);
 
     /* Nothing changed in the input since the tab was tapped last */
-    if (cldata->pszCompletePrevCmd && pszInLine && 
+    if (cldata->pszCompletePrevCmd && pszInLine &&
         cldata->ePrevState == pParseState->tabState.eTabState &&
         !strcmp(cldata->pszCompletePrevCmd, pszInLine) &&
         pParseState->dwTabPressCount > 0)
@@ -1876,10 +1827,10 @@ pfnRegShellCompleteCallback(
         goto cleanup;
     }
     pParseState->dwTabPressCount++;
-    
+
 
     pParseState->tabState.eTabState = REGSHELL_TAB_CMD;
-    do 
+    do
     {
         switch (pParseState->tabState.eTabState)
         {
@@ -1892,16 +1843,19 @@ pfnRegShellCompleteCallback(
                 {
                     pParseState->tabState.eTabState =
                         REGSHELL_TAB_BRACKET_PREFIX;
-                
+
                     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCommand);
-                    pParseState->tabState.pszCommand = pszCommand;
+                    dwError = LwRtlCStringDuplicate(
+                                &(pParseState->tabState.pszCommand),
+                                pszCommand);
+                    BAIL_ON_REG_ERROR(dwError);
                 }
                 else
                 {
                     BAIL_ON_REG_ERROR(dwError);
                 }
                 break;
-    
+
             case REGSHELL_TAB_BRACKET_PREFIX:
                 if (pszParam && pszParam[0] == '[')
                 {
@@ -1918,7 +1872,7 @@ pfnRegShellCompleteCallback(
                 break;
 
             case REGSHELL_TAB_ROOT_KEY:
-                pszTmp = strchr(pszParam, '\\'); 
+                pszTmp = strchr(pszParam, '\\');
                 if (!pszTmp)
                 {
                     /* Maybe just the undecorated root key, so \ terminate */
@@ -1927,7 +1881,9 @@ pfnRegShellCompleteCallback(
                                   pszParam);
                     if (dwError == 0)
                     {
-                        RegShellInputLineTerminate(el, pszInLine);
+                        /* if it doesn't end in \ add the ending \ */
+                        RegShellCompletionInputLineTerminate(pszInLine, completions);
+
                         bProcessingCommand = FALSE;
                         pParseState->dwTabPressCount = 0;
                     }
@@ -1942,8 +1898,8 @@ pfnRegShellCompleteCallback(
                     /* Root key is valid, move to the next level... */
                     pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
                 }
-    
-                /* 
+
+                /*
                  * Determine if valid root key was provided in input
                  * Separate root key from remainder of input parameters.
                  */
@@ -1953,7 +1909,7 @@ pfnRegShellCompleteCallback(
                                   &pszInRootKey,
                                   pszParam);
                     BAIL_ON_REG_ERROR(dwError);
-                    pszTmp = strchr(pszInRootKey, '\\'); 
+                    pszTmp = strchr(pszInRootKey, '\\');
                     if (pszTmp)
                     {
                         *pszTmp++ = '\0';
@@ -1965,7 +1921,7 @@ pfnRegShellCompleteCallback(
                             BAIL_ON_REG_ERROR(dwError);
                         }
                     }
-    
+
                     dwError = RegShellIsValidRootKey(
                                   pParseState->hReg,
                                   pszInRootKey);
@@ -1980,7 +1936,7 @@ pfnRegShellCompleteCallback(
                         LWREG_SAFE_FREE_STRING(pszParamSave);
                     }
                 }
-    
+
                 if (!RegShellGetRootKey(pParseState))
                 {
                     if (dwError)
@@ -1991,7 +1947,7 @@ pfnRegShellCompleteCallback(
                                       &ppwszRootKeys,
                                       &dwRootKeysCount);
                         BAIL_ON_REG_ERROR(dwError);
-            
+
                         dwError = RegShellCompletionMatch(
                                       pszInRootKey ? pszInRootKey : "",
                                       ppwszRootKeys,
@@ -2005,12 +1961,18 @@ pfnRegShellCompleteCallback(
                         {
                             continue;
                         }
-                                      
+
                         if (dwMatchArgsLen > 1)
                         {
                             for (i=0; i<dwMatchArgsLen; i++)
                             {
                                 printf("%s\t", ppMatchArgs[i]);
+
+                                ntStatus = RegShellAddCompletion(completions, "%s %s%s",
+                                        pszCommand,
+                                        pParseState->bBracketPrefix ? "[" : "",
+                                        ppMatchArgs[i]);
+                                BAIL_ON_NT_STATUS(ntStatus);
                             }
                             printf("\n");
                             bProcessingCommand = FALSE;
@@ -2018,7 +1980,12 @@ pfnRegShellCompleteCallback(
                         }
                         else if (dwMatchArgsLen == 1)
                         {
-                         
+                            ntStatus = RegShellAddCompletion(completions, "%s %s%s",
+                                        pszCommand,
+                                        pParseState->bBracketPrefix ? "[" : "",
+                                        ppMatchArgs[0]);
+                            BAIL_ON_NT_STATUS(ntStatus);
+
                             pszRootKey = ppMatchArgs[0];
                             bProcessingCommand = FALSE;
                         }
@@ -2026,60 +1993,41 @@ pfnRegShellCompleteCallback(
                         {
                             /*
                              * No root key was provided, so prefix one onto the
-                             * existing command line. Must re-read the line from
-                             * libedit and parse cmd/args after this modification.
+                             * existing command line (via a completion)
                              */
                             LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
-                            pParseState->pszFullRootKeyName = 
-                                strdup(HKEY_THIS_MACHINE);
-                            pszTmp = (pszParam[0] == '\\') ?
-                                HKEY_THIS_MACHINE : HKEY_THIS_MACHINE "\\";
-                            RegShellPrependStringInput(
-                                el, 
-                                pszTmp,
-                                pszParam);
-                            LWREG_SAFE_FREE_STRING(pszInLine);
-                            dwError = RegShellCompleteGetInput(el, &pszInLine);
-                            BAIL_ON_REG_ERROR(dwError);
+
+                            pszTmp = (pszParam[0] == '\\')
+                                ? HKEY_THIS_MACHINE
+                                : HKEY_THIS_MACHINE "\\";
+
+                            ntStatus = RegShellAddCompletion(completions, "%s %s%s%s",
+                                    pszCommand,
+                                    pParseState->bBracketPrefix ? "[" : "",
+                                    pszTmp,
+                                    pszParam);
+                            BAIL_ON_NT_STATUS(ntStatus);
+
+                            bProcessingCommand = FALSE;
+
                             LWREG_SAFE_FREE_STRING(pszCommand);
                             LWREG_SAFE_FREE_STRING(pszParam);
-                            
-                            dwError = RegShellSplitCmdParam(
-                                      pszInLine,
-                                      &pszCommand,
-                                      &pszParam);
-                            BAIL_ON_REG_ERROR(dwError);
-                            pParseState->tabState.pszCommand = pszCommand;
-                            continue;  // ick, get rid of this.
+
+                            continue;
                         }
                     }
-    
-                    /* Fill in matching root key on command line */
-                    RegShellSetSubStringInputLine(el,
-                        pszInRootKey ? pszInRootKey : "",
-                        pszRootKey,
-                        &dwLenAppended);
-                    pParseState->dwTabPressCount = 0;
-                    if (dwLenAppended > 0)
-                    {
-                        /* Add a \ termination only if characters were added */
-                        RegShellSetInputLine(el, "\\");
-                    }
-        
+
                     /* Save root key in parse state context */
                     LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
                     dwError = LwRtlCStringDuplicate(
-                                  &pParseState->pszFullRootKeyName, 
+                                  &pParseState->pszFullRootKeyName,
                                   pszRootKey);
                     BAIL_ON_REG_ERROR(dwError);
                 }
-    
-                LWREG_SAFE_FREE_STRING(pszInLine);
-                dwError = RegShellCompleteGetInput(el, &pszInLine);
-                BAIL_ON_REG_ERROR(dwError);
+
                 pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
                 break;
-    
+
             case REGSHELL_TAB_SUBKEY:
                 if (pszParam)
                 {
@@ -2101,7 +2049,6 @@ pfnRegShellCompleteCallback(
                     /* Failed because subkey path is not valid */
                     if (dwError)
                     {
-                        el_beep(el);
                         bProcessingCommand = FALSE;
                         break;
                     }
@@ -2116,9 +2063,9 @@ pfnRegShellCompleteCallback(
                               &dwSubKeyLen);
                 BAIL_ON_REG_ERROR(dwError);
 
-                /* 
+                /*
                  * Partial key, find best match. Found unique matching key
-                 * when dwMatchArgsLen == 1 
+                 * when dwMatchArgsLen == 1
                  */
                 dwMatchArgsLen = 0;
                 dwError = RegShellCompletionMatch(
@@ -2132,15 +2079,21 @@ pfnRegShellCompleteCallback(
                               &dwMatchBestLen);
                 if (dwMatchArgsLen == 1)
                 {
-                    /* First element in return list is the subkey match. */
-                    RegShellSetSubStringInputLine(el,
-                        pszResidualSubKey,
-                        ppMatchArgs[0],
-                        &dwLenAppended);
-                    LWREG_SAFE_FREE_STRING(pszInLine);
-                    dwError = RegShellCompleteGetInput(el, &pszInLine);
+                    /* complete the command line by trimming off the residual sub key
+                     * and concatenating the matching subkey(s),
+                     * e.g. for "cd HKTH\Services\l", the residual sub key is "l".
+                     * and matching subkeys are "lsass" and "lwio"
+                     */
+                    LWREG_SAFE_FREE_STRING(pszTmpLine);
+                    dwError = LwRtlCStringDuplicate(&pszTmpLine, buf);
                     BAIL_ON_REG_ERROR(dwError);
-                    RegShellInputLineTerminate(el, pszInLine);
+                    pszTmpLine[strlen(pszTmpLine) - strlen(pszResidualSubKey)] = '\0';
+
+                    ntStatus = RegShellAddCompletion(completions, "%s%s", pszTmpLine, ppMatchArgs[0]);
+                    BAIL_ON_NT_STATUS(ntStatus);
+
+                    LWREG_SAFE_FREE_STRING(pszTmpLine);
+
                     pParseState->dwTabPressCount = 0;
                 }
                 else if (dwMatchArgsLen > 0)
@@ -2149,33 +2102,60 @@ pfnRegShellCompleteCallback(
                     printf("\n");
                     for (i=0; i<dwMatchArgsLen; i++)
                     {
-                        printf("%s\n", ppMatchArgs[i]);
+                        printf("\r%s\n", ppMatchArgs[i]);
                     }
-                    ppMatchArgs[dwMatchBestIndex][dwMatchBestLen] = '\0';
-                    RegShellSetSubStringInputLine(el,
-                        pszResidualSubKey,
-                        ppMatchArgs[dwMatchBestIndex],
-                        &dwLenAppended);
                     printf("\n");
-                    el_beep(el);
+
+                    /* complete the command line by trimming off the residual sub key
+                     * and concatenating the matching subkey(s),
+                     * e.g. for "cd HKTH\Services\l", the residual sub key is "l".
+                     * and matching subkeys are "lsass" and "lwio"
+                     *
+                     * add the best matching completion first
+                     */
+                    LWREG_SAFE_FREE_STRING(pszTmpLine);
+                    dwError = LwRtlCStringDuplicate(&pszTmpLine, buf);
+                    BAIL_ON_REG_ERROR(dwError);
+                    pszTmpLine[strlen(pszTmpLine) - strlen(pszResidualSubKey)] = '\0';
+
+                    ntStatus = RegShellAddCompletion(completions, "%s%s", pszTmpLine, ppMatchArgs[dwMatchBestIndex]);
+                    BAIL_ON_NT_STATUS(ntStatus);
+
+                    for (i=0; i<dwMatchArgsLen; i++)
+                    {
+                        if (i == dwMatchBestIndex) {
+                            continue;
+                        }
+
+                        ntStatus = RegShellAddCompletion(completions, "%s%s", pszTmpLine, ppMatchArgs[i]);
+                        BAIL_ON_NT_STATUS(ntStatus);
+                    }
+                    LWREG_SAFE_FREE_STRING(pszTmpLine);
+
                     bProcessingCommand = FALSE;
                     break;
                 }
                 else if (dwSubKeyLen > 0)
                 {
                     /* Nothing matches, dump full list of subkeys */
-                    printf("\n");
+                    printf("\r\n");
                     for (i=0; i<dwSubKeyLen; i++)
-                    {  
+                    {
                         LWREG_SAFE_FREE_STRING(pszSubKey);
+
                         dwError = LwRtlCStringAllocateFromWC16String(
                                       &pszSubKey, ppwszSubKeys[i]);
                         BAIL_ON_REG_ERROR(dwError);
-                        printf("%s\n", pszSubKey);
+
+                        printf("\r%s\n", pszSubKey);
+
+                        ntStatus = RegShellAddCompletion(completions, "%s %s", pszCommand, pszSubKey);
+                        BAIL_ON_NT_STATUS(ntStatus);
+
                         LWREG_SAFE_FREE_STRING(pszSubKey);
                     }
-                    printf("\n");
-                    el_beep(el);
+                    printf("\r\n");
+
                 }
                 bProcessingCommand = FALSE;
                 break;
@@ -2186,10 +2166,8 @@ pfnRegShellCompleteCallback(
         }
     }
     while (bProcessingCommand);
+
     cldata->ePrevState = pParseState->tabState.eTabState;
-    LWREG_SAFE_FREE_STRING(pszInLine);
-    dwError = RegShellCompleteGetInput(el, &pszInLine);
-    BAIL_ON_REG_ERROR(dwError);
 
     LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
     cldata->pszCompletePrevCmd = pszInLine;
@@ -2208,12 +2186,14 @@ cleanup:
     LWREG_SAFE_FREE_MEMORY(ppwszSubKeys);
     LWREG_SAFE_FREE_STRING(pszInRootKey);
     LWREG_SAFE_FREE_STRING(pszSubKey);
+    LWREG_SAFE_FREE_STRING(pszCommand);
+    LWREG_SAFE_FREE_STRING(pszTmpLine);
     LWREG_SAFE_FREE_STRING(pszParam);
     LWREG_SAFE_FREE_STRING(pszResidualSubKey);
     LWREG_SAFE_FREE_STRING(pszInLine);
     RegShellFreeStrList(ppMatchArgs);
-    RegShellCompletePrint(el, pParseState);
-    return dwError;
+
+    return;
 
 error:
     goto cleanup;
@@ -2221,13 +2201,12 @@ error:
 
 
 static char *
-pfnRegShellPromptCallback(EditLine *el)
+regShellPrompt(REGSHELL_CLIENT_DATA *cldata)
 {
     static char promptBuf[1024] = "";
-    EDITLINE_CLIENT_DATA *cldata = NULL;
-
-    el_get(el, EL_CLIENTDATA, (void *) &cldata);
-    snprintf(promptBuf, sizeof(promptBuf), "\n%s%s%s%s ",
+    /* note: linenoise redisplays the prompt during editing, so
+     * it should not contain \n */
+    snprintf(promptBuf, sizeof(promptBuf), "%s%s%s%s ",
              cldata->pParseState->pszDefaultRootKeyName ?
                  cldata->pParseState->pszDefaultRootKeyName : "",
              cldata->pParseState->pszDefaultKey ? "\\" : "",
@@ -2236,7 +2215,6 @@ pfnRegShellPromptCallback(EditLine *el)
              cldata->continuation ? ">>>" : ">");
     return promptBuf;
 }
-
 
 DWORD
 RegShellExecuteCmdLine(
@@ -2288,10 +2266,187 @@ RegShellHandleSignalEditLine(int *signal, void *ctx)
 #ifdef SIGWINCH
     if (*signal == SIGWINCH)
     {
-        el_set((EditLine *) ctx, EL_REFRESH);
+        /* ignore this for linenoise; libedit would need to be refreshed */
     }
 #endif
     *signal = 0;
+}
+
+/* this MUST return trailing newlines in order for parsing to work
+ * correctly (otherwise EOL is flagged when parsing the last parameter
+ * and that parameter is "lost") */
+PSTR
+RegShellGetInput(
+    PCSTR prompt,
+    int *read)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR buffer = NULL;
+    PSTR pszInputLine = NULL;
+
+    buffer = linenoise(prompt);
+    if (buffer) {
+        dwError = RegAllocateMemory(
+                  strlen(buffer) + sizeof("\n"),
+                  (PVOID) &pszInputLine);
+        BAIL_ON_REG_ERROR(dwError);
+
+        strcpy(pszInputLine, buffer);
+        strcat(pszInputLine, "\n");
+    }
+
+cleanup:
+    LWREG_SAFE_FREE_STRING(buffer);
+
+    *read = pszInputLine
+        ? strlen(pszInputLine)
+        : 0;
+
+    return pszInputLine;
+
+error:
+    LWREG_SAFE_FREE_STRING(pszInputLine);
+    goto cleanup;
+}
+
+void
+RegShellFreeCompletionData(
+    PREGSHELL_CLIENT_DATA pcl_data
+        )
+{
+    int i = 0;
+
+    LWREG_SAFE_FREE_STRING(pcl_data->pParseState->pszDefaultKeyCompletion);
+    for (i=0; pcl_data->ppszCompleteMatches && i<pcl_data->dwCompleteMatchesLen; i++)
+    {
+        LWREG_SAFE_FREE_STRING(pcl_data->ppszCompleteMatches[i]);
+    }
+    LWREG_SAFE_FREE_MEMORY(pcl_data->ppszCompleteMatches);
+    LWREG_SAFE_FREE_STRING(pcl_data->pszCompletePrevCmd);
+    pcl_data->dwEnteredTextLen = 0;
+}
+
+DWORD
+RegShellGetHistoryFileName(
+        PSTR *pszHistoryFileName)
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    struct passwd *userPwdEntry = NULL;
+    PSTR pszHistoryFileDir = NULL;
+    PSTR pszHistoryFilePath = NULL;
+
+    /* Build fully qualified path for history file */
+    userPwdEntry = getpwuid(getuid());
+    pszHistoryFileDir = (userPwdEntry && userPwdEntry->pw_dir)
+        ? userPwdEntry->pw_dir
+        : "/tmp";
+
+    dwError = RegAllocateMemory(
+                  strlen(pszHistoryFileDir) + sizeof("/.regshell_history"),
+                  (PVOID) &pszHistoryFilePath);
+    BAIL_ON_REG_ERROR(dwError);
+
+    strcpy(pszHistoryFilePath, pszHistoryFileDir);
+    strcat(pszHistoryFilePath, "/.regshell_history");
+
+    *pszHistoryFileName = pszHistoryFilePath;
+
+cleanup:
+    return dwError;
+
+error:
+    LWREG_SAFE_FREE_STRING(pszHistoryFilePath);
+    goto cleanup;
+}
+
+static
+int
+RegShellHistoryInit(int maxEvents, PCSTR pszHistoryFileName)
+{
+    int linenoiseError = LINENOISE_SUCCESS;
+
+    linenoiseError = linenoiseHistorySetMaxLen(maxEvents);
+    linenoiseError = linenoiseHistoryLoad(pszHistoryFileName);
+
+    return linenoiseError;
+}
+
+
+static
+int
+RegShellHistorySave(PCSTR pszHistoryFileName)
+{
+    return linenoiseHistorySave(pszHistoryFileName);
+}
+
+
+static
+int
+RegShellGetHistoryEventNumber(int eventNum, PSTR *history)
+{
+    /* linenoise events are zero based, regshell uses one based */
+    *history = linenoiseHistoryEntry(eventNum - 1);
+    return *history ? LINENOISE_SUCCESS : LINENOISE_ERROR;
+}
+
+
+static
+int
+RegShellGetHistoryPrevious(PSTR *history)
+{
+    *history = linenoiseHistoryLastEntry();
+    return *history ? LINENOISE_SUCCESS : LINENOISE_ERROR;
+}
+
+
+static
+int
+RegShellGetHistorySearch(PCSTR search, PSTR *history)
+{
+    *history = linenoiseHistoryMatching(search);
+    return *history ? LINENOISE_SUCCESS : LINENOISE_ERROR;
+}
+
+
+static
+int
+RegShellAddHistoryEntry(PCSTR entry)
+{
+    int linenoiseError = LINENOISE_ERROR;
+    char *h = (char *)entry;
+    size_t len = 0;
+
+    len = strlen(entry);
+    if (entry[len - 1] == '\n') {
+        h = strdup(entry);
+        h[len - 1] = '\0';
+    }
+
+    if (h) {
+        linenoiseError = linenoiseHistoryAdd(h);
+        if (h != entry) free(h);
+    }
+
+    return linenoiseError;
+}
+
+
+static
+void
+RegShellHistoryDisplay()
+{
+    const char **history = linenoiseHistory();
+    const int history_len = linenoiseHistoryLen();
+    int i = 0;
+
+    /* linenoise history events are zero based,
+     * we want to display them as one based */
+    if (*history && history_len) {
+        for (i = 0; i < history_len; i++) {
+            fprintf(stdout, "%4d %s\n", i+1, history[i]);
+        }
+    }
 }
 
 
@@ -2301,104 +2456,43 @@ RegShellProcessInteractiveEditLine(
     PREGSHELL_PARSE_STATE pParseState,
     PSTR pszProgramName)
 {
-    History *hist = NULL;
-    HistEvent ev;
-    EDITLINE_CLIENT_DATA el_cdata = {0};
+    DWORD dwError = 0;
+
+    REGSHELL_CLIENT_DATA cl_data = {0};
     int num = 0;
     int ncontinuation = 0;
-    int rv = 0;
+    int rv = -1;
 
-    const char *buf = NULL;
-    EditLine *el = NULL;
+    char *buf = NULL;
     BOOLEAN bHistFirst = FALSE;
-    DWORD dwError = 0;
-    DWORD i = 0;
     DWORD dwCmdLineLen = 0;
     DWORD dwEventNum = 0;
     PSTR pszCmdLine = NULL;
     PSTR pszNewCmdLine = NULL;
     PSTR pszNumEnd = NULL;
-    PSTR pszHistoryFileDir = NULL;
     PSTR pszHistoryFileName = NULL;
-    const char *hist_str = NULL;
-    struct passwd *userPwdEntry = NULL;
-
-    hist = history_init();
-    history(hist, &ev, H_SETSIZE, 100);
-
-    el = el_init(pszProgramName, stdin, stdout, stderr);
-
-    /* Make configurable in regshellrc file */
-    el_set(el, EL_EDITOR, "emacs");
-
-    /* Signal handling in editline seems not to function... */
-    el_set(el, EL_SIGNAL, 0);
-
-#ifdef EL_ESC_CHAR
-    /* Set escape character from \ to | */
-    el_set(el, EL_ESC_CHAR, (int) REGSHELL_ESC_CHAR);
-#endif
-
-    /* Editline prompt function; display info from pParseState */
-    el_set(el, EL_PROMPT, pfnRegShellPromptCallback);
+    char *hist_search = NULL;
+    char *hist_str = NULL;
 
     /* Set regshell context */
-    el_cdata.pParseState = pParseState;
-    el_set(el, EL_CLIENTDATA, (void *) &el_cdata);
+    cl_data.pParseState = pParseState;
+    gpcl_data = &cl_data;
 
-    /* Setup history context, and load previous history file */
-    el_set(el, EL_HIST, history, hist);
-
-    /* Build fully qualified path for history file */
-    userPwdEntry = getpwuid(getuid());
-    if (userPwdEntry)
-    {
-        pszHistoryFileDir = userPwdEntry->pw_dir;
-    }
-    if (!pszHistoryFileDir)
-    {
-        pszHistoryFileDir = "/tmp";
-    }
-
-    dwError = RegAllocateMemory(
-                  strlen(pszHistoryFileDir) + sizeof("/.regshell_history"),
-                  (PVOID) &pszHistoryFileName);
+    /* load previous history file */
+    dwError = RegShellGetHistoryFileName(&pszHistoryFileName);
     BAIL_ON_REG_ERROR(dwError);
+    RegShellHistoryInit(REGSHELL_MAX_HISTORY_ENTRIES, pszHistoryFileName);
 
-    strcpy(pszHistoryFileName, pszHistoryFileDir);
-    strcat(pszHistoryFileName, "/.regshell_history");
-    
-    /* Retrieve this from user's home directory */
-    history(hist, &ev, H_LOAD, pszHistoryFileName);
+    linenoiseSetCompletionCallback(pfnRegShellCompleteCallback);
 
-    /*
-     * Bind j, k in vi command mode to previous and next line, instead
-     * of previous and next history.
-     */
-    el_set(el, EL_BIND, "-a", "k", "ed-prev-line", NULL);
-    el_set(el, EL_BIND, "-a", "j", "ed-next-line", NULL);
-
-    /*
-     * Register complete function callback
-     */
-    el_set(el, 
-           EL_ADDFN,
-           "ed-complete",
-           "Complete argument",
-           pfnRegShellCompleteCallback);
-    el_set(el, EL_BIND, "^I", "ed-complete", NULL);
-
-    /*
-     * Source the user's defaults file.
-     */
-    el_source(el, NULL);
-
-    while ((buf = el_gets(el, &num))!=NULL && num!=0)
+    printf("\n");
+    while ((buf = RegShellGetInput(regShellPrompt(&cl_data), &num)) !=NULL && num != 0)
     {
         if (gCaughtSignal > 0)
         {
-            RegShellHandleSignalEditLine(&gCaughtSignal, (LW_PVOID) el);
+            RegShellHandleSignalEditLine(&gCaughtSignal, (LW_PVOID) NULL);
         }
+
         if (num>1 && buf[num-2] == REGSHELL_ESC_CHAR)
         {
             ncontinuation = 1;
@@ -2411,20 +2505,9 @@ RegShellProcessInteractiveEditLine(
 #if 0
 printf("\n\n got line '%.*s'\n\n", num, buf);
 #endif
+        RegShellFreeCompletionData(&cl_data);
 
-#if 1 /* This mess needs to be put into a completion cleanup function */
-        LWREG_SAFE_FREE_STRING(el_cdata.pParseState->pszDefaultKeyCompletion);
-        for (i=0; el_cdata.ppszCompleteMatches && i<el_cdata.dwCompleteMatchesLen; i++)
-        {
-            LWREG_SAFE_FREE_STRING(el_cdata.ppszCompleteMatches[i]);
-        }
-        LWREG_SAFE_FREE_MEMORY(el_cdata.ppszCompleteMatches);
-        LWREG_SAFE_FREE_STRING(el_cdata.pszCompletePrevCmd);
-        el_cdata.dwEnteredTextLen = 0;
-#endif
-
-
-        el_cdata.continuation = ncontinuation;
+        cl_data.continuation = ncontinuation;
 
         dwError = RegAllocateMemory(
                       sizeof(*pszNewCmdLine) * (num + 3),
@@ -2439,7 +2522,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
 
         /*
          * Put a terminating ] if a [ was provided, but only if one does not
-         * already exist. This is needed to pass the syntax check of 
+         * already exist. This is needed to pass the syntax check of
          * a subkey parameter.
          */
 
@@ -2461,7 +2544,6 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
             continue;
         }
 
-
         /*
          * Process history command recall (!nnn | !command syntax)
          */
@@ -2471,8 +2553,8 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
             if (isdigit((int)pszCmdLine[1]))
             {
                 dwEventNum = strtol(&pszCmdLine[1], &pszNumEnd, 0);
-                rv = history(hist, &ev, H_NEXT_EVENT, dwEventNum);
-                if (rv == -1)
+                rv = RegShellGetHistoryEventNumber(dwEventNum, &hist_str);
+                if (rv == HISTORY_ERROR)
                 {
                     printf("regshell: %d: event not found\n", dwEventNum);
                 }
@@ -2485,8 +2567,8 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                  */
                 if (pszCmdLine[1] == '!')
                 {
-                    rv = history(hist, &ev, H_FIRST);
-                    if (rv == -1)
+                    rv = RegShellGetHistoryPrevious(&hist_str);
+                    if (rv == HISTORY_ERROR)
                     {
                         printf("regshell: !!: event not found\n");
                     }
@@ -2500,18 +2582,28 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                     /*
                      * !command case. Searches history for last occurrence
                      * of "command" in history list, and expands command line
-                     * with that command.
+                     * with that command. (Remove trailing \n from command
+                     * before search.)
                      */
-                    hist_str = &pszCmdLine[1];
-                    rv = history(hist, &ev, H_PREV_STR, hist_str);
-                    if (rv == -1)
+                    hist_search = strdup(&pszCmdLine[1]);
+                    hist_search[strlen(&pszCmdLine[1]) - 1] = '\0';
+                    rv = RegShellGetHistorySearch(hist_search, &hist_str);
+                    LWREG_SAFE_FREE_STRING(hist_search);
+
+                    if (rv == HISTORY_ERROR)
                     {
                         printf("regshell: %s: event not found\n", hist_str);
                     }
                 }
             }
 
-            if (rv == 0)
+            if (rv != HISTORY_SUCCESS)
+            {
+                /* Failed to expand the command, clear the "command line" as by
+                 * itself it is not a valid command */
+                LWREG_SAFE_FREE_STRING(pszCmdLine);
+            }
+            else
             {
                 dwCmdLineLen = 0;
 
@@ -2523,7 +2615,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                 {
                     dwCmdLineLen += strlen(pszNumEnd);
                 }
-                dwCmdLineLen += strlen(ev.str);
+                dwCmdLineLen += strlen(hist_str);
                 dwCmdLineLen++;
 
                 dwError = RegAllocateMemory(
@@ -2531,7 +2623,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                               (PVOID*)&pszNewCmdLine);
                 BAIL_ON_REG_ERROR(dwError);
 
-                strcpy(pszNewCmdLine, ev.str);
+                strcpy(pszNewCmdLine, hist_str);
                 dwCmdLineLen = strlen(pszNewCmdLine);
                 if (pszNewCmdLine[dwCmdLineLen-1] == '\n')
                 {
@@ -2540,7 +2632,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
 
                 if (bHistFirst)
                 {
-                    strcat(pszNewCmdLine, &pszNewCmdLine[2]);
+                    strcat(pszNewCmdLine, &pszCmdLine[2]);
                 }
                 else if (pszNumEnd)
                 {
@@ -2551,24 +2643,21 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                 pszCmdLine = pszNewCmdLine;
                 pszNewCmdLine = NULL;
 
-                /*
-                 * Display command from history list
-                 */
+                /* Display command from history list */
                 printf("%s\n", pszCmdLine);
             }
         }
 
         if (pszCmdLine && pszCmdLine[0] != '\n')
         {
-            rv = history(hist, &ev, H_ENTER, pszCmdLine);
+            RegShellAddHistoryEntry(pszCmdLine);
+            /* as quit simply exits, just update
+             * the history file for each command */
+            RegShellHistorySave(pszHistoryFileName);
+
             if (strcmp(pszCmdLine, "history\n") == 0)
             {
-                for (rv = history(hist, &ev, H_LAST);
-                     rv != -1;
-                     rv = history(hist, &ev, H_PREV))
-                {
-                    fprintf(stdout, "%4d %s", ev.num, ev.str);
-                }
+                RegShellHistoryDisplay();
             }
             else
             {
@@ -2578,23 +2667,30 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                               dwCmdLineLen);
             }
         }
+
+        LWREG_SAFE_FREE_STRING(buf);
         LWREG_SAFE_FREE_STRING(pszCmdLine);
+        LWREG_SAFE_FREE_STRING(hist_str);
         dwCmdLineLen = 0;
+        bHistFirst = FALSE;
+        pszNumEnd = NULL;
+
+        printf("\n");
+
     }
 
-    /* Save current regshell history */
-    history(hist, &ev, H_SAVE, pszHistoryFileName);
-
 cleanup:
+    LWREG_SAFE_FREE_STRING(buf);
+    LWREG_SAFE_FREE_STRING(pszCmdLine);
+    LWREG_SAFE_FREE_STRING(hist_str);
+
+    RegShellHistorySave(pszHistoryFileName);
     LWREG_SAFE_FREE_STRING(pszHistoryFileName);
-    el_end(el);
-    history_end(hist);
     return dwError;
 
 error:
     goto cleanup;
 }
-
 
 
 DWORD

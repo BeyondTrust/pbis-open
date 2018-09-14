@@ -1,0 +1,18 @@
+configure()
+{
+    mk_check_headers \
+      termios.h unistd.h stdlib.h stdio.h errno.h \
+      string.h strings.h ctype.h sys/stat.h sys/types.h \
+      sys/ioctl.h
+}
+
+make()
+{
+    mk_headers \
+        MASTER="linenoise.h utf8.h"
+
+    mk_library \
+        LIB=linenoise-mob \
+        HEADERDEPS="linenoise.h utf8.h" \
+        SOURCES="linenoise.c utf8.c"
+}

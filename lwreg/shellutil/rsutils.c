@@ -901,7 +901,7 @@ RegShellUtilValueArrayFree(
         LWREG_SAFE_FREE_MEMORY(pValueArray[i].pValueName);
         LWREG_SAFE_FREE_MEMORY(pValueArray[i].pData);
     }
-    
+
     LWREG_SAFE_FREE_MEMORY(pValueArray);
 cleanup:
     return dwError;
@@ -1072,11 +1072,13 @@ RegShellUtilGetValues(
             pValueArray[indx].bValueSet = TRUE;
         }
 
-    	dwError = RegWC16StringAllocateFromCString(
+        dwError = RegWC16StringAllocateFromCString(
                       &pValueArray[indx].pValueName,
                       pszValueName);
-    	BAIL_ON_REG_ERROR(dwError);
+        BAIL_ON_REG_ERROR(dwError);
+
         LWREG_SAFE_FREE_STRING(pszValueName);
+        LWREG_SAFE_FREE_MEMORY(pwszValueName);
 
         pValueArray[indx].type = regType;
         pValueArray[indx].pData = pData;

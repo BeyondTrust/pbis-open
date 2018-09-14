@@ -39,10 +39,13 @@
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stddef.h>
 typedef struct linenoiseCompletions {
   size_t len;
   char **cvec;
@@ -55,6 +58,7 @@ void linenoiseSetCompletionCallback(linenoiseCompletionCallback *);
 void linenoiseSetHintsCallback(linenoiseHintsCallback *);
 void linenoiseSetFreeHintsCallback(linenoiseFreeHintsCallback *);
 void linenoiseAddCompletion(linenoiseCompletions *, const char *);
+void linenoiseAddHistoryCompletions(const char*, linenoiseCompletions *);
 
 char *linenoise(const char *prompt);
 void linenoiseFree(void *ptr);
@@ -65,6 +69,26 @@ int linenoiseHistoryLoad(const char *filename);
 void linenoiseClearScreen(void);
 void linenoiseSetMultiLine(int ml);
 void linenoisePrintKeyCodes(void);
+
+typedef size_t (linenoisePrevCharLen)(const char *buf, size_t buf_len, size_t pos, size_t *col_len);
+typedef size_t (linenoiseNextCharLen)(const char *buf, size_t buf_len, size_t pos, size_t *col_len);
+typedef size_t (linenoiseReadCode)(int fd, char *buf, size_t buf_len, int* c);
+
+void linenoiseSetEncodingFunctions(
+    linenoisePrevCharLen *prevCharLenFunc,
+    linenoiseNextCharLen *nextCharLenFunc,
+    linenoiseReadCode *readCodeFunc);
+
+#define __PBIS_LINENOISE__
+#ifdef  __PBIS_LINENOISE__
+int linenoiseHistoryLen();
+const char **linenoiseHistory();
+void linenoiseHistoryFree();
+
+char *linenoiseHistoryLastEntry();
+char *linenoiseHistoryEntry(int n);
+char *linenoiseHistoryMatching(const char *text);
+#endif
 
 #ifdef __cplusplus
 }

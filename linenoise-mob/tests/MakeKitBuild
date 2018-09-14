@@ -1,0 +1,11 @@
+make()
+{
+    mk_have_cmock && \
+    mk_cmock \
+        PROGRAM="testlinenoise-history" \
+        SOURCES="testlinenoise-history.c testlinenoise-history_Runner.c" \
+        LIBDEPS="linenoise-mob" \
+        LDFLAGS="-lpbiscmock"
+
+}
+
