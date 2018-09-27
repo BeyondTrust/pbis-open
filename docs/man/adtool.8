@@ -1,0 +1,952 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "ADTOOL" "8" "September 2018" "" ""
+.
+.SH "NAME"
+\fBadtool\fR \- AD tool to manage objects in Active Directory
+.
+.SH "USER SYNOPSIS"
+\fBadtool\fR [\fIoptions\fR] \-a search\-user \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-user \-\-logon\-name \fIname\fR (\-\-cn|\-\-first\-name|\-\-last\-name \fIname\fR) [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a reset\-user\-password \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a unlock\-account (\-\-user|\-\-computer \fIname\fR)
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a enable\-user \-\-name \fIname\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a disable\-user \-\-name \fIname\fR
+.
+.SH "GROUP SYNOPSIS"
+\fBadtool\fR [\fIoptions\fR] \-a search\-groups \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-group \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a add\-to\-group (\-\-user|\-\-group \fIname\fR) \-\-to\-group \fItarget\-group\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a remove\-from\-group (\-\-user|\-\-group \fIname\fR) \-\-from\-group \fIname\fR
+.
+.SH "COMPUTER SYNOPSIS"
+\fBadtool\fR [\fIoptions\fR] \-a search\-computer \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-computer \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.SH "OU SYNOPSIS"
+\fBadtool\fR [\fIoptions\fR] \-a search\-ou \-\-name \fIname\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-ou \-\-dn \fIDN\fR [\fIactionoptions\fR]
+.
+.SH "OBJECT SYNOPSIS"
+\fBadtool\fR [\fIoptions\fR] \-a search\-objects [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a lookup\-object \-\-dn \fIDN\fR [\fIactionoptions\fR]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a move\-object \-\-from <DN/RDN> \-\-to <DN/RDN>
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a delete\-object \-\-dn \fIDN\fR [\-\-force]
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a set\-attr \-\-dn \fIDN\fR \-\-attrName \fIname\fR [\-\-attrValue \fIvalue\fR]
+.
+.SH "DESCRIPTION"
+\fBadtool\fR is the BeyondTrust PBIS AD tool\. \fBadtool\fR can create, query and modify objects in Active Directory\. \fBadtool\fR can also be utilized to create, find and manage objects in PowerBroker cells\.
+.
+.P
+\fBNOTE: AUTHENTICATION REQUIRED \-\fR This tool is for managing Active Directory objects which requires AD rights\. It is \fBREQUIRED\fR to be logged in as an AD user with rights to manage AD before using the \fBadtool\fR\. Alternatively the \-\-domain \fBCONNECTION OPTION\fR with an \fBAUTHENTICATION OPTION\fR can be used to connect to the domain when logged in as a local user\.
+.
+.SH "HELP OPTIONS"
+\fB\-u|\-\-usage\fR
+.
+.IP
+Display brief usage message\.
+.
+.P
+\fB\-?|\-\-help\fR
+.
+.IP
+Displays brief usage and help information\. Help can list all actions(\-a), or help on a specific action (\-a \fIaction\fR)\.
+.
+.P
+\fB\-v|\-\-version\fR
+.
+.IP
+Print program version\.
+.
+.SH "COMMON OPTIONS"
+\fB\-l|\-\-log\-level\fR \fIint\fR
+.
+.IP
+Acceptable values: 1(error), 2(warning), 3(info), 4(verbose) 5(trace)\. Default: 2(warning)\.
+.
+.P
+\fB\-q|\-\-quiet\fR
+.
+.IP
+Suppress printing to stdout\. Just set the return code\. print\-dn option makes an exception\.
+.
+.P
+\fB\-t|\-\-print\-dn\fR
+.
+.IP
+Print DNs of the objects to be looked up, modified or searched for\.
+.
+.P
+\fB\-r|\-\-read\-only\fR
+.
+.IP
+Do not actually modify directory objects when executing actions\.
+.
+.SH "CONNECTION OPTIONS"
+\fB\-s|\-\-server\fR \fIstring\fR
+.
+.IP
+Active Directory server to connect to\.
+.
+.P
+\fB\-d|\-\-domain\fR \fIstring\fR
+.
+.IP
+Domain to connect to\.
+.
+.P
+\fB\-p|\-\-port\fR \fIint\fR
+.
+.IP
+TCP port number
+.
+.P
+\fB\-m|\-\-non\-schema\fR
+.
+.IP
+Turn off schema mode
+.
+.SH "AUTHENTICATION OPTIONS"
+\fB\-n|\-\-logon\-as\fR \fIstring\fR
+.
+.IP
+User name or UPN\.
+.
+.P
+\fB\-x|\-\-passwd\fR \fIstring\fR
+.
+.IP
+Password for authentication\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-k|\-\-keytab\fR \fIstring\fR
+.
+.IP
+Full path of keytab file, e\.g\. /etc/krb5\.keytab
+.
+.P
+\fB\-c|\-\-krb5cc\fR \fIstring\fR
+.
+.IP
+Full path of krb5 ticket cache file, e\.g\. /tmp/krb5cc_foo@centeris\.com
+.
+.P
+\fB\-z|\-\-no\-sec\fR
+.
+.IP
+Turns off secure authentication\. Simple bind will be used\. Use with caution!
+.
+.SH "ACTION"
+\fB\-a|\-\-action\fR \fIaction\fR
+.
+.IP
+Action to execute\. Type \'\-\-help \-a\' for a list of actions, or \'\-\-help \-a \fIaction\fR\' for information on a specific action\.
+.
+.SH "USER ACTIONS"
+\fBSEARCH\-USER\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a search\-user \-\-name \fIstring\fR [\-\-search\-base \fIstring\fR] [\-\-scope \fIstring\fR]
+.
+.IP
+Search for users, print DNs\.
+.
+.P
+\fB\-\-search\-base\fR \fIstring\fR
+.
+.IP
+DN of top\-level node to start the search from\. (Default: rootDomainNamingContext of the DC the client connects to)
+.
+.P
+\fB\-\-scope\fR \fIstring\fR
+.
+.IP
+Search scope\. Acceptable values: base, one\-level, subtree\. Default: subtree
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the user (DN/RDN, UPN, or SamAccountName)\. Wildcards (*) accepted as part of the name\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Look up "unixHomeDirectory" attribute of a user with samAccountName TestUser\.
+.
+.IP
+\fBadtool \-a search\-user \-\-name TestUser \-t | adtool \-a lookup\-object \-\-dn \- \-\-attr unixHomeDirectory\fR
+.
+.P
+\fBNEW\-USER\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-user \-\-logon\-name \fIstring\fR (\-\-cn|\-\-first\-name|\-\-last\-name \fIstring\fR) [\-\-dn \fIstring\fR] [\-\-pre\-win\-2000\-name \fIstring\fR] [\-\-description \fIstring\fR] [\-\- \fIstring\fR] [\-\-description \fIstring\fR] [\-\-description \fIstring\fR] [\-\-password \fIstring\fR] [\-\-spn \fIstring\fR] [\-\-keytab\-file \fIstring\fR] [\-\-no\-must\-change\-password] [\-\-no\-password\-expires] [\-\-account\-enabled]
+.
+.IP
+Create a new user account\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the parent container/OU containing the user\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-cn\fR \fIstring\fR
+.
+.IP
+Common name (CN) of the new user\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-logon\-name\fR \fIstring\fR
+.
+.IP
+Logon name of the new user\. Sets upn attribute\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-pre\-win\-2000\-name\fR \fIstring\fR
+.
+.IP
+Pre Windows\-2000 logon name (sAMAccountName)\.
+.
+.P
+\fB\-\-first\-name\fR \fIstring\fR
+.
+.IP
+First name of the new user\.
+.
+.P
+\fB\-\-last\-name\fR \fIstring\fR
+.
+.IP
+Last name of the new user\.
+.
+.P
+\fB\-\-description\fR \fIstring\fR
+.
+.IP
+Description of the user\.
+.
+.P
+\fB\-\-password\fR \fIstring\fR
+.
+.IP
+User\'s password\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-spn\fR \fIstring\fR
+.
+.IP
+Set new user account service principal name attribute\. A comma separated list can be specified (eg\. \-\-spn "nfs, http/")\. Default is an empty SPN attribute\.
+.
+.P
+\fB\-\-keytab\-file\fR \fIstring\fR
+.
+.IP
+Generate a keytab file for the user\. Specify /path/to/file\.keytab\.
+.
+.P
+\fB\-\-no\-must\-change\-password\fR
+.
+.IP
+User is not required to change the password at next logon\.
+.
+.P
+\fB\-\-no\-password\-expires\fR
+.
+.IP
+The password never expires\.
+.
+.P
+\fB\-\-account\-enabled\fR
+.
+.IP
+User account will be enabled\. By default the account is disabled on creation\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Create a new user account TestUser in TestOu\.
+.
+.IP
+\fBadtool \-a new\-user \-\-dn OU=TestOu \-\-cn TestUser \-\-logon\-name TestUser \-\-password=ChangeMe\fR
+.
+.P
+\fBRESET\-USER\-PASSWORD\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a reset\-user\-password \-\-name \fIstring\fR [\-\-password \fIstring\fR] [\-\-spn \fIstring\fR] [\-\-keytab\-file \fIstring\fR] [\-\-no\-must\-change\-password] [\-\-no\-password\-expires]
+.
+.IP
+Reset user\'s password\.
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+User to change password for\. (DN/RDN, UPN, or SamAccountName; use \'\-\' for stdin input)
+.
+.P
+\fB\-\-password\fR \fIstring\fR
+.
+.IP
+User\'s password\. If omitted only the password\'s properties may be changed but not the password itself\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-spn\fR \fIstring\fR
+.
+.IP
+Modify user account service principal name attribute\. A comma separated list can be specified (eg\. \-\-spn "nfs,http/")\.
+.
+.P
+\fB\-\-keytab\-file\fR \fIstring\fR
+.
+.IP
+Modify/Generate a keytab file for the user\. Specify /path/to/file\.keytab\.
+.
+.P
+\fB\-\-no\-must\-change\-password\fR
+.
+.IP
+User is not required to change the password at next logon\. If omitted \- user must change password at next logon unless "\-\-no\-password\-expires" option is specified\.
+.
+.P
+\fB\-\-no\-password\-expires\fR
+.
+.IP
+The password never expires\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Reset user\'s password reading the password from TestUser\.pwd file\.
+.
+.IP
+\fBcat TestUser\.pwd | adtool \-a reset\-user\-password \-\-name TestUser \-\-password=\- \-\-no\-password\-expires\fR
+.
+.P
+\fBUNLOCK\-ACCOUNT\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a unlock\-account (\-\-user|\-\-computer \fIstring\fR)
+.
+.IP
+Unlock user or computer account\.
+.
+.P
+\fB\-\-user\fR \fIstring\fR
+.
+.IP
+Name of the user (DN/RDN, UPN, or samAccountName; use \'\-\' for stdin input)
+.
+.P
+\fB\-\-computer\fR \fIstring\fR
+.
+.IP
+Computer name (DN/RDN, SPN, or SamAccountName; use \'\-\' for stdin input)\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Unlock the user account\.
+.
+.IP
+\fBadtool \-a unlock\-account \-\-user TestUser\fR
+.
+.P
+\fBENABLE\-USER\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a enable\-user \-\-name \fIstring\fR
+.
+.IP
+Enable a user account in Active Directory\.
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the user (DN/RDN, UPN, or samAccountName; use \'\-\' for stdin input)
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Enable the user account\.
+.
+.IP
+\fBadtool \-a enable\-user \-\-name TestUser\fR
+.
+.P
+\fBDISABLE\-USER\fR
+.
+.P
+adtool [\fIoptions\fR] \-a disable\-user \-\-name \fIstring\fR
+.
+.IP
+Disable a user account in Active Directory\.
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the user (DN/RDN, UPN, or samAccountName; use \'\-\' for stdin input)
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Disable the user account\.
+.
+.IP
+\fBadtool \-a disable\-user \-\-name TestUser\fR
+.
+.SH "GROUP ACTIONS"
+\fBSEARCH\-GROUPS\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a search\-groups \-\-name \fIstring\fR [\-\-scope \fIstring\fR] [\-\-name \fIstring\fR]
+.
+.IP
+Search for group objects, print DNs\.
+.
+.P
+\fB\-\-search\-base\fR \fIstring\fR
+.
+.IP
+DN of top\-level node to start the search from\. (Default: rootDomainNamingContext of the DC the client connects to)
+.
+.P
+\fB\-\-scope\fR \fIstring\fR
+.
+.IP
+Search scope\. Acceptable values: base, one\-level, subtree\. Default: subtree
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the group (DN/RDN, UPN, or SamAccountName)\. Wildcards (*) accepted as part of the name\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Looks for group TestGroup under OU TestOU\.
+.
+.IP
+\fBadtool \-a search\-groups \-\-name TestGroup \-\-scope OU=TestOU\fR
+.
+.P
+\fBNEW\-GROUP\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-group \-\-name \fIstring\fR [\-\-dn \fIstring\fR] [\-\-pre\-win\-2000\-name \fIstring\fR] [\-\-type \fIstring\fR] [\-\-description \fIstring\fR]
+.
+.IP
+Create a new global security group\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the parent container/OU containing the group\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the group\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-pre\-win\-2000\-name\fR \fIstring\fR
+.
+.IP
+Pre Windows\-2000 logon name (sAMAccountName)\.
+.
+.P
+\fB\-\-type\fR \fIstring\fR
+.
+.IP
+Group type\. Acceptable values: domain\-local, global, universal\. Default: global
+.
+.P
+\fB\-\-description\fR \fIstring\fR
+.
+.IP
+Description of the group\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Create a new group\.
+.
+.IP
+\fBadtool \-a new\-group \-\-dn OU=TestOu \-\-pre\-win\-2000\-name TestGroup \-\-name TestGroup\fR
+.
+.P
+\fBADD\-TO\-GROUP\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a add\-to\-group (\-\-user|\-\-group \fIstring\fR) \-\-to\-group \fIstring\fR
+.
+.IP
+Add a domain user/group to a security group\. Either \-\-user or \-\-group need to be stated\.
+.
+.P
+\fB\-\-user\fR \fIstring\fR
+.
+.IP
+User to add to the group (DN/RDN, UPN, or SamAccountName; use \'\-\' for stdin input)\.
+.
+.P
+\fB\-\-group\fR \fIstring\fR
+.
+.IP
+Group to add to the group (DN/RDN, or CN; use \'\-\' for stdin input)\.
+.
+.P
+\fB\-\-to\-group\fR \fIstring\fR
+.
+.IP
+Group to add user or group to (DN/RDN , or CN; use \'\-\' for stdin input)
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Add user TestUser to group TestGroup\.
+.
+.IP
+\fBadtool \-a add\-to\-group \-\-user TestUser \-\-to\-group TestGroup\fR
+.
+.P
+\fBREMOVE\-FROM\-GROUP\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a remove\-from\-group (\-\-user|\-\-group \fIstring\fR) \-\-from\-group \fIstring\fR
+.
+.IP
+Remove a user/group from a security group\.
+.
+.P
+\fB\-\-user\fR \fIstring\fR
+.
+.IP
+User to remove from the group (DN/RDN, UPN, or SamAccountName; use \'\-\' for stdin input)\.
+.
+.P
+\fB\-\-group\fR \fIstring\fR
+.
+.IP
+Group to remove from the group (DN/RDN, or CN; use \'\-\' for stdin input)\.
+.
+.P
+\fB\-\-from\-group\fR \fIstring\fR
+.
+.IP
+Group to remove user or group from (DN/RDN , or CN; use \'\-\' for stdin input)
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Remove user TestUser from group TestGroup\.
+.
+.IP
+\fBadtool \-a remove\-from\-group \-\-user TestUser \-\-from\-group TestGroup\fR
+.
+.SH "COMPUTER ACTIONS"
+\fBSEARCH\-COMPUTER\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a search\-computer \-\-name \fIstring\fR [\-\-scope \fIstring\fR] [\-\-name \fIstring\fR]
+.
+.IP
+Search for computer objects, print DNs\.
+.
+.P
+\fB\-\-search\-base\fR \fIstring\fR
+.
+.IP
+DN of top\-level node to start the search from\. (Default: rootDomainNamingContext of the DC the client connects to)
+.
+.P
+\fB\-\-scope\fR \fIstring\fR
+.
+.IP
+Search scope\. Acceptable values: base, one\-level, subtree\. Default: subtree
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the computer (DN/RDN, UPN, or SamAccountName)\. Wildcards (*) accepted as part of the name\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Looks for computer TestComputer under OU TestOU\.
+.
+.IP
+\fBadtool \-a search\-computer \-\-name TestComputer \-\-scope OU=TestOU\fR
+.
+.P
+\fBNEW\-COMPUTER\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-computer \-\-name \fIstring\fR [\-\-dn \fIstring\fR] [\-\-pre\-win\-2000\-name \fIstring\fR] [\-\-description \fIstring\fR] [\-\-dnshostname \fIstring\fR] [\-\-password \fIstring\fR] [\-\-spn \fIstring\fR] [\-\-keytab\-file \fIstring\fR]
+.
+.IP
+Create a new computer object\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the parent container/OU containing the computer\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-name\fR\fIstring\fR
+.
+.IP
+Name of the new computer\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-pre\-win\-2000\-name\fR \fIstring\fR
+.
+.IP
+Pre Windows\-2000 name (sAMAccountName)\.
+.
+.P
+\fB\-\-description\fR \fIstring\fR
+.
+.IP
+Description of the computer
+.
+.P
+\fB\-\-dnshostname\fR \fIstring\fR
+.
+.IP
+Fully\-Qualified DNS name of the computer
+.
+.P
+\fB\-\-password\fR \fIstring\fR
+.
+.IP
+Computer\'s password\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-spn\fR \fIstring\fR
+.
+.IP
+Set new computer account service principal name attribute\. A comma separated list can be specified (eg\. \-\-spn "nfs, host/")\. Default is \-\-spn "host"\. For an empty SPN attribute use \-\-spn ""\.
+.
+.P
+\fB\-\-keytab\-file\fR \fIstring\fR
+.
+.IP
+Generate a keytab file for the computer\. Specify /path/to/file\.keytab\. By default keytab file is generated with "host" service class
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Create a new computer under the computers container\.
+.
+.IP
+\fBadtool \-a new\-computer \-\-name TestComputer\fR
+.
+.SH "OU ACTIONS"
+\fBSEARCH\-OU\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a search\-ou \-\-name \fIstring\fR [\-\-search\-base \fIstring\fR] [\-\-scope \fIstring\fR]
+.
+.IP
+Search for organizational units, print DNs
+.
+.P
+\fB\-\-search\-base\fR \fIstring\fR
+.
+.IP
+DN of top\-level node to start the search from\. (Default: rootDomainNamingContext of the DC the client connects to)
+.
+.P
+\fB\-\-scope\fR \fIstring\fR
+.
+.IP
+Search scope\. Acceptable values: base, one\-level, subtree\. Default: subtree
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the OU (DN/RDN, or CN)\. Wildcards (*) accepted as part of the name\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Look up "description" attribute of an OU specified by name with a wildcard\.
+.
+.IP
+\fBadtool \-a search\-ou \-\-name \'*Ou\' \-t | adtool \-a lookup\-object \-\-dn \- \-\-attr description\fR
+.
+.P
+\fBNEW\-OU\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a new\-ou \-\-dn \fIdistinguished name\fR [\-\-name \fIstring\fR] [\-\-description \fIstring\fR]
+.
+.IP
+Create a new organizational unit\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the new OU or DN/RDN of the parent if "\-\-name" is present\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-name\fR \fIstring\fR
+.
+.IP
+Name of the new organizational unit\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-description\fR \fIstring\fR
+.
+.IP
+Description of the organizational unit
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Create OU in a root naming context\.
+.
+.IP
+\fBadtool \-a new\-ou \-\-dn OU=TestOu\fR
+.
+.SH "OBJECT ACTIONS"
+\fBSEARCH\-OBJECTS\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a search\-objects [\-\-scope \fIstring\fR] [\-\-fliter \fIstring\fR]
+.
+.IP
+Search for any type of objects using LDAP filter\.
+.
+.P
+\fB\-\-search\-base\fR \fIstring\fR
+.
+.IP
+DN of top\-level node to start the search from\. (Default: rootDomainNamingContext of the DC the client connects to)
+.
+.P
+\fB\-\-scope\fR \fIstring\fR
+.
+.IP
+Search scope\. Acceptable values: base, one\-level, subtree\. Default: subtree
+.
+.P
+\fB\-\-filter\fR \fIstring\fR
+.
+.IP
+LDAP search filter (RFC 2254)\. Return all entries if omitted (Default: (objectClass=top))
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Look up all attributes of an AD object using filter\-based search\.
+.
+.IP
+\fBadtool \-a search\-object \-\-filter \'(&(objectClass=person)(displayName TestUser))\' \-t | adtool \-a lookup\-object\fR
+.
+.P
+\fBLOOKUP\-OBJECT\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a lookup\-object \-\-dn \fIstring\fR [\-\-attr \fIstring\fR] [\-\-raw\-time] [\-\-all]
+.
+.IP
+Retrieve object attributes\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the object to look up\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-attr\fR \fIstring\fR
+.
+.IP
+Attribute to show values of
+.
+.P
+\fB\-\-raw\-time\fR
+.
+.IP
+Do not format timestamps (show raw time data)
+.
+.P
+\fB\-\-all\fR
+.
+.IP
+Show values of all object attributes
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Look up OU\'s GUID
+.
+.IP
+\fBadtool \-a lookup\-object \-\-dn OU=TestOU \-\-attr objectGUID\fR
+.
+.P
+\fBMOVE\-OBJECT\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a move\-object \-\-from \fIstring\fR \-\-to \fIstring\fR
+.
+.IP
+Move/rename an object\.
+.
+.P
+\fB\-\-from\fR \fIstring\fR
+.
+.IP
+DN/RDN of the object to move/rename\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-to\fR \fIstring\fR
+.
+.IP
+DN/RDN of the new object\. (use \'\-\' for stdin input)
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Move computer object under the computers container to TestOU\.
+.
+.IP
+\fBadtool \-a move\-object \-\-from CN=TestComputer,CN=Computers \-\-to CN=TestComputer,OU=TestOU\fR
+.
+.P
+\fBDELETE\-OBJECT\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a delete\-object \-\-dn \fIstring\fR [\-\-force]
+.
+.IP
+Delete an object\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the object to delete\. (use \'\-\' for stdin input)
+.
+.P
+\fB\-\-force\fR
+.
+.IP
+Remove all children first\. Default: fail if the object has any child nodes
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Delete OU and all its children if any (\-\-force)\.
+.
+.IP
+\fBadtool \-a delete\-object \-\-dn OU=TestOU \-\-force\fR
+.
+.P
+\fBSET\-ATTR\fR
+.
+.P
+\fBadtool\fR [\fIoptions\fR] \-a set\-attr \-\-dn \fIstring\fR \-\-attrName \fIstring\fR [\-\-attrValue \fIvalue\fR]
+.
+.IP
+Set/un\-set attribute\.
+.
+.P
+\fB\-\-dn\fR \fIstring\fR
+.
+.IP
+DN/RDN of the object\.
+.
+.P
+\fB\-\-attrName\fR \fIstring\fR
+.
+.IP
+Name of attribute\.
+.
+.P
+\fB\-\-attrValue\fR \fIstring\fR
+.
+.IP
+Value of attribute\. Multi\-value attributes are delimited with a semi\-colon\. To unset an attribute do not provide the attrValue argument\.
+.
+.P
+\fBEXAMPLE\fR
+.
+.IP
+Modify a multi\-value attribute using a semi\-colon as the delimiter\. Note: Attribute value validation is not done\. Use with care\.
+.
+.IP
+\fBadtool \-a set\-attr \-\-dn CN=TestUser,OU=TestOU \-\-attrName otherHomePhone \-\-attrValue "546\-872\-8383;453\-857\-9844;954\-723\-9765"\fR
+.
+.IP
+Unset an attribute\. Note: Attribute value validation is not done\. Use with care\.
+.
+.IP
+\fBadtool \-a set\-attr \-\-dn CN=TestUser,CN=Users,DC=company,DC=com \-\-attrName displayName\fR
+.
+.SH "SEE ALSO"
+The full documentation for PBIS is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
+.
+.SH "VERSION"
+PBIS version 8\.7 +\.

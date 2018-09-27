@@ -19,4 +19,5 @@ Information about PBIS Open can be found at [PBIS Open](https://github.com/Beyon
 
 SEE ALSO
 --------
+adtool(8)
 domainjoin-cli(8)
