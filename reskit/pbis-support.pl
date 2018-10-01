@@ -54,6 +54,7 @@
 # v2.11.1 2016-08-17 RCA add 8.5 and 8.6 detection and fix group policy testing with --gpagent and --gpo
 # v2.12   2017-10-30 RCA fix logfile break on OSX
 # v2.13   2018-09-28 RCA add alarm handling for runTool() so if commands time out, the script will continue.
+# v2.14   2018-10-01 RCA add alarm handling for all calls to System() so if commands time out, the script will continue.
 #
 # Data structures explained at bottom of file
 #
@@ -80,7 +81,7 @@ use sigtrap qw (handler cleanup old-interface-signals normal-signals);
 
 
 # Define global variables
-my $gVer = "2.13";
+my $gVer = "2.14";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -309,7 +310,7 @@ sub daemonRestart($$) {
         $startscript = $info->{svcctl}->{stop1}.$info->{svcctl}->{stop2}.$info->{svcctl}->{stop3};
         $startscript =~ s/daemonname/$options->{daemon}/;
         logDebug("Calling $options->{daemon} stop as: ".$startscript);
-        $result = System("$startscript"); #removed for Mac Stpuidness:  > /dev/null 2>&1"); #2011-04-12 RCA
+        $result = System("$startscript", undef, $opt->{alarmtime}); #removed for Mac Stpuidness:  > /dev/null 2>&1"); #2011-04-12 RCA
         if ($options->{daemon}=~/^lwsm/) {
             logInfo("Sleeping 30 seconds for $options->{daemon} to safely stop");
             sleep 30;
@@ -319,7 +320,7 @@ sub daemonRestart($$) {
 
         my $proc=findProcess($options->{daemon}, $info);
         if (($info->{OStype} eq "darwin") and defined($proc->{pid})) {
-            $result = System("$startscript > /dev/null 2>&1");
+            $result = System("$startscript > /dev/null 2>&1", undef, $opt->{alarmtime});
             # Darwin 10.6 seems to need 2 "launchctl stop" commands in testing - 2011-04-12 RCA
             sleep 2;
         }
@@ -360,7 +361,7 @@ sub daemonRestart($$) {
         $startscript = $info->{svcctl}->{start1}.$info->{svcctl}->{start2}.$info->{svcctl}->{start3};
         $startscript =~ s/daemonname/$options->{daemon}/;
         logDebug("Calling $options->{daemon} start as: '$startscript'");
-        $result = System("$startscript"); # removed for Mac stupidness:  > /dev/null 2>&1");
+        $result = System("$startscript", undef, $opt->{alarmtime}); # removed for Mac stupidness:  > /dev/null 2>&1");
         if ($result) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Failed to start $options->{daemon}");
@@ -396,7 +397,7 @@ sub daemonContainerStop($$) {
     if ($proc) {
         $script=$info->{lw}->{path}."/".$info->{lwsm}->{control}." stop ".$options->{daemon};
         logVerbose("Running: $script");
-        $result = System("$script");
+        $result = System("$script", undef, $opt->{alarmtime});
     }
     if (defined($info->{$options->{daemon}}->{pid}) and $info->{$options->{daemon}}->{pid}) {
         logWarning("$options->{daemon} failed to stop, killing process by stored pid $info->{$options->{daemon}}->{pid}");
@@ -438,7 +439,7 @@ sub daemonContainerStart($$) {
         $startscript = $startscript."--loglevel $options->{loglevel} ";
         $startscript = $startscript."--logfile ".$info->{logpath}."/".$options->{daemon}.".log";
         logInfo("Starting container $startscript...");
-        $result = System("$startscript &");
+        $result = System("$startscript &", undef, $opt->{alarmtime});
         if (not $result) {
             my $proc=findProcess($options->{daemon}, $info);
             $info->{$options->{daemon}}->{pid} = $proc->{pid};
@@ -451,7 +452,7 @@ sub daemonContainerStart($$) {
     }
     $startscript = $info->{lw}->{path}."/".$info->{lwsm}->{control}." start ".$options->{daemon};
     logVerbose("Running: $startscript");
-    $result = System($startscript);
+    $result = System($startscript, undef, $opt->{alarmtime});
     if ($result) {
         logError("Failed to start daemon $options->{daemon} via lwsm!");
         $gRetval |= ERR_SYSTEM_CALL;
@@ -1014,9 +1015,9 @@ sub runTool($$$$;$) {
     logVerbose("Attempting to run '$cmd'");
     my $ret = "";
     my $alarmtimeout=$opt->{alarmtime};
-    logDebug("Setting alarm timeout to $alarmtimeout.");
+    logInfo("Setting alarm timeout to $alarmtimeout.");
     {
-        # disable alarm to prevent possible race condition between end of eval and executiaon of alarm(0) after eval
+        # disable alarm to prevent possible race condition between end of eval and execution of alarm(0) after eval
         local $SIG{ALRM} = sub { };
         $ret = eval {
             local $SIG{ALRM} = sub { die $data };
@@ -1105,7 +1106,6 @@ sub System($;$$)
     if (defined($print) && $print=~/^\d+$/) {
         logDebug("RUN: $command");
     }
-
     if ($timeout) {
         my $pid = fork();
         if (not defined $pid) {
@@ -1173,9 +1173,9 @@ sub tarFiles($$$$) {
     logInfo("Adding file $file to $tar");
     my $error;
     if (-e $tar) {
-        $error = System("tar -rf $tar $file > /dev/null 2>&1");
+        $error = System("tar -rf $tar $file > /dev/null 2>&1", undef, $opt->{alarmtime});
     } else {
-        $error = System("tar -cf $tar $file > /dev/null 2>&1");
+        $error = System("tar -cf $tar $file > /dev/null 2>&1", undef, $opt->{alarmtime});
     }
     if ($error) {
         $gRetval |= ERR_SYSTEM_CALL;
@@ -1194,7 +1194,7 @@ sub tcpdumpStart($$) {
     }
     my $dumpcmd = "$info->{tcpdump}->{startcmd} $iface $info->{tcpdump}->{args} $opt->{capturefile} $info->{tcpdump}->{filter}";
     logVerbose("Trying to run: $dumpcmd");
-    my $error = System("$dumpcmd &");
+    my $error = System("$dumpcmd &", undef, $opt->{alarmtime});
     if ($error) {
         $gRetval |= ERR_SYSTEM_CALL;
         logError("Could not start capture command: $dumpcmd");
@@ -1213,7 +1213,7 @@ sub tcpdumpStop($$) {
         $error = killProc("$info->{tcpdump}->{startcmd}", 9, $info);
     } else {
         logVerbose("Sending stop command...");
-        my $error = System($stopcmd);
+        my $error = System($stopcmd, undef, $opt->{alarmtime});
         if ($error) {
             logWarning("There was an error running: '$stopcmd', trying to kill via kill -9.");
             $error=killProc($info->{tcpdump}->{startcmd}, 9, $info);
@@ -1576,7 +1576,7 @@ sub cleanupaftermyself {
         my $stopcmd = $info->{svccontrol}->{stop1}.$info->{svccontrol}->{stop2}.$info->{svccontrol}->{stop3};
         $stopcmd=~s/daemonname/lwsmd/;
         logVerbose("Attempting to stop lwsmd via: '$stopcmd', then waiting 30 seconds for full shutdown.");
-        System($stopcmd);
+        System($stopcmd, undef, $opt->{alarmtime});
         sleep 30;
         logVerbose("Attempting to kill lwsmd, just in case");
         KillProc("lwsmd", 9, $info);
@@ -1590,7 +1590,7 @@ sub cleanupaftermyself {
         if ($info->{lw}->{lwsm}->{control} eq "lwsm") {
             $startcmd =~s/daemonname/lwsmd/;
             logInfo("Attemping to start lwsmd via '$startcmd'");
-            System($startcmd);
+            System($startcmd, undef, $opt->{alarmtime});
             runTool($info, $opt, "lwsm autostart", "bury");
             waitForDomain($info, $opt);
         } else {
@@ -1870,7 +1870,7 @@ sub waitForDomain($$) {
     my ($error, $i) = (0,0);
     for ($i = 0; $i < 24; $i++) {
         sleep 5;
-        $error = System("$info->{lw}->{path}/$info->{lw}->{tools}->{status} >/dev/null 2>&1");
+        $error = System("$info->{lw}->{path}/$info->{lw}->{tools}->{status} >/dev/null 2>&1", undef, $opt->{alarmtime});
         unless ($error) {
             # lw-get-status returns 0 for success, 2 if lsassd hasn't started yet
             $error=runTool($info, $opt, $info->{lw}->{tools}->{status}, "grep", "Domain:");
@@ -2585,7 +2585,7 @@ sub outputReport($$) {
     }
     if ($opt->{tarballext}=~/\.gz$/) {
         logInfo("Output gathered, now gzipping for email");
-        $error = System("gzip $tarballfile");
+        $error = System("gzip $tarballfile", undef, $opt->{alarmtime});
         if ($error) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Can't gzip $tarballfile - $!");
