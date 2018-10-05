@@ -31,6 +31,7 @@ gather_version_info()
     IS_10_11=
     IS_10_12=
     IS_10_13=
+    IS_10_14=
     HAVE_LAUNCHCTL_V2=
 
     _get_os_version=`uname -r`
@@ -82,6 +83,11 @@ gather_version_info()
         17.*)
             IS_10_13=1
             echo "This is a High Sierra (10.13) version of Mac OS X"
+            HAVE_LAUNCHCTL_V2=1
+            ;;
+        18.*)
+            IS_10_14=1
+            echo "This is a Mojave (10.14) version of Mac OS X"
             HAVE_LAUNCHCTL_V2=1
             ;;
         *)

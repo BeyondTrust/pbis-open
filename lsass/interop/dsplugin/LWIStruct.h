@@ -214,9 +214,10 @@ typedef long MACERROR;
 #define LWE_DS_FLAG_IS_MOUNTAIN_LION                             0x00000100
 #define LWE_DS_FLAG_IS_MAVERICKS                       	         0x00000200
 #define LWE_DS_FLAG_IS_YOSEMITE					 0x00000400
-#define LWE_DS_FLAG_IS_ELCAPITAN				 0x00000800
-#define LWE_DS_FLAG_IS_SIERRA   				 0x00001000
-#define LWE_DS_FLAG_IS_HIGH_SIERRA   				 0x00002000
+#define LWE_DS_FLAG_IS_ELCAPITAN                                 0x00000800
+#define LWE_DS_FLAG_IS_SIERRA                                    0x00001000
+#define LWE_DS_FLAG_IS_HIGH_SIERRA                               0x00002000
+#define LWE_DS_FLAG_IS_MOJAVE                                    0x00004000
 
 typedef DWORD LWE_DS_FLAGS;
 
