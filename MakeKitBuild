@@ -1,5 +1,5 @@
 PROJECT_NAME="platform"
-MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
+MODULES="core compiler autotools moonunit cmock pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="openssl krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite curl libxml2 \
