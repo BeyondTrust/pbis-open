@@ -1025,7 +1025,9 @@ ContainerStart(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     status = lwmsg_call_dispatch(pCall, &pInstance->In, &pInstance->Out, ContainerStartComplete, pInstance);
+    CONTAINER_LOCK();
 
     switch (status)
     {
@@ -1116,7 +1118,9 @@ ContainerStop(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     status = lwmsg_call_dispatch(pCall, &pInstance->In, &pInstance->Out, ContainerStopComplete, pInstance);
+    CONTAINER_LOCK();
 
     switch (status)
     {
@@ -1194,7 +1198,9 @@ ContainerRefresh(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    CONTAINER_LOCK();
     BAIL_ON_ERROR(dwError);
 
     switch (out.tag)
@@ -1258,7 +1264,9 @@ ContainerSetLogInfo(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    CONTAINER_LOCK();
     BAIL_ON_ERROR(dwError);
 
     switch (out.tag)
@@ -1326,7 +1334,9 @@ ContainerSetLogLevel(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    CONTAINER_LOCK();
     BAIL_ON_ERROR(dwError);
 
     switch (out.tag)
@@ -1396,7 +1406,9 @@ ContainerGetLogState(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    CONTAINER_LOCK();
     BAIL_ON_ERROR(dwError);
 
     switch (out.tag)
@@ -1464,7 +1476,9 @@ ContainerGetFacilityList(
     dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
     BAIL_ON_ERROR(dwError);
 
+    CONTAINER_UNLOCK();
     dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    CONTAINER_LOCK();
     BAIL_ON_ERROR(dwError);
 
     switch (out.tag)
@@ -1522,7 +1536,7 @@ ContainerConstruct(
     pInstance->CoreSize = pInfo->dwCoreSize;
     pInstance->LogType = pInfo->DefaultLogType;
     pInstance->LogLevel = pInfo->DefaultLogLevel;
-    pInstance->ShutdownTimeout = pInfo->uShutdownTimeout; 
+    pInstance->ShutdownTimeout = pInfo->uShutdownTimeout;
 
     dwError = LwAllocateWc16String(&pInstance->pName, pInfo->pwszName);
     BAIL_ON_ERROR(dwError);
