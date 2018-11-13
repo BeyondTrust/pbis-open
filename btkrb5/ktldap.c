@@ -49,7 +49,7 @@
 #define LW_LDAP_16MB  16777215
 #define LW_LDAP_1MB   1048575
 
-static DWORD gKtLdapSaslMaxBufSize = LW_LDAP_16MB;
+static ber_len_t gKtLdapSaslMaxBufSize = LW_LDAP_16MB;
 
 VOID KtLdapSetSaslMaxBufSize(DWORD dwMaxbufsize)
 {
@@ -66,9 +66,8 @@ KtLdapBind(
 {
     const int version = LDAP_VERSION3;
     DWORD dwError = ERROR_SUCCESS;
-    DWORD dwMaxBufsize = 0;
     int lderr = 0;
-    ber_len_t maxbufsize = 0;
+    ber_len_t maxBufsize = 0;
     PSTR pszUrl = NULL;
     LDAP *pLd = NULL;
 
@@ -101,8 +100,8 @@ KtLdapBind(
     lderr = ldap_set_option( pLd, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    dwMaxBufsize = gKtLdapSaslMaxBufSize;
-    lderr = ldap_set_option(pLd, LDAP_OPT_X_SASL_MAXBUFSIZE, &dwMaxBufsize);
+    maxBufsize = gKtLdapSaslMaxBufSize;
+    lderr = ldap_set_option(pLd, LDAP_OPT_X_SASL_MAXBUFSIZE, &maxBufsize);
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwLdapBindDirectorySasl(pLd, pszDc, FALSE);

@@ -283,13 +283,13 @@ make()
 {
     OPEN_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @popt @sqlite \
-        @libuuid @openssl @curl @libxml2 @libedit \
-        @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
-        @lwio @libschannel @dcerpc @centutils @lwsm @lwadtool \
-        @eventlog @lsass @reapsysl @lwdns @lwnetapi @opensoap\
-        @linenoise-mob @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
-        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
-        @reskit @usermonitor @mod_auth_kerb @krb5_plugins @btkrb5 @tomlc99"
+        @libuuid @openssl @curl @libxml2 @libtdb @lwbase @lwmsg \
+        @lwreg @lwadvapi @netlogon @lwio @libschannel @dcerpc \
+        @centutils @lwsm @lwadtool @eventlog @lsass @reapsysl \
+        @lwdns @lwnetapi @opensoap\ @linenoise-mob @domainjoin/libdomainjoin \
+        @domainjoin/domainjoin-cli @domainjoin/scripts @lwconfig \
+        @lwupgrade @samba-interop @config @reskit @usermonitor \
+        @mod_auth_kerb @krb5_plugins @btkrb5 @tomlc99"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
