@@ -297,7 +297,7 @@ LsaPamMustCheckCurrentPassword(
     if (((PLSA_USER_INFO_1)pUserInfo)->bIsLocalUser)
     {
         // Local root user does not have to
-        // provider a user's old password.
+        // provide a user's old password.
         bCheckOldPassword = (getuid() != 0);
     }
     else
@@ -364,7 +364,7 @@ LsaPamUpdatePassword(
     }
     if (pPamContext->bPasswordChangeSuceeded)
     {
-        LSA_LOG_PAM_DEBUG("Password change already suceeded");
+        LSA_LOG_PAM_DEBUG("Password change already succeeded");
         goto cleanup;
     }
 
@@ -384,7 +384,7 @@ LsaPamUpdatePassword(
     dwError = LsaFindObjects(
                     hLsaConnection,
                     NULL,
-                    LSA_FIND_FLAGS_NSS,
+                    0,
                     LSA_OBJECT_TYPE_USER,
                     LSA_QUERY_TYPE_BY_NAME,
                     1,
@@ -423,7 +423,7 @@ cleanup:
     LW_SECURE_FREE_STRING(pszOldPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
     if (ppUser)
-    {
+    {        
         LsaFreeSecurityObjectList(
             1,
             ppUser);
@@ -451,6 +451,19 @@ cleanup:
     return dwError;
 
 error:
+
+    if ( dwError == LW_ERROR_INVALID_PASSWORD && ppUser && ppUser[0])
+    {
+        if (getuid() == 0 && ppUser[0]->bIsLocal) {
+            LsaPamConverse(
+                pamh,
+                "Ignoring root password change for PBIS AD user. Please use '/opt/pbis/bin/adtool' to manage PBIS AD user account passwords.",
+                PAM_ERROR_MSG,
+                NULL);
+            
+            dwError = LW_ERROR_SUCCESS;
+        }
+    }
 
     if ( dwError == LW_ERROR_PASSWORD_RESTRICTION )
     {
