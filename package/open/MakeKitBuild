@@ -286,7 +286,7 @@ make()
         @libuuid @openssl @curl @libxml2 @libtdb @lwbase @lwmsg \
         @lwreg @lwadvapi @netlogon @lwio @libschannel @dcerpc \
         @centutils @lwsm @lwadtool @eventlog @lsass @reapsysl \
-        @lwdns @lwnetapi @opensoap\ @linenoise-mob @domainjoin/libdomainjoin \
+        @lwdns @lwnetapi @opensoap @linenoise-mob @domainjoin/libdomainjoin \
         @domainjoin/domainjoin-cli @domainjoin/scripts @lwconfig \
         @lwupgrade @samba-interop @config @reskit @usermonitor \
         @mod_auth_kerb @krb5_plugins @btkrb5 @tomlc99"
