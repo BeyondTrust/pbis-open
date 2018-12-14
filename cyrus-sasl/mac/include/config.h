@@ -128,7 +128,9 @@ extern int getopt(
 	char * const *nargv,
 	const char *ostr);
 
-extern int getsubopt(char **optionp, const char * const *tokens, char **valuep);
+/* extern int getsubopt(char **optionp, const char * const *tokens, char **valuep); */
+/* PBIS modification to make this definition match the OSX unistd.h definition */
+extern int getsubopt(char **optionp, char * const *tokens, char **valuep);
 extern char* getpass(const char *prompt);
 
 /* ------------------------------------------------------------ */
