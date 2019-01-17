@@ -427,7 +427,7 @@ RSysSrvParseLine(
 
         if (!bLogThis)
         {
-            RSYS_LOG_INFO("Ignoring unmatched event of type %s due to configuration setttings", pLine->pSource->pszEventType);
+            RSYS_LOG_INFO("Ignoring unmatched event of type %s due to configuration settings", pLine->pSource->pszEventType);
 
             *pbNonBlank = FALSE;
             goto cleanup;
@@ -651,7 +651,7 @@ RSysSrvReadSource(
 
     dwError = regcomp(
                     &repeatRegEx,
-                    "[^ ]+ +[^ ]+ [^ ]+ [^ ]+ last message repeated ([0-9]+) times?( ---)?",
+                    "last message repeated ([0-9]+) times?",
                     REG_EXTENDED);
     BAIL_ON_RSYS_ERROR(dwError);
     bCompiledRegEx = TRUE;
@@ -690,8 +690,10 @@ RSysSrvReadSource(
                           sNewLen));
         BAIL_ON_RSYS_ERROR(dwError);
 
-        pSource->pszReadDataStart += pszNewBuffer - pSource->pszReadBufferStart;
-        pSource->pszReadDataEnd += pszNewBuffer - pSource->pszReadBufferStart;
+        memcpy(pszNewBuffer, pSource->pszReadBufferStart, pSource->pszReadBufferEnd - pSource->pszReadBufferStart);
+
+        pSource->pszReadDataStart = pszNewBuffer + (pSource->pszReadDataStart - pSource->pszReadBufferStart);
+        pSource->pszReadDataEnd = pszNewBuffer + (pSource->pszReadDataEnd - pSource->pszReadBufferStart);
 
         LW_RTL_FREE(&pSource->pszReadBufferStart);
 
