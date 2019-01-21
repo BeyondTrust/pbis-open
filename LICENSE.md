@@ -3,7 +3,7 @@ This software is provided under the terms of the GNU General Public License
 The additional components listed below are covered under separate license
 agreements:
 
-- cyrus-sasl - Copyright notice
+- cyrus-sasl - BSD License
 - dcerpc - BSD License
 - krb5 - MIT License
 - libedit - BSD License
@@ -15,7 +15,7 @@ agreements:
 - mod_auth_kerb - BSD License
 - mod_auth_pam - BSD License
 - openldap - OpenLDAP Public License
-- opensoap - Copyright notice
+- opensoap - BSD License
 - openssl - OpenSSL License
 - popt - MIT License
 - sqlite - Public Domain
