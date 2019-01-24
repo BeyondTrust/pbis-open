@@ -422,6 +422,9 @@ option()
                 s390x)
                     _default_MK_BUILD_ARCH="s390x"
                     ;;
+                mips64|mips64el)
+                    _default_MK_BUILD_ARCH="mips64"
+                    ;;
                 *)
                     mk_fail "unknown architecture: `uname -m`"
                     ;;
@@ -459,6 +462,9 @@ option()
             ;;
         "hpux-ia64")
             _default_MK_BUILD_ISAS="ia64_32 ia64_64"
+            ;;
+         *"-mips64"*)
+            _default_MK_BUILD_ISAS="mips64 mips64el"
             ;;
         *)
             _default_MK_BUILD_ISAS="$_default_MK_BUILD_ARCH"

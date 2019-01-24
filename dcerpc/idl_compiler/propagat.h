@@ -57,13 +57,11 @@ extern boolean PROP_main(       /* Returns true on success */
     AST_interface_n_t *int_p    /* [in] Ptr to AST interface node */
 );
 
-#ifndef mips
 void PROP_set_type_attr
 (
     AST_type_n_t *type_node_ptr,
     AST_flags_t  type_attr
 );
-#endif
 
 
 #endif
