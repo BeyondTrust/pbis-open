@@ -1,4 +1,4 @@
-PowerBroker Identity Services
+BeyondTrust AD Bridge
 --------
 To join an Active Directory domain, run
 
@@ -8,7 +8,7 @@ To query the computers state
 
 	/opt/pbis/bin/domainjoin-cli query
 
-To list PBIS services
+To list BeyondTrust AD Bridge services
 
 	/opt/pbis/bin/lwsm list
 

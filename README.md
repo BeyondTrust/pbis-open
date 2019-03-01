@@ -1,6 +1,6 @@
-# PowerBroker Identity Services Open
+# BeyondTrust AD Bridge Open
 
-PowerBroker Identity Services Open has several goals:
+BeyondTrust AD Bridge Open has several goals:
 
 1. Simplify the process of joining non-Microsoft hosts to Active Directory domains.
 2. Simplify the management of these hosts.
@@ -10,7 +10,7 @@ PowerBroker Identity Services Open has several goals:
 
 The pbis-open build uses makekit (http://bkoropoff.github.io/makekit/)
 While the code is portable among a variety of *nix based platforms
-(Linux, Solaris, AIX, HP-UX, and OS X), this build system is 
+(Linux, Solaris, AIX, HP-UX, and OS X), this build system is
 primarily intended for Linux & FreeBSD platforms.
 
 Before you begin, please read over this list of prerequisite development
@@ -19,7 +19,7 @@ packages (depending on your Linux distro):
 ### RedHat/Fedora
 * gcc glibc-devel pam-devel flex bison rpm-build rpm-devel popt-devel libxml2-devel autoconf automake libtool
 
-#### Optional packages: 
+#### Optional packages:
 * libglade2-devel - To build domainjoin-gui GTK application
 * 32bit development tools and libraries for compatibility packages when building on x86_64
   * glibc-devel.i686 libgcc.i686 pam-devel.i686
@@ -56,7 +56,7 @@ instead, but be sure to read the note below:
     $ make -jXX
     $ sudo make install
 
-You may view the complete set of configure options by running 
+You may view the complete set of configure options by running
 
     $ ../configure --help
 
@@ -72,10 +72,10 @@ you will need to start lwsmd and import registry files manually:
       done'
     $ sudo /etc/init.d/lwsmd reload
 
-## PBIS Registry Service
+## BeyondTrust AD Bridge Registry Service
 
-The PBIS Registry Service (lwregd) is the configuration data store
-used by all PBIS services.  PBIS provides several ways to view and
+The AD Bridge Registry Service (lwregd) is the configuration data store
+used by all AD Bridge services. AD Bridge provides several ways to view and
 modify the registry settings:
     - /opt/pbis/bin/edit-reg
     - /opt/pbis/bin/regshell
@@ -101,7 +101,7 @@ For example:
     hkey_this_machine\services\lsass> dir
     Arguments    REG_SZ   "lsassd --syslog"
     Dependencies REG_SZ   "netlogon lwio lwreg rdr"
-    Description  REG_SZ    "PBIS Security and Authentication Subsystem"
+    Description  REG_SZ    "Security and Authentication Subsystem"
     Path         REG_SZ    "/opt/pbis/sbin/lsassd"
     Type         REG_DWORD 0x00000001 (1)
 
@@ -111,17 +111,17 @@ NOTE: incorrectly configuring the PBIS registry can prevent PBIS from starting
 and/or prevent user authentication.  Use caution when modifying existing
 settings.
 
-## PBIS Service Manager
+## BeyondTrust AD Bridge  Service Manager
 
-The PBIS Service Manager (lwsmd) provides a service control
-architecture for starting and stopping all PBIS daemons and drivers
-based on a dependency graph.
+The AD Bridge Service Manager (lwsmd) provides a service control
+architecture for starting and stopping all AD Bridge daemons and
+drivers based on a dependency graph.
 
 The lwsmd daemon itself is managed using the standard SysV init
 script:
 
     $ /etc/init.d/lwsmd start
-    * Starting PBIS Service Manager: lwsmd              [ OK ] 
+    * Starting PBIS Service Manager: lwsmd              [ OK ]
 
 Only the registry service (lwregd) is hard coded to be started
 initially.  The user space CLI for managing services is the "lwsm"
@@ -139,7 +139,7 @@ utility.
     npfs        running (io: 19438)
     netlogon    running (standalone: 19468)
     srvsvc      running (standalone: 19529)
-    
+
     $ lwsm info lsass
     Service: lsass
     Description: PBIS Security and Authentication Subsystem
@@ -148,21 +148,20 @@ utility.
     Path: /opt/pbis/sbin/lsassd
     Arguments: 'lsassd' '--syslog'
     Dependencies: netlogon lwio lwreg rdr
-    
+
     $ lwsm stop lsass
     Stopping service reverse dependency: srvsvc
     Stopping service reverse dependency: srv
     Stopping service: lsass
-    
+
     $ lwsm start srvsvc
     Starting service dependency: lsass
     Starting service dependency: srv
     Starting service: srvsvc
-    
+
 
 
 ## Getting Help
 
 The main PBIS Open web site is at [GitHub](https://github.com/BeyondTrust/pbis-open).
 From here you will find links to the project forums, and pre-built package downloads.
-

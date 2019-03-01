@@ -1,34 +1,34 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\lwio]
-"Description" = { 
-    value = "PBIS IO Manager" 
-    default = "PBIS IO Manager" 
-    doc = "" 
+"Description" = {
+    value = "IO Manager"
+    default = "IO Manager" 
+    doc = ""
 }
-"Path" = { 
-    value = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
-    default = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
-    doc = "" 
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@"
+    doc = ""
 }
-"Arguments" = { 
-    value = "" 
-    default = "" 
-    doc = "" 
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
 }
-"Environment" = { 
-    default = "" 
-    doc = "" 
+"Environment" = {
+    default = ""
+    doc = ""
 }
-"Dependencies" = { 
-    value = "lwreg" 
-    default = "lwreg" 
-    doc = "" 
+"Dependencies" = {
+    value = "lwreg"
+    default = "lwreg"
+    doc = ""
 }
-"Type" = { 
+"Type" = {
     value = dword:00000002
     default = dword:00000002
-    doc = "" 
+    doc = ""
 }
 "Autostart" = {
     default = dword:00000001
@@ -44,21 +44,21 @@
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters]
-"SignMessagesIfSupported" = { 
-    default = dword:00000000 
-    doc = "" 
+"SignMessagesIfSupported" = {
+    default = dword:00000000
+    doc = ""
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
-"Load" = { 
+"Load" = {
     value = "rdr"
     default = "rdr"
-    doc = "" 
+    doc = ""
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
-"Path" = { 
-    value = "@providerdir@/libiotest.sys@MOD_EXT@" 
-    default = "@providerdir@/libiotest.sys@MOD_EXT@" 
-    doc = "" 
+"Path" = {
+    value = "@providerdir@/libiotest.sys@MOD_EXT@"
+    default = "@providerdir@/libiotest.sys@MOD_EXT@"
+    doc = ""
 }

@@ -200,7 +200,7 @@ static DWORD InitLsaAuthParams(
     }
 
     if (params->workstation_name) {
-        dwErr = LwAllocateString(params->workstation_name, 
+        dwErr = LwAllocateString(params->workstation_name,
                                   &pLsaParams->pszWorkstation);
         BAIL_ON_LSA_ERR(dwErr);
     }
@@ -241,7 +241,7 @@ CopyLsaUserInfoToWbcInfo(
     BAIL_ON_NULL_PTR_PARAM(pWbcUserInfo, dwErr);
     BAIL_ON_NULL_PTR_PARAM(pLsaUserInfo, dwErr);
 
-    memset(pWbcUserInfo, 0, sizeof(struct wbcAuthUserInfo));    
+    memset(pWbcUserInfo, 0, sizeof(struct wbcAuthUserInfo));
 
     pWbcUserInfo->user_flags = pLsaUserInfo->dwUserFlags;
 
@@ -272,17 +272,17 @@ CopyLsaUserInfoToWbcInfo(
 
     pWbcUserInfo->acct_flags = pLsaUserInfo->dwAcctFlags;
 
-    if (pLsaUserInfo->pSessionKey) {        
+    if (pLsaUserInfo->pSessionKey) {
         memcpy(pWbcUserInfo->user_session_key,
                LsaDataBlobBuffer(pLsaUserInfo->pSessionKey),
                sizeof(pWbcUserInfo->user_session_key));
     }
 
-    if (pLsaUserInfo->pLmSessionKey) {        
+    if (pLsaUserInfo->pLmSessionKey) {
         memcpy(pWbcUserInfo->lm_session_key,
                LsaDataBlobBuffer(pLsaUserInfo->pLmSessionKey),
                sizeof(pWbcUserInfo->lm_session_key));
-    }    
+    }
 
     pWbcUserInfo->logon_count        = pLsaUserInfo->LogonCount;
     pWbcUserInfo->bad_password_count = pLsaUserInfo->BadPasswordCount;
@@ -481,7 +481,7 @@ MapLsaErrorToNtStatus(
         ntStatus = STATUS_PASSWORD_EXPIRED;
         break;
     case LW_ERROR_ACCOUNT_EXPIRED:
-        ntStatus = STATUS_ACCOUNT_EXPIRED;        
+        ntStatus = STATUS_ACCOUNT_EXPIRED;
         break;
     case LW_ERROR_ACCOUNT_LOCKED:
         ntStatus = STATUS_ACCOUNT_LOCKED_OUT;
@@ -490,10 +490,10 @@ MapLsaErrorToNtStatus(
         ntStatus = STATUS_ACCOUNT_DISABLED;
         break;
     default:
-        break;        
+        break;
     }
 
-    return ntStatus;    
+    return ntStatus;
 }
 
 DWORD
@@ -510,12 +510,12 @@ wbcFillErrorInfo(
     pError = _wbc_malloc_zero(sizeof(struct wbcAuthErrorInfo),
                   FreeWbcErrorInfo);
     BAIL_ON_NULL_PTR(pError, dwErr);
-    
+
     /* Fill in errors here */
 
-    ntStatus = MapLsaErrorToNtStatus(dwError);    
+    ntStatus = MapLsaErrorToNtStatus(dwError);
 
-    pError->nt_status = ntStatus;    
+    pError->nt_status = ntStatus;
 
     *ppWbcError = pError;
 
@@ -541,11 +541,11 @@ wbcAuthenticateUserEx(
     /* Sanity and setup */
 
     BAIL_ON_NULL_PTR_PARAM(params, dwErr);
-    
+
     if (params->level == WBC_AUTH_USER_LEVEL_PAC)
     {
         // Samba now makes a call with WBC_AUTH_USER_LEVEL_PAC to prime the cache with the PAC
-        // PBIS currently does not implement or require this functionality.
+        // BeyondTrust AD Bridge currently does not implement or require this functionality.
         // As this is merely a cache priming mechanism it is safe to ignore.
         return WBC_ERR_SUCCESS;
     }
@@ -768,4 +768,3 @@ wbcAddNamedBlob(
 
     return LW_ERROR_NOT_IMPLEMENTED;
 }
-

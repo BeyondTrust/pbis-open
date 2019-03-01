@@ -7,7 +7,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -155,7 +155,7 @@ typedef LW_LONG  LW_NTSTATUS, *LW_PNTSTATUS;
 typedef LW_WCHAR           LW_TCHAR;
 #else
 typedef LW_CHAR            LW_TCHAR;
-#endif 
+#endif
 
 typedef struct _LW_GUID {
     LW_ULONG Data1;
@@ -485,7 +485,7 @@ typedef LW_PANSI_STRING PANSI_STRING;
 #define ANSI_STRING_MAX_CHARS LW_ANSI_STRING_MAX_CHARS
 #define ANSI_STRING_MAX_BYTES LW_ANSI_STRING_MAX_BYTES
 
-#define RTL_STRING_IS_NULL_OR_EMPTY(String) LW_RTL_STRING_IS_NULL_OR_EMPTY(String) 
+#define RTL_STRING_IS_NULL_OR_EMPTY(String) LW_RTL_STRING_IS_NULL_OR_EMPTY(String)
 #define RtlCStringIsNullOrEmpty(String) LwRtlCStringIsNullOrEmpty(String)
 
 #define RTL_CONSTANT_STRING(StringLiteral) LW_RTL_CONSTANT_STRING(StringLiteral)
@@ -505,9 +505,9 @@ cpp_quote("#endif")
 
 #endif
 
-// krb5/src/plugins/preauth/pkinit/pkcs11.h struct ck_slot_info field 
+// krb5/src/plugins/preauth/pkinit/pkcs11.h struct ck_slot_info field
 // slot description length is hardcoded to 64. Using the following define
-// for PBIS use.
+// for BeyondTrust AD Bridge use.
 #define LW_CK_SLOT_DESCRIPTION_LEN 64
 
 #endif

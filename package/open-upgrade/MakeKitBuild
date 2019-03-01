@@ -31,7 +31,7 @@ package_deb()
         VERSION="$PKG_DEB_VERSION" \
         DEBIANFILES="deb/pbis-open-upgrade.preinst.in deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
 
-    mk_deb_done   
+    mk_deb_done
 }
 
 package_freebsd()
@@ -39,8 +39,8 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_OPEN_UPGRADE_FREEBSD_NAME" \
         VERSION="$PKG_FREEBSD_VERSION" \
-        SHORT="-PowerBroker Identity Services Open Upgrade Helper" \
-        LONG="-Aids in upgrading between versions of PowerBroker Identity Services Open" \
+        SHORT="-BeyondTrust AD Bridge Open Upgrade Helper" \
+        LONG="-Aids in upgrading between versions of BeyondTrust AD Bridge Open" \
         PREINST="freebsd/preinstall.in" \
         POSTINST="freebsd/postinstall.in"
 
@@ -87,7 +87,7 @@ package_depot()
 
         mk_depot_sub_do SUBPACKAGE="prefix"
         mk_depot_sub_done
-            
+
     mk_depot_done
 }
 

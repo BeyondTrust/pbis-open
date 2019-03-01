@@ -69,7 +69,7 @@ Makeself version $MS_VERSION
   --tar arg1 [arg2 ...] Access the contents of the archive through the tar command
   --                    Following arguments will be passed to the embedded script
 
-  To see PBIS install help, run \$0 -- --help
+  To see BeyondTrust AD Bridge install help, run \$0 -- --help
 
 EOH
 }

@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -34,8 +34,8 @@
  * The checkout and checkin reasons are displayed in Password Safe
  * web console.
  */
-static PSTR pszDomainJoinCheckOutReason = "\"Reason\":\"PBIS Domainjoin\"";
-static PSTR pszDomainJoinCheckInReason = "{\"Reason\":\"PBIS Domainjoin Done\"}";
+static PSTR pszDomainJoinCheckOutReason = "\"Reason\":\"AD Bridge Domainjoin\"";
+static PSTR pszDomainJoinCheckInReason = "{\"Reason\":\"AD Bridge Domainjoin Done\"}";
 
 
 /*
@@ -188,8 +188,8 @@ DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi)
    readBuffer.size = strlen(pszDomainJoinCheckInReason);
 
    dwError = LwAllocateStringPrintf(
-               &pszUrl, "%s/Requests/%d/Checkin", 
-               pApi->config.pszUrlBase, 
+               &pszUrl, "%s/Requests/%d/Checkin",
+               pApi->config.pszUrlBase,
                pApi->session.dwRequestId);
    BAIL_ON_LW_ERROR(dwError);
 
@@ -267,4 +267,3 @@ error:
   goto cleanup;
 
 }
-

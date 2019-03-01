@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "DOMAINJOIN\-CLI" "8" "August 2018" "" ""
+.TH "DOMAINJOIN\-CLI" "8" "January 2019" "" ""
 .
 .SH "NAME"
 \fBdomainjoin\-cli\fR \- Join a host to an Active Directory domain
@@ -37,7 +37,7 @@
 \fBdomainjoin\-cli\fR [\fIoptions\fR] get_distro_version
 .
 .SH "DESCRIPTION"
-\fBdomainjoin\-cli\fR is the BeyondTrust PBIS AD domain join tool\. \fBdomainjoin\-cli\fR will join the current machine to an AD domain, and enable the authentication of AD users\.
+\fBdomainjoin\-cli\fR is the BeyondTrust AD Bridge domain join tool\. \fBdomainjoin\-cli\fR will join the current machine to an AD domain, and enable the authentication of AD users\.
 .
 .P
 \fBdomainjoin\-cli\fR offers fine\-grained control over modifications to system configuration files that are typically required during a join, such as editing \fB/etc/nsswitch\.conf\fR or the system PAM setup (see JOIN and LEAVE commands)\.
@@ -79,7 +79,7 @@ The join command supports the following options:
 \fB\-\-ou\fR \fIorganizational_unit\fR
 .
 .IP
-Joins the machine to the OU \fIorganizational_unit\fR instead of the default "Computers" OU\. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied\. \fBNote:\fR Group policy support is an \fBPBIS Enterprise\fR feature\. If the \fIorganizational_unit\fR is not supplied, you will be prompted for it\. \fB\-\-\fR can be used to indicate the OU value is not supplied and to separate it from subsequent parameters\.
+Joins the machine to the OU \fIorganizational_unit\fR instead of the default "Computers" OU\. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied\. \fBNote:\fR Group policy support is an \fBBeyondTrust AD Bridge Enterprise\fR feature\. If the \fIorganizational_unit\fR is not supplied, you will be prompted for it\. \fB\-\-\fR can be used to indicate the OU value is not supplied and to separate it from subsequent parameters\.
 .
 .P
 \fB\-\-assumeDefaultDomain\fR \fByes\fR|\fBno\fR
@@ -118,7 +118,7 @@ Explicitly enables the configuration of \fImodule\fR during the join operation\.
 Explicitly disables the configuration of \fImodule\fR during the join operation\.
 .
 .IP
-\fBNote\fR that some modules are necessary for the proper operation of PBIS while joined to AD\. If you attempt to disable such a module, \fBdomainjoin\-cli\fR will refuse to proceed with a join operation\.
+\fBNote\fR that some modules are necessary for the proper operation of BeyondTrust AD Bridge while joined to AD\. If you attempt to disable such a module, \fBdomainjoin\-cli\fR will refuse to proceed with a join operation\.
 .
 .IP
 For some modules, it is possible to make the relevant configuration changes by hand; \fBdomainjoin\-cli\fR will inform you of the necessary changes and will proceed with the module disabled if it detects that the changes have been made\.
@@ -217,7 +217,7 @@ Turns on debugging information during the leave operation and provides more verb
 \fBbash\fR \- fixes the bash prompt for backslashes in usernames
 .
 .IP "\(bu" 4
-\fBdsplugin\fR \- enables the PBIS directory services plugin on a Mac computer
+\fBdsplugin\fR \- enables the directory services plugin on a Mac computer
 .
 .IP "\(bu" 4
 \fBfirewall\fR \- opens ports to the domain controller
@@ -247,7 +247,7 @@ Turns on debugging information during the leave operation and provides more verb
 \fBpam\fR \- configures pam\.d and pam\.conf
 .
 .IP "\(bu" 4
-\fBnsswitch\fR \- enables or disables PBIS nsswitch module
+\fBnsswitch\fR \- enables or disables nsswitch module
 .
 .IP "\(bu" 4
 \fBssh\fR \- configures ssh and sshd
@@ -279,7 +279,7 @@ Makes local configuration modifications necessary to ensure that the fully\-qual
 Changes the hostname of this machine to \fIhostname\fR\. As it is necessary to have a unique, non\-generic name before joining AD, this operation is provided as a convenient way to quickly rename this computer before performing a join\.
 .
 .SH "CONFIGURATION AND DEBUGGING COMMANDS"
-\fBdomainjoin\-cli\fR includes commands for debugging the domain\-join process and for configuring or preconfiguring a module\. For example, run the configure command to preconfigure a system before you join a domain—a useful strategy when you are deploying PBIS in a virtual environment and you need to preconfigure the nsswitch, ssh, or PAM module of the target computers to avoid restarting them after they are added to the domain\.
+\fBdomainjoin\-cli\fR includes commands for debugging the domain\-join process and for configuring or preconfiguring a module\. For example, run the configure command to preconfigure a system before you join a domain—a useful strategy when you are deploying BeyondTrust AD Bridge in a virtual environment and you need to preconfigure the nsswitch, ssh, or PAM module of the target computers to avoid restarting them after they are added to the domain\.
 .
 .P
 The following \fBconfigure\fR commands are supported\.
@@ -358,7 +358,7 @@ Show what configuration modules would be run when joining the AD domain \fBsales
 Show what changes would be made to the system by the \fBpam\fR module when joining the AD domain \fBsales\.my\-company\.com\fR\.
 .
 .SH "SEE ALSO"
-The full documentation for PBIS is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
+The full documentation is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
 .
 .SH "VERSION"
-PBIS version 8\.7 +\.
+Version 9\.0 +\.

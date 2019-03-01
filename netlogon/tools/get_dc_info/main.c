@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -61,7 +61,7 @@ ShowUsage()
     printf("        [--force] [--ds-required] [--gc-required]\n");
     printf("        [--pdc-required] [--background-only] [--kdc-required]\n");
     printf("        [--timeserv-required] [--writeable-required] [--good-timeserv-required]\n");
-    printf("        [--avoid-self] [--preferred-domain <domain name>]\n\n"); 
+    printf("        [--avoid-self] [--preferred-domain <domain name>]\n\n");
 }
 
 DWORD
@@ -72,7 +72,7 @@ AddFlag(
 {
     DWORD dwError = 0;
     DWORD dwFlags = *pdwFlags;
-    
+
     if(dwFlags & dwFlag)
     {
         printf("Duplicate flag entered: [0x%.8X]\n", dwFlag);
@@ -84,15 +84,15 @@ AddFlag(
         dwError = ERROR_INVALID_PARAMETER;
     }
     BAIL_ON_LWNET_ERROR(dwError);
-    
+
     dwFlags |= dwFlag;
-    
+
     *pdwFlags = dwFlags;
-    
-    
+
+
 error:
     return dwError;
-    
+
 }
 
 DWORD
@@ -127,11 +127,11 @@ ParseArgs(
         {
             break;
         }
-        
+
         switch (parseMode)
         {
             case PARSE_MODE_OPEN:
-        
+
                 if ((strcmp(pszArg, "--help") == 0) ||
                     (strcmp(pszArg, "-h") == 0))
                 {
@@ -148,7 +148,7 @@ ParseArgs(
 
                     dwError = LWNetAllocateString(pszArg, &pszTargetFQDN);
                     BAIL_ON_LWNET_ERROR(dwError);
-        
+
                     parseMode = PARSE_MODE_OPTIONS;
                 }
                 break;
@@ -212,7 +212,7 @@ ParseArgs(
                     dwError = AddFlag(DS_AVOID_SELF, &dwFlags);
                     BAIL_ON_LWNET_ERROR(dwError);
                 }
-                else 
+                else
                 {
                     LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
                     dwError = ERROR_INVALID_PARAMETER;
@@ -220,44 +220,44 @@ ParseArgs(
                 }
                 break;
             case PARSE_MODE_SITENAME:
-                
+
                 if(!IsNullOrEmptyString(pszSiteName))
                 {
                     LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
                     dwError = ERROR_INVALID_PARAMETER;
                     BAIL_ON_LWNET_ERROR(dwError);
                 }
-                
+
                 dwError = LWNetAllocateString(pszArg, &pszSiteName);
                 BAIL_ON_LWNET_ERROR(dwError);
-                
+
                 parseMode = PARSE_MODE_OPTIONS;
                 break;
             case PARSE_MODE_PREFERRED_DOMAIN:
-                
+
                 if(!IsNullOrEmptyString(pszPrimaryDomain))
                 {
                     LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
                     dwError = ERROR_INVALID_PARAMETER;
                     BAIL_ON_LWNET_ERROR(dwError);
                 }
-                
+
                 dwError = LWNetAllocateString(pszArg, &pszPrimaryDomain);
                 BAIL_ON_LWNET_ERROR(dwError);
-                
+
                 parseMode = PARSE_MODE_OPTIONS;
                 break;
         }
-        
+
     } while (iArg < argc);
 
-    
+
     if(IsNullOrEmptyString(pszTargetFQDN))
     {
         ShowUsage();
         exit(0);
     }
-    
+
 error:
     if (dwError)
     {
@@ -277,7 +277,7 @@ error:
 
 void
 safePrintString(
-    PSTR pszStringName, 
+    PSTR pszStringName,
     PSTR pszStringValue
     )
 {
@@ -313,9 +313,9 @@ main(
     PLWNET_DC_INFO pDCInfo = NULL;
     DWORD dwFlags = 0;
     CHAR szErrorBuf[1024];
-    
+
     INT i = 0;
-    
+
     dwError = ParseArgs(
                 argc,
                 argv,
@@ -336,7 +336,7 @@ main(
                 NULL,
                 &pDCInfo
                 );
-    BAIL_ON_LWNET_ERROR(dwError); 
+    BAIL_ON_LWNET_ERROR(dwError);
 
     printf("Printing LWNET_DC_INFO fields:\n");
     printf("===============================\n");
@@ -346,30 +346,30 @@ main(
     }
     else
     {
-        printf("dwDomainControllerAddressType = %u\n", pDCInfo->dwDomainControllerAddressType); 
-        printf("dwFlags = %u\n", pDCInfo->dwFlags); 
-        printf("dwVersion = %u\n", pDCInfo->dwVersion);       
-        printf("wLMToken = %u\n", pDCInfo->wLMToken);  
+        printf("dwDomainControllerAddressType = %u\n", pDCInfo->dwDomainControllerAddressType);
+        printf("dwFlags = %u\n", pDCInfo->dwFlags);
+        printf("dwVersion = %u\n", pDCInfo->dwVersion);
+        printf("wLMToken = %u\n", pDCInfo->wLMToken);
         printf("wNTToken = %u\n", pDCInfo->wNTToken);
-        
+
         safePrintString("pszDomainControllerName", pDCInfo->pszDomainControllerName);
         safePrintString("pszDomainControllerAddress", pDCInfo->pszDomainControllerAddress);
-        
+
         printf("pucDomainGUID(hex) = ");
         for(i = 0; i < LWNET_GUID_SIZE; i++)
         {
             printf("%.2X ", pDCInfo->pucDomainGUID[i]);
         }
         printf("\n");
-        
-        safePrintString("pszNetBIOSDomainName", pDCInfo->pszNetBIOSDomainName);    
-        safePrintString("pszFullyQualifiedDomainName", pDCInfo->pszFullyQualifiedDomainName);     
-        safePrintString("pszDnsForestName", pDCInfo->pszDnsForestName);       
-        safePrintString("pszDCSiteName", pDCInfo->pszDCSiteName);      
-        safePrintString("pszClientSiteName", pDCInfo->pszClientSiteName); 
-        safePrintString("pszNetBIOSHostName", pDCInfo->pszNetBIOSHostName);   
-        safePrintString("pszUserName", pDCInfo->pszUserName);     
-        
+
+        safePrintString("pszNetBIOSDomainName", pDCInfo->pszNetBIOSDomainName);
+        safePrintString("pszFullyQualifiedDomainName", pDCInfo->pszFullyQualifiedDomainName);
+        safePrintString("pszDnsForestName", pDCInfo->pszDnsForestName);
+        safePrintString("pszDCSiteName", pDCInfo->pszDCSiteName);
+        safePrintString("pszClientSiteName", pDCInfo->pszClientSiteName);
+        safePrintString("pszNetBIOSHostName", pDCInfo->pszNetBIOSHostName);
+        safePrintString("pszUserName", pDCInfo->pszUserName);
+
     }
 
 error:
@@ -381,7 +381,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the PBIS Netlogon Agent.  Error code %u (%s).\n%s\n",
+                 "Failed communication with the AD Bridge Netlogon Agent.  Error code %u (%s).\n%s\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)),
                  szErrorBuf);
@@ -390,7 +390,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the PBIS Netlogon Agent.  Error code %u (%s).\n",
+                 "Failed communication with the AD Bridge Netlogon Agent.  Error code %u (%s).\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)));
         }

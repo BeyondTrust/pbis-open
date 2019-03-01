@@ -828,9 +828,9 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
             options->warningCallback(options, "Unsupported loader flags set",
                                  "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environment variables.\n"
                                   "\n"
-                                 "If this operation fails you should stop all PowerBroker Identity Services daemons, clear the environment variable, then retry the join operation.\n"
+                                 "If this operation fails you should stop all BeyondTrust AD Bridge daemons, clear the environment variable, then retry the join operation.\n"
                                  "\n"
-                                 "For more information, see the 'PowerBroker Identity Services Quick Start Guide' or 'PowerBroker Identity Services Installation Guide' online at:\n"
+                                 "For more information, see the 'BeyondTrust AD Bridge Installation Guide' online at:\n"
                                  "http://www.beyondtrust.com\n");
         }
     }
@@ -1873,4 +1873,3 @@ void DJSetUserEnabledADProviderModes(
 cleanup:
    return;
 }
-

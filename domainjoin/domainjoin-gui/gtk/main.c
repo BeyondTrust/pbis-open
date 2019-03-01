@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -476,7 +476,7 @@ join_mode(PJOINSTATE pJoinState, LWException** exc)
     int result;
     gboolean quit = FALSE;
 
-    g_idle_add(close_stale_dialogs, NULL);  
+    g_idle_add(close_stale_dialogs, NULL);
 
     dialog = joindialog_new(pJoinState);
 
@@ -579,8 +579,8 @@ ensure_gtk_version(int major, int minor, int micro, LWException** exc)
     if ((msg = gtk_check_version(major, minor, micro)))
     {
         LW_RAISE_EX(exc, ERROR_DLL_MIGHT_BE_INCOMPATIBLE,
-            "Incompatible library detected", 
-            "%s.  PBIS does not support graphical domain joins on this platform.  "
+            "Incompatible library detected",
+            "%s.  BeyondTrust AD Bridge does not support graphical domain joins on this platform.  "
             "Please use the command-line domain join application instead.",
             msg);
     }
@@ -665,4 +665,3 @@ cleanup:
 
     return 0;
 }
-

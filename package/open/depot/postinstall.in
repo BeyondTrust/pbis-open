@@ -394,7 +394,7 @@ execute_auxiliary_scripts()
 
 postinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
 
     determine_upgrade_type
 
@@ -415,7 +415,7 @@ postinstall()
     cleanup_registry
 
     remove_TrustEnumerationWaitSettingFromADPath
-  
+
     remove_npfs_dependencies
 
     remove_dcerpc_dependencies
@@ -457,7 +457,7 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    logfile "Package: PowerBroker Identity Services Open postinstall finished"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall finished"
     exit 0
 }
 

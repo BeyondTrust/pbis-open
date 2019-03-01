@@ -67,11 +67,11 @@
         <template>
                 <common_name>
                         <loctext xml:lang='C'>
-                        PowerBroker Identity Services Service Management daemon
+                        BeyondTrust AD Bridge Service Management daemon
                         </loctext>
                 </common_name>
                 <documentation>
-                        <doc_link name='PowerBroker Identity Services Documentation' uri='http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/Resources/Documentation-Library/' />
+                        <doc_link name='BeyondTrust AD Bridge Documentation' uri='http://www.beyondtrust.com/' />
                 </documentation>
         </template>
 </service>

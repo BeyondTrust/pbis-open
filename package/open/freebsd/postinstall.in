@@ -377,7 +377,7 @@ execute_auxiliary_scripts()
 
 postinstall()
 {
-    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    log "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     determine_upgrade_type
@@ -430,13 +430,13 @@ postinstall()
             fi
         fi
     fi
-    
+
     run_quiet mv /var/lib/likewise /var/lib/likewise.old
     run_quiet rm -rf "${UPGRADEDIR}"
 
     execute_auxiliary_scripts
 
-    log "Package: PowerBroker Identity Services Open postinstall finished"
+    log "Package: BeyondTrust AD Bridge Open postinstall finished"
     exit 0
 }
 

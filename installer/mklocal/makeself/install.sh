@@ -357,13 +357,13 @@ do_setup()
         if [ -n "$i" ]; then
             expr "$i" : "^$libdir:" >/dev/null
             if [ $? -ne 0 ]; then
-                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
+                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the BeyondTrust AD Bridge manual for more information."
             fi
         fi
     done
     for i in "$LD_PRELOAD"; do
         if [ -n "$i" ]; then
-            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
+            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the BeyondTrust AD Bridge manual for more information."
         fi
     done
 }
@@ -807,7 +807,7 @@ remove_extra_files()
         fi
     done
 
-    echo "Remove PowerBroker Identity Services created backup/restore files"
+    echo "Remove BeyondTrust AD Bridge created backup/restore files"
     for file in /etc/pam.conf /etc/pam.d/* /etc/krb5.conf /etc/krb5/* /etc/hosts /etc/sshd_config /etc/ssh_config /etc/ssh/* /etc/nsswitch.conf /etc/skel /etc/inet/* /etc/hostname.* /etc/defaultdomain /usr/lib/security/methods.cfg /etc/security/user /etc/security/login.cfg /etc/netsvc.conf /etc/methods.cfg; do
         orig="$file.lwidentity.orig"
         bak="$file.lwidentity.bak"

@@ -4,13 +4,13 @@ Priority: optional
 Maintainer: PBIS Support <pbis-support@beyondtrust.com>
 Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
-Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+Homepage: http://www.beyondtrust.com/
 
 Package: @PKG_OPEN_DEB_NAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, @PKG_OPEN_UPGRADE_DEB_NAME@
 Provides: @PKG_OPEN_DEB_NAME@, likewise-open
-Conflicts: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@), 
+Conflicts: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  pbis-enterprise,
  likewise-open (<< 6.2),
  likewise-base (<< 6.2),
@@ -35,7 +35,7 @@ Conflicts: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-samba-interop (<< 6.2),
  likewise-sqlite (<< 6.2),
  likewise-enterprise (<< 6.2),
-Replaces: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@), 
+Replaces: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-open (<< 6.2),
  likewise-base (<< 6.2),
  likewise-domainjoin (<< 6.2),
@@ -55,7 +55,7 @@ Replaces: @PKG_OPEN_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-rpc (<< 6.2),
  likewise-sqlite (<< 6.2),
 Description: Authentication services for Active Directory domains
- PowerBroker Identity Services integrates Unix desktops and servers into
+ BeyondTrust AD Bridge integrates Unix desktops and servers into
  an Active Directory environment by joining hosts to the domain and lets Unix
  applications and services authenticate Windows users and groups via the PAM
  and Name Service Switch libraries.
@@ -64,7 +64,5 @@ Package: @PKG_OPEN_DEB_NAME@-dev
 Section: libdevel
 Architecture: any
 #Depends: likewise_open (= ${binary:Version})
-Description: PowerBroker Identity Services Open SDK
- PowerBroker Identity Services Open Software Development Kit
-
-
+Description: BeyondTrust AD Bridge Open SDK
+ BeyondTrust AD Bridge Open Software Development Kit

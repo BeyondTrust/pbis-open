@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script completely uninstalls PowerBroker Identity Services from the Mac
+# This script completely uninstalls AD Bridge from the Mac
 
 warn()
 {

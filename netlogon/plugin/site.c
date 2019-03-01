@@ -32,7 +32,7 @@
  *
  * Abstract:
  *
- *        PBIS Netlogon
+ *        AD Bridge Netlogon
  *
  *        Preferred Site Plugin
  *
@@ -49,13 +49,13 @@
 #include "lwnet-plugin.h"
 #include "lwerror.h"
 
-typedef struct _SITE_PLUGIN_INTERFACE 
+typedef struct _SITE_PLUGIN_INTERFACE
 {
     LWNET_PLUGIN_INTERFACE iface;
     LW_PSTR pszSiteName;
 } SITE_PLUGIN_INTERFACE, *PSITE_PLUGIN_INTERFACE;
 
-typedef struct _SITE_PLUGIN_RESULT 
+typedef struct _SITE_PLUGIN_RESULT
 {
     PDNS_SERVER_INFO pServerInfo;
     LWNET_PLUGIN_SERVER_ADDRESS ServerAddress[0];
@@ -151,7 +151,7 @@ error:
     }
 
     if (pResult) *ppDcArray = pResult->ServerAddress;
-    
+
     *pdwDcCount = dwDcCount;
 
     return dwError;
@@ -199,7 +199,7 @@ SitePluginReadRegistry(PSITE_PLUGIN_INTERFACE pInterface)
                 Config,
                 sizeof(Config)/sizeof(Config[0]));
 
-    
+
     return dwError;
 }
 

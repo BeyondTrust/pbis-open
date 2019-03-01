@@ -21,7 +21,7 @@ do
     case "$arg" in
 	--help|-h)
 	    cat <<EOF
-$PROGRAM -- Modify PBIS configuration in your preferred text editor
+$PROGRAM -- Modify BeyondTrust AD Bridge configuration in your preferred text editor
 
 Usage:  $PROGRAM [ options ] [ path ]
 
@@ -85,7 +85,7 @@ fi
 TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
 
 #
-# Warning: \r is embedded as ^M (0xd) as not all UNIX sed supports 
+# Warning: \r is embedded as ^M (0xd) as not all UNIX sed supports
 # the \r escape sequence for this character.
 #
 "${BINDIR}/regshell" export --legacy ${ROOT_PATH} - | \

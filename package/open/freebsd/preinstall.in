@@ -91,14 +91,14 @@ run_or_fail()
 
 preinstall()
 {
-    log "Package: PowerBroker Identity Services Open preinstall begins (`date`)"
+    log "Package: BeyondTrust AD Bridge Open preinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     if [ -f '@MK_SBINDIR@/gpagentd' ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before installing PowerBroker Identity Services Open."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall BeyondTrust AD Bridge Enterprise before installing BeyondTrust AD Bridge Open."
         exit 1
     elif [ -f '@MK_PREFIX@/data/VERSION' ]; then
-        log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of PowerBroker Identity Services Open before proceeding with the install."
+        log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of BeyondTrust AD Bridge Open before proceeding with the install."
         exit 1
     fi
 
@@ -106,7 +106,7 @@ preinstall()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: PowerBroker Identity Services Open preinstall finished"
+    log "Package: BeyondTrust AD Bridge Open preinstall finished"
     exit 0
 }
 

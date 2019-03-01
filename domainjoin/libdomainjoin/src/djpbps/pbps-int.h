@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -61,10 +61,10 @@
 #include <djhostinfo.h>
 
 
-// Certificates in the domain join configuration file needs to be 
+// Certificates in the domain join configuration file needs to be
 // in PEM format.
 #define PBPS_CURLOPT_SSLCERTTYPE  "PEM"
- 
+
 #define BAIL_WITH_CURL_ERROR(_curlError, ...) \
     do { \
         DJ_LOG_ERROR("CURL error %d (%s)\n", \
@@ -82,7 +82,7 @@
     } while(0);
 
 
-/* 
+/*
  * Credential checkout duration time as defined in Password Safe API.
  */
 #define PBPSAPI_MINIMUM_DURATION_MINUTES 1
@@ -108,18 +108,18 @@ typedef struct PbpsApiManagedAccount_s
 } PbpsApiManagedAccount_t;
 
 typedef struct PbpsApiConfig_s
-{      
+{
    DWORD dwVersionTemplate;
    PSTR pszUrlBase;         // PasswordSafe server
-   PSTR pszRunAsUser;       // run as user in http header 
+   PSTR pszRunAsUser;       // run as user in http header
    PSTR pszRunAsUserPwd;
    PSTR pszApiKey;
    PSTR pszHeaderAuth;
    PSTR pszJoinAccount;     // Needs to be a PasswordSafe managed account.
                             // Account to request credentials.
    DWORD dwDurationMinutes;
-   PSTR pszCertFileClient;  // Certificate PBIS provides to Password Safe for validation
-   PSTR pszCertFileCA;      // CA for PBIS to use to verify certificate from Password Safe
+   PSTR pszCertFileClient;  // Certificate BeyondTrust AD Bridge provides to Password Safe for validation
+   PSTR pszCertFileCA;      // CA for BeyondTrust AD Bridge to use to verify certificate from Password Safe
 }  PbpsApiConfig_t;
 
 typedef struct PbpsApiSession_s
@@ -144,7 +144,7 @@ typedef struct responseBuffer_s
   DWORD size;
 } responseBuffer_t;
 
-/* 
+/*
  * Possible http errors codes from Password Safe.
  */
 typedef enum PbpsErrorCode_e {
@@ -187,7 +187,7 @@ extern size_t PbpsApiReadCallBackFunction(
 extern DWORD PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile);
 extern DWORD PbpsApiSignIn(PbpsApi_t *pApi);
 extern DWORD PbpsApiRequestId(PbpsApi_t *pApi, DWORD *pdwRequestId);
-extern DWORD PbpsApiCredentialsGet(PbpsApi_t *pApi, DWORD dwRequestId, 
+extern DWORD PbpsApiCredentialsGet(PbpsApi_t *pApi, DWORD dwRequestId,
                                    PSTR *ppszCredentials);
 extern DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi);
 extern DWORD PbpsApiSignOut(PbpsApi_t *pApi);
@@ -202,8 +202,3 @@ extern DWORD PbpsApiGetJoinAccount(
                  PbpsApiManagedAccount_t **ppAccount);
 
 #endif  // _PBPS_INT_H_
-
-
-
-
-

@@ -409,7 +409,7 @@ long PlugInShell_Initialize(void)
     {
         pszVersionName = "unsupported";
     }
-    LOG("Starting up PBIS - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
+    LOG("Starting up BeyondTrust AD Bridge - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
             pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
     if (isUnsupported)
     {
@@ -489,7 +489,7 @@ long PlugInShell_Initialize(void)
         {
             if (macError == eDSAuthUnknownUser)
             {
-                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszAllowAdministrationBy);
+                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by BeyondTrust AD Bridge authentication daemon. Recommend checking that system administrator has enabled the items here in the AD Bridge cell that applies to this computer.", pszAllowAdministrationBy);
             }
             else
             {
@@ -601,7 +601,7 @@ cleanup:
 long
 PlugInShell_ProcessRequest(void *inData)
 {
-    long macError = eDSNoErr;    
+    long macError = eDSNoErr;
     bool isAcquired = false;
     sHeader * pMsgHdr = (sHeader *)inData;
     unsigned long msgType = pMsgHdr ? pMsgHdr->fType : 0;
@@ -616,7 +616,7 @@ PlugInShell_ProcessRequest(void *inData)
 
     GS_ACQUIRE_SHARED();
     isAcquired = true;
-    
+
     GS_VERIFY_INITIALIZED(macError);
 
     //
@@ -627,7 +627,7 @@ PlugInShell_ProcessRequest(void *inData)
         macError = ePlugInNotActive;
         GOTO_CLEANUP();
     }
-    
+
     //
     // We also do not handle anything while not "startup complete".
     //
@@ -964,7 +964,7 @@ long PlugInShell_PeriodicTask(void)
     PSTR pszDomain = NULL;
     BOOLEAN bOffline = false;
     static int offlineTimerCount = 0;
-    static PSTR pszCurrentAllowedAdminsList = NULL;   
+    static PSTR pszCurrentAllowedAdminsList = NULL;
 
     // No enter/leave logging since function is called every 30 seconds
     // or so (on Mac OS X 10.4.7).
@@ -998,7 +998,7 @@ long PlugInShell_PeriodicTask(void)
 
     if (offlineTimerCount == 0)
     {
-        
+
 
         if (bOffline)
         {
@@ -1036,7 +1036,7 @@ long PlugInShell_PeriodicTask(void)
             {
                 if (macError == eDSAuthUnknownUser)
                 {
-                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszCurrentAllowedAdminsList);
+                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by BeyondTrust AD Bridge authentication daemon. Recommend checking that system administrator has enabled the items here in the AD Bridge cell that applies to this computer.", pszCurrentAllowedAdminsList);
                 }
                 else
                 {

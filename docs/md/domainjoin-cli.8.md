@@ -27,7 +27,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-**domainjoin-cli** is the BeyondTrust PBIS AD domain join tool. **domainjoin-cli** will join the current machine to an AD domain, and enable the authentication of AD users.
+**domainjoin-cli** is the BeyondTrust AD Bridge domain join tool. **domainjoin-cli** will join the current machine to an AD domain, and enable the authentication of AD users.
 
 **domainjoin-cli** offers fine-grained control over modifications to system configuration files that are typically required during a join, such as editing `/etc/nsswitch.conf` or the system PAM setup (see JOIN and LEAVE commands).
 
@@ -58,14 +58,14 @@ JOIN COMMAND
 Joins the machine to the AD domain <domain> and configures AD authentication.  This operation requires valid AD credentials for <domain> to be specified as <username> and <password>. If <username> or <password> are not specified on the command line, **domainjoin-cli** will prompt for them.
 
 [ENTERPRISE]
-For **PBIS Enterprise**, the credentials can be retrieved from a **BeyondTrust Password Safe** instance; see the `--configFile` option.
+For **BeyondTrust AD Bridge Enterprise**, the credentials can be retrieved from a **BeyondTrust Password Safe** instance; see the `--configFile` option.
 [/ENTERPRISE]
 
 The join command supports the following options:
 
 `--ou` <organizational_unit>
 
-[INDENT]Joins the machine to the OU <organizational_unit> instead of the default "Computers" OU. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied.  **Note:** Group policy support is an **PBIS Enterprise** feature.  If the <organizational_unit> is not supplied, you will be prompted for it. `--` can be used to indicate the OU value is not supplied and to separate it from subsequent parameters.
+[INDENT]Joins the machine to the OU <organizational_unit> instead of the default "Computers" OU. The OU to which a machine is joined determines which users will be able to authenticate against the machine and which group policies will be applied.  **Note:** Group policy support is an **BeyondTrust AD Bridge Enterprise** feature.  If the <organizational_unit> is not supplied, you will be prompted for it. `--` can be used to indicate the OU value is not supplied and to separate it from subsequent parameters.
 [ENTERPRISE]
 
 `--assumeDefaultCell` `auto`|`no`|`force`
@@ -110,7 +110,7 @@ The join command supports the following options:
 
 [INDENT]Explicitly disables the configuration of <module> during the join operation.
 
-[INDENT]**Note** that some modules are necessary for the proper operation of PBIS while joined to AD. If you attempt to disable such a module, **domainjoin-cli** will refuse to proceed with a join operation.
+[INDENT]**Note** that some modules are necessary for the proper operation of BeyondTrust AD Bridge while joined to AD. If you attempt to disable such a module, **domainjoin-cli** will refuse to proceed with a join operation.
 
 [INDENT]For some modules, it is possible to make the relevant configuration changes by hand; **domainjoin-cli** will inform you of the necessary changes and will proceed with the module disabled if it detects that the changes have been made.
 
@@ -148,7 +148,7 @@ Leaves the currently-joined AD domain and deconfigures AD authentication and gro
 In order to disable the machine account in AD, either administrative credentials for <domain> or the same credentials originally used to join the machine must be specified as <username> and <password>. If <password> is not specified on the command line, **domainjoin-cli** will prompt you for it.  
 
 [ENTERPRISE]
-For **PBIS Enterprise**, the credentials can be retrieved from a **BeyondTrust Password Safe** instance; see the `--configFile` option.
+For **BeyondTrust AD Bridge Enterprise**, the credentials can be retrieved from a **BeyondTrust Password Safe** instance; see the `--configFile` option.
 [/ENTERPRISE]
 
 If no credentials are specified, the machine will no longer behave as a member of <domain> but it's machine account will remain enabled in AD.
@@ -203,7 +203,7 @@ DOMAINJOIN MODULES
 
 * `bash` - fixes the bash prompt for backslashes in usernames
 
-* `dsplugin` - enables the PBIS directory services plugin on a Mac computer
+* `dsplugin` - enables the directory services plugin on a Mac computer
 
 * `firewall` - opens ports to the domain controller
 
@@ -223,7 +223,7 @@ DOMAINJOIN MODULES
 
 * `pam` - configures pam.d and pam.conf
 
-* `nsswitch` - enables or disables PBIS nsswitch module
+* `nsswitch` - enables or disables nsswitch module
 
 * `ssh` - configures ssh and sshd
 
@@ -258,7 +258,7 @@ Changes the hostname of this machine to <hostname>. As it is necessary to have a
 CONFIGURATION AND DEBUGGING COMMANDS
 ------------------------------------
 
-`domainjoin-cli` includes commands for debugging the domain-join process and for configuring or preconfiguring a module.  For example, run the configure command to preconfigure a system before you join a domain—a useful strategy when you are deploying PBIS in a virtual environment and you need to preconfigure the nsswitch, ssh, or PAM module of the target computers to avoid restarting them after they are added to the domain.
+`domainjoin-cli` includes commands for debugging the domain-join process and for configuring or preconfiguring a module.  For example, run the configure command to preconfigure a system before you join a domain—a useful strategy when you are deploying BeyondTrust AD Bridge in a virtual environment and you need to preconfigure the nsswitch, ssh, or PAM module of the target computers to avoid restarting them after they are added to the domain.
 
 The following `configure` commands are supported.
 
@@ -316,9 +316,9 @@ Example invocations of **domainjoin-cli** and their effects follow:
 SEE ALSO
 --------
 
-The full documentation for PBIS is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/resources/education/documentation/?subcategory=ad-bridge
+The full documentation is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/resources/education/documentation/?subcategory=ad-bridge
 
 VERSION
 -------
 
-PBIS version 8.7 +.
+Version 9.0 +.

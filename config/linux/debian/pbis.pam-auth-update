@@ -1,4 +1,4 @@
-Name: PowerBroker Identity Services (PBIS)
+Name: BeyondTrust AD Bridge
 Default: yes
 Priority: 260
 Conflicts: winbind

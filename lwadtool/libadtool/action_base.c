@@ -30,10 +30,10 @@
  *
  * Abstract:
  *         This file is intended to contain code common to all actions.
- *        
+ *
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Apr 12, 2010
  *
  */
@@ -189,7 +189,7 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
             appContext->workConn = &(appContext->searchConn);
         }
     }
-    else if(IsDNComp(*name)) 
+    else if(IsDNComp(*name))
     {
         dwError = LwStrDupOrNull((PCSTR) *name, &tmp);
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
@@ -209,7 +209,7 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
             }
         }
     }
-    else if (IsBackSlashPresent(*name)) 
+    else if (IsBackSlashPresent(*name))
     {
         p = strstr((PCSTR) *name, "\\");
 
@@ -241,7 +241,7 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
             appContext->workConn = &(appContext->searchConn);
         }
     }
-    else 
+    else
     {
         appContext->workConn = &(appContext->modifyConn);
     }
@@ -557,7 +557,7 @@ AdtAddGroupToCellSDefaultCell(IN AdtActionTP action, PSTR groupDN) {
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group %s has been added to PowerBroker cell\n", groupDN);
+            PrintResult(appContext, LogLevelNone, "Group %s has been added to cell\n", groupDN);
         }
     }
 
@@ -646,7 +646,7 @@ DWORD AdtAddGroupToCellS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group has been added to PowerBroker cell\n");
+            PrintResult(appContext, LogLevelNone, "Group has been added to cell\n");
         }
     }
 
@@ -719,7 +719,7 @@ DWORD AdtAddGroupToCellNS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group has been added to PowerBroker cell\n");
+            PrintResult(appContext, LogLevelNone, "Group has been added to cell\n");
         }
     }
 
@@ -730,5 +730,3 @@ DWORD AdtAddGroupToCellNS(IN AdtActionTP action,
     error:
         goto cleanup;
 }
-
-

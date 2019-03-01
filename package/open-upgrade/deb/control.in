@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: PBIS Support <openproject@beyondtrust.com>
 Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
-Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+Homepage: http://www.beyondtrust.com/
 
 Package: @PKG_OPEN_UPGRADE_DEB_NAME@
 Architecture: any
@@ -19,7 +19,7 @@ Conflicts: @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-samba-interop (<< 6.2),
  likewise-srvsvc (<< 6.2),
  likewise-smbclient (<< 6.2),
- likewise-password-policy (<< 6.2),  
+ likewise-password-policy (<< 6.2),
 Replaces: @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-open-upgrade (<< 6.2),
  likewise-lwupgrade (<< 6.2),
@@ -29,6 +29,6 @@ Replaces: @PKG_OPEN_UPGRADE_DEB_NAME@ (<< @PKG_DEB_VERSION@),
  likewise-samba-interop (<< 6.2),
  likewise-srvsvc (<< 6.2),
  likewise-smbclient (<< 6.2),
- likewise-password-policy (<< 6.2),  
+ likewise-password-policy (<< 6.2),
 Description: Helper package for upgrading systems with versions preceding
  PowerBroker Identity Services Open 7.0.

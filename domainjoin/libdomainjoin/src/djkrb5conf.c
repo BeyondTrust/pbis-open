@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -315,7 +315,7 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
     }
     else
     {
-        // This is either a name value pair, a compound element, 
+        // This is either a name value pair, a compound element,
         // or a (currently unsupported) directive
         // For now, treat anything we don't understand/support as a comment
         // so that we don't break with every change to the format
@@ -939,7 +939,7 @@ GatherDomainMappings(
         }
     }
     *pszJoinForest = pszForestName;
-    
+
     if (mappings->size == 0)
     {
         // Put in the default entry
@@ -1035,7 +1035,7 @@ CreateMacKeberosFile(
             GCE(ceError);
         }
 
-        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during PowerBroker Identity Services domain join.\n"));
+        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during BeyondTrust AD Bridge domain join.\n"));
         GCE(ceError = CTFilePrintf(file, "# Any previous version of edu.mit.Kerberos is backed up to\n"));
         GCE(ceError = CTFilePrintf(file, "# /Likewise/Preferences/edu.mit.Kerberos.orig\n"));
         GCE(ceError = CTFilePrintf(file, "# Leaving the current domain will restore the file above.\n"));
@@ -1074,7 +1074,7 @@ Krb5LeaveDomain(Krb5Entry *conf)
        /* Upon domain join, it was possible that the default_ccache_name was commented out. We now
           want to undo this. ParseLine() function treats a commented out line as all leadingWhiteSpace.
           So need to search for #BT and parse the leadingWhiteSpace in order to extract the
-          name value pair. */ 
+          name value pair. */
        Krb5Entry *child = GetChild(libdefaults, i);
        if(child->leadingWhiteSpace != NULL &&
                strstr(child->leadingWhiteSpace, "#BT default_ccache_name"))
@@ -1096,7 +1096,7 @@ cleanup:
     return ceError;
 }
 
-static DWORD 
+static DWORD
 getTail(PSTR inputDN, PSTR *tail)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -1114,7 +1114,7 @@ getTail(PSTR inputDN, PSTR *tail)
 	    break;
 	}
     }
-    *tail = pszTail; 
+    *tail = pszTail;
 cleanup:
     if(ceError)
         CT_SAFE_FREE_STRING(pszTail);
@@ -1258,7 +1258,7 @@ Krb5JoinDomain(
             CTStrToUpper(pszforestUpper);
             if(strcmp(pszforestUpper,pszJoinForest)  &&
 	          (strcmp(pszLongNameUpper, pszforestUpper) ||
-                   strcmp(pszJoinDomain, pszJoinForest)))  
+                   strcmp(pszJoinDomain, pszJoinForest)))
             {
                 GCE(ceError = EnsureGroupNode(capaths, pszLongNameUpper, &capathsGroup));
                 if(strcmp(pszJoinDomain,pszJoinForest))
@@ -1280,10 +1280,10 @@ Krb5JoinDomain(
                     length = strlen(pszLongNameUpper);
                     for( dn = pszLongNameUpper; dn < &pszLongNameUpper[length]; dn++)
                     {
-                        if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue; 
+                        if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue;
                         ch = &dn[1];
-                        if( !strcmp(ch,pszforestUpper) || 
-                            !strcmp(ch,pszTail)) 
+                        if( !strcmp(ch,pszforestUpper) ||
+                            !strcmp(ch,pszTail))
                         {
                             break;
                         }
@@ -1304,10 +1304,10 @@ Krb5JoinDomain(
                 {
                     for( dn = pszJoinDomain; dn < &pszJoinDomain[length]; dn++)
                     {
-                        if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue; 
+                        if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue;
                         ch = &dn[1];
-                        if( !strcmp(ch,pszforestUpper) || 
-                            !strcmp(ch,pszTail)) 
+                        if( !strcmp(ch,pszforestUpper) ||
+                            !strcmp(ch,pszTail))
                         {
                             break;
                         }
@@ -1795,7 +1795,7 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
     ceError = ReadKrb5Configuration(tempDir, &conf, &modified);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to BeyondTrust AD Bridge technical support.");
         goto cleanup;
     }
     else
@@ -1992,7 +1992,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     ceError = ReadKrb5Configuration(tempDir, &conf, NULL);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to BeyondTrust AD Bridge technical support.");
         goto cleanup;
     }
     else
@@ -2002,12 +2002,12 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     if(libdefaults == NULL)
     {
 #ifdef __LWI_SOLARIS__
-        /* The krb5.conf may exist, but is relatively empty - usually because there was 
+        /* The krb5.conf may exist, but is relatively empty - usually because there was
 	   no default krb5.conf file.  Therefore on Solaris setup a symlink to where
 	   we will create the keytab
 	*/
 	CTCheckFileOrLinkExists("/etc/krb5/krb5.keystab", &exists);
-	if(! exists) 
+	if(! exists)
             CTCreateSymLink("/etc/krb5.keytab","/etc/krb5/krb5.keytab");
 #endif
 
@@ -2032,7 +2032,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
             (void) CTRemoveFile("/etc/krb5.keytab");
             LW_CLEANUP_CTERR(exc, CTCreateSymLink("/etc/krb5/krb5.keytab",
                             "/etc/krb5.keytab"));
-#else			
+#else
             LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
                         "default_keytab_name", "/etc/krb5.keytab"));
 #endif

@@ -1,4 +1,3 @@
-# PBIS modifications to linenoise/linenoise-mob
+# BeyondTrust AD Bridge modifications to linenoise/linenoise-mob
 
-PBIS modifies linenoise/linenoise-mob to add history searching functionality.
-
+BeyondTrust AD Bridge modifies linenoise/linenoise-mob to add history searching functionality.

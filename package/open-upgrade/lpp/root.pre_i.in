@@ -97,10 +97,10 @@ determine_upgrade_type()
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
     if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
         log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
@@ -355,7 +355,7 @@ wait_for_lwsm_shutdown()
 
 postinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade begins (`date`)"
 
     determine_upgrade_type
 
@@ -401,7 +401,7 @@ postinstall()
 
     preserve_join_status
 
-    logfile "Package: PowerBroker Identity Services Open Upgrade finished"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade finished"
     exit 0
 }
 

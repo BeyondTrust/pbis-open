@@ -153,7 +153,7 @@ cleanup:
         with PAM_UPDATE_AUTHTOK; AIX will think the password change has
         finished and was successful. It seems like any error code other
         than PAM_SUCCESS will convince AIX to call back.
- 
+
         On AIX 5.3 TL6, PAM_SUCCESS can be returned, however most other
         error codes (including PAM_NEW_AUTHTOK_REQD) will cause AIX to
         think an unrecoverable error occurred.
@@ -423,7 +423,7 @@ cleanup:
     LW_SECURE_FREE_STRING(pszOldPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
     if (ppUser)
-    {        
+    {
         LsaFreeSecurityObjectList(
             1,
             ppUser);
@@ -457,10 +457,10 @@ error:
         if (getuid() == 0 && ppUser[0]->bIsLocal) {
             LsaPamConverse(
                 pamh,
-                "Ignoring root password change for PBIS AD user. Please use '/opt/pbis/bin/adtool' to manage PBIS AD user account passwords.",
+                "Ignoring root password change for BeyondTrust AD Bridge AD user. Please use '/opt/pbis/bin/adtool' to manage AD user account passwords.",
                 PAM_ERROR_MSG,
                 NULL);
-            
+
             dwError = LW_ERROR_SUCCESS;
         }
     }
@@ -671,7 +671,7 @@ LsaPamGetOldPassword(
        /* HP-UX clears PAM_OLDAUTHTOK between the two phases of chauthtok, so
           save a copy of the old password where we can find it later */
 
-       /* For Solaris, we read PAM_LSASS_OLDAUTHTOK instead of 
+       /* For Solaris, we read PAM_LSASS_OLDAUTHTOK instead of
           PAM_OLDAUTHTOK. */
        dwError = LsaPamSetDataString(pamh, PAM_LSASS_OLDAUTHTOK, pszPassword);
        BAIL_ON_LSA_ERROR(dwError);

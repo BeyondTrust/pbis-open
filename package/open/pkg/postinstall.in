@@ -172,7 +172,7 @@ determine_join_status()
 
     if [ -f "${UPGRADEDIR}/status.txt" ]; then
         run_or_fail cat "$STATUSFILE"
-		
+
 
         domain=`cat $STATUSFILE 2>/dev/null | grep '^STATUS_JOINED=' | sed -e 's/STATUS_JOINED=//'`
 
@@ -426,7 +426,7 @@ execute_auxiliary_scripts()
 
 postinstall()
 {
-    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    log "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     determine_upgrade_type
@@ -447,7 +447,7 @@ postinstall()
 
     cleanup_registry
 
-    remove_TrustEnumerationWaitSettingFromADPath   
+    remove_TrustEnumerationWaitSettingFromADPath
 
     remove_npfs_dependencies
 
@@ -481,9 +481,8 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    log "Package: PowerBroker Identity Services Open postinstall finished"
+    log "Package: BeyondTrust AD Bridge Open postinstall finished"
     exit 0
 }
 
 postinstall
-

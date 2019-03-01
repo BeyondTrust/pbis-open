@@ -268,7 +268,7 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
             case NotConfigured:
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
                 goto cleanup;
             default:
                 LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state.module->shortName);
@@ -316,7 +316,7 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
                 }
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                 goto cleanup;
             default:
                 LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
@@ -372,7 +372,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionTitle);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
                     LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
@@ -391,13 +391,13 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                 case CannotConfigure:
                     LW_RAISE_EX(exc,
                             ERROR_CAN_NOT_COMPLETE, "Module not configured",
-                            "Even though the configuration of '%s' was executed, the configuration is not complete. Please contact PowerBroker Identity Services support.",
+                            "Even though the configuration of '%s' was executed, the configuration is not complete. Please contact support.",
                             state->module->shortName);
                     goto cleanup;
                 case SufficientlyConfigured:
                     LW_CLEANUP_CTERR(exc,
                             CTAllocateStringPrintf(&exceptionMessage,
-                            "Even though the configuration of '%s' was executed, the configuration did not fully complete. Please contact PowerBroker Identity Services support.",
+                            "Even though the configuration of '%s' was executed, the configuration did not fully complete. Please contact support.",
                             state->module->shortName));
                     if (options->warningCallback != NULL)
                     {
@@ -408,7 +408,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionMessage);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
                     LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);

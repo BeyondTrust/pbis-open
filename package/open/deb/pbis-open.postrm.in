@@ -93,17 +93,17 @@ run_or_fail()
 
 case "$1" in
     remove)
-        logfile "Package: PowerBroker Identity Services Open postremove [remove] begins (`date`)"
+        logfile "Package: BeyondTrust AD Bridge Open postremove [remove] begins (`date`)"
 
-        logfile "Package: PowerBroker Identity Services Open postremove [remove] finished"
+        logfile "Package: BeyondTrust AD Bridge Open postremove [remove] finished"
     ;;
 
     purge)
-        logfile "Package: PowerBroker Identity Services Open postremove [purge] begins (`date`)"
+        logfile "Package: BeyondTrust AD Bridge Open postremove [purge] begins (`date`)"
 
         run_quiet rm -rf '@LW_CACHEDIR@'
 
-        logfile "Package: PowerBroker IdentityServices Open postremove [purge] finished"
+        logfile "Package: BeyondTrust AD Bridge Open postremove [purge] finished"
     ;;
 esac
 

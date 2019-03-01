@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -984,7 +984,7 @@ static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const cha
 
         // A backslash followed by a newline seems to be treated as whitespace.
         // Two backslashes followed by a newline turns into one backslash then
-        // whitespace. 
+        // whitespace.
         while (CTStrEndsWith(buffer, "\\\n") || CTStrEndsWith(buffer,
                     "\\\r\n"))
         {
@@ -2689,8 +2689,8 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
         if(includeService != NULL)
         {
 #ifdef __LWI_SOLARIS__
-            /* For Solaris 11 the configuration has been moved into the pam_authtok_common 
-             * we need to be added before this to fix #81441 
+            /* For Solaris 11 the configuration has been moved into the pam_authtok_common
+             * we need to be added before this to fix #81441
              */
             if (!strcmp(phase, "password") && !strcmp(includeService, "pam_authtok_common"))
             {
@@ -2698,7 +2698,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 break;
             }
 #endif
-            
+
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             state->includeLevel++;
             PamLwidentityEnable(testPrefix, distro, conf, includeService, phase, pam_lwidentity, state, &nestedException);
@@ -3107,13 +3107,13 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM module", "The PowerBroker Identity Services PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM module", "The PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
             else if(state->includeLevel == 0)
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM configuration", "The PowerBroker Identity Services PAM module cannot be configured for the %s service.  Either this service is unprotected (does not require a valid password for access), or it is using a PAM module that this program is unfamiliar with.  Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM configuration", "The PAM module cannot be configured for the %s service.  Either this service is unprotected (does not require a valid password for access), or it is using a PAM module that this program is unfamiliar with.  Please email technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
             }
             goto cleanup;
         }
@@ -3755,7 +3755,7 @@ void DJUpdatePamConf(const char *testPrefix,
              */
             DJ_LOG_WARNING("Ignoring pam service vmware-authd because 32bit pam libraries are not available on this system");
             continue;
-        }        
+        }
         for(j = 0; phases[j] != NULL; j++)
         {
             memset(&state, 0, sizeof(state));
@@ -3917,8 +3917,8 @@ cleanup:
     CT_SAFE_FREE_STRING(pamauthupdateconf);
 }
 
-// The purpose of this function is to parse the given source file and either add or 
-// remove the use-authtok option from password phase. The results are written to the 
+// The purpose of this function is to parse the given source file and either add or
+// remove the use-authtok option from password phase. The results are written to the
 // destination file.  The function assumes the source file is /usr/lib/pam-configs/unix.
 static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUseAuthtok)
 {
@@ -3965,7 +3965,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
 
        ceError = CTReadNextLine(fSrcHandle, &buffer, &bEndOfFile);
        BAIL_ON_CENTERIS_ERROR(ceError);
-    
+
        if (bEndOfFile)
          break;
 
@@ -4037,7 +4037,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
                    // First write the use_authtok option followed by the exitsting options.
                    ceError = CTFilePrintf(fDstHandle, "%s ", pUseAuthTok);
                    BAIL_ON_CENTERIS_ERROR(ceError);
-               } 
+               }
 
                for (i = 0; i < lineObj.optionCount; i++)
                {
@@ -4054,7 +4054,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
    }
-   
+
 cleanup:
 
    if (fDstHandle != NULL)
@@ -4103,7 +4103,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
      // Nothing to do.
      goto cleanup;
    }
-   
+
    ceError = CTCheckFileOrLinkExists(pFilePamConfigsCrack, &pamConfigCrackExists);
    BAIL_ON_CENTERIS_ERROR(ceError);
 
@@ -4116,7 +4116,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
       // Before modifing backup the original pam-configs/unix file.
       ceError = CTCheckDirectoryExists(pDirPamConfigsPbis, &pamConfigsPbisDirExists);
       BAIL_ON_CENTERIS_ERROR(ceError);
- 
+
       if (!pamConfigsPbisDirExists)
       {
          ceError = CTCreateDirectory(pDirPamConfigsPbis, 0700);
@@ -4138,7 +4138,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
 
       BAIL_ON_CENTERIS_ERROR(ceError);
 
-      // Go ahead and remove or add the use_authtok option. Result is written to a 
+      // Go ahead and remove or add the use_authtok option. Result is written to a
       // temporary file.
       ceError = ParseUnixFile(pFilePamConfigsUnix, pFileUnixTemp, useAuthtok);
       BAIL_ON_CENTERIS_ERROR(ceError);
@@ -4149,7 +4149,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
 
    if (pamConfigUnixExists && pamConfigCrackExists && !useAuthtok)
    {
-       // Dont modify pam-unix password entry which would have the use_authtok option. 
+       // Dont modify pam-unix password entry which would have the use_authtok option.
        // Mostly likely pam-cracklib is above pam-unix.
        goto cleanup;
    }
@@ -4508,7 +4508,7 @@ DJCopyPamToRootDir(
         CT_SAFE_FREE_STRING(destPath);
         GCE(ceError = CTAllocateStringPrintf(&destPath, "%s/etc/pam.d", destPrefix));
         GCE(ceError = CTCopyDirectoryIgnoreErrors(srcPath, destPath, TRUE, &missingFile));
-        
+
     }
 
     CT_SAFE_FREE_STRING(srcPath);
@@ -4524,7 +4524,7 @@ DJCopyPamToRootDir(
 cleanup:
     if(missingFile != NULL)
     {
-        fprintf(stdout, "\nFile not found: %s\n", missingFile);               
+        fprintf(stdout, "\nFile not found: %s\n", missingFile);
     }
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
@@ -4733,7 +4733,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
     BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
 
     memset(&conf, 0, sizeof(conf));
-    
+
     LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
     if (bPamAuthUpdateSupported)
     {
@@ -4771,7 +4771,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
         else
         {
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf( &ret,
-"All references to PowerBroker Identity Services PAM modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
+"All references to BeyondTrust AD Bridge PAM modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
         }
     }
 

@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "ADTOOL" "8" "September 2018" "" ""
+.TH "ADTOOL" "8" "January 2019" "" ""
 .
 .SH "NAME"
 \fBadtool\fR \- AD tool to manage objects in Active Directory
@@ -64,7 +64,7 @@
 \fBadtool\fR [\fIoptions\fR] \-a set\-attr \-\-dn \fIDN\fR \-\-attrName \fIname\fR [\-\-attrValue \fIvalue\fR]
 .
 .SH "DESCRIPTION"
-\fBadtool\fR is the BeyondTrust PBIS AD tool\. \fBadtool\fR can create, query and modify objects in Active Directory\. \fBadtool\fR can also be utilized to create, find and manage objects in PowerBroker cells\.
+\fBadtool\fR can create, query and modify objects in Active Directory\. \fBadtool\fR can also be utilized to create, find and manage objects in cells\.
 .
 .P
 \fBNOTE: AUTHENTICATION REQUIRED \-\fR This tool is for managing Active Directory objects which requires AD rights\. It is \fBREQUIRED\fR to be logged in as an AD user with rights to manage AD before using the \fBadtool\fR\. Alternatively the \-\-domain \fBCONNECTION OPTION\fR with an \fBAUTHENTICATION OPTION\fR can be used to connect to the domain when logged in as a local user\.
@@ -946,7 +946,7 @@ Unset an attribute\. Note: Attribute value validation is not done\. Use with car
 \fBadtool \-a set\-attr \-\-dn CN=TestUser,CN=Users,DC=company,DC=com \-\-attrName displayName\fR
 .
 .SH "SEE ALSO"
-The full documentation for PBIS is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
+The full documentation is available online at https://github\.com/BeyondTrust/pbis\-open/wiki/Documentation and https://www\.beyondtrust\.com/resources/education/documentation/?subcategory=ad\-bridge
 .
 .SH "VERSION"
-PBIS version 8\.7 +\.
+Version 9\.0 +\.

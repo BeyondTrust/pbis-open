@@ -88,7 +88,7 @@ CELL SYNOPSIS
 DESCRIPTION
 -----------
 
-**adtool** is the BeyondTrust PBIS AD tool. **adtool** can create, query and modify objects in Active Directory. **adtool** can also be utilized to create, find and manage objects in PowerBroker cells.
+**adtool** can create, query and modify objects in Active Directory. **adtool** can also be utilized to create, find and manage objects in cells.
 
 **NOTE: AUTHENTICATION REQUIRED -** This tool is for managing Active Directory objects which requires AD rights. It is **REQUIRED** to be logged in as an AD user with rights to manage AD before using the **adtool**. Alternatively the --domain **CONNECTION OPTION** with an **AUTHENTICATION OPTION** can be used to connect to the domain when logged in as a local user.
 
@@ -111,7 +111,7 @@ COMMON OPTIONS
 -------
 
 `-l|--log-level` <int>
-  
+
 [INDENT]Acceptable values: 1(error), 2(warning), 3(info), 4(verbose) 5(trace). Default: 2(warning).
 
 `-q|--quiet`
@@ -176,7 +176,7 @@ ACTION
 [INDENT]Action to execute. Type '--help -a' for a list of actions, or '--help -a <action>' for information on a specific action.
 
 USER ACTIONS
-------------- 
+-------------
 
 **SEARCH-USER**
 
@@ -258,9 +258,9 @@ USER ACTIONS
 [INDENT]The password never expires.
 
 `--account-enabled`                  
-                
+
 [INDENT]User account will be enabled. By default the account is disabled on creation.                          
-     
+
 **EXAMPLE**
 
 [INDENT]Create a new user account TestUser in TestOu.
@@ -276,11 +276,11 @@ USER ACTIONS
 
 `--name` <string>
 
-[INDENT]User to change password for. (DN/RDN, UPN, or SamAccountName; use '-' for stdin input) 
+[INDENT]User to change password for. (DN/RDN, UPN, or SamAccountName; use '-' for stdin input)
 
 `--password` <string>
 
-[INDENT]User's password. If omitted only the password's properties may be changed but not the password itself. (use '-' for stdin input) 
+[INDENT]User's password. If omitted only the password's properties may be changed but not the password itself. (use '-' for stdin input)
 
 `--spn` <string>
 
@@ -361,7 +361,7 @@ adtool [<options>] -a disable-user --name <string>
 
 
 GROUP ACTIONS
-------------- 
+-------------
 
 **SEARCH-GROUPS**
 
@@ -380,7 +380,7 @@ GROUP ACTIONS
 `--name` <string>
 
 [INDENT]Name of the group (DN/RDN, UPN, or SamAccountName).  Wildcards (*) accepted as part of the name.
-    
+
 **EXAMPLE**
 
 [INDENT]Looks for group TestGroup under OU TestOU.
@@ -456,7 +456,7 @@ GROUP ACTIONS
 
 [INDENT]User to remove from the group (DN/RDN, UPN, or SamAccountName; use '-' for stdin input).
 
-`--group` <string> 
+`--group` <string>
 
 [INDENT]Group to remove from the group (DN/RDN, or CN; use '-' for stdin input).
 
@@ -472,7 +472,7 @@ GROUP ACTIONS
 
 
 COMPUTER ACTIONS
-------------- 
+-------------
 
 **SEARCH-COMPUTER**
 
@@ -507,7 +507,7 @@ COMPUTER ACTIONS
 
 `--dn` <string>
 
-[INDENT]DN/RDN of the parent container/OU containing the computer. (use '-' for stdin input) 
+[INDENT]DN/RDN of the parent container/OU containing the computer. (use '-' for stdin input)
 
 `--name`<string>
 
@@ -561,7 +561,7 @@ OU ACTIONS
 
 [INDENT]Search scope. Acceptable values: base, one-level, subtree. Default: subtree
 
-`--name` <string> 
+`--name` <string>
 
 [INDENT]Name of the OU (DN/RDN, or CN). Wildcards (*) accepted as part of the name.
 
@@ -598,7 +598,7 @@ OU ACTIONS
 
 
 OBJECT ACTIONS
-------------- 
+-------------
 
 **SEARCH-OBJECTS**
 
@@ -638,7 +638,7 @@ OBJECT ACTIONS
 `--attr`  <string>
 
 [INDENT]Attribute to show values of
- 
+
 `--raw-time`
 
 [INDENT]Do not format timestamps (show raw time data)
@@ -667,7 +667,7 @@ OBJECT ACTIONS
 `--to` <string>
 
 [INDENT]DN/RDN of the new object. (use '-' for stdin input)
-    
+
 **EXAMPLE**
 
 [INDENT]Move computer object under the computers container to TestOU.
@@ -683,7 +683,7 @@ OBJECT ACTIONS
 
 `--dn` <string>
 
-[INDENT]DN/RDN of the object to delete. (use '-' for stdin input) 
+[INDENT]DN/RDN of the object to delete. (use '-' for stdin input)
 
 `--force`
 
@@ -704,7 +704,7 @@ OBJECT ACTIONS
 
 `--dn` <string>
 
-[INDENT]DN/RDN of the object. 
+[INDENT]DN/RDN of the object.
 
 ` --attrName` <string>
 
@@ -727,13 +727,13 @@ OBJECT ACTIONS
 
 
 CELL ACTIONS
-------------- 
+-------------
 
 **SEARCH-CELLS**
 
 `adtool` [<options>] -a search-cells [--search-base <string>] [--scope <string>] [--user <string>] [--group <string>]
 
-[INDENT]Search for PowerBroker Cells.
+[INDENT]Search for AD Bridge Cells.
 
 `--search-base` <string>
 
@@ -750,10 +750,10 @@ CELL ACTIONS
 `--group` <string>
 
 [INDENT]Search for cells the group is a member of (DN/RDN, or CN; use '-' for stdin input).
- 
+
 **EXAMPLE**
 
-[INDENT]Search for PowerBroker Cells in root naming context containing user TestUser.
+[INDENT]Search for AD Bridge Cells in root naming context containing user TestUser.
 
 [INDENT]`adtool -a search-cells --user TestUser`
 
@@ -762,7 +762,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a new-cell --dn <string> [--home-dir-template <string>] [--default-login-shell <string>]
 
-[INDENT]Create a new PowerBroker Cell.
+[INDENT]Create a new AD Bridge Cell.
 
 `--dn` <string>
 
@@ -778,7 +778,7 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Create PowerBroker Cell in TestOU setting the default login shell property to /bin/sh.
+[INDENT]Create AD Bridge Cell in TestOU setting the default login shell property to /bin/sh.
 
 [INDENT]`adtool -a new-cell --dn OU=TestOu --default-login-shell /bin/sh`
 
@@ -787,7 +787,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a add-to-cell --dn <string> (--user|--group <string>)
 
-[INDENT]Add user/group to a PowerBroker Cell.
+[INDENT]Add user/group to a AD Bridge Cell.
 
 `--dn` <string>
 
@@ -803,11 +803,11 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Add group TestGroup to PowerBroker Cell.
+[INDENT]Add group TestGroup to AD Bridge Cell.
 
 [INDENT]`adtool -a add-to-cell --dn OU=TestOU --group TestGroup`
 
-[INDENT]Add user TestGroup to PowerBroker Cell.
+[INDENT]Add user TestGroup to AD Bridge Cell.
 
 [INDENT]`adtool -a add-to-cell --dn OU=TestOU --user TestUser`
 
@@ -817,7 +817,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a remove-from-cell --dn <string> --user|--group <string> [--force]
 
-[INDENT]Remove user/group from a PowerBroker Cell.
+[INDENT]Remove user/group from a AD Bridge Cell.
 
 `--dn` <string>
 
@@ -835,7 +835,7 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Remove user/group from PowerBroker Cell.
+[INDENT]Remove user/group from AD Bridge Cell.
 
 [INDENT]`adtool -a remove-from-cell --dn OU=TestOU --user TestUser`
 
@@ -846,7 +846,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a delete-cell --dn <string> [--force]
 
-[INDENT]Delete a PowerBroker Cell.
+[INDENT]Delete a AD Bridge Cell.
 
 `--dn` <string>
 
@@ -858,7 +858,7 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Delete the PowerBroker Cell TestOU.
+[INDENT]Delete the AD Bridge Cell TestOU.
 
 [INDENT]`adtool -a delete-cell --dn OU=TestOU --force`
 
@@ -867,7 +867,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a edit-cell --dn <string> (--home-dir-template <string> | --default-login-shell <string>)
 
-[INDENT]Modify PowerBroker Cell properties.
+[INDENT]Modify AD Bridge Cell properties.
 
 `--dn` <string>
 
@@ -883,7 +883,7 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Change the default login shell property of PowerBroker Cell.
+[INDENT]Change the default login shell property of AD Bridge Cell.
 
 [INDENT]`adtool -a edit-cell --dn OU=TestOU --default-login-shell=/bin/bash`
 
@@ -970,7 +970,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a lookup-cell --dn <string> [--home-dir-template <string>] [--default-login-shell <string>] [--users <string>] [--groups <string>] [--linked-cells <string>] [--all]
 
-[INDENT]Retrieve PowerBroker Cell properties.
+[INDENT]Retrieve AD Bridge Cell properties.
 
 `--dn` <string>
 
@@ -1002,7 +1002,7 @@ CELL ACTIONS
 
 **EXAMPLE**
 
-[INDENT]Find cells linked to PowerBroker Cell in OU=TestOU
+[INDENT]Find cells linked to AD Bridge Cell in OU=TestOU
 
 [INDENT]`adtool -a lookup-cell --dn OU=TestOU --linked-cells`
 
@@ -1097,7 +1097,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a link-cell --source-dn <string> --target-dn <string>
 
-[INDENT]Link PowerBroker Cells.
+[INDENT]Link AD Bridge Cells.
 
 `--source-dn` <string>
 
@@ -1118,7 +1118,7 @@ CELL ACTIONS
 
 `adtool` [<options>] -a unlink-cell --source-dn <string> --target-dn <string>
 
-[INDENT]Unlink PowerBroker Cells.
+[INDENT]Unlink AD Bridge Cells.
 
 `--source-dn` <string>
 
@@ -1139,9 +1139,9 @@ CELL ACTIONS
 SEE ALSO
 --------
 
-The full documentation for PBIS is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/resources/education/documentation/?subcategory=ad-bridge
+The full documentation is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/resources/education/documentation/?subcategory=ad-bridge
 
 VERSION
 -------
 
-PBIS version 8.7 +.
+Version 9.0 +.

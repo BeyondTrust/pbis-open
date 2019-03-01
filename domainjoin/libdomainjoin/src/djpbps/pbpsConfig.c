@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -32,7 +32,7 @@
 #include <toml.h>
 
 
-/* 
+/*
  *
  * Read contents of the config file into the config structure.
  * The certificate values in the config file are written out
@@ -65,7 +65,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
    }
 
    dwError = CTOpenFile(pszConfigFile,
-                        "r", 
+                        "r",
                          &pConfigFp);
    BAIL_ON_LW_ERROR(dwError);
 
@@ -176,13 +176,13 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
       BAIL_ON_LW_ERROR(dwError);
    }
 
-   if (toml_rtos(pszTomlRaw, &pszValueStr)) 
+   if (toml_rtos(pszTomlRaw, &pszValueStr))
    {
       DJ_LOG_ERROR("Section PasswordSafe ServerUrl invalid string");
       dwError = LW_ERROR_DOMAINJOIN_CONFIG_BAD_VALUE;
       BAIL_ON_LW_ERROR(dwError);
    }
-   
+
    dwError = LwAllocateStringPrintf(
                     &(pApi->config.pszUrlBase), "%s/BeyondTrust/api/public/v3",
                     pszValueStr);
@@ -199,13 +199,13 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
       BAIL_ON_LW_ERROR(dwError);
    }
 
-   if (toml_rtos(pszTomlRaw, &pszValueStr) != 0) 
+   if (toml_rtos(pszTomlRaw, &pszValueStr) != 0)
    {
       DJ_LOG_ERROR("Section PasswordSafe RunAsUser invalid string");
       dwError = LW_ERROR_DOMAINJOIN_CONFIG_BAD_VALUE;
       BAIL_ON_LW_ERROR(dwError);
    }
-   
+
    dwError = LwAllocateStringPrintf(
                     &(pApi->config.pszRunAsUser), "%s",
                     pszValueStr);
@@ -215,11 +215,11 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
    pszValueStr = NULL;
 
    // RunAsUserPassword
-   // Optional. Needed if Password Safe web console shows 
+   // Optional. Needed if Password Safe web console shows
    // "User Password Required" is checked in Configuration->API Registration.
    if ((pszTomlRaw = toml_raw_in(pSectionPbps, "RunAsUserPassword")) != 0)
    {
-      if (toml_rtos(pszTomlRaw, &pszValueStr) == 0) 
+      if (toml_rtos(pszTomlRaw, &pszValueStr) == 0)
       {
          dwError = LwAllocateStringPrintf(
                           &(pApi->config.pszRunAsUserPwd), "%s",
@@ -236,7 +236,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
 
    LW_SAFE_FREE_STRING(pszValueStr);
    pszValueStr = NULL;
-  
+
    // ApiKey
    if ((pszTomlRaw = toml_raw_in(pSectionPbps, "ApiKey")) == 0)
    {
@@ -260,7 +260,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
 
    LW_SAFE_FREE_STRING(pszValueStr);
    pszValueStr = NULL;
- 
+
 
    // DurationMinutes
    pApi->config.dwDurationMinutes = PBPSAPI_DEFAULT_DURATION_MINUTES;
@@ -273,7 +273,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
          BAIL_ON_LW_ERROR(dwError);
       }
 
-      if (dwValue >= PBPSAPI_MINIMUM_DURATION_MINUTES && 
+      if (dwValue >= PBPSAPI_MINIMUM_DURATION_MINUTES &&
           dwValue <= PBPSAPI_MAXIMUM_DURATION_MINUTES)
       {
          pApi->config.dwDurationMinutes = dwValue;
@@ -284,12 +284,12 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
                       dwValue,
                       PBPSAPI_MINIMUM_DURATION_MINUTES,
                       PBPSAPI_MAXIMUM_DURATION_MINUTES);
- 
+
          dwError = LW_ERROR_DOMAINJOIN_CONFIG_OUT_OF_RANGE;
          BAIL_ON_LW_ERROR(dwError);
       }
    }
-   
+
 
 
    // Client Certificate
@@ -327,7 +327,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
 
 
    // CA Certificate
-   // Needed if PBIS agent needs to verify PBPS server certificate.
+   // Needed if BeyondTrust AD Bridge agent needs to verify PBPS server certificate.
    pApi->config.pszCertFileCA = NULL;
    if ((pszTomlRaw = toml_raw_in(pSectionPbps, "CACertificate")) != 0)
    {
@@ -362,7 +362,7 @@ PbpsApiGetConfig(PbpsApi_t *pApi, PSTR pszConfigFile)
    if (pApi->config.pszRunAsUserPwd)
    {
       dwError = LwAllocateStringPrintf(
-                       &(pApi->config.pszHeaderAuth), 
+                       &(pApi->config.pszHeaderAuth),
                        CURL_HEADER_AUTH_FORMAT_WITH_PWD,
                        pApi->config.pszApiKey,
                        pApi->config.pszRunAsUser,

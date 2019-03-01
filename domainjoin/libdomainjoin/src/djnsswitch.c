@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -469,7 +469,7 @@ cleanup:
     return ceError;
 }
 
-static DWORD RemoveModule(NsswitchConf *conf, 
+static DWORD RemoveModule(NsswitchConf *conf,
         int line, int moduleIndex)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -555,7 +555,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
 			}
 		}
 	}
-	
+
     if(!bFileExists)
     {
         bFileExists = TRUE;
@@ -589,7 +589,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
         GCE(ceError = CTAllocateStringPrintf(
           &defaultFilePath, "%s%s", testPrefix, NSSWITCH_LWIDEFAULTS));
         GCE(ceError = CTCheckFileExists(defaultFilePath, &bFileExists));
-      
+
         if (bFileExists) {
             ceError = ReadNsswitchFile(conf, testPrefix, NSSWITCH_LWIDEFAULTS);
             GCE(ceError);
@@ -858,7 +858,7 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
     }
 
-    // If initgroups is present, it overrides the groups line 
+    // If initgroups is present, it overrides the groups line
     // and has different semantics.
     // As soon as a module reports success, processing stops. We don't want
     // that so we need to add '[SUCCESS=continue]'
@@ -1149,7 +1149,7 @@ static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
                 "mr,", &usingMr));
 
     if(usingMr)
-        addString = 
+        addString =
 PREFIXDIR "/lib/*.so*            mr,\n"
 PREFIXDIR "/lib64/*.so*          mr,\n"
 LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
@@ -1189,7 +1189,7 @@ LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
     {
         ceError = CTFindFileInPath("apparmor", "/etc/init.d/apparmor", &restartPath);
     }
-    
+
     if(ceError == ERROR_FILE_NOT_FOUND)
     {
         ceError = ERROR_SUCCESS;
@@ -1243,7 +1243,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
             goto cleanup;
         }
         LW_CLEANUP_CTERR(exc, ceError);
-        
+
         LW_TRY(exc, result = RemoveCompat(&conf, NULL, &LW_EXC));
         if(result == CannotConfigure || result == NotConfigured)
         {
@@ -1266,7 +1266,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
             result = NotConfigured;
             goto cleanup;
         }
-        
+
         LW_CLEANUP_CTERR(exc, DJHasMethodsCfg(&exists));
 
         if(exists)
@@ -1518,18 +1518,18 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
     LW_CLEANUP_CTERR(exc, UpdateNsswitchConf(&conf, options->joiningDomain));
 
     if(options->joiningDomain && conf.modified)
-        configureSteps = 
+        configureSteps =
 "The following steps are required and can be performed automatically:\n"
 "\t* Edit nsswitch apparmor profile to allow libraries in the " PREFIXDIR "/lib  and " PREFIXDIR "/lib64 directories\n"
 "\t* List lwidentity module in /usr/lib/security/methods.cfg (AIX only)\n"
 "\t* Add lwidentity to passwd and group/groups line /etc/nsswitch.conf or /etc/netsvc.conf\n";
     else if(conf.modified)
-        configureSteps = 
+        configureSteps =
 "The following steps are required and can be performed automatically:\n"
 "\t* Remove lwidentity module from /usr/lib/security/methods.cfg (AIX only)\n"
 "\t* Remove lwidentity from passwd and group/groups line /etc/nsswitch.conf or /etc/netsvc.conf\n"
 "The following step is optional:\n"
-"\t* Remove apparmor exception for pbis nsswitch libraries\n";
+"\t* Remove apparmor exception for nsswitch libraries\n";
     else
         configureSteps = "";
 
@@ -1552,4 +1552,4 @@ cleanup:
     return ret;
 }
 
-const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable PowerBroker Identity Services nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };
+const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };

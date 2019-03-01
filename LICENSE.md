@@ -25,8 +25,8 @@ agreements:
 For more details and for the full text for each of these licenses, read the
 LICENSE and COPYING files included with this software.
 
-PowerBroker Identity Services, Open Edition is an open source, community
-project sponsored by BeyondTrust Software to integrate Linux, Unix, and Mac in
+BeyondTrust AD Bridge - Open Edition is an open source, community project
+sponsored by BeyondTrust Software to integrate Linux, Unix, and Mac in
 Microsoft Active Directory and authenticate users with their domain
 credentials.
 
@@ -35,4 +35,3 @@ AS WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH LIKEWISE
 SOFTWARE OR BEYONDTRUST SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER
 THE TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
 LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.
-

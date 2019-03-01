@@ -1,12 +1,12 @@
 Name: 		@PKG_OPEN_GUI_RPM_NAME@
-Summary: 	PowerBroker Identity Services Graphical Interface
+Summary: 	BeyondTrust AD Bridge Graphical Interface
 Version:        @PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
 License: 	Likewise Proprietary
-URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+URL:	http://www.beyondtrust.com/
 Group: 		System Environment/Daemons
 
 AutoReq: no
 
 %description
-PowerBroker Identity Services provides Active Directory authentication.
+BeyondTrust AD Bridge provides Active Directory authentication.

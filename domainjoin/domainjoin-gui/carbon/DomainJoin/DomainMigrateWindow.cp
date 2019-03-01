@@ -73,7 +73,7 @@ DomainMigrateWindow::GetLocalUserName()
         std::string errMsg("Failed to get local user name from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -87,7 +87,7 @@ DomainMigrateWindow::GetLocalUserHomeDir()
         std::string errMsg("Failed to get local user homedir from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -101,7 +101,7 @@ DomainMigrateWindow::GetADUserName()
         std::string errMsg("Failed to get AD user name from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -115,7 +115,7 @@ DomainMigrateWindow::GetADUserHomeDir()
         std::string errMsg("Failed to get AD user homedir from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -129,7 +129,7 @@ DomainMigrateWindow::GetADUserUID()
         std::string errMsg("Failed to get AD user homedir from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -143,7 +143,7 @@ DomainMigrateWindow::GetADUserGID()
         std::string errMsg("Failed to get AD user homedir from control");
         throw DomainJoinException(-1, "Migrate User Error", errMsg);
     }
-    
+
     return result;
 }
 
@@ -282,12 +282,12 @@ void
 DomainMigrateWindow::MigrateOff()
 {
     OSStatus err = noErr;
-    
+
     ControlID migrateCtrl;
     migrateCtrl.id = MIGRATE_ID;
     migrateCtrl.signature = 'CnTs';
     ControlRef migrateRef = nil;
-    
+
     err = GetControlByID(this->GetWindowRef(), &migrateCtrl, &migrateRef);
     if (err == noErr)
     {
@@ -299,12 +299,12 @@ void
 DomainMigrateWindow::MigrateOn()
 {
     OSStatus err = noErr;
-    
+
     ControlID migrateCtrl;
     migrateCtrl.id = MIGRATE_ID;
     migrateCtrl.signature = 'CnTs';
     ControlRef migrateRef = nil;
-    
+
     err = GetControlByID(this->GetWindowRef(), &migrateCtrl, &migrateRef);
     if (err == noErr)
     {
@@ -317,21 +317,21 @@ DomainMigrateWindow::SetLocalUsers()
 {
     PUSER_LIST pLocalUsers = NULL;
     PUSER_LIST pTemp = NULL;
-    
+
     ClearLocalUsersCombo();
     GetLocalUserList(&pLocalUsers);
-    
+
     pTemp = pLocalUsers;
-    
+
     while (pTemp)
     {
         AddUserToLocalUsersCombo(pTemp->pszUsername);
         pTemp = pTemp->pNext;
     }
-    
+
     _pLocalUsers = pLocalUsers;
     pLocalUsers = NULL;
-    
+
     SetTitleToLocalUsersCombo();
 }
 
@@ -339,12 +339,12 @@ void
 DomainMigrateWindow::ClearLocalUsersCombo()
 {
     OSStatus err = noErr;
-    
+
     ControlID luComboCtrl;
     luComboCtrl.id = LOCAL_USER_COMBO_ID;
     luComboCtrl.signature = 'CnTs';
     ControlRef luComboRef = nil;
-    
+
     ItemCount numItems = 0, i = 0;
     _localUsersFirstItem = "";
 
@@ -352,19 +352,19 @@ DomainMigrateWindow::ClearLocalUsersCombo()
     if (err == noErr)
     {
         numItems = HIComboBoxGetItemCount(luComboRef);
-    
+
         for (i = 0; i < numItems; i++)
         {
             HIComboBoxRemoveItemAtIndex(luComboRef, 0); // Remove topmost item each iteration
         }
     }
-    
+
     if (_pLocalUsers)
     {
         FreeLocalUserList(_pLocalUsers);
         _pLocalUsers = NULL;
     }
-    
+
     SetTextControlString(LOCAL_USER_COMBO_ID, "");
 }
 
@@ -372,14 +372,14 @@ void
 DomainMigrateWindow::AddUserToLocalUsersCombo(const std::string& value)
 {
     OSStatus err = noErr;
-    
+
     ControlID luComboCtrl;
     luComboCtrl.id = LOCAL_USER_COMBO_ID;
     luComboCtrl.signature = 'CnTs';
     ControlRef luComboRef = nil;
 
     CFStringRef valueStrRef = CFStringCreateWithCString(NULL, value.c_str(), kCFStringEncodingASCII);
-    
+
     err = GetControlByID(this->GetWindowRef(), &luComboCtrl, &luComboRef);
     if (err == noErr)
     {
@@ -398,7 +398,7 @@ void
 DomainMigrateWindow::SetTitleToLocalUsersCombo()
 {
     OSStatus err = noErr;
-    
+
     ControlID luComboCtrl;
     luComboCtrl.id = LOCAL_USER_COMBO_ID;
     luComboCtrl.signature = 'CnTs';
@@ -406,7 +406,7 @@ DomainMigrateWindow::SetTitleToLocalUsersCombo()
     CFStringRef firstItemRef;
     char szFirstItem[256] = {0};
     PUSER_LIST pTemp = _pLocalUsers;
-    
+
     err = GetControlByID(this->GetWindowRef(), &luComboCtrl, &luComboRef);
     if (err == noErr)
     {
@@ -422,7 +422,7 @@ DomainMigrateWindow::SetTitleToLocalUsersCombo()
     CFStringGetCString(firstItemRef, szFirstItem, 255, kCFStringEncodingASCII);
     _localUsersFirstItem = szFirstItem;
     SetTextControlString(LOCAL_USER_COMBO_ID, _localUsersFirstItem);
-    
+
     // Fill in the fields for the selected first item
     while (pTemp)
     {
@@ -436,7 +436,7 @@ DomainMigrateWindow::SetTitleToLocalUsersCombo()
         }
         pTemp = pTemp->pNext;
     }
-    
+
 exit:
 
     if (firstItemRef)
@@ -456,7 +456,7 @@ DomainMigrateWindow::ShowMigrateCompleteDialog(const std::string& value)
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
     StandardAlert(kAlertNoteAlert,
-    "\pPBIS - Active Directory",
+    "\pBeyondTrust AD Bridge - Active Directory",
     (StringPtr)msgStr,
     NULL,
     &outItemHit);
@@ -480,7 +480,7 @@ DomainMigrateWindow::ShowMigrateCompleteErrorDialog(
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 511, kCFStringEncodingASCII);
     StandardAlert(kAlertNoteAlert,
-                  "\pPBIS - Active Directory",
+                  "\pBeyondTrust AD Bridge - Active Directory",
                   (StringPtr)msgStr,
                   NULL,
                   &outItemHit);
@@ -506,16 +506,16 @@ DomainMigrateWindow::ConfirmMigration(
     OSStatus err = noErr;
     DialogItemIndex itemHit;
     CFStringRef msgStrRef = NULL;
-    
+
     GetStandardAlertDefaultParams(&params, kStdCFStringAlertVersionOne);
-    
+
     params.movable = true;
     params.defaultText = CFSTR("Yes");
     params.cancelText = CFSTR("No");
     params.otherText = NULL;
     params.defaultButton = kAlertStdAlertCancelButton;
     params.position = kWindowCenterOnParentWindow;
-    
+
     if (!strcmp(localUserHomeDir.c_str(), adUserHomeDir.c_str()))
     {
         msgStrRef = CFStringCreateWithFormat(NULL,
@@ -548,7 +548,7 @@ DomainMigrateWindow::ConfirmMigration(
     }
 
     err = CreateStandardAlert(kAlertStopAlert,
-                              CFSTR("PBIS Migrate User Profile"),
+                              CFSTR("BeyondTrust AD Bridge Migrate User Profile"),
                               msgStrRef,
                               &params,
                               &dialog);
@@ -564,12 +564,12 @@ DomainMigrateWindow::ConfirmMigration(
     {
         throw DomainJoinException(err, "Domain Join Error", "Failed to create dialog");
     }
-    
+
     if (msgStrRef)
     {
         CFRelease(msgStrRef);
     }
-    
+
     return itemHit != 2;
 }
 
@@ -598,7 +598,7 @@ DomainMigrateWindow::CallMigrateCommand(
         "--log",
         logFileName.c_str(),
         (char *) NULL };
-                
+
     macError = CallCommandWithOutputAndErr(args[0],
                                            args,
                                            true,
@@ -608,13 +608,13 @@ DomainMigrateWindow::CallMigrateCommand(
     {
         exitCode = -1;
     }
-    
+
     if (ppszOutput && pszOutput)
     {
         *ppszOutput = pszOutput;
         pszOutput = NULL;
     }
-    
+
     if (pszOutput)
     {
         free(pszOutput);
@@ -627,12 +627,12 @@ void
 DomainMigrateWindow::HideMigrateProgressBar()
 {
     OSStatus err = noErr;
-    
+
     ControlID progressBarCtrl;
     progressBarCtrl.id = MIGRATE_PROGRESS_ID;
     progressBarCtrl.signature = 'CnTs';
     ControlRef progressBarRef = nil;
-    
+
     err = GetControlByID(this->GetWindowRef(), &progressBarCtrl, &progressBarRef);
     if (err == noErr)
     {
@@ -644,12 +644,12 @@ void
 DomainMigrateWindow::ShowMigrateProgressBar()
 {
     OSStatus err = noErr;
-    
+
     ControlID progressBarCtrl;
     progressBarCtrl.id = MIGRATE_PROGRESS_ID;
     progressBarCtrl.signature = 'CnTs';
     ControlRef progressBarRef = nil;
-    
+
     err = GetControlByID(this->GetWindowRef(), &progressBarCtrl, &progressBarRef);
     if (err == noErr)
     {
@@ -672,26 +672,26 @@ DomainMigrateWindow::HandleMigration()
         bool bDeleteAccount = IsDeleteOptionSelected();
         bool bKeepAdmin = IsKeepAdminOptionSelected();
         bool bUseSpotlight = IsUseSpotlightOptionSelected();
-        
+
         ShowMigrateProgressBar();
-        
+
         if (ConfirmMigration(localUserName, localUserHomeDir, adUserName, adUserHomeDir, adUserUID, adUserGID, bMoveProfile, bDeleteAccount, bKeepAdmin, bUseSpotlight))
         {
             int ret = 0;
             char szLogFileName[256] = { 0 };
             char * pszErrorMessage = NULL;
-            
+
             sprintf(szLogFileName, "/var/log/pbis-migrate.%s.log", localUserName.c_str());
-            
+
             // Migrate user with the parameters we have determined...
             ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, bKeepAdmin, bUseSpotlight, &pszErrorMessage);
-            
+
             HideMigrateProgressBar();
-            
+
             if (ret)
             {
                 ShowMigrateCompleteErrorDialog(localUserName, ret, pszErrorMessage);
-                
+
                 if (pszErrorMessage)
                 {
                     free(pszErrorMessage);
@@ -701,11 +701,11 @@ DomainMigrateWindow::HandleMigration()
             {
                 ShowMigrateCompleteDialog(localUserName);
             }
-            
+
             // Okay to switch back to Leave dialog since the migration is completed
             PostApplicationEvent(MAIN_MENU_JOIN_OR_LEAVE_ID);
         }
-        
+
         HideMigrateProgressBar();
     }
     catch(DomainJoinException& dje)
@@ -736,12 +736,12 @@ DomainMigrateWindow::HandleMigration()
 bool
 DomainMigrateWindow::HandleValidateUser()
 {
-    long   macError = eDSNoErr;  
+    long   macError = eDSNoErr;
     char * pszRealName = NULL;
     char * pszHomeDir = NULL;
     char * pszUID = NULL;
     char * pszGID = NULL;
-    
+
     try
     {
         std::string adUserName = GetADUserName();
@@ -751,7 +751,7 @@ DomainMigrateWindow::HandleValidateUser()
         SetADUserHomeDirectory("");
         SetADUserUID("");
         SetADUserGID("");
-        
+
         macError = GetADUserInfo(adUserName.c_str(),
                                  &pszRealName,
                                  &pszHomeDir,
@@ -791,27 +791,27 @@ DomainMigrateWindow::HandleValidateUser()
                       NULL,
                       &outItemHit);
     }
-    
+
     if (pszRealName)
     {
         free(pszRealName);
     }
-    
+
     if (pszHomeDir)
     {
         free(pszHomeDir);
     }
-    
+
     if (pszUID)
     {
         free(pszUID);
     }
-    
+
     if (pszGID)
     {
         free(pszGID);
     }
-    
+
     return (macError == noErr);
 }
 
@@ -822,7 +822,7 @@ DomainMigrateWindow::HandleCommand( const HICommandExtended& inCommand )
     std::string localUserName = GetLocalUserName();
     std::string currentFirstItem = _localUsersFirstItem;
     PUSER_LIST pTemp = _pLocalUsers;
-    
+
     if (localUserName != currentFirstItem)
     {
         _localUsersFirstItem = localUserName;
@@ -839,7 +839,7 @@ DomainMigrateWindow::HandleCommand( const HICommandExtended& inCommand )
             pTemp = pTemp->pNext;
         }
     }
-    
+
     switch ( inCommand.commandID )
     {
         case CANCEL_CMD_ID:
@@ -853,7 +853,7 @@ DomainMigrateWindow::HandleCommand( const HICommandExtended& inCommand )
         case COPY_RADIO_CMD_ID:
             UnsetRadioButton(MOVE_RADIO_ID);
             return true;
-             
+
         case LOCAL_USER_NAME_CMD_ID:
             return true;
 
@@ -863,7 +863,7 @@ DomainMigrateWindow::HandleCommand( const HICommandExtended& inCommand )
                 HandleMigration();
             }
             return true;
- 
+
         case VALIDATE_CMD_ID:
             if (HandleValidateUser())
             {
@@ -874,7 +874,7 @@ DomainMigrateWindow::HandleCommand( const HICommandExtended& inCommand )
                 MigrateOff();
             }
             return true;
-            
+
         default:
             return false;
     }
@@ -893,31 +893,31 @@ DomainMigrateWindow::Close()
 static
 void
 DoubleTheBufferSizeIfItsTooSmall(
-    long *              pMacError, 
-    tDirNodeReference   hDirRef, 
+    long *              pMacError,
+    tDirNodeReference   hDirRef,
     tDataBufferPtr *    ppBuffer
 )
-    // This routine is designed to handle the case where a 
-    // Open Directory routine returns eDSBufferTooSmall.  
-    // If so, it doubles the size of the buffer, allowing the 
-    // caller to retry the Open Directory routine with the 
+    // This routine is designed to handle the case where a
+    // Open Directory routine returns eDSBufferTooSmall.
+    // If so, it doubles the size of the buffer, allowing the
+    // caller to retry the Open Directory routine with the
     // large buffer.
     //
-    // errPtr is a pointer to a Open Directory error.  
-    // This routine does nothing unless that error is 
-    // eDSBufferTooSmall.  In that case it frees the buffer 
-    // referenced by *bufPtrPtr, replacing it with a buffer 
-    // of twice the size.  It then leaves *errPtr set to 
-    // eDSBufferTooSmall so that the caller retries the 
+    // errPtr is a pointer to a Open Directory error.
+    // This routine does nothing unless that error is
+    // eDSBufferTooSmall.  In that case it frees the buffer
+    // referenced by *bufPtrPtr, replacing it with a buffer
+    // of twice the size.  It then leaves *errPtr set to
+    // eDSBufferTooSmall so that the caller retries the
     // call with the larger buffer.
 {
     long            macError = eDSNoErr;
     tDirStatus      junk;
     tDataBufferPtr  pBuffer = NULL;
-    
+
     if (*pMacError == eDSBufferTooSmall)
     {
-        // If the buffer size is already bigger than 16 MB, don't try to 
+        // If the buffer size is already bigger than 16 MB, don't try to
         // double it again; something has gone horribly wrong.
         if ( (*ppBuffer)->fBufferSize >= (16 * 1024 * 1024) )
         {
@@ -931,18 +931,18 @@ DoubleTheBufferSizeIfItsTooSmall(
             macError = eDSAllocationFailed;
             if (macError) goto cleanup;
         }
-        
+
         junk = dsDataBufferDeAllocate(hDirRef, *ppBuffer);
         *ppBuffer = pBuffer;
     }
-    
+
 cleanup:
 
-    // If err is eDSNoErr, the buffer expansion was successful 
-    // so we leave *errPtr set to eDSBufferTooSmall.  If err 
-    // is any other value, the expansion failed and we set 
+    // If err is eDSNoErr, the buffer expansion was successful
+    // so we leave *errPtr set to eDSBufferTooSmall.  If err
+    // is any other value, the expansion failed and we set
     // *errPtr to that error.
-        
+
     if (macError != eDSNoErr)
     {
         *pMacError = macError;
@@ -961,30 +961,30 @@ dsFindDirNodes_Wrap(
     )
     // A wrapper for dsFindDirNodes that handles two special cases:
     //
-    // o If the routine returns eDSBufferTooSmall, it doubles the 
-    //   size of the buffer referenced by *inOutDataBufferPtrPtr 
+    // o If the routine returns eDSBufferTooSmall, it doubles the
+    //   size of the buffer referenced by *inOutDataBufferPtrPtr
     //   and retries.
     //
-    //   Note that this change requires a change of the function 
-    //   prototype; the second parameter is a pointer to a pointer 
-    //   to the buffer, rather than just a pointer to the buffer. 
+    //   Note that this change requires a change of the function
+    //   prototype; the second parameter is a pointer to a pointer
+    //   to the buffer, rather than just a pointer to the buffer.
     //   This is so that I can modify the client's buffer pointer.
     //
-    // o If the routine returns no nodes but there's valid continue data, 
+    // o If the routine returns no nodes but there's valid continue data,
     //   it retries.
     //
     // In other respects this works just like dsFindDirNodes.
 {
     long macError = eDSNoErr;
-    
+
     do {
         do {
             macError = dsFindDirNodes(
-                hDirRef, 
-                *ppDataBuffer, 
-                pNodeName, 
-                PatternMatchType, 
-                pulNodeCount, 
+                hDirRef,
+                *ppDataBuffer,
+                pNodeName,
+                PatternMatchType,
+                pulNodeCount,
                 inOutContinueData
             );
             DoubleTheBufferSizeIfItsTooSmall(&macError, hDirRef, ppDataBuffer);
@@ -998,7 +998,7 @@ enum {
     kDefaultDSBufferSize = 1024
 };
 
-static 
+static
 long
 GetLocalNodePathList(
     tDirReference  hDirRef,
@@ -1006,7 +1006,7 @@ GetLocalNodePathList(
     )
     // Returns the path to the Open Directory local node. (/NetInfo/root/ or Local/Default/)
     // dirRef is the connection to Open Directory.
-    // On success, *searchNodePathListPtr is a data list that 
+    // On success, *searchNodePathListPtr is a data list that
     // contains the search node's path components.
 {
     long                macError = eDSNoErr;
@@ -1015,70 +1015,70 @@ GetLocalNodePathList(
     unsigned long       ulNodeCount = 0;
     tContextData        context = NULL;
     tDataListPtr        pLocalNodePath = NULL;
-    
-    // Allocate a buffer for the node find results.  We'll grow 
+
+    // Allocate a buffer for the node find results.  We'll grow
     // this buffer if it proves to be to small.
-    
+
     pDataBuffer = dsDataBufferAllocate(hDirRef, kDefaultDSBufferSize);
     if (!pDataBuffer)
     {
         macError = eDSAllocationFailed;
         goto cleanup;
     }
-    
-    // Find the node.  Note that this is a degenerate case because 
-    // we're only looking for a single node, the local node, so 
-    // we don't need to loop calling dsFindDirNodes, which is the 
+
+    // Find the node.  Note that this is a degenerate case because
+    // we're only looking for a single node, the local node, so
+    // we don't need to loop calling dsFindDirNodes, which is the
     // standard way of using dsFindDirNodes.
-    
+
     macError = dsFindDirNodes_Wrap(
-            hDirRef, 
+            hDirRef,
             &pDataBuffer,                       // place results here
             NULL,                               // no pattern, rather...
             patternToFind,                      // ... hardwired search type
-            &ulNodeCount, 
+            &ulNodeCount,
             &context
         );
     if (macError) goto cleanup;
-    
+
     // If we didn't find any nodes, that's bad.
-    
+
     if (ulNodeCount < 1)
     {
         macError = eDSNodeNotFound;
         goto cleanup;
     }
-    
-    // Grab the first node from the buffer.  Note that the inDirNodeIndex 
-    // parameter to dsGetDirNodeName is one-based, so we pass in the constant 
+
+    // Grab the first node from the buffer.  Note that the inDirNodeIndex
+    // parameter to dsGetDirNodeName is one-based, so we pass in the constant
     // 1.
-    // 
-    // Also, if we found more than one, that's unusual, but not enough to 
+    //
+    // Also, if we found more than one, that's unusual, but not enough to
     // cause us to error.
     macError = dsGetDirNodeName(hDirRef, pDataBuffer, 1, &pLocalNodePath);
     if (macError) goto cleanup;
-    
+
     *ppLocalNodePath = pLocalNodePath;
     pLocalNodePath = NULL;
-    
+
 cleanup:
 
     // Clean up.
-    
+
     if (context != 0)
     {
         dsReleaseContinueData(hDirRef, context);
     }
-    
+
     if (pDataBuffer)
     {
         dsDataBufferDeAllocate(hDirRef, pDataBuffer);
     }
-    
+
     return macError;
 }
 
-static 
+static
 long
 GetLikewiseNodePathList(
     tDirReference  hDirRef,
@@ -1086,7 +1086,7 @@ GetLikewiseNodePathList(
     )
     // Returns the path to the Open Directory likewise node. (/Likewise - Active Directory/)
     // dirRef is the connection to Open Directory.
-    // On success, *searchNodePathListPtr is a data list that 
+    // On success, *searchNodePathListPtr is a data list that
     // contains the search node's path components.
 {
     long                macError = eDSNoErr;
@@ -1096,69 +1096,69 @@ GetLikewiseNodePathList(
     unsigned long       ulNodeCount = 0;
     tContextData        context = NULL;
     tDataListPtr        pLikewiseNodePath = NULL;
-    
+
     // Create Likewise node name string list
     macError = dsBuildListFromStringsAlloc(hDirRef, &likewiseNodeName, "Likewise", NULL);
-    if (macError) goto cleanup;  
-    
-    // Allocate a buffer for the node find results.  We'll grow 
+    if (macError) goto cleanup;
+
+    // Allocate a buffer for the node find results.  We'll grow
     // this buffer if it proves to be to small.
-    
+
     pDataBuffer = dsDataBufferAllocate(hDirRef, kDefaultDSBufferSize);
     if (!pDataBuffer)
     {
         macError = eDSAllocationFailed;
         goto cleanup;
     }
-    
-    // Find the node.  Note that this is a degenerate case because 
-    // we're only looking for a single node, the local node, so 
-    // we don't need to loop calling dsFindDirNodes, which is the 
+
+    // Find the node.  Note that this is a degenerate case because
+    // we're only looking for a single node, the local node, so
+    // we don't need to loop calling dsFindDirNodes, which is the
     // standard way of using dsFindDirNodes.
-    
+
     macError = dsFindDirNodes_Wrap(
-            hDirRef, 
+            hDirRef,
             &pDataBuffer,                       // place results here
             &likewiseNodeName,
             patternToFind,
-            &ulNodeCount, 
+            &ulNodeCount,
             &context
         );
     if (macError) goto cleanup;
-    
+
     // If we didn't find any nodes, that's bad.
-    
+
     if (ulNodeCount < 1) {
         macError = eDSNodeNotFound;
         goto cleanup;
     }
-    
-    // Grab the first node from the buffer.  Note that the inDirNodeIndex 
-    // parameter to dsGetDirNodeName is one-based, so we pass in the constant 
+
+    // Grab the first node from the buffer.  Note that the inDirNodeIndex
+    // parameter to dsGetDirNodeName is one-based, so we pass in the constant
     // 1.
-    // 
-    // Also, if we found more than one, that's unusual, but not enough to 
+    //
+    // Also, if we found more than one, that's unusual, but not enough to
     // cause us to error.
     macError = dsGetDirNodeName(hDirRef, pDataBuffer, 1, &pLikewiseNodePath);
     if (macError) goto cleanup;
-    
+
     *ppLikewiseNodePath = pLikewiseNodePath;
     pLikewiseNodePath = NULL;
-    
+
 cleanup:
 
     dsDataListDeallocate(hDirRef, &likewiseNodeName);
-    
+
     if (context != 0)
     {
         dsReleaseContinueData(hDirRef, context);
     }
-    
+
     if (pDataBuffer)
     {
         dsDataBufferDeAllocate(hDirRef, pDataBuffer);
     }
-    
+
     return macError;
 }
 
@@ -1166,7 +1166,7 @@ static
 long
 GetUserInfo(
     tDirReference hDirRef,
-    tDirNodeReference hNodeRef, 
+    tDirNodeReference hNodeRef,
     const char * pszUsername,
     char ** ppszRealName,
     char ** ppszUserHomeDir,
@@ -1196,14 +1196,14 @@ GetUserInfo(
         macError = eDSInvalidRecordName;
         goto exit;
     }
-    
+
     pRecordName = dsDataNodeAllocateString(hDirRef, pszUsername);
     if (!pRecordName)
     {
         macError = eDSAllocationFailed;
         goto exit;
     }
-    
+
     pRecordTypeUser = dsDataNodeAllocateString(hDirRef, kDSStdRecordTypeUsers);
     if (!pRecordTypeUser)
     {
@@ -1217,7 +1217,7 @@ GetUserInfo(
         macError = eDSAllocationFailed;
         goto exit;
     }
-    
+
     pGeneratedID = dsDataNodeAllocateString(hDirRef, kDS1AttrGeneratedUID);
     if (!pGeneratedID)
     {
@@ -1245,7 +1245,7 @@ GetUserInfo(
         macError = eDSAllocationFailed;
         goto exit;
     }
-    
+
     // Get record by name
     macError = dsOpenRecord(hNodeRef,
                             pRecordTypeUser,
@@ -1256,7 +1256,7 @@ GetUserInfo(
     // Generated ID
     macError = dsGetRecordAttributeValueByIndex(refRecord, pGeneratedID, 1, &pValueEntry);
     if (macError) goto exit;
-    
+
     if (pValueEntry->fAttributeValueData.fBufferLength)
     {
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
@@ -1271,7 +1271,7 @@ GetUserInfo(
     // RealName
     macError = dsGetRecordAttributeValueByIndex(refRecord, pRealName, 1, &pValueEntry);
     if (macError) goto exit;
-    
+
     if (pValueEntry->fAttributeValueData.fBufferLength > 0)
     {
         pszRealName = (char*) malloc(pValueEntry->fAttributeValueData.fBufferLength + 1);
@@ -1281,7 +1281,7 @@ GetUserInfo(
             goto exit;
         }
         memset(pszRealName, 0, pValueEntry->fAttributeValueData.fBufferLength + 1);
-        
+
         strcpy(pszRealName, pValueEntry->fAttributeValueData.fBufferData);
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
         pValueEntry = NULL;
@@ -1295,7 +1295,7 @@ GetUserInfo(
     // UniqueID
     macError = dsGetRecordAttributeValueByIndex(refRecord, pUniqueID, 1, &pValueEntry);
     if (macError) goto exit;
-    
+
     if (pValueEntry->fAttributeValueData.fBufferLength > 0)
     {
         if (!strcmp(pValueEntry->fAttributeValueData.fBufferData, "0"))
@@ -1304,7 +1304,7 @@ GetUserInfo(
             macError = eDSInvalidRecordName;
             goto exit;
         }
-        
+
         pszUserUID = (char*) malloc(pValueEntry->fAttributeValueData.fBufferLength + 1);
         if (!pszUserUID)
         {
@@ -1312,7 +1312,7 @@ GetUserInfo(
             goto exit;
         }
         memset(pszUserUID, 0, pValueEntry->fAttributeValueData.fBufferLength + 1);
-        
+
         strcpy(pszUserUID, pValueEntry->fAttributeValueData.fBufferData);
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
         pValueEntry = NULL;
@@ -1326,7 +1326,7 @@ GetUserInfo(
     // PrimaryGroup
     macError = dsGetRecordAttributeValueByIndex(refRecord, pPrimaryGroup, 1, &pValueEntry);
     if (macError) goto exit;
-    
+
     if (pValueEntry->fAttributeValueData.fBufferLength > 0)
     {
         pszUserGID = (char*) malloc(pValueEntry->fAttributeValueData.fBufferLength + 1);
@@ -1336,7 +1336,7 @@ GetUserInfo(
             goto exit;
         }
         memset(pszUserGID, 0, pValueEntry->fAttributeValueData.fBufferLength + 1);
-        
+
         strcpy(pszUserGID, pValueEntry->fAttributeValueData.fBufferData);
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
         pValueEntry = NULL;
@@ -1345,12 +1345,12 @@ GetUserInfo(
     {
         macError = eDSInvalidAttributeType;
         goto exit;
-    }   
+    }
 
     // HomeDirectory
     macError = dsGetRecordAttributeValueByIndex(refRecord, pHomeDirectory, 1, &pValueEntry);
     if (macError) goto exit;
-    
+
     if (pValueEntry->fAttributeValueData.fBufferLength > 0)
     {
         pszHomeDir = (char*) malloc(pValueEntry->fAttributeValueData.fBufferLength + 1);
@@ -1360,7 +1360,7 @@ GetUserInfo(
             goto exit;
         }
         memset(pszHomeDir, 0, pValueEntry->fAttributeValueData.fBufferLength + 1);
-        
+
         strcpy(pszHomeDir, pValueEntry->fAttributeValueData.fBufferData);
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
         pValueEntry = NULL;
@@ -1370,46 +1370,46 @@ GetUserInfo(
         macError = eDSInvalidAttributeType;
         goto exit;
     }
-        
+
     *ppszRealName = pszRealName;
     pszRealName = NULL;
-    
+
     *ppszUserHomeDir = pszHomeDir;
     pszHomeDir = NULL;
-    
+
     *ppszUserUID = pszUserUID;
     pszUserUID = NULL;
-    
+
     *ppszUserGID = pszUserGID;
     pszUserGID = NULL;
-    
+
 cleanup:
-    
+
     if (pRealName)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pRealName);
     }
-        
+
     if (pGeneratedID)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pGeneratedID);
     }
-    
+
     if (pUniqueID)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pUniqueID);
     }
-    
+
     if (pPrimaryGroup)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pPrimaryGroup);
     }
-    
+
     if (pHomeDirectory)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pHomeDirectory);
     }
-    
+
     if (pRecordName)
     {
         junk = dsDataNodeDeAllocate(hDirRef, pRecordName);
@@ -1419,46 +1419,46 @@ cleanup:
     {
         junk = dsDataNodeDeAllocate(hDirRef, pRecordTypeUser);
     }
-    
+
     if (pValueEntry)
     {
         junk = dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
     }
-    
+
     if (refRecord)
     {
         junk = dsCloseRecord(refRecord);
     }
-    
+
     if (pszRealName)
     {
         free(pszRealName);
     }
-        
+
     if (pszHomeDir)
     {
         free(pszHomeDir);
     }
-    
+
     if (pszUserUID)
     {
         free(pszUserUID);
     }
-    
+
     if (pszUserGID)
     {
         free(pszUserGID);
     }
-    
+
     return macError;
-    
-exit:    
+
+exit:
 
     *ppszRealName = NULL;
     *ppszUserHomeDir = NULL;
     *ppszUserUID = NULL;
     *ppszUserGID = NULL;
-   
+
     goto cleanup;
 }
 
@@ -1475,9 +1475,9 @@ CreateUserNode(
     long macError = eDSNoErr;
     char * pszRecordName = NULL;
     tAttributeListRef refAttrList = NULL;
-    tRecordEntryPtr pRecord = NULL; 
+    tRecordEntryPtr pRecord = NULL;
     PUSER_LIST pUser = NULL;
-    
+
     // Create the new user node for the list
     pUser = (PUSER_LIST) malloc(sizeof(USER_LIST));
     if (!pUser)
@@ -1491,9 +1491,9 @@ CreateUserNode(
     pUser->pszUserUID = NULL;
     pUser->pszUserGID = NULL;
     pUser->pNext = NULL;
-    
+
     // Get record from buffer
-    macError = dsGetRecordEntry(hNodeRef, 
+    macError = dsGetRecordEntry(hNodeRef,
                                 pDataBuffer,
                                 index, // start count at 1
                                 &refAttrList,
@@ -1503,13 +1503,13 @@ CreateUserNode(
     // Get the record name
     macError = dsGetRecordNameFromEntry(pRecord, &pszRecordName);
     if (macError) goto exit;
-    
+
     if (!pszRecordName)
     {
         macError = eDSAttributeValueNotFound;
         if (macError) goto exit;
     }
-    
+
     pUser->pszUsername = pszRecordName;
     pszRecordName = NULL;
 
@@ -1533,11 +1533,11 @@ cleanup:
     }
 
     return (*ppUser != NULL);
-    
+
 exit:
 
    *ppUser = NULL;
-   
+
    goto cleanup;
 }
 
@@ -1558,7 +1558,7 @@ GetADUserInfo(
     char *            pszHomeDir = NULL;
     char *            pszUserUID = NULL;
     char *            pszUserGID = NULL;
-        
+
     macError = dsOpenDirService(&hDirRef);
     if (macError) goto exit;
 
@@ -1567,7 +1567,7 @@ GetADUserInfo(
 
     macError = dsOpenDirNode(hDirRef, pLikewiseNodePath, &hNodeRef);
     if (macError) goto exit;
-        
+
     macError = GetUserInfo(hDirRef,
                            hNodeRef,
                            pszUsername,
@@ -1576,46 +1576,46 @@ GetADUserInfo(
                            &pszUserUID,
                            &pszUserGID);
     if (macError) goto exit;
-        
+
     *ppszRealName = pszRealName;
     pszRealName = NULL;
-    
+
     *ppszUserHomeDir = pszHomeDir;
     pszHomeDir = NULL;
-    
+
     *ppszUserUID = pszUserUID;
     pszUserUID = NULL;
-    
+
     *ppszUserGID = pszUserGID;
     pszUserGID = NULL;
-    
+
 cleanup:
-        
+
     if (pszRealName)
     {
         free(pszRealName);
     }
-        
+
     if (pszHomeDir)
     {
         free(pszHomeDir);
     }
-    
+
     if (pszUserUID)
     {
         free(pszUserUID);
     }
-    
+
     if (pszUserGID)
     {
         free(pszUserGID);
     }
-    
+
     if (pLikewiseNodePath)
     {
         dsDataListDeallocate(hDirRef, pLikewiseNodePath);
     }
-    
+
     if (hNodeRef)
     {
         dsCloseDirNode(hNodeRef);
@@ -1625,16 +1625,16 @@ cleanup:
     {
         dsCloseDirService(hDirRef);
     }
-    
+
     return macError;
-    
-exit:    
+
+exit:
 
     *ppszRealName = NULL;
     *ppszUserHomeDir = NULL;
     *ppszUserUID = NULL;
     *ppszUserGID = NULL;
-   
+
     goto cleanup;
 }
 
@@ -1644,7 +1644,7 @@ GetLocalUserList(
     )
 {
     long macError = eDSNoErr;
-    
+
     PUSER_LIST pLocalUsers = NULL;
     PUSER_LIST pUser = NULL, pPrev = NULL;
 
@@ -1659,19 +1659,19 @@ GetLocalUserList(
     long unsigned       record_count = 0;
     tDataBufferPtr      pDataBuffer = NULL;
     tContextData        pContinuationData = NULL;
-    
+
     macError = dsBuildListFromStringsAlloc(hDirRef, &attrTypeAll, kDSAttributesAll, NULL);
-    if (macError) goto error;  
-    
+    if (macError) goto error;
+
     macError = dsBuildListFromStringsAlloc(hDirRef, &recordTypeUsers, kDSStdRecordTypeUsers, NULL);
     if (macError) goto error;
 
     macError = dsBuildListFromStringsAlloc(hDirRef, &recordsAll, kDSRecordsAll, NULL);
     if (macError) goto error;
-    
+
     macError = dsOpenDirService(&hDirRef);
     if (macError) goto error;
-    
+
     pDataBuffer = dsDataBufferAllocate(hDirRef, 1024);
     if (pDataBuffer == NULL)
     {
@@ -1684,12 +1684,12 @@ GetLocalUserList(
 
     macError = dsOpenDirNode(hDirRef, pLocalNodePath, &hNodeRef);
     if (macError) goto error;
-    
+
     do
     {
         // Reset the counter for the next read if we are continuing on
         record_count = 0;
-        
+
         do
         {
             if (macError == eDSBufferTooSmall)
@@ -1704,7 +1704,7 @@ GetLocalUserList(
                 if(pDataBuffer == NULL)
                     break;
             }
-    
+
             macError = dsGetRecordList(hNodeRef,
                                        pDataBuffer,
                                        &recordsAll,
@@ -1717,7 +1717,7 @@ GetLocalUserList(
 
         } while (macError == eDSBufferTooSmall);
 
-        if (record_count > 0) 
+        if (record_count > 0)
         {
             unsigned int i;
             for (i=1; i <= record_count; i++)
@@ -1732,7 +1732,7 @@ GetLocalUserList(
                     {
                         pLocalUsers = pUser;
                     }
-                    
+
                     pPrev = pUser;
                     pUser = NULL;
                 }
@@ -1742,34 +1742,34 @@ GetLocalUserList(
 
     *ppLocalUsers = pLocalUsers;
     pLocalUsers = NULL;
-    
+
 cleanup:
 
     // Node structure is part of the stack, each may contain an allocation
     dsDataListDeallocate(hDirRef, &recordsAll);
     dsDataListDeallocate(hDirRef, &recordTypeUsers);
     dsDataListDeallocate(hDirRef, &attrTypeAll);
-    
+
     if (pLocalNodePath)
     {
         dsDataListDeallocate(hDirRef, pLocalNodePath);
     }
-    
+
     if (pValueEntry)
     {
         dsDeallocAttributeValueEntry(hDirRef, pValueEntry);
     }
-    
+
     if (pDataBuffer)
     {
         dsDataBufferDeAllocate(hDirRef, pDataBuffer);
     }
-    
+
     if (hRecordRef)
     {
         dsCloseRecord(hRecordRef);
     }
-    
+
     if (hNodeRef)
     {
         dsCloseDirNode(hNodeRef);
@@ -1784,9 +1784,9 @@ cleanup:
     {
         FreeLocalUserList(pLocalUsers);
     }
-    
+
     return macError;
-    
+
 error:
 
     *ppLocalUsers = NULL;
@@ -1803,27 +1803,27 @@ FreeLocalUserList(
     {
         PUSER_LIST pTemp = pLocalUsers;
         pLocalUsers = pLocalUsers->pNext;
-        
+
         if (pTemp->pszUsername)
         {
             free(pTemp->pszUsername);
         }
-        
+
         if (pTemp->pszUserRealName)
         {
             free(pTemp->pszUserRealName);
         }
-        
+
         if (pTemp->pszUserUID)
         {
             free(pTemp->pszUserUID);
         }
-        
+
         if (pTemp->pszUserGID)
         {
             free(pTemp->pszUserGID);
         }
-        
+
         if (pTemp->pszUserHomeDir)
         {
             free(pTemp->pszUserHomeDir);
@@ -1842,7 +1842,7 @@ CallCommandWithOutputAndErr(
     int *         pExitCode
     )
 {
-    long         macError = eDSNoErr;  
+    long         macError = eDSNoErr;
     unsigned int buffer_size = 1024;
     unsigned int read_size, write_size;
     int out[2];
@@ -1950,7 +1950,6 @@ exit:
     {
         free(pszTempOutput);
     }
-    
+
     return macError;
 }
-

@@ -30,7 +30,7 @@
 #
 # cmock.sh -- Support for building CMock/Unity unit tests
 #   This includes:
-#     - checking for the presence of the pbis packaged cmock/unity library
+#     - checking for the presence of the AD Bridge packaged cmock/unity library
 #     - building a test; basically a glorified mk_program
 #     - running the list of tests
 #

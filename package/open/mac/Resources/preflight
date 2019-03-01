@@ -148,10 +148,10 @@ determine_upgrade_type()
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
     if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
         log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
@@ -425,14 +425,14 @@ log "See /var/log/pbis-open-install.log for a complete installation log"
 
 if [ "`uname -n`" = "localhost" ]
 then
-    log "Error: local host name is 'localhost' - please change it before installing PowerBroker Identity Services Open."
+    log "Error: local host name is 'localhost' - please change it before installing BeyondTrust AD Bridge Open."
 
     if [ ! -t 0 ]
     then
         /usr/bin/osascript << EOF
 tell application "System Events"
     activate
-    display dialog "Error: local host name is 'localhost' - please change it before installing PowerBroker Identity Services Open."
+    display dialog "Error: local host name is 'localhost' - please change it before installing BeyondTrust AD Bridge Open."
 end tell
 EOF
     fi
@@ -474,5 +474,3 @@ if [ -x @MK_BINDIR@/macuninstall.sh ]; then
 fi
 
 log "Extracting and installing the binaries and configuration files"
-
-

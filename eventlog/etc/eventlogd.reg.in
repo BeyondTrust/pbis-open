@@ -2,8 +2,8 @@
 
 [HKEY_THIS_MACHINE\Services\eventlog]
 "Description" = {
-    value = "PBIS Event Log Service"
-    default = "PBIS Event Log Service"
+    value = "Event Log Service"
+    default = "Event Log Service"
     doc = ""
 }
 "Path" = {
@@ -39,41 +39,41 @@
 }
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters]
-"AllowReadTo" = { 
-    default = "" 
-    doc = "" 
+"AllowReadTo" = {
+    default = ""
+    doc = ""
 }
-"AllowWriteTo" = { 
-    default = "" 
-    doc = "" 
+"AllowWriteTo" = {
+    default = ""
+    doc = ""
 }
-"AllowDeleteTo" = { 
-    default = "" 
-    doc = "" 
+"AllowDeleteTo" = {
+    default = ""
+    doc = ""
 }
-"MaxDiskUsage" = { 
-    default = dword:06400000 
-    doc = "" 
+"MaxDiskUsage" = {
+    default = dword:06400000
+    doc = ""
 }
-"MaxEventLifespan" = { 
-    default = dword:0000005A 
-    doc = "" 
+"MaxEventLifespan" = {
+    default = dword:0000005A
+    doc = ""
 }
-"MaxNumEvents" = { 
-    default = dword:000186A0 
-    doc = "" 
+"MaxNumEvents" = {
+    default = dword:000186A0
+    doc = ""
 }
-"EventDbPurgeInterval" = { 
-    default = dword:00000001 
-    doc = "" 
+"EventDbPurgeInterval" = {
+    default = dword:00000001
+    doc = ""
 }
-"RemoveEventsAsNeeded" = { 
-    default = dword:00000001 
+"RemoveEventsAsNeeded" = {
+    default = dword:00000001
     doc = ""
     range = boolean
 }
-"RegisterTcpIp" = { 
-    default = dword:00000000 
+"RegisterTcpIp" = {
+    default = dword:00000000
     doc = ""
     range = boolean
 }

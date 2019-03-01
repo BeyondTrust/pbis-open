@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -539,13 +539,13 @@ static PSTR GetDSPluginDescription(const JoinProcessOptions *options, LWExceptio
     if(options->joiningDomain)
     {
         LW_CLEANUP_CTERR(exc, CTStrdup(
-                    "The PowerBroker Identity Services Directory Services plugin will be enabled by adding it to the custom search path and switching the search policy to custom.",
+                    "The BeyondTrust AD Bridge Directory Services plugin will be enabled by adding it to the custom search path and switching the search policy to custom.",
                     &ret));
     }
     else
     {
         LW_CLEANUP_CTERR(exc, CTStrdup(
-                    "The PowerBroker Identity Services Directory Services plugin will removed from the custom search path and and the search policy will be switched back to standard.",
+                    "The BeyondTrust AD Bridge Directory Services plugin will removed from the custom search path and and the search policy will be switched back to standard.",
                     &ret));
     }
 
@@ -553,4 +553,4 @@ cleanup:
     return ret;
 }
 
-const JoinModule DJDSPlugin = { TRUE, "dsplugin", "enable PBIS directory services plugin", QueryDSPlugin, DoDSPlugin, GetDSPluginDescription};
+const JoinModule DJDSPlugin = { TRUE, "dsplugin", "enable BeyondTrust AD Bridge directory services plugin", QueryDSPlugin, DoDSPlugin, GetDSPluginDescription};

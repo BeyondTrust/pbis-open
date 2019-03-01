@@ -3,20 +3,20 @@ Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
 License: 	GPLv2
-URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+URL:	http://www.beyondtrust.com/
 Group: 		System Environment/Daemons
 Prereq: @PKG_OPEN_UPGRADE_RPM_NAME@
-Conflicts:  winbind 
+Conflicts:  winbind
 Obsoletes: likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
 Provides: @PKG_OPEN_RPM_NAME@ , likewise-open
 AutoReq: no
 AutoProv: no
 
 %description
-PowerBroker Identity Services Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
+BeyondTrust AD Bridge Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
 %package devel
-Summary: PowerBroker Identity Services Open (development)
+Summary: BeyondTrust AD Bridge Open (development)
 Group: Development/Libraries
 Requires: @PKG_OPEN_RPM_NAME@
 
@@ -211,7 +211,7 @@ setup_selinux_policy_module()
         logfile "/etc/selinux/targeted/policy not present."
         return;
     fi
-    
+
     RUNSCRIPT="run_or_fail "
     if [ -x "/usr/sbin/getenforce" ]; then
        SELinuxMode=`/usr/sbin/getenforce`
@@ -241,7 +241,7 @@ You may provide a policy at @MK_DATADIR@/pbis.pp"
         if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
             logfile "selinuxenabled indicates SELinux is enabled"
             if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
-                if [ -f /etc/selinux/config ]; then                 
+                if [ -f /etc/selinux/config ]; then
                     log "SELinux found to be present, enabled, and enforcing.
 You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode by editing the file
@@ -253,7 +253,7 @@ You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode.
 Check your system's documentation for details."
                 fi
-                log 'PowerBroker Identity Services will not install without an appropriate policy for SELinux.'
+                log 'BeyondTrust AD Bridge will not install without an appropriate policy for SELinux.'
                 exit 1
             else
                 logfile "getenforce indicates permissive (which is ok)"
@@ -565,7 +565,7 @@ execute_auxiliary_scripts()
 
 postinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
 
     determine_os_version
 
@@ -576,7 +576,7 @@ postinstall()
     restore_6_0_configuration
 
     restore_6_1_configuration
- 
+
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
@@ -650,7 +650,7 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    logfile "Package: PowerBroker Identity Services Open postinstall finished"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall finished"
     exit 0
 }
 
@@ -745,7 +745,7 @@ run_or_fail()
 
 pre_upgrade()
 {
-    logfile "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [pre upgrade] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
@@ -762,12 +762,12 @@ pre_upgrade()
         run_quiet pkill -KILL -x $daemon
     done
 
-    logfile "Package: PowerBroker Identity Services Open [pre upgrade] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [pre upgrade] finished"
 }
 
 pre_install()
 {
-    logfile "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [pre install] begins (`date`)"
 
     if [ -x /sbin/service ]
     then
@@ -781,7 +781,7 @@ pre_install()
         run_quiet pkill -KILL -x $daemon
     done
 
-    logfile "Package: PowerBroker Identity Services Open [pre install] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [pre install] finished"
     exit 0
 }
 
@@ -890,7 +890,7 @@ execute_auxiliary_scripts()
 
 preuninstall_remove()
 {
-    logfile "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [preun remove] begins (`date`)"
 
     execute_auxiliary_scripts
 
@@ -918,7 +918,7 @@ preuninstall_remove()
 
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
-    logfile "Package: PowerBroker Identity Services Open [preun remove] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [preun remove] finished"
     exit 0
 }
 

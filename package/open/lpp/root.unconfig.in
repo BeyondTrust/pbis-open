@@ -102,7 +102,7 @@ execute_auxiliary_scripts()
 
 preremove()
 {
-    log "Package: PowerBroker Identity Services Open preremove begins (`date`)"
+    log "Package: BeyondTrust AD Bridge Open preremove begins (`date`)"
     log "Logging all operations to $LOG"
 
     execute_auxiliary_scripts
@@ -125,7 +125,7 @@ preremove()
         fi
     done
 
-    log "Package: PowerBroker Identity Services Open preremove finished"
+    log "Package: BeyondTrust AD Bridge Open preremove finished"
     exit 0
 }
 

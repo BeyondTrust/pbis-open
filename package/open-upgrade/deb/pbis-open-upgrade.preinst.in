@@ -97,10 +97,10 @@ determine_upgrade_type()
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
     if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
         log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
@@ -185,7 +185,7 @@ determine_join_status()
         if [ -n "$domain" ]; then
             logfile "System is joined to $domain according to lw-lsa ad-get-machine account"
             STATUS_JOINED=$domain
-        elif [ -x "/usr/bin/lw-get-current-domain" ]; then 
+        elif [ -x "/usr/bin/lw-get-current-domain" ]; then
 	        domain=`/usr/bin/lw-get-current-domain 2>/dev/null | sed -e 's/Current Domain = //'`
             if [ -n "$domain" ]; then
             	logfile "System is joined to $domain according to lw-get-current-domain"
@@ -249,7 +249,7 @@ add_TrustEnumerationWaitSetting()
         regshell=/usr/bin/lwregshell
     fi
     if [ -n "$STATUS_JOINED" ]; then
-         if [ -n "$UPGRADING_FROM_6_1" -o -n "$UPGRADING_FROM_6_0" -o -n "$UPGRADING_PBIS" ]; then 
+         if [ -n "$UPGRADING_FROM_6_1" -o -n "$UPGRADING_FROM_6_0" -o -n "$UPGRADING_PBIS" ]; then
             domain_list=`$regshell list_keys '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainJoin]'`
             for KEYS in $domain_list
             do
@@ -431,7 +431,7 @@ wait_for_lwsm_shutdown()
 
 preinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade begins (`date`)"
 
     determine_upgrade_type
 
@@ -491,7 +491,7 @@ preinstall()
         run_quiet rm -r /etc/likewise-open
     fi
 
-    logfile "Package: PowerBroker Identity Services Open Upgrade finished"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade finished"
     exit 0
 }
 

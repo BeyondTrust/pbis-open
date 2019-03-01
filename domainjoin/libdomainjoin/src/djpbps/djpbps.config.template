@@ -1,7 +1,7 @@
 #
 # This file is a template used by the /opt/pbis/bin/domainjoin-cli
 # command to obtain the necessary credentials from PasswordSafe needed
-# to execute a PBIS agent domain join.
+# to execute a BeyondTrust AD Bridge agent domain join.
 #
 # Using the information provided in this file, domainjoin-cli will
 # contact the Password Safe server and obtain the password for
@@ -19,9 +19,9 @@
 #   > openssl pkcs12 -in client.pfx -out client.pem -nodes
 #     Enter Import Password: <password used to export client certificate>
 #
-#   Using an editor, edit client.pem and copy and paste the client 
+#   Using an editor, edit client.pem and copy and paste the client
 #   certificate and private key to the ClientCertificate attribute in this
-#   file.  
+#   file.
 #
 #   From the Certificate Authority(CA), obtain a CA certificate and add
 #   the certificate section to the ServerCertificate attribute in this file.
@@ -31,7 +31,7 @@
 Template = 1  # Do not modify.
 
 [DomainJoin]
-# User account to use for domain join. In addition, this account must 
+# User account to use for domain join. In addition, this account must
 # also be a managed account in Password Safe with API access enabled.
 DomainJoinUser = '<AD user account>'
 
@@ -76,7 +76,7 @@ ApiKey = '<API Key>' #eg. 4b2c430dbe2b6aff66b016cc8e11b0f78b4d7cc426d3fd4c53c92a
 #"""
 
 # CA Certificate
-# Optional. Specify if PBIS agent should verify PBPS server.
+# Optional. Specify if BeyondTrust AD Bridge agent should verify PBPS server.
 # If given, the certificate is stored in /etc/pbis/pbpsCA.pem.
 # Default is not to verify. Uncomment if required.
 #CACertificate = """

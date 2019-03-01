@@ -582,7 +582,7 @@ execute_auxiliary_scripts()
 ## Main
 ##
 
-log "Finalizing PowerBroker Identity Services Open installation"
+log "Finalizing BeyondTrust AD Bridge Open installation"
 
 ConfigureDirectoryOwners
 

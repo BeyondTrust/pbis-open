@@ -59,8 +59,8 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_OPEN_FREEBSD_NAME" \
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}" \
-        SHORT="-PowerBroker Identity Services Open ${LW_VERSION}" \
-        LONG="-PowerBroker Identity Services Open joins your machine into Active Directory" \
+        SHORT="-BeyondTrust AD Bridge Open ${LW_VERSION}" \
+        LONG="-BeyondTrust AD Bridge Open joins your machine into Active Directory" \
         PREINST="freebsd/preinstall.in" \
         POSTINST="freebsd/postinstall.in" \
         PRERM="freebsd/preuninstall.in" \
@@ -75,7 +75,7 @@ package_freebsd()
 
     mk_freebsd_done
 }
-      
+
 package_pkg()
 {
     mk_pkg_do \
@@ -114,14 +114,14 @@ package_pkg()
 
         mk_pkg_sub_done
 
-        
+
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopen" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
 
             open_files_prefix
             open_files_compat_prefix
-            
+
             # Indicate directories we own
             mk_package_dirs \
                 "${MK_PREFIX}" \
@@ -169,10 +169,10 @@ package_lpp()
     mk_lpp_do \
         PACKAGE="${PKG_OPEN_LPP_NAME}" \
         VERSION="${PKG_LPP_VERSION}"
-    
+
         mk_lpp_sub_do \
             SUBPACKAGE="-" \
-            DESCRIPTION="PowerBroker Identity Services Open" \
+            DESCRIPTION="BeyondTrust AD Bridge Open" \
             PREIN="lpp/root.pre_i.in" \
             CONFIG="lpp/root.config.in" \
             UNCONFIG="lpp/root.unconfig.in" \
@@ -181,7 +181,7 @@ package_lpp()
 
             open_files
             open_files_compat
-            
+
             # Because AIX SysV-compatible shared libraries do
             # not have an SONAME mechanism, we need to keep
             # the plain .so symlinks in addition to the .so.*
@@ -227,11 +227,11 @@ package_depot()
         PSF="depot/open.psf.in" \
         CONTROLFILES="depot/copyright.in depot/depend.in depot/postinstall.in \
                       depot/preinstall.in depot/preremove.in"
-    
+
         mk_depot_sub_do SUBPACKAGE=prefix
             open_files_prefix
             open_files_compat_prefix
-            
+
             if [ "$MK_HOST_ARCH" = "ia64" ]
             then
                 mk_package_patterns SUBDIRS="@package/unpack" \
@@ -239,7 +239,7 @@ package_depot()
                     "$MK_PREFIX/lib/pa20_64/*"
             fi
         mk_depot_sub_done
-        
+
         mk_depot_sub_do SUBPACKAGE=root
             open_files_root
             open_files_usr

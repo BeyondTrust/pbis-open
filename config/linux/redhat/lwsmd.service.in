@@ -1,11 +1,11 @@
 [Unit]
-Description=BeyondTrust PBIS Service Manager
-After=network.target 
+Description=BeyondTrust AD Bridge Service Manager
+After=network.target
 Before=sshd.service
 
 [Service]
 Type=forking
-ExecStart=@MK_SBINDIR@/lwsmd --start-as-daemon 
+ExecStart=@MK_SBINDIR@/lwsmd --start-as-daemon
 ExecReload=@MK_BINDIR@/lwsm refresh
 ExecStop=@MK_BINDIR@/lwsm shutdown
 # We want systemd to give lwsmd some time to finish gracefully, but still want

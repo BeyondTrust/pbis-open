@@ -172,7 +172,7 @@ FindFileInPath(
                     LWFILE_REGULAR,
                     &exists);
         BAIL_ON_LSA_ERROR(error);
-        
+
         if (!exists)
         {
             error = LwCheckFileTypeExists(
@@ -237,19 +237,19 @@ CaptureOutputWithStderr(
     {
         *ppOutput = NULL;
     }
-    
+
     if (pipe(pipeFds))
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
-    
+
     pid = fork();
-    
+
     if (pid < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);     
+        BAIL_ON_LSA_ERROR(error);
     }
     else if (pid == 0)
     {
@@ -273,18 +273,18 @@ CaptureOutputWithStderr(
         execvp(pCommand, (char **)ppArgs);
         abort();
     }
-    
+
     if (close(pipeFds[1]))
     {
         pipeFds[1] = -1;
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);     
+        BAIL_ON_LSA_ERROR(error);
     }
     pipeFds[1] = -1;
-    
+
     error = LwAllocateMemory(bufferCapacity, (PVOID*) &pTempOutput);
     BAIL_ON_LSA_ERROR(error);
-    
+
     while ((readCount = read(pipeFds[0], pTempOutput + inBuffer, bufferCapacity - inBuffer)) > 0)
     {
         inBuffer += readCount;
@@ -300,21 +300,21 @@ CaptureOutputWithStderr(
             pTempOutput = pNewOutput;
         }
     }
-    
+
     if (readCount < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
-    
+
     if (close(pipeFds[0]) < 0)
     {
         pipeFds[0] = -1;
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
     pipeFds[0] = -1;
-    
+
     if (waitpid(pid, &status, 0) != pid)
     {
         error = LwMapErrnoToLwError(errno);
@@ -326,7 +326,7 @@ CaptureOutputWithStderr(
         *ppOutput = pTempOutput;
         pTempOutput = NULL;
     }
-    
+
     if (pExitCode != NULL)
     {
         *pExitCode = WEXITSTATUS(status);
@@ -334,10 +334,10 @@ CaptureOutputWithStderr(
     else if (status)
     {
         error = ERROR_BAD_COMMAND;
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
-    
-cleanup:   
+
+cleanup:
     if (pipeFds[0] >= 0)
     {
         close(pipeFds[0]);
@@ -604,7 +604,7 @@ InstallWbclient(
         if (unlink(pWbClient) < 0)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
     else
@@ -614,7 +614,7 @@ InstallWbclient(
             if (errno != ENOENT)
             {
                 error = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(error);   
+                BAIL_ON_LSA_ERROR(error);
             }
         }
     }
@@ -622,7 +622,7 @@ InstallWbclient(
     if (symlink(pLikewiseWbClient, pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
@@ -694,7 +694,7 @@ UninstallWbclient(
     if (unlink(pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     if (stat(pWbClientOriginal, &statBuf) < 0)
@@ -709,7 +709,7 @@ UninstallWbclient(
             LW_RTL_LOG_ERROR("Cannot find original wbclient library at %s",
                     pWbClientOriginal);
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
     else
@@ -717,7 +717,7 @@ UninstallWbclient(
         if (symlink(pWbClientOriginal, pWbClient) < 0)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
 
         LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
@@ -873,7 +873,7 @@ GetSecretsPath(
                 pSambaPrivateDir
                 );
         BAIL_ON_LSA_ERROR(error);
-        
+
         // Verify the path exists
         if (stat(pPath, &statBuf) < 0)
         {
@@ -888,7 +888,7 @@ GetSecretsPath(
                 LW_RTL_LOG_ERROR("Cannot find secrets.tdb at %s",
                         pPath);
                 error = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(error);   
+                BAIL_ON_LSA_ERROR(error);
             }
         }
     }
@@ -973,7 +973,7 @@ InstallLwiCompat(
         if (errno != ENOENT)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
 
@@ -984,7 +984,7 @@ InstallLwiCompat(
         {
             LW_RTL_LOG_ERROR("Cannot access idmap directory %s. Please ensure you have winbind installed", pSambaDir);
         }
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     LW_RTL_LOG_INFO("Linked idmapper %s to %s", pLwiCompat, pLikewiseLwiCompat);
@@ -1022,7 +1022,7 @@ UninstallLwiCompat(
         if (errno != ENOENT)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
 
@@ -1304,7 +1304,7 @@ SynchronizePassword(
         &pPasswordInfo);
     if (error == NERR_SetupNotJoined)
     {
-        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because PowerBroker Identity Services is not joined. The password will be written to secrets.tdb on the next successful join attempt");
+        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because AD Bridge is not joined. The password will be written to secrets.tdb on the next successful join attempt");
         error = 0;
     }
     else
@@ -1445,7 +1445,7 @@ ShowUsage(
     fprintf(stderr, "\n");
     fputs(
 "Installs interop libraries into directories used by Samba and copies the\n"
-"machine password from the PowerBroker Identity Services' database to Samba's.\n",
+"machine password from the AD Bridge' database to Samba's.\n",
     stderr);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options are:\n");
@@ -1605,7 +1605,7 @@ main(
                 LWFILE_REGULAR,
                 &smbdExists);
     BAIL_ON_LSA_ERROR(error);
-    
+
     if (!smbdExists)
     {
         error = LwCheckFileTypeExists(
@@ -1621,11 +1621,11 @@ main(
     }
 
     error = CheckSambaVersion(pSmbdPath, &pVersion);
-    if (force == FALSE) 
+    if (force == FALSE)
     {
        BAIL_ON_LSA_ERROR(error);
     }
- 
+
     if (mode == CHECK_VERSION)
     {
         fprintf(stderr, "Samba version supported\n");

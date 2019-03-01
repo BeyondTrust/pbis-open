@@ -21,7 +21,7 @@ const int DomainLeaveWindow::MIGRATE_ID       = 312;
 const int DomainLeaveWindow::LEAVE_CMD_ID     = 'leav';
 const int DomainLeaveWindow::MIGRATE_CMD_ID   = 'migr';
 const int DomainLeaveWindow::CLOSE_CMD_ID     = 'not!';
-		
+
 //--------------------------------------------------------------------------------------------
 Boolean
 DomainLeaveWindow::HandleCommand( const HICommandExtended& inCommand )
@@ -31,19 +31,19 @@ DomainLeaveWindow::HandleCommand( const HICommandExtended& inCommand )
         case CLOSE_CMD_ID:
 			this->Close();
 			break;
-        			
+
 		case LEAVE_CMD_ID:
 		    HandleLeaveDomain();
 			break;
-        
+
         case MIGRATE_CMD_ID:
 		    HandleMigrateUser();
 			break;
-			
+
         default:
             return false;
     }
-	
+
 	return true;
 }
 
@@ -90,7 +90,7 @@ DomainLeaveWindow::GetComputerName()
 	   std::string errMsg("Failed to get computer name from control");
 	   throw DomainJoinException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 
@@ -104,7 +104,7 @@ DomainLeaveWindow::GetDomainName()
 	   std::string errMsg("Failed to get domain name from control");
 	   throw DomainJoinException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 
@@ -116,18 +116,18 @@ DomainLeaveWindow::ConfirmLeave(const std::string& domainName)
 	OSStatus err = noErr;
 	DialogItemIndex itemHit;
 	CFStringRef msgStrRef = NULL;
-	
+
 	GetStandardAlertDefaultParams(&params, kStdCFStringAlertVersionOne);
-	
+
 	params.movable = true;
 	params.defaultText = CFSTR("Yes");
 	params.cancelText = CFSTR("No");
 	params.otherText = NULL;
 	params.defaultButton = kAlertStdAlertCancelButton;
 	params.position = kWindowCenterOnParentWindow;
-	
+
 	msgStrRef = CFStringCreateWithFormat(NULL, NULL, CFSTR("Are you sure you want to leave the %s domain?"), domainName.c_str());
-	
+
 	err = CreateStandardAlert(kAlertStopAlert,
 	                          CFSTR("Domain Join"),
 							  msgStrRef,
@@ -145,12 +145,12 @@ DomainLeaveWindow::ConfirmLeave(const std::string& domainName)
 	{
 	   throw DomainJoinException(err, "Domain Join Error", "Failed to create dialog");
 	}
-	
+
 	if (msgStrRef)
 	{
 	   CFRelease(msgStrRef);
 	}
-	
+
 	return itemHit != 2;
 }
 
@@ -163,7 +163,7 @@ DomainLeaveWindow::ShowLeftDomainDialog(const std::string& domainName)
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
     StandardAlert(kAlertNoteAlert,
-                  "\pPBIS - Active Directory",
+                  "\pBeyondTrust AD Bridge - Active Directory",
 				  (StringPtr)msgStr,
 				  NULL,
 				  &outItemHit);
@@ -176,10 +176,10 @@ DomainLeaveWindow::HandleLeaveDomain()
     {
         std::string computerName = GetComputerName();
         std::string domainName = GetDomainName();
-		
+
         if (!ConfirmLeave(domainName))
             return;
-		
+
         setuid(0);
 
         DomainJoinInterface::LeaveDomain();
@@ -191,9 +191,9 @@ DomainLeaveWindow::HandleLeaveDomain()
     catch(DomainJoinException& dje)
     {
 	SInt16 outItemHit;
-	const char* err = dje.what();	
+	const char* err = dje.what();
 	const char* message = dje.GetLongErrorMessage();
-	DialogRef dialog;	
+	DialogRef dialog;
 	CFStringRef msgStrRef = CFStringCreateWithCString(NULL, message, kCFStringEncodingASCII);
 	CFStringGetPascalString(msgStrRef, (StringPtr)message, strlen(message), kCFStringEncodingASCII);
 	CFStringRef errStrRef = CFStringCreateWithCString(NULL, err, kCFStringEncodingASCII);
