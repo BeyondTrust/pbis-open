@@ -4037,6 +4037,7 @@ AD_OnlineQueryMemberOfForSid(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    DWORD dwErrorOnline = LW_ERROR_SUCCESS;
     size_t sMembershipCount = 0;
     PLSA_GROUP_MEMBERSHIP* ppMemberships = NULL;
     BOOLEAN bIsCacheOnlyMode = FALSE;
@@ -4050,6 +4051,8 @@ AD_OnlineQueryMemberOfForSid(
     int iPrimaryGroupIndex = -1;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
     DWORD dwIndex = 0;
+
+    LSA_LOG_DEBUG("Online query member of for SID=%s", LSA_SAFE_LOG_STRING(pszSid));
 
     if (FindFlags & LSA_FIND_FLAGS_NSS)
     {
@@ -4185,7 +4188,12 @@ AD_OnlineQueryMemberOfForSid(
                     pszGroupSid,
                     pGroupHash);
                 pszGroupSid = NULL;
-                BAIL_ON_LSA_ERROR(dwError);
+
+                // Record the AD_OnlineQueryMemberOfForSid error but continue as other domains may be online
+                if (dwError) 
+                {
+                   dwErrorOnline = dwError;
+                }
             }
         }
     }
@@ -4213,6 +4221,11 @@ AD_OnlineQueryMemberOfForSid(
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
+    }
+
+    if (dwErrorOnline) 
+    {
+       dwError = dwErrorOnline;
     }
 
 cleanup:
@@ -4320,18 +4333,25 @@ AD_OnlineQueryMemberOf(
     
     for (dwIndex = 0; dwIndex < dwSidCount; dwIndex++)
     {
+        DWORD dwErrorOnline = 0;
         if (AdIsSpecialDomainSidPrefix(ppszSids[dwIndex]))
         {
             continue;
         }
 
-        dwError = AD_OnlineQueryMemberOfForSid(
+        dwErrorOnline = AD_OnlineQueryMemberOfForSid(
             pContext,
             FindFlags,
             ppszSids[dwIndex],
             pGroupHash);
-        BAIL_ON_LSA_ERROR(dwError);
+
+        // Record the AD_OnlineQueryMemberOfForSid error but continue as other domains may be online
+        if (dwErrorOnline) 
+        {
+           dwError = dwErrorOnline;
+        }
     }
+    BAIL_ON_LSA_ERROR(dwError);
     
     dwError = AD_MoveHashValuesToArray(
                     pGroupHash,

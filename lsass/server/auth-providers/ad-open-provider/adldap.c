@@ -1479,7 +1479,7 @@ error:
 
     if ( dwError != LW_ERROR_DOMAIN_IS_OFFLINE )
     {
-        LSA_LOG_ERROR("Failed to group memberships of SID=%s. [error code:%u]",
+        LSA_LOG_ERROR("Failed to get group memberships for SID=%s. [error code:%u]",
                       pObject->pszObjectSid, dwError);
     }
 

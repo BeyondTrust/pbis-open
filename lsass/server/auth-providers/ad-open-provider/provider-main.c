@@ -5309,6 +5309,8 @@ AD_QueryMemberOf(
 {
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
+    DWORD dwGroupSidCount = 0;
+    PSTR* ppszGroupSids = NULL;
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
@@ -5331,12 +5333,19 @@ AD_QueryMemberOf(
             FindFlags,
             dwSidCount,
             ppszSids,
-            pdwGroupSidCount,
-            pppszGroupSids);
+            &dwGroupSidCount,
+            &ppszGroupSids);
     }
 
     if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
+        if (ppszGroupSids)
+        {
+            LwFreeStringArray(ppszGroupSids, dwGroupSidCount);
+            dwGroupSidCount = 0;
+            ppszGroupSids = NULL;
+        }
+
         dwError = AD_OfflineQueryMemberOf(
             pContext,
             FindFlags,
@@ -5345,6 +5354,9 @@ AD_QueryMemberOf(
             pdwGroupSidCount,
             pppszGroupSids);
     }
+
+    *pdwGroupSidCount = dwGroupSidCount;
+    *pppszGroupSids = ppszGroupSids;
 
 cleanup:
 

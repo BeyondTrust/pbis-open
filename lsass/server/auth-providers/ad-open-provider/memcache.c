@@ -999,6 +999,9 @@ MemCacheFindUserByName(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("User cache entry for %s not found", pszKey);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1058,6 +1061,9 @@ MemCacheFindUserById(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("User cache entry for id %lu not found", (unsigned long)uid);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1143,6 +1149,9 @@ MemCacheFindGroupByName(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("Group cache entry for %s not found", pszKey);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1199,6 +1208,9 @@ MemCacheFindGroupById(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("Group cache entry for id %lu not found", (unsigned long)gid);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 

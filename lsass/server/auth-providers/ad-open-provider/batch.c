@@ -123,7 +123,9 @@ LsaAdBatchCheckDomainModeCompatibility(
         // Exclude all the external trusts in default mode to inherit the feature from 4.0
         // To be specific, external trust in default mode is not supported.
         dwError = LW_ERROR_INCOMPATIBLE_MODES_BETWEEN_TRUSTEDDOMAINS;
-        BAIL_ON_LSA_ERROR(dwError);
+
+        LSA_LOG_DEBUG("External trusts not supported in default cell mode for %s", pszDomainDnToUse ? pszDomainDnToUse : LSA_SAFE_LOG_STRING(pszDnsDomainName));
+        goto error;
     }
 
     if (!pszDomainDnToUse)
@@ -154,7 +156,10 @@ LsaAdBatchCheckDomainModeCompatibility(
     if (adMode != pState->pProviderData->adConfigurationMode)
     {
         dwError = LW_ERROR_INCOMPATIBLE_MODES_BETWEEN_TRUSTEDDOMAINS;
-        BAIL_ON_LSA_ERROR(dwError);
+
+        LSA_LOG_ERROR("Incompatible schema mode for %s (0x%X:0x%X)", LSA_SAFE_LOG_STRING(pszDomainDnToUse), (int)adMode, (int)pState->pProviderData->adConfigurationMode);
+
+        goto error;
     }
 
 cleanup:
@@ -268,6 +273,11 @@ LsaAdBatchGetDomainEntryType(
             bSkip = TRUE;
             LSA_LOG_DEBUG("Mark trusted domain %s [skip] due to incompatible modes from primary domain %s",
                            pszDomainName, pState->pProviderData->szDomain);
+        }
+        if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
+        {
+            dwError = 0;
+            LSA_LOG_DEBUG("Unable to determine compatibility for offline domain %s", pszDomainName);
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -973,6 +983,12 @@ LsaAdBatchSplitBIListToBIListPerDomain(
                 dwError = 0;
                 continue;
             }
+            if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+            {
+                LSA_LOG_DEBUG("Domain is offline for query item - '%s'", pBatchItem->pszSid);
+                dwError = 0;
+                continue;
+            }
             BAIL_ON_LSA_ERROR(dwError);
 
             LsaListInsertTail(pDomainList, &pFoundEntry->DomainEntryListLinks);
@@ -1058,6 +1074,12 @@ LsaAdBatchSplitQTListToBIListPerDomain(
             if (LW_ERROR_NO_SUCH_DOMAIN == dwError)
             {
                 LSA_LOG_DEBUG("Domain not found for query item - '%s'", ppszQueryList[i]);
+                dwError = 0;
+                continue;
+            }
+            if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+            {
+                LSA_LOG_DEBUG("Domain is offline for query item - '%s'", ppszQueryList[i]);
                 dwError = 0;
                 continue;
             }
@@ -1634,6 +1656,8 @@ LsaAdBatchFindObjects(
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
+
+    LSA_LOG_DEBUG("Batch Find Objects %d", (int)dwQueryItemsCount);
 
     dwError = LsaAdBatchFindObjectsInternal(
                    pContext,

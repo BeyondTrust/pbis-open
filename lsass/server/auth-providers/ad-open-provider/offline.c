@@ -628,6 +628,8 @@ AD_OfflineQueryMemberOfForSid(
     PLSA_SECURITY_OBJECT* ppUserObject = NULL;
     DWORD dwIndex = 0;
 
+    LSA_LOG_DEBUG("Offline query member of for SID=%s", LSA_SAFE_LOG_STRING(pszSid));
+
     dwError = AD_OfflineFindObjectsBySidList(
                   pContext->pState,
                   1,

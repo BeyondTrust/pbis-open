@@ -3272,8 +3272,7 @@ LsaDmpLdapOpen(
     // domain goes offline, not when the machine goes globally offline).
     if (LsaDmpIsDomainOffline(hDmState, pszDnsDomainName, bUseGc))
     {
-        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-        BAIL_ON_LSA_ERROR(dwError);
+        LSA_LOG_DEBUG("Domain %s is offline", LSA_SAFE_LOG_STRING(pszDnsDomainName));
     }
 
     LsaDmpAcquireMutex(hDmState->pMutex);
