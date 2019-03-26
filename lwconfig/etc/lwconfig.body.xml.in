@@ -549,7 +549,7 @@
     </capability>
     <capability>
         <name>RemoteHomeDirTemplate</name>
-        <description>Format string for the mount path of the remote Windows Folder. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</description>
+        <description>Format string for the mount path of the remote Windows Folder. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U). Please ensure you can manually mount cifs shares when using this setting</description>
         <registry type="string"
             lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate"
             gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate" >

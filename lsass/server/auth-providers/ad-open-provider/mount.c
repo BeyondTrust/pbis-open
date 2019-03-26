@@ -501,7 +501,7 @@ MountUsingCifs(
             dwError = LwMapErrnoToLwError(errno);
 
             LSA_LOG_WARNING(
-                "Failed mount of %s on %s with data %s, error %u (errno %u)",
+                "Failed mount of %s on %s with data %s, error %u (errno %u). Please ensure you can manually mount CIFS shares using 'mount -t cifs <source> <target>'",
                 pszRemotePath,
             pObject->userInfo.pszLocalWindowsHomeFolder,
             pszMountCommand,
