@@ -64,7 +64,8 @@ typedef UINT8 LSA_AD_BATCH_DOMAIN_ENTRY_FLAGS;
 #define LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_SKIP             0x01
 // If this is set, we are dealing with one-way trust scenario.
 #define LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_IS_ONE_WAY_TRUST 0x02
-
+// Domain was not supposed to be skipped but is offline
+#define LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_OFFLINE          0x04
 
 typedef UINT8 LSA_AD_BATCH_OBJECT_TYPE, *PLSA_AD_BATCH_OBJECT_TYPE;
 #define LSA_AD_BATCH_OBJECT_TYPE_UNDEFINED 0

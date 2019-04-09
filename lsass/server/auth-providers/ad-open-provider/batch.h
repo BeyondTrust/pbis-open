@@ -65,7 +65,9 @@ LsaAdBatchFindObjects(
     IN OPTIONAL PSTR* ppszQueryList,
     IN OPTIONAL PDWORD pdwId,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT OPTIONAL PDWORD pdwOfflineDomains,
+    OUT OPTIONAL PSTR** pppszOfflineDomains
     );
 
 DWORD
@@ -92,7 +94,9 @@ LsaAdBatchEnumObjects(
     IN OPTIONAL PCSTR pszDomainName,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR **pppszOfflineDomains
     );
 
 DWORD

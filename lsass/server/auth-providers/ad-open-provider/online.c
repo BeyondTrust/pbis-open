@@ -2933,7 +2933,9 @@ AD_FindObjectsByListNoCache(
                 ppszList,
                 NULL,
                 pdwCount,
-                pppObjects);
+                pppObjects,
+                NULL,
+                NULL);
 }
 
 DWORD
@@ -3940,7 +3942,9 @@ AD_OnlineEnumObjects(
     IN HANDLE hEnum,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR**pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
@@ -3972,7 +3976,9 @@ AD_OnlineEnumObjects(
                 pEnum->pszDomainName,
                 dwMaxObjectsCount,
                 pdwObjectsCount,
-                pppObjects);
+                pppObjects,
+                pdwOfflineDomains,
+                pppszOfflineDomains);
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = LsaAdBatchEnumObjects(
@@ -3982,7 +3988,9 @@ AD_OnlineEnumObjects(
                 pEnum->pszDomainName,
                 dwMaxObjectsCount,
                 pdwObjectsCount,
-                pppObjects);
+                pppObjects,
+                pdwOfflineDomains,
+                pppszOfflineDomains);
             break;
         }
 

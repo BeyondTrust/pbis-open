@@ -424,7 +424,9 @@ LsaAdBatchEnumProcessPseudoMessages(
                     ppszSids,
                     NULL,
                     &dwObjectsCount,
-                    &ppObjects);
+                    &ppObjects,
+                    NULL,
+                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     // If orphaned objects are encountered, LsaAdBatchFindObjects does not
@@ -906,7 +908,9 @@ LsaAdBatchEnumObjects(
     IN OPTIONAL PCSTR pszDomainName,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR **pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
@@ -1050,6 +1054,9 @@ LsaAdBatchEnumObjects(
 cleanup:
     *pdwObjectsCount = dwTotalObjectsCount;
     *pppObjects = ppTotalObjects;
+
+    *pdwOfflineDomains = 0;
+    *pppszOfflineDomains = NULL;
 
     return dwError;
 

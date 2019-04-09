@@ -451,7 +451,9 @@ AD_OnlineEnumObjects(
     IN HANDLE hEnum,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR **pppszOfflineDomains
     );
 
 DWORD

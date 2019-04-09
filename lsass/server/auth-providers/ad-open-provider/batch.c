@@ -1126,7 +1126,9 @@ LsaAdBatchResolveObjectsForDomainList(
     IN PLSA_LIST_LINKS pDomainList,
     IN BOOLEAN bResolvePseudoObjects,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR** pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
@@ -1136,6 +1138,9 @@ LsaAdBatchResolveObjectsForDomainList(
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     DWORD dwCurrentIndex = 0;
+    DWORD dwOfflineDomains = 0;
+    PSTR *ppszOfflineDomains = NULL;
+    DWORD dwOfflineDomainsIndex = 0;
 
     for (pLinks = pDomainList->Next;
          pLinks != pDomainList;
@@ -1153,14 +1158,19 @@ LsaAdBatchResolveObjectsForDomainList(
                       QueryType,
                       bResolvePseudoObjects,
                       pEntry);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
+        {
+            SetFlag(pEntry->Flags, LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_OFFLINE);
+            dwError = 0;
 
-        dwObjectsCount += pEntry->dwBatchItemCount;
-    }
+            dwOfflineDomains += 1;
+        }
+        else
+        {
+            BAIL_ON_LSA_ERROR(dwError);
 
-    if (!dwObjectsCount)
-    {
-        goto error;
+            dwObjectsCount += pEntry->dwBatchItemCount;
+        }
     }
 
     dwError = LwAllocateMemory(
@@ -1168,8 +1178,14 @@ LsaAdBatchResolveObjectsForDomainList(
                 (PVOID*)&ppObjects);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwAllocateMemory(
+                dwOfflineDomains * sizeof(*ppszOfflineDomains),
+                (PVOID*)&ppszOfflineDomains);
+    BAIL_ON_LSA_ERROR(dwError);
+
     // Combine results
     dwCurrentIndex = 0;
+    dwOfflineDomainsIndex = 0;
     for (pLinks = pDomainList->Next;
          pLinks != pDomainList;
          pLinks = pLinks->Next)
@@ -1179,6 +1195,14 @@ LsaAdBatchResolveObjectsForDomainList(
 
         if (IsSetFlag(pEntry->Flags, LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_SKIP))
         {
+            continue;
+        }
+
+        if (IsSetFlag(pEntry->Flags, LSA_AD_BATCH_DOMAIN_ENTRY_FLAG_OFFLINE))
+        {
+            dwError = LwAllocateString(pEntry->pszDnsDomainName,
+                        &ppszOfflineDomains[dwOfflineDomainsIndex++]);
+            BAIL_ON_LSA_ERROR(dwError);
             continue;
         }
 
@@ -1198,41 +1222,44 @@ LsaAdBatchResolveObjectsForDomainList(
     LSA_ASSERT(dwCurrentIndex <= dwObjectsCount);
 
     // Compress the output
-    if (dwCurrentIndex == 0)
+    if (dwCurrentIndex < dwObjectsCount)
     {
-        ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
-        dwObjectsCount = 0;
-    }
-    else
-    {
-        if (dwCurrentIndex < dwObjectsCount)
-        {
-            PLSA_SECURITY_OBJECT* ppTempObjects = NULL;
+        PLSA_SECURITY_OBJECT* ppTempObjects = NULL;
 
-            dwError = LwAllocateMemory(
-                        dwCurrentIndex * sizeof(*ppTempObjects),
-                        (PVOID*)&ppTempObjects);
-            BAIL_ON_LSA_ERROR(dwError);
+        dwError = LwAllocateMemory(
+                    dwCurrentIndex * sizeof(*ppTempObjects),
+                    (PVOID*)&ppTempObjects);
+        BAIL_ON_LSA_ERROR(dwError);
 
-            memcpy(ppTempObjects, ppObjects, sizeof(*ppObjects) * dwCurrentIndex);
-            LwFreeMemory(ppObjects);
-            ppObjects = ppTempObjects;
-            dwObjectsCount = dwCurrentIndex;
-        }
-    }
-
-error:
-
-    if (dwError)
-    {
-        ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
-        dwObjectsCount = 0;
+        memcpy(ppTempObjects, ppObjects, sizeof(*ppObjects) * dwCurrentIndex);
+        LwFreeMemory(ppObjects);
+        ppObjects = ppTempObjects;
+        dwObjectsCount = dwCurrentIndex;
     }
 
     *pdwObjectsCount = dwObjectsCount;
     *pppObjects = ppObjects;
 
+    *pdwOfflineDomains = dwOfflineDomains;
+    *pppszOfflineDomains = ppszOfflineDomains;
+
+cleanup:
     return dwError;
+
+error:
+    *pdwObjectsCount = 0;
+    *pppObjects = NULL;
+
+    *pdwOfflineDomains = 0;
+
+    ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
+    dwObjectsCount = 0;
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
+
+    goto cleanup;
 }
 
 static
@@ -1243,13 +1270,17 @@ LsaAdBatchFindObjectsRealBeforePseudo(
     IN DWORD dwQueryItemsCount,
     IN PSTR* ppszQueryList,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR **pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_LIST_LINKS DomainList = {0};
+    DWORD dwOfflineDomains = 0;
+    PSTR* ppszOfflineDomains = NULL;
 
     dwError = LsaAdBatchSplitQTListToBIListPerDomain(
                         pContext,
@@ -1265,11 +1296,16 @@ LsaAdBatchFindObjectsRealBeforePseudo(
                         &DomainList,
                         TRUE,
                         &dwObjectsCount,
-                        &ppObjects);
+                        &ppObjects,
+                        &dwOfflineDomains,
+                        &ppszOfflineDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
     *pdwObjectsCount = dwObjectsCount;
     *pppObjects = ppObjects;
+
+    *pdwOfflineDomains = dwOfflineDomains;
+    *pppszOfflineDomains = ppszOfflineDomains;
 
 cleanup:
     LsaAdBatchFreeDomainListElements(&DomainList);
@@ -1280,7 +1316,15 @@ error:
     *pdwObjectsCount = 0;
     *pppObjects = NULL;
 
+    *pdwOfflineDomains = 0;
+    *pppszOfflineDomains = NULL;
+
     ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
+
     goto cleanup;
 }
 
@@ -1293,12 +1337,16 @@ LsaAdBatchFindObjectsPseudoBeforeReal(
     IN OPTIONAL PSTR* ppszQueryList,
     IN OPTIONAL PDWORD pdwId,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR** pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    DWORD dwOfflineDomains = 0;
+    PSTR* ppszOfflineDomains = NULL;
     LSA_LIST_LINKS BatchItemList = {0};
     LSA_LIST_LINKS DomainList = {0};
     DWORD dwTotalBatchItemCount = 0;
@@ -1342,11 +1390,16 @@ LsaAdBatchFindObjectsPseudoBeforeReal(
                         &DomainList,
                         bResolvedPseudo ? FALSE : TRUE,
                         &dwObjectsCount,
-                        &ppObjects);
+                        &ppObjects,
+                        &dwOfflineDomains,
+                        &ppszOfflineDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
     *pdwObjectsCount = dwObjectsCount;
     *pppObjects = ppObjects;
+
+    *pdwOfflineDomains = dwOfflineDomains;
+    *pppszOfflineDomains = ppszOfflineDomains;
 
 cleanup:
     LsaAdBatchFreeDomainListElements(&DomainList);
@@ -1358,7 +1411,15 @@ error:
     *pdwObjectsCount = 0;
     *pppObjects = NULL;
 
+    *pdwOfflineDomains = 0;
+    *pppszOfflineDomains = NULL;
+
     ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
+
     goto cleanup;
 }
 
@@ -1378,6 +1439,8 @@ LsaAdBatchFindSingleObject(
     DWORD dwQueryUid = 0;
     DWORD dwQueryUidCount = 0;
     PLSA_SECURITY_OBJECT* ppQueryUidObjects = NULL;
+    DWORD dwOfflineDomains = 0;
+    PSTR* ppszOfflineDomains = NULL;
 
     if (!LSA_IS_XOR(!LW_IS_NULL_OR_EMPTY_STR(pszQueryTerm), pdwId))
     {
@@ -1395,8 +1458,20 @@ LsaAdBatchFindSingleObject(
                         (PSTR*)&pszQueryTerm,
                         NULL,
                         &dwCount,
-                        &ppObjects);
+                        &ppObjects,
+                        &dwOfflineDomains,
+                        &ppszOfflineDomains);
         BAIL_ON_LSA_ERROR(dwError);
+
+        if (dwOfflineDomains)
+        {
+           // Since we're looking for a single object, if the number off
+           // line domains is set then we can say the domain the object
+           // belongs to is offline.
+           dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+           BAIL_ON_LSA_ERROR(dwError);
+        }
+
         if (dwCount > 0)
         {
             dwQueryUid = ppObjects[0]->userInfo.uid;/* query term uid */
@@ -1407,7 +1482,9 @@ LsaAdBatchFindSingleObject(
                           NULL, /* query term string */
                           &dwQueryUid,
                           &dwQueryUidCount,
-                          &ppQueryUidObjects);
+                          &ppQueryUidObjects,
+                          NULL,
+                          NULL);
         }
     }
     else if (pdwId)
@@ -1419,8 +1496,19 @@ LsaAdBatchFindSingleObject(
                         NULL,
                         pdwId,
                         &dwCount,
-                        &ppObjects);
+                        &ppObjects,
+                        &dwOfflineDomains,
+                        &ppszOfflineDomains);
         BAIL_ON_LSA_ERROR(dwError);
+
+        if (dwOfflineDomains)
+        {
+           // Since we're looking for a single object, if the number off
+           // line domains is set then we can say the domain the object
+           // belongs to is offline.
+           dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+           BAIL_ON_LSA_ERROR(dwError);
+        }
     }
 
     if (dwCount < 1 || !ppObjects[0])
@@ -1470,6 +1558,9 @@ LsaAdBatchFindSingleObject(
     ppObjects[0] = NULL;
 
 cleanup:
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+
     ADCacheSafeFreeObjectList(dwCount, &ppObjects);
     ADCacheSafeFreeObjectList(dwQueryUidCount, &ppQueryUidObjects);
 
@@ -1491,7 +1582,9 @@ LsaAdBatchFindObjectsInternal(
     IN OPTIONAL PSTR* ppszQueryList,
     IN OPTIONAL PDWORD pdwId,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR** pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
@@ -1543,7 +1636,9 @@ LsaAdBatchFindObjectsInternal(
                             dwQueryItemsCount,
                             ppszQueryList,
                             pdwObjectsCount,
-                            pppObjects);
+                            pppObjects,
+                            pdwOfflineDomains,
+                            pppszOfflineDomains);
             BAIL_ON_LSA_ERROR(dwError);
             break;
         case LSA_AD_BATCH_QUERY_TYPE_BY_USER_ALIAS:
@@ -1557,7 +1652,9 @@ LsaAdBatchFindObjectsInternal(
                             ppszQueryList,
                             pdwId,
                             pdwObjectsCount,
-                            pppObjects);
+                            pppObjects,
+                            pdwOfflineDomains,
+                            pppszOfflineDomains);
             BAIL_ON_LSA_ERROR(dwError);
             break;
         default:
@@ -1649,13 +1746,17 @@ LsaAdBatchFindObjects(
     IN OPTIONAL PSTR* ppszQueryList,
     IN OPTIONAL PDWORD pdwId,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT OPTIONAL PDWORD pdwOfflineDomains,
+    OUT OPTIONAL PSTR** pppszOfflineDomains
     )
 {
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    DWORD dwOfflineDomains = 0;
+    PSTR* ppszOfflineDomains = NULL;
 
     LSA_LOG_DEBUG("Batch Find Objects %d", (int)dwQueryItemsCount);
 
@@ -1666,7 +1767,9 @@ LsaAdBatchFindObjects(
                    ppszQueryList,
                    pdwId,
                    &dwObjectsCount,
-                   &ppObjects);
+                   &ppObjects,
+                   &dwOfflineDomains,
+                   &ppszOfflineDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (LsaAdBatchIsUnprovisionedMode(pState->pProviderData) &&
@@ -1684,10 +1787,23 @@ LsaAdBatchFindObjects(
     *pdwObjectsCount = dwObjectsCount;
     *pppObjects = ppObjects;
 
+    if(pdwOfflineDomains && pppszOfflineDomains)
+    {
+        *pdwOfflineDomains = dwOfflineDomains;
+        *pppszOfflineDomains = ppszOfflineDomains;
+
+        dwOfflineDomains = 0;
+        ppszOfflineDomains = NULL;
+    }
+
 cleanup:
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
+
     return dwError;
 
 error:
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
     ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
     *pdwObjectsCount = 0;
     *pppObjects = NULL;
@@ -2254,6 +2370,7 @@ LsaAdBatchResolvePseudoObjectSidsViaGcDefaultMode(
 
         // We only process the forests that have compatible adMode with the primiary domain,
         // Hence the mode should be the same as "pProviderData->adConfigurationMode"
+        LSA_LOG_DEBUG("Searching domain '%s'.", ppszDomainNames[i]);
         dwError = LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
                     pContext,
                     QueryType,
@@ -2263,6 +2380,13 @@ LsaAdBatchResolvePseudoObjectSidsViaGcDefaultMode(
                     pState->pProviderData->adConfigurationMode,
                     pBatchItemList,
                     &dwFoundInDomainCount);
+        // TODO[DM] verify this is what should happen in default cell mode
+        if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE) {
+            LSA_LOG_DEBUG("Skipped domain '%s' as it is offline.", ppszDomainNames[i]);
+
+            dwError = LW_ERROR_SUCCESS;
+            continue;
+        }
         BAIL_ON_LSA_ERROR(dwError);
 
         dwTotalFoundCount += dwFoundInDomainCount;

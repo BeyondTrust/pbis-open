@@ -5107,6 +5107,8 @@ AD_EnumObjects(
     PAD_PROVIDER_CONTEXT pContext = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     DWORD dwObjectsCount = 0;
+    DWORD dwOfflineDomains = 0;
+    PSTR *ppszOfflineDomains = NULL;
 
     dwError = AD_ResolveProviderState(pEnum->pProviderContext, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
@@ -5129,7 +5131,9 @@ AD_EnumObjects(
             hEnum,
             dwMaxObjectsCount,
             &dwObjectsCount,
-            &ppObjects);
+            &ppObjects,
+            &dwOfflineDomains,
+            &ppszOfflineDomains);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -5144,6 +5148,10 @@ AD_EnumObjects(
     *pppObjects = ppObjects;
 
 cleanup:
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
 
     AD_ClearProviderState(pContext);
 
@@ -5757,7 +5765,7 @@ LsaAdProviderLogServiceStartEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "Likewise authentication service provider initialization %s.\r\n\r\n" \
+                 "AD Bridge authentication service provider initialization %s.\r\n\r\n" \
                  "     Authentication provider:   %s\r\n\r\n" \
                  "     Hostname:                  %s\r\n" \
                  "     Domain:                    %s\r\n" \
@@ -5841,7 +5849,7 @@ LsaAdProviderLogConfigReloadEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "BeyondTrust AD Bridge authentication service provider configuration settings have been reloaded.\r\n\r\n" \
+                 "AD Bridge authentication service provider configuration settings have been reloaded.\r\n\r\n" \
                  "     Authentication provider:           %s\r\n" \
                  "     Current settings are...\r\n" \
                  "     Cache entry expiry (secs):         %u\r\n" \
