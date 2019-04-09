@@ -301,7 +301,7 @@ usage()
 {
     echo "usage: `basename $0` [--test]"
     echo ""
-    echo "    This script completely uninstalls all Likewise products from the Mac."
+    echo "    This script completely uninstalls all AD Bridge products from the Mac."
     echo ""
     exit 1
 }
