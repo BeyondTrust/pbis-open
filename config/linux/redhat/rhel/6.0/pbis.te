@@ -1,5 +1,5 @@
 
-module pbis 8.5.2;
+module pbis 9.0.1;
 
 require {
 	type unconfined_t;
@@ -472,3 +472,19 @@ pbis_client(xdm_dbusd_t)
 pbis_client(xfs_t)
 pbis_client(xserver_t)
 pbis_client(zos_remote_t)
+
+
+optional {
+    require {
+        type nova_t;
+    }
+    pbis_client(nova_t)
+}
+
+optional {
+    require {
+        type neutron_t;
+    }
+    pbis_client(neutron_t)
+}
+
