@@ -729,7 +729,7 @@ DNSInet6ValidateAddress(
     pTemp = strtok(szQuadCountString,":");
     if (pTemp != NULL ) 
     {
-	    dwQuadCount++;
+        dwQuadCount++;
     }
     while((pTemp = strtok(NULL,":")) != NULL) {
         dwQuadCount++;
@@ -772,7 +772,7 @@ DNSInet6ValidateAddress(
         bIsInValid = TRUE;
     //check for 3920:aefc::849a::6757
     if(dwQuadCount < dwColonCount-1 && dwQuadCount != 1)
-	    bIsInValid = TRUE;
+        bIsInValid = TRUE;
     //check for 21:21:21
     if(dwQuadCount <= 7 && dwColonCount <= 6)
     {
@@ -993,7 +993,7 @@ DNSInet6GetPtrAddress(
     pSzOutputAddr = (PSTR) malloc(sizeof(CHAR) * CANONICAL_INET6_ADDRSTRLEN);
     DNSInet6ExpandAddress(szInput);
     DNSInet6Canonicalize(szInput,szOutput);
-    strncat(szOutput,"ip6.arpa",8);
+    strcat(szOutput,"ip6.arpa");
     strcpy(pSzOutputAddr,szOutput);
 
     *ppSzInet6OutputAddr = pSzOutputAddr;
@@ -1025,7 +1025,7 @@ DNSInet6GetPtrZoneAddress(
     DNSInet6Canonicalize(szInput,szOutput);
 
     strcpy(pSzOutputAddr,szOutput+(dwIpaddressToChop * 8));
-    strncat(pSzOutputAddr,"ip6.arpa",8);
+    strcat(pSzOutputAddr,"ip6.arpa");
 
     *ppSzInet6OutputAddr = pSzOutputAddr;
     return 0;
