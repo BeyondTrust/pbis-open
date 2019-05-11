@@ -214,7 +214,7 @@ LsaSrvWriteLoginFailedEvent(
 {
     DWORD dwError = 0;
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
-    char  szReason[256] = {0};
+    char  szReason[307] = {0};
     char  szLoginPhase[256] = {0};
     PSTR  pszData = NULL;
     DWORD dwEventID = 0;
