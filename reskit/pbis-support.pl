@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright 2008-2011 Likewise Software, 2011-2014 BeyondTrust Software
+# Copyright 2008-2011 Likewise Software, 2011-2019 BeyondTrust Software
 # by Robert Auch
 # gather information for emailing to support.
 #
@@ -55,6 +55,7 @@
 # v2.12   2017-10-30 RCA fix logfile break on OSX
 # v2.13   2018-09-28 RCA add alarm handling for runTool() so if commands time out, the script will continue.
 # v2.14   2018-10-01 RCA add alarm handling for all calls to System() so if commands time out, the script will continue.
+# v2.15   2019-05-14 DCM support ADBridge 9+ and "future proof" version checks 
 #
 # Data structures explained at bottom of file
 #
@@ -81,7 +82,7 @@ use sigtrap qw (handler cleanup old-interface-signals normal-signals);
 
 
 # Define global variables
-my $gVer = "2.14";
+my $gVer = "2.15";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -124,7 +125,7 @@ sub usage($$)
 
     my $helplines = "
 $scriptName version $gVer
-(C)2008-2011, Likewise Software, 2011-2014 BeyondTrust Software
+(C)2008-2011, Likewise Software, 2011-2019 BeyondTrust Software
 
 usage: $scriptName [tests] [log choices] [options]
 
@@ -262,7 +263,7 @@ $scriptName --restart --regdaemon -c
 
 sub cleanup {
     logData("");
-    logError("Recieved CTRL-C, cleaning up...!");
+    logError("Received CTRL-C, cleaning up...!");
     logData("");
     if ($info->{scriptstatus}->{tcpdump}) {
         tcpdumpStop($info, $opt);
@@ -1978,7 +1979,8 @@ sub getLikewiseVersion($$) {
         }
         close VF;
         my @tmparray = split(/\./, $info->{lw}->{version});
-        $info->{lw}->{majorVersion} = $tmparray[0];
+        $info->{lw}->{majorVersion} = $tmparray[0]+0;
+        $info->{lw}->{minorVersion} = $tmparray[1]+0;
         logDebug("PBIS $info->{lw}->{majorVersion} is $info->{lw}->{version}.");
     } else {
         logInfo("No Version File found, determining version from binaries installed");
@@ -2006,7 +2008,9 @@ sub getLikewiseVersion($$) {
         }
     }
     my $gporefresh = findInPath("gporefresh", ["/opt/centeris/bin/", "/usr/centeris/bin", "/opt/likewise/bin", "/opt/pbis/bin"]);
-    if ($info->{lw}->{version}=~/^8\.\d+\./) {
+
+    # versions 8.0+
+    if (defined($info->{lw}->{majorVersion}) && $info->{lw}->{majorVersion} >= 8) {
         $info->{lw}->{base} = "/opt/pbis";
         $info->{lw}->{path} = "/opt/pbis/bin";
         $info->{lw}->{daemons}->{smbdaemon} = "lwio";
@@ -2019,7 +2023,9 @@ sub getLikewiseVersion($$) {
         $info->{lw}->{daemons}->{syslogreaper} = "reapsysl";
         $info->{lw}->{daemons}->{registry} = "lwreg";
         $info->{lw}->{daemons}->{lwsm} = "lwsm";
-        if ($info->{lw}->{version}=~/^8\.[2-5]/) {
+
+        # lwcert and autoenroll exist in 8.2+
+        if ($info->{lw}->{majorVersion} > 8 || $info->{lw}->{minorVersion} >= 2) {
             $info->{lw}->{daemons}->{certmgr} = "lwcert";
             $info->{lw}->{daemons}->{autoenroll} = "autoenroll";
         }
