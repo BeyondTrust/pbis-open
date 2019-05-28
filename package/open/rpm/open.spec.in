@@ -187,6 +187,15 @@ determine_os_version()
         elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 7' '/etc/redhat-release'`" ]; then
             PBIS_DISTRO=rhel
             PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
         fi
     fi
 }
