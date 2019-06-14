@@ -2926,7 +2926,11 @@ AD_FindObjectsByListNoCache(
     OUT PLSA_SECURITY_OBJECT** pppObjects
     )
 {
-    return LsaAdBatchFindObjects(
+    DWORD dwError = LW_ERROR_SUCCESS;
+    DWORD dwOfflineDomains = 0;
+    PSTR* ppszOfflineDomains = NULL;
+
+    dwError =  LsaAdBatchFindObjects(
                 pContext,
                 QueryType,
                 dwCount,
@@ -2934,8 +2938,23 @@ AD_FindObjectsByListNoCache(
                 NULL,
                 pdwCount,
                 pppObjects,
-                NULL,
-                NULL);
+                &dwOfflineDomains,
+                &ppszOfflineDomains);
+    if (dwError == LW_ERROR_SUCCESS &&
+        dwCount == 1 && dwOfflineDomains == 1)
+    {
+       // Success is returned even if the domain(s) is offline or the 
+       // object(s) is not found. However, If we're looking for a 
+       // single object, and the number of offline domains is also one, 
+       // then return domain offline.
+       dwError =  LW_ERROR_DOMAIN_IS_OFFLINE;
+    }
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
+
+    return dwError;
 }
 
 DWORD

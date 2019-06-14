@@ -5359,8 +5359,8 @@ AD_QueryMemberOf(
             FindFlags,
             dwSidCount,
             ppszSids,
-            pdwGroupSidCount,
-            pppszGroupSids);
+            &dwGroupSidCount,
+            &ppszGroupSids);
     }
 
     *pdwGroupSidCount = dwGroupSidCount;
