@@ -55,7 +55,8 @@
 # v2.12   2017-10-30 RCA fix logfile break on OSX
 # v2.13   2018-09-28 RCA add alarm handling for runTool() so if commands time out, the script will continue.
 # v2.14   2018-10-01 RCA add alarm handling for all calls to System() so if commands time out, the script will continue.
-# v2.15   2019-05-14 DCM support ADBridge 9+ and "future proof" version checks 
+# v2.15   2019-05-14 DCM support ADBridge 9+ and "future proof" version checks
+# v2.16   2019-06-14 RCA fix logging capture for smart cards and auto enrollment
 #
 # Data structures explained at bottom of file
 #
@@ -82,7 +83,7 @@ use sigtrap qw (handler cleanup old-interface-signals normal-signals);
 
 
 # Define global variables
-my $gVer = "2.15";
+my $gVer = "2.16";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -559,9 +560,10 @@ sub findLogFile {
                 }
                 if ($_=~/(^|\b)$facility(\.|,[^.]+.)(\*|err|crit|notice|warn|info|verbose|debug)(;[^\s]+)?\s+-?([^\s]+)/) {
                     $file=$6;
-                    logVerbose("Matched $file for $facility.");
                     if ( -f "$file" ) {
+                        logVerbose("Matched $file for $facility.");
                         push(@files, $file);
+                        last PATH;
                         # we have our match, and $file is scoped to the sub.
                     } else {
                         logVerbose("Matched $file for $facility, but it's not a file, continuing.");
@@ -1168,7 +1170,7 @@ sub tarFiles($$$$) {
         logInfo("$file is a link, adding its target first.");
         tarFiles($info, $opt, $tar, abs_path($file));
     } else {
-        logVerbose("No errors looking for existance of $file, continuing.");
+        logVerbose("No errors looking for existence of $file, continuing.");
     }
 
     logInfo("Adding file $file to $tar");
@@ -1506,7 +1508,7 @@ sub changeLoggingWithContainer($$$) {
         $options->{daemon} = $daemon;
         daemonContainerStop($info, $options);
     };
-    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpcks11 lwsc lwcert autoenroll)){
+    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpkcs11 lwsc lwcert autoenroll)){
         logDebug("Checking if I need to restart $daemon daemon...");
         my $daemonopt=$daemon."d";
         next unless(defined($opt->{$daemonopt}) and $opt->{$daemonopt});
@@ -1780,13 +1782,21 @@ sub determineOS($$) {
     }
     $info->{logfiles}=[];
     foreach my $facility (("kern", "daemon", "auth")) {
+        logVerbose("Trying to find $facility logs in syslog config...");
         my @logs=findLogFile($facility);
-        push(@logs, $info->{logpath}."/".$info->{logfile});
-        if ($facility eq "daemon" and $#logs > 0) {
+        if ((scalar @logs) < 1) {
+            logVerbose("Did not find any entries from findLogFile('$facility').");
+            push(@logs, $info->{logpath}."/".$info->{logfile});  #don't add the default value, if syslog review has found better information
+        }
+        if ($facility eq "daemon" and ((scalar @logs) > 0)) {
+            # if we DID find better information in syslog review, rewrite the info->logfile values with the updated info
             $info->{logpath} = dirname($logs[0]);
             $info->{logfile} = basename($logs[0]);
-            logInfo("Found $info->{logfile} via syslog config.");
+            logInfo("Found $info->{logpath}/$info->{logfile} via syslog config.");
+        } else {
+            logVerbose("Not overriding logpath or logfile variables.");
         }
+        push(@{$info->{logfiles}}, @logs);  #need this so that the tarball can find them to add them - 2019-06-14 RCA
     }
     logData("OS: $info->{OStype}");
 
@@ -2415,7 +2425,8 @@ sub outputReport($$) {
         $tarballfile=~s/\.gz$//;
     }
     logVerbose("Creating tarball $tarballfile and adding logs");
-    if ($opt->{restart} or $info->{lwsm}->{type} eq "container") {
+    if ($opt->{restart} or ($info->{lwsm}->{type} eq "container")) {
+        logVerbose("Looking for and adding individual log files.");
         if ($opt->{lsassd}) {
             logInfo("Adding auth daemon log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{authdaemon}.".log";
@@ -2461,16 +2472,29 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{syslogreaper}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
+        if ($opt->{smartcard} and defined($info->{lw}->{daemons}->{smartcard})) {
+            logInfo("Adding smartcard log");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{smartcard}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
         if ($opt->{usermonitor} and defined($info->{lw}->{daemons}->{usermonitor})) {
             logInfo("Adding usermonitor log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{usermonitor}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
-        if ($opt->{certmgr} and defined($info->{lw}->{daemons}->{certmgr})) {
+        if ($opt->{lwcertd} and defined($info->{lw}->{daemons}->{certmgr})) {
             logInfo("Adding lwcert logs.");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{certmgr}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
+        if ($opt->{autoenrolld} and defined($info->{lw}->{daemons}->{autoenroll})) {
+            logInfo("Adding autoenroll logs.");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{autoenroll}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
+        if ($opt->{lwpkcs11d} and defined($info->{lw}->{daemons}->{pkcs11})) {
+            logInfo("Adding pkcs11 logs.");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{pkcs11}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
     }
@@ -2989,8 +3013,8 @@ sub main() {
         'lwsmd|svcctl|lwsm|svcctld!',
         'reapsysld|syslogreaper|reaper!',
         'lwscd|smartcard|lwsc!',
-        'lwpcks11d|lwpcks11!',
-        'lwcertd|lwcert!',
+        'lwpkcs11d|lwpkcs11!',
+        'lwcertd|lwcert|certmgr!',
         'autoenrolld|autoenroll!',
         'usermonitor!',
         'pbislevel|pbisloglevel=s',
@@ -3444,7 +3468,7 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         eventfwdd
         reapsysld
         lwregd
-        lwpcks11d
+        lwpkcs11d
         lwscd
         lwsmd
         lwcertd
