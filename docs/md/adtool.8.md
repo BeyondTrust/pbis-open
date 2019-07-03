@@ -19,7 +19,7 @@ USER SYNOPSIS
 GROUP SYNOPSIS
 --------
 
-`adtool` [<options>] -a search-groups --name <name> [<actionoptions>]
+`adtool` [<options>] -a search-group --name <name> [<actionoptions>]
 
 `adtool` [<options>] -a new-group --name <name> [<actionoptions>]
 
@@ -44,7 +44,7 @@ OU SYNOPSIS
 OBJECT SYNOPSIS
 --------
 
-`adtool` [<options>] -a search-objects [<actionoptions>]
+`adtool` [<options>] -a search-object [<actionoptions>]
 
 `adtool` [<options>] -a lookup-object --dn <DN> [<actionoptions>]
 
@@ -363,9 +363,9 @@ adtool [<options>] -a disable-user --name <string>
 GROUP ACTIONS
 -------------
 
-**SEARCH-GROUPS**
+**SEARCH-GROUP**
 
-`adtool` [<options>] -a search-groups --name <string> [--scope <string>] [--name <string>]
+`adtool` [<options>] -a search-group --name <string> [--scope <string>] [--name <string>]
 
 [INDENT]Search for group objects, print DNs.
 
@@ -385,7 +385,7 @@ GROUP ACTIONS
 
 [INDENT]Looks for group TestGroup under OU TestOU.
 
-[INDENT]`adtool -a search-groups --name TestGroup --scope OU=TestOU`
+[INDENT]`adtool -a search-group --name TestGroup --scope OU=TestOU`
 
 
 **NEW-GROUP**
@@ -600,9 +600,9 @@ OU ACTIONS
 OBJECT ACTIONS
 -------------
 
-**SEARCH-OBJECTS**
+**SEARCH-OBJECT**
 
-`adtool` [<options>] -a search-objects [--scope <string>] [--fliter <string>]
+`adtool` [<options>] -a search-object [--scope <string>] [--fliter <string>]
 
 [INDENT]Search for any type of objects using LDAP filter.
 
