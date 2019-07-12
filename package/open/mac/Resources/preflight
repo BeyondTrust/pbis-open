@@ -417,6 +417,22 @@ preserve_ignore_files()
     fi
 }
 
+preserve_settings()
+{
+    PRESERVE_FILE="${UPGRADEDIR}/preserveSetting"
+    LSASS_KEY="HKEY_THIS_MACHINE\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory"
+    SAVE_VALUES="UnprovisionedModeEnabled|AssumeDefaultCellModeEnabled|CellSupport"
+
+    if [ -d /opt/pbis/bin ]; then
+        regshell=/opt/pbis/bin/regshell
+    elif [ -d /opt/likewise/bin ]; then
+        regshell=/opt/likewise/bin/lwregshell
+    else
+        regshell=/usr/bin/lwregshell
+    fi
+
+    $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | grep -E ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
+}
 
 ##
 ## Main
@@ -447,6 +463,8 @@ determine_join_status
 set_UnixLastChangeTime
 
 add_TrustEnumerationWaitSetting
+
+preserve_settings
 
 stop_daemons
 

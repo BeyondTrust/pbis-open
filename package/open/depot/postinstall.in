@@ -392,6 +392,22 @@ execute_auxiliary_scripts()
     fi
 }
 
+restore_settings()
+{
+   REGSHELL='@MK_BINDIR@/regshell'
+   SETTING_FILE="${UPGRADEDIR}/preserveSetting"
+   LSASS_KEY="[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]"
+
+   if [ -f ${SETTING_FILE} ]; then
+      while read buff; do
+        valueName=`echo $buff | awk '{ print $1}'|sed -e 's/\"//g'`
+        value=`echo $buff | awk '{ print $2}'|sed -e 's/\"//g'`
+        run_or_fail $REGSHELL set_value ${LSASS_KEY} ${valueName}  ${value}
+      done < ${SETTING_FILE}
+   fi
+
+}
+
 postinstall()
 {
     logfile "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
@@ -421,6 +437,8 @@ postinstall()
     remove_dcerpc_dependencies
 
     switch_to_open_provider
+
+    restore_settings
 
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
