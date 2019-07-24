@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -32,6 +32,7 @@
 #include "djdistroinfo.h"
 #include <sys/utsname.h>
 #include <sys/types.h>
+#include <string.h>
 #include <regex.h>
 #ifdef HAVE_SYS_SYSTEMINFO_H
 #include <sys/systeminfo.h>
@@ -570,8 +571,12 @@ DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info)
             $ uname -r
             5.8
             */
+            /* distro version is os release, e.g. 5.11 */
             GCE(ceError = CTAllocateStringPrintf(&info->version,
                         "%s", unameStruct.release));
+            /* distro extended for solaris is solaris version, e.g. 11.4 */
+            GCE(ceError = CTAllocateStringPrintf(&info->extended,
+                        "%s", unameStruct.version));
             break;
         case OS_DARWIN:
             info->distro = DISTRO_DARWIN;
@@ -827,7 +832,7 @@ struct
 {
     LwArchType value;
     const char *name;
-} static const archList[] = 
+} static const archList[] =
 {
     { ARCH_X86_32, "x86_32" },
     { ARCH_X86_32, "i386" },
@@ -873,13 +878,52 @@ void DJFreeDistroInfo(LwDistroInfo *info)
 }
 
 
+BOOLEAN
+DJGetSolarisVersion(const LwDistroInfo * const info, int *major, int *minor)
+{
+    char *osversion = NULL;
+    char *tok = NULL;
+    char *ptr = NULL;
+    long int value = 0;
+    BOOLEAN bSuccess = FALSE;
+
+    if (info->os != OS_SUNOS || !info->extended) {
+        return bSuccess;
+    }
+
+    osversion = strdup(info->extended);
+    tok = strtok(osversion, ".");
+
+    /* return 'true' if major version specified,
+     * and default minor to 0 if major is specified */
+    if (tok) {
+        value = strtol(tok, &ptr, 10);
+        if (ptr != tok) {
+            bSuccess = TRUE;
+
+            *major = value;
+            *minor = 0;
+
+            tok = strtok(NULL, ".");
+            if (tok) {
+                value = strtol(tok, &ptr, 10);
+                *minor = (ptr != tok) ? value : 0;
+            }
+        }
+    }
+
+    CT_SAFE_FREE_STRING(osversion);
+
+    return bSuccess;
+}
+
 /**
  * @brief Returns TRUE is this is Enterprise.
  *
  * This is a simple check for the existent of the Enterprise data file.
  */
-BOOLEAN 
-DJGetIsEnterprise(void) 
+BOOLEAN
+DJGetIsEnterprise(void)
 {
     DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bIsEnterprise = FALSE;

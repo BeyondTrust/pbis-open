@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -83,6 +83,7 @@ typedef struct
     LwDistroType distro;
     LwArchType arch;
     char *version;
+    char *extended; // os specific
 } LwDistroInfo;
 
 LwOSType DJGetOSFromString(const char *str);
@@ -93,13 +94,22 @@ DWORD DJGetOSString(LwOSType type, char **result);
 DWORD DJGetDistroString(LwDistroType type, char **result);
 DWORD DJGetArchString(LwArchType type, char **result);
 
-//Fills in fields with correct values
-DWORD
-DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info);
+// Fills in fields with correct values
+DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info);
 
-//Safe to call after DJGetDistroInfo has been called, or the structure has
-//been zeroed out.
+// Safe to call after DJGetDistroInfo has been called, or the structure has
+// been zeroed out.
 void DJFreeDistroInfo(LwDistroInfo *info);
+
+/**
+ * @brief Get Solaris major and minor versions
+ *
+ * These are populated from the distro info
+ * extended field and correspond to the Solaris vesion.
+ *
+ * @return TRUE/FALSE indicating success
+ */
+BOOLEAN DJGetSolarisVersion(const LwDistroInfo * const info, int * const major, int * const minor);
 
 /**
  * @brief Returns TRUE is this is Enterprise.

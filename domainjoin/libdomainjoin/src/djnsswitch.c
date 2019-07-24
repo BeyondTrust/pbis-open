@@ -772,6 +772,15 @@ cleanup:
     return result;
 }
 
+static BOOLEAN IsSolaris11_4Plus(const LwDistroInfo * const distro) {
+    int major = 0;
+    int minor = 0;
+
+    DJGetSolarisVersion(distro, &major, &minor);
+
+    return (major > 11) || ((major == 11) && (minor > 3));
+}
+
 DWORD
 UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 {
@@ -904,17 +913,22 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         {
             if(enable)
             {
-                sprintf(szCommand,
-                   "svccfg -s name-service/switch setprop config/password=\\\"files %s\\\"",
-                   moduleName);
+                /*  can't backslash escape the password group prop values on solaris 11.4 */
+                BOOLEAN solaris11_4 = IsSolaris11_4Plus(&distro);
+                const char * const password_setprop = (solaris11_4)
+                    ? "svccfg -s name-service/switch setprop config/password=\"files %s\""
+                    : "svccfg -s name-service/switch setprop config/password=\\\"files %s\\\"";
+                const char * const group_setprop = (solaris11_4)
+                    ? "svccfg -s name-service/switch setprop config/group=\"files %s\""
+                    : "svccfg -s name-service/switch setprop config/group=\\\"files %s\\\"";
+
+                sprintf(szCommand, password_setprop, moduleName);
                 if(system(szCommand) < 0)
                 {
                    goto cleanup;
                 }
                 memset(szCommand, 0, sizeof(szCommand));
-                sprintf(szCommand,
-                   "svccfg -s name-service/switch setprop config/group=\\\"files %s\\\"",
-                   moduleName);
+                sprintf(szCommand,group_setprop, moduleName);
                 if(system(szCommand) < 0)
                 {
                    goto cleanup;
