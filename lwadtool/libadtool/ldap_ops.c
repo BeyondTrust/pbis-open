@@ -349,14 +349,7 @@ FormatKnownAttributes(IN AppContextTP appContext,
                 }
                 else {
                     for (i = 0; vals[i] != NULL; i++) {
-                        if (IsPrintable(vals[i])) {
-                            dwError = LwStrDupOrNull((PCSTR) vals[i],
-                                                     &(ovals[i]));
-                        }
-                        else {
-                            dwError = LwStrDupOrNull("<BINARY DATA>",
-                                                     &(ovals[i]));
-                        }
+                        dwError = LwStrDupOrNull((PCSTR) vals[i], &(ovals[i]));
                         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
                     }
                 }

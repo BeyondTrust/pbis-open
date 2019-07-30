@@ -565,25 +565,6 @@ INT GetFirstIndexOfChar(IN PSTR str, IN CHAR ch, IN INT ignoreCase)
 }
 
 /**
- * Check if all characters in the string are printable.
- *
- * @param str String to check.
- * @return TRUE is the string does not contain non-printable characters; FALSE otherwise.
- */
-BOOL IsPrintable(IN PSTR str)
-{
-    INT i;
-
-    for(i = 0; str && str[i]; ++i) {
-        if(!isprint((int) (str[i]))) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
-/**
  * Get parent DN. This method dynamically allocates memory, which must be freed.
  *
  * @param str DN to parse.
