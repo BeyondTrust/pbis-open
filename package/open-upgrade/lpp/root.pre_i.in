@@ -346,11 +346,15 @@ preserve_settings()
         regshell=/opt/pbis/bin/regshell
     elif [ -d /opt/likewise/bin ]; then
         regshell=/opt/likewise/bin/lwregshell
-    else
+    elif [ -x /usr/bin/lwregshell ]; then
         regshell=/usr/bin/lwregshell
+    else
+        regshell=""
     fi
 
-    $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | grep -E ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
+    if [ -n "$regshell" ]; then
+      $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | grep -E ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
+    fi
 }
 
 wait_for_lwsm_shutdown()
