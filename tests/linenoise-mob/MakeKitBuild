@@ -1,0 +1,23 @@
+configure()
+{
+    mk_check_program ruby
+}
+
+make()
+{
+
+    if [ -n "${RUBY}" ] && [ -n "${UNITY_DIR}" ]
+    then
+        mk_target \
+            TARGET="testlinenoise-history_Runner.c" \
+            DEPS="testlinenoise-history.c testlinenoise-history.yml" \
+            ruby "${UNITY_DIR}/auto/generate_test_runner.rb" "&testlinenoise-history.yml" '$<' '$@'
+    fi
+
+    mk_have_cmock && \
+    mk_cmock \
+        PROGRAM="testlinenoise-history" \
+        SOURCES="testlinenoise-history.c testlinenoise-history_Runner.c" \
+        LIBDEPS="linenoise-mob" \
+        LDFLAGS="-lpbiscmock"
+}

@@ -324,15 +324,16 @@ LsaSrvWriteLoginFailedEvent(
 
         default:
         {
-            char szLwError[256];
+            char szLwError[200];
 
             dwEventID = LSASS_EVENT_FAILED_LOGON_UNEXPECTED_ERROR;
             LwGetErrorString(dwErrCode, szLwError, sizeof(szLwError));
             snprintf(
                 szReason,
                 sizeof(szReason),
-                "An unexpected error occurred: Error %d (%s)",
+                "An unexpected error occurred: Error %d (%.*s)",
                 dwErrCode,
+                (int)sizeof(szLwError),
                 szLwError);
         }
     }

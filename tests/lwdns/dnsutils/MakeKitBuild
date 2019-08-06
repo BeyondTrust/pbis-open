@@ -1,0 +1,25 @@
+configure()
+{
+    mk_check_program ruby
+}
+
+make()
+{
+    mk_check_library lwadvapi_nothr
+    mk_check_library lwdns
+
+    if [ -n "${RUBY}" ] && [ -n "${UNITY_DIR}" ]
+    then
+        mk_target \
+            TARGET="testdnsutils_Runner.c" \
+            DEPS="testdnsutils.c project.yml" \
+            ruby "${UNITY_DIR}/auto/generate_test_runner.rb" "&project.yml" '$<' '$@'
+    fi
+
+    mk_have_cmock && \
+    mk_cmock \
+        PROGRAM="testdnsutils" \
+        SOURCES="testdnsutils.c testdnsutils_Runner.c" \
+        LIBDEPS="lwadvapi_nothr lwdns" \
+        LDFLAGS="-lpbiscmock"
+}
