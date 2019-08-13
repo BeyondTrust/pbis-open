@@ -383,20 +383,20 @@ execute_auxiliary_scripts()
 remove_TrustEnumerationWaitSettingFromADPath()
 {
     run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' 'TrustEnumerationWait'
-    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'  'TrustEnumerationWaitSeconds'
+    run_quiet '@MK_BINDIR@/regshell' delete_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' 'TrustEnumerationWaitSeconds'
 }
 
 restore_settings()
 {
    REGSHELL='@MK_BINDIR@/regshell'
    SETTING_FILE="${UPGRADEDIR}/preserveSetting"
-   LSASS_KEY="[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]"
+   LSASS_KEY='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
 
    if [ -f ${SETTING_FILE} ]; then
       while read buff; do
         valueName=`echo $buff | awk '{ print $1}'|sed -e 's/\"//g'`
         value=`echo $buff | awk '{ print $2}'|sed -e 's/\"//g'`
-        run_or_fail $REGSHELL set_value ${LSASS_KEY} ${valueName}  ${value}
+        run_or_fail $REGSHELL set_value "$LSASS_KEY" ${valueName}  ${value}
       done < ${SETTING_FILE}
    fi
 

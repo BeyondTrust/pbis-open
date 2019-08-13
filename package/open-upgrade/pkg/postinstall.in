@@ -353,7 +353,7 @@ preserve_settings()
     fi
 
     if [ -n "$regshell" ]; then
-      $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | grep -E ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
+      $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | egrep ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
     fi
 }
 
