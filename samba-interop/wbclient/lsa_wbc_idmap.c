@@ -492,3 +492,8 @@ wbcErr wbcSetGidHwm(gid_t gid_hwm)
     return WBC_ERR_NOT_IMPLEMENTED;
 }
 
+wbcErr wbcUnixIdsToSids(const struct wbcUnixId *ids, uint32_t num_ids,
+			struct wbcDomainSid *sids)
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
