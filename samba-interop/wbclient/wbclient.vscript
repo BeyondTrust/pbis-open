@@ -95,3 +95,9 @@ WBCLIENT_0.12 {
 WBCLIENT_0.13 {
                 wbcUnixIdsToSids;
 } WBCLIENT_0.12;
+
+WBCLIENT_0.14 {
+} WBCLIENT_0.13;
+
+WBCLIENT_0.15 {
+} WBCLIENT_0.14;
