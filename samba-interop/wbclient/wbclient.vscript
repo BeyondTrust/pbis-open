@@ -86,10 +86,6 @@ WBCLIENT_0.11 {
 } WBCLIENT_0.10;
 
 WBCLIENT_0.12 {
-	global:
-		wbc*;
-	local:
-		*;
 } WBCLIENT_0.11;
 
 WBCLIENT_0.13 {
