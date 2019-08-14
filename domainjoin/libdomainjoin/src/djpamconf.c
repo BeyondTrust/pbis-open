@@ -3104,6 +3104,25 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 goto cleanup;
             }
 
+            /* On solaris 11.4 service sshd-gsapi, sshd-hostbased and 
+             * sshd-pubkey fallback is password prompt should any of 
+             * these modules fail authentication. 
+             */
+            if (!strcmp(normalizedService, "sshd-gssapi"))
+            {
+                goto cleanup;
+            }
+
+            if (!strcmp(normalizedService, "sshd-hostbased"))
+            {
+                goto cleanup;
+            }
+
+            if (!strcmp(normalizedService, "sshd-pubkey"))
+            {
+                goto cleanup;
+            }
+
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
