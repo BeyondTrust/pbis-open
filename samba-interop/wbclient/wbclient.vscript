@@ -93,6 +93,7 @@ WBCLIENT_0.12 {
 } WBCLIENT_0.11;
 
 WBCLIENT_0.13 {
+        global:
                 wbcUnixIdsToSids;
 } WBCLIENT_0.12;
 
