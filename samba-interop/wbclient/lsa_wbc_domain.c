@@ -657,3 +657,12 @@ cleanup:
     return map_error_to_wbc_status(error);
 }
 
+wbcErr
+wbcPingDc2(
+    const char *domain,
+    struct wbcAuthErrorInfo **ppError,
+    char **dcname
+    )
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}

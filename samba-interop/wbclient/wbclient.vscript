@@ -78,14 +78,23 @@ WBCLIENT_0.9 {
 };
 
 WBCLIENT_0.10 {
+	global:
+		wbcPingDc2;
 } WBCLIENT_0.9;
 
 WBCLIENT_0.11 {
 } WBCLIENT_0.10;
 
 WBCLIENT_0.12 {
-	global:
-		wbc*;
-	local:
-		*;
-};
+} WBCLIENT_0.11;
+
+WBCLIENT_0.13 {
+        global:
+                wbcUnixIdsToSids;
+} WBCLIENT_0.12;
+
+WBCLIENT_0.14 {
+} WBCLIENT_0.13;
+
+WBCLIENT_0.15 {
+} WBCLIENT_0.14;
