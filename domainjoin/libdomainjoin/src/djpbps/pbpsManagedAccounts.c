@@ -318,7 +318,7 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
             // this intentionally filters out 'null'
             pAccount->pszDomainAccountName = NULL;
             if (pAccount->pszDomainName
-                    && (!((strnlen(pAccount->pszDomainName, 5) == 4)
+                    && (!((strlen(pAccount->pszDomainName) == 4)
                             && strncmp(pAccount->pszDomainName, "null", 4) == 0))) {
                 dwError = LwAllocateStringPrintf(
                      &(pAccount->pszDomainAccountName), "%s\\\\%s",
