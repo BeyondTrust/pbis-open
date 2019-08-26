@@ -1,0 +1,26 @@
+SUBDIRS=". djpbps"
+
+configure()
+{
+    mk_check_program ruby
+}
+
+make()
+{
+    if [ -n "${RUBY}" ] && [ -n "${UNITY_DIR}" ]
+    then
+        mk_target \
+            TARGET="testdjdistro_solaris_version_Runner.c" \
+            DEPS="testdjdistro_solaris_version.c project.yml" \
+            ruby "${UNITY_DIR}/auto/generate_test_runner.rb" "&project.yml" '$<' '$@'
+    fi
+
+    mk_have_cmock && \
+    mk_cmock \
+        PROGRAM="testdjdistro_solaris_version" \
+        SOURCES="testdjdistro_solaris_version.c testdjdistro_solaris_version_Runner.c" \
+        INCLUDEDIRS="../libdomainjoin/include" \
+        HEADERDEPS="djdistroinfo.h" \
+        LIBDEPS="domainjoin" \
+        LDFLAGS="-lpbiscmock"
+}

@@ -104,7 +104,9 @@ typedef struct PbpsApiManagedAccount_s
    PSTR  pszSystemName;
    PSTR  pszDomainName;
    PSTR  pszAccountName;
-   PSTR  pszAccountNameFull;
+
+   // <domain\\><account>
+   PSTR pszDomainAccountName;
 } PbpsApiManagedAccount_t;
 
 typedef struct PbpsApiConfig_s
@@ -192,7 +194,7 @@ extern DWORD PbpsApiCredentialsGet(PbpsApi_t *pApi, DWORD dwRequestId,
 extern DWORD PbpsApiRequestIdCheckin(PbpsApi_t *pApi);
 extern DWORD PbpsApiSignOut(PbpsApi_t *pApi);
 
-
+extern DWORD PbpsApiManagedAccountsParse(PSTR pszManagedAccount, PLW_DLINKED_LIST *ppManagedAccountsList);
 extern DWORD PbpsApiManagedAccountsGet(PbpsApi_t *pApi);
 extern VOID  PbpsApiManagedAccountFree(PbpsApiManagedAccount_t *pAccount);
 extern VOID  PbpsManagedAccountListFree(PLW_DLINKED_LIST pManagedAccountList);

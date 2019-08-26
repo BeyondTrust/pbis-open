@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -30,14 +30,14 @@
 
 #include "pbps-int.h"
 
-/* 
+/*
  * This module has functions to retrieved from Password Safe in json
- * format a list of managed accounts. This list is parsed and translated 
+ * format a list of managed accounts. This list is parsed and translated
  * to a linked list of managed accounts.
  *
  *
  * GET ManagedAccounts
- * 
+ *
  */
 
 
@@ -50,7 +50,7 @@ VOID PbpsApiManagedAccountFree(PbpsApiManagedAccount_t *pAccount)
    LW_SAFE_FREE_STRING(pAccount->pszSystemName);
    LW_SAFE_FREE_STRING(pAccount->pszDomainName);
    LW_SAFE_FREE_STRING(pAccount->pszAccountName);
-   LW_SAFE_FREE_STRING(pAccount->pszAccountNameFull);
+   LW_SAFE_FREE_STRING(pAccount->pszDomainAccountName);
    LwFreeMemory(pAccount);
 
 cleanup:
@@ -62,7 +62,7 @@ VOID PbpsApiManagedAccountItemFree(PVOID pItem,
                                PVOID pUserData)
 {
    PbpsApiManagedAccount_t *pAccount = (PbpsApiManagedAccount_t *) pItem;
-  
+
    PbpsApiManagedAccountFree(pAccount);
 
    return;
@@ -85,11 +85,10 @@ PbpsApiManagedAccountPrint(PVOID pItem,
 {
    PbpsApiManagedAccount_t *pAccount = (PbpsApiManagedAccount_t *) pItem;
 
-   DJ_LOG_VERBOSE("AccountName:%s AccountNameFull:%s\n\tSystemName:%s DomainName:%s\n\tPlatformId:%d SystemId:%d AccountId:%d\n", 
+   DJ_LOG_VERBOSE("AccountName:%s\n\tSystemName:%s DomainName:%s\n\tPlatformId:%d SystemId:%d AccountId:%d\n",
                  pAccount->pszAccountName,
-                 pAccount->pszAccountNameFull,
                  pAccount->pszSystemName,
-                 pAccount->pszDomainName,
+                 pAccount->pszDomainName ? pAccount->pszDomainName : "null",
                  pAccount->dwPlatformId,
                  pAccount->dwSystemId,
                  pAccount->dwAccountId);
@@ -101,7 +100,7 @@ PbpsApiManagedAccountPrint(PVOID pItem,
  *  Log a linked list of managed accounts.
  */
 static
-VOID 
+VOID
 PbpsApiManagedAccountsPrint(PLW_DLINKED_LIST pManagedAccountList)
 {
    LwDLinkedListForEach(pManagedAccountList,
@@ -111,15 +110,10 @@ PbpsApiManagedAccountsPrint(PLW_DLINKED_LIST pManagedAccountList)
 }
 
 
-static
-DWORD 
-PbpsApiManagedAccountsParse(PSTR pszManagedAccount, 
-                            PLW_DLINKED_LIST *ppManagedAccountsList);
-
 /*
  * GET ManagedAccounts
  */
-DWORD 
+DWORD
 PbpsApiManagedAccountsGet(PbpsApi_t *pApi)
 {
    DWORD dwError = LW_ERROR_SUCCESS;
@@ -177,7 +171,7 @@ PbpsApiManagedAccountsGet(PbpsApi_t *pApi)
      BAIL_ON_LW_ERROR(dwError);
   }
 
-  DJ_LOG_VERBOSE("\tManaged Accounts: size:%d\n \t%s\n", 
+  DJ_LOG_VERBOSE("\tManaged Accounts: size:%d\n \t%s\n",
                  responseBuffer.size,
                  responseBuffer.buffer);
 
@@ -219,13 +213,12 @@ error:
  * Convert a string of multiple managed accounts into a linked list.
  * Input: pszManagedAccount. Sample input:
  *
- * {"PlatformID":4,"SystemId":5,"SystemName":"build-aix-ppc64","DomainName":null,"AccountId":5,"AccountName":"builder","AccountNameFull":"builder","ApplicationID":null,"ApplicationDisplayName":null,"MaximumReleaseDuration":10079,"MaxReleaseDurationDays":6,"MaxReleaseDurationHours":23,"MaxReleaseDurationMinutes":59,"InstanceName":"","DefaultReleaseDuration":120,"DefaultReleaseDurationDays":0,"DefaultReleaseDurationHours":2,"DefaultReleaseDurationMinutes":0,"LastChangeDate":"2016-09-08T08:20:57.827","NextChangeDate":null,"IsChanging":false,"IsISAAccess":false,"PreferredNodeID":"ccce4d07-96e0-4ce5-ac2c-637c6995988f"},
+ * {"PlatformID":4,"SystemId":5,"SystemName":"build-aix-ppc64","DomainName":null,"AccountId":5,"AccountName":"builder","ApplicationID":null,"ApplicationDisplayName":null,"MaximumReleaseDuration":10079,"MaxReleaseDurationDays":6,"MaxReleaseDurationHours":23,"MaxReleaseDurationMinutes":59,"InstanceName":"","DefaultReleaseDuration":120,"DefaultReleaseDurationDays":0,"DefaultReleaseDurationHours":2,"DefaultReleaseDurationMinutes":0,"LastChangeDate":"2016-09-08T08:20:57.827","NextChangeDate":null,"IsChanging":false,"IsISAAccess":false,"PreferredNodeID":"ccce4d07-96e0-4ce5-ac2c-637c6995988f"},
  *
  * Output: ppManagedAccountsList. A link list of managed accounts
  */
-static
-DWORD 
-PbpsApiManagedAccountsParse(PSTR pszManagedAccount, 
+DWORD
+PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
                             PLW_DLINKED_LIST *ppManagedAccountsList)
 {
    DWORD dwError = LW_ERROR_SUCCESS;
@@ -236,7 +229,6 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
    PSTR  pszSystemName = NULL;
    PSTR  pszDomainName = NULL;
    PSTR  pszAccountName = NULL;
-   PSTR  pszAccountNameFull = NULL;
    PSTR  savePtr = NULL;
    PSTR  savePtr2 = NULL;
    PSTR  name = NULL;
@@ -257,7 +249,7 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
       value = NULL;
       savePtr2 = NULL;
 
-      name = strtok_r (token, ":", &savePtr2); 
+      name = strtok_r (token, ":", &savePtr2);
       if (name != NULL)
       {
          value = strtok_r(NULL, ":", &savePtr2);
@@ -300,12 +292,6 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
             dwAccountId = (DWORD) LwStrtoll(value, &pszEndPtr, 10);
             dwCount++;
          }
-         else if (strncmp("AccountNameFull", name, 15) == 0)
-         {
-            LwAllocateString(value, &pszAccountNameFull);
-            LwStrToLower(pszAccountNameFull);
-            dwCount++;
-         }
          else if (strncmp("AccountName", name, 10) == 0)
          {
             LwAllocateString(value, &pszAccountName);
@@ -313,7 +299,7 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
             dwCount++;
          }
 
-         if (dwCount == 7)
+         if (dwCount == 6)
          {
             // We have the necessary values to fill-in a struct
             dwError = LwAllocateMemory(sizeof(PbpsApiManagedAccount_t),
@@ -326,7 +312,22 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
             pAccount->pszSystemName = pszSystemName;
             pAccount->pszDomainName = pszDomainName;
             pAccount->pszAccountName = pszAccountName;
-            pAccount->pszAccountNameFull = pszAccountNameFull;
+
+            // if the domain is supplied construct domain account name
+            // to simplify searching
+            // this intentionally filters out 'null'
+            pAccount->pszDomainAccountName = NULL;
+            if (pAccount->pszDomainName
+                    && (!((strnlen(pAccount->pszDomainName, 5) == 4)
+                            && strncmp(pAccount->pszDomainName, "null", 4) == 0))) {
+                dwError = LwAllocateStringPrintf(
+                     &(pAccount->pszDomainAccountName), "%s\\\\%s",
+                        pAccount->pszDomainName,
+                        pAccount->pszAccountName);
+                BAIL_ON_LW_ERROR(dwError);
+            } else {
+                LwAllocateString(pAccount->pszAccountName, &pAccount->pszDomainAccountName);
+            }
 
             dwError = LwDLinkedListAppend(&pTmpManagedAccountsList,
                                           pAccount);
@@ -339,28 +340,28 @@ PbpsApiManagedAccountsParse(PSTR pszManagedAccount,
    }
 
    *ppManagedAccountsList = pTmpManagedAccountsList;
-    
+
 cleanup:
    return dwError;
 
 error:
    if (pTmpManagedAccountsList)
-     PbpsManagedAccountListFree(pTmpManagedAccountsList);  
+     PbpsManagedAccountListFree(pTmpManagedAccountsList);
 
    goto cleanup;
 }
 
 
-/* 
+/*
  * Copy managed account. This function allocates memory which must
  * be released using PbpsApiManagedAccountFree()
  *
  */
-static 
-DWORD PbpsApiAccountCopy(PbpsApiManagedAccount_t *pSrcAccount, 
+static
+DWORD PbpsApiAccountCopy(PbpsApiManagedAccount_t *pSrcAccount,
                          PbpsApiManagedAccount_t **ppDestAccount)
 {
-   DWORD dwError = LW_ERROR_SUCCESS; 
+   DWORD dwError = LW_ERROR_SUCCESS;
    PbpsApiManagedAccount_t *pTmp = NULL;
 
    dwError = LwAllocateMemory(sizeof(PbpsApiManagedAccount_t),
@@ -370,6 +371,10 @@ DWORD PbpsApiAccountCopy(PbpsApiManagedAccount_t *pSrcAccount,
    pTmp->dwPlatformId = pSrcAccount->dwPlatformId;
    pTmp->dwSystemId   = pSrcAccount->dwSystemId;
    pTmp->dwAccountId  = pSrcAccount->dwAccountId;
+   pTmp->pszSystemName = NULL;
+   pTmp->pszDomainName = NULL;
+   pTmp->pszAccountName = NULL;
+   pTmp->pszDomainAccountName = NULL;
 
    dwError = LwAllocateStringPrintf(
                      &(pTmp->pszSystemName), "%s",
@@ -377,19 +382,25 @@ DWORD PbpsApiAccountCopy(PbpsApiManagedAccount_t *pSrcAccount,
    BAIL_ON_LW_ERROR(dwError);
 
    dwError = LwAllocateStringPrintf(
-                     &(pTmp->pszDomainName), "%s",
-                     pSrcAccount->pszDomainName);
-   BAIL_ON_LW_ERROR(dwError);
-
-   dwError = LwAllocateStringPrintf(
                      &(pTmp->pszAccountName), "%s",
                      pSrcAccount->pszAccountName);
    BAIL_ON_LW_ERROR(dwError);
 
-   dwError = LwAllocateStringPrintf(
-                     &(pTmp->pszAccountNameFull), "%s",
-                     pSrcAccount->pszAccountNameFull);
-   BAIL_ON_LW_ERROR(dwError);
+   if (pSrcAccount->pszDomainName)
+   {
+      dwError = LwAllocateStringPrintf(
+                        &(pTmp->pszDomainName), "%s",
+                        pSrcAccount->pszDomainName);
+      BAIL_ON_LW_ERROR(dwError);
+   }
+
+   if (pSrcAccount->pszDomainAccountName)
+   {
+      dwError = LwAllocateStringPrintf(
+                        &(pTmp->pszDomainAccountName), "%s",
+                        pSrcAccount->pszDomainAccountName);
+      BAIL_ON_LW_ERROR(dwError);
+   }
 
 cleanup:
    *ppDestAccount = pTmp;
@@ -414,8 +425,8 @@ typedef struct PbpsApiSearchFor_s
  * Search link list of managed accounts. If a match is found, pUserData
  * is updated with a newly allocated PbpsApiManagedAccount_t. As
  * such, the caller will need to free the memory.
- * Full match is based on SystemName and AccountNameFull or AccountName.
- * Failing a full match then only consider AccountNameFull or AccountName.
+ * Full match is based on SystemName and optionally Domain and AccountName.
+ * Failing a full match then only consider Domain\\AccountName.
  *
  */
 static
@@ -430,14 +441,13 @@ PbpsApiManagedAccountSearch(PVOID pItem,
 
    if (needle->bFoundMatch)
    {
-      // Found an exact match of SystemName and AccountNameFull/
-      // AccountName
+      // Found an exact match of SystemName and DomainAccountName || AccountName
       goto cleanup;
    }
 
-   if ((strcasecmp(needle->pszHostname, pAccount->pszSystemName) == 0) && 
-         ((strcasecmp(needle->pszJoinAccount, pAccount->pszAccountNameFull) == 0) ||
-         (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0)))
+   if ((strcasecmp(needle->pszHostname, pAccount->pszSystemName) == 0)
+        && ((pAccount->pszDomainAccountName && (strcasecmp(needle->pszJoinAccount, pAccount->pszDomainAccountName) == 0))
+           ||  (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0)))
    {
        //Allocate and copy pAccount into needle->pJoinAccount
        dwError = PbpsApiAccountCopy(pAccount, &pDestAccount);
@@ -455,12 +465,12 @@ PbpsApiManagedAccountSearch(PVOID pItem,
        // meets all the criteria.
        needle->bFoundMatch = TRUE;
 
-       DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found system %s with account %s", 
-                      needle->pszHostname, 
+       DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found system %s with account %s",
+                      needle->pszHostname,
                       needle->pszJoinAccount);
    }
-   else if ((strcasecmp(needle->pszJoinAccount, pAccount->pszAccountNameFull) == 0) ||
-            (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0))
+   else if ((pAccount->pszDomainAccountName && (strcasecmp(needle->pszJoinAccount, pAccount->pszDomainAccountName) == 0))
+           ||  (strcasecmp(needle->pszJoinAccount, pAccount->pszAccountName) == 0))
    {
       if (needle->pJoinAccount == NULL)
       {
@@ -472,11 +482,11 @@ PbpsApiManagedAccountSearch(PVOID pItem,
          BAIL_ON_LW_ERROR(dwError);
          needle->pJoinAccount = pDestAccount;
 
-         DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found account %s", 
+         DJ_LOG_VERBOSE("PbpsApiManagedAccountSearch found account %s",
                          needle->pszJoinAccount);
       }
    }
-   
+
 cleanup:
    return;
 
@@ -491,10 +501,10 @@ error:
  * Returned account must be freed with PbpsApiManagedAccountFree().
  *
  */
-DWORD 
+DWORD
 PbpsApiGetJoinAccount(
-           PbpsApi_t *pApi, 
-           PSTR pszJoinAccount, 
+           PbpsApi_t *pApi,
+           PSTR pszJoinAccount,
            PbpsApiManagedAccount_t **ppAccount)
 {
    DWORD dwError = LW_ERROR_SUCCESS;
@@ -504,11 +514,11 @@ PbpsApiGetJoinAccount(
    needle.pszJoinAccount = pszJoinAccount;
    needle.pszHostname = NULL;
    needle.pJoinAccount = NULL;
-   
+
    dwError = DJGetComputerName(&needle.pszHostname);
    BAIL_ON_LW_ERROR(dwError);
 
-   LwDLinkedListForEach(pApi->session.pManagedAccountList, 
+   LwDLinkedListForEach(pApi->session.pManagedAccountList,
                       &PbpsApiManagedAccountSearch,
                       (PVOID) &needle);
 

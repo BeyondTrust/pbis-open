@@ -1,0 +1,26 @@
+configure()
+{
+    mk_check_program ruby
+}
+
+make()
+{
+    mk_check_headers ctbase.h lwdef.h
+
+    if [ -n "${RUBY}" ] && [ -n "${UNITY_DIR}" ]
+    then
+        mk_target \
+            TARGET="testPbpsApi_Runner.c" \
+            DEPS="testPbpsApi.c project.yml" \
+            ruby "${UNITY_DIR}/auto/generate_test_runner.rb" "&project.yml" '$<' '$@'
+
+        mk_have_cmock && \
+        mk_cmock \
+            PROGRAM="testPbpsApi" \
+            SOURCES="testPbpsApi.c testPbpsApi_Runner.c MockDJGetComputerName.c" \
+            INCLUDEDIRS=". ../../../libdomainjoin/src/djpbps/ ../../../include/ ../../../../lwadvapi/include ../../../../lwadvapi/include/public ../../../libdomainjoin/include" \
+            HEADERDEPS="ctbase.h lwdef.h" \
+            LIBDEPS="domainjoin lwadvapi_nothr lwbase_nothr" \
+            LDFLAGS="-lpbiscmock"
+    fi
+}
