@@ -268,6 +268,7 @@ configure_openssl()
     # openssl so it builds properly for the 
     # target platform; you can see the supported
     # host_string values by running Configure -?
+
     case "${MK_OS}-${MK_ISA}" in
         darwin-x86_64)
             host_string="darwin64-x86_64-cc"
@@ -295,6 +296,11 @@ configure_openssl()
         solaris-x86_32)
             export MAKE=gmake
             host_string="solaris-x86-gcc"
+            extra_args="no-asm -static-libgcc"
+            ;;
+        solaris-x86_64)
+            export MAKE=gmake
+            host_string="solaris64-x86_64-gcc"
             extra_args="no-asm -static-libgcc"
             ;;
         aix-ppc32)
