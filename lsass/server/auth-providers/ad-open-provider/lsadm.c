@@ -1232,6 +1232,43 @@ LsaDmpIsValidDnsDomainName(
 }
 
 static
+VOID
+LsaDmConvertGUIDToUuid(PGUID pDomainGuid, uuid_t *pUuid)
+{
+
+  uuid_t tmpGuid;
+
+  if (pUuid == NULL || pDomainGuid == NULL)
+  {
+    return;
+  }
+
+  if (sizeof(uuid_t) != sizeof(LW_GUID))
+  {
+    LSA_LOG_ERROR("Cannot convert LW_GUID to uuid_t. Different size 0x%x and 0x%x", sizeof(uuid_t), sizeof(LW_GUID));
+    memset(pUuid, 0, sizeof(uuid_t));
+    return;
+  }
+
+  tmpGuid[0] = (pDomainGuid->Data1 & 0xff000000) >> 24;
+  tmpGuid[1] = (pDomainGuid->Data1 & 0x00ff0000) >> 16;
+  tmpGuid[2] = (pDomainGuid->Data1 & 0x0000ff00) >> 8;
+  tmpGuid[3] = (pDomainGuid->Data1 & 0x000000ff);
+
+  tmpGuid[4] = (pDomainGuid->Data2 & 0xff00) >> 8;
+  tmpGuid[5] = (pDomainGuid->Data2 & 0x00ff);
+
+  tmpGuid[6] = (pDomainGuid->Data3 & 0xff00) >> 8;
+  tmpGuid[7] = (pDomainGuid->Data3 & 0x00ff);
+
+  memcpy(&tmpGuid[8], &pDomainGuid->Data4, sizeof(pDomainGuid->Data4));
+
+  memcpy(pUuid, &tmpGuid, sizeof(uuid_t));
+
+  return;
+}
+
+static
 BOOLEAN
 LsaDmpDomainCreate(
     OUT PLSA_DM_DOMAIN_STATE* ppDomain,
@@ -1276,7 +1313,7 @@ LsaDmpDomainCreate(
 
     if (pDomainGuid)
     {
-        memcpy(&pDomain->Guid, pDomainGuid, sizeof(pDomain->Guid));
+        LsaDmConvertGUIDToUuid(pDomainGuid, &pDomain->Guid);
     }
 
     if (pszDnsForestName)
