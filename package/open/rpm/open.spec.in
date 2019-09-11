@@ -127,6 +127,7 @@ determine_os_version()
 {
     PBIS_DISTRO=unknown
     PBIS_DISTRO_VERSION=unknown
+    PBIS_SYSTEMD=0
 
     if [ -f '/etc/centos-release' ]; then
         PBIS_DISTRO=centos
@@ -196,6 +197,21 @@ determine_os_version()
         elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 8' '/etc/redhat-release'`" ]; then
             PBIS_DISTRO=rhel
             PBIS_DISTRO_VERSION=8.0
+        fi
+    elif [ -f '/etc/os-release' ]; then
+        PBIS_DISTRO=`grep ^NAME= /etc/os-release | cut -d '=' -f2 | tr -d '\"'`
+        PBIS_DISTRO_VERSION=`grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | tr -d '"'`
+        PBIS_DISTRO_MAJOR_VER=`echo $PBIS_DISTRO_VERSION | cut -d '.' -f1`
+
+        if [ -z $PBIS_DISTRO_MAJOR_VER ]; then
+            PBIS_DISTRO_MAJOR_VER=$PBIS_DISTRO_VERSION
+        fi
+
+        if [ $PBIS_DISTRO="SLED" -o $PBIS_DISTRO="SLES" ]; then
+            if [ $PBIS_DISTRO_MAJOR_VER -ge 12 -a -x /usr/bin/systemctl ]; then
+                PBIS_SYSTEMD=1
+                logfile "Using Systemd for $PBIS_DISTRO"
+            fi
         fi
     fi
 }
@@ -630,7 +646,7 @@ postinstall()
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    if [ -f /etc/redhat-release ]; then
+    if [ -f /etc/redhat-release -o $PBIS_SYSTEMD -eq 1 ]; then
 	if [ ! -f /usr/bin/systemctl ]; then
             run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
 	fi
@@ -648,8 +664,9 @@ postinstall()
     fi
 
 
-    if [ -x /sbin/service ]
-    then
+    if [ -x /usr/bin/systemctl ]; then
+        run /usr/bin/systemctl start lwsmd
+    elif [ -x /sbin/service ]; then
         run /sbin/service lwsmd start
     else
         run '@LW_INITDIR@/lwsmd' start
@@ -788,7 +805,9 @@ pre_upgrade()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -807,7 +826,9 @@ pre_install()
 {
     logfile "Package: BeyondTrust AD Bridge Open [pre install] begins (`date`)"
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -947,7 +968,9 @@ preuninstall_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -964,7 +987,9 @@ preuninstall_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    run_quiet /sbin/chkconfig --del lwsmd
+    if [ ! -f /usr/bin/systemctl ]; then        
+        run_quiet /sbin/chkconfig --del lwsmd
+    fi
 
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
