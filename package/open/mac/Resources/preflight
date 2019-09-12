@@ -94,7 +94,7 @@ stop_and_disable_daemon()
     SERVICE=$1
     SERVICE_PATH=@MK_SBINDIR@/$SERVICE
     SERVICE_NAME=com.beyondtrust.pbis.$SERVICE
-    SERVICE_DAEMON_OLD=/System/Library/LaunchDaemons/$SERVICE_NAME.plist
+    SERVICE_DAEMON_OLD=/Library/LaunchDaemons/$SERVICE_NAME.plist
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
 
     if [ -f "$SERVICE_DAEMON_OLD" ]; then
@@ -122,7 +122,7 @@ stop_daemons()
 
 disable_plugin()
 {
-    FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+    FRAMEWORK_DIR="/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
     LIBRARY_DS_DIR="/Library/DirectoryServices/PlugIns"
 
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do

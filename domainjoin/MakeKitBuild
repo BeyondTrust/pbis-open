@@ -4,11 +4,6 @@ option()
 {
     default_dj_gui="no"
 
-    if [ "$MK_HOST_OS" = "darwin" ]
-    then
-        default_dj_gui="yes"
-    fi
-
     mk_option \
         OPTION=dj-gui \
         PARAM='yes|no' \

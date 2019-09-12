@@ -156,7 +156,7 @@ enable_plugin()
 {
     PLUGIN_DIR=LWDSPlugin.dsplug
     SRC_DIR=@PRIMARY_LIBDIR@
-    FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+    FRAMEWORK_DIR="/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
     LIBRARY_DS_DIR="/Library/DirectoryServices/PlugIns"
 
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do

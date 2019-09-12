@@ -19,19 +19,6 @@
 #include "LWIDirNodeQuery.h"
 #include "LWIRecordQuery.h"
 
-// Mac OS X Version Names
-#define MAC_OS_X_VERSION_NAME_10_4 "Tiger"
-#define MAC_OS_X_VERSION_NAME_10_5 "Leopard"
-#define MAC_OS_X_VERSION_NAME_10_6 "Snow Leopard"
-#define MAC_OS_X_VERSION_NAME_10_7 "Lion"
-#define MAC_OS_X_VERSION_NAME_10_8 "Mountain Lion"
-#define MAC_OS_X_VERSION_NAME_10_9 "Mavericks"
-#define MAC_OS_X_VERSION_NAME_10_10 "Yosemite"
-#define MAC_OS_X_VERSION_NAME_10_11 "El Capitan"
-#define MAC_OS_X_VERSION_NAME_10_12 "Sierra"
-#define MAC_OS_X_VERSION_NAME_10_13 "High Sierra"
-#define MAC_OS_X_VERSION_NAME_10_14 "Mojave"
-
 // Local helper functions
 //
 
@@ -238,8 +225,7 @@ long PlugInShell_Initialize(void)
     long macError = eDSNoErr;
     bool gotUnameInfo = false;
     PSTR pszVersion = NULL;
-    PCSTR pszVersionName = NULL;
-    bool isUnsupported = false;
+
     PNETADAPTERINFO pTempNetInfo = NULL;
     struct utsname info;
     BOOLEAN bMergeModeMCX = FALSE;
@@ -290,66 +276,6 @@ long PlugInShell_Initialize(void)
         macError = LWCaptureOutput((char*)"sw_vers -productVersion", &pszVersion);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        if (strstr(pszVersion, "10.4.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags & (~LWE_DS_FLAG_IS_LEOPARD);
-            GlobalState.Flags = GlobalState.Flags & (~LWE_DS_FLAG_IS_SNOW_LEOPARD);
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_4;
-        }
-        else if (strstr(pszVersion, "10.5.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_5;
-        }
-        else if (strstr(pszVersion, "10.6.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
-        }
-        else if (strstr(pszVersion, "10.7.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
-        }
-        else if (strstr(pszVersion, "10.8.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
-        }
-        else if (strstr(pszVersion, "10.9.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
-        }
-        else if (strstr(pszVersion, "10.10.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
-        }
-        else if (strstr(pszVersion, "10.11.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_ELCAPITAN;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_11;
-        }
-        else if (strstr(pszVersion, "10.12.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SIERRA;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_12;
-        }
-        else if (strstr(pszVersion, "10.13.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_HIGH_SIERRA;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_13;
-        }
-        else if (strstr(pszVersion, "10.14.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MOJAVE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_14;
-        }
-        else
-        {
-            isUnsupported = true;
-        }
     }
     else
     {
@@ -358,65 +284,10 @@ long PlugInShell_Initialize(void)
         macError = LwAllocateString(info.release, &pszVersion);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        if (strstr(pszVersion, "8.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags & ~LWE_DS_FLAG_IS_LEOPARD;
-            GlobalState.Flags = GlobalState.Flags & ~LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_4;
-        }
-        else if (strstr(pszVersion, "9.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_5;
-        }
-        else if (strstr(pszVersion, "10.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
-        }
-        else if (strstr(pszVersion, "11.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LION;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
-        }
-        else if (strstr(pszVersion, "12.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MOUNTAIN_LION;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
-        } else if (strstr(pszVersion, "13.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
-        } else if (strstr(pszVersion, "14.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
-        } else if (strstr(pszVersion, "15.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_ELCAPITAN;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_11;
-        } else if (strstr(pszVersion, "16.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SIERRA;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_12;
-        } else if (strstr(pszVersion, "17.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_HIGH_SIERRA;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_13;
-        } else if (strstr(pszVersion, "18.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MOJAVE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_14;
-        } else {
-            isUnsupported = true;
-        }
     }
-    if (isUnsupported)
-    {
-        pszVersionName = "unsupported";
-    }
-    LOG("Starting up BeyondTrust AD Bridge - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
-            pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
-    if (isUnsupported)
-    {
-        macError = ePlugInFailedToInitialize;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
+    LOG("Starting up BeyondTrust AD Bridge - Active directory DS plug-in, detected %s Mac OS X %s",
+             gotUnameInfo ? "kernel " : "", pszVersion);
+   
     /* Get the network adpater details - We only care about the ENetAddress info */
     macError = LWGetNetAdapterList(true, &GlobalState.pNetAdapterList);
     GOTO_CLEANUP_ON_MACERROR(macError);

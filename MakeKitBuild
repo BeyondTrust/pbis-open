@@ -26,6 +26,7 @@ defaults()
     then
         LOCALSTATEDIR="/private/var"
         SYSCONFDIR="/private/etc/pbis"
+        MANDIR="/usr/local/share/man"
     fi
 
     # Fail on warnings

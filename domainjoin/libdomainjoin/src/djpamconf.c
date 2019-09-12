@@ -4305,18 +4305,7 @@ void DJNewConfigurePamForADLogin(
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.6, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && (
-            !strncmp(distro.version, "10.14", strlen("10.14")) ||
-            !strncmp(distro.version, "10.13", strlen("10.13")) ||
-            !strncmp(distro.version, "10.12", strlen("10.12")) ||
-            !strncmp(distro.version, "10.11", strlen("10.11")) ||
-            !strncmp(distro.version, "10.10", strlen("10.10")) ||
-            !strncmp(distro.version, "10.9", strlen("10.9")) ||
-            !strncmp(distro.version, "10.8", strlen("10.8")) ||
-            !strncmp(distro.version, "10.7", strlen("10.7")) ||
-            !strncmp(distro.version, "10.6", strlen("10.6")) ||
-            !strncmp(distro.version, "10.5", strlen("10.5")))
-       )
+    if (distro.os == OS_DARWIN) 
     {
         DJ_LOG_INFO("Ignoring pam configuration phase of domainjoin utility for this OS. Mac OS X 10.5 or higher uses a common PAM module for all authentication plugins registered with DirectoryService (pam_opendirectory.so). Therefore no action is needed for this join module.");
         goto cleanup;
@@ -4602,18 +4591,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.5, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && (
-            !strncmp(distro.version, "10.14", strlen("10.14")) ||
-            !strncmp(distro.version, "10.13", strlen("10.13")) ||
-            !strncmp(distro.version, "10.12", strlen("10.12")) ||
-            !strncmp(distro.version, "10.11", strlen("10.11")) ||
-            !strncmp(distro.version, "10.10", strlen("10.10")) ||
-            !strncmp(distro.version, "10.9", strlen("10.9")) ||
-            !strncmp(distro.version, "10.8", strlen("10.8")) ||
-            !strncmp(distro.version, "10.7", strlen("10.7")) ||
-            !strncmp(distro.version, "10.6", strlen("10.6")) ||
-            !strncmp(distro.version, "10.5", strlen("10.5")))
-       )
+    if (distro.os == OS_DARWIN)
     {
         DJ_LOG_INFO("No action is needed for PAM join module on Mac OS X 10.5 or higher. Returning module result of FullyConfigured.");
         result = FullyConfigured;
