@@ -735,20 +735,6 @@ configure_logon_message_application
 # Add the ticketcopy login agent
 configure_agent com.beyondtrust.pbis.ticketcopy
 
-# Add PBIS Utilities folder to Applications location in Finder. Shortcut
-# the Domain Join application to here.
-if [ -d '/Applications/PBIS Utilities' ]; then
-    _log "PBIS Utilities folder already exists"
-else
-    run mkdir -p '/Applications/PBIS Utilities'
-fi
-
-if [ -d '/Applications/PBIS Utilities/Domain Join.app' ]; then
-    _log "Domain Join application already created in Utilities folder"
-else
-    run ln -s '@MK_BINDIR@/Domain Join.app' '/Applications/PBIS Utilities/.'
-fi
-
 if [ -n "$UPGRADING_FROM_5_0123" ]; then
     log "Likewise Identity Services Open 5.X has been successfully upgraded."
 fi
