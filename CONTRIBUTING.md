@@ -18,27 +18,9 @@ file in the top-level directory.
 
 ## Contributing
 
-[Contributor License Agreement
-(CLA)](https://github.com/BeyondTrust/pbis-open/wiki/docs/Contribution%20License%20Agreement%20(CLA)%20BeyondTrust.pdf)
-
-BeyondTrust AD Bridge, Open Edition requires all individual contributors of
-ideas, code, work, or documentation to the BeyondTrust AD Bridge, Open
-Edition Source Project must complete, sign, and submit an Individual
-Contributor License Agreement (CLA). Please contact BeyondTrust at
-openproject@beyondtrust.com to discuss and submit your agreement.
-
-All contributions will be reviewed and considered for acceptance. BeyondTrust
+All [Pull Request](https://github.com/BeyondTrust/pbis-open/pulls) will be reviewed and considered for acceptance. BeyondTrust 
 will solely determine if the project contribution is accepted and will notify
-the contributor along with providing them a copy of the fully executed
-agreement.
-
-The purpose of this agreement is to clearly define the terms under which
-intellectual property has been contributed to the BeyondTrust AD Bridge, Open
-Edition Source Project and thereby allow us to defend the Project should
-there be a legal dispute regarding the software at some future time.
-
-BeyondTrust requires a signed CLA before it will consider acceptance of any
-contributions to the BeyondTrust AD Bridge, Open Edition Project.
+the contributor.
 
 For a corporation that has assigned employees to work on the BeyondTrust
 AD Bridge Open Edition Source Project, a Corporate CLA (CCLA) is available

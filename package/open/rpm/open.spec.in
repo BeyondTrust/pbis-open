@@ -2,7 +2,7 @@ Name: 		@PKG_OPEN_RPM_NAME@
 Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
-License: 	GPLv2
+License: 	apache-2.0
 URL:	http://www.beyondtrust.com/
 Group: 		System Environment/Daemons
 Prereq: @PKG_OPEN_UPGRADE_RPM_NAME@

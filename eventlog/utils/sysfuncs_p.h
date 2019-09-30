@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -11,7 +11,7 @@
  *
  * Abstract:
  *
- *        Likewise Eventlog Services
+ *        BeyondTrust Eventlog Services
  *
  *        System Functions
  *
