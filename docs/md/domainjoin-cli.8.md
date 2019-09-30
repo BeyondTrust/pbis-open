@@ -316,7 +316,7 @@ Example invocations of **domainjoin-cli** and their effects follow:
 SEE ALSO
 --------
 
-The full documentation is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/resources/education/documentation/?subcategory=ad-bridge
+The full documentation is available online at https://github.com/BeyondTrust/pbis-open/wiki/Documentation and https://www.beyondtrust.com/docs/ad-bridge
 
 VERSION
 -------
