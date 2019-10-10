@@ -131,7 +131,11 @@ determine_os_version()
 
     if [ -f '/etc/centos-release' ]; then
         PBIS_DISTRO=centos
-        if [ -n "`grep '^CentOS release 7' '/etc/centos-release'`" ]; then
+        if [ -n "`grep '^CentOS release 8' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^CentOS Linux release 8' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^CentOS release 7' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=7.0
         elif [ -n "`grep '^CentOS Linux release 7' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=7.0
@@ -987,7 +991,7 @@ preuninstall_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    if [ ! -f /usr/bin/systemctl ]; then        
+    if [ ! -f /usr/bin/systemctl ]; then
         run_quiet /sbin/chkconfig --del lwsmd
     fi
 
