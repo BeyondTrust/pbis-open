@@ -442,11 +442,27 @@ RtlValidSecurityDescriptor(
     IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor
     );
 
+PCSTR
+RtlValidRelativeSecurityDescriptorErrorMessage(
+    UINT error
+);
+
 BOOLEAN
 RtlValidRelativeSecurityDescriptor(
     IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     IN ULONG SecurityDescriptorLength,
     IN SECURITY_INFORMATION RequiredInformation
+    );
+
+// validate the security descriptor and optionally
+// return a error subcode which indicates specifically
+// what was invalid
+BOOLEAN
+RtlValidRelativeSecurityDescriptorWithErrorSubcode(
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    IN ULONG SecurityDescriptorLength,
+    IN SECURITY_INFORMATION RequiredInformation,
+    OUT OPTIONAL PUINT ErrorSubcode
     );
 
 ULONG

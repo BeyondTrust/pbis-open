@@ -38,9 +38,44 @@
 
 #include "security-includes.h"
 
+#define SET_VERIFY_SD_ERROR_SUBCODE(pErrorSubcode, Value) (pErrorSubcode) ? *pErrorSubcode = Value : -1
+
 //
 // SD Functions
 //
+
+// relative security descriptor validation error table
+static
+struct {
+    UINT error;
+    PCSTR msg;
+} rel_sd_error_codes[] = {
+    { REL_SD_INVALID_SECURITY_INFORMATION_MASK, "Invalid security information mask; this indicates a programming issue/corrupted security descriptor." },
+    { REL_SD_INVALID_LENGTH, "Invalid security descriptor length. The security descriptor does not meet the minimum size."},
+    { REL_SD_NOT_SELF_RELATIVE, "Expected a relative security descriptor, but the control field does not contain the self-relative flag."},
+    { REL_SD_MISSING_OWNER, "Requested owner information but none was returned."},
+    { REL_SD_MISSING_GROUP, "Requested group information but none was returned."},
+    { REL_SD_MISSING_SACL, "Missing system access control list."},
+    { REL_SD_MISSING_DACL, "Missing discretionary access control list."},
+    { REL_SD_INVALID_OFFSET_OWNER, "Failed to validate the owner information."},
+    { REL_SD_INVALID_OFFSET_GROUP, "Failed to validate the group information."},
+    { REL_SD_INVALID_OFFSET_SACL, "Failed to validate the system access control list."},
+    { REL_SD_INVALID_OFFSET_DACL, "Failed to validate the discretionary access control list."},
+    { REL_SD_INVALID_OFFSET_SIZE, "Invalid offset; computed size is larger than buffer."},
+    { ABS_SD_INVALID_HEADER, "Failed to validate constructed security descriptor absolute header."},
+    { -1, NULL} // end of table sentinel
+};
+
+PCSTR RtlValidRelativeSecurityDescriptorErrorMessage(UINT error) {
+    int i = 0;
+
+    for (i=0; rel_sd_error_codes[i].msg; i++) {
+        if (rel_sd_error_codes[i].error == error) {
+            return rel_sd_error_codes[i].msg;
+        }
+    }
+    return "Unknown error.";
+}
 
 NTSTATUS
 RtlCreateSecurityDescriptorAbsolute(
@@ -158,7 +193,7 @@ RtlValidSecurityDescriptor(
     {
         GOTO_CLEANUP();
     }
-        
+
     if (SecurityDescriptor->Dacl &&
         !RtlValidAcl(SecurityDescriptor->Dacl, NULL))
     {
@@ -227,10 +262,11 @@ cleanup:
 
 static
 NTSTATUS
-RtlpVerifyRelativeSecurityDescriptor(
+RtlpVerifyRelativeSecurityDescriptorWithErrorSubcode(
     IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     IN ULONG SecurityDescriptorLength,
-    IN SECURITY_INFORMATION RequiredInformation
+    IN SECURITY_INFORMATION RequiredInformation,
+    OUT OPTIONAL PUINT ErrorSubcode
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -241,12 +277,14 @@ RtlpVerifyRelativeSecurityDescriptor(
     if (!LW_IS_VALID_FLAGS(RequiredInformation, VALID_SECURITY_INFORMATION_MASK))
     {
         status = STATUS_INVALID_PARAMETER;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_SECURITY_INFORMATION_MASK);
         GOTO_CLEANUP();
     }
 
     if (SecurityDescriptorLength < sizeof(*SecurityDescriptor))
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_LENGTH);
         GOTO_CLEANUP();
     }
 
@@ -265,6 +303,7 @@ RtlpVerifyRelativeSecurityDescriptor(
     if (!IsSetFlag(relHeader.Control, SE_SELF_RELATIVE))
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_NOT_SELF_RELATIVE);
         GOTO_CLEANUP();
     }
 
@@ -276,6 +315,7 @@ RtlpVerifyRelativeSecurityDescriptor(
         !relHeader.Owner)
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_MISSING_OWNER);
         GOTO_CLEANUP();
     }
 
@@ -283,6 +323,7 @@ RtlpVerifyRelativeSecurityDescriptor(
         !relHeader.Group)
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_MISSING_GROUP);
         GOTO_CLEANUP();
     }
 
@@ -291,6 +332,7 @@ RtlpVerifyRelativeSecurityDescriptor(
         !IsSetFlag(relHeader.Control, SE_SACL_PRESENT))
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_MISSING_SACL);
         GOTO_CLEANUP();
     }
 
@@ -299,6 +341,7 @@ RtlpVerifyRelativeSecurityDescriptor(
         !IsSetFlag(relHeader.Control, SE_DACL_PRESENT))
     {
         status = STATUS_INVALID_SECURITY_DESCR;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_MISSING_DACL);
         GOTO_CLEANUP();
     }
 
@@ -319,7 +362,9 @@ RtlpVerifyRelativeSecurityDescriptor(
     // absolute header.
     ClearFlag(absHeader.Control, SE_SELF_RELATIVE);
 
+    // as this is a consistency check, we don't add specific error subcodes
     status = RtlpVerifySecurityDescriptorHeader(&absHeader);
+    SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, ABS_SD_INVALID_HEADER);
     GOTO_CLEANUP_ON_STATUS(status);
 
     //
@@ -334,6 +379,7 @@ RtlpVerifyRelativeSecurityDescriptor(
                     &sizeUsed,
                     relHeader.Owner,
                     RtlpIsValidLittleEndianSidBuffer);
+    SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_OFFSET_OWNER);
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlpVerifyRelativeSecurityDescriptorOffset(
@@ -342,6 +388,7 @@ RtlpVerifyRelativeSecurityDescriptor(
                     &sizeUsed,
                     relHeader.Group,
                     RtlpIsValidLittleEndianSidBuffer);
+    SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_OFFSET_GROUP);
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlpVerifyRelativeSecurityDescriptorOffset(
@@ -350,6 +397,7 @@ RtlpVerifyRelativeSecurityDescriptor(
                     &sizeUsed,
                     relHeader.Sacl,
                     RtlpIsValidLittleEndianAclBuffer);
+    SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_OFFSET_SACL);
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlpVerifyRelativeSecurityDescriptorOffset(
@@ -358,11 +406,13 @@ RtlpVerifyRelativeSecurityDescriptor(
                     &sizeUsed,
                     relHeader.Dacl,
                     RtlpIsValidLittleEndianAclBuffer);
+    SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_OFFSET_DACL);
     GOTO_CLEANUP_ON_STATUS(status);
 
     if (sizeUsed > SecurityDescriptorLength)
     {
         status = STATUS_ASSERTION_FAILURE;
+        SET_VERIFY_SD_ERROR_SUBCODE(ErrorSubcode, REL_SD_INVALID_OFFSET_SIZE);
         GOTO_CLEANUP_ON_STATUS(status);
     }
 
@@ -371,6 +421,18 @@ RtlpVerifyRelativeSecurityDescriptor(
 cleanup:
     return status;
 }
+
+static
+NTSTATUS
+RtlpVerifyRelativeSecurityDescriptor(
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    IN ULONG SecurityDescriptorLength,
+    IN SECURITY_INFORMATION RequiredInformation
+    )
+{
+    return RtlpVerifyRelativeSecurityDescriptorWithErrorSubcode(SecurityDescriptor, SecurityDescriptorLength, RequiredInformation, NULL);
+}
+
 
 BOOLEAN
 RtlValidRelativeSecurityDescriptor(
@@ -383,6 +445,22 @@ RtlValidRelativeSecurityDescriptor(
                             SecurityDescriptor,
                             SecurityDescriptorLength,
                             RequiredInformation);
+    return NT_SUCCESS(status);
+}
+
+BOOLEAN
+RtlValidRelativeSecurityDescriptorWithErrorSubcode(
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    IN ULONG SecurityDescriptorLength,
+    IN SECURITY_INFORMATION RequiredInformation,
+    OUT PUINT ErrorSubcode
+    )
+{
+    NTSTATUS status = RtlpVerifyRelativeSecurityDescriptorWithErrorSubcode(
+                            SecurityDescriptor,
+                            SecurityDescriptorLength,
+                            RequiredInformation,
+                            ErrorSubcode);
     return NT_SUCCESS(status);
 }
 
@@ -995,7 +1073,7 @@ cleanup:
 }
 
 
-/* 
+/*
  * Byte swap a UINT32 that is not guaranteed to be word-boundary aligned.
  * Advance cursor by the number of bytes swapped afterwards.
  */
@@ -1093,7 +1171,7 @@ RtlpEncodeLittleEndianAclSwab(
  * 6.0 -> 6.1 conversion routine to fix byte swapping problem
  * on big endian systems. The data is supposed to be stored in
  * little endian, but a bug in lwbase affecting BE systems
- * effectively disabled all swapping functions, so the data is 
+ * effectively disabled all swapping functions, so the data is
  * stored in native byte order.
  * Since this bug is fixed in 6.1, the byte order is wrong, and needs
  * to be adjusted, which is the purpose of this function.
@@ -1417,7 +1495,7 @@ RtlQuerySecurityDescriptorInfo(
     IN PSECURITY_DESCRIPTOR_RELATIVE ObjectSecurityDescriptor
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;    
+    NTSTATUS status = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDescAbs = NULL;
 
     // Sanity checks
@@ -1426,10 +1504,10 @@ RtlQuerySecurityDescriptorInfo(
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_ON_STATUS(status);
-    }    
+    }
 
     status = RtlpCreateAbsSecDescFromRelative(
-                 &pSecDescAbs, 
+                 &pSecDescAbs,
                  ObjectSecurityDescriptor);
     GOTO_CLEANUP_ON_STATUS(status);
 
@@ -1439,7 +1517,7 @@ RtlQuerySecurityDescriptorInfo(
     {
         PSID pOwnerSid = NULL;
         BOOLEAN bOwnerDefaulted = FALSE;
-        
+
         status = RtlGetOwnerSecurityDescriptor(
                      pSecDescAbs,
                      &pOwnerSid,
@@ -1454,7 +1532,7 @@ RtlQuerySecurityDescriptorInfo(
                      FALSE);
         GOTO_CLEANUP_ON_STATUS(status);
     }
-        
+
     if (!(SecurityInformation & GROUP_SECURITY_INFORMATION))
     {
         PSID pGroupSid = NULL;
@@ -1465,12 +1543,12 @@ RtlQuerySecurityDescriptorInfo(
                      &pGroupSid,
                      &bGroupDefaulted);
         GOTO_CLEANUP_ON_STATUS(status);
-        
+
         LW_RTL_FREE(&pGroupSid);
 
         status = RtlSetGroupSecurityDescriptor(pSecDescAbs, NULL, FALSE);
         GOTO_CLEANUP_ON_STATUS(status);
-    }        
+    }
 
     if (!(SecurityInformation & DACL_SECURITY_INFORMATION))
     {
@@ -1492,15 +1570,15 @@ RtlQuerySecurityDescriptorInfo(
         LW_RTL_FREE(&pDacl);
 
         status = RtlSetDaclSecurityDescriptor(pSecDescAbs, FALSE, NULL, FALSE);
-        GOTO_CLEANUP_ON_STATUS(status);        
-    
+        GOTO_CLEANUP_ON_STATUS(status);
+
         status = RtlSetSecurityDescriptorControl(
                      pSecDescAbs,
                      DaclControlChange,
                      0);
-        GOTO_CLEANUP_ON_STATUS(status);        
+        GOTO_CLEANUP_ON_STATUS(status);
     }
-    
+
     if (!(SecurityInformation & SACL_SECURITY_INFORMATION))
     {
         PACL pSacl = NULL;
@@ -1515,12 +1593,12 @@ RtlQuerySecurityDescriptorInfo(
                      &bSaclPresent,
                      &pSacl,
                      &bSaclDefaulted);
-        GOTO_CLEANUP_ON_STATUS(status);        
-    
+        GOTO_CLEANUP_ON_STATUS(status);
+
         LW_RTL_FREE(&pSacl);
 
         status = RtlSetSaclSecurityDescriptor(pSecDescAbs, FALSE, NULL, FALSE);
-        GOTO_CLEANUP_ON_STATUS(status);        
+        GOTO_CLEANUP_ON_STATUS(status);
 
         status = RtlSetSecurityDescriptorControl(
                      pSecDescAbs,
@@ -1535,8 +1613,8 @@ RtlQuerySecurityDescriptorInfo(
                  pSecDescAbs,
                  SecurityDescriptor,
                  Length);
-    GOTO_CLEANUP_ON_STATUS(status);    
-    
+    GOTO_CLEANUP_ON_STATUS(status);
+
 
 cleanup:
     if (pSecDescAbs)
@@ -1557,40 +1635,40 @@ RtlSetSecurityDescriptorInfo(
     IN PGENERIC_MAPPING GenericMapping
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;    
+    NTSTATUS status = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_ABSOLUTE pObjSecDescAbs = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pInputSecDescAbs = NULL;
     SECURITY_DESCRIPTOR_CONTROL InputSecDescControl = 0;
-    UCHAR Revision = 0;    
-    
+    UCHAR Revision = 0;
+
     // Sanity checks
 
     if (SecurityInformation == 0)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_ON_STATUS(status);
-    }    
+    }
 
     // Convert to an Absolute SecDesc
 
     status = RtlpCreateAbsSecDescFromRelative(
-                 &pObjSecDescAbs, 
+                 &pObjSecDescAbs,
                  ObjectSecurityDescriptor);
     GOTO_CLEANUP_ON_STATUS(status);
-        
+
     status = RtlpCreateAbsSecDescFromRelative(
-                 &pInputSecDescAbs, 
+                 &pInputSecDescAbs,
                  InputSecurityDescriptor);
     GOTO_CLEANUP_ON_STATUS(status);
 
     // Merge
-        
+
     status = RtlGetSecurityDescriptorControl(
                  pInputSecDescAbs,
                  &InputSecDescControl,
                  &Revision);
     GOTO_CLEANUP_ON_STATUS(status);
-        
+
     // Owner
 
     if (SecurityInformation & OWNER_SECURITY_INFORMATION)
@@ -1625,7 +1703,7 @@ RtlSetSecurityDescriptorInfo(
                      pInputOwnerSid,
                      bInputOwnerDefaulted);
         GOTO_CLEANUP_ON_STATUS(status);
-        
+
     }
 
     // Group
@@ -1650,7 +1728,7 @@ RtlSetSecurityDescriptorInfo(
                      &pInputGroupSid,
                      &bInputGroupDefaulted);
         GOTO_CLEANUP_ON_STATUS(status);
-        
+
         status = RtlSetGroupSecurityDescriptor(
                      pInputSecDescAbs,
                      NULL,
@@ -1662,7 +1740,7 @@ RtlSetSecurityDescriptorInfo(
                      pInputGroupSid,
                      bInputGroupDefaulted);
         GOTO_CLEANUP_ON_STATUS(status);
-    }        
+    }
 
     // Dacl
 
@@ -1717,14 +1795,14 @@ RtlSetSecurityDescriptorInfo(
         GOTO_CLEANUP_ON_STATUS(status);
 
         DaclControlSet = InputSecDescControl & DaclControlChange;
-        
+
         status = RtlSetSecurityDescriptorControl(
                      pObjSecDescAbs,
                      DaclControlChange,
                      DaclControlSet);
         GOTO_CLEANUP_ON_STATUS(status);
     }
-    
+
     // Sacl
 
     if (SecurityInformation & SACL_SECURITY_INFORMATION)
@@ -1755,14 +1833,14 @@ RtlSetSecurityDescriptorInfo(
                      &pInputSacl,
                      &bInputSaclDefaulted);
         GOTO_CLEANUP_ON_STATUS(status);
-    
+
         status = RtlSetSaclSecurityDescriptor(
                      pInputSecDescAbs,
                      FALSE,
                      NULL,
                      FALSE);
         GOTO_CLEANUP_ON_STATUS(status);
-    
+
         status = RtlSetSecurityDescriptorControl(
                      pObjSecDescAbs,
                      SaclControlChange,
@@ -1791,8 +1869,8 @@ RtlSetSecurityDescriptorInfo(
                  pObjSecDescAbs,
                  NewObjectSecurityDescriptor,
                  NewObjectSecurityDescriptorLength);
-    GOTO_CLEANUP_ON_STATUS(status);    
-    
+    GOTO_CLEANUP_ON_STATUS(status);
+
 
 cleanup:
     if (pObjSecDescAbs)
@@ -1904,7 +1982,7 @@ cleanup:
         LW_RTL_FREE(&pSacl);
         LW_RTL_FREE(&pDacl);
     }
-            
+
     return status;
 }
 
@@ -1956,4 +2034,3 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
-

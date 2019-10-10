@@ -1,0 +1,14 @@
+# build verify-security-descriptor utility
+
+make()
+{
+    mk_check_library lwbase
+
+    mk_program \
+        PROGRAM="verify-sd" \
+        SOURCES="verify-sd.c" \
+        HEADERDEPS="lw/types.h lw/winerror.h lw/base.h lwerror.h lwmem.h lwstr.h" \
+        LIBDEPS="lwadvapi_nothr lwbase lwbase_nothr" \
+        INSTALLDIR="${MK_LIBEXECDIR}"
+}
+

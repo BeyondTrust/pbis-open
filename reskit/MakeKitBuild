@@ -1,3 +1,5 @@
+SUBDIRS=". security-descriptor"
+
 configure()
 {
     mk_declare -o \
