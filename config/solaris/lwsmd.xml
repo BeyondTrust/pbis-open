@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
 <!--
-        Copyright 2009 Likewise Software, All rights reserved.
+        Copyright (c) BeyondTrust Software. All rights reserved.
         Use is subject to license terms.
 
         #ident  "@(#)lwsmd.xml        5.3     08/09/21 SMI"

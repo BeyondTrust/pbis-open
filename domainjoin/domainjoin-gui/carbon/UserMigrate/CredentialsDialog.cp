@@ -3,7 +3,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/13/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -44,7 +44,7 @@ CredentialsDialog::GetUsername()
 	   std::string errMsg("Failed to get user name from control");
 	   throw UserMigrateException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 
@@ -58,7 +58,7 @@ CredentialsDialog::GetPassword()
 	   std::string errMsg("Failed to get password from control");
 	   throw UserMigrateException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 

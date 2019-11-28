@@ -32,7 +32,7 @@
  *  DomainJoin
  *
  *  Created by Sriram Nambakam on 8/9/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 #ifndef __MAIN_H__
@@ -49,45 +49,45 @@
 class DomainJoinApp : public TApplication
 {
     public:
-							
+
 		DomainJoinApp();
         virtual ~DomainJoinApp();
-		
+
 	protected:
-	    
+
 		DomainJoinApp(const DomainJoinApp& other);
 		DomainJoinApp& operator=(const DomainJoinApp& other);
-	
+
 	public:
-	
+
 	    virtual void Run();
-        
+
     protected:
-	
+
         virtual Boolean     HandleCommand( const HICommandExtended& inCommand );
-		
+
 		void JoinOrLeaveDomain();
         void MigrateUser();
-		
+
 		DomainJoinWindow& GetJoinWindow();
 		DomainLeaveWindow& GetLeaveWindow();
         DomainMigrateWindow& GetMigrateWindow();
-        
+
         void EnsureAuthorization();
-		
+
 		void FixProcessEnvironment();
-		
+
 	protected:
-	
+
 	    static const int ApplicationSignature;
-		
+
 	private:
-	
+
 	    MainWindow*          _mainWindow;
 	    DomainJoinWindow*    _joinWindow;
 		DomainLeaveWindow*   _leaveWindow;
         DomainMigrateWindow* _migrateWindow;
-		
+
 		char* _envPath;
 };
 

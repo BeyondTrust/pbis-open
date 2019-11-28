@@ -32,7 +32,7 @@
  *  DomainJoin
  *
  *  Created by Sriram Nambakam on 8/8/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -49,7 +49,7 @@ class DomainLeaveWindow : public TWindow
     public:
 	DomainLeaveWindow(int inAppSignature) : TWindow( inAppSignature, CFSTR("Window"), CFSTR("Leave") ) {}
     virtual  ~DomainLeaveWindow() {}
-	
+
     protected:
     DomainLeaveWindow(const DomainLeaveWindow& other);
     DomainLeaveWindow& operator=(const DomainLeaveWindow& other);
@@ -59,7 +59,7 @@ class DomainLeaveWindow : public TWindow
     void SetDomainName(const std::string& name);
     void SetOU(const std::string& ou);
     virtual void Close();
-        
+
     protected:
     virtual Boolean     HandleCommand( const HICommandExtended& inCommand );
 	std::string GetComputerName();
@@ -68,16 +68,16 @@ class DomainLeaveWindow : public TWindow
 	void HandleLeaveDomain();
     void HandleMigrateUser();
     void ShowLeftDomainDialog(const std::string& domainName);
-		
+
     protected:
-	
+
 	static const int COMPUTER_NAME_ID;
 	static const int DOMAIN_NAME_ID;
     static const int OU_ID;
 	static const int LEAVE_ID;
 	static const int CLOSE_ID;
     static const int MIGRATE_ID;
-		
+
 	static const int COMPUTER_NAME_CMD_ID;
 	static const int DOMAIN_NAME_CMD_ID;
 	static const int LEAVE_CMD_ID;
@@ -86,5 +86,3 @@ class DomainLeaveWindow : public TWindow
 };
 
 #endif /* __DOMAINLEAVEWINDOW_H__ */
-
-

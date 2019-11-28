@@ -32,7 +32,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/13/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 #ifndef __CREDENTIALSDIALOG_H__
@@ -48,34 +48,32 @@ class CredentialsDialog : public TSheet
     public:
 	     CredentialsDialog(int inAppSignature, TWindow& parentWindow);
 		 virtual ~CredentialsDialog() {}
-	
+
 	protected:
 	     CredentialsDialog(const CredentialsDialog& other);
 		 CredentialsDialog& operator=(const CredentialsDialog& other);
-		 
+
 	public:
-		 		 
+
 	     void SetUsername(const std::string& userName);
 		 void SetPassword(const std::string& password);
-		 
+
 		 std::string GetUsername();
 		 std::string GetPassword();
-		 
+
 	protected:
-	
+
 	     virtual Boolean HandleCommand(const HICommandExtended& inCommand);
-		
+
 	protected:
-	
+
 	    static const int USERNAME_ID;
 		static const int PASSWORD_ID;
 		static const int CANCEL_BUTTON_ID;
 		static const int OK_BUTTON_ID;
-		
+
 		static const int CANCEL_CMD_ID;
 		static const int OK_CMD_ID;
 };
 
 #endif /* ___CREDENTIALSDIALOG_H__ */
-
-

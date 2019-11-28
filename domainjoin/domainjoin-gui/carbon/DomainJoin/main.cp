@@ -3,7 +3,7 @@
 //  DomainJoin
 //
 //  Created by Chuck Mount on 8/7/07.
-//  Copyright Centeris Corporation 2007. All rights reserved.
+//  Copyright (c) BeyondTrust Software. All rights reserved.
 //
 
 #include "main.h"
@@ -59,7 +59,7 @@ DomainJoinApp::GetJoinWindow()
 	{
 	   _joinWindow = new DomainJoinWindow(ApplicationSignature);
 	}
-	
+
 	return *_joinWindow;
 }
 
@@ -70,7 +70,7 @@ DomainJoinApp::GetLeaveWindow()
 	{
 	   _leaveWindow = new DomainLeaveWindow(ApplicationSignature);
 	}
-	
+
 	return *_leaveWindow;
 }
 
@@ -81,7 +81,7 @@ DomainJoinApp::GetMigrateWindow()
 	{
 	   _migrateWindow = new DomainMigrateWindow(ApplicationSignature);
 	}
-	
+
 	return *_migrateWindow;
 }
 
@@ -91,13 +91,13 @@ DomainJoinApp::JoinOrLeaveDomain()
     try
     {
 	    DomainJoinStatus joinStatus;
-		
+
         DomainJoinInterface::GetDomainJoinStatus(joinStatus);
-		
+
 		DomainJoinWindow& joinWindow = GetJoinWindow();
 		DomainLeaveWindow& leaveWindow = GetLeaveWindow();
         DomainMigrateWindow& migrateWindow = GetMigrateWindow();
-		
+
 		if (joinStatus.DomainName.length() > 0)
 		{
            migrateWindow.Hide();
@@ -105,7 +105,7 @@ DomainJoinApp::JoinOrLeaveDomain()
 		   leaveWindow.SetComputerName(joinStatus.Name);
 		   leaveWindow.SetDomainName(joinStatus.DomainName);
                    leaveWindow.SetOU(joinStatus.OUPath);
-           
+
 		   leaveWindow.Show();
 		}
 		else
@@ -119,11 +119,11 @@ DomainJoinApp::JoinOrLeaveDomain()
 
     }
     catch(DomainJoinException& dje)
-    {					  
+    {
 		SInt16 outItemHit;
-		const char* err = dje.what();	
+		const char* err = dje.what();
 		const char* message = dje.GetLongErrorMessage();
-		DialogRef dialog;	
+		DialogRef dialog;
 		CFStringRef msgStrRef = CFStringCreateWithCString(NULL, message, kCFStringEncodingASCII);
 		CFStringGetPascalString(msgStrRef, (StringPtr)message, strlen(message), kCFStringEncodingASCII);
 		CFStringRef errStrRef = CFStringCreateWithCString(NULL, err, kCFStringEncodingASCII);
@@ -148,24 +148,24 @@ DomainJoinApp::MigrateUser()
     try
     {
 	    DomainJoinStatus joinStatus;
-		
+
         DomainJoinInterface::GetDomainJoinStatus(joinStatus);
-		
+
 		DomainMigrateWindow& migrateWindow = GetMigrateWindow();
         DomainJoinWindow& joinWindow = GetJoinWindow();
 		DomainLeaveWindow& leaveWindow = GetLeaveWindow();
-		
+
 		if (joinStatus.DomainName.length() > 0)
 		{
 		   joinWindow.Hide();
 		   leaveWindow.Hide();
-           
+
            // Clear the AD username edit control
            migrateWindow.SetADUserEdit("");
-           
+
            // Turn off Migrate button
            migrateWindow.MigrateOff();
-           
+
            // Clear display fields
            migrateWindow.SetLocalUserRealName("");
            migrateWindow.SetLocalUserHomeDirectory("");
@@ -175,19 +175,19 @@ DomainJoinApp::MigrateUser()
            migrateWindow.SetADUserHomeDirectory("");
            migrateWindow.SetADUserUID("");
            migrateWindow.SetADUserGID("");
-           
-           // Determine current list of local user accounts and populate the list box control         
+
+           // Determine current list of local user accounts and populate the list box control
            migrateWindow.SetLocalUsers();
-           
+
            migrateWindow.Show();
 		}
     }
     catch(DomainJoinException& dje)
-    {					  
+    {
 		SInt16 outItemHit;
-		const char* err = dje.what();	
+		const char* err = dje.what();
 		const char* message = dje.GetLongErrorMessage();
-		DialogRef dialog;	
+		DialogRef dialog;
 		CFStringRef msgStrRef = CFStringCreateWithCString(NULL, message, kCFStringEncodingASCII);
 		CFStringGetPascalString(msgStrRef, (StringPtr)message, strlen(message), kCFStringEncodingASCII);
 		CFStringRef errStrRef = CFStringCreateWithCString(NULL, err, kCFStringEncodingASCII);
@@ -212,7 +212,7 @@ DomainJoinApp::HandleCommand( const HICommandExtended& inCommand )
 {
     switch ( inCommand.commandID )
     {
-	
+
 		case MAIN_MENU_JOIN_OR_LEAVE_ID:
 		    JoinOrLeaveDomain();
 			return true;
@@ -220,9 +220,9 @@ DomainJoinApp::HandleCommand( const HICommandExtended& inCommand )
 		case MAIN_MENU_MIGRATE_ID:
 		    MigrateUser();
 			return true;
-            
+
         // Add your own command-handling cases here
-        
+
         default:
             return false;
     }
@@ -239,7 +239,7 @@ DomainJoinApp::FixProcessEnvironment()
 	std::vector<std::string> essentialPaths;
 	std::vector<std::string>::iterator iter;
 	bool bNeedNewPath = false;
-	
+
     std::string curPath = getenv("PATH");
 	size_t idx_first = 0;
 	size_t idx_next = std::string::npos;
@@ -279,9 +279,9 @@ DomainJoinApp::FixProcessEnvironment()
 		   }
 	       newPath << *iter;
 	   }
-	   
+
 	   _envPath = strdup(newPath.str().c_str());
-	   
+
 	   putenv(_envPath);
 	}
 }
@@ -322,40 +322,40 @@ int main(int argc, char* argv[])
        {
            OSStatus status = noErr;
            AuthorizationFlags authFlags = kAuthorizationFlagDefaults;
-       
+
            status = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, authFlags, &authRef);
            if (status != errAuthorizationSuccess)
            {
               throw FailedAdminPrivilegeException("Failed to create authorization");
            }
-       
+
            do
            {
                AuthorizationItem authItems = {kAuthorizationRightExecute, 0, NULL, 0};
                AuthorizationRights authRights = {1, &authItems};
-           
+
                authFlags = (kAuthorizationFlagDefaults |
                             kAuthorizationFlagInteractionAllowed |
                             kAuthorizationFlagPreAuthorize |
                             kAuthorizationFlagExtendRights);
                status = AuthorizationCopyRights(authRef, &authRights, NULL, authFlags, NULL);
-        
+
                if (status != errAuthorizationSuccess)
                {
                   throw FailedAdminPrivilegeException("Failed to acquire admin rights");
                }
            } while (0);
-           
+
            char msgBuf[128];
            int bytesRead = 0;
-           
+
            authFlags = kAuthorizationFlagDefaults;
            status = AuthorizationExecuteWithPrivileges(authRef, argv[0], authFlags, argv, &commPipe);
            if (status != errAuthorizationSuccess)
            {
               throw FailedAdminPrivilegeException("Failed to launch with privileges");
            }
-           
+
            for(bytesRead = 0; bytesRead > 0; bytesRead = read(fileno(commPipe), msgBuf, sizeof(msgBuf)));
        }
        catch(FailedAdminPrivilegeException& fape)
@@ -379,7 +379,7 @@ int main(int argc, char* argv[])
 					     NULL,
 					     &outItemHit);
        }
-       
+
        if (authRef)
        {
            AuthorizationFree(authRef, kAuthorizationFlagDefaults);
@@ -388,5 +388,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-

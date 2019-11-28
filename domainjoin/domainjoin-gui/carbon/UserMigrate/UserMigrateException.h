@@ -32,7 +32,7 @@
  *  UserMigrate
  *
  *  Created by Chuck Mount on 8/8/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -46,30 +46,30 @@
 class UserMigrateException : public std::exception
 {
     public:
-    
+
         UserMigrateException();
         UserMigrateException(int errCode,
                             const std::string& shortErrMsg="Domain Join Error",
                             const std::string& longErrMsg="Internal Error");
         virtual ~UserMigrateException() throw() {}
-    
+
     public:
-    
+
         inline int GetErrorCode() { return _errCode; }
         inline void SetErrorCode(int code) { _errCode = code; }
-        
+
         virtual const char* what() const throw()
         {
                 return _shortErrorMsg.c_str();
         }
-        
+
         virtual const char* GetLongErrorMessage() const throw()
         {
                 return _longErrorMsg.c_str();
         }
-                
+
     public:
-    
+
         static const int ERROR_INVALID_COMPUTERNAME;
         static const int ERROR_INVALID_DOMAINNAME;
         static const int ERROR_BAD_FORMAT;
@@ -78,7 +78,7 @@ class UserMigrateException : public std::exception
         static const int LW_ERROR_FAILED_ADMIN_PRIVS;
 
     private:
-    
+
         std::string _shortErrorMsg;
         std::string _longErrorMsg;
         int _errCode;
@@ -155,5 +155,3 @@ class UnresolvedDomainNameException : public UserMigrateException
 };
 
 #endif /* __USERMIGRATEEXCEPTION_H__ */
-
-

@@ -75,7 +75,7 @@
                  version="true"
                  use="true"
                  windowtitle="Likewise Servlet Authentication API">
-           <bottom><![CDATA[<i>Copyright &#169; Likewise Software. All Rights Reserved.</i>]]></bottom>
+           <bottom><![CDATA[<i>Copyright &#169; BeyondTrust Software. All rights reserved.</i>]]></bottom>
         </javadoc>
 
     </target>

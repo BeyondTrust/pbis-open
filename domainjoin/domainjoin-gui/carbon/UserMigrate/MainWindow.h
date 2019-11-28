@@ -32,7 +32,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/7/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -50,14 +50,12 @@ class MainWindow : public TWindow
     public:
                             MainWindow(int inAppSignature) : TWindow( inAppSignature, CFSTR("MainWindow") ) {}
         virtual             ~MainWindow() {}
-        
+
         static void         Create();
-        
+
     protected:
-    
+
         virtual Boolean     HandleCommand( const HICommandExtended& inCommand );
 };
 
 #endif /* __MAINWINDOW_H__ */
-
-

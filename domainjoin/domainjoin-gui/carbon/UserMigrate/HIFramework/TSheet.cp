@@ -3,7 +3,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/13/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 

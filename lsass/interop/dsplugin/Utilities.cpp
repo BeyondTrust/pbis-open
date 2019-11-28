@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #ifdef __cplusplus
@@ -48,16 +47,16 @@ void LogMessageV(const char *Format, va_list Args)
 {
     const char* pszFile = "/var/lib/pbis/lwedsplugin.syslog";
     BOOLEAN bDirExists = FALSE;
-    
-    LwCheckFileTypeExists(pszFile, LWFILE_REGULAR, &bDirExists);    
 
-   
+    LwCheckFileTypeExists(pszFile, LWFILE_REGULAR, &bDirExists);
+
+
     if(bDirExists)
     {
-        vsyslog(LOG_ERR, Format, Args);        
+        vsyslog(LOG_ERR, Format, Args);
     }
     else
-    {            
+    {
         char* output = NULL;
 
         // Note: DSDebugLog eventually calls CString::Vsprintf (inside DirectoryServer's
@@ -752,16 +751,16 @@ LWCaptureOutput(
     long macError = eDSNoErr;
     CHAR szBuf[1000];
     FILE* pFile = NULL;
- 
+
     pFile = popen(pszCommand, "r");
     if (pFile == NULL) {
         macError = LwErrnoToWin32Error(errno);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
- 
+
     while (TRUE) {
         if (NULL == fgets(szBuf, PATH_MAX, pFile)) {
-            if (feof(pFile)) { 
+            if (feof(pFile)) {
                 break;
             } else {
                 macError = LwErrnoToWin32Error(errno);
@@ -771,9 +770,9 @@ LWCaptureOutput(
         LwStripWhitespace(szBuf, TRUE, TRUE);
         if (!IsNullOrEmptyString(szBuf)) {
             macError = LwAllocateString(szBuf, ppszOutput);
-            break; 
+            break;
         }
- 
+
     }
 
 cleanup:
@@ -789,8 +788,8 @@ enum {
 };
 
 static ODRecordRef FindRecordByName(CFStringRef cfstrPlugin, const char* pcszRecordName, const char* pcszRecordType) {
-        
-   
+
+
     CFErrorRef cfError;
     long nResults = 0;
     ODRecordRef odFoundRecord = NULL;
@@ -814,27 +813,27 @@ static ODRecordRef FindRecordByName(CFStringRef cfstrPlugin, const char* pcszRec
     if(cfError != NULL)
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
-    }    
-    
+    }
+
     cfResults = ODQueryCopyResults(cfLocalQuery, false, &cfError);
     if(cfError != NULL)
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
     }
-    
-    
+
+
     nResults = CFArrayGetCount(cfResults);
     if(nResults == 1)
     {
         ODRecordRef tempRecord = (ODRecordRef)CFArrayGetValueAtIndex(cfResults, 0);
         odFoundRecord = ODNodeCopyRecord(localNode, cfstrRecordType, ODRecordGetRecordName(tempRecord), NULL, &cfError);
-        
+
     }
     else
     {
         LOG_ERROR("%d results from searching for %s", nResults, pcszRecordName );
     }
-    
+
 error:
     if(localNode != NULL)
     {
@@ -860,18 +859,18 @@ error:
     {
         CFRelease(cfResults);
     }
-    
-    
+
+
     return odFoundRecord;
 }
 
 static
 CFStringRef
-CopyAttrFromRecord(ODRecordRef record, CFStringRef attr) 
+CopyAttrFromRecord(ODRecordRef record, CFStringRef attr)
 {
     CFArrayRef values = ODRecordCopyValues(record, attr, NULL);
     CFStringRef result = NULL;
-    
+
     if (values) {
         if (CFArrayGetCount(values) == 1) {
             result = (CFStringRef)CFArrayGetValueAtIndex(values, 0);
@@ -879,7 +878,7 @@ CopyAttrFromRecord(ODRecordRef record, CFStringRef attr)
         }
         CFRelease(values);
     }
-    
+
     return result;
 }
 
@@ -892,50 +891,50 @@ LWIsUserInLocalGroup(
     ODRecordRef odGroup;
     ODRecordRef odUser;
     BOOLEAN bResult = false;
-    
+
     if (pszUsername == NULL) return false;
     if (pszGroupname == NULL) return false;
 
     odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
     odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
-    
+
     if(odGroup != NULL && odUser != NULL)
     {
         CFStringRef uGuid = CopyAttrFromRecord(odUser, CFSTR(kDS1AttrGeneratedUID));
 
-        if (uGuid != NULL) 
+        if (uGuid != NULL)
         {
             CFArrayRef members = ODRecordCopyValues(odGroup, CFSTR(kDSNAttrGroupMembers), NULL);
-            
-            if (members != NULL) 
+
+            if (members != NULL)
             {
                 int l = CFArrayGetCount(members);
                 int i;
 
-                for (i=0; i<l; i++) 
+                for (i=0; i<l; i++)
                 {
                     CFStringRef guid = (CFStringRef)CFArrayGetValueAtIndex(members, i);
 
-                    if (guid && CFStringCompare(guid, uGuid, 0) == 0) 
+                    if (guid && CFStringCompare(guid, uGuid, 0) == 0)
                     {
                         bResult = true;
                         break;
                     }
                 }
-                
+
                 CFRelease(members);
             }
 
             CFRelease(uGuid);
         }
     }
-    
+
     if(odGroup != NULL) CFRelease(odGroup);
-    
+
     if(odUser != NULL) CFRelease(odUser);
-        
+
     LOG("LWIsUserInLocalGroup is %s in %s: bResult %d", pszUsername, pszGroupname, bResult);
-    
+
     return bResult;
 }
 
@@ -949,14 +948,14 @@ LWRemoveUserFromLocalGroup(
     ODRecordRef odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
     ODRecordRef odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
 
-    long lResult = 0;    
+    long lResult = 0;
     if(odGroup != NULL && odUser != NULL)
     {
         lResult = ODRecordRemoveMember(odGroup, odUser, &cfError)  == true ? ERROR_SUCCESS : CFErrorGetCode(cfError);
         if(cfError != NULL)
         {
             BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
-        }        
+        }
     }
     else
     {
@@ -972,7 +971,7 @@ error:
     {
         CFRelease(odUser);
     }
-            
+
     return lResult;
 }
 
@@ -983,11 +982,11 @@ LWAddUserToLocalGroup(
     char* pszUsername,
     const char* pszGroupname
     )
-{        
+{
     CFErrorRef cfError;
-    
-    //locate the admin group   
-    ODRecordRef adminGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);            
+
+    //locate the admin group
+    ODRecordRef adminGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
     ODRecordRef recordToAdd = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername,kDSStdRecordTypeUsers);
     if(recordToAdd == NULL)
     {
@@ -1002,13 +1001,13 @@ LWAddUserToLocalGroup(
         {
             BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
         }
-    }    
+    }
     else
     {
         lResult = eDSInvalidRecordRef;
     }
    error:
-             
+
     if(adminGroup != NULL)
     {
         CFRelease(adminGroup);
@@ -1017,10 +1016,10 @@ LWAddUserToLocalGroup(
     {
         CFRelease(recordToAdd);
     }
-   
+
     return lResult;
 
-    
+
 }
 
 #ifdef __cplusplus

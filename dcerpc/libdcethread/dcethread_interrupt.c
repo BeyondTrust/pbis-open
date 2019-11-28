@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 #include <config.h>

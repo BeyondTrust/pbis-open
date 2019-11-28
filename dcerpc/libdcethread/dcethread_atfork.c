@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -115,15 +114,15 @@ static void
 __dcethread_pre_fork(void)
 {
     unsigned int i;
-    
+
     pthread_rwlock_rdlock(&atfork_lock);
-    
+
     for (i = 0; i < atfork_handlers_len; i++)
     {
 	if (atfork_handlers[i].pre_fork)
 	    atfork_handlers[i].pre_fork(atfork_handlers[i].user_state);
     }
-    
+
     pthread_rwlock_unlock(&atfork_lock);
 }
 
@@ -133,13 +132,13 @@ __dcethread_parent_fork(void)
     unsigned int i;
 
     pthread_rwlock_rdlock(&atfork_lock);
-    
+
     for (i = 0; i < atfork_handlers_len; i++)
     {
 	if (atfork_handlers[i].parent_fork)
 	    atfork_handlers[i].parent_fork(atfork_handlers[i].user_state);
     }
-    
+
     pthread_rwlock_unlock(&atfork_lock);
 }
 
@@ -149,13 +148,13 @@ __dcethread_child_fork(void)
     unsigned int i;
 
     pthread_rwlock_rdlock(&atfork_lock);
-    
+
     for (i = 0; i < atfork_handlers_len; i++)
     {
 	if (atfork_handlers[i].child_fork)
 	    atfork_handlers[i].child_fork(atfork_handlers[i].user_state);
     }
-    
+
     pthread_rwlock_unlock(&atfork_lock);
 }
 
@@ -182,23 +181,23 @@ int
 dcethread_atfork(void *user_state, void (*pre_fork)(void *), void (*parent_fork)(void *), void (*child_fork)(void *))
 {
     dcethread_atfork_handler handler;
-    
+
     dcethread_atfork_init();
 
     pthread_rwlock_wrlock(&atfork_lock);
-    
+
     if (atfork_handlers_len >= ATFORK_MAX_HANDLERS)
     {
 	pthread_rwlock_unlock(&atfork_lock);
 	return dcethread__set_errno(ENOMEM);
     }
-    
+
     /* Fill in struct */
     handler.user_state = user_state;
     handler.pre_fork = pre_fork;
     handler.child_fork = child_fork;
     handler.parent_fork = parent_fork;
-    
+
 #ifndef AVOID_PTHREAD_ATFORK
     /* If no handlers have been registered yet, register our proxy functions exactly once with the
        real pthread_atfork */
@@ -210,13 +209,13 @@ dcethread_atfork(void *user_state, void (*pre_fork)(void *), void (*parent_fork)
 	    return -1;
 	}
     }
-#endif    
+#endif
 
     /* Add handler to array */
     atfork_handlers[atfork_handlers_len++] = handler;
-	
+
     pthread_rwlock_unlock(&atfork_lock);
-    
+
     return dcethread__set_errno(0);
 }
 
@@ -273,7 +272,7 @@ pre_handler(void *_data)
 {
     MU_TRACE("Fork pre handler active in thread %p", dcethread_self());
     ((struct called_s*) _data)->pre = 1;
-} 
+}
 
 static void
 parent_handler(void *_data)
@@ -286,7 +285,7 @@ static void
 child_handler(void *_data)
 {
     ((struct called_s*) _data)->child = 1;
-}  
+}
 
 
 MU_TEST(dcethread_atfork, basic)

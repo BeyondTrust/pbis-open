@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -50,7 +49,7 @@ dcethread_mutex_trylock(dcethread_mutex *mutex)
     {
         mutex->owner = pthread_self();
 	return 1;
-    } 
+    }
     else if (ret == EBUSY)
     {
 	return 0;

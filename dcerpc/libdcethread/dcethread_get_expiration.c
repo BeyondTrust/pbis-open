@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * 
+ *
  * (c) Copyright 1990 OPEN SOFTWARE FOUNDATION, INC.
  * (c) Copyright 1990 HEWLETT-PACKARD COMPANY
  * (c) Copyright 1990 DIGITAL EQUIPMENT CORPORATION
@@ -49,7 +48,7 @@
  * Packard Company, nor Digital Equipment Corporation makes any
  * representations about the suitability of this software for any
  * purpose.
- * 
+ *
  */
 
 #include <sys/time.h>
@@ -88,29 +87,29 @@
  *
  *      none
  */
-int 
+int
 dcethread_get_expiration(struct timespec* delta, struct timespec* abstime)
 {
 #ifdef HAVE_PTHREAD_GET_EXPIRATION_NP
     return pthread_get_expiration_np(delta, abstime);
 #else
     struct timeval now;
-    
+
     if (delta->tv_nsec >= (1000 * 1000000) || delta->tv_nsec < 0) {
-	errno = EINVAL;                   
+	errno = EINVAL;
 	return -1;
     }
-    
+
     gettimeofday(&now, NULL);
-    
+
     abstime->tv_nsec    = delta->tv_nsec + (now.tv_usec * 1000);
     abstime->tv_sec     = delta->tv_sec + now.tv_sec;
-    
-    if (abstime->tv_nsec >= (1000 * 1000000)) {   
+
+    if (abstime->tv_nsec >= (1000 * 1000000)) {
 	abstime->tv_nsec -= (1000 * 1000000);
 	abstime->tv_sec += 1;
     }
-    
+
     return 0;
 #endif /* HAVE_PTHREAD_GET_EXPIRATION_NP */
 }

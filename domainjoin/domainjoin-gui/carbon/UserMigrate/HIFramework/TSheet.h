@@ -32,7 +32,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/13/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 #ifndef __TSHEET_H__
@@ -51,24 +51,24 @@ class TSheet : public TWindow
 				  TWindow&   fParent
 				  );
 			virtual ~TSheet() {}
-				  
+
 	  protected:
 	       TSheet(const TSheet& other);
 		   TSheet& operator=(const TSheet& other);
-		   
+
 	  public:
-	  
+
 	       virtual void Show();
 		   virtual void Hide();
-		   
+
 	  protected:
-	  
+
 	       inline WindowRef GetParentWindowRef() { return _parent.GetWindowRef(); }
-		   
+
 	  private:
-	  
+
 	       TWindow& _parent;
-		   
+
 };
 
 #endif /* __TSHEET_H__ */

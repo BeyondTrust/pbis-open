@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "includes.h"
@@ -48,7 +47,7 @@
 
 #define GET_NODE_SIZE(node) \
                     ((node) ? (node)->fBufferSize : 0)
-                    
+
 #ifdef DEBUG_PASSWORD
 #define DEBUG_USER_PASSWORD(username, oldPassword, password) \
     do { \
@@ -181,12 +180,12 @@ long CrackDirNodePath(
     PSTR pszDomainName = NULL;
     PSTR pszGPOName = NULL;
 
-    memset( szDomainName, 
-            0, 
+    memset( szDomainName,
+            0,
             sizeof(szDomainName));
-    
-    memset( szGPOName, 
-            0, 
+
+    memset( szGPOName,
+            0,
             sizeof(szGPOName));
 
     if (IsPluginRoot(pszDirNodePath))
@@ -194,38 +193,38 @@ long CrackDirNodePath(
         macError = eDSInvalidName;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     if (!IsPluginRootPathPrefix(pszDirNodePath))
     {
         macError = eDSUnknownNodeName;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     if (strlen(PLUGIN_ROOT_PATH) + 1 >= strlen(pszDirNodePath))
     {
         macError = eDSInvalidName;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     pTemp = (PSTR) pszDirNodePath + sizeof(PLUGIN_ROOT_PATH);
     pGPOName = strchr(pTemp, '/');
-    
+
     if (pGPOName == NULL)
     {
         macError = eDSInvalidName;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
-    strncpy( szDomainName, 
-             pTemp, 
+    strncpy( szDomainName,
+             pTemp,
              pGPOName - pTemp);
-    
+
     if (pGPOName[0] == '/')
     {
         pGPOName += 1; /* Skip past the '/' in the DirNodePath */
     }
 
-    macError = LwAllocateString( szDomainName, 
+    macError = LwAllocateString( szDomainName,
                                 &pszDomainName);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -422,7 +421,7 @@ long
 LWIDirNodeQuery::Initialize()
 {
     long macError = eDSNoErr;
-    
+
     _dirNodeRefMap = new DirNodeRefMap();
     if (!_dirNodeRefMap)
     {
@@ -456,16 +455,16 @@ CopyDirNode(
 {
     long macError = eDSNoErr;
     PDSDIRNODE pNewNode = NULL;
-    
+
     if (!pDirNode)
     {
         macError = eDSNullParameter;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     macError = LwAllocateMemory(sizeof(DSDIRNODE), (PVOID*) &pNewNode);
     GOTO_CLEANUP_ON_MACERROR(macError);
-    
+
     if (pDirNode->pszDirNodePath)
     {
         macError = LwAllocateString(pDirNode->pszDirNodePath, &pNewNode->pszDirNodePath);
@@ -485,10 +484,10 @@ CopyDirNode(
     }
 
     pNewNode->fPlugInRootConnection = pDirNode->fPlugInRootConnection;
-    
+
     *ppDirNodeRef = pNewNode;
     pNewNode = NULL;
-    
+
 cleanup:
 
     if (pNewNode)
@@ -582,15 +581,15 @@ LWIDirNodeQuery::Open(sOpenDirNode * pOpenDirNode)
     if (iter != _dirNodeRefMap->end())
     {
         LOG("Reopening the same node reference?");
-        FreeDirNode(iter->second);        
+        FreeDirNode(iter->second);
         _dirNodeRefMap->erase(iter);
     }
-    
+
     if (!IsPluginRoot(dirNodeName))
     {
         macError = CrackDirNodePath(dirNodeName, &pszDomainName, &pszGPOName);
         GOTO_CLEANUP_ON_MACERROR(macError);
-    
+
         macError = GetSpecificGPO(pszDomainName, pszGPOName, &pGPO);
         if (macError || pGPO == NULL)
         {
@@ -598,14 +597,14 @@ LWIDirNodeQuery::Open(sOpenDirNode * pOpenDirNode)
             macError = eDSOpenNodeFailed;
         }
     }
-    
+
     /* Now create a new dirNodeRefMap entry for the new open dir node */
     macError = LwAllocateMemory(sizeof(DSDIRNODE), (PVOID*) &pDirNode);
     GOTO_CLEANUP_ON_MACERROR(macError);
-    
+
     pDirNode->pszDirNodePath = dirNodeName;
     dirNodeName = NULL;
-    
+
     pDirNode->pDirNodeGPO = pGPO;
     pGPO = NULL;
 
@@ -613,31 +612,31 @@ LWIDirNodeQuery::Open(sOpenDirNode * pOpenDirNode)
 
     /* Save off directory node reference and path name */
     LWIDirNodeQuery::_dirNodeRefMap->insert(std::make_pair(pOpenDirNode->fOutNodeRef, pDirNode));
-    
+
     LOG("Saved Likewise dirnode reference: %d to (%s%s) for user: %s",
         pOpenDirNode->fOutNodeRef,
         pDirNode->pszDirNodePath,
         pDirNode->fPlugInRootConnection ? " [ROOT]" : "",
         pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "<Unknown>");
     pDirNode = NULL;
-    
+
 cleanup:
 
     if (dirNodeName)
     {
         free(dirNodeName);
     }
-    
+
     if (pszDomainName)
     {
         LW_SAFE_FREE_STRING(pszDomainName);
     }
-    
+
     if (pszGPOName)
     {
         LW_SAFE_FREE_STRING(pszGPOName);
     }
-    
+
     GPA_SAFE_FREE_GPO_LIST(pGPO);
 
     FreeDirNode(pDirNode);
@@ -652,7 +651,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
     sDoDirNodeAuth* pDoDirNodeAuth,
     bool fIsJoined,
     PVOID pAllowAdminCheckData,
-    LWE_DS_FLAGS Flags) 
+    LWE_DS_FLAGS Flags)
 {
     long macError = eDSNoErr;
     int EE = 0;
@@ -681,10 +680,10 @@ LWIDirNodeQuery::DoDirNodeAuth(
               pDoDirNodeAuth->fInAuthStepData,
               GET_NODE_LEN(pDoDirNodeAuth->fInAuthStepData),
               pDoDirNodeAuth->fResult);
-    
+
     macError = GetDsDirNodeRef(pDoDirNodeAuth->fInNodeRef, &pDirNode);
     GOTO_CLEANUP_ON_MACERROR(macError);
-    
+
     if (!pDoDirNodeAuth->fInAuthMethod)
     {
         macError = eDSNullDataBuff;
@@ -699,7 +698,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
                                                                            sense, we use isAuthOnly with meaning:
                                                                            true - user is just authenticating
                                                                            false - user is logging on and creating a session connection */
-                                                            
+
 
     isAuthPassword = !(strcmp(pDoDirNodeAuth->fInAuthMethod->fBufferData, kDSStdAuthClearText) &&
                        strcmp(pDoDirNodeAuth->fInAuthMethod->fBufferData, kDSStdAuthCrypt) &&
@@ -813,11 +812,11 @@ LWIDirNodeQuery::DoDirNodeAuth(
 
         LOG("%sline logon successful for user: %s. Message: %s",
             (isOnlineLogon) ? "On" : "Off", username,
-            pszMessage ? pszMessage : "<none>");   
+            pszMessage ? pszMessage : "<none>");
     }
     else
     {
-        LOG("Authenticating user for %s: %s AuthOnly: %s", pDirNode->fPlugInRootConnection ? "logon" : "admin", username, isAuthOnly ? "true" : "false");   
+        LOG("Authenticating user for %s: %s AuthOnly: %s", pDirNode->fPlugInRootConnection ? "logon" : "admin", username, isAuthOnly ? "true" : "false");
         macError = AuthenticateUser(username, password, isAuthOnly, &isOnlineLogon, &pszMessage);
         if (Flags & LWE_DS_FLAG_IS_SNOW_LEOPARD &&
             macError == eDSAuthPasswordExpired)
@@ -832,13 +831,13 @@ LWIDirNodeQuery::DoDirNodeAuth(
         {
             LOG("%sline logon successful for user: %s. Message: %s",
                 (isOnlineLogon) ? "On" : "Off", username,
-                pszMessage ? pszMessage : "<none>");   
+                pszMessage ? pszMessage : "<none>");
         }
         else
         {
             LOG("%sline authentication successful for administrator: %s. Message: %s",
                 (isOnlineLogon) ? "On" : "Off", username,
-                pszMessage ? pszMessage : "<none>");   
+                pszMessage ? pszMessage : "<none>");
         }
 
         // Also test to see if the logon should be rejected due to account policies
@@ -847,7 +846,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
                         username,
                         pDoDirNodeAuth->fOutAuthStepDataResponse);
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
-        
+
         macError = GetUserPrincipalNames(username, &pszUPN, &pszUserSamAccount, &pszUserDomainFQDN);
         if (macError == eDSNoErr && pszUPN)
         {
@@ -857,15 +856,15 @@ LWIDirNodeQuery::DoDirNodeAuth(
                 LW_SAFE_FREE_STRING(pDirNode->pszDirNodeUserUPN);
                 pDirNode->pszDirNodeUserUPN = NULL;
             }
-            
+
             macError = LwAllocateString(pszUPN, &pDirNode->pszDirNodeUserUPN);
             GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
-            
+
             /* Check to see if user should be a local admin */
             if (pAllowAdminCheckData)
             {
                 BOOLEAN bIsInAdminGroup = LWIsUserInLocalGroup(username, "admin");
-                    
+
                 macError = CheckUserForAccess(username, pAllowAdminCheckData);
                 if (macError)
                 {
@@ -910,8 +909,8 @@ LWIDirNodeQuery::DoDirNodeAuth(
             {
                //Take care of the situation, the last AD user was removed from
                //pAllowAdminCheckData, thus making pAllowAdminCheckData NULL.
-               // If the user is in the local admin group, but because 
-               // AllowAdminCheckData is null, then if the user is an AD 
+               // If the user is in the local admin group, but because
+               // AllowAdminCheckData is null, then if the user is an AD
                // user it should be removed from the local admin group.
                BOOLEAN bIsInAdminGroup = LWIsUserInLocalGroup(username, "admin");
                if (bIsInAdminGroup)
@@ -939,8 +938,8 @@ LWIDirNodeQuery::DoDirNodeAuth(
                     LOG("Failed to add user (%s) to staff group with error: %d", username, macError);
                     macError = eDSNoErr;
                 }
-            }           
-          
+            }
+
             /* Get AD user attributes and cache them for offline access */
             LOG("Going to collect current AD user attributes for user %s", username);
             macError = CollectCurrentADAttributesForUser(username, pszMessage, isOnlineLogon);
@@ -948,15 +947,15 @@ LWIDirNodeQuery::DoDirNodeAuth(
             {
                 LOG("Failed to get user (%s) AD attributes with error: %d", username, macError);
                 macError = eDSNoErr;
-            }                       
-            		
+            }
+
             /* Now handle notifying Group Policy agent about user logon activity */
             if (isAuthOnly == false)
             {
                 if (isOnlineLogon)
                 {
                     LOG("Going to notify Group Policy about user logon for %s (UPN: %s) (user account: %s  domain: %s)", username, pszUPN, pszUserSamAccount, pszUserDomainFQDN);
-                    
+
                     macError = NotifyUserLogon(username);
                     if (macError)
                     {
@@ -994,7 +993,7 @@ cleanup:
     {
         LW_SAFE_FREE_STRING(pszMessage);
     }
-        
+
     if (oldPassword)
     {
         free(oldPassword);
@@ -1026,7 +1025,7 @@ LWIDirNodeQuery::Close(sCloseDirNode * pCloseDirNode)
     long macError = eDSNoErr;
     PDSDIRNODE pDirNode = NULL;
     DirNodeRefMapIter iter;
-    
+
     LOG_ENTER("fType = %d, fResult = %d, fInNodeRef = %u",
               pCloseDirNode->fType,
               pCloseDirNode->fResult,
@@ -1090,10 +1089,10 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo, LWE_DS_FLAGS Flags, 
 
     LOG_PARAM("fInDirNodeInfoTypeList => { count = %d, items = \"%s\"}",
               attributeCount, SAFE_LOG_STR(attributes));
-              
+
     macError = GetDsDirNodeRef(pGetDirNodeInfo->fInNodeRef, &pDirNode);
     GOTO_CLEANUP_ON_MACERROR(macError);
-          
+
     macError = LWIQuery::Create(!pGetDirNodeInfo->fInAttrInfoOnly,
                                 false, // Rely on our error eDSBufferTooSmall to cause the caller to retry
                                 pGetDirNodeInfo->fInNodeRef,
@@ -1229,10 +1228,10 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo, LWE_DS_FLAGS Flags, 
                     {
                         macError = LWIQuery::SetAttributeValue(pAttribute, kDSStdRecordTypeUsers);
                         GOTO_CLEANUP_ON_MACERROR(macError);
-                            
+
                         macError = LWIQuery::SetAttributeValue(pAttribute, kDSStdRecordTypeGroups);
                         GOTO_CLEANUP_ON_MACERROR(macError);
-                            
+
                         macError = LWIQuery::SetAttributeValue(pAttribute, kDSStdRecordTypeComputerLists);
                         GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -1542,7 +1541,7 @@ LWIDirNodeQuery::GetAttributeValue(sGetAttributeValue * pGetAttributeValue)
         pGetAttributeValue->fOutAttrValue,
         pGetAttributeValue->fOutAttrValue->fAttributeValueID,
         pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferSize);
-        
+
 #ifdef SHOW_ALL_DEBUG_SPEW
     LOG_BUFFER(pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferData,
                pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferLength);
@@ -1640,7 +1639,7 @@ LWIDirNodeQuery::GetDsDirNodeRef(long dirNodeRef, PDSDIRNODE* ppDirNode)
         macError = eDSInvalidNodeRef;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
 #ifdef SHOW_DIRNODE_DEBUG_SPEW
     LOG_PARAM("LWIDirNodeQuery::GetDsDirNodeRef(\"%s\") on behalf of user: %s uid: %d",
               pDirNode->pszDirNodePath ? pDirNode->pszDirNodePath : "<Empty?>",
@@ -1657,7 +1656,7 @@ LWIDirNodeQuery::GetDsDirNodeRef(long dirNodeRef, PDSDIRNODE* ppDirNode)
         *ppDirNode = pDirNode;
         pDirNode = NULL;
     }
-      
+
     pDirNode = NULL; /* Pointer to map entry, no need to free */
 
 cleanup:
@@ -1668,4 +1667,3 @@ cleanup:
 
     return macError;
 }
-

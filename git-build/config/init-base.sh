@@ -1,8 +1,7 @@
 #!/bin/sh
 
 # Generic cross-platform init script logic
-# Copyright (c) Likewise Software, Inc.
-# All rights reserved.
+# Copyright (c) BeyondTrust Software. All rights reserved.
 #
 # Authors: Jerry Carter (gcarter@likewisesoftware.com)
 #          Kyle Stemen (kstemen@likewisesoftware.com)
@@ -108,8 +107,8 @@ elif [ "`uname -s`" = 'HP-UX' ]; then
     PLATFORM="HP-UX"
 elif [ "`uname -s`" = 'SunOS' ]; then
     PLATFORM="SOLARIS"
-elif [ "`uname -s`" = 'VMkernel' ]; then                                  
-    PLATFORM="ESXI"                             
+elif [ "`uname -s`" = 'VMkernel' ]; then
+    PLATFORM="ESXI"
 elif [ "`uname`" = "FreeBSD" -o "`uname`" = "Isilon OneFS" ]; then
     PLATFORM="FREEBSD"
     extra_commands="reload"
@@ -205,7 +204,7 @@ fi
 ##
 
 status_success() {
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo_success
             echo
@@ -224,7 +223,7 @@ status_success() {
 
 status_failed() {
     status=$1
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo_failure
             echo
@@ -290,10 +289,10 @@ generic_status()
 		return 0
             fi
 	fi
-	
+
         #Program is dead, but lock file exists
 	[ -f "${LOCKFILE}" ] && return 2
-	
+
         #Program is dead, but pid file exists
 	return 1
     else
@@ -364,7 +363,7 @@ daemon_start() {
 
     check_load_path
 
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo -n $"Starting `basename ${PROG_BIN}`: "
             daemon ${PROG_BIN} ${PROG_ARGS}
@@ -433,7 +432,7 @@ daemon_start() {
 }
 
 daemon_stop() {
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo -n $"Stopping `basename ${PROG_BIN}`: "
             killproc `basename ${PROG_BIN}`
@@ -504,7 +503,7 @@ daemon_stop() {
 
 daemon_reload()
 {
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT | SUSE | FREEBSD | ESXI)
             echo -n $"Reloading ${PROG_DESC} configuration"
 	    killall -HUP "`basename ${PROG_BIN}`"
@@ -615,7 +614,7 @@ if type run_rc_command >/dev/null 2>&1; then
     exit 0
 fi
 
-case "$1" in 
+case "$1" in
     start)
         daemon_start
         ret=$?
@@ -648,7 +647,7 @@ case "$1" in
         ret=$?
         print_status $ret
         ;;
-        
+
     status)
         daemon_status
         ;;
@@ -665,4 +664,3 @@ case "$1" in
         exit 1
         ;;
 esac
-

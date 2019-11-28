@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * 
+ *
  * (c) Copyright 1990 OPEN SOFTWARE FOUNDATION, INC.
  * (c) Copyright 1990 HEWLETT-PACKARD COMPANY
  * (c) Copyright 1990 DIGITAL EQUIPMENT CORPORATION
@@ -49,7 +48,7 @@
  * Packard Company, nor Digital Equipment Corporation makes any
  * representations about the suitability of this software for any
  * purpose.
- * 
+ *
  */
 
 #include <sys/time.h>
@@ -73,10 +72,10 @@ dcethread_delay(struct timespec const* interval)
 #else
     struct timespec rqtp, rmtp;
     int ret;
-    
+
     rqtp.tv_sec = interval->tv_sec;
     rqtp.tv_nsec = interval->tv_nsec;
-    
+
     ret = -1;
     do {
 	ret = nanosleep(&rqtp, &rmtp);
@@ -84,8 +83,7 @@ dcethread_delay(struct timespec const* interval)
 	rqtp.tv_nsec = rmtp.tv_nsec;
     }
     while (ret != 0 && errno == EINTR);
-    
+
     return ret;
 #endif /* HAVE_PTHREAD_DELAY_NP */
 }
-

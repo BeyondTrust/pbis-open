@@ -32,7 +32,7 @@
  *  UserMigrate
  *
  *  Created by Sriram Nambakam on 8/13/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 #ifndef __USERMIGRATE_DEFS_H__
@@ -46,5 +46,3 @@
 #define CREDENTIALS_CMD_CANCEL     'CDCc'
 
 #endif /* __USERMIGRATE_DEFS_H__ */
-
-

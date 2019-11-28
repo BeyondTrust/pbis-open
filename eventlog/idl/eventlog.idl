@@ -3,9 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright (C) Centeris Corporation 2004-2007
- * Copyright (C) Likewise Software 2007
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
@@ -29,7 +27,7 @@ import "wtypes.idl";
 #endif
 [
     uuid(9956a31b-ec79-4818-9c63-c112689ae827),
-    pointer_default(unique), 
+    pointer_default(unique),
     version(1.0)
 ]
 
@@ -96,7 +94,7 @@ interface LwEventlog {
     RpcEvtClose(
         [in, out] RPC_LW_EVENTLOG_HANDLE *phEventlog
         );
-    
+
     DWORD
     RpcEvtGetRecordCount(
         [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
@@ -116,7 +114,7 @@ interface LwEventlog {
     RpcEvtWriteRecords(
         [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
         [in] DWORD Count,
-        [in, size_is(Count)] LW_EVENTLOG_RECORD* pRecords 
+        [in, size_is(Count)] LW_EVENTLOG_RECORD* pRecords
         );
 
     DWORD
@@ -129,4 +127,3 @@ interface LwEventlog {
 }
 
 #endif /* __LW_EVENTLOG_IDL__ */
-

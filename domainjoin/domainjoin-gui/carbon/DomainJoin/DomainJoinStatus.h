@@ -32,7 +32,7 @@
  *  DomainJoin
  *
  *  Created by Chuck Mount on 8/7/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 #ifndef __DOMAINJOINSTATUS_H__
@@ -57,4 +57,3 @@ struct DomainJoinStatus
 };
 
 #endif /* __DOMAINJOINSTATUS_H__ */
-

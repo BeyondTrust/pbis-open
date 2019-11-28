@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -46,10 +45,10 @@ int
 dcethread_attr_setprio(dcethread_attr *attr, int priority)
 {
     struct sched_param sp;
-    
+
     memset(&sp, 0, sizeof(sp));
     sp.sched_priority = priority;
-    
+
     return dcethread__set_errno(pthread_attr_setschedparam(attr, &sp));
 }
 

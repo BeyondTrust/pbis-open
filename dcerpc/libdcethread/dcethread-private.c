@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -145,7 +144,7 @@ my_clock_gettime(struct timespec* tp)
 #else
   int result;
   struct timeval tv;
-       
+
   if ((result = gettimeofday(&tv, NULL)))
     return result;
 
@@ -289,7 +288,7 @@ dcethread__delete(dcethread* thread)
 {
     DCETHREAD_TRACE("Thread %p: deleted", thread);
     pthread_mutex_destroy((pthread_mutex_t*) &thread->lock);
-    pthread_cond_destroy((pthread_cond_t*) &thread->state_change);    
+    pthread_cond_destroy((pthread_cond_t*) &thread->state_change);
     if (thread->flag.joinable)
         pthread_detach(thread->pthread);
     free((void*) thread);
@@ -362,7 +361,7 @@ dcethread__wait(dcethread* thread)
 {
     dcethread__sanity(thread);
     thread->flag.locked = 0;
-    pthread_cond_wait((pthread_cond_t*) &thread->state_change, 
+    pthread_cond_wait((pthread_cond_t*) &thread->state_change,
                       (pthread_mutex_t*) &thread->lock);
     thread->flag.locked = 1;
 }
@@ -372,7 +371,7 @@ dcethread__timedwait(dcethread* thread, struct timespec* ts)
 {
     dcethread__sanity(thread);
     thread->flag.locked = 0;
-    pthread_cond_timedwait((pthread_cond_t*) &thread->state_change, 
+    pthread_cond_timedwait((pthread_cond_t*) &thread->state_change,
                            (pthread_mutex_t*) &thread->lock, ts);
     thread->flag.locked = 1;
 }
@@ -438,7 +437,7 @@ dcethread__interrupt(dcethread* thread)
 {
     int count = 0;
     int old_state = thread->state;
-    
+
     if (old_state == DCETHREAD_STATE_INTERRUPT ||
         old_state == DCETHREAD_STATE_DEAD)
     {
@@ -448,7 +447,7 @@ dcethread__interrupt(dcethread* thread)
 
     DCETHREAD_TRACE("Thread %p: interrupt posted", thread);
     dcethread__change_state(thread, DCETHREAD_STATE_INTERRUPT);
-    
+
     /* We need to poke the thread and wait for an acknowledgement of the interrupt if: */
     if (thread != dcethread__self() &&         /* The interrupted thread is not us, and */
         thread->flag.interruptible &&          /* The thread can be interrupted, and */
@@ -462,7 +461,7 @@ dcethread__interrupt(dcethread* thread)
 
             if (count > 2)
                 DCETHREAD_WARNING("Thread %p: still not interrupted after %i ms", thread, count * 100);
-            
+
             if (thread->interrupt(thread, thread->interrupt_data))
             {
                 /* Interrupt is guaranteed to have succeeded, so
@@ -471,16 +470,16 @@ dcethread__interrupt(dcethread* thread)
             }
 
             count++;
-            
+
             my_clock_gettime(&waittime);
             waittime.tv_nsec += 100000000;
-            
+
             if (waittime.tv_nsec > 1000000000)
             {
 	       waittime.tv_nsec -= 1000000000;
 	       waittime.tv_sec += 1;
 	    }
-            
+
             /* Wait for state change */
             dcethread__timedwait(thread, &waittime);
         }
@@ -516,7 +515,7 @@ dcethread__begin_block(dcethread* thread, int (*interrupt)(dcethread*, void*), v
 	    thread->interrupt = interrupt;
 	if (data)
 	    thread->interrupt_data = data;
-	
+
 	/* Change to blocked state */
 	dcethread__change_state(thread, DCETHREAD_STATE_BLOCKED);
     }
@@ -540,7 +539,7 @@ dcethread__poll_end_block(dcethread* thread, int (*interrupt)(dcethread*, void*)
     dcethread__lock(thread);
     state = thread->state;
     interruptible = thread->flag.interruptible;
-    
+
     if (state == DCETHREAD_STATE_INTERRUPT)
     {
         if (interrupt)

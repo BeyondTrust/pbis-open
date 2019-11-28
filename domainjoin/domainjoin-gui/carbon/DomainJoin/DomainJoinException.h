@@ -32,7 +32,7 @@
  *  DomainJoin
  *
  *  Created by Chuck Mount on 8/8/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -46,30 +46,30 @@
 class DomainJoinException : public std::exception
 {
     public:
-    
+
         DomainJoinException();
         DomainJoinException(int errCode,
                             const std::string& shortErrMsg="Domain Join Error",
                             const std::string& longErrMsg="Internal Error");
         virtual ~DomainJoinException() throw() {}
-    
+
     public:
-    
+
         inline int GetErrorCode() { return _errCode; }
         inline void SetErrorCode(int code) { _errCode = code; }
-        
+
         virtual const char* what() const throw()
         {
                 return _shortErrorMsg.c_str();
         }
-        
+
         virtual const char* GetLongErrorMessage() const throw()
         {
                 return _longErrorMsg.c_str();
         }
-                
+
     public:
-    
+
         static const int DWORD_DOMAINJOIN_NON_ROOT_USER;
         static const int ERROR_INVALID_COMPUTERNAME;
         static const int ERROR_INVALID_DOMAINNAME;
@@ -79,7 +79,7 @@ class DomainJoinException : public std::exception
         static const int LW_ERROR_FAILED_ADMIN_PRIVS;
 
     private:
-    
+
         int _errCode;
         std::string _shortErrorMsg;
         std::string _longErrorMsg;
@@ -167,5 +167,3 @@ class UnresolvedDomainNameException : public DomainJoinException
 };
 
 #endif /* __DOMAINJOINEXCEPTION_H__ */
-
-

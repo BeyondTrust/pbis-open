@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *

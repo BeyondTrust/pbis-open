@@ -3,7 +3,7 @@
 //  UserMigrate
 //
 //  Created by Chuck Mount on 8/7/07.
-//  Copyright Centeris Corporation 2007. All rights reserved.
+//  Copyright (c) BeyondTrust Software. All rights reserved.
 //
 
 #include "main.h"

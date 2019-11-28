@@ -32,7 +32,7 @@
  *  DomainJoin
  *
  *  Created by Sriram Nambakam on 8/7/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -49,13 +49,13 @@
 #include "djitf.h"
 
 class DomainJoinInterface
-{  
+{
     private:
        DomainJoinInterface();
        ~DomainJoinInterface();
-          
+
     public:
-    
+
         static void JoinDomain(std::string& szDomainName,
                                std::string& pszUserName,
                                std::string& pszPassword,
@@ -63,33 +63,33 @@ class DomainJoinInterface
                                std::string& pszUserDomainPrefix,
                                bool bAssumeDefaultDomain,
                                bool bNoHosts);
-        
+
         static void LeaveDomain();
-        
+
         static void SetComputerName(std::string& pszComputerName,
                                     std::string& pszDomainName);
-        
+
         static void GetDomainJoinStatus(DomainJoinStatus& joinStatus);
-		
+
 		static bool IsDomainNameResolvable(const std::string& domainName);
-        
+
     protected:
-    
+
         static DomainJoinInterface& getInstance();
-        
+
         void Initialize();
         void Cleanup();
-        
+
         static void LoadFunction(
 						void*       pLibHandle,
 						const char* pszFunctionName,
 						void**      FunctionPointer
 						);
-        
+
     private:
-    
+
         static DomainJoinInterface* _instance;
-    
+
         void* _libHandle;
 		PDJ_API_FUNCTION_TABLE _pDJApiFunctionTable;
         PFNShutdownJoinInterface _pfnShutdownJoinInterface;

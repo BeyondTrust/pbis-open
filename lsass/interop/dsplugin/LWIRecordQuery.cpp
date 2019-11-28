@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "LWIDirNodeQuery.h"
@@ -182,7 +181,7 @@ LWIRecordQuery::Open(sOpenRecord* pOpenRecord, LWE_DS_FLAGS Flags, PNETADAPTERIN
 
     macError = GetDataNodeString(pOpenRecord->fInRecName, &pszRecName);
     GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
     if (!strcmp(pOpenRecord->fInRecType->fBufferData, kDSStdRecordTypeUsers))
     {
         macError = LWIQuery::Create(true,
@@ -653,7 +652,7 @@ LWIRecordQuery::AddAttribute(sAddAttribute* pAddAttribute)
 
     macError = GetDataNodeValue(pAddAttribute->fInFirstAttrValue, &pValue, &length);
 	GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
     LOG_ENTER("fInRecRef = %d, Attribute = %s, Value len = %d",
               pAddAttribute->fInRecRef,
 			  pszAttribute,
@@ -676,7 +675,7 @@ LWIRecordQuery::AddAttribute(sAddAttribute* pAddAttribute)
         pszAttribute, pRecord->pszName);
 
     LWIQuery::RemoveAttributeAndValues(pszAttribute, pRecord);
-		  
+
     LOG("Saving off new attribute (%s) value len (%d) settings on record (%s)",
         pszAttribute, length, pRecord->pszName);
 
@@ -715,7 +714,7 @@ LWIRecordQuery::AddAttributeValue(sAddAttributeValue* pAddAttributeValue)
     PDSRECORD pRecord = NULL;
     RecordRefMapIter iter;
 	PDSATTRIBUTE pAttribute = NULL;
-	
+
     macError = GetDataNodeString(pAddAttributeValue->fInAttrType, &pszAttribute);
 	GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -724,7 +723,7 @@ LWIRecordQuery::AddAttributeValue(sAddAttributeValue* pAddAttributeValue)
 
     macError = GetDataNodeString(pAddAttributeValue->fInAttrValue, &pszValue);
 	GOTO_CLEANUP_ON_MACERROR(macError);
-			
+
 	LOG_ENTER("fInRecRef = %d", pAddAttributeValue->fInRecRef);
 
     iter = LWIRecordQuery::_recordRefMap->find(pAddAttributeValue->fInRecRef);
@@ -739,17 +738,17 @@ LWIRecordQuery::AddAttributeValue(sAddAttributeValue* pAddAttributeValue)
         macError = eDSInvalidRecordRef;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-	
+
     macError = LWIQuery::FindAttributeByType(pRecord, pszAttribute, &pAttribute);
 	if (macError == eDSAttributeNotFound)
 	{
 	    macError = LWIQuery::AddAttribute(pszAttribute, pRecord, &pAttribute);
 	}
     GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
 	macError = LWIQuery::SetAttributeValue(pAttribute, pszValue);
 	GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
 	LOG("Saving off additional attribute (%s) setting on object (%s)",
 	    pszAttribute, pRecord->pszName);
 
@@ -762,12 +761,12 @@ cleanup:
 	{
 	    LwFreeMemory(pszAttribute);
 	}
-	
+
 	if (pszValue)
 	{
 	    LwFreeMemory(pszValue);
 	}
-	
+
     LOG_LEAVE("--> %d", macError);
 
     return macError;
@@ -786,21 +785,21 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
     int valueCount = 0;
     int i = 0;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;    
+    PDSATTRIBUTE pAttribute = NULL;
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     valueCount = dsDataListGetNodeCount(pSetAttributeValues->fInAttrValueList);
 
     macError = GetDataNodeString(pSetAttributeValues->fInAttrType, &pszAttribute);
     GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
     LOG_ENTER("fType = %d, fResult = %d, fInRecRef = %d, Attribute = %s, Number of values = %d",
               pSetAttributeValues->fType,
               pSetAttributeValues->fResult,
               pSetAttributeValues->fInRecRef,
 			  pszAttribute,
               valueCount);
-			  
+
     iter = LWIRecordQuery::_recordRefMap->find(pSetAttributeValues->fInRecRef);
     if (iter != LWIRecordQuery::_recordRefMap->end())
     {
@@ -828,11 +827,11 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
         macError = eDSInvalidRecordType;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-	
+
     LOG("Replacing attribute (%s) settings on record (%s)", pszAttribute, pRecord->pszName);
 
     LWIQuery::RemoveAttributeAndValues(pszAttribute, pRecord);
-    
+
     macError = LWIQuery::AddAttribute(pszAttribute, pRecord, &pAttribute);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -843,17 +842,17 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
                                            i+1,
                                            &pDataNode );
         GOTO_CLEANUP_ON_MACERROR( macError );
-        
+
         macError = GetDataNodeValue(pDataNode, &pValue, &length);
         GOTO_CLEANUP_ON_MACERROR( macError );
-        
+
         // Add to record
         macError = LWIQuery::SetAttributeValue(pAttribute, pValue, length);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
         LwFreeMemory(pValue);
         pValue = NULL;
-        
+
         dsDataNodeDeAllocate(0, pDataNode);
         pDataNode = NULL;
     }
@@ -872,22 +871,22 @@ LWIRecordQuery::SetAttributeValues(sSetAttributeValues* pSetAttributeValues)
 cleanup:
 
 
-    
+
     if (pszAttribute)
     {
         LW_SAFE_FREE_STRING(pszAttribute);
     }
-    
+
     if (pDataNode)
     {
         dsDataNodeDeAllocate(0, pDataNode);
     }
-    
+
     if (pValue)
     {
         LwFreeMemory(pValue);
     }
-		
+
     LOG_LEAVE("--> %d", macError);
 
     return macError;
@@ -903,21 +902,21 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
     PDSRECORD pRecord = NULL;
     RecordRefMapIter iter;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;   
+    PDSATTRIBUTE pAttribute = NULL;
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     macError = GetDataNodeString(pSetAttributeValue->fInAttrType, &pszAttribute);
     GOTO_CLEANUP_ON_MACERROR(macError);
-    
+
     macError = GetDataNodeValue(&pSetAttributeValue->fInAttrValueEntry->fAttributeValueData, &pValue, &length);
     GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
     LOG_ENTER("fType = %d, fResult = %d, fInRecRef = %d, Attribute = %s",
               pSetAttributeValue->fType,
               pSetAttributeValue->fResult,
               pSetAttributeValue->fInRecRef,
               pszAttribute);
-  
+
     iter = LWIRecordQuery::_recordRefMap->find(pSetAttributeValue->fInRecRef);
     if (iter != LWIRecordQuery::_recordRefMap->end())
     {
@@ -930,7 +929,7 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
         macError = eDSInvalidRecordRef;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     if (!strcmp(pRecord->pszType, kDSStdRecordTypeComputerGroups) ||
         !strcmp(pRecord->pszType, kDSStdRecordTypeComputerLists))
     {
@@ -945,11 +944,11 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
         macError = eDSInvalidRecordType;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-	
+
     LOG("Replacing attribute (%s) settings on record (%s)", pszAttribute, pRecord->pszName);
 
     LWIQuery::RemoveAttributeAndValues(pszAttribute, pRecord);
-    
+
     macError = LWIQuery::AddAttribute(pszAttribute, pRecord, &pAttribute);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -963,7 +962,7 @@ LWIRecordQuery::SetAttributeValue(sSetAttributeValue* pSetAttributeValue)
         pRecord->pszName, pDirNode->pszDirNodePath, pDirNode->pszDirNodeUserUPN ? pDirNode->pszDirNodeUserUPN : "Unknown");
 
     pAttribute = pRecord->pAttributeListHead;
-    
+
     /* Mark this pRecord not dirty since we have saved off changes to AD */
     pRecord->fDirty = FALSE;
 
@@ -974,18 +973,18 @@ cleanup:
     {
         LwFreeMemory(pszAttribute);
     }
-    
+
     if (pValue)
     {
         LwFreeMemory(pValue);
     }
-		
+
     LOG_LEAVE("--> %d", macError);
 
     return macError;
 }
 
-long 
+long
 LWIRecordQuery::RemoveAttribute(sRemoveAttribute* pRemoveAttribute)
 {
     long  macError = eDSNoErr;
@@ -995,13 +994,13 @@ LWIRecordQuery::RemoveAttribute(sRemoveAttribute* pRemoveAttribute)
 
     macError = GetDataNodeString(pRemoveAttribute->fInAttribute, &pszAttribute);
 	GOTO_CLEANUP_ON_MACERROR(macError);
-	
+
     LOG_ENTER("fType = %d, fResult = %d, fInRecRef = %d, Attribute = %s",
               pRemoveAttribute->fType,
               pRemoveAttribute->fResult,
               pRemoveAttribute->fInRecRef,
 			  pszAttribute);
-			  
+
     iter = LWIRecordQuery::_recordRefMap->find(pRemoveAttribute->fInRecRef);
     if (iter != LWIRecordQuery::_recordRefMap->end())
     {
@@ -1014,7 +1013,7 @@ LWIRecordQuery::RemoveAttribute(sRemoveAttribute* pRemoveAttribute)
         macError = eDSInvalidRecordRef;
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-	
+
     LOG("Removing attribute (%s) settings on record (%s)", pszAttribute, pRecord->pszName);
 
     LWIQuery::RemoveAttributeAndValues(pszAttribute, pRecord);
@@ -1028,27 +1027,27 @@ cleanup:
     {
         LwFreeMemory(pszAttribute);
     }
-		
+
     LOG_LEAVE("--> %d", macError);
 
     return macError;
 }
 
-long 
+long
 LWIRecordQuery::FlushRecord(sFlushRecord* pFlushRecord)
 {
     long macError = eDSNoErr;
     PDSRECORD pRecord = NULL;
     RecordRefMapIter iter;
     PDSDIRNODE pDirNode = NULL;
-    PDSATTRIBUTE pAttribute = NULL;    
+    PDSATTRIBUTE pAttribute = NULL;
     DWORD dwPolicyType = UNKNOWN_GROUP_POLICY;
 
     LOG_ENTER("fType = %d, fResult = %d, fInRecRef = %d",
               pFlushRecord->fType,
               pFlushRecord->fResult,
               pFlushRecord->fInRecRef);
-  
+
     iter = LWIRecordQuery::_recordRefMap->find(pFlushRecord->fInRecRef);
     if (iter != LWIRecordQuery::_recordRefMap->end())
     {
@@ -1093,4 +1092,3 @@ cleanup:
 
     return macError;
 }
-
