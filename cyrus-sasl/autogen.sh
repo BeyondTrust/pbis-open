@@ -32,7 +32,7 @@ fi
 
 cd saslauthd || exit $?
 rm -f aclocal.m4
-libtoolize -fic || exit $?
+libtoolize -f -c || exit $?
 aclocal --force -I ../cmulocal -I ../config || exit $?
 echo "cyrus after aclocal2"
 if type stat >/dev/null 2>&1; then
