@@ -9,7 +9,6 @@ Prereq: @PKG_OPEN_UPGRADE_RPM_NAME@
 Conflicts:  winbind
 Obsoletes: likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
 Provides: @PKG_OPEN_RPM_NAME@ , likewise-open
-Requires: libnsl.so.1
 AutoReq: no
 AutoProv: no
 
@@ -848,6 +847,27 @@ pre_install()
     logfile "Package: BeyondTrust AD Bridge Open [pre install] finished"
     exit 0
 }
+
+check_for_required_libraries()
+{
+    local __is64=`file -L /bin/uname | grep -i 64-bit`
+
+    if [ -d /lib64 -a -n "$__is64" ]
+    then
+        local __libdir="/lib64"
+    else
+        local __libdir="/lib"
+    fi
+
+    find_library $__libdir/libnsl.so.1
+    if [ $? -ne 0 ]
+    then
+        log "BeyondTrust AD Bridge Open requires library $__libdir/libnsl.so.1; please install libnsl.so.1 before installing AD Bridge."
+        exit 1
+    fi
+}
+
+check_for_required_libraries
 
 if [ $1 -eq 1 ]; then
     pre_install
