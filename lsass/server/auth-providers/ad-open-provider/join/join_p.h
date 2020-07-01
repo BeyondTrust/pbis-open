@@ -60,6 +60,7 @@
 #define LSAJOIN_JOIN_UNSECURE                        (0x00000040)
 #define LSAJOIN_MACHINE_PWD_PASSED                   (0x00000080)
 #define LSAJOIN_DEFER_SPN_SET                        (0x00000100)
+#define LSAJOIN_NO_PRE_COMPUTER_ACCOUNT              (0x00000200)
 
 /* LDAP account flags - local copies of UF_* flags
    from NetAPI */
