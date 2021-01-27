@@ -92,6 +92,8 @@ LsaNssGetNumberGroupMembers(
     return dwNumMembers;
 }
 
+PCSTR pszPBIS = "PBIS";
+
 DWORD
 LsaNssComputeGroupStringLength(
     DWORD dwAlignBytes,
@@ -103,12 +105,14 @@ LsaNssComputeGroupStringLength(
     DWORD dwNumMembers = 0;
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszName)) {
-       dwLength += strlen(pGroupInfo->pszName) + 1;
+       dwLength += strlen(pGroupInfo->pszName) + 1;  // Plus 1 for terminator
     }
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszPasswd)) {
-       dwLength += strlen(pGroupInfo->pszPasswd) + 1;
+       dwLength += strlen(pGroupInfo->pszPasswd) + 1; // Plus 1 for terminator
     }
+    else
+       dwLength += strlen(pszPBIS) + 1;  // Add one for null terminator
 
     /* Adding space for group members */
     dwLength += dwAlignBytes;
@@ -118,11 +122,14 @@ LsaNssComputeGroupStringLength(
         ppszMember++)
     {
         dwLength += sizeof(PSTR);
-        dwLength += strlen(*ppszMember) + 1;
+        dwLength += strlen(*ppszMember) + 1; // Add one for null terminator
         dwNumMembers++;
     }
     // Account for terminating NULL always
     dwLength += sizeof(PSTR);
+
+    // Pad out to word align.
+    dwLength = dwLength + sizeof(PSTR) - (dwLength % sizeof(PSTR));
 
     return dwLength;
 }
@@ -186,7 +193,9 @@ LsaNssWriteGroupInfo(
             PSTR pszMemberMarker = NULL;
             DWORD iMember = 0;
 
-            // This is where we start writing the members
+            // MemberMarker is where we start writing the members. 
+            // Marker is where we start writing the pointer for each member
+            // Plus 1 to skip past the null terminator for the list of pointers.
             pszMemberMarker = pszMarker + (sizeof(PSTR) * (dwNumMembers + 1));
 
             for (iMember = 0; iMember < dwNumMembers; iMember++)
@@ -194,9 +203,10 @@ LsaNssWriteGroupInfo(
                 *(pResultGroup->gr_mem+iMember) = pszMemberMarker;
                 pszMarker += sizeof(PSTR);
 
-                dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember));
+                // Plus 1 so memcpy includes the null string terminator
+                dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember)) + 1;
                 memcpy(pszMemberMarker, *(pGroupInfo_1->ppszMembers + iMember), dwLen);
-                pszMemberMarker += dwLen + 1;
+                pszMemberMarker += dwLen;
             }
             // Handle the terminating NULL
             *(pResultGroup->gr_mem+iMember) = NULL;
@@ -204,24 +214,26 @@ LsaNssWriteGroupInfo(
         }
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszName)) {
-           dwLen = strlen(pGroupInfo_1->pszName);
+           // Plus 1 so memcpy includes the null string terminator
+           dwLen = strlen(pGroupInfo_1->pszName) + 1;
            memcpy(pszMarker, pGroupInfo_1->pszName, dwLen);
            pResultGroup->gr_name = pszMarker;
-           pszMarker += dwLen + 1;
+           pszMarker += dwLen;
         }
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszPasswd)) {
-           dwLen = strlen(pGroupInfo_1->pszPasswd);
+           // Plus 1 so memcpy includes the null string terminator
+           dwLen = strlen(pGroupInfo_1->pszPasswd) + 1;
            memcpy(pszMarker, pGroupInfo_1->pszPasswd, dwLen);
            pResultGroup->gr_passwd = pszMarker;
-           pszMarker += dwLen + 1;
+           pszMarker += dwLen;
         }
         else{
-            PCSTR pszPBIS = "PBIS";
-            dwLen = strlen(pszPBIS);
+            // Plus 1 so memcpy includes the null string terminator
+            dwLen = strlen(pszPBIS) + 1;
             memcpy(pszMarker, pszPBIS, dwLen);
             pResultGroup->gr_passwd = pszMarker;
-            pszMarker += dwLen + 1;
+            pszMarker += dwLen;
         }
     }
     else
