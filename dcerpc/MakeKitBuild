@@ -190,6 +190,12 @@ configure()
             s390x)
                 target_cpu="$target_cpu s390x"
                 ;;
+            mips64)
+                target_cpu="$target_cpu mips64"
+                ;;
+            mips64el)
+                target_cpu="$target_cpu mips64el"
+                ;;
             *)
                 mk_warn "Unknown isa '${_isa}'"
                 ;;

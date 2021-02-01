@@ -46,7 +46,7 @@ configure()
     # Required libraries
     mk_check_libraries \
         FAIL=yes \
-        lwmsg lwadvapi lwbase regclient lwioclient centutils
+        lwmsg lwadvapi lwbase regclient lwioclient centutils crypto
 
     # Optional libraries
     mk_check_libraries \

@@ -1,3 +1,10 @@
+configure()
+{
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        crypto
+}
 make()
 {
     RPCTEST_SOURCES="\

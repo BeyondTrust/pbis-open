@@ -2,6 +2,11 @@ configure()
 {
     mk_check_headers \
        unistd.h sys/stat.h sys/types.h 
+
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        ldap_r lber
 }
 
 make()

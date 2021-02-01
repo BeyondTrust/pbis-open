@@ -344,6 +344,14 @@ configure_openssl()
         linux-arm*)
             host_string="linux-generic32"
             ;;
+        linux-mips64)
+            host_string="linux-mips64"
+            extra_args="-std=gnu99 -march=mips64r2 -mabi=64 -EB"
+            ;;
+        linux-mips64el)
+            host_string="linux-mips64el"
+            extra_args="-std=gnu99 -march=mips64r2 -mabi=64 -EL"
+            ;;
         *)
             mk_msg "Unknown host/build '${MK_OS}-${MK_ISA}'; will use openssl config to build openssl. You should verify openssl config correctly detects your host/build."
             host_string=""
