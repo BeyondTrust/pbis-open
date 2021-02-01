@@ -13,7 +13,7 @@ debug_callback(const char* file, unsigned int line, int level, const char* messa
     switch (level)
     {
     case DCETHREAD_DEBUG_ERROR:
-	Mu_Interface_Result(file, line, MU_STATUS_FAILURE, "%s", message);
+	mu_interface_result(file, line, MU_STATUS_FAILURE, "%s", message);
         return;
     case DCETHREAD_DEBUG_WARNING:
 	mu_level = MU_LEVEL_WARNING;
@@ -29,7 +29,7 @@ debug_callback(const char* file, unsigned int line, int level, const char* messa
 	break;
     }
 
-    Mu_Interface_Event(file, line, mu_level, "%s", message);
+    mu_interface_event(file, line, mu_level, "%s", message);
 }
 
 static void
@@ -41,11 +41,11 @@ uncaught_callback(dcethread_exc* exc, const char* file, unsigned int line, void*
         const char* name = dcethread__exc_getname(exc);
         if (name)
         {
-            Mu_Interface_Result(file, line, MU_STATUS_EXCEPTION, "exception %s thrown but not caught", name);
+            mu_interface_result(file, line, MU_STATUS_EXCEPTION, "exception %s thrown but not caught", name);
         }
         else
         {
-            Mu_Interface_Result(file, line, MU_STATUS_EXCEPTION, "exception %i thrown but not caught", dcethread__exc_getstatus(exc));
+            mu_interface_result(file, line, MU_STATUS_EXCEPTION, "exception %i thrown but not caught", dcethread__exc_getstatus(exc));
         }
     }
 

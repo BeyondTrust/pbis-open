@@ -131,8 +131,9 @@ static void rpc_ss_ndr_m_array_shadow (
                                         IDL_msp);
       else
         bounds_list = (IDL_bound_pair_t *)array_defn_ptr;
-        array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
-        l_storage_len = bounds_list[0].upper - bounds_list[0].lower + 1;
+
+      array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
+      l_storage_len = bounds_list[0].upper - bounds_list[0].lower + 1;
     }
     else    /* Conformant or open */
     {
@@ -593,9 +594,10 @@ void rpc_ss_ndr_marsh_cs_array (
       if (IDL_msp->IDL_type_vec[TVEC_INT_REP_OFFSET] != NDR_LOCAL_INT_REP)
 	rpc_ss_fixed_bounds_from_vector(1, array_defn_ptr, &bounds_list,
                                         IDL_msp);
-      else
+      else {
 	bounds_list = (IDL_bound_pair_t *)array_defn_ptr;
-        array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
+      }
+      array_defn_ptr += IDL_FIXED_BOUND_PAIR_WIDTH;
     }
     else    /* Conformant or varying */
     {

@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Pluggable Authentication Module
  *
@@ -211,6 +210,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaParseIgnoreList(
     PSTR pIgnoreList,
@@ -257,11 +257,14 @@ LsaParseIgnoreList(
                             pToken,
                             &pTokenCopy);
             BAIL_ON_LSA_ERROR(dwError);
+
             dwError = LwHashSetValue(
                             pIgnoreHash,
                             pTokenCopy,
                             pTokenCopy);
             BAIL_ON_LSA_ERROR(dwError);
+
+            pTokenCopy = NULL;
         }
 
         pToken = strtok_r(NULL, "\r\n", &pSavePtr);
@@ -269,17 +272,21 @@ LsaParseIgnoreList(
 
 
 cleanup:
+    LW_SAFE_FREE_STRING(pTokenCopy);
+
     if (dwError)
     {
         LwHashSafeFree(&pIgnoreHash);
     }
     *ppIgnoreHash = pIgnoreHash;
+
     return dwError;
 
 error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaReadSystemGroupList(
     IN PCSTR pFileName,
@@ -391,6 +398,7 @@ error:
 #endif /* HAVE_FGETGRENT_R */
 }
 
+static
 DWORD
 LsaReadSystemUserList(
     IN PCSTR pFileName,
@@ -518,7 +526,7 @@ LsaReadIgnoreHashes()
         dwError = LwMapErrnoToLwError(errno);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if (tCurrentTime < gtIgnoreHashLastUpdated +
             LSA_IGNORE_LIST_UPDATE_INTERVAL)
     {
@@ -593,6 +601,116 @@ LsaShouldIgnoreUser(
     {
         return (LwHashExists(gpUserIgnoreHash, pszName));
     }
+    return FALSE;
+}
+
+static
+BOOLEAN
+LsaCheckAccessAllowed(PCSTR pszName)
+{
+    DWORD dwError = 0;
+    BOOLEAN bAllowed = FALSE;
+    HANDLE hLsaConnection = NULL;
+
+    if (pszName)
+    {
+        dwError = LsaOpenServer(&hLsaConnection);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LsaCheckUserInList(hLsaConnection, pszName, NULL);
+        if (dwError == LW_STATUS_SUCCESS)
+        {
+            bAllowed = TRUE;
+        }
+    }
+
+cleanup:
+    if (hLsaConnection != NULL)
+    {
+        LsaCloseServer(hLsaConnection);
+        hLsaConnection = NULL;
+    }
+
+    return bAllowed;
+
+error:
+
+    goto cleanup;
+}
+
+BOOLEAN
+LsaShouldIgnoreUserInfo(
+    PVOID        pUserInfo
+    )
+{
+    BOOLEAN bShouldIgnore = FALSE;
+    time_t tCurrentTime = 0;
+    static time_t stIgnoreConfigLastUpdated = 0;
+    static BOOLEAN sbCheckAccessDenied = FALSE;
+
+    if (pUserInfo == NULL) return TRUE;
+
+    // Ignore errors
+    LsaReadIgnoreHashes();
+    
+    time(&tCurrentTime);
+
+    // Currently this is only called from NSS.
+    // Higher level NSS_LOCK code should ensure this is thread safe.
+    if (tCurrentTime < stIgnoreConfigLastUpdated || 
+            tCurrentTime > stIgnoreConfigLastUpdated + 
+            LSA_IGNORE_LIST_UPDATE_INTERVAL)
+    {
+        PLSA_PAM_CONFIG pConfig = NULL;
+
+        LsaPamGetConfig(&pConfig);
+
+        if (pConfig)
+        {
+            sbCheckAccessDenied = pConfig->bNssApplyAccessControl;
+
+            LsaPamFreeConfig(pConfig);
+        }
+
+        stIgnoreConfigLastUpdated = tCurrentTime;
+    }
+
+    if (gpUserIgnoreHash)
+    {
+        PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+
+        bShouldIgnore = LwHashExists(gpUserIgnoreHash, pUserInfo_0->pszName);
+    }
+
+    if (bShouldIgnore == FALSE && sbCheckAccessDenied) {
+        PLSA_USER_INFO_0 pUserInfo_0 = (PLSA_USER_INFO_0)pUserInfo;
+
+        if (LsaCheckAccessAllowed(pUserInfo_0->pszName) == FALSE) {
+            bShouldIgnore = TRUE;
+        }
+    }
+
+    return bShouldIgnore;
+}
+
+BOOLEAN
+LsaShouldIgnoreGroupInfo(
+    PVOID        pGroupInfo
+    )
+{
+    // Ignore errors
+    LsaReadIgnoreHashes();
+
+    if (gpGroupIgnoreHash)
+    {
+        if (pGroupInfo)
+        {
+            PLSA_GROUP_INFO_0 pGroupInfo_0 = (PLSA_GROUP_INFO_0)pGroupInfo;
+
+            return (LwHashExists(gpGroupIgnoreHash, pGroupInfo_0->pszName));
+        }
+    }
+
     return FALSE;
 }
 

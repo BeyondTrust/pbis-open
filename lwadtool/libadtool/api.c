@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -33,7 +33,7 @@
  *        Application data and adtool syntax definitions.
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 23, 2010
  *
  */
@@ -265,7 +265,16 @@ static DWORD SetUpAction(IN AdtActionTP action) {
             appContext->actionCleanUpMethod = &CleanUpAdtUnlockAccountAction;
             break;
 
+        case (AdtSetAttrAction):
+            appContext->actionInitMethod = &InitAdtSetAttrAction;
+            appContext->actionValidateMethod = &ValidateAdtSetAttrAction;
+            appContext->actionExecuteMethod = &ExecuteAdtSetAttrAction;
+            appContext->actionCleanUpMethod = &CleanUpAdtSetAttrAction;
+            break;
+
         default:
+            dwError = ADT_ERR_INVALID_ACTION;
+            ADT_BAIL_ON_ERROR_NP(dwError);
             break;
     }
 
@@ -506,7 +515,11 @@ DWORD AdtCreateActionArgV(IN HANDLE context, IN INT argc, IN PCSTR *argv, OUT Ad
             }
 
             dwError = SetUpAction(&(appContext->action));
-            ADT_BAIL_ON_ERROR2(dwError);
+            if (dwError == ADT_ERR_INVALID_ACTION) {
+                EXIT_ABNORMALLY;
+            } else {
+                ADT_BAIL_ON_ERROR2(dwError);
+            }
 
             EXIT_NORMALLY;
         }
@@ -517,7 +530,7 @@ DWORD AdtCreateActionArgV(IN HANDLE context, IN INT argc, IN PCSTR *argv, OUT Ad
       return(dwError);
 
     error:
-      PrintUsage(appContext->fullCon, NULL, NULL, appContext->optionsCon);
+      PrintUsage(appContext->optionsCon, NULL, NULL, appContext->fullCon);
       goto cleanup;
 
     error2:
@@ -817,6 +830,7 @@ PCSTR AdtGetErrorMsg(IN DWORD dwError)
  */
 PCSTR AdtGetActionName(IN AdtActionCode code) {
     switch (code) {
+#ifdef __ADTOOL_ENTERPRISE__
         /**
          * Enterprise edition.
          */
@@ -854,7 +868,11 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
             return ADT_LOOKUP_CELL_USER_ACT;
 
         case (AdtLookupCellGroupAction):
-            return ADT_lOOKUP_CELL_GROUP_ACT;
+            return ADT_LOOKUP_CELL_GROUP_ACT;
+
+        case (AdtDeleteCellAction):
+            return ADT_DELETE_CELL_ACT;
+#endif
 
         case (AdtMoveObjectAction):
             return ADT_MOVE_OBJECT_ACT;
@@ -873,9 +891,6 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
 
         case (AdtDeleteObjectAction):
             return ADT_DELETE_OBJECT_ACT;
-
-        case (AdtDeleteCellAction):
-            return ADT_DELETE_CELL_ACT;
 
         case (AdtSearchUserAction):
             return ADT_SEARCH_USER_ACT;
@@ -922,6 +937,9 @@ PCSTR AdtGetActionName(IN AdtActionCode code) {
         case (AdtUnlockAccountAction):
             return ADT_UNLOCK_ACCOUNT_ACT;
 
+        case (AdtSetAttrAction):
+            return ADT_SET_ATTR_ACT;
+
         default:
             break;
     }
@@ -946,12 +964,18 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
       name[i] = tolower(name[i]);
     }
 
+#ifdef __ADTOOL_ENTERPRISE__
+
     if(!strcmp(name, ADT_NEW_CELL_ACT)) {
         return AdtNewCellAction;
     }
 
     if(!strcmp(name, ADT_EDIT_CELL_ACT)) {
         return AdtEditCellAction;
+    }
+
+    if(!strcmp(name, ADT_DELETE_CELL_ACT)) {
+        return AdtDeleteCellAction;
     }
 
     if(!strcmp(name, ADT_EDIT_CELL_USER_ACT)) {
@@ -990,9 +1014,10 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
         return AdtLookupCellUserAction;
     }
 
-    if(!strcmp(name, ADT_lOOKUP_CELL_GROUP_ACT)) {
+    if(!strcmp(name, ADT_LOOKUP_CELL_GROUP_ACT)) {
         return AdtLookupCellGroupAction;
     }
+#endif
 
     if(!strcmp(name, ADT_MOVE_OBJECT_ACT)) {
         return AdtMoveObjectAction;
@@ -1016,10 +1041,6 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
 
     if(!strcmp(name, ADT_DELETE_OBJECT_ACT)) {
         return AdtDeleteObjectAction;
-    }
-
-    if(!strcmp(name, ADT_DELETE_CELL_ACT)) {
-        return AdtDeleteCellAction;
     }
 
     if(!strcmp(name, ADT_SEARCH_USER_ACT)) {
@@ -1080,6 +1101,10 @@ AdtActionCode AdtGetActionCode(IN PSTR name) {
 
     if(!strcmp(name, ADT_UNLOCK_ACCOUNT_ACT)) {
         return AdtUnlockAccountAction;
+    }
+
+    if(!strcmp(name, ADT_SET_ATTR_ACT)) {
+        return AdtSetAttrAction;
     }
 
     return AdtBaseAction;

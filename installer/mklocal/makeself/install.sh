@@ -10,10 +10,11 @@ ERR_PACKAGE_COULD_NOT_INSTALL=2
 ERR_PACKAGE_NOT_INSTALLED=3
 ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
-OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd" 
+OBSOLETE_DAEMONS="lsassd dcerpcd eventlogd lwiod netlogond lwregd srvsvcd lwrdrd"
 DAEMONS="lwsmd"
 DAEMON_PATTERN="lwsmd|lsassd|dcerpcd|eventlogd|lwiod|netlogond|lwregd|srvsvcd|lwrdrd|lw-container|lw-svcm-wrap"
 likewise_bindir="/opt/likewise/bin"
+INSTALL_DIR="/opt/pbis"
 
 ## Have to set the path for HP-UX boot process
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:$PATH
@@ -70,9 +71,9 @@ setup_initdir_likewise()
     esac
 }
 
-# return the pids of obsolete daemons, 
+# return the pids of obsolete daemons,
 # lwsmd and lw-container processes
-generic_daemon_spawn_pids() 
+generic_daemon_spawn_pids()
 {
     case "${OS_TYPE}" in
         freebsd)
@@ -99,7 +100,7 @@ generic_daemon_wait() {
     process_pids="`generic_daemon_spawn_pids`"
     i=1
     LAST=$1
-    if [ "$process_pids" ] 
+    if [ "$process_pids" ]
     then
         while [ "$i" -le "$LAST" ]; do
             process_pids="`generic_daemon_spawn_pids`"
@@ -143,7 +144,7 @@ stop_daemons()
         done
     fi
 
-    generic_daemon_wait 60 
+    generic_daemon_wait 60
     generic_daemon_kill
 }
 
@@ -348,21 +349,21 @@ do_setup()
 
     check_specific_os
 
-    libdir=/opt/pbis/lib
-    if [ -x /opt/pbis/lib64 ]; then
-        libdir=/opt/pbis/lib64
+    libdir=${INSTALL_DIR}/lib
+    if [ -x ${INSTALL_DIR}/lib64 ]; then
+        libdir=${INSTALL_DIR}/lib64
     fi
     for i in "$LD_LIBRARY_PATH" "$LIBPATH" "$SHLIB_PATH"; do
         if [ -n "$i" ]; then
             expr "$i" : "^$libdir:" >/dev/null
             if [ $? -ne 0 ]; then
-                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
+                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the BeyondTrust AD Bridge manual for more information."
             fi
         fi
     done
     for i in "$LD_PRELOAD"; do
         if [ -n "$i" ]; then
-            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
+            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the BeyondTrust AD Bridge manual for more information."
         fi
     done
 }
@@ -799,14 +800,14 @@ package_purge_solaris()
 
 remove_extra_files()
 {
-    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/lib/likewise.old /var/lib/lwidentity /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
+    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/lib/likewise.old /var/lib/lwidentity /var/cache/likewise /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ${INSTALL_DIR} ; do
         if [ -d "$file" ]; then
             echo "Removing directory $file"
             /bin/rm -rf "$file"
         fi
     done
 
-    echo "Remove PowerBroker Identity Services created backup/restore files"
+    echo "Remove BeyondTrust AD Bridge created backup/restore files"
     for file in /etc/pam.conf /etc/pam.d/* /etc/krb5.conf /etc/krb5/* /etc/hosts /etc/sshd_config /etc/ssh_config /etc/ssh/* /etc/nsswitch.conf /etc/skel /etc/inet/* /etc/hostname.* /etc/defaultdomain /usr/lib/security/methods.cfg /etc/security/user /etc/security/login.cfg /etc/netsvc.conf /etc/methods.cfg; do
         orig="$file.lwidentity.orig"
         bak="$file.lwidentity.bak"
@@ -863,6 +864,11 @@ package_purge()
     return $?
 }
 
+get_prefix_dir()
+{
+    echo "${PREFIX}"
+}
+
 remove_likewise_directories()
 {
     if [ -d "/opt/likewise" ]
@@ -881,6 +887,11 @@ remove_likewise_directories()
     fi
 }
 
+do_install_failure_info()
+{
+    log_info "The install has not completed. Correct any errors and reinstall by running `pwd`/`basename $0` install"
+}
+
 do_install()
 {
     log_info "Installing packages and old packages will be removed"
@@ -893,6 +904,7 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error uninstalling $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         fi
@@ -903,6 +915,7 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error installing $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         else
@@ -930,6 +943,7 @@ do_install()
         err=$?
         if [ $err -ne 0 ]; then
             log_info "Error uninstalling obsolete packages $pkgList"
+            do_install_failure_info
             exit 1
         fi
     fi
@@ -948,10 +962,12 @@ do_install()
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error installing $pkgName"
+                do_install_failure_info
                 exit 1
             fi
         else
             log_info "Missing package file for $INSTALL_BASE_PACKAGE"
+            do_install_failure_info
             exit 1
         fi
     fi
@@ -976,18 +992,9 @@ do_install()
         if [ "$OPT_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
             DO_INSTALL_LEGACY_PACKAGE="yes"
         fi
-
         if [ "$DO_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
-            pkgName=`package_file_exists $INSTALL_LEGACY_PACKAGE`
-            if [ $? -eq 0 ]; then
-                package_install "$pkgName"
-               err=$?
-                if [ $err -ne 0 ]; then
-                    log_info "Error installing $pkgName"
-                fi
-            else
-                log_info "Missing package file $pkgName for $INSTALL_LEGACY_PACKAGE"
-            fi
+            log_info ""
+            log_info "Nothing done for --legacy option. No longer supported"
         fi
     fi
 
@@ -1002,21 +1009,21 @@ do_install()
         cp "${DIRNAME}/response" /var/lib/pbis/uninstall/response
     fi
 
+    log_info ""
     log_info "Installing Packages was successful"
 }
 
 do_postinstall_messages()
 {
+    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
+    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     RUN_JOIN_GUI="1"
-    guimsg=""
 
     if [ "$1" != 'interactive' ]; then
         RUN_JOIN_GUI=""
     fi
 
-    if [ -x "/opt/pbis/bin/domainjoin-gui" ]; then
-        guimsg="domainjoin-gui or "
-    else
+    if [ ! -x "$domainjoin_gui" ]; then
         RUN_JOIN_GUI=""
     fi
 
@@ -1024,7 +1031,8 @@ do_postinstall_messages()
         RUN_JOIN_GUI=""
     fi
 
-    domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+    command="`get_prefix_dir`/bin/lsa ad-get-machine account"
+    domain=`$command 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
 
     if [ -n "$domain" ]; then
         log_info ""
@@ -1037,13 +1045,20 @@ do_postinstall_messages()
     log_info ""
 
     if [ -z "$domain" ]; then
-        log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
-        log_info "with Active Directory credentials. Example:"
-        log_info "domainjoin-cli join MYDOMAIN.COM MyJoinAccount"
+        log_info "Run domainjoin-cli to join a domain to allow log on with Active Directory";
+        log_info "credentials. domainjoin-cli will prompt for missing parameters."
+        log_info "Run domainjoin-cli --help, or man domainjoin-cli for more information."
+        log_info ""
+        log_info "Example:"
+        log_info ""
+        log_info "$domainjoin_cli join MYDOMAIN.COM MyJoinAccount"
         log_info ""
 
         if [ -n "$RUN_JOIN_GUI" ]; then
-            /opt/pbis/bin/domainjoin-gui >/dev/null 2>&1 &
+	    log_info "Or use the domainjoin-gui located at:"
+	    log_info "$domainjoin_gui"
+	    log_info ""
+	    $domainjoin_gui >/dev/null 2>&1 &
         fi
     fi
 }
@@ -1075,7 +1090,7 @@ do_uninstall()
     fi
 
     if [ -d "${likewise_bindir}" ]; then
-       setup_initdir_likewise 
+       setup_initdir_likewise
        stop_daemons
        stop_daemons_on_reboot
     fi
@@ -1107,7 +1122,7 @@ do_purge()
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
     else
-        domainjoin_cli=/opt/pbis/bin/domainjoin-cli
+        domainjoin_cli=${INSTALL_DIR}/bin/domainjoin-cli
         if [ -x "$domainjoin_cli" ]; then
             $domainjoin_cli leave > /dev/null 2>&1
         fi
@@ -1194,7 +1209,7 @@ prompt_yes_no()
         echo "${_prompt} (${_allowed})" | tr '\n' ' '
         read _answer
 
-        _answer=`echo ${_answer} | tr [A-Z] [a-z]`
+        _answer=`echo ${_answer} | tr [:upper:] [:lower:]`
         case "${_answer}" in
             y|ye|yes)
                 answer=yes
@@ -1216,6 +1231,41 @@ prompt_yes_no()
     done
 }
 
+prompt_yes_no_view()
+{
+    _prompt="$1"
+    _allowed="yes/no/view"
+    _default="yes"
+
+    answer=""
+    until test -n "${answer}" ; do
+
+        # Solaris has issues with echo -n, so the tr turns the trailing
+        # newline into a space, thus emulating echo -n
+
+        echo "${_prompt} (${_allowed})" | tr '\n' ' '
+        read _answer
+
+        _answer=`echo ${_answer} | tr [:upper:] [:lower:]`
+        case "${_answer}" in
+            y|ye|yes)
+                answer=yes
+                ;;
+            n|no)
+                answer=no
+                ;;
+            v|vi|vie|view)
+                answer=view
+                ;;
+            '')
+                if [ -n "${_default}" ]; then
+                    answer="${_default}"
+                fi
+                ;;
+        esac
+    done
+}
+
 do_interactive()
 {
     if [ "x${PAGER}" = "x" ]; then
@@ -1223,31 +1273,26 @@ do_interactive()
     fi
 
     if [ -f "${DIRNAME}/EULA" ]; then
-        cat "${DIRNAME}/EULA" | ${PAGER}
-        prompt_yes_no "Do you accept the terms of these licenses?"
-        if [ "x$answer" != "xyes" ]; then
-            echo "License not accepted."
-            exit 1
-        fi
+        answer=""
+
+        until [ "x$answer" = "xyes" ]; do
+            prompt_yes_no_view "Do you accept the terms of the EULA (default yes)?"
+            case "${answer}" in
+                yes)
+                    ;;
+                no)
+                    echo "License not accepted."
+                    exit 1
+                    ;;
+                view)
+                    cat "${DIRNAME}/EULA" | ${PAGER}
+                    ;;
+            esac
+        done
 
         echo ""
-        echo "License accepted."
+        echo "License accepted. License agreement can be found at ${INSTALL_DIR}/data/EULA"
         echo ""
-    fi
-
-    prompt_yes_no "Would you like to install package for legacy links? (i.e.  /opt/likewise/bin/lw-find-user-by-name -> /opt/pbis/bin/find-user-by-name)"
-    if [ "x$answer" = "xyes" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE="yes"
-    elif [ "x$answer" = "xno" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE="no"
-    elif [ "x$answer" = "xauto" ]; then
-        OPT_INSTALL_LEGACY_PACKAGE=""
-    fi
-
-    prompt_yes_no "Would you like to install now?"
-    if [ "x$answer" != "xyes" ]; then
-        do_info
-        exit 0
     fi
 }
 
@@ -1272,8 +1317,6 @@ usage()
     echo "    --dir <DIR>      base directory where this script is located"
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
-    echo "    --legacy         install the legacy package"
-    echo "    --no-legacy      do not install the legacy package"
 
     if [ "${OS_TYPE}" = "solaris" ]; then
         echo "    --all-zones      install to all zones (default)"
@@ -1289,7 +1332,7 @@ usage()
     echo "                  and delete all generated files)"
     echo "    info          show commands to do a manual install"
     echo ""
-    echo "  If not command is given, interactive mode is used."
+    echo "  If no command is given, interactive mode is used."
     echo ""
 }
 
@@ -1298,7 +1341,7 @@ main_install()
     OPT_DONT_JOIN=""
     OPT_SOLARIS_CURRENT_ZONE=""
     OPT_IGNORE_SPECIFIC_OS=""
-    OPT_INSTALL_LEGACY_PACKAGE=""
+    OPT_INSTALL_LEGACY_PACKAGE="no"
 
     ECHO_DIRNAME=""
 
@@ -1346,24 +1389,10 @@ main_install()
                 shift 1
                 ;;
             --legacy)
-                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
-                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "yes" ]; then
-                        echo "Cannot use $1 with --legacy"
-                        usage
-                        exit 1
-                    fi
-                fi
                 OPT_INSTALL_LEGACY_PACKAGE="yes"
                 shift 1
                 ;;
             --no-legacy)
-                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
-                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "no" ]; then
-                        echo "Cannot use $1 with --no-legacy"
-                        usage
-                        exit 1
-                    fi
-                fi
                 OPT_INSTALL_LEGACY_PACKAGE="no"
                 shift 1
                 ;;

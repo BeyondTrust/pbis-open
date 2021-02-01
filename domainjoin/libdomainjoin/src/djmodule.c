@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -118,6 +117,7 @@ void DJFreeJoinProcessOptions(JoinProcessOptions *options)
     CT_SAFE_FREE_STRING(options->userDomainPrefix);
     CT_SAFE_FREE_STRING(options->username);
     CT_SAFE_FREE_STRING(options->password);
+    CT_SAFE_FREE_STRING(options->pszConfigFile);
 
     for(i = 0; i < options->moduleStates.size; i++)
     {
@@ -267,7 +267,7 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
             case NotConfigured:
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
                 goto cleanup;
             default:
                 LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state.module->shortName);
@@ -315,7 +315,7 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
                 }
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                 goto cleanup;
             default:
                 LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
@@ -334,7 +334,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
     PSTR exceptionTitle = NULL;
     LWException *moduleException = NULL;
 
-    // Before running the modules, make sure that all of the 
+    // Before running the modules, make sure that all of the
     // necessary modules are enabled.
     LW_TRY(exc, DJCheckRequiredEnabled(options, &LW_EXC));
 
@@ -371,7 +371,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionTitle);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
                     LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
@@ -390,13 +390,13 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                 case CannotConfigure:
                     LW_RAISE_EX(exc,
                             ERROR_CAN_NOT_COMPLETE, "Module not configured",
-                            "Even though the configuration of '%s' was executed, the configuration is not complete. Please contact PowerBroker Identity Services support.",
+                            "Even though the configuration of '%s' was executed, the configuration is not complete. Please contact support.",
                             state->module->shortName);
                     goto cleanup;
                 case SufficientlyConfigured:
                     LW_CLEANUP_CTERR(exc,
                             CTAllocateStringPrintf(&exceptionMessage,
-                            "Even though the configuration of '%s' was executed, the configuration did not fully complete. Please contact PowerBroker Identity Services support.",
+                            "Even though the configuration of '%s' was executed, the configuration did not fully complete. Please contact support.",
                             state->module->shortName));
                     if (options->warningCallback != NULL)
                     {
@@ -407,7 +407,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionMessage);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use PowerBroker Identity Services, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use BeyondTrust AD Bridge, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
                     LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);

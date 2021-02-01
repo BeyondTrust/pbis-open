@@ -3,33 +3,32 @@
 * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /**
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * @file
  *
@@ -75,16 +74,40 @@ LwListIsEmpty(
     return (Head->Next == Head);
 }
 
+static
+BOOLEAN
+LwListContains(
+    IN LW_LIST_LINKS* Head,
+    IN LW_LIST_LINKS* Element
+)
+{
+    LW_LIST_LINKS* next;
+    
+    if (Head == NULL) return FALSE;
+    if (Element == NULL) return FALSE;
+    
+    for (next = Head->Next; (next != NULL) && (next != Head); next = next->Next) {
+        if (next == Element) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 VOID
 LwListInsertAfter(
     IN LW_LIST_LINKS* Head,
     IN LW_LIST_LINKS* Element
     )
 {
-    Element->Next = Head->Next;
-    Element->Prev = Head;
-    Head->Next->Prev = Element;
-    Head->Next = Element;
+    // Ensure we don't already have this entry in the list as it will corrupt the list pointers
+    if (LwListContains(Head, Element) == FALSE) {
+        Element->Next = Head->Next;
+        Element->Prev = Head;
+        Head->Next->Prev = Element;
+        Head->Next = Element;
+    }
 }
 
 VOID
@@ -93,10 +116,13 @@ LwListInsertBefore(
     IN LW_LIST_LINKS* Element
     )
 {
-    Element->Next = Head;
-    Element->Prev = Head->Prev;
-    Head->Prev->Next = Element;
-    Head->Prev = Element;
+    // Ensure we don't already have this entry in the list as it will corrupt the list pointers
+    if (LwListContains(Head, Element) == FALSE) {
+        Element->Next = Head;
+        Element->Prev = Head->Prev;
+        Head->Prev->Next = Element;
+        Head->Prev = Element;
+    }
 }
 
 VOID

@@ -1,5 +1,17 @@
 MODULES="sfx dmg"
 
+configure()
+{
+    mk_declare -o \
+        VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
+        QFE="${LW_PRODUCT_QFE}" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+
+    mk_output_file COPYING
+    mk_output_file LICENSES
+}
+
 make()
 {
     case "$MK_HOST_OS" in
@@ -26,7 +38,7 @@ make()
                 DMG="pbis-open-${LW_VERSION}" \
                 VOLNAME="pbis-open" \
                 TEMPLATE="dmg-template.tar.bz2" \
-                PACKAGES="pbis-open pbis-open-legacy"
+                PACKAGES="pbis-open"
             ;;
     esac
 }
@@ -37,7 +49,7 @@ sfx_solaris()
         SFX="pbis-open-${LW_VERSION}" \
         FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
-        PACKAGES="PBISopen PBISopeng PBISopenl" \
+        PACKAGES="PBISopen PBISopeng" \
         UPGRADE="PBISopeng" \
         LEGACY="PBISopenl" \
         OBSOLETE="LikewiseBase LikewiseDomainjoin \
@@ -71,7 +83,7 @@ sfx_generic()
         SFX="pbis-open-${LW_VERSION}" \
         FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
-        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE pbis-open-legacy" \
+        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE" \
         UPGRADE="pbis-open-upgrade" \
         LEGACY="pbis-open-legacy" \
         OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin \

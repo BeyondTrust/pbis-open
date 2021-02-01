@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Active Directory Authentication Provider
  *
@@ -262,6 +261,23 @@ AD_FreeHashObject(
     IN OUT const LW_HASH_ENTRY *pEntry
     );
 
+/**
+ * @brief Perform a lookup for security objects from the given list of DN values
+ * 
+ * Where possible this function will use the local cache to resolve security objects
+ * for the provided DN list. Where items are missing, expired or incomplete in the 
+ * local cache the security object will be queried from AD using LDAP calls.
+ * 
+ * The list of security objects returned in @p pppResults will be a sparse array 
+ * matching the DN values in the @p ppszDNList passed in.
+ * 
+ * @param pContext Handle to the provider context
+ * @param sCount Number of DN values in the @p ppszDNList array
+ * @param ppszDNList Array containing a list of DN values to query
+ * @param psResultsCount The number of security objects set in the sparse @p pppResults array
+ * @param pppResults Sparse array containing a list of security objects matching the @p ppszDNList values
+ * @return PBIS LSA error code
+ */
 DWORD
 AD_FindObjectsByDNList(
     IN PAD_PROVIDER_CONTEXT pContext,
@@ -295,6 +311,23 @@ AD_FindObjectBySid(
     OUT PLSA_SECURITY_OBJECT* ppResult
     );
 
+/**
+ * @brief Perform a lookup for security objects from the given list of SID values
+ * 
+ * Where possible this function will use the local cache to resolve security objects
+ * for the provided SID list. Where items are missing/expired or incomplete in the 
+ * local cache the security object will be queried from AD using LDAP calls.
+ * 
+ * The list of security objects returned in @p pppResults will be a sparse array 
+ * matching the SID values in the @p ppszSidList passed in.
+ * 
+ * @param pContext Handle to the provider context
+ * @param sCount Number of SID values in the @p ppszSidList array
+ * @param ppszSidList Array containing a list of SID values to query
+ * @param psResultsCount The number of security objects set in the sparse @p pppResults array
+ * @param pppResults Sparse array containing a list of security objects matching the @p ppszSidList values
+ * @return PBIS LSA error code
+ */
 DWORD
 AD_FindObjectsBySidList(
     IN PAD_PROVIDER_CONTEXT pContext,
@@ -417,7 +450,9 @@ AD_OnlineEnumObjects(
     IN HANDLE hEnum,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
+    OUT PLSA_SECURITY_OBJECT** pppObjects,
+    OUT PDWORD pdwOfflineDomains,
+    OUT PSTR **pppszOfflineDomains
     );
 
 DWORD

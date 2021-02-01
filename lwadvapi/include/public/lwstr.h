@@ -3,32 +3,32 @@
  */
 
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -36,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Advanced API (lwadvapi) String Utilities
+ *        BeyondTrust Advanced API (lwadvapi) String Utilities
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
@@ -112,12 +112,68 @@ LwFreeString(
     LW_PSTR pszString
     );
 
+/*
+ * Spare input string array is supported.
+ * Use LwFreeStringArray() to release new string array.
+ */
 LW_DWORD
 LwDuplicateStringArray(
     OUT PSTR** pppNewStringArray,
     OUT PDWORD pdwNewCount,
     IN PSTR* ppStringArray,
     IN DWORD dwCount
+    );
+
+DWORD
+LwConvertMultiStringToStringArray(
+    IN PCSTR pszMultiString,
+    OUT PSTR** pppszStringArray,
+    OUT PDWORD pdwCount
+    );
+
+/* Merge the given string arrays into ArrayOut.
+ * Sparse input string arrays are supported.
+ * Use LwFreeStringArray() to release out string array.
+ */
+DWORD
+LwMergeStringArray(
+   IN  PSTR* ppStrArrayA,     IN  DWORD  dwStrArrayACount,
+   IN  PSTR* ppStrArrayB,     IN  DWORD  dwStrArrayBCount,
+   OUT PSTR** pppStrArrayOut, OUT DWORD* pdwStrArrayOutCount);
+
+DWORD
+LwAllocateStringArray(
+    OUT PSTR** pppNewStringArray,
+    IN DWORD dwCount
+    );
+
+DWORD
+LwConvertListToStringArray(
+    OUT PSTR** pppNewStringArray,
+    OUT PDWORD pdwNewCount,
+    IN PCSTR pszMultiString,
+    IN PCSTR pszDelim
+    );
+
+BOOLEAN
+LwStringArrayContains(
+        IN PSTR* pszaList, 
+        IN DWORD dwCount, 
+        IN PSTR pszStr, 
+        IN BOOLEAN bCaseSensitive);
+
+BOOLEAN
+LwStringArrayCompare(
+        IN PSTR* pszaList1, 
+        IN DWORD dwCount1, 
+        IN PSTR* pszaList2, 
+        IN DWORD dwCount2);
+
+DWORD
+LwSortStringArray(
+    IN PSTR* pszaList, 
+    IN DWORD dwCount,
+    BOOLEAN bAscend
     );
 
 void
@@ -161,6 +217,18 @@ LwStripWhitespace(
     LW_IN LW_OUT LW_PSTR pszString,
     LW_IN LW_BOOLEAN bLeading,
     LW_IN LW_BOOLEAN bTrailing
+    );
+
+LW_VOID
+LwStripLeadingCharacters(
+    PSTR pszString,
+    CHAR character
+    );
+
+LW_VOID
+LwStripTrailingCharacters(
+    PSTR pszString,
+    CHAR character
     );
 
 LW_VOID

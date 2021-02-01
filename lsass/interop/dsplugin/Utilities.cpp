@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #ifdef __cplusplus
@@ -36,14 +35,6 @@ extern "C" {
 
 #define LWE_MIN(a, b) ((a < b)?(a):(b))
 
-#undef USE_SYSLOG
-
-#ifdef USE_SYSLOG
-void LogMessageV(const char *Format, va_list Args)
-{
-    vsyslog(LOG_ERR, Format, Args);
-}
-#else
 static void LogMessageToDsLog(const char *format, ...)
 {
     va_list args;
@@ -54,38 +45,51 @@ static void LogMessageToDsLog(const char *format, ...)
 
 void LogMessageV(const char *Format, va_list Args)
 {
-    char* output = NULL;
+    const char* pszFile = "/var/lib/pbis/lwedsplugin.syslog";
+    BOOLEAN bDirExists = FALSE;
 
-    // Note: DSDebugLog eventually calls CString::Vsprintf (inside DirectoryServer's
-    // CoreFramework/Private/CString.cpp), which is not compatible with sprintf
-    // despite the documentation in Apple's "Open Directory Reference").
-    // To avoid compatibility issues, we will do our own formatting first.
-    //
-    // We also discovered another bug in CString::Vsprintf where a '%' in string
-    // that we are formatting with %s can cause a crash.  So we must make sure that
-    // there are no '%'s in the string that we are trying to output.
-    //
+    LwCheckFileTypeExists(pszFile, LWFILE_REGULAR, &bDirExists);
 
-    vasprintf(&output, Format, Args);
-    if (output)
+
+    if(bDirExists)
     {
-        for (char *p = output; *p; p++)
-        {
-            if ('%' == *p)
-            {
-                *p = '*';
-            }
-        }
-
-        LogMessageToDsLog("%s", output);
-        free(output);
+        vsyslog(LOG_ERR, Format, Args);
     }
     else
     {
-        LogMessageToDsLog("*** Failed to allocate memory while formatting log message ***");
+        char* output = NULL;
+
+        // Note: DSDebugLog eventually calls CString::Vsprintf (inside DirectoryServer's
+        // CoreFramework/Private/CString.cpp), which is not compatible with sprintf
+        // despite the documentation in Apple's "Open Directory Reference").
+        // To avoid compatibility issues, we will do our own formatting first.
+        //
+        // We also discovered another bug in CString::Vsprintf where a '%' in string
+        // that we are formatting with %s can cause a crash.  So we must make sure that
+        // there are no '%'s in the string that we are trying to output.
+        //
+
+        vasprintf(&output, Format, Args);
+        if (output)
+        {
+            for (char *p = output; *p; p++)
+            {
+                if ('%' == *p)
+                {
+                    *p = '*';
+                }
+            }
+
+            LogMessageToDsLog("%s", output);
+            free(output);
+        }
+        else
+        {
+            LogMessageToDsLog("*** Failed to allocate memory while formatting log message ***");
+        }
     }
 }
-#endif
+
 
 void LogMessage(const char *Format, ...)
 {
@@ -747,16 +751,16 @@ LWCaptureOutput(
     long macError = eDSNoErr;
     CHAR szBuf[1000];
     FILE* pFile = NULL;
- 
+
     pFile = popen(pszCommand, "r");
     if (pFile == NULL) {
         macError = LwErrnoToWin32Error(errno);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
- 
+
     while (TRUE) {
         if (NULL == fgets(szBuf, PATH_MAX, pFile)) {
-            if (feof(pFile)) { 
+            if (feof(pFile)) {
                 break;
             } else {
                 macError = LwErrnoToWin32Error(errno);
@@ -766,9 +770,9 @@ LWCaptureOutput(
         LwStripWhitespace(szBuf, TRUE, TRUE);
         if (!IsNullOrEmptyString(szBuf)) {
             macError = LwAllocateString(szBuf, ppszOutput);
-            break; 
+            break;
         }
- 
+
     }
 
 cleanup:
@@ -783,11 +787,10 @@ enum {
     kDefaultDSBufferSize = 1024
 };
 
-ODRecordRef FindRecordByName(const char* pcszPlugin, const char* pcszRecordName, const char* pcszRecordType) {
-        
-   
+static ODRecordRef FindRecordByName(CFStringRef cfstrPlugin, const char* pcszRecordName, const char* pcszRecordType) {
+
+
     CFErrorRef cfError;
-    CFStringRef cfstrPlugin = CFStringCreateWithCString(kCFAllocatorDefault, pcszPlugin, kCFStringEncodingUTF8);
     long nResults = 0;
     ODRecordRef odFoundRecord = NULL;
     CFArrayRef cfResults = NULL;
@@ -803,41 +806,35 @@ ODRecordRef FindRecordByName(const char* pcszPlugin, const char* pcszRecordName,
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
     }
-    
-
 
     cfSearchValue = CFArrayCreate(kCFAllocatorDefault, cfValues, 1, &kCFTypeArrayCallBacks);
-     cfstrRecordType = CFStringCreateWithCString(kCFAllocatorDefault, pcszRecordType, kCFStringEncodingUTF8);
+    cfstrRecordType = CFStringCreateWithCString(kCFAllocatorDefault, pcszRecordType, kCFStringEncodingUTF8);
     cfLocalQuery = ODQueryCreateWithNode(kCFAllocatorDefault, localNode, cfstrRecordType, CFSTR(kDSNAttrRecordName), kODMatchEqualTo, cfSearchValue, NULL, 0, &cfError);
     if(cfError != NULL)
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
-    }    
-    
+    }
+
     cfResults = ODQueryCopyResults(cfLocalQuery, false, &cfError);
     if(cfError != NULL)
     {
         BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
     }
-    
-    
+
+
     nResults = CFArrayGetCount(cfResults);
     if(nResults == 1)
     {
         ODRecordRef tempRecord = (ODRecordRef)CFArrayGetValueAtIndex(cfResults, 0);
         odFoundRecord = ODNodeCopyRecord(localNode, cfstrRecordType, ODRecordGetRecordName(tempRecord), NULL, &cfError);
-        
+
     }
     else
     {
         LOG_ERROR("%d results from searching for %s", nResults, pcszRecordName );
     }
-    
+
 error:
-    if(cfstrPlugin != NULL)
-    {
-        CFRelease(cfstrPlugin);        
-    }
     if(localNode != NULL)
     {
         CFRelease(localNode);
@@ -862,9 +859,27 @@ error:
     {
         CFRelease(cfResults);
     }
-    
-    
+
+
     return odFoundRecord;
+}
+
+static
+CFStringRef
+CopyAttrFromRecord(ODRecordRef record, CFStringRef attr)
+{
+    CFArrayRef values = ODRecordCopyValues(record, attr, NULL);
+    CFStringRef result = NULL;
+
+    if (values) {
+        if (CFArrayGetCount(values) == 1) {
+            result = (CFStringRef)CFArrayGetValueAtIndex(values, 0);
+            CFRetain(result);
+        }
+        CFRelease(values);
+    }
+
+    return result;
 }
 
 BOOLEAN
@@ -873,46 +888,54 @@ LWIsUserInLocalGroup(
     const char* pszGroupname
     )
 {
-    FILE *fp;
-    char path[2048];
-    char command[2048];
-    sprintf(command, "dscl . -read /Groups/%s GroupMembership", pszGroupname);
+    ODRecordRef odGroup;
+    ODRecordRef odUser;
+    BOOLEAN bResult = false;
 
-    fp = popen(command, "r");
+    if (pszUsername == NULL) return false;
+    if (pszGroupname == NULL) return false;
 
-    if(fp == NULL) {
-	LOG("Unable to find dscl command");
-        return FALSE;
-    }
+    odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
+    odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
 
-    while(fgets(path, sizeof(path), fp) != NULL) {
-    }
-    
-    pclose(fp);
-
-    char* account = strtok(path, " ");
-    account = strtok(NULL, " ");
-
-    while(account != NULL)
+    if(odGroup != NULL && odUser != NULL)
     {
-        for(unsigned int i = 0; i < strlen(account); i++)
-        {	
-            if(isspace(account[i]) )
-            {
-                account[i] = '\0';
-                break;
-            }
-        }
+        CFStringRef uGuid = CopyAttrFromRecord(odUser, CFSTR(kDS1AttrGeneratedUID));
 
-        if(strcasecmp(pszUsername, account) == 0)
+        if (uGuid != NULL)
         {
-            return TRUE;
-        }
+            CFArrayRef members = ODRecordCopyValues(odGroup, CFSTR(kDSNAttrGroupMembers), NULL);
 
-        account = strtok(NULL, " ");
+            if (members != NULL)
+            {
+                int l = CFArrayGetCount(members);
+                int i;
+
+                for (i=0; i<l; i++)
+                {
+                    CFStringRef guid = (CFStringRef)CFArrayGetValueAtIndex(members, i);
+
+                    if (guid && CFStringCompare(guid, uGuid, 0) == 0)
+                    {
+                        bResult = true;
+                        break;
+                    }
+                }
+
+                CFRelease(members);
+            }
+
+            CFRelease(uGuid);
+        }
     }
 
-    return FALSE;
+    if(odGroup != NULL) CFRelease(odGroup);
+
+    if(odUser != NULL) CFRelease(odUser);
+
+    LOG("LWIsUserInLocalGroup is %s in %s: bResult %d", pszUsername, pszGroupname, bResult);
+
+    return bResult;
 }
 
 long
@@ -922,17 +945,17 @@ LWRemoveUserFromLocalGroup(
     )
 {
     CFErrorRef cfError;
-    ODRecordRef odGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);
-    ODRecordRef odUser = FindRecordByName("/Likewise - Active Directory", pszUsername, kDSStdRecordTypeUsers);
+    ODRecordRef odGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
+    ODRecordRef odUser = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername, kDSStdRecordTypeUsers);
 
-    long lResult = 0;    
+    long lResult = 0;
     if(odGroup != NULL && odUser != NULL)
     {
         lResult = ODRecordRemoveMember(odGroup, odUser, &cfError)  == true ? ERROR_SUCCESS : CFErrorGetCode(cfError);
         if(cfError != NULL)
         {
             BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
-        }        
+        }
     }
     else
     {
@@ -948,7 +971,7 @@ error:
     {
         CFRelease(odUser);
     }
-            
+
     return lResult;
 }
 
@@ -959,15 +982,15 @@ LWAddUserToLocalGroup(
     char* pszUsername,
     const char* pszGroupname
     )
-{        
+{
     CFErrorRef cfError;
-    
-    //locate the admin group   
-    ODRecordRef adminGroup = FindRecordByName("/Local/Default", pszGroupname, kDSStdRecordTypeGroups);            
-    ODRecordRef recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeUsers);
+
+    //locate the admin group
+    ODRecordRef adminGroup = FindRecordByName(CFSTR("/Local/Default"), pszGroupname, kDSStdRecordTypeGroups);
+    ODRecordRef recordToAdd = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername,kDSStdRecordTypeUsers);
     if(recordToAdd == NULL)
     {
-        recordToAdd = FindRecordByName("/Likewise - Active Directory", pszUsername,kDSStdRecordTypeGroups);
+        recordToAdd = FindRecordByName(CFSTR("/Likewise - Active Directory"), pszUsername,kDSStdRecordTypeGroups);
     }
 
     long lResult = 0;
@@ -978,13 +1001,13 @@ LWAddUserToLocalGroup(
         {
             BAIL_ON_MAC_ERROR(CFErrorGetCode(cfError));
         }
-    }    
+    }
     else
     {
         lResult = eDSInvalidRecordRef;
     }
    error:
-             
+
     if(adminGroup != NULL)
     {
         CFRelease(adminGroup);
@@ -993,10 +1016,10 @@ LWAddUserToLocalGroup(
     {
         CFRelease(recordToAdd);
     }
-   
+
     return lResult;
 
-    
+
 }
 
 #ifdef __cplusplus

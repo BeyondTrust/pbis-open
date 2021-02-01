@@ -233,3 +233,9 @@ account_rights_main(
     int argc,
     char* argv[]
     );
+
+int
+host_access_control_main(
+    int argc,
+    char* argv[]
+    );

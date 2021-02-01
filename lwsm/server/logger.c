@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -331,19 +331,19 @@ PCSTR
 LwSmLogTypeToLogTypeName(
     LW_SM_LOGGER_TYPE type
 )
-{     
+{
   switch (type)
   {
       case LW_SM_LOGGER_NONE:
           return "none";
       case LW_SM_LOGGER_FILE:
-          return "file";    
+          return "file";
       case LW_SM_LOGGER_SYSLOG :
-          return  "syslog";          
-          
-      default:          
-          return  "UNKNOWN";          
-  } 
+          return  "syslog";
+
+      default:
+          return  "UNKNOWN";
+  }
 }
 
 DWORD
@@ -360,7 +360,7 @@ LwSmLogLevelToLogLevelName(
 
   *pszName = LwSmLogLevelToString(*pLevel);
 
-  if (!strcasecmp(*pszName, "UNNOWN"))
+  if (!strcasecmp(*pszName, "UNKNOWN"))
   {
     dwError = LW_ERROR_INVALID_PARAMETER;
     BAIL_ON_ERROR(dwError);
@@ -529,7 +529,7 @@ cleanup:
 
 error:
 
-    goto cleanup; 
+    goto cleanup;
 }
 
 DWORD
@@ -800,7 +800,7 @@ LwSmLogFileLog (
     }
 
     fflush(pContext->file);
-   
+
     return dwError;
 }
 
@@ -820,7 +820,7 @@ LwSmLogFileClose(
     {
         close(pContext->fd);
     }
-    
+
     LW_SAFE_FREE_MEMORY(pContext->pszPath);
     LW_SAFE_FREE_MEMORY(pContext);
 }
@@ -924,6 +924,11 @@ LwSmSyslogLog(
     )
 {
     DWORD dwError = 0;
+    int syslogFacility = LOG_DAEMON;
+
+    if (pData) {
+        syslogFacility = *(int *)pData;
+    }
 
     switch (maxLevel)
     {
@@ -938,7 +943,7 @@ LwSmSyslogLog(
         if (pszFacility)
         {
             syslog(
-                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                LwSmLogLevelToPriority(level) | syslogFacility,
                 "[%s] %s\n",
                 pszFacility,
                 pszMessage);
@@ -946,7 +951,7 @@ LwSmSyslogLog(
         else
         {
             syslog(
-                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                LwSmLogLevelToPriority(level) | syslogFacility,
                 "%s\n",
                 pszMessage);
         }
@@ -956,7 +961,7 @@ LwSmSyslogLog(
         if (pszFacility)
         {
             syslog(
-                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                LwSmLogLevelToPriority(level) | syslogFacility,
                 "[%s] %s():%s:%i: %s\n",
                 pszFacility,
                 pszFunctionName,
@@ -967,7 +972,7 @@ LwSmSyslogLog(
         else
         {
             syslog(
-                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                LwSmLogLevelToPriority(level) | syslogFacility,
                 "%s():%s:%i: %s\n",
                 pszFunctionName,
                 LwSmBasename(pszSourceFile),
@@ -975,7 +980,7 @@ LwSmSyslogLog(
                 pszMessage);
         }
     }
-   
+
     return dwError;
 }
 
@@ -996,10 +1001,16 @@ LwSmSyslogGetTargetName(
     )
 {
     DWORD dwError = 0;
+    PLW_SM_SYSLOG_FACILITY syslogFacility = NULL;
+
+    if (pData)
+    {
+        syslogFacility = LwSmGetSyslogFacilityByValue(*((int *)pData));
+    }
 
     dwError = LwAllocateString(
-        "LOG_DAEMON",
-        ppszTargetName);
+            (syslogFacility ? syslogFacility->description : "LOG_DAEMON"),
+            ppszTargetName);
     BAIL_ON_ERROR(dwError);
 
 error:
@@ -1084,10 +1095,21 @@ error:
 
 DWORD
 LwSmSetLoggerToSyslog(
-    PCSTR pFacility
+    PCSTR pFacility,
+    PCSTR pSyslogFacility
     )
 {
-    return LwSmSetLogger(pFacility, &gSyslogLogger, NULL);
+    PLW_SM_SYSLOG_FACILITY facility = NULL;
+    PVOID loggerData = NULL;
+
+    /* entry is static const so we can point directly at it */
+    facility = LwSmGetSyslogFacilityByName(pSyslogFacility);
+    if (facility)
+    {
+        loggerData = (PVOID) &(facility->facility);
+    }
+
+    return LwSmSetLogger(pFacility, &gSyslogLogger, loggerData);
 }
 
 DWORD

@@ -3,34 +3,35 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "includes.h"
 #include "lam-user.h"
 #include "lam-group.h"
+
+static const int MAX_NUM_USERS = 500;
 
 DWORD
 LsaNssFindUserByAixName(
@@ -215,7 +216,8 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwUid(uid_t uid)
+static
+struct passwd *_LsaNssGetPwUid(uid_t uid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -263,7 +265,21 @@ error:
     goto cleanup;
 }
 
-struct passwd *LsaNssGetPwNam(PCSTR pszName)
+struct passwd *LsaNssGetPwUid(uid_t uid)
+{
+    struct passwd *rc;
+    
+    NSS_LOCK();
+
+    rc = _LsaNssGetPwUid(uid);
+    
+    NSS_UNLOCK();
+
+    return rc;
+}
+
+static
+struct passwd *_LsaNssGetPwNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
@@ -311,6 +327,19 @@ error:
     goto cleanup;
 }
 
+struct passwd *LsaNssGetPwNam(PCSTR pszName)
+{
+    struct passwd *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetPwNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
 DWORD
 LsaNssListUsers(
         HANDLE hLsaConnection,
@@ -319,17 +348,26 @@ LsaNssListUsers(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     const DWORD dwInfoLevel = 0;
-    const DWORD dwEnumLimit = 10000;
+    const DWORD dwEnumLimit = MAX_NUM_USERS;
     DWORD dwIndex = 0;
+    DWORD dwTotalIndex = 0;
     DWORD dwUsersFound = 0;
     HANDLE hResume = (HANDLE)NULL;
-    size_t sRequiredMem = 0;
+    size_t sRequiredMem = 1;
+    size_t sUsedMem = 0;
     PLSA_USER_INFO_0* ppUserList = NULL;
     PSTR pszListStart = NULL;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
     // Do not free
     PSTR pszPos = NULL;
 
     LSA_LOG_PAM_DEBUG("Enumerating users");
+    
+    if (pDisabled) 
+    {
+        pResult->attr_flag = ENOENT;
+        goto error;
+    }
 
     dwError = LsaBeginEnumUsers(
                 hLsaConnection,
@@ -339,39 +377,64 @@ LsaNssListUsers(
                 &hResume);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaEnumUsers(
-                hLsaConnection,
-                hResume,
-                &dwUsersFound,
-                (PVOID**)&ppUserList);
-    BAIL_ON_LSA_ERROR(dwError);
+    do {
+        if (ppUserList != NULL)
+        {
+            LsaFreeUserInfoList(
+                    dwInfoLevel,
+                    (PVOID*)ppUserList,
+                    dwUsersFound);
 
-    if (dwUsersFound == dwEnumLimit)
-    {
-        pResult->attr_flag = ENOMEM;
-        goto error;
+            ppUserList = NULL;
+            dwUsersFound = 0;
+        }
+
+        dwError = LsaEnumUsers(
+                    hLsaConnection,
+                    hResume,
+                    &dwUsersFound,
+                    (PVOID**)&ppUserList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (dwUsersFound == 0) continue;
+
+        LSA_LOG_PAM_DEBUG("Found %u users", (unsigned int)dwUsersFound);
+
+        for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
+        {
+            if (ppUserList[dwIndex]->pszName) 
+            {
+                sRequiredMem += strlen(ppUserList[dwIndex]->pszName) + 1;
+            }
+        }
+
+        dwError = LwReallocMemory(
+                    pszListStart,
+                    (PVOID*)&pszListStart,
+                    sRequiredMem);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszPos = pszListStart + sUsedMem;
+
+        for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
+        {
+            if (ppUserList[dwIndex]->pszName) 
+            {
+                strcpy(pszPos, ppUserList[dwIndex]->pszName);
+                pszPos += strlen(pszPos) + 1;
+            }
+        }
+        
+        sUsedMem = pszPos - pszListStart;
+        
+        dwTotalIndex += dwUsersFound;
+        
+    } while (dwUsersFound > 0);
+    
+    if (pszPos) {
+        *pszPos++ = 0;
+        assert(pszPos == pszListStart + sRequiredMem);
     }
-
-    sRequiredMem = 1;
-    for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
-    {
-        sRequiredMem += strlen(ppUserList[dwIndex]->pszName) + 1;
-    }
-
-    dwError = LwAllocateMemory(
-                sRequiredMem,
-                (PVOID*)&pszListStart);
-    BAIL_ON_LSA_ERROR(dwError);
-    pszPos = pszListStart;
-
-    for (dwIndex = 0; dwIndex < dwUsersFound; dwIndex++)
-    {
-        strcpy(pszPos, ppUserList[dwIndex]->pszName);
-        pszPos += strlen(pszPos) + 1;
-    }
-    *pszPos++ = 0;
-
-    assert(pszPos == pszListStart + sRequiredMem);
 
     pResult->attr_un.au_char = pszListStart;
     pResult->attr_flag = 0;
@@ -415,11 +478,11 @@ LsaNssGetUserAttr(
 
     if (!strcmp(pszAttribute, S_ID))
     {
-        pResult->attr_un.au_long = pInfo->uid;
+        pResult->attr_un.au_int = pInfo->uid;
     }
     else if (!strcmp(pszAttribute, S_PGID))
     {
-        pResult->attr_un.au_long = pInfo->gid;
+        pResult->attr_un.au_int = pInfo->gid;
     }
     else if (!strcmp(pszAttribute, S_PWD))
     {
@@ -486,6 +549,10 @@ LsaNssGetUserAttr(
                     pInfo,
                     &pResult->attr_un.au_char);
         BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (!strcmp(pszAttribute, S_DAEMONCHK))
+    {
+        pResult->attr_un.au_int = 1;
     }
     else if (!strcmp(pszAttribute, S_LOCKED))
     {

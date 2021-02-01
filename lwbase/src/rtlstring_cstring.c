@@ -3,32 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewise.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -349,5 +349,104 @@ LwRtlCStringAllocateAppendPrintf(
     va_end(args);
 
     return status;
+}
+
+/**
+ * @brief Return current rounded up to a multiple of multiple
+ *
+ * n.b. this does NOT check for overflow
+ *
+ * @param current the current size
+ * @param multiple
+ *
+ * @return current rounded to a mutiple of multiple,
+ *  when mulitple is 0 or 1, current is returned
+ */
+static
+size_t
+round_to_multiple(
+    size_t current,
+    size_t multiple
+    )
+{
+    if (multiple == 0) {
+        return current;
+    }
+
+    size_t remainder = current % multiple;
+
+    return (remainder == 0)
+        ? current
+        : current + multiple - remainder;
+}
+
+/**
+ * @brief Grow the buffer if needed to accommodate the required number of characters
+ * (not including terminating null) and return the new size
+ *
+ * This reallocates the buffer; Failing to reallocate the buffer will leave buffer
+ * untouched and 0 will be returned.
+ *
+ * @param buffer
+ * @param current the current size
+ * @param multiple the buffer will be grown to a size which is a multiple of this value
+ * @param required the number of additional characters the buffer has to include
+ *  (not including the terminating null
+ *
+ * @return the size of the buffer, or 0 if the buffer could not be reallocated
+ */
+static
+size_t
+grow_buffer(
+    char **buffer,
+    size_t current_size,
+    size_t multiple,
+    size_t required
+    )
+{
+    const size_t used = (*buffer) ? strlen(*buffer) : 0;
+    const size_t remaining = current_size - used;
+
+    size_t new_size = 0;
+    char * new = NULL;
+
+    if (remaining >= (required + 1)) {
+        return current_size;
+    }
+
+    new_size = round_to_multiple(used + required + 1, multiple);
+    new = LwRtlMemoryRealloc((void *)*buffer, new_size);
+
+    if (!new) {
+        new_size = 0;
+    } else {
+        *buffer = new;
+    }
+
+    return new_size;
+}
+
+PSTR
+LwRtlCStringStrcatGrow(
+    IN OUT PSTR* buffer,
+    IN OUT size_t *current_size,
+    IN size_t multiple,
+    IN PCSTR src
+    )
+{
+    size_t new_buffer_size = grow_buffer(buffer, *current_size, multiple, strlen(src));
+
+    if (!new_buffer_size) {
+        /* needed to but failed to grow the buffer */
+        return NULL;
+    }
+
+    /* new buffers won't be zero filled so must strcpy */
+    (*current_size == 0)
+        ? strcpy(*buffer, src)
+        : strcat(*buffer, src);
+
+    *current_size = new_buffer_size;
+    return *buffer;
 }
 

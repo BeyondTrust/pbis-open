@@ -1,27 +1,26 @@
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -57,7 +56,7 @@ static struct
     DWORD dwCount;
     LSA_QUERY_LIST QueryList;
     BOOLEAN bShowUsage;
-} gState = 
+} gState =
 {
     .pszTargetProvider = NULL,
     .FindFlags = 0,
@@ -141,24 +140,30 @@ ShowUsage(
         Basename(pszProgramName));
     printf(
         "\n"
+        "Description:\n"
+        "    Enumerate members of group(s).\n"
+        "\n"
         "Object type options:\n"
-        "    --user                  Return only user objects\n"
-        "    --group                 Return only group objects\n"
+        "    --user                  Return only user objects.\n"
+        "    --group                 Return only group objects.\n"
         "\n"
         "Key type options:\n"
-        "    --by-dn                 Specify groups by distinguished name\n"
-        "    --by-sid                Specify groups by SID\n"
-        "    --by-nt4                Specify groups by NT4-style domain-qualified name\n"
-        "    --by-alias              Specify groups by alias (must specify object type)\n"
-        "    --by-upn                Specify groups by user principal name\n"
-        "    --by-unix-id            Specify groups by UID or GID (must specify object type)\n"
-        "    --by-name               Specify groups by generic name (NT4, alias, or UPN accepted)\n"
+        "    --by-dn                 Specify groups by distinguished name.\n"
+        "    --by-sid                Specify groups by SID.\n"
+        "    --by-nt4                Specify groups by NT4-style domain-qualified name.\n"
+        "    --by-alias              Specify groups by alias (must specify object type).\n"
+        "    --by-unix-id            Specify groups by UID or GID (must specify object type).\n"
+        "    --by-name               Specify groups by generic name (NT4, or alias accepted). This is the default. \n"
         "\n"
         "Query flags:\n"
-        "     --nss                  Omit data not necessary for NSS layer\n"
+        "    --nss                  Omit data not necessary for NSS layer.\n"
         "\n"
         "Other options:\n"
-        "     --provider name        Direct request to provider with the specified name\n"
+        "    --provider name        Direct request to provider with the specified name.\n"
+        "\n"
+        "Examples:\n"
+        "    enum-members TEST\\\\domain^users TEST\\\\domain^admins\n"
+        "    enum-members --user --by-nt4 TEST\\\\domain^users\n"
         "\n");
 }
 
@@ -202,11 +207,6 @@ ParseArguments(
             dwError = SetQueryType(LSA_QUERY_TYPE_BY_ALIAS);
             BAIL_ON_LSA_ERROR(dwError);
         }
-        else if (!strcmp(ppszArgv[i], "--by-upn"))
-        {
-            dwError = SetQueryType(LSA_QUERY_TYPE_BY_UPN);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
         else if (!strcmp(ppszArgv[i], "--by-unix-id"))
         {
             dwError = SetQueryType(LSA_QUERY_TYPE_BY_UNIX_ID);
@@ -224,7 +224,7 @@ ParseArguments(
         else if (!strcmp(ppszArgv[i], "--provider"))
         {
             i++;
-                
+
             if (i >= argc)
             {
                 dwError = LW_ERROR_INVALID_PARAMETER;
@@ -282,7 +282,7 @@ ResolveSid(
             SingleList.ppszStrings = &QueryList.ppszStrings[dwIndex];
             break;
         }
-        
+
         dwError = LsaFindObjects(
             hLsa,
             gState.pszTargetProvider,
@@ -302,7 +302,7 @@ ResolveSid(
     }
 
 error:
-    
+
     if (ppObjects)
     {
         LsaFreeSecurityObjectList(1, ppObjects);
@@ -393,7 +393,7 @@ EnumMembers(
                 gState.FindFlags,
                 pszSid);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             for (;;)
             {
                 dwError = LsaEnumMembers(
@@ -408,12 +408,12 @@ EnumMembers(
                     break;
                 }
                 BAIL_ON_LSA_ERROR(dwError);
-                
+
                 dwError = ResolveMembers(hLsa, dwCount, ppszMembers, &ppObjects);
                 BAIL_ON_LSA_ERROR(dwError);
-                
+
                 for (dwIndex = 0; dwIndex < dwCount; dwIndex++, dwTotalIndex++)
-                {                  
+                {
                     if (ppObjects[dwIndex])
                     {
                         if (ppObjects[dwIndex]->type == gState.ObjectType || gState.ObjectType == LSA_OBJECT_TYPE_UNDEFINED)
@@ -433,7 +433,7 @@ EnumMembers(
                 LsaFreeSidList(dwCount, ppszMembers);
                 ppszMembers = NULL;
             }
-            
+
             LW_SAFE_FREE_MEMORY(pszSid);
             LsaCloseEnum(hLsa, hEnum);
             hEnum = NULL;
@@ -453,7 +453,7 @@ cleanup:
     {
         LsaFreeSidList(dwCount, ppszMembers);
     }
-    
+
     if (hEnum)
     {
         LsaCloseEnum(hLsa, hEnum);
@@ -495,7 +495,7 @@ EnumMembersMain(
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
         }
-        
+
         dwError = EnumMembers();
         BAIL_ON_LSA_ERROR(dwError);
     }

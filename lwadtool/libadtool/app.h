@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -33,7 +33,7 @@
  *        Application context definitions.
  *
  * Authors: Author: CORP\slavam
- * 
+ *
  * Created on: Mar 23, 2010
  *
  */
@@ -60,7 +60,7 @@
 #define ADT_SEARCH_CELLS_ACT             "search-cells"
 #define ADT_LOOKUP_CELL_ACT             "lookup-cell"
 #define ADT_LOOKUP_CELL_USER_ACT        "lookup-cell-user"
-#define ADT_lOOKUP_CELL_GROUP_ACT       "lookup-cell-group"
+#define ADT_LOOKUP_CELL_GROUP_ACT       "lookup-cell-group"
 #define ADT_DELETE_CELL_ACT             "delete-cell"
 
 /**
@@ -87,6 +87,7 @@
 #define ADT_ADD_TO_GROUP_ACT            "add-to-group"
 #define ADT_REMOVE_FROM_GROUP_ACT       "remove-from-group"
 #define ADT_UNLOCK_ACCOUNT_ACT          "unlock-account"
+#define ADT_SET_ATTR_ACT                "set-attr"
 
 #define A_DESC_HEADER "Description: "
 #define A_EXAMPLE_HEADER "\n\nExample: "
@@ -433,6 +434,12 @@ extern BOOL IsMultiForestMode(IN AdtActionTP action);
  */
 extern PSTR GetCurrentNtTime();
 
+/*
+ * Set the servicePrincipalName attribute in AD.
+ */
+extern DWORD SetObjectSPNAttribute(IN AdtActionTP action, IN PCSTR pszUserName);
+
+
 /**
  * Actions' initialization methods.
  */
@@ -472,6 +479,8 @@ extern DWORD InitAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD InitAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD InitAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD InitAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD InitAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' validate methods.
@@ -511,6 +520,8 @@ extern DWORD ValidateAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD ValidateAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD ValidateAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD ValidateAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD ValidateAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' execute method.
@@ -550,6 +561,8 @@ extern DWORD ExecuteAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD ExecuteAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD ExecuteAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Actions' clean up methods.
@@ -591,6 +604,8 @@ extern DWORD CleanUpAdtResetComputerPasswordAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtAddToGroupAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtRemoveFromGroupAction(IN AdtActionTP action);
 extern DWORD CleanUpAdtUnlockAccountAction(IN AdtActionTP action);
+extern DWORD CleanUpAdtSetAttrAction(IN AdtActionTP action);
+
 
 /**
  * Error message buffer.

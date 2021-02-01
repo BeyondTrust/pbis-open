@@ -1,0 +1,63 @@
+BeyondTrust AD Bridge - Open Edition
+Version @FULL_VERSION@
+Copyright 2019 BeyondTrust
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+The additional components listed below are covered under separate license agreements:
+
+- cyrus-sasl - Copyright notice
+- dcerpc - BSD License
+- krb5 - MIT License
+- libedit - BSD License
+- libiconv - LGPLv2
+- libtdb - LGPLv2
+- libuuid - BSD License
+- libxml2 - MIT License
+- linenoise-mob - BSD 2-clause "Simplified" License
+- mod_auth_kerb - BSD License
+- mod_auth_pam - BSD License
+- openldap - OpenLDAP Public License
+- opensoap - Copyright notice
+- openssl - OpenSSL License
+- popt - MIT License
+- sqlite - Public Domain
+- tomlc99 - MIT License
+- MakeKit - BSD License
+
+For more details and for the full text for each of these licenses, read the
+LICENSE and COPYING files included with this software.
+
+Acknowledgements:
+This product includes software developed by the University of California,
+Berkeley and its contributors.
+
+This product includes software developed by Computing Services at Carnegie
+Mellon University (http://www.cmu.edu/computing/).
+
+This product includes software developed by the OpenSSL Project for use in
+the OpenSSL Toolkit (http://www.openssl.org/)
+
+This product includes cryptographic software written by Eric Young
+(eay@cryptsoft.com)"
+
+BeyondTrust AD Bridge, Open Edition is an open source, community
+project sponsored by BeyondTrust Software to integrate Linux, Unix, and Mac in
+Microsoft Active Directory and authenticate users with their domain
+credentials.
+
+BEYONDTRUST SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS
+AS WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH LIKEWISE
+SOFTWARE OR BEYONDTRUST SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER
+THE TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD, NOTWITHSTANDING THE ABOVE
+NOTICE.

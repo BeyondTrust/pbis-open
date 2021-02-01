@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -155,7 +155,7 @@ typedef LW_LONG  LW_NTSTATUS, *LW_PNTSTATUS;
 typedef LW_WCHAR           LW_TCHAR;
 #else
 typedef LW_CHAR            LW_TCHAR;
-#endif 
+#endif
 
 typedef struct _LW_GUID {
     LW_ULONG Data1;
@@ -485,7 +485,7 @@ typedef LW_PANSI_STRING PANSI_STRING;
 #define ANSI_STRING_MAX_CHARS LW_ANSI_STRING_MAX_CHARS
 #define ANSI_STRING_MAX_BYTES LW_ANSI_STRING_MAX_BYTES
 
-#define RTL_STRING_IS_NULL_OR_EMPTY(String) LW_RTL_STRING_IS_NULL_OR_EMPTY(String) 
+#define RTL_STRING_IS_NULL_OR_EMPTY(String) LW_RTL_STRING_IS_NULL_OR_EMPTY(String)
 #define RtlCStringIsNullOrEmpty(String) LwRtlCStringIsNullOrEmpty(String)
 
 #define RTL_CONSTANT_STRING(StringLiteral) LW_RTL_CONSTANT_STRING(StringLiteral)
@@ -504,5 +504,10 @@ typedef LW_PANSI_STRING PANSI_STRING;
 cpp_quote("#endif")
 
 #endif
+
+// krb5/src/plugins/preauth/pkinit/pkcs11.h struct ck_slot_info field
+// slot description length is hardcoded to 64. Using the following define
+// for BeyondTrust AD Bridge use.
+#define LW_CK_SLOT_DESCRIPTION_LEN 64
 
 #endif

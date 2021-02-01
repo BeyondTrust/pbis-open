@@ -4,8 +4,8 @@ make()
         PROGRAM=regshell \
         SOURCES="cmdparse.c regshell.c import.c export.c" \
         INCLUDEDIRS=". ../include ../shellutil" \
-        LIBDEPS="regcommon regclient rsutils lwbase_nothr edit" \
-        HEADERDEPS="lw/base.h lwmsg/lwmsg.h histedit.h"
+        LIBDEPS="regcommon regclient rsutils lwbase_nothr linenoise-mob" \
+        HEADERDEPS="lw/base.h lwmsg/lwmsg.h linenoise.h"
 
     mk_stage \
         DEST="${MK_BINDIR}/edit-reg" \

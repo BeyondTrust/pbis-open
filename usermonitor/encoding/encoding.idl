@@ -54,4 +54,13 @@ interface usermonitor_encoding
     void GROUP_MEMBERSHIP_CHANGE_Decode(
             [in] handle_t h,
             [out] GROUP_MEMBERSHIP_CHANGE **value);
+
+    void AD_USER_CHANGE_Encode(
+            [in] handle_t h,
+            [in, unique] AD_USER_CHANGE * value);
+
+    void AD_USER_CHANGE_Decode(
+            [in] handle_t h,
+            [out] AD_USER_CHANGE **value);
+
 }

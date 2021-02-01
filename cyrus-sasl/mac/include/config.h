@@ -6,7 +6,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -16,7 +16,7 @@
  * 3. The name "Carnegie Mellon University" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For permission or any other legal
- *    details, please contact  
+ *    details, please contact
  *      Office of Technology Transfer
  *      Carnegie Mellon University
  *      5000 Forbes Avenue
@@ -128,7 +128,9 @@ extern int getopt(
 	char * const *nargv,
 	const char *ostr);
 
-extern int getsubopt(char **optionp, const char * const *tokens, char **valuep);
+/* extern int getsubopt(char **optionp, const char * const *tokens, char **valuep); */
+/* BeyondTrust AD Bridge modification to make this definition match the OSX unistd.h definition */
+extern int getsubopt(char **optionp, char * const *tokens, char **valuep);
 extern char* getpass(const char *prompt);
 
 /* ------------------------------------------------------------ */
@@ -166,7 +168,7 @@ struct sockaddr {
         u_char  sa_len;                 /* total length */
         u_char  sa_family;              /* address family */
         char    sa_data[14];            /* address value */
-}; 
+};
 #define SOCK_MAXADDRLEN 255             /* longest possible addresses */
 
 #ifndef HAVE_SOCKLEN_T
@@ -258,9 +260,9 @@ struct sockaddr_storage {
 #define SOCK_DGRAM		2
 
 struct iovec {
-    char *iov_base; 
+    char *iov_base;
     long iov_len;
-};      
+};
 
 #ifndef HAVE_GETADDRINFO
 #define        getaddrinfo     sasl_getaddrinfo

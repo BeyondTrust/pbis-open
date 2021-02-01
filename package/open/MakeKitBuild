@@ -53,19 +53,19 @@ package_rpm()
         mk_rpm_sub_done
     mk_rpm_done
 }
-      
+
 package_freebsd()
 {
     mk_freebsd_do \
         PACKAGE="$PKG_OPEN_FREEBSD_NAME" \
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}" \
-        SHORT="-PowerBroker Identity Services Open ${LW_VERSION}" \
-        LONG="-PowerBroker Identity Services Open joins your machine into Active Directory" \
+        SHORT="-BeyondTrust AD Bridge Open ${LW_VERSION}" \
+        LONG="-BeyondTrust AD Bridge Open joins your machine into Active Directory" \
         PREINST="freebsd/preinstall.in" \
         POSTINST="freebsd/postinstall.in" \
         PRERM="freebsd/preuninstall.in" \
         POSTRM="freebsd/postuninstall.in"
-        
+
         open_files
         open_files_compat
 
@@ -75,7 +75,7 @@ package_freebsd()
 
     mk_freebsd_done
 }
-      
+
 package_pkg()
 {
     mk_pkg_do \
@@ -114,14 +114,14 @@ package_pkg()
 
         mk_pkg_sub_done
 
-        
+
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopen" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
 
             open_files_prefix
             open_files_compat_prefix
-            
+
             # Indicate directories we own
             mk_package_dirs \
                 "${MK_PREFIX}" \
@@ -137,6 +137,7 @@ package_pkg()
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/netlogon" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
                 "${MK_LIBDIR}/lsa-rpc" \
@@ -144,6 +145,7 @@ package_pkg()
                 "${MK_LIBDIR}/lw-map-sec" \
                 "${MK_LIBDIR}/apache2.0" \
                 "${MK_LIBDIR}/apache2.2" \
+                "${MK_LIBDIR}/apache2.4" \
 
             mk_multiarch_do
                 mk_package_dirs "${MK_LIBDIR}"
@@ -167,10 +169,10 @@ package_lpp()
     mk_lpp_do \
         PACKAGE="${PKG_OPEN_LPP_NAME}" \
         VERSION="${PKG_LPP_VERSION}"
-    
+
         mk_lpp_sub_do \
             SUBPACKAGE="-" \
-            DESCRIPTION="PowerBroker Identity Services Open" \
+            DESCRIPTION="BeyondTrust AD Bridge Open" \
             PREIN="lpp/root.pre_i.in" \
             CONFIG="lpp/root.config.in" \
             UNCONFIG="lpp/root.unconfig.in" \
@@ -179,7 +181,7 @@ package_lpp()
 
             open_files
             open_files_compat
-            
+
             # Because AIX SysV-compatible shared libraries do
             # not have an SONAME mechanism, we need to keep
             # the plain .so symlinks in addition to the .so.*
@@ -205,6 +207,7 @@ package_lpp()
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/krb5/plugins/preauth" \
                 "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/netlogon" \
                 "${MK_LIBDIR}/sasl2" \
                 "${MK_LIBDIR}/lsa-provider" \
                 "${MK_LIBDIR}/lsa-rpc" \
@@ -224,11 +227,11 @@ package_depot()
         PSF="depot/open.psf.in" \
         CONTROLFILES="depot/copyright.in depot/depend.in depot/postinstall.in \
                       depot/preinstall.in depot/preremove.in"
-    
+
         mk_depot_sub_do SUBPACKAGE=prefix
             open_files_prefix
             open_files_compat_prefix
-            
+
             if [ "$MK_HOST_ARCH" = "ia64" ]
             then
                 mk_package_patterns SUBDIRS="@package/unpack" \
@@ -236,7 +239,7 @@ package_depot()
                     "$MK_PREFIX/lib/pa20_64/*"
             fi
         mk_depot_sub_done
-        
+
         mk_depot_sub_do SUBPACKAGE=root
             open_files_root
             open_files_usr
@@ -265,7 +268,7 @@ package_mac()
                    mac/Resources/English.lproj/ReadMe.txt \
                    mac/Resources/English.lproj/License.txt" \
         BINRESOURCES="mac/Resources/English.lproj/background.gif"
-    
+
         mk_macpkg_sub_do SUBPACKAGE=image
             open_files
             # No separate GUI package
@@ -280,13 +283,13 @@ make()
 {
     OPEN_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @popt @sqlite \
-        @libuuid @openssl @curl @libxml2 @libedit \
-        @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
-        @lwio @libschannel @dcerpc @centutils @lwsm @lwadtool \
-        @eventlog @lsass @reapsysl @lwdns @lwnetapi @opensoap\
-        @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
-        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
-        @reskit @usermonitor @mod_auth_kerb @krb5_plugins"
+        @libuuid @openssl @curl @libxml2 @libtdb @lwbase @lwmsg \
+        @lwreg @lwadvapi @netlogon @lwio @libschannel @dcerpc \
+        @centutils @lwsm @lwadtool @eventlog @lsass @reapsysl \
+        @lwdns @lwnetapi @opensoap @linenoise-mob @domainjoin/libdomainjoin \
+        @domainjoin/domainjoin-cli @domainjoin/scripts @lwconfig \
+        @lwupgrade @samba-interop @config @reskit @usermonitor \
+        @mod_auth_kerb @krb5_plugins @btkrb5 @tomlc99"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
@@ -326,11 +329,14 @@ open_files_prefix()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/apache2.4/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/netlogon/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwicompat_v*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
         "${MK_DATADIR}/rhel/*" \
         "${MK_DATADIR}/rhel/6.0/*" \
         "${MK_DATADIR}/rhel/7.0/*" \
+        "${MK_DATADIR}/rhel/8.0/*" \
         "${MK_DATADIR}/fedora/*" \
         "${MK_DATADIR}/fedora/21/*" \
         "${MK_DATADIR}/fedora/20/*" \
@@ -341,8 +347,11 @@ open_files_prefix()
         "${MK_DATADIR}/fedora/15/*" \
         "${MK_DATADIR}/fedora/14/*" \
         "${MK_DATADIR}/fedora/13/*" \
-        "${LW_CONFIGDIR}/*.reg" \
-        "${MK_PREFIX}/data/VERSION"
+        "${LW_CONFIGDIR}/*.reg"     \
+        "${MK_PREFIX}/data/VERSION" \
+        "${MK_PREFIX}/data/COPYING" \
+        "${MK_PREFIX}/data/LICENSES" \
+        "${MK_SYSCONFDIR}/djpbps.config.template"
 }
 
 open_files_usr()

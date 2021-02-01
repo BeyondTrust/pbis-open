@@ -102,7 +102,7 @@ done
 
 check_params SOURCE_DIR BUILD_DIR DIST_DIR
 
-if [ -n "$TOOLS" ]
+if [ -n "$TOOLS" ] && [ -d "$TOOLS" ]
 then
     PATH="${TOOLS}/bin:$PATH"
     EXTRA_CPPFLAGS="-DNDEBUG=1 -I${TOOLS}/include"

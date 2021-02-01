@@ -266,7 +266,7 @@
                 <ostype name="command">vald</ostype>
               </object>
             </array>
-            <string name="title">Destination - Likewise AD Account</string>
+            <string name="title">Destination - AD Bridge Account</string>
           </object>
           <object class="IBCarbonSeparator" id="207">
             <string name="bounds">12 273 175 274 </string>

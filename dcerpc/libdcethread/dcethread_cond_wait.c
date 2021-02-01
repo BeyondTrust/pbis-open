@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -132,7 +131,7 @@ MU_TEST(dcethread_cond_wait, interrupt_post)
 
     ts.tv_nsec = 100000000;
     ts.tv_sec = 0;
-    
+
     MU_TRY_DCETHREAD( dcethread_create(&thread, NULL, basic_thread, NULL) );
     MU_TRY_DCETHREAD( dcethread_delay(&ts) );
     MU_TRY_DCETHREAD( dcethread_interrupt(thread) );
@@ -172,7 +171,7 @@ global_lock_thread(void* data)
 
     MU_ASSERT(interrupt_caught);
 
-    return NULL;    
+    return NULL;
 }
 
 MU_TEST(dcethread_cond_wait, interrupt_global)
@@ -188,7 +187,7 @@ MU_TEST(dcethread_cond_wait, interrupt_global)
     MU_TRY_DCETHREAD( dcethread_mutex_lock(&global_mutex) );
     MU_TRY_DCETHREAD( dcethread_interrupt(thread) );
     MU_TRY_DCETHREAD( dcethread_mutex_unlock(&global_mutex) );
-    MU_TRY_DCETHREAD( dcethread_join(thread, NULL) );    
+    MU_TRY_DCETHREAD( dcethread_join(thread, NULL) );
 }
 
 #endif /* TEST */

@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -562,25 +562,6 @@ INT GetFirstIndexOfChar(IN PSTR str, IN CHAR ch, IN INT ignoreCase)
     }
 
     return -1;
-}
-
-/**
- * Check if all characters in the string are printable.
- *
- * @param str String to check.
- * @return TRUE is the string does not contain non-printable characters; FALSE otherwise.
- */
-BOOL IsPrintable(IN PSTR str)
-{
-    INT i;
-
-    for(i = 0; str && str[i]; ++i) {
-        if(!isprint((int) (str[i]))) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
 }
 
 /**
@@ -1290,3 +1271,36 @@ Str2Ull(IN PCSTR pStr, IN register INT base, OUT unsigned long long int *res)
     error:
         goto cleanup;
 }
+
+// Distinguish between nfs, nfs/ and http/www.linuxcomputer.com. If it is
+// service class name with trailing slash, then strip the slash.
+VOID
+GroomSpn(PSTR *ppszSpn, BOOLEAN *bIsServiceClass)
+{
+   PSTR pszHasPeriod = NULL;
+   PSTR pszHasSlash = NULL;
+
+   LwStripLeadingWhitespace(*ppszSpn);
+   LwStripTrailingWhitespace(*ppszSpn);
+
+   LwStrChr(*ppszSpn, '.', &pszHasPeriod);
+   if (pszHasPeriod)
+   {
+     *bIsServiceClass = FALSE;
+     return;
+   }
+
+   LwStrChr(*ppszSpn, '/', &pszHasSlash);
+   if ((pszHasSlash) && (strlen(pszHasSlash) == 1))
+   {
+      *pszHasSlash = '\0';
+      *bIsServiceClass = TRUE;
+   }
+   else if ((pszHasSlash) && (strlen(pszHasSlash) >= 1))
+     *bIsServiceClass = FALSE;
+   else
+     *bIsServiceClass = TRUE;
+
+   return;
+}
+

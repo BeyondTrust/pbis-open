@@ -97,10 +97,10 @@ determine_upgrade_type()
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
     if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall BeyondTrust AD Bridge Enterprise before proceeding."
         exit 1
     elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
         log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
@@ -321,6 +321,27 @@ preserve_6_1_configuration()
     fi
 }
 
+preserve_settings()
+{
+    PRESERVE_FILE="${UPGRADEDIR}/preserveSetting"
+    LSASS_KEY="HKEY_THIS_MACHINE\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory"
+    SAVE_VALUES="UnprovisionedModeEnabled|AssumeDefaultCellModeEnabled|CellSupport"
+
+    if [ -d /opt/pbis/bin ]; then
+        regshell=/opt/pbis/bin/regshell
+    elif [ -d /opt/likewise/bin ]; then
+        regshell=/opt/likewise/bin/lwregshell
+    elif [ -x /usr/bin/lwregshell ]; then
+        regshell=/usr/bin/lwregshell
+    else
+        regshell=""
+    fi
+
+    if [ -n "$regshell" ]; then
+      $regshell list_values ${LSASS_KEY} | awk '{print $2, $4}' | grep -E ${SAVE_VALUES} >> ${PRESERVE_FILE} 2>&1
+    fi
+}
+
 wait_for_lwsm_shutdown()
 {
     LWSMD_WAIT_TIME=$1
@@ -339,7 +360,7 @@ wait_for_lwsm_shutdown()
 
 preinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade begins (`date`)"
 
     determine_upgrade_type
 
@@ -349,11 +370,13 @@ preinstall()
 
     add_TrustEnumerationWaitSetting
 
+    preserve_settings
+
     # Try to deconfigure pam/nsswitch
     if [ -x @MK_BINDIR@/domainjoin-cli ]; then
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
-    
+
     elif [ -x /opt/likewise/bin/domainjoin-cli ]; then
         run_quiet /opt/likewise/bin/domainjoin-cli configure --disable pam
         run_quiet /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
@@ -380,7 +403,7 @@ preinstall()
 
     preserve_join_status
 
-    logfile "Package: PowerBroker Identity Services Open Upgrade finished"
+    logfile "Package: BeyondTrust AD Bridge Open Upgrade finished"
     exit 0
 }
 

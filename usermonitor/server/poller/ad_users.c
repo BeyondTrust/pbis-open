@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -47,6 +46,42 @@
 
 #define AD_PROVIDER_REGKEY "Services\\lsass\\Parameters\\Providers\\ActiveDirectory"
 #define AD_PROVIDER_POLICY_REGKEY "Policy\\" AD_PROVIDER_REGKEY
+
+VOID
+UmnSrvFreeADUserContents(
+    PAD_USER_INFO pUser
+    )
+{
+    LW_SAFE_FREE_MEMORY(pUser->pszDN);
+    LW_SAFE_FREE_MEMORY(pUser->pszObjectSid);
+    LW_SAFE_FREE_MEMORY(pUser->pszNetbiosDomainName);
+    LW_SAFE_FREE_MEMORY(pUser->pszSamAccountName);
+    LW_SAFE_FREE_MEMORY(pUser->pszPrimaryGroupSid);
+    LW_SAFE_FREE_MEMORY(pUser->pszUPN);
+    LW_SAFE_FREE_MEMORY(pUser->pszAliasName);
+    LW_SAFE_FREE_MEMORY(pUser->pszWindowsHomeFolder);
+    LW_SAFE_FREE_MEMORY(pUser->pszLocalWindowsHomeFolder);
+
+    LW_SAFE_FREE_MEMORY(pUser->pw_name);
+    LW_SAFE_FREE_MEMORY(pUser->pw_passwd);
+    LW_SAFE_FREE_MEMORY(pUser->pw_gecos);
+    LW_SAFE_FREE_MEMORY(pUser->pw_dir);
+    LW_SAFE_FREE_MEMORY(pUser->pw_shell);
+    LW_SAFE_FREE_MEMORY(pUser->pDisplayName);
+}
+
+/**
+ * @brief Report true if usermonitor considers the user "enabled",
+ * this controls whether usermonitor reports on this user.
+ */
+static inline
+BOOL
+UmnSrvUserIsEnabled(
+        const PLSA_SECURITY_OBJECT pUser
+        )
+{
+    return (pUser->enabled);
+}
 
 static
 DWORD
@@ -87,9 +122,16 @@ UmnSrvAddUsersFromMembership(
 
     if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
-        if (ppObjects[0]->enabled &&
+        UMN_LOG_DEBUG("Processing AD user %s (%s)",
+                ppObjects[0]->pszSamAccountName,
+                ppObjects[0]->pszObjectSid);
+
+        if (UmnSrvUserIsEnabled(ppObjects[0]) &&
                 !LwHashExists(pUsers, ppObjects[0]->pszObjectSid))
         {
+            UMN_LOG_VERBOSE("Found AD user %s that can login",
+                        ppObjects[0]->userInfo.pszUnixName);
+
             dwError = LwHashSetValue(
                             pUsers,
                             ppObjects[0]->pszObjectSid,
@@ -100,6 +142,7 @@ UmnSrvAddUsersFromMembership(
     }
     else if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_GROUP)
     {
+        UMN_LOG_DEBUG("Querying membership of group %s", ppObjects[0]->pszSamAccountName);
         dwError = LsaQueryExpandedGroupMembers(
                         hLsass,
                         NULL,
@@ -110,9 +153,16 @@ UmnSrvAddUsersFromMembership(
                         &ppMembers);
         BAIL_ON_UMN_ERROR(dwError);
 
+        UMN_LOG_DEBUG("Group %s membership count %d", ppObjects[0]->pszSamAccountName, memberCount);
+
         for (i = 0; i < memberCount; i++)
         {
-            if (ppMembers[i]->enabled &&
+            UMN_LOG_DEBUG("Processing group %s member %s (%s)",
+                    ppObjects[0]->pszSamAccountName,
+                    ppMembers[i]->pszSamAccountName,
+                    ppMembers[i]->pszObjectSid);
+
+            if (UmnSrvUserIsEnabled(ppMembers[i]) &&
                     !LwHashExists(pUsers, ppMembers[i]->pszObjectSid))
             {
                 UMN_LOG_VERBOSE("Found AD user %s that can login because of group %s",
@@ -161,18 +211,472 @@ UmnSrvHashFreeObjectValue(
     }
 }
 
+
+DWORD
+UmnSrvReadADUser(
+    PCSTR pParentKey,
+    PCSTR pName,
+    PAD_USER_INFO pADUser
+    )
+{
+    DWORD dwError = 0;
+    PSTR pUserPath = NULL;
+
+    /* n.b. not all attributes are written to
+     * the registry, see UmnSrvWriteADUserValues()
+     */
+    LWREG_CONFIG_ITEM userLayout[] =
+    {
+        {
+            "pw_name",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_name,
+            NULL
+        },
+        {
+            "pw_passwd",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_passwd,
+            NULL
+        },
+        {
+            "pw_uid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_uid,
+            NULL
+        },
+        {
+            "pw_gid",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gid,
+            NULL
+        },
+        {
+            "pw_gecos",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_gecos,
+            NULL
+        },
+        {
+            "pw_dir",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_dir,
+            NULL
+        },
+        {
+            "pw_shell",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pw_shell,
+            NULL
+        },
+        {
+            "pDisplayname",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pDisplayName,
+            NULL
+        },
+        {
+            "ad_objectsid",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszObjectSid,
+            NULL
+        },
+        {
+            "ad_dn",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszDN,
+            NULL
+        },
+        {
+            "ad_netbiosdomainname",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszNetbiosDomainName,
+            NULL
+        },
+        {
+            "ad_samaccountname",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszSamAccountName,
+            NULL
+        },
+        {
+            "ad_primarygroupsid",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszPrimaryGroupSid,
+            NULL
+        },
+        {
+            "ad_upn",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszUPN,
+            NULL
+        },
+        {
+            "ad_aliasname",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszAliasName,
+            NULL
+        },
+        {
+            "ad_passwordexpired",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPasswordExpired,
+            NULL
+        },
+        {
+            "ad_passwordneverexpires",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPasswordNeverExpires,
+            NULL
+        },
+        {
+            "ad_promptpasswordchange",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bPromptPasswordChange,
+            NULL
+        },
+        {
+            "ad_usercanchangepassword",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bUserCanChangePassword,
+            NULL
+        },
+        {
+            "ad_accountdisabled",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountDisabled,
+            NULL
+        },
+        {
+            "ad_accountexpired",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountExpired,
+            NULL
+        },
+        {
+            "ad_accountlocked",
+            FALSE,
+            LwRegTypeBoolean,
+            0,
+            -1,
+            NULL,
+            &pADUser->bAccountLocked,
+            NULL
+        },
+        {
+            "ad_windowshomefolder",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszWindowsHomeFolder,
+            NULL
+        },
+        {
+            "ad_localwindowshomefolder",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pADUser->pszLocalWindowsHomeFolder,
+            NULL
+        },
+        {
+            "LastUpdated",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pADUser->LastUpdated,
+            NULL
+        },
+    };
+
+    UMN_LOG_VERBOSE("Reading previous values for user '%s'",
+                    pName);
+
+    dwError = LwAllocateStringPrintf(
+                    &pUserPath,
+                    "Services\\" SERVICE_NAME "\\Parameters\\%s\\%s",
+                    pParentKey,
+                    pName);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pADUser->version = AD_USER_INFO_VERSION;
+    dwError = LwRegProcessConfig(
+                pUserPath,
+                NULL,
+                userLayout,
+                sizeof(userLayout)/sizeof(userLayout[0]));
+    BAIL_ON_UMN_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pUserPath);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
+UmnSrvGetADUserEventDescription(PWSTR *ppszDescription,
+            PCSTR pOperation,
+            const char * const oldTimeBuf,
+            PAD_USER_INFO pOld,
+            const char * const newTimeBuf,
+            PLSA_SECURITY_OBJECT pNew)
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    dwError = LwAllocateWc16sPrintfW(
+                    ppszDescription,
+                    L"Between %hhs and %hhs, user '%hhs' was %hhs.\n"
+                    L"Passwd (from passwd struct)\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Uid\n"
+                    L"\tOld: %d\n"
+                    L"\tNew: %d\n"
+                    L"Primary group id\n"
+                    L"\tOld: %d\n"
+                    L"\tNew: %d\n"
+                    L"Gecos\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Home directory\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Shell\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Display Name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"DN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"SID\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Netbios domain name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Sam account name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Primary group SID\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"UPN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Alias name\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Generated UPN\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Password expired\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Password never expires\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Must change password\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Can change password\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account disabled\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account expired\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Account locked\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Windows home folder\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Local Windows home folder\n"
+                    L"\tOld: %hhs\n"
+                    L"\tNew: %hhs",
+                    oldTimeBuf,
+                    newTimeBuf,
+                    pOld ? pOld->pw_name : pNew->userInfo.pszUnixName,
+                    pOperation,
+                    pOld ? pOld->pw_passwd : "",
+                    pNew ? (pNew->userInfo.pszPasswd ?  pNew->userInfo.pszPasswd : "x") : "",
+                    pOld ? pOld->pw_uid : -1,
+                    pNew ? pNew->userInfo.uid : -1,
+                    pOld ? pOld->pw_gid : -1,
+                    pNew ? pNew->userInfo.gid : -1,
+                    pOld ? pOld->pw_gecos : "",
+                    (pNew && pNew->userInfo.pszGecos) ?  pNew->userInfo.pszGecos : "",
+                    pOld ? pOld->pw_dir : "",
+                    pNew ? pNew->userInfo.pszHomedir : "",
+                    pOld ? pOld->pw_shell : "",
+                    pNew ? pNew->userInfo.pszShell : "",
+                    pOld ? pOld->pDisplayName : "",
+                    pNew ? pNew->userInfo.pszDisplayName : "",
+
+                    pOld ? pOld->pszDN : "",
+                    (pNew && pNew->pszDN) ? pNew->pszDN : "",
+
+                    pOld ? pOld->pszObjectSid : "",
+                    (pNew && pNew->pszObjectSid) ? pNew->pszObjectSid : "",
+
+                    pOld ? pOld->pszNetbiosDomainName : "",
+                    (pNew && pNew->pszNetbiosDomainName) ? pNew->pszNetbiosDomainName : "",
+
+                    pOld ? pOld->pszSamAccountName : "",
+                    (pNew && pNew->pszSamAccountName) ? pNew->pszSamAccountName : "",
+
+                    pOld ? pOld->pszPrimaryGroupSid : "",
+                    (pNew && pNew->userInfo.pszPrimaryGroupSid) ? pNew->userInfo.pszPrimaryGroupSid : "",
+
+                    pOld ? pOld->pszUPN : "",
+                    (pNew && pNew->userInfo.pszUPN) ? pNew->userInfo.pszUPN : "",
+
+                    pOld ? pOld->pszAliasName : "",
+                    (pNew && pNew->userInfo.pszAliasName) ? pNew->userInfo.pszAliasName : "",
+
+                    pOld ? (pOld->bIsGeneratedUPN ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bIsGeneratedUPN ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPasswordExpired ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPasswordExpired ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPasswordNeverExpires ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPasswordNeverExpires ? "true" : "false") : "",
+
+                    pOld ? (pOld->bPromptPasswordChange ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bPromptPasswordChange ? "true" : "false") : "",
+
+                    pOld ? (pOld->bUserCanChangePassword ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bUserCanChangePassword ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountDisabled ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountDisabled ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountExpired ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountExpired ? "true" : "false") : "",
+
+                    pOld ? (pOld->bAccountLocked ? "true" : "false") : "",
+                    pNew ? (pNew->userInfo.bAccountLocked ? "true" : "false") : "",
+
+                    pOld ? pOld->pszWindowsHomeFolder : "",
+                    (pNew && pNew->userInfo.pszWindowsHomeFolder) ? pNew->userInfo.pszWindowsHomeFolder : "",
+
+                    pOld ? pOld->pszLocalWindowsHomeFolder : "",
+                    (pNew && pNew->userInfo.pszLocalWindowsHomeFolder) ? pNew->userInfo.pszLocalWindowsHomeFolder : ""
+            );
+
+    return dwError;
+}
+
+
 DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long PreviousRun,
-    PUSER_MONITOR_PASSWD pOld,
+    PAD_USER_INFO pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
     )
 {
     DWORD dwError = 0;
     // Do not free. The field values are borrowed from other structures.
-    USER_CHANGE change = { { 0 } };
+    AD_USER_CHANGE change = { { 0 } };
     LW_EVENTLOG_RECORD record = { 0 };
     char oldTimeBuf[128] = { 0 };
     char newTimeBuf[128] = { 0 };
@@ -211,43 +715,69 @@ UmnSrvWriteADUserEvent(
 
     if (pNew)
     {
-        change.NewValue.pw_name = pNew->userInfo.pszUnixName;
-        change.NewValue.pw_passwd = pNew->userInfo.pszPasswd ?
-                                        pNew->userInfo.pszPasswd : "x";
-        change.NewValue.pw_uid = pNew->userInfo.uid;
-        change.NewValue.pw_gid = pNew->userInfo.gid;
-        change.NewValue.pw_gecos = pNew->userInfo.pszGecos ?
-                                        pNew->userInfo.pszGecos : "";
-        change.NewValue.pw_dir = pNew->userInfo.pszHomedir;
-        change.NewValue.pw_shell = pNew->userInfo.pszShell;
-        change.NewValue.pDisplayName = pNew->userInfo.pszDisplayName;
-        change.NewValue.LastUpdated = Now;
+        assert(pNew->type == LSA_OBJECT_TYPE_USER);
+
+        change.ADNewValue.version = AD_USER_INFO_VERSION;
+
+        change.ADNewValue.pszDN = pNew->pszDN;
+        change.ADNewValue.pszObjectSid = pNew->pszObjectSid;
+        change.ADNewValue.enabled = pNew->enabled;
+        change.ADNewValue.bIsLocal = pNew->bIsLocal;
+        change.ADNewValue.pszNetbiosDomainName = pNew->pszNetbiosDomainName;
+        change.ADNewValue.pszSamAccountName = pNew->pszSamAccountName;
+        change.ADNewValue.pszPrimaryGroupSid = pNew->userInfo.pszPrimaryGroupSid;
+        change.ADNewValue.pszUPN = pNew->userInfo.pszUPN;
+        change.ADNewValue.pszAliasName = pNew->userInfo.pszAliasName;
+
+        change.ADNewValue.qwPwdLastSet = pNew->userInfo.qwPwdLastSet;
+        change.ADNewValue.qwMaxPwdAge = pNew->userInfo.qwMaxPwdAge;
+        change.ADNewValue.qwPwdExpires = pNew->userInfo.qwPwdExpires;
+        change.ADNewValue.qwAccountExpires = pNew->userInfo.qwAccountExpires;
+
+        change.ADNewValue.bIsGeneratedUPN = pNew->userInfo.bIsGeneratedUPN;
+        change.ADNewValue.bIsAccountInfoKnown = pNew->userInfo.bIsAccountInfoKnown;
+        change.ADNewValue.bPasswordExpired = pNew->userInfo.bPasswordExpired;
+        change.ADNewValue.bPasswordNeverExpires = pNew->userInfo.bPasswordNeverExpires;
+        change.ADNewValue.bPromptPasswordChange = pNew->userInfo.bPromptPasswordChange;
+        change.ADNewValue.bUserCanChangePassword = pNew->userInfo.bUserCanChangePassword;
+        change.ADNewValue.bAccountDisabled = pNew->userInfo.bAccountDisabled;
+        change.ADNewValue.bAccountExpired = pNew->userInfo.bAccountExpired;
+        change.ADNewValue.bAccountLocked = pNew->userInfo.bAccountLocked;
+
+        change.ADNewValue.pw_uid = pNew->userInfo.uid;
+        change.ADNewValue.pw_gid = pNew->userInfo.gid;
+        change.ADNewValue.pw_name = pNew->userInfo.pszUnixName;
+        change.ADNewValue.pw_passwd = pNew->userInfo.pszPasswd 
+                                        ? pNew->userInfo.pszPasswd
+                                        : "x";
+        change.ADNewValue.pw_gecos = pNew->userInfo.pszGecos
+                                        ? pNew->userInfo.pszGecos
+                                        : "";
+        change.ADNewValue.pw_shell = pNew->userInfo.pszShell;
+        change.ADNewValue.pw_dir = pNew->userInfo.pszHomedir;
+
+        change.ADNewValue.pDisplayName = pNew->userInfo.pszDisplayName;
+        change.ADNewValue.pszWindowsHomeFolder = pNew->userInfo.pszWindowsHomeFolder;
+        change.ADNewValue.pszLocalWindowsHomeFolder = pNew->userInfo.pszLocalWindowsHomeFolder; 
+        change.ADNewValue.LastUpdated = Now;
     }
 
-    dwError = LwMbsToWc16s(
-                    "Application",
-                    &record.pLogname);
+    dwError = LwMbsToWc16s( "Application", &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
     if (!PreviousRun)
     {
-        dwError = LwMbsToWc16s(
-                        "Success Audit",
-                        &record.pEventType);
+        dwError = LwMbsToWc16s( "Success Audit", &record.pEventType);
     }
     else
     {
-        dwError = LwMbsToWc16s(
-                        "Information",
-                        &record.pEventType);
+        dwError = LwMbsToWc16s( "Information", &record.pEventType);
     }
     BAIL_ON_UMN_ERROR(dwError);
 
     record.EventDateTime = Now;
 
-    dwError = LwMbsToWc16s(
-                    "User Monitor",
-                    &record.pEventSource);
+    dwError = LwMbsToWc16s( "User Monitor", &record.pEventSource);
     BAIL_ON_UMN_ERROR(dwError);
 
     if (pOld != NULL && pNew != NULL)
@@ -270,7 +800,7 @@ UmnSrvWriteADUserEvent(
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pEventCategory,
-                    L"AD User %hhs",
+                    L"AD User %hhs " AD_USER_CHANGE_VERSION ,
                     pOperation);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -293,55 +823,18 @@ UmnSrvWriteADUserEvent(
         BAIL_ON_UMN_ERROR(dwError);
     }
 
-    // Leave computer NULL so it is filled in by the eventlog
+    // Do not free. This value is borrowed from other structures.
+    record.pComputer = (PWSTR)UmnEvtGetEventComputerName();
 
-    dwError = LwAllocateWc16sPrintfW(
-                    &record.pDescription,
-                    L"Between %hhs and %hhs, user '%hhs' was %hhs.\n"
-                    L"Passwd (from passwd struct)\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Uid\n"
-                    L"\tOld: %d\n"
-                    L"\tNew: %d\n"
-                    L"Primary group id\n"
-                    L"\tOld: %d\n"
-                    L"\tNew: %d\n"
-                    L"Gecos\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Home directory\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Shell\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs\n"
-                    L"Display Name\n"
-                    L"\tOld: %hhs\n"
-                    L"\tNew: %hhs",
-                    oldTimeBuf,
-                    newTimeBuf,
-                    pOld ? pOld->pw_name : pNew->userInfo.pszUnixName,
-                    pOperation,
-                    pOld ? pOld->pw_passwd : "",
-                    pNew ? (pNew->userInfo.pszPasswd ?
-                                pNew->userInfo.pszPasswd : "x") : "",
-                    pOld ? pOld->pw_uid : -1,
-                    pNew ? pNew->userInfo.uid : -1,
-                    pOld ? pOld->pw_gid : -1,
-                    pNew ? pNew->userInfo.gid : -1,
-                    pOld ? pOld->pw_gecos : "",
-                    (pNew && pNew->userInfo.pszGecos) ?
-                        pNew->userInfo.pszGecos : "",
-                    pOld ? pOld->pw_dir : "",
-                    pNew ? pNew->userInfo.pszHomedir : "",
-                    pOld ? pOld->pw_shell : "",
-                    pNew ? pNew->userInfo.pszShell : "",
-                    pOld ? pOld->pDisplayName : "",
-                    pNew ? pNew->userInfo.pszDisplayName : "");
+    dwError = UmnSrvGetADUserEventDescription(&record.pDescription,
+            pOperation,
+            oldTimeBuf,
+            pOld,
+            newTimeBuf,
+            pNew);
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = EncodeUserChange(
+    dwError = EncodeADUserChange(
                     &change,
                     &record.DataLen,
                     (PVOID*)&record.pData);
@@ -367,6 +860,7 @@ error:
     goto cleanup;
 }
 
+
 static
 DWORD
 UmnSrvWriteADUserValues(
@@ -375,6 +869,23 @@ UmnSrvWriteADUserValues(
     PLSA_SECURITY_OBJECT pUser
     )
 {
+
+    /* This doesn't write the following attributes
+     * enabled
+     * bIsLocal
+     * type
+     * qwPwdLastSet
+     * qwMaxPwdAge
+     * qwPwdExpires
+     * qwAccountExpires
+     * bIsGeneratedUPN
+     * bIsAccountInfoKnown
+     * dwLmHashLen
+     * pLmHash
+     * dwNtHashLen
+     * pNtHash
+     */
+
     DWORD dwError = 0;
     DWORD dword = 0;
     PCSTR pString = NULL;
@@ -476,12 +987,226 @@ UmnSrvWriteADUserValues(
                     strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
+    pString = pUser->pszObjectSid;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_objectsid",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->pszDN;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_dn",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->pszNetbiosDomainName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_netbiosdomainname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->pszSamAccountName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_samaccountname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+
+    pString = pUser->userInfo.pszPrimaryGroupSid;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_primarygroupsid",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->userInfo.pszUPN;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_upn",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->userInfo.pszAliasName;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_aliasname",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bPasswordExpired;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_passwordexpired",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bPasswordNeverExpires;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_passwordneverexpires",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bPromptPasswordChange;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_promptpasswordchange",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bUserCanChangePassword;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_usercanchangepassword",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bAccountDisabled;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountdisabled",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bAccountExpired;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountexpired",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->userInfo.bAccountLocked;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_accountLocked",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->userInfo.pszWindowsHomeFolder;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_windowshomefolder",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    pString = pUser->userInfo.pszLocalWindowsHomeFolder;
+    if (!pString)
+    {
+        pString = "";
+    }
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "ad_localwindowshomefolder",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
 cleanup:
     return dwError;
 
 error:
     goto cleanup;
 }
+
 
 static
 BOOLEAN
@@ -501,6 +1226,43 @@ UmnSrvStringsEqual(
     return !strcmp(pStr1, pStr2);
 }
 
+
+static
+BOOLEAN
+UmnSrvADUserChanged(
+        const PAD_USER_INFO pOld,
+        const PLSA_SECURITY_OBJECT pUser
+        )
+{
+    return ( pUser->userInfo.bPasswordExpired != pOld->bPasswordExpired
+             || pUser->userInfo.bAccountDisabled != pOld->bAccountDisabled
+             || pUser->userInfo.bAccountExpired != pOld->bAccountExpired
+             || pUser->userInfo.bAccountLocked != pOld->bAccountLocked
+             || strcmp((pUser->userInfo.pszPasswd ?
+                        pUser->userInfo.pszPasswd : "x"),
+                    pOld->pw_passwd)
+             || pUser->userInfo.uid != pOld->pw_uid
+             || pUser->userInfo.gid != pOld->pw_gid
+             || !UmnSrvStringsEqual(pUser->userInfo.pszGecos, pOld->pw_gecos)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, pOld->pw_dir)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszShell, pOld->pw_shell)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName, pOld->pDisplayName)
+             || !UmnSrvStringsEqual(pUser->pszDN, pOld->pszDN)
+             || !UmnSrvStringsEqual(pUser->pszObjectSid, pOld->pszObjectSid)
+             || !UmnSrvStringsEqual(pUser->pszNetbiosDomainName, pOld->pszNetbiosDomainName)
+             || !UmnSrvStringsEqual(pUser->pszSamAccountName, pOld->pszSamAccountName)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszPrimaryGroupSid, pOld->pszPrimaryGroupSid)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszUPN, pOld->pszUPN)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszAliasName, pOld->pszAliasName)
+             || pUser->userInfo.bPasswordNeverExpires != pOld->bPasswordNeverExpires
+             || pUser->userInfo.bPromptPasswordChange != pOld->bPromptPasswordChange
+             || pUser->userInfo.bUserCanChangePassword != pOld->bUserCanChangePassword
+             || !UmnSrvStringsEqual(pUser->userInfo.pszUnixName, pOld->pw_name)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszWindowsHomeFolder, pOld->pszWindowsHomeFolder)
+             || !UmnSrvStringsEqual(pUser->userInfo.pszLocalWindowsHomeFolder, pOld->pszLocalWindowsHomeFolder));
+}
+
+
 static
 DWORD
 UmnSrvUpdateADUser(
@@ -514,7 +1276,7 @@ UmnSrvUpdateADUser(
 {
     DWORD dwError = 0;
     HKEY hKey = NULL;
-    USER_MONITOR_PASSWD old = { 0 };
+    AD_USER_INFO old = { 0 };
     DWORD dwNow = Now;
     PSTR pEncodedUser = NULL;
 
@@ -587,22 +1349,13 @@ UmnSrvUpdateADUser(
     {
         BAIL_ON_UMN_ERROR(dwError);
 
-        dwError = UmnSrvReadUser(
+        dwError = UmnSrvReadADUser(
                         "AD Users",
                         pEncodedUser,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
 
-        if (strcmp((pUser->userInfo.pszPasswd ?
-                        pUser->userInfo.pszPasswd : "x"),
-                    old.pw_passwd) ||
-                pUser->userInfo.uid != old.pw_uid ||
-                pUser->userInfo.gid != old.pw_gid ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszGecos, old.pw_gecos) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, old.pw_dir) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszShell, old.pw_shell) ||
-                !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName,
-                    old.pDisplayName))
+        if (UmnSrvADUserChanged(&old, pUser))
         {
             UMN_LOG_INFO("User '%s' (uid %d) changed",
                             pUser->userInfo.pszUnixName, pUser->userInfo.uid);
@@ -634,7 +1387,7 @@ UmnSrvUpdateADUser(
 
 cleanup:
     LW_SAFE_FREE_STRING(pEncodedUser);
-    UmnSrvFreeUserContents(&old);
+    UmnSrvFreeADUserContents(&old);
     if (hKey)
     {
         RegCloseKey(
@@ -642,10 +1395,140 @@ cleanup:
                 hKey);
     }
     return dwError;
-    
+
 error:
     goto cleanup;
 }
+
+
+DWORD
+UmnSrvFindDeletedADUsers(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    PCSTR pUserKeyName,
+    HKEY hUsers,
+    long long Now
+    )
+{
+    DWORD dwError = 0;
+    DWORD subKeyCount = 0;
+    DWORD maxSubKeyLen = 0;
+    DWORD subKeyLen = 0;
+    DWORD i = 0;
+    PSTR pKeyName = NULL;
+    DWORD lastUpdated = 0;
+    DWORD lastUpdatedLen = 0;
+    AD_USER_INFO old = { 0 };
+
+    UMN_LOG_DEBUG("Finding deleted AD users");
+
+    dwError = RegQueryInfoKeyA(
+                    hReg,
+                    hUsers,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &subKeyCount,
+                    &maxSubKeyLen,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    maxSubKeyLen + 1,
+                    (PVOID *)&pKeyName);
+
+    for (i = 0; i < subKeyCount; i++)
+    {
+        if (gbPollerThreadShouldExit)
+        {
+            dwError = ERROR_CANCELLED;
+            BAIL_ON_UMN_ERROR(dwError);
+        }
+        subKeyLen = maxSubKeyLen;
+
+        dwError = RegEnumKeyExA(
+                        hReg,
+                        hUsers,
+                        i,
+                        pKeyName,
+                        &subKeyLen,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        pKeyName[subKeyLen] = 0;
+
+        lastUpdatedLen = sizeof(lastUpdated);
+        dwError = RegGetValueA(
+                        hReg,
+                        hUsers,
+                        pKeyName,
+                        "LastUpdated",
+                        0,
+                        NULL,
+                        (PBYTE)&lastUpdated,
+                        &lastUpdatedLen);
+        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            UMN_LOG_WARNING("User %s not completely written. The user monitor service may have previously terminated ungracefully.",
+                        LW_SAFE_LOG_STRING(pKeyName));
+            lastUpdated = 0;
+            dwError = 0;
+        }
+        else
+        {
+            BAIL_ON_UMN_ERROR(dwError);
+        }
+
+        if (lastUpdated < Now)
+        {
+            UmnSrvFreeADUserContents(&old);
+            dwError = UmnSrvReadADUser(
+                            pUserKeyName,
+                            pKeyName,
+                            &old);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            UMN_LOG_INFO("User '%s' deleted",
+                            old.pw_name);
+
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hUsers,
+                            pKeyName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = UmnSrvWriteADUserEvent(
+                            pEventlog,
+                            old.LastUpdated,
+                            &old,
+                            Now,
+                            NULL);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            // Make sure we don't skip the next key since this one was deleted
+            i--;
+            subKeyCount--;
+        }
+    }
+
+cleanup:
+    UmnSrvFreeADUserContents(&old);
+
+    LW_SAFE_FREE_STRING(pKeyName);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 static
 DWORD
@@ -970,7 +1853,7 @@ UmnSrvUpdateADAccountsByHash(
         }
     }
 
-    dwError = UmnSrvFindDeletedUsers(
+    dwError = UmnSrvFindDeletedADUsers(
                     pEventlog,
                     hReg,
                     "AD Users",
@@ -1013,10 +1896,11 @@ cleanup:
     LwHashSafeFree(&pNameToUser);
     LwHashSafeFree(&pNameToGroup);
     return dwError;
-    
+
 error:
     goto cleanup;
 }
+
 
 DWORD
 UmnSrvUpdateADAccounts(
@@ -1029,10 +1913,19 @@ UmnSrvUpdateADAccounts(
     )
 {
     DWORD dwError = 0;
-    PSTR pMemberList = NULL;
-    PCSTR pIter = NULL;
+    DWORD k = 0;
+    PSTR  pRequireMemberList = NULL;
+    PSTR  pHostAccessGroup = NULL;
     PSTR  pMember = NULL;
     PLW_HASH_TABLE pUsers = NULL;
+    DWORD dwRequireMemberListCount = 0;
+    DWORD dwHostAccessGroupCount = 0;
+    DWORD dwMemberListCount = 0;
+    PSTR* ppHostAccessGroupArray = NULL;
+    PSTR* ppRequireMemberListArray = NULL;
+    PSTR* ppMemberListArray = NULL;
+
+
     LWREG_CONFIG_ITEM ADConfigDescription[] =
     {
         {
@@ -1042,9 +1935,19 @@ UmnSrvUpdateADAccounts(
             0,
             MAXDWORD,
             NULL,
-            &pMemberList,
+            &pRequireMemberList,
             NULL
         },
+        {
+            "HostAccessGroup",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pHostAccessGroup,
+            NULL
+        }
     };
     PLSASTATUS pLsaStatus = NULL;
     // Do not free
@@ -1053,6 +1956,8 @@ UmnSrvUpdateADAccounts(
     PSTR pCell = NULL;
     PLSA_SECURITY_OBJECT pAllUsers = NULL;
     DWORD i = 0;
+
+    UMN_LOG_DEBUG("Updating AD users");
 
     dwError = LwHashCreate(
                     100,
@@ -1070,32 +1975,46 @@ UmnSrvUpdateADAccounts(
                 sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (pMemberList && pMemberList[0])
+    dwError = LwConvertMultiStringToStringArray(pRequireMemberList,
+                                                &ppRequireMemberListArray,
+                                                &dwRequireMemberListCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwConvertMultiStringToStringArray(pHostAccessGroup,
+                                                &ppHostAccessGroupArray,
+                                                &dwHostAccessGroupCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwMergeStringArray(
+                     ppRequireMemberListArray, dwRequireMemberListCount,
+                     ppHostAccessGroupArray,   dwHostAccessGroupCount,
+                     &ppMemberListArray,       &dwMemberListCount);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    if (dwMemberListCount > 0)
     {
-        pIter = pMemberList;
-        while (*pIter != 0)
-        {
-            dwError = LwStrDupOrNull(
-                            pIter,
-                            &pMember);
-            BAIL_ON_UMN_ERROR(dwError);
+       for(k = 0; k < dwMemberListCount; k++)
+       {
+          UMN_LOG_DEBUG("RequireMembershipOf is set; will report on AD users belonging to RequireMembershipOf entries");
 
-            LwStripWhitespace(
-                    pMember,
-                    TRUE,
-                    TRUE);
+          dwError = LwStrDupOrNull(ppMemberListArray[k], &pMember);
+          BAIL_ON_UMN_ERROR(dwError);
 
-            dwError = UmnSrvAddUsersFromMembership(
-                            hLsass,
-                            pUsers,
-                            pMember);
-            BAIL_ON_UMN_ERROR(dwError);
+          LwStripWhitespace( pMember, TRUE, TRUE);
 
-            pIter += strlen(pIter) + 1;
-        }
+          UMN_LOG_DEBUG("Adding users belonging to RequireMembershipOf entry %s", pMember);
+          dwError = UmnSrvAddUsersFromMembership(
+                               hLsass,
+                               pUsers,
+                               pMember);
+          BAIL_ON_UMN_ERROR(dwError);
+          LW_SAFE_FREE_STRING(pMember);
+       }
     }
     else
     {
+
+        UMN_LOG_DEBUG("RequireMembershipOf is NOT set; will report on AD users based on joined cell/domain");
         dwError = LsaGetStatus2(
                         hLsass,
                         NULL,
@@ -1116,6 +2035,10 @@ UmnSrvUpdateADAccounts(
 
         if (pDomain || pCell)
         {
+            UMN_LOG_DEBUG("Reporting all users %s %s can login",
+                    (pCell) ? "in cell" : "accessible from domain",
+                    (pCell) ? pCell : pDomain);
+
             dwError = LwAllocateMemory(
                             sizeof(*pAllUsers),
                             (PVOID*)&pAllUsers);
@@ -1208,13 +2131,19 @@ cleanup:
     {
         LsaFreeStatus(pLsaStatus);
     }
-    LW_SAFE_FREE_STRING(pMemberList);
     LW_SAFE_FREE_STRING(pMember);
     LwHashSafeFree(&pUsers);
     if (pAllUsers)
     {
         LsaFreeSecurityObject(pAllUsers);
     }
+
+    LW_SAFE_FREE_STRING(pRequireMemberList);
+    LW_SAFE_FREE_STRING(pHostAccessGroup);
+    LwFreeStringArray(ppRequireMemberListArray, dwRequireMemberListCount);
+    LwFreeStringArray(ppHostAccessGroupArray, dwHostAccessGroupCount);
+    LwFreeStringArray(ppMemberListArray, dwMemberListCount);
+
     return dwError;
 
 error:

@@ -155,7 +155,7 @@ _mk_autotools()
     else
         dirname="$PROJECT_NAME"
     fi
-    
+
     mk_comment "autotools source component $dirname ($SYSTEM)"
 
     for _lib in ${LIBDEPS}
@@ -350,9 +350,9 @@ mk_autotools()
     for _program in ${PROGRAMS}
     do
         MK_INTERNAL_PROGRAMS="$MK_INTERNAL_PROGRAMS $_program"
-       
+
         mk_quote "@${MK_OBJECT_DIR}/build-run/bin/${_program}"
-        
+
         TARGETS="$TARGETS $result"
     done
 
@@ -384,7 +384,7 @@ mk_autotools()
         mk_run_or_fail ${_command}
         mk_cd_or_fail "${MK_ROOT_DIR}"
     fi
-    
+
     if [ "$MK_SYSTEM" = "host" -a "$MK_HOST_MULTIARCH" = "combine" ]
     then
         parts=""
@@ -429,7 +429,7 @@ mk_autotools()
         if [ "$INSTALL" != "no" ]
         then
             mk_quote "$result"
-            
+
             mk_target \
                 SYSTEM="$SYSTEM" \
                 TARGET=".${BUILDDIR}_stage" \
@@ -491,7 +491,7 @@ _mk_at_expand_srcdir_patterns()
         mk_quote_list -o -name "$_pattern"
         _args="$_args $result"
     done
-    
+
     _args="$_args -prune"
 
     set -f
@@ -528,7 +528,7 @@ option()
         HELP="Build system string"
 
     for _isa in ${MK_HOST_ISAS}
-    do   
+    do
         _mk_define_name "$_isa"
         _var="MK_AT_HOST_STRING_$result"
         _option="at-host-string-$(echo $_isa | tr '_' '-')"
@@ -555,7 +555,7 @@ configure()
 
     mk_declare -e MK_AT_BUILD_STRING
     mk_declare -s -e MK_AT_HOST_STRING
-    
+
     for _isa in ${MK_HOST_ISAS}
     do
         _mk_define_name "$_isa"

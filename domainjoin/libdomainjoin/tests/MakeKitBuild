@@ -1,0 +1,10 @@
+make()
+{
+    mk_have_cmock && \
+    mk_cmock \
+        PROGRAM="testdjregutils" \
+        SOURCES="Mocklwreg.c testdjregutils.c testdjregutils_Runner.c" \
+        INCLUDEDIRS="../include ../../include ../../../lwreg/include ../../../lwadvapi/include/public" \
+        LIBDEPS="domainjoin" \
+        LDFLAGS="-lpbiscmock"
+}

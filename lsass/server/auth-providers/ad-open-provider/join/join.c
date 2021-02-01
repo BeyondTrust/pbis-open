@@ -3,33 +3,32 @@
  * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,8 +36,8 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
- * 
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
+ *
  *        Join to Active Directory
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
@@ -65,7 +64,8 @@ LsaJoinDomainInternal(
     DWORD  dwUserAccountAttributes,
     PWSTR  pwszOsName,
     PWSTR  pwszOsVersion,
-    PWSTR  pwszOsServicePack
+    PWSTR  pwszOsServicePack,
+    PSTR   pszServicePrincipalNameList
     );
 
 static
@@ -95,7 +95,8 @@ LsaGetAccountName(
     const wchar16_t *machname,
     const wchar16_t *domain_controller_name,
     const wchar16_t *dns_domain_name,
-    wchar16_t       **account_name
+    wchar16_t       **account_name,
+    BOOLEAN         *exists
     );
 
 
@@ -143,7 +144,8 @@ LsaSaveMachinePassword(
     PCWSTR  pwszDnsDomainName,
     PCWSTR  pwszDCName,
     PCWSTR  pwszSidStr,
-    PCWSTR  pwszPassword
+    PCWSTR  pwszPassword,
+    PSTR    pszServicePrincipalNameList
     );
 
 static
@@ -175,8 +177,7 @@ DWORD
 LsaDirectoryConnect(
     PCWSTR pDomain,
     LDAP** ppLdConn,
-    PWSTR* ppDefaultContext,
-    PWSTR* ppSchemaContext
+    PWSTR* ppDefaultContext
     );
 
 
@@ -194,7 +195,8 @@ LsaMachAcctCreate(
     const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou,
-    int rejoin
+    BOOLEAN move,
+    BOOLEAN exists
     );
 
 
@@ -202,10 +204,9 @@ static
 DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
-    const wchar16_t *name,
+    const wchar16_t *fqdn,
+    const wchar16_t *machname,
     const wchar16_t *dn_context,
-    PCWSTR pSchemaContext,
-    const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     );
 
@@ -230,7 +231,6 @@ LsaMachAcctSetAttribute(
     const wchar16_t **attr_val,
     int new
     );
-
 
 static
 DWORD
@@ -260,8 +260,6 @@ LsaPrepareDesKey(
     OUT PBYTE  pOutput
     );
 
-
-
 DWORD
 LsaJoinDomainUac(
     PCSTR pszHostname,
@@ -274,7 +272,8 @@ LsaJoinDomainUac(
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
     LSA_NET_JOIN_FLAGS dwFlags,
-    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac,
+    PSTR pszServicePrincipalNameList
     )
 {
     DWORD dwError = 0;
@@ -299,6 +298,17 @@ LsaJoinDomainUac(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    LSA_LOG_DEBUG("LsaJoinDomainUac(%s, %s, %s, %s, %s, ********, %s, %s, %s, %x, %x)",
+            LSA_SAFE_LOG_STRING(pszHostname),
+            LSA_SAFE_LOG_STRING(pszHostDnsDomain),
+            LSA_SAFE_LOG_STRING(pszDomain),
+            LSA_SAFE_LOG_STRING(pszOU),
+            LSA_SAFE_LOG_STRING(pszUsername),
+            LSA_SAFE_LOG_STRING(pszOSName),
+            LSA_SAFE_LOG_STRING(pszOSVersion),
+            LSA_SAFE_LOG_STRING(pszOSServicePack),
+            dwFlags, dwUac);
+
     if ( !(dwFlags & LSA_NET_JOIN_DOMAIN_NOTIMESYNC) )
     {
         dwError = LsaSyncTimeToDC(pszDomain);
@@ -314,7 +324,7 @@ LsaJoinDomainUac(
                 TRUE,
                 &pAccessInfo);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     dwError = LwMbsToWc16s(
                     pszHostname,
                     &pwszHostname);
@@ -327,12 +337,12 @@ LsaJoinDomainUac(
                         &pwszHostDnsDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     dwError = LwMbsToWc16s(
                     pszDomain,
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOU))
     {
         dwError = LwMbsToWc16s(
@@ -340,21 +350,21 @@ LsaJoinDomainUac(
                     &pwszOU);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSName)) {
         dwError = LwMbsToWc16s(
                     pszOSName,
                     &pwszOSName);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSVersion)) {
         dwError = LwMbsToWc16s(
                     pszOSVersion,
                     &pwszOSVersion);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSServicePack)) {
         dwError = LwMbsToWc16s(
                     pszOSServicePack,
@@ -373,11 +383,12 @@ LsaJoinDomainUac(
             dwUac,
             pwszOSName,
             pwszOSVersion,
-            pwszOSServicePack);
+            pwszOSServicePack,
+            pszServicePrincipalNameList);
     BAIL_ON_LSA_ERROR(dwError);
 
-   dwError = LsaPstoreSetDomainWTrustEnumerationWaitTime(pwszDomain);
-   BAIL_ON_LSA_ERROR(dwError);
+    dwError = LsaPstoreSetDomainWTrustEnumerationWaitTime(pwszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
@@ -392,39 +403,10 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszOSServicePack);
 
     return dwError;
-    
+
 error:
 
     goto cleanup;
-}
-
-DWORD
-LsaJoinDomain(
-    PCSTR pszHostname,
-    PCSTR pszHostDnsDomain,
-    PCSTR pszDomain,
-    PCSTR pszOU,
-    PCSTR pszUsername,
-    PCSTR pszPassword,
-    PCSTR pszOSName,
-    PCSTR pszOSVersion,
-    PCSTR pszOSServicePack,
-    LSA_NET_JOIN_FLAGS dwFlags
-    )
-{
-    return LsaJoinDomainUac(
-               pszHostname,
-               pszHostDnsDomain,
-               pszDomain,
-               pszOU,
-               pszUsername,
-               pszPassword,
-               pszOSName,
-               pszOSVersion,
-               pszOSServicePack,
-               dwFlags,
-               0
-               );
 }
 
 DWORD
@@ -435,23 +417,215 @@ LsaSyncTimeToDC(
     DWORD dwError = 0;
     LWNET_UNIX_TIME_T dcTime = 0;
     time_t ttDCTime = 0;
-    
+
     dwError = LWNetGetDCTime(
                     pszDomain,
                     &dcTime);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     ttDCTime = (time_t) dcTime;
-    
+
     if (labs(ttDCTime - time(NULL)) > LSA_JOIN_MAX_ALLOWED_CLOCK_DRIFT_SECONDS) {
         dwError = LwSetSystemTime(ttDCTime);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
 cleanup:
 
     return dwError;
-    
+
+error:
+
+    goto cleanup;
+}
+
+
+// Distinguish between nfs, nfs/ and http/www.linuxcomputer.com. If it is
+// service class name with trailing slash, then strip the slash.
+static
+VOID
+GroomSpn(PSTR *ppszSpn, BOOLEAN *bIsServiceClass)
+{
+   PSTR pszHasPeriod = NULL;
+   PSTR pszHasSlash = NULL;
+
+   LwStripLeadingWhitespace(*ppszSpn);
+   LwStripTrailingWhitespace(*ppszSpn);
+
+   LwStrChr(*ppszSpn, '.', &pszHasPeriod);
+   if (pszHasPeriod)
+   {
+     *bIsServiceClass = FALSE;
+     return;
+   }
+
+   LwStrChr(*ppszSpn, '/', &pszHasSlash);
+   if ((pszHasSlash) && (strlen(pszHasSlash) == 1))
+   {
+      *pszHasSlash = '\0';
+      *bIsServiceClass = TRUE;
+   }
+   else if ((pszHasSlash) && (strlen(pszHasSlash) >= 1))
+     *bIsServiceClass = FALSE;
+   else
+     *bIsServiceClass = TRUE;
+
+   return;
+}
+
+
+// Input:  nfs, NFS, http/linuxhostbox, host, HOST/, http/linuxhostbox2
+// Output: NFS, HOST, http/linuxhostbox, http/linuxhostbox2
+static
+VOID GroomSpnList(PSTR pszSPNameList, PSTR *ppGroomedServicePrincipalList)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   BOOLEAN bIsServiceClass = FALSE;
+   PSTR pszServicePrincipalNameList = NULL;
+   PSTR saveStrPtr = NULL;
+   PSTR aStr = NULL;
+   PSTR isStrThere = NULL;
+   PSTR pszTempStr = NULL;
+   PSTR pszNewServicePrincipalNameList = NULL;
+   PSTR pszFqdnList = NULL;
+   PSTR pszServiceClassList = NULL;
+
+   dwError = LwStrDupOrNull(pszSPNameList, &pszServicePrincipalNameList);
+   BAIL_ON_LSA_ERROR(dwError);
+
+   // Tokenize the provided SPN list checking for duplicates SPN values and
+   // upper casing SPN.
+   aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
+   while (aStr != NULL)
+   {
+      GroomSpn(&aStr, &bIsServiceClass);
+
+      if (bIsServiceClass)
+      {
+         LwStrToUpper(aStr);
+         LwStrStr(pszServiceClassList, aStr, &isStrThere);
+         if (!isStrThere)
+         {
+            if (pszServiceClassList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszServiceClassList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+            LW_SAFE_FREE_STRING(pszServiceClassList);
+            pszServiceClassList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+      else
+      {
+         LwStrStr(pszFqdnList, aStr, &isStrThere);
+         if ((!isStrThere) || (strlen(aStr) != (strlen(isStrThere))))
+         {
+            if (pszFqdnList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszFqdnList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+
+            LW_SAFE_FREE_STRING(pszFqdnList);
+            pszFqdnList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+      aStr = strtok_r(NULL, ",", &saveStrPtr);
+   }
+
+   if (pszFqdnList && pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s,%s", pszServiceClassList, pszFqdnList);
+   else if (pszFqdnList && !pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszFqdnList);
+   else
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszServiceClassList);
+
+   // pszNewServicePrincipalNameList contains non-duplicated, uppercase service class.
+   // Fully qualified SPN is added as is.
+   *ppGroomedServicePrincipalList = pszNewServicePrincipalNameList;
+
+cleanup:
+
+   LW_SAFE_FREE_STRING(pszFqdnList);
+   LW_SAFE_FREE_STRING(pszServiceClassList);
+
+   return;
+
+error:
+   goto cleanup;
+}
+
+static
+VOID
+LsaFreeSpnAttrVal(
+    PWSTR *ppwszSpnAttrVal,
+    DWORD dwNumberOfSpnEntries)
+{
+
+  DWORD i = 0;
+
+  for (i = 0; i < dwNumberOfSpnEntries; i++)
+  {
+     LW_SAFE_FREE_MEMORY(ppwszSpnAttrVal[i]);
+  }
+
+  LwFreeMemory(ppwszSpnAttrVal);
+}
+
+static
+DWORD
+LsaCreateSpnAttrVal(
+    PWSTR pwszDnsHostName,
+    PWSTR pwszHostname,
+    PSTR  pszServicePrincipalNameList,
+    PWSTR **pppwszSpnAttrVal,
+    DWORD *pdwNumberOfSpnEntries)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    BOOLEAN bIsServiceClass = FALSE;
+    DWORD dwNumberOfSpnEntries = 150;
+    DWORD i = 0;
+    PSTR aStr = NULL;
+    PSTR saveStrPtr = NULL;
+    PSTR pszGroomedSPNList = NULL;
+    PWSTR *ppwszSPNAttrVal = NULL;
+
+    GroomSpnList(pszServicePrincipalNameList, &pszGroomedSPNList);
+
+    dwError = LwAllocateMemory(dwNumberOfSpnEntries * sizeof(PWSTR), (PVOID*) &ppwszSPNAttrVal);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (i = 0; i < dwNumberOfSpnEntries; i++)
+        ppwszSPNAttrVal[i] = NULL;
+
+    i = 0;
+    aStr = strtok_r(pszGroomedSPNList, ",", &saveStrPtr);
+    while ((aStr != NULL) && (i < (dwNumberOfSpnEntries-1)))
+    {
+       GroomSpn(&aStr, &bIsServiceClass);
+       if (bIsServiceClass)
+       {
+          ppwszSPNAttrVal[i] = LdapAttrValSvcPrincipalName(aStr, pwszDnsHostName);
+          ppwszSPNAttrVal[i+1] = LdapAttrValSvcPrincipalName(aStr, pwszHostname);
+          i+=2;
+       }
+       else
+       {
+          LwMbsToWc16s(aStr, &ppwszSPNAttrVal[i]);
+          i++;
+       }
+       aStr = strtok_r(NULL, ",", &saveStrPtr);
+    }
+
+    *pdwNumberOfSpnEntries = dwNumberOfSpnEntries;
+    *pppwszSpnAttrVal = ppwszSPNAttrVal;
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszGroomedSPNList);
+
+    return dwError;
+
 error:
 
     goto cleanup;
@@ -471,7 +645,8 @@ LsaJoinDomainInternal(
     DWORD  dwUserAccountAttributes,
     PWSTR  pwszOsName,
     PWSTR  pwszOsVersion,
-    PWSTR  pwszOsServicePack
+    PWSTR  pwszOsServicePack,
+    PSTR   pszServicePrincipalNameList
     )
 {
     const DWORD dwLsaAccess = LSA_ACCESS_LOOKUP_NAMES_SIDS |
@@ -484,7 +659,7 @@ LsaJoinDomainInternal(
     LsaPolicyInformation *pLsaPolicyInfo = NULL;
     PWSTR pwszMachineName = NULL;
     PWSTR pwszMachineAcctName = NULL;
-    PWSTR pwszMachinePassword[MACHPASS_LEN+1] = {0};
+    WCHAR pwszMachinePassword[MACHPASS_LEN+1] = {0};
     PWSTR pwszDomainName = NULL;
     PSID pDomainSid = NULL;
     PWSTR pwszDnsDomainName = NULL;
@@ -492,12 +667,11 @@ LsaJoinDomainInternal(
     LDAP *pLdap = NULL;
     PWSTR pwszMachineNameLc = NULL;    /* lower cased machine name */
     PWSTR pwszBaseDn = NULL;
-    PWSTR pwszSchemaDn = NULL;
     PWSTR pwszDn = NULL;
     PWSTR pwszDnsAttrName = NULL;
     PWSTR pwszDnsAttrVal[2] = {0};
     PWSTR pwszSpnAttrName = NULL;
-    PWSTR pwszSpnAttrVal[3] = {0};
+    PWSTR *ppwszSpnAttrVal = NULL;
     PWSTR pwszOSNameAttrName = NULL;
     PWSTR pwszOSNameAttrVal[2] = {0};
     PWSTR pwszOSVersionAttrName = NULL;
@@ -510,8 +684,11 @@ LsaJoinDomainInternal(
     PWSTR pwszSupportedEncryptionTypesVal[2] = {0};
     DWORD dwSupportedEncryptionTypes = 0;
     PWSTR pwszSidStr = NULL;
+    PWSTR pwszComputerContainer = NULL;
     WCHAR wszUacVal[11] = {0};
     LW_PIO_CREDS pCreds = NULL;
+    BOOLEAN account_exists = FALSE;
+    DWORD dwNumberOfSpnEntries = 0;
 
     dwError = LwAllocateWc16String(&pwszMachineName,
                                    pwszHostname);
@@ -567,36 +744,46 @@ LsaJoinDomainInternal(
                              pwszMachineName,
                              pwszDCName,
                              pwszDnsDomain ? pwszDnsDomain : pwszDnsDomainName,
-                             &pwszMachineAcctName);
+                             &pwszMachineAcctName,
+                             &account_exists);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* If account_ou is specified pre-create disabled machine
+    dwError = LsaDirectoryConnect(
+                    pwszDCName,
+                    &pLdap,
+                    &pwszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pwszAccountOu == NULL)
+    {
+        pwszComputerContainer = pwszAccountOu = LdapGetWellKnownObject(pLdap, pwszBaseDn, LW_GUID_COMPUTERS_CONTAINER);
+    }
+
+    /* Pre-create a disabled machine
        account object in given branch of directory. It will
        be reset afterwards by means of rpc calls */
     if (pwszAccountOu)
     {
-        dwError = LsaDirectoryConnect(
-                        pwszDCName,
-                        &pLdap,
-                        &pwszBaseDn,
-                        &pwszSchemaDn);
-        BAIL_ON_LSA_ERROR(dwError);
+        int move = (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED) == LSAJOIN_DOMAIN_JOIN_IF_JOINED ? TRUE : FALSE;
+
+        // If a specific OU wasn't requested then we don't want to move the Computer account
+        if (pwszComputerContainer) move = FALSE;
 
         dwError = LsaMachAcctCreate(
-                      pLdap, 
-                      pwszMachineName, 
-                      pwszMachineAcctName, 
+                      pLdap,
+                      pwszMachineName,
+                      pwszMachineAcctName,
                       pwszAccountOu,
-                      (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED));
+                      move,
+                      account_exists);
         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaDirectoryDisconnect(pLdap);
-        pLdap = NULL;
-        BAIL_ON_LSA_ERROR(dwError);
-
-        LW_SAFE_FREE_MEMORY(pwszBaseDn);
-        LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     }
+
+    dwError = LsaDirectoryDisconnect(pLdap);
+    pLdap = NULL;
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LW_SAFE_FREE_MEMORY(pwszBaseDn);
 
     dwError = LsaGenerateMachinePassword(
                (PWSTR)pwszMachinePassword,
@@ -625,8 +812,7 @@ LsaJoinDomainInternal(
     dwError = LsaDirectoryConnect(
                     pwszDCName,
                     &pLdap,
-                    &pwszBaseDn,
-                    &pwszSchemaDn);
+                    &pwszBaseDn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaMachAcctSearch(
@@ -649,10 +835,11 @@ LsaJoinDomainInternal(
               pwszDnsDomainName,
               pwszDCName,
               pwszSidStr,
-              (PWSTR)pwszMachinePassword);
+              (PWSTR)pwszMachinePassword,
+              pszServicePrincipalNameList);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* 
+    /*
      * Open connection to directory server if it's going to be needed
      */
     if (!(dwJoinFlags & LSAJOIN_DEFER_SPN_SET) ||
@@ -669,7 +856,7 @@ LsaJoinDomainInternal(
             dwError = LwAllocateWc16String(&pwszMachineNameLc,
                                            pwszMachineName);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             dwError = LwWc16sToLower(pwszMachineNameLc);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -691,18 +878,23 @@ LsaJoinDomainInternal(
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = LwMbsToWc16s("servicePrincipalName",
-                                   &pwszSpnAttrName);
+                                       &pwszSpnAttrName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            pwszSpnAttrVal[0] = LdapAttrValSvcPrincipalName("HOST", pwszDnsHostName);
-            pwszSpnAttrVal[1] = LdapAttrValSvcPrincipalName("HOST", pwszHostname);
-            pwszSpnAttrVal[2] = NULL;
+            dwError = LsaCreateSpnAttrVal(
+                               pwszDnsHostName,
+                               pwszHostname,
+                               pszServicePrincipalNameList,
+                               &ppwszSpnAttrVal,
+                               &dwNumberOfSpnEntries);
+            BAIL_ON_LSA_ERROR(dwError);
 
             dwError = LsaMachAcctSetAttribute(pLdap, pwszDn, pwszSpnAttrName,
-                                              (const wchar16_t**)pwszSpnAttrVal, 0);
+                                                  (const wchar16_t**)ppwszSpnAttrVal, 0);
+
             if (dwError == LW_ERROR_LDAP_CONSTRAINT_VIOLATION)
             {
-                dwError = LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN;
+               dwError = LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN;
             }
             BAIL_ON_LSA_ERROR(dwError);
         }
@@ -876,6 +1068,11 @@ cleanup:
         LsaDirectoryDisconnect(pLdap);
     }
 
+    if (ppwszSpnAttrVal)
+    {
+        LsaFreeSpnAttrVal(ppwszSpnAttrVal, dwNumberOfSpnEntries);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszDomainName);
     RTL_FREE(&pDomainSid);
     RTL_FREE(&pwszSidStr);
@@ -884,13 +1081,10 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszMachineAcctName);
     LW_SAFE_FREE_MEMORY(pwszMachineNameLc);
     LW_SAFE_FREE_MEMORY(pwszBaseDn);
-    LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     LW_SAFE_FREE_MEMORY(pwszDn);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrName);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszSpnAttrName);
-    LW_SAFE_FREE_MEMORY(pwszSpnAttrVal[0]);
-    LW_SAFE_FREE_MEMORY(pwszSpnAttrVal[1]);
     LW_SAFE_FREE_MEMORY(pwszOSNameAttrName);
     LW_SAFE_FREE_MEMORY(pwszOSNameAttrVal[0]);
     LW_SAFE_FREE_MEMORY(pwszOSVersionAttrName);
@@ -900,6 +1094,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszDCName);
     LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesName);
     LW_SAFE_FREE_MEMORY(pwszSupportedEncryptionTypesVal[0]);
+    LW_SAFE_FREE_MEMORY(pwszComputerContainer);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -920,17 +1115,18 @@ LsaGetAccountName(
     const wchar16_t *machname,
     const wchar16_t *domain_controller_name,
     const wchar16_t *dns_domain_name,
-    wchar16_t       **account_name
+    wchar16_t       **account_name,
+    BOOLEAN         *exists
     )
 {
     int err = ERROR_SUCCESS;
     LDAP *ld = NULL;
     wchar16_t *base_dn = NULL;
-    PWSTR pSchemaDn = NULL;
     wchar16_t *dn = NULL;
     wchar16_t *machname_lc = NULL;
     wchar16_t *samname = NULL;     /* short name valid for SAM account */
     wchar16_t *dnsname = NULL;
+    wchar16_t *fqdn = NULL;
     wchar16_t *hashstr = NULL;
     wchar16_t *samacctname = NULL; /* account name (with trailing '$') */
     UINT32    hash = 0;
@@ -942,6 +1138,7 @@ LsaGetAccountName(
     size_t    machname_len = 0;
     size_t    samacctname_len = 0;
 
+    if (exists) *exists = FALSE;
 
     err = LwWc16sLen(machname, &machname_len);
     BAIL_ON_LSA_ERROR(err);
@@ -951,20 +1148,25 @@ LsaGetAccountName(
 
     wc16slower(machname_lc);
 
+    fqdn = LdapAttrValDnsHostName(machname_lc, dns_domain_name);
+    if (!fqdn)
+    {
+        err = ERROR_OUTOFMEMORY;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     /* look for an existing account using the dns_host_name attribute */
     err = LsaDirectoryConnect(
                 domain_controller_name,
                 &ld,
-                &base_dn,
-                &pSchemaDn);
+                &base_dn);
     BAIL_ON_LSA_ERROR(err);
 
     err = LsaMachDnsNameSearch(
                 ld,
+                fqdn,
                 machname_lc,
                 base_dn,
-                pSchemaDn,
-                dns_domain_name,
                 &samname);
     if (err == ERROR_SUCCESS)
     {
@@ -974,6 +1176,8 @@ LsaGetAccountName(
         BAIL_ON_LSA_ERROR(err);
 
         samname[samname_len - 1] = 0;
+
+        if (exists) *exists = TRUE;
     }
     else
     {
@@ -982,9 +1186,13 @@ LsaGetAccountName(
 
     if (!samname)
     {
+        LSA_LOG_DEBUG("Machine account not found with DNS name");
+
         /* the host name is short enough to use as is */
         if (machname_len < 16)
         {
+            LSA_LOG_DEBUG("Machine account name length < 16");
+
             if (sw16printfw(searchname,
                             sizeof(searchname)/sizeof(wchar16_t),
                             L"%ws$",
@@ -997,11 +1205,24 @@ LsaGetAccountName(
             err = LsaMachAcctSearch(ld, searchname, base_dn, NULL, &dnsname);
             if ( err != ERROR_SUCCESS || !dnsname)
             {
+                if (err == ERROR_SUCCESS)
+                {
+                    if (exists) *exists = TRUE;
+                    LSA_LOG_DEBUG("Machine account found with samAccountName but has no DNS name defined");
+                }
+                else
+                {
+                    LSA_LOG_DEBUG("Machine account not found with samAccountName");
+                }
+
                 err = ERROR_SUCCESS;
 
                 err = LwAllocateWc16String(&samname, machname);
                 BAIL_ON_LSA_ERROR(err);
             }
+
+            if (dnsname) LSA_LOG_DEBUG("Machine account found with different DNS name");
+
             LW_SAFE_FREE_MEMORY(dnsname);
         }
     }
@@ -1015,6 +1236,8 @@ LsaGetAccountName(
       */
     if (!samname)
     {
+        LSA_LOG_DEBUG("Machine account name too long or found with wrong DNS name");
+
         dnsname = LdapAttrValDnsHostName(
                       machname_lc,
                       dns_domain_name);
@@ -1062,9 +1285,21 @@ LsaGetAccountName(
                 BAIL_ON_LSA_ERROR(err);
             }
 
+            LSA_LOG_DEBUG("Machine account checking hashed name");
+
             err = LsaMachAcctSearch(ld, searchname, base_dn, NULL, &dnsname);
             if ( err != ERROR_SUCCESS || !dnsname)
             {
+                if (err == ERROR_SUCCESS)
+                {
+                    if (exists) *exists = TRUE;
+                    LSA_LOG_DEBUG("Hashed Machine account found with samAccountName but has no DNS name defined");
+                }
+                else
+                {
+                    LSA_LOG_DEBUG("Hashed Machine account not found with samAccountName");
+                }
+
                 err = ERROR_SUCCESS;
 
                 err = LwAllocateWc16String(&samname, newname);
@@ -1076,6 +1311,8 @@ LsaGetAccountName(
         }
         if (offset == 100)
         {
+            LSA_LOG_ERROR("Failed to create unique Machine account name after 100 attempts");
+
             err = ERROR_DUP_NAME;
             goto error;
         }
@@ -1117,7 +1354,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(samname);
     LW_SAFE_FREE_MEMORY(base_dn);
-    LW_SAFE_FREE_MEMORY(pSchemaDn);
 
     return err;
 
@@ -1278,7 +1514,7 @@ LsaGenerateRandomString(
         {
             iClass = pClassBuffer[i] % 4;
         }
-     
+
         switch (iClass)
         {
             case 0:
@@ -1387,12 +1623,12 @@ LsaCreateMachineAccount(
                                       pwszDCName,
                                       pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
-    
+
     ntStatus = SamrConnect2(hSamrBinding,
                             pwszDCName,
                             dwConnAccess,
                             &hConnect);
-    BAIL_ON_NT_STATUS(ntStatus);    
+    BAIL_ON_NT_STATUS(ntStatus);
 
     rpc_binding_inq_transport_info(hSamrBinding,
                                    &hTransportInfo,
@@ -1747,7 +1983,7 @@ LsaEncryptPasswordBufferEx(
 
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
-    MD5_Update(&ctx, pSessionKey, 16);
+    MD5_Update(&ctx, pSessionKey, dwSessionKeyLen > 16 ? 16 : dwSessionKeyLen);
     MD5_Final(DigestedSessKey, &ctx);
 
     LSA_LOG_DEBUG("RC4_KEY structure is using %d bytes", sizeof(rc4_key));
@@ -1886,7 +2122,8 @@ LsaSaveMachinePassword(
     PCWSTR  pwszDnsDomainName,
     PCWSTR  pwszDCName,
     PCWSTR  pwszSidStr,
-    PCWSTR  pwszPassword
+    PCWSTR  pwszPassword,
+    PSTR    pszServicePrincipalNameList
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -1906,9 +2143,12 @@ LsaSaveMachinePassword(
     /* various forms of principal name for keytab */
     PWSTR pwszPrincipal = NULL;
     PWSTR pwszFqdn = NULL;
+    PWSTR pwszServiceClass = NULL;
     PWSTR principalName = NULL;
-    WCHAR hostInstanceName[] = { 'h', 'o', 's', 't', 0x0};
-    WCHAR cifsInstanceName[] = { 'c', 'i', 'f', 's', 0x0};
+    PSTR pszSpn = NULL;
+    PSTR pszServicePrincipalListSave = NULL;
+    PSTR pszTmpServicePrincipalList = NULL;
+    BOOLEAN bIsServiceClass = FALSE;
 
     dwError = LwAllocateWc16String(&pwszAccount,
                                    pwszMachineAccountName);
@@ -1966,6 +2206,8 @@ LsaSaveMachinePassword(
                                      &pwszPrincipal);
     BAIL_ON_LSA_ERROR(dwError);
 
+    KtLdapSetSaslMaxBufSize(LsaSrvSaslMaxBufSize());
+
     /* Get the directory base naming context first */
     dwError = KtLdapGetBaseDnW(pwszDCName, &pwszBaseDn);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2013,7 +2255,7 @@ LsaSaveMachinePassword(
                                          pwszMachineDnsDomain,
                                          pwszAdDnsDomainNameUc,
                                          pwszDCName,
-                                         pwszBaseDn, 
+                                         pwszBaseDn,
                                          &pwszSalt);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2040,236 +2282,182 @@ LsaSaveMachinePassword(
                   dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    // host/MACHINE@DOMAIN.NET
-
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  TRUE,
-                  NULL,
-                  FALSE);
+    dwError = LwStrDupOrNull(pszServicePrincipalNameList, &pszTmpServicePrincipalList);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+    pszSpn = strtok_r(pszTmpServicePrincipalList, ",", &pszServicePrincipalListSave);
+    while (pszSpn)
+    {
+       if (pwszServiceClass)
+          LW_SAFE_FREE_MEMORY(pwszServiceClass);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+       GroomSpn(&pszSpn, &bIsServiceClass);
 
-    // host/machine@DOMAIN.NET
+       LSA_LOG_VERBOSE("Generating keytab entry for %s", pszSpn);
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  FALSE,
-                  NULL,
-                  FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
+       dwError = LwMbsToWc16s(pszSpn, &pwszServiceClass);
+       BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+       if (!bIsServiceClass)
+       {
+          // Add pszSpn as is.
+          dwError = LwAllocateWc16sPrintfW(&principalName, L"%ws", pwszServiceClass);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
+          LW_SAFE_FREE_MEMORY(principalName);
+       }
+       else
+       {
+          // serviceclass/MACHINE@DOMAIN.NET
 
-    // host/MACHINE.DOMAIN.NET@DOMAIN.NET
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        TRUE,
+                        NULL,
+                        FALSE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  TRUE,
-                  pwszMachineDnsDomain,
-                  TRUE);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          LW_SAFE_FREE_MEMORY(principalName);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          // serviceclass/machine@DOMAIN.NET
 
-    // host/machine.domain.net@DOMAIN.NET
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        FALSE,
+                        NULL,
+                        FALSE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  FALSE,
-                  pwszMachineDnsDomain,
-                  FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          LW_SAFE_FREE_MEMORY(principalName);
 
-    // host/MACHINE.domain.net@DOMAIN.NET
+          // serviceclass/MACHINE.DOMAIN.NET@DOMAIN.NET
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  TRUE,
-                  pwszMachineDnsDomain,
-                  FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        TRUE,
+                        pwszMachineDnsDomain,
+                        TRUE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          LW_SAFE_FREE_MEMORY(principalName);
 
-    // host/machine.DOMAIN.NET@DOMAIN.NET
+          // serviceclass/machine.domain.net@DOMAIN.NET
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  hostInstanceName,
-                  pwszMachineName,
-                  FALSE,
-                  pwszMachineDnsDomain,
-                  TRUE);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        FALSE,
+                        pwszMachineDnsDomain,
+                        FALSE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          LW_SAFE_FREE_MEMORY(principalName);
 
-    // cifs/machine.domain.net@DOMAIN.NET
+          // serviceclass/MACHINE.domain.net@DOMAIN.NET
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  cifsInstanceName,
-                  pwszMachineName,
-                  FALSE,
-                  pwszMachineDnsDomain,
-                  FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        TRUE,
+                        pwszMachineDnsDomain,
+                        FALSE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          LW_SAFE_FREE_MEMORY(principalName);
 
-    // cifs/MACHINE.DOMAIN.NET@DOMAIN.NET
+          // serviceclass/machine.DOMAIN.NET@DOMAIN.NET
 
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  cifsInstanceName,
-                  pwszMachineName,
-                  TRUE,
-                  pwszMachineDnsDomain,
-                  TRUE);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaBuildPrincipalName(
+                        &principalName,
+                        pwszServiceClass,
+                        pwszMachineName,
+                        FALSE,
+                        pwszMachineDnsDomain,
+                        TRUE);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
+          dwError = LsaSavePrincipalKey(
+                        principalName,
+                        pwszPass,
+                        sPassLen,
+                        pwszAdDnsDomainNameUc,
+                        pwszSalt,
+                        pwszDCName,
+                        dwKvno);
+          BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(principalName);
+          LW_SAFE_FREE_MEMORY(principalName);
+       }
 
-    // cifs/MACHINE.domain.net@DOMAIN.NET
-
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  cifsInstanceName,
-                  pwszMachineName,
-                  TRUE,
-                  pwszMachineDnsDomain,
-                  FALSE);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LW_SAFE_FREE_MEMORY(principalName);
-
-    // cifs/machine.DOMAIN.NET@DOMAIN.NET
-
-    dwError = LsaBuildPrincipalName(
-                  &principalName,
-                  cifsInstanceName,
-                  pwszMachineName,
-                  FALSE,
-                  pwszMachineDnsDomain,
-                  TRUE);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaSavePrincipalKey(
-                  principalName,
-                  pwszPass,
-                  sPassLen,
-                  pwszAdDnsDomainNameUc,
-                  pwszSalt,
-                  pwszDCName,
-                  dwKvno);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LW_SAFE_FREE_MEMORY(principalName);
-
+       pszSpn = strtok_r(NULL, ",", &pszServicePrincipalListSave);
+    }
 
 cleanup:
     LW_SAFE_FREE_MEMORY(principalName);
@@ -2285,6 +2473,8 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszAccount);
     LW_SAFE_FREE_MEMORY(pwszPrincipal);
     LW_SAFE_FREE_MEMORY(pwszFqdn);
+    LW_SAFE_FREE_MEMORY(pwszServiceClass);
+    LW_SAFE_FREE_STRING(pszTmpServicePrincipalList);
 
     return dwError;
 
@@ -2423,8 +2613,7 @@ DWORD
 LsaDirectoryConnect(
     PCWSTR pDomain,
     LDAP** ppLdConn,
-    PWSTR* ppDefaultContext,
-    PWSTR* ppSchemaContext
+    PWSTR* ppDefaultContext
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -2436,12 +2625,10 @@ LsaDirectoryConnect(
     PWSTR pAttributeName = NULL;
     PWSTR* ppAttributeValue = NULL;
     PWSTR pDefaultContext = NULL;
-    PWSTR pSchemaContext = NULL;
 
     BAIL_ON_INVALID_POINTER(pDomain);
     BAIL_ON_INVALID_POINTER(ppLdConn);
     BAIL_ON_INVALID_POINTER(ppDefaultContext);
-    BAIL_ON_INVALID_POINTER(ppSchemaContext);
 
     dwError = LdapInitConnection(&pLdConn, pDomain, FALSE);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2463,30 +2650,8 @@ LsaDirectoryConnect(
     dwError = LwAllocateWc16String(&pDefaultContext, ppAttributeValue[0]);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LW_SAFE_FREE_MEMORY(pAttributeName);
-    if (ppAttributeValue)
-    {
-        LdapAttributeValueFree(ppAttributeValue);
-        ppAttributeValue = NULL;
-    }
-
-    dwError = LwMbsToWc16s("schemaNamingContext",
-                           &pAttributeName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    ppAttributeValue = LdapAttributeGet(pLdConn, pInfo, pAttributeName, NULL);
-    if (ppAttributeValue == NULL) {
-        /* TODO: find more descriptive error code */
-        lderr = LDAP_NO_SUCH_ATTRIBUTE;
-        BAIL_ON_LDAP_ERROR(lderr);
-    }
-
-    dwError = LwAllocateWc16String(&pSchemaContext, ppAttributeValue[0]);
-    BAIL_ON_LSA_ERROR(dwError);
-
     *ppLdConn = pLdConn;
     *ppDefaultContext = pDefaultContext;
-    *ppSchemaContext = pSchemaContext;
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pAttributeName);
@@ -2515,11 +2680,9 @@ error:
         LdapCloseConnection(pLdConn);
     }
     LW_SAFE_FREE_MEMORY(pDefaultContext);
-    LW_SAFE_FREE_MEMORY(pSchemaContext);
 
     *ppLdConn = NULL;
     *ppDefaultContext = NULL;
-    *ppSchemaContext = NULL;
     goto cleanup;
 }
 
@@ -2542,7 +2705,8 @@ LsaMachAcctCreate(
     const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou,
-    int rejoin
+    BOOLEAN move,
+    BOOLEAN exists
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -2560,13 +2724,18 @@ LsaMachAcctCreate(
     BAIL_ON_INVALID_POINTER(machacct_name);
     BAIL_ON_INVALID_POINTER(ou);
 
-    lderr = LdapMachAcctCreate(ld, machacct_name, ou);
-    if (lderr == LDAP_ALREADY_EXISTS && rejoin) {
+    if (exists == FALSE)
+    {
+        lderr = LdapMachAcctCreate(ld, machine_name, machacct_name, ou);
+        BAIL_ON_LDAP_ERROR(lderr);
+    }
+    else if (move)
+    {
         lderr = LdapGetDirectoryInfo(&info, &res, ld);
         BAIL_ON_LDAP_ERROR(lderr);
 
         dwError = LwMbsToWc16s("defaultNamingContext",
-                               &dn_context_name);
+                &dn_context_name);
         BAIL_ON_LSA_ERROR(dwError);
 
         dn_context_val = LdapAttributeGet(ld, info, dn_context_name, NULL);
@@ -2576,12 +2745,13 @@ LsaMachAcctCreate(
             goto error;
         }
 
-        lderr = LdapMachAcctSearch(&machacct, ld, machacct_name,
-                                   dn_context_val[0]);
+        lderr = LdapMachAcctSearch(&machacct, ld, machacct_name, dn_context_val[0]);
+
+        // If the machine account with this sAMAccountName doesn't exist then we have a naming conflict
+        if (lderr == LDAP_NO_SUCH_OBJECT) lderr = LDAP_ALREADY_EXISTS;
         BAIL_ON_LDAP_ERROR(lderr);
 
-        dwError = LwMbsToWc16s("distinguishedName",
-                               &dn_name);
+        dwError = LwMbsToWc16s("distinguishedName", &dn_name);
         BAIL_ON_LSA_ERROR(dwError);
 
         dn_val = LdapAttributeGet(ld, machacct, dn_name, NULL);
@@ -2616,10 +2786,15 @@ cleanup:
         LdapAttributeValueFree(dn_val);
     }
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
+    if (dwError == ERROR_SUCCESS && lderr != 0)
     {
         dwError = LwMapLdapErrorToLwError(lderr);
+
+        if (dwError == LW_ERROR_UNKNOWN && move)
+        {
+            /* provide a more useful error if possible */
+            dwError = LW_ERROR_LDAP_RENAME_FAILED;
+        }
     }
 
     return dwError;
@@ -2633,10 +2808,9 @@ static
 DWORD
 LsaMachDnsNameSearch(
     LDAP *ldconn,
-    const wchar16_t *name,
+    const wchar16_t *fqdn,
+    const wchar16_t *machname,
     const wchar16_t *dn_context,
-    PCWSTR pSchemaContext,
-    const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     )
 {
@@ -2647,20 +2821,29 @@ LsaMachDnsNameSearch(
     wchar16_t **samacct_attr_val = NULL;
 
     BAIL_ON_INVALID_POINTER(ldconn);
-    BAIL_ON_INVALID_POINTER(name);
+    BAIL_ON_INVALID_POINTER(fqdn);
     BAIL_ON_INVALID_POINTER(dn_context);
-    BAIL_ON_INVALID_POINTER(dns_domain_name);
     BAIL_ON_INVALID_POINTER(samacct);
 
     *samacct = NULL;
 
+    // Attempt to find the computer account using the CN and FQDN (improve performance for pre-staged accounts and re-joining)
     lderr = LdapMachDnsNameSearch(
                 &res,
                 ldconn,
-                name,
-                dns_domain_name,
-                dn_context,
-                pSchemaContext);
+                fqdn,
+                machname,
+                dn_context);
+
+    if (lderr != LDAP_SUCCESS) {
+        // Couldn't find using the CN so try the old dNSHostName search
+        lderr = LdapMachDnsNameSearch(
+                    &res,
+                    ldconn,
+                    fqdn,
+                    NULL,
+                    dn_context);
+    }
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwMbsToWc16s("sAMAccountName",
@@ -2808,6 +2991,7 @@ LsaMachAcctSetAttribute(
     lderr = LdapMachAcctSetAttribute(ldconn, dn, attr_name, attr_val, new);
     return LwMapLdapErrorToLwError(lderr);
 }
+
 
 DWORD
 LsaGetDcName(
@@ -3078,7 +3262,8 @@ error:
 
 DWORD
 LsaMachineChangePassword(
-    IN OPTIONAL PCSTR pszDnsDomainName
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    IN PSTR           pszServicePrincipalNameList
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -3139,6 +3324,7 @@ LsaMachineChangePassword(
 
     // TODO-2010/01/10-dalmeida -- Simplify this calling sequence
     // by using keytab plugin in lsapstore...
+
     dwError = LsaSaveMachinePassword(
                     pwszHostname,
                     pPasswordInfo->Account.SamAccountName,
@@ -3147,7 +3333,8 @@ LsaMachineChangePassword(
                     pPasswordInfo->Account.DnsDomainName,
                     pwszDCName,
                     pPasswordInfo->Account.DomainSid,
-                    wszNewPassword);
+                    wszNewPassword,
+                    pszServicePrincipalNameList);
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
@@ -3419,4 +3606,3 @@ cleanup:
 error:
     goto cleanup;
 }
-

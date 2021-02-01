@@ -3,223 +3,34 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "../includes.h"
 
 
-DWORD
-ADUGetAllMCXPolicies(
-    HANDLE hDirectory,
-    PCSTR pszDN,
-    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PSTR szAttributeList[] = { "distinguishedName", NULL };
-    PGROUP_POLICY_OBJECT pGPObjectList = NULL;
-    PGROUP_POLICY_OBJECT pGPObject = NULL;
-    LDAPMessage* pMessage = NULL;
-    LDAPMessage* pLDAPMessage = NULL;
-    long lCount = 0;
-    PSTR pszValue = NULL;
 
-    dwError = LwLdapDirectorySearch(
-        hDirectory,
-        pszDN,
-        LDAP_SCOPE_ONELEVEL,
-        (PSTR)"(&(objectclass=groupPolicyContainer)(|(gPCMachineExtensionNames=*{B9BF896E-F9EB-49B5-8E67-11E2EDAED06C}*)(gPCUserExtensionNames=*{07E500C4-20FD-4829-8F38-B5FF63FA0493}*)))",
-        szAttributeList,
-        &pMessage);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    dwError = LwLdapCountEntries(
-        hDirectory,
-        pMessage,
-        &lCount
-        );
-    BAIL_ON_MAC_ERROR(dwError);
-
-    if (lCount > 0)
-    {
-        pLDAPMessage = LwLdapFirstEntry(hDirectory, pMessage);
-    }
-
-    while(pLDAPMessage != NULL)
-    {
-        dwError = LwLdapGetString(hDirectory,
-                                   pLDAPMessage,
-                                   "distinguishedName",
-                                   &pszValue);
-        BAIL_ON_MAC_ERROR(dwError);
-
-        dwError = LwAllocateMemory(sizeof(GROUP_POLICY_OBJECT), (PVOID*)&pGPObject);
-        BAIL_ON_MAC_ERROR(dwError);
-
-        pGPObject->pszPolicyDN = pszValue;
-        pszValue = NULL;
-
-        if (pGPObjectList != NULL)
-        {
-            pGPObject->pNext = pGPObjectList;
-            pGPObjectList = pGPObject;
-        }
-        else
-        {
-            pGPObjectList = pGPObject;
-        }
-
-        pGPObject = NULL;
-
-        pLDAPMessage = LwLdapNextEntry(hDirectory, pLDAPMessage);
-    }
-
-    if (*ppGroupPolicyObjects != NULL)
-    {
-        (*ppGroupPolicyObjects)->pNext = pGPObjectList;
-    }
-    else
-    {
-        *ppGroupPolicyObjects = pGPObjectList;
-    }
-
-    if (pMessage)
-    {
-        ldap_msgfree(pMessage);
-    }
-
-    if (pLDAPMessage)
-    {
-        ldap_msgfree(pLDAPMessage);
-    }
-
-    return dwError;
-
-cleanup:
-
-    if (pMessage)
-    {
-        ldap_msgfree(pMessage);
-    }
-
-    if (pLDAPMessage)
-    {
-        ldap_msgfree(pLDAPMessage);
-    }
-
-    LW_SAFE_FREE_STRING(pszValue);
-    ADU_SAFE_FREE_GPO_LIST (pGPObject);
-    ADU_SAFE_FREE_GPO_LIST (pGPObjectList);
-
-    return dwError;
-
-error:
-
-    if (ppGroupPolicyObjects)
-        *ppGroupPolicyObjects = NULL;
-
-    goto cleanup;
-}
-
-DWORD
-ADUGetMCXPolicy(
-    HANDLE hDirectory,
-    PCSTR pszDN,
-    PCSTR pszGPOName,
-    PGROUP_POLICY_OBJECT * ppGPO
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PSTR szAttributeList[] = { "distinguishedName", NULL };
-    char szQuery[512] = {0};
-    PGROUP_POLICY_OBJECT pGPObject = NULL;
-    LDAPMessage* pMessage = NULL;
-    long lCount = 0;
-    PSTR pszValue = NULL;
-
-    sprintf(szQuery, "(&(objectclass=groupPolicyContainer)(%s=%s))", ADU_DISPLAY_NAME_ATTR, pszGPOName);
-
-    dwError = LwLdapDirectorySearch(
-        hDirectory,
-        pszDN,
-        LDAP_SCOPE_ONELEVEL,
-        szQuery,
-        szAttributeList,
-        &pMessage);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    dwError = LwLdapCountEntries(
-        hDirectory,
-        pMessage,
-        &lCount
-        );
-    BAIL_ON_MAC_ERROR(dwError);
-
-    if (lCount < 0) {
-        dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (lCount == 0) {
-        dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    } else if (lCount > 1) {
-        dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
-    }
-    BAIL_ON_MAC_ERROR(dwError);
-
-    dwError = LwLdapGetString(hDirectory,
-                               pMessage,
-                               "distinguishedName",
-                               &pszValue);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    dwError = LwAllocateMemory(sizeof(GROUP_POLICY_OBJECT), (PVOID*)&pGPObject);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    pGPObject->pszPolicyDN = pszValue;
-    pszValue = NULL;
-
-    *ppGPO = pGPObject;
-    pGPObject = NULL;
-
-cleanup:
-
-    if (pMessage) {
-        ldap_msgfree(pMessage);
-    }
-
-    LW_SAFE_FREE_STRING(pszValue);
-    ADU_SAFE_FREE_GPO_LIST (pGPObject);
-
-    return dwError;
-
-error:
-
-    if (ppGPO)
-        *ppGPO = NULL;
-
-    goto cleanup;
-}
 
 static
 DWORD

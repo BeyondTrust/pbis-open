@@ -2,21 +2,21 @@ Name: 		@PKG_OPEN_RPM_NAME@
 Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
-License: 	Likewise Proprietary
-URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+License: 	apache-2.0
+URL:	http://www.beyondtrust.com/
 Group: 		System Environment/Daemons
-Prereq: grep, sh-utils, @PKG_OPEN_UPGRADE_RPM_NAME@
-Conflicts:  winbind 
+Prereq: @PKG_OPEN_UPGRADE_RPM_NAME@
+Conflicts:  winbind
 Obsoletes: likewise-open, likewise-base, likewise-domainjoin, likewise-domainjoin-gui, likewise-eventlog, likewise-krb5, likewise-libxml2, likewise-lsass, likewise-lwconfig, likewise-lwio, likewise-lwreg, likewise-lwreskit, likewise-lwtools, likewise-lwupgrade, likewise-mod-auth-kerb, likewise-netlogon, likewise-openldap, likewise-passwd, likewise-pstore, likewise-rpc, likewise-sqlite, likewise-srvsvc
 Provides: @PKG_OPEN_RPM_NAME@ , likewise-open
 AutoReq: no
 AutoProv: no
 
 %description
-PowerBroker Identity Services Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
+BeyondTrust AD Bridge Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
 %package devel
-Summary: PowerBroker Identity Services Open (development)
+Summary: BeyondTrust AD Bridge Open (development)
 Group: Development/Libraries
 Requires: @PKG_OPEN_RPM_NAME@
 
@@ -127,10 +127,15 @@ determine_os_version()
 {
     PBIS_DISTRO=unknown
     PBIS_DISTRO_VERSION=unknown
+    PBIS_SYSTEMD=0
 
     if [ -f '/etc/centos-release' ]; then
         PBIS_DISTRO=centos
-        if [ -n "`grep '^CentOS release 7' '/etc/centos-release'`" ]; then
+        if [ -n "`grep '^CentOS release 8' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^CentOS Linux release 8' '/etc/centos-release'`" ]; then
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^CentOS release 7' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=7.0
         elif [ -n "`grep '^CentOS Linux release 7' '/etc/centos-release'`" ]; then
             PBIS_DISTRO_VERSION=7.0
@@ -187,6 +192,30 @@ determine_os_version()
         elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 7' '/etc/redhat-release'`" ]; then
             PBIS_DISTRO=rhel
             PBIS_DISTRO_VERSION=7.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Server release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
+        elif [ -n "`grep '^Red Hat Enterprise Linux Workstation release 8' '/etc/redhat-release'`" ]; then
+            PBIS_DISTRO=rhel
+            PBIS_DISTRO_VERSION=8.0
+        fi
+    elif [ -f '/etc/os-release' ]; then
+        PBIS_DISTRO=`grep ^NAME= /etc/os-release | cut -d '=' -f2 | tr -d '\"'`
+        PBIS_DISTRO_VERSION=`grep ^VERSION_ID= /etc/os-release | cut -d '=' -f2 | tr -d '"'`
+        PBIS_DISTRO_MAJOR_VER=`echo $PBIS_DISTRO_VERSION | cut -d '.' -f1`
+
+        if [ -z $PBIS_DISTRO_MAJOR_VER ]; then
+            PBIS_DISTRO_MAJOR_VER=$PBIS_DISTRO_VERSION
+        fi
+
+        if [ $PBIS_DISTRO="SLED" -o $PBIS_DISTRO="SLES" ]; then
+            if [ $PBIS_DISTRO_MAJOR_VER -ge 12 -a -x /usr/bin/systemctl ]; then
+                PBIS_SYSTEMD=1
+                logfile "Using Systemd for $PBIS_DISTRO"
+            fi
         fi
     fi
 }
@@ -212,15 +241,26 @@ setup_selinux_policy_module()
         return;
     fi
 
+    RUNSCRIPT="run_or_fail "
+    if [ -x "/usr/sbin/getenforce" ]; then
+       SELinuxMode=`/usr/sbin/getenforce`
+       log "SELinux Mode: $SELinuxMode"
+       if [ "$SELinuxMode" = "Permissive" ]; then
+         RUNSCRIPT="run "
+       elif [ "$SELinuxMode" = "Disabled" ]; then
+         RUNSCRIPT="run "
+       fi
+    fi
+
     if [ "$DISTRO" = "rhel" -a "$VERSION" = "5.0" ]; then
         log 'SELinux Policy Module not required.'
     elif [ -f "@MK_DATADIR@/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module using @MK_DATADIR@/pbis.pp'
-        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
+        $RUNSCRIPT /usr/sbin/semodule -i "@MK_DATADIR@/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
     elif [ -f "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp" ]; then
         log 'Setting up SELinux Policy Module'
-        run_or_fail /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
+        $RUNSCRIPT /usr/sbin/semodule -i "@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp"
         run_quiet /sbin/fixfiles -R pbis-open restore
     else
       log "An appropriate SELinux policy [@MK_DATADIR@/$DISTRO/$VERSION/pbis.pp] was not included in this package.
@@ -230,7 +270,7 @@ You may provide a policy at @MK_DATADIR@/pbis.pp"
         if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
             logfile "selinuxenabled indicates SELinux is enabled"
             if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
-                if [ -f /etc/selinux/config ]; then                 
+                if [ -f /etc/selinux/config ]; then
                     log "SELinux found to be present, enabled, and enforcing.
 You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode by editing the file
@@ -242,7 +282,7 @@ You may either provide a policy at @MK_DATADIR@/pbis.pp  --OR--
 SELinux must be disabled or set to permissive mode.
 Check your system's documentation for details."
                 fi
-                log 'PowerBroker Identity Services will not install without an appropriate policy for SELinux.'
+                log 'BeyondTrust AD Bridge will not install without an appropriate policy for SELinux.'
                 exit 1
             else
                 logfile "getenforce indicates permissive (which is ok)"
@@ -552,9 +592,25 @@ execute_auxiliary_scripts()
     fi
 }
 
+restore_settings()
+{
+   REGSHELL='@MK_BINDIR@/regshell'
+   SETTING_FILE="${UPGRADEDIR}/preserveSetting"
+   LSASS_KEY='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+
+   if [ -f ${SETTING_FILE} ]; then
+      while read buff; do
+        valueName=`echo $buff | awk '{ print $1}'|sed -e 's/\"//g'`
+        value=`echo $buff | awk '{ print $2}'|sed -e 's/\"//g'`
+        run_or_fail $REGSHELL set_value "$LSASS_KEY" ${valueName}  ${value}
+      done < ${SETTING_FILE}
+   fi
+
+}
+
 postinstall()
 {
-    logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall begins (`date`)"
 
     determine_os_version
 
@@ -565,7 +621,7 @@ postinstall()
     restore_6_0_configuration
 
     restore_6_1_configuration
- 
+
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --disable-autostart --loglevel debug
 
     restore_5_0123_configuration
@@ -586,13 +642,15 @@ postinstall()
 
     switch_to_open_provider
 
+    restore_settings
+
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
     if [ -f "@LW_INITDIR@/lwsmd" ]; then
         run rm -f '@LW_INITDIR@/lwsmd'
     fi
 
-    if [ -f /etc/redhat-release ]; then
+    if [ -f /etc/redhat-release -o $PBIS_SYSTEMD -eq 1 ]; then
 	if [ ! -f /usr/bin/systemctl ]; then
             run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
 	fi
@@ -610,8 +668,9 @@ postinstall()
     fi
 
 
-    if [ -x /sbin/service ]
-    then
+    if [ -x /usr/bin/systemctl ]; then
+        run /usr/bin/systemctl start lwsmd
+    elif [ -x /sbin/service ]; then
         run /sbin/service lwsmd start
     else
         run '@LW_INITDIR@/lwsmd' start
@@ -639,7 +698,7 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    logfile "Package: PowerBroker Identity Services Open postinstall finished"
+    logfile "Package: BeyondTrust AD Bridge Open postinstall finished"
     exit 0
 }
 
@@ -653,6 +712,17 @@ UPGRADEDIR=/var/lib/pbis-upgrade
 LOG=/var/log/pbis-open-install.log
 
 PKG_ARCH="__PKG_ARCH"
+
+find_library()
+{
+    if [ -x /sbin/ldconfig ]
+    then
+        local __x=`/sbin/ldconfig -p | grep $@`
+        [[ -n "$__x" ]]
+        return $?
+    fi
+    return 0
+}
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -734,12 +804,14 @@ run_or_fail()
 
 pre_upgrade()
 {
-    logfile "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [pre upgrade] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -751,14 +823,16 @@ pre_upgrade()
         run_quiet pkill -KILL -x $daemon
     done
 
-    logfile "Package: PowerBroker Identity Services Open [pre upgrade] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [pre upgrade] finished"
 }
 
 pre_install()
 {
-    logfile "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [pre install] begins (`date`)"
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -770,9 +844,30 @@ pre_install()
         run_quiet pkill -KILL -x $daemon
     done
 
-    logfile "Package: PowerBroker Identity Services Open [pre install] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [pre install] finished"
     exit 0
 }
+
+check_for_required_libraries()
+{
+    local __is64=`file -L /bin/uname | grep -i 64-bit`
+
+    if [ -d /lib64 -a -n "$__is64" ]
+    then
+        local __libdir="/lib64"
+    else
+        local __libdir="/lib"
+    fi
+
+    find_library $__libdir/libnsl.so.1
+    if [ $? -ne 0 ]
+    then
+        log "BeyondTrust AD Bridge Open requires library $__libdir/libnsl.so.1; please install libnsl.so.1 before installing AD Bridge."
+        exit 1
+    fi
+}
+
+check_for_required_libraries
 
 if [ $1 -eq 1 ]; then
     pre_install
@@ -879,14 +974,16 @@ execute_auxiliary_scripts()
 
 preuninstall_remove()
 {
-    logfile "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
+    logfile "Package: BeyondTrust AD Bridge Open [preun remove] begins (`date`)"
 
     execute_auxiliary_scripts
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    if [ -x /sbin/service ]
+    if [ -x /usr/bin/systemctl ]; then
+        run_quiet /usr/bin/systemctl stop lwsmd
+    elif [ -x /sbin/service ]
     then
         run_quiet /sbin/service lwsmd stop
     else
@@ -903,11 +1000,13 @@ preuninstall_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    run_quiet /sbin/chkconfig --del lwsmd
+    if [ ! -f /usr/bin/systemctl ]; then
+        run_quiet /sbin/chkconfig --del lwsmd
+    fi
 
     run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
-    logfile "Package: PowerBroker Identity Services Open [preun remove] finished"
+    logfile "Package: BeyondTrust AD Bridge Open [preun remove] finished"
     exit 0
 }
 

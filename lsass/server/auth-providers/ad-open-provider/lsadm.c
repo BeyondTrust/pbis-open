@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /**
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * @file
  *
@@ -1232,6 +1231,43 @@ LsaDmpIsValidDnsDomainName(
 }
 
 static
+VOID
+LsaDmConvertGUIDToUuid(PGUID pDomainGuid, uuid_t *pUuid)
+{
+
+  uuid_t tmpGuid;
+
+  if (pUuid == NULL || pDomainGuid == NULL)
+  {
+    return;
+  }
+
+  if (sizeof(uuid_t) != sizeof(LW_GUID))
+  {
+    LSA_LOG_ERROR("Cannot convert LW_GUID to uuid_t. Different size 0x%x and 0x%x", sizeof(uuid_t), sizeof(LW_GUID));
+    memset(pUuid, 0, sizeof(uuid_t));
+    return;
+  }
+
+  tmpGuid[0] = (pDomainGuid->Data1 & 0xff000000) >> 24;
+  tmpGuid[1] = (pDomainGuid->Data1 & 0x00ff0000) >> 16;
+  tmpGuid[2] = (pDomainGuid->Data1 & 0x0000ff00) >> 8;
+  tmpGuid[3] = (pDomainGuid->Data1 & 0x000000ff);
+
+  tmpGuid[4] = (pDomainGuid->Data2 & 0xff00) >> 8;
+  tmpGuid[5] = (pDomainGuid->Data2 & 0x00ff);
+
+  tmpGuid[6] = (pDomainGuid->Data3 & 0xff00) >> 8;
+  tmpGuid[7] = (pDomainGuid->Data3 & 0x00ff);
+
+  memcpy(&tmpGuid[8], &pDomainGuid->Data4, sizeof(pDomainGuid->Data4));
+
+  memcpy(pUuid, &tmpGuid, sizeof(uuid_t));
+
+  return;
+}
+
+static
 BOOLEAN
 LsaDmpDomainCreate(
     OUT PLSA_DM_DOMAIN_STATE* ppDomain,
@@ -1276,7 +1312,7 @@ LsaDmpDomainCreate(
 
     if (pDomainGuid)
     {
-        memcpy(&pDomain->Guid, pDomainGuid, sizeof(pDomain->Guid));
+        LsaDmConvertGUIDToUuid(pDomainGuid, &pDomain->Guid);
     }
 
     if (pszDnsForestName)
@@ -3272,8 +3308,7 @@ LsaDmpLdapOpen(
     // domain goes offline, not when the machine goes globally offline).
     if (LsaDmpIsDomainOffline(hDmState, pszDnsDomainName, bUseGc))
     {
-        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-        BAIL_ON_LSA_ERROR(dwError);
+        LSA_LOG_DEBUG("Domain %s is offline", LSA_SAFE_LOG_STRING(pszDnsDomainName));
     }
 
     LsaDmpAcquireMutex(hDmState->pMutex);
@@ -3726,15 +3761,25 @@ LsaDmConnectDomain(
                 0,
                 NULL,
                 &pLocalDcInfo);
-            bIsNetworkError = LsaDmpIsNetworkError(dwError);
-            if (bIsNetworkError)
+            if (!dwError)
             {
-               if (time(NULL) > dwEnumTimeout)
-                 done = TRUE;
+               break;
+            }
+
+            // If enabled, determine if we have exceeded the trust 
+            // enumeration wait time.
+            if (time(NULL) > dwEnumTimeout)
+            {
+               done = TRUE;
             }
             else
-               done = TRUE;
+            {
+               // Wait for half a second and try connecting again.
+               struct timeval tv ={0,500000};
+               select(0, NULL, NULL, NULL, &tv);
+            }
         }
+
         BAIL_ON_LSA_ERROR(dwError);
         pActualDcInfo = pLocalDcInfo;
     }

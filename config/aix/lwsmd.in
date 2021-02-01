@@ -3,7 +3,7 @@
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
-PROG_DESC="PBIS Service Manager"
+PROG_DESC="BeyondTrust AD Bridge Service Manager"
 PROG_BIN=@MK_SBINDIR@/lwsmd
 PROG_ARGS="--start-as-daemon"
 PROG_PATTERN="/opt/pbis/sbin/lwsmd|lw-container|lw-svcm-wrap"

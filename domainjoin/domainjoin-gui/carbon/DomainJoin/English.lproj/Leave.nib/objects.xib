@@ -19,7 +19,7 @@
             <int name="controlID">302</int>
             <boolean name="small">TRUE</boolean>
             <int name="controlSize">1</int>
-            <string name="title">PowerBroker Identity Services is using the following information to identify your computer on the network.</string>
+            <string name="title">BeyondTrust AD Bridge is using the following information to identify your computer on the network.</string>
           </object>
           <object class="IBCarbonStaticText" id="182">
             <string name="bounds">78 20 91 122 </string>

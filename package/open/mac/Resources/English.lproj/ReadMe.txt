@@ -1,4 +1,4 @@
-PowerBroker Identity Services - Open Edition
+BeyondTrust AD Bridge - Open Edition
 --------
 
 To join an Active Directory domain using a graphical utility, run:

@@ -1,0 +1,24 @@
+configure()
+{
+
+    mk_config_header "include/config.h"
+
+    mk_check_headers \
+        stdio.h setjmp.h stdlib.h assert.h errno.h stdint.h ctype.h string.h inttypes.h
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h string.h"\
+        strndup strtoll
+}
+
+make()
+{
+    mk_headers \
+        MASTER="toml.h"
+
+    mk_library \
+        LIB=tomlc99\
+        HEADERDEPS="toml.h" \
+        INCLUDEDIRS="include" \
+        SOURCES="toml.c"
+}

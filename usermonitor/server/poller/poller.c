@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -49,13 +48,43 @@
 
 VOID
 UmnSrvTimevalToTimespec(
-    OUT struct timespec *pDest,
-    IN struct timeval *pSrc
+    OUT struct timespec * const pDest,
+    IN struct timeval * const pSrc
     )
 {
     pDest->tv_sec = pSrc->tv_sec;
     pDest->tv_nsec = pSrc->tv_usec * 1000;
 }
+
+
+/**
+ * @brief Populate the timespec & timeval with the current time
+ *
+ * @param pDestTimespec
+ * @param pDestTimeval
+ *
+ * @return 0 for success, or errno error code
+ */
+DWORD
+static
+UmnSrvNow(
+    OUT struct timespec * const pDestTimespec,
+    OUT struct timeval * const pDestTimeval
+    )
+{
+    DWORD dwError = 0;
+
+    dwError = gettimeofday(pDestTimeval, NULL);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    UmnSrvTimevalToTimespec(
+                pDestTimespec,
+                pDestTimeval);
+
+error:
+    return dwError;
+}
+
 
 VOID
 UmnSrvTimespecAdd(
@@ -88,9 +117,9 @@ UmnSrvTimespecAdd(
 
 VOID
 UmnSrvTimespecSubtract(
-    OUT struct timespec *pDest,
-    IN struct timespec *pA,
-    IN struct timespec *pB
+    OUT struct timespec * const pDest,
+    IN struct timespec * const pA,
+    IN struct timespec * const pB
     )
 {
     long lTotalSecs = pA->tv_sec - pB->tv_sec;
@@ -116,6 +145,40 @@ UmnSrvTimespecSubtract(
 
     pDest->tv_sec = lTotalSecs;
     pDest->tv_nsec = lTotalNSecs;
+}
+
+
+/**
+ * @brief Set pElapsed to TRUE if pTimespec has elapsed.
+ *
+ * @param pTimespec
+ * @param pElapsed set to TRUE if pTimespec is <= 'now',
+ *  FALSE otherwise, always FALSE on error
+ * @return 0 for success, or errno error code
+ */
+DWORD
+static UmnSrvTimespecElapsed(
+    IN struct timespec const * const pTimespec,
+    OUT BOOLEAN * const pElapsed
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    struct timeval now = {0};
+    struct timespec nowSpec = {0};
+
+    *pElapsed = FALSE;
+
+    dwError = UmnSrvNow(&nowSpec, &now);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    *pElapsed = (nowSpec.tv_sec > pTimespec->tv_sec
+                || (nowSpec.tv_sec == pTimespec->tv_sec
+                    && nowSpec.tv_nsec >= pTimespec->tv_nsec))
+        ? TRUE
+        : FALSE;
+
+error:
+    return dwError;
 }
 
 DWORD
@@ -155,6 +218,8 @@ UmnSrvUpdateAccountInfo(
     HANDLE hLsass = NULL;
     HANDLE hReg = NULL;
     HKEY hParameters = NULL;
+    BOOLEAN bLocalDBOpen = FALSE;
+
     // Do not free
     PSTR pDisableLsassEnum = NULL;
     DWORD lastUpdated = 0;
@@ -196,7 +261,8 @@ UmnSrvUpdateAccountInfo(
         dwError = 0;
     }
     BAIL_ON_UMN_ERROR(dwError);
-    
+
+    /* processing local users/groups so disable AD user/group enumeration */
     pDisableLsassEnum = getenv("_DISABLE_LSASS_NSS_ENUMERATION");
     if (!pDisableLsassEnum || strcmp(pDisableLsassEnum, "1"))
     {
@@ -219,6 +285,7 @@ UmnSrvUpdateAccountInfo(
 
     setpwent();
     setgrent();
+    bLocalDBOpen = TRUE;
 
     dwError = UmnSrvUpdateUsers(
                     hLsass,
@@ -240,6 +307,7 @@ UmnSrvUpdateAccountInfo(
 
     endpwent();
     endgrent();
+    bLocalDBOpen = FALSE;
 
     dwError = UmnSrvUpdateADAccounts(
                     hLsass,
@@ -260,8 +328,13 @@ UmnSrvUpdateAccountInfo(
                     (PBYTE)&lastUpdated,
                     sizeof(lastUpdated));
     BAIL_ON_UMN_ERROR(dwError);
-    
+
 cleanup:
+    if (bLocalDBOpen)
+    {
+        endpwent();
+        endgrent();
+    }
     if (hLsass)
     {
         LsaCloseServer(hLsass);
@@ -280,29 +353,30 @@ error:
     goto cleanup;
 }
 
+
 PVOID
 UmnSrvPollerThreadRoutine(
     IN PVOID pUnused
     )
 {
     DWORD dwError = 0;
+
     struct timeval now;
-    struct timespec periodStart, periodUsed, nowSpec, nextWake, pushWait = {0};
-    BOOLEAN bMutexLocked = FALSE;
+    struct timespec periodStart, periodUsed, nextWake, pushWait = {0};
     DWORD dwPeriodSecs = 0;
+    
+    char regErrMsg[256] = {0};
+    char fqdn[1024] = {0};
+
+    BOOLEAN bMutexLocked = FALSE;
 
     UMN_LOG_INFO("User poller thread started");
-
     dwError = pthread_mutex_lock(&gSignalPollerMutex);
     BAIL_ON_UMN_ERROR(dwError);
     bMutexLocked = TRUE;
 
-    dwError = gettimeofday(&now, NULL);
+    dwError = UmnSrvNow(&periodStart, &now);
     BAIL_ON_UMN_ERROR(dwError);
-
-    UmnSrvTimevalToTimespec(
-        &periodStart,
-        &now);
 
     while (!gbPollerThreadShouldExit)
     {
@@ -321,69 +395,82 @@ UmnSrvPollerThreadRoutine(
 
         while (!gbPollerThreadShouldExit && !gbPollerRefresh)
         {
+            BOOLEAN bWaitElapsed = FALSE;
+
             dwError = pthread_cond_timedwait(
                         &gSignalPoller,
                         &gSignalPollerMutex,
                         &nextWake);
+
+            if (dwError == EINTR)
+            {
+                UMN_LOG_DEBUG("User poller cond wait interrupted; continuing.");
+                continue;
+            }
+
             if (dwError == ETIMEDOUT)
             {
+                UMN_LOG_DEBUG("User poller cond wait completed.");
                 dwError = 0;
                 break;
             }
-            else if (dwError == EINTR)
-            {
-                // Try again
-                continue;
-            }
-            else if (dwError == 0)
-            {
-                // Check that this wasn't a spurious wakeup
-                dwError = gettimeofday(&now, NULL);
-                BAIL_ON_UMN_ERROR(dwError);
 
-                UmnSrvTimevalToTimespec(
-                    &nowSpec,
-                    &now);
-
-                if (nowSpec.tv_sec > nextWake.tv_sec ||
-                        (nowSpec.tv_sec == nextWake.tv_sec &&
-                            nowSpec.tv_nsec >= nextWake.tv_nsec))
-                {
-                    break;
-                }
-            }
-            else
+            if (dwError != 0) 
             {
+                UMN_LOG_ERROR("Timed wait error: error %s (%d).", 
+                      ErrnoToName(dwError), dwError);
                 BAIL_ON_UMN_ERROR(dwError);
+            }
+
+            dwError = UmnSrvTimespecElapsed(&nextWake, &bWaitElapsed);
+            if (dwError == 0 && bWaitElapsed == TRUE) 
+            {
+                break;
             }
         }
+
         gbPollerRefresh = FALSE;
 
         if (!gbPollerThreadShouldExit)
         {
-            dwError = gettimeofday(&now, NULL);
+            dwError = UmnSrvNow(&periodStart, &now);
             BAIL_ON_UMN_ERROR(dwError);
 
-            UmnSrvTimevalToTimespec(
-                &periodStart,
-                &now);
+            // obtain the fully qualified domain name and use it throughout this iteration
+            UmnEvtFreeEventComputerName();
+            UmnEvtGetFQDN(fqdn, sizeof(fqdn));
+            UmnEvtSetEventComputerName(fqdn);
 
             dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
             if (dwError == ERROR_CANCELLED)
             {
-                UMN_LOG_INFO("User poller canceled iteration");
+                UMN_LOG_INFO("User poller cancelled iteration");
                 dwError = 0;
                 break;
             }
-            BAIL_ON_UMN_ERROR(dwError);
 
-            dwError = gettimeofday(&now, NULL);
-            BAIL_ON_UMN_ERROR(dwError);
+            // simply log other errors and attempt to continue
+            if (dwError != LW_ERROR_SUCCESS) 
+            {
+                if (LwRegIsRegistrySpecificError(dwError))
+                {
+                    LwRegGetErrorString(dwError, regErrMsg, sizeof(regErrMsg) - 1);
+                    UMN_LOG_ERROR("Failed updating account info, registry error = %d  %s. Continuing.",
+                            dwError, regErrMsg);
+                }
+                else 
+                {
+                    UMN_LOG_ERROR("Failed updating account info, error = %d symbol = %s %s. Continuing.", 
+                        dwError,
+                        LwWin32ExtErrorToName(dwError), 
+                        LwWin32ExtErrorToDescription(dwError));
+                }
+                dwError = 0;
+            }
 
             // periodUsed = now - periodStart
-            UmnSrvTimevalToTimespec(
-                &periodUsed,
-                &now);
+            dwError = UmnSrvNow(&periodUsed, &now);
+            BAIL_ON_UMN_ERROR(dwError);
 
             UmnSrvTimespecSubtract(
                 &periodUsed,

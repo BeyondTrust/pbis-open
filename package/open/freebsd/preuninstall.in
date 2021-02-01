@@ -100,7 +100,7 @@ execute_auxiliary_scripts()
 
 preuninstall()
 {
-    log "Package: PowerBroker Identity Services Open preuninstall begins (`date`)"
+    log "Package: BeyondTrust AD Bridge Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     execute_auxiliary_scripts
@@ -117,9 +117,8 @@ preuninstall()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: PowerBroker Identity Services Open preuninstall finished"
+    log "Package: BeyondTrust AD Bridge Open preuninstall finished"
     exit 0
 }
 
 preuninstall
-

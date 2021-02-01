@@ -1,5 +1,5 @@
 PKG=PBISopen
-NAME=PowerBroker Identity Services Open
+NAME=BeyondTrust AD Bridge Open
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
 CATEGORY=system

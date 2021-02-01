@@ -3,33 +3,32 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Active Directory Authentication Provider
  *
@@ -716,7 +715,7 @@ LsaAdProviderStateDestroy(
             }
             LsaAdProviderStateRelease(pState);
         }
-    
+
         if (pState->hSchannelState)
         {
             AD_NetDestroySchannelState(pState->hSchannelState);
@@ -805,7 +804,7 @@ LsaAdProviderStateCreateMinimal(
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pState->stateLock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     pState->pStateLock = &pState->stateLock;
 
 error:
@@ -858,7 +857,7 @@ LsaAdProviderStateCreate(
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pState->configLock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     pState->pConfigLock = &pState->configLock;
 
     dwError = AD_NetCreateSchannelState(&pState->hSchannelState);
@@ -871,7 +870,7 @@ LsaAdProviderStateCreate(
                   pState->pszDomainName,
                   &config);
     BAIL_ON_LSA_ERROR(dwError);
-                
+
     dwError = AD_TransferConfigContents(
                     &config,
                     &pState->config);
@@ -1009,18 +1008,18 @@ AD_InitializeProvider(
                         &dwDomainCount);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     if(dwDomainCount > 0)
     {
         // Retrieve from the registry for each domain the wait time and enabled flags.
         // It also determines the maximum wait time.
-        LsaGetTrustEnumerationValue(ppszDomainList, dwDomainCount, 
+        LsaGetTrustEnumerationValue(ppszDomainList, dwDomainCount,
                                    (PDWORD*)&pdwTrustEnumerationWaitEnabled,
-                                   (PDWORD*)&pdwTrustEnumerationWaitSeconds, 
-                                    &dwTrustEnumerationWaitSecondsMaxValue, 
+                                   (PDWORD*)&pdwTrustEnumerationWaitSeconds,
+                                    &dwTrustEnumerationWaitSecondsMaxValue,
                                     &dwTrustEnumerationWait);
     }
-     
+
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
         BOOLEAN bIsDefault = FALSE;
@@ -1079,12 +1078,12 @@ AD_InitializeProvider(
                                           LsaAdStartupThread,
                                           pStartupThreadInfo1));
         }
-        else 
+        else
         {
 
              dwError = LsaStartupThreadInfoCreate(
                        &pdwTrustEnumerationWaitSeconds[dwIndex],
-                       pStateMinimal, 
+                       pStateMinimal,
                        FALSE,
                        &pStartupThreadInfo);
              BAIL_ON_LSA_ERROR(dwError);
@@ -1124,9 +1123,9 @@ AD_InitializeProvider(
            }
            LsaStartupThreadReleaseMutex(
                     pStartupThreadInfo1->Thread_Info.pTrustEnumerationMutex);
-      
+
            if (bTrustEnumerationIsDone)
-           {  
+           {
                 LSA_LOG_INFO("AD Provider: Trust enumeration complete.");
                 break;
            }
@@ -1139,8 +1138,8 @@ AD_InitializeProvider(
                    LSA_LOG_INFO("AD Provider: Aborting wait for trust enumeration");
                    break;
                }
-           }  
-       } 
+           }
+       }
     }
 
     *ppszProviderName = gpszADProviderName;
@@ -1154,7 +1153,7 @@ cleanup:
     AD_DereferenceProviderState(pStateMinimal);
 
 //    if(pStartupThreadInfo1){
-//        LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);       
+//        LsaStartupThreadInfoDestroy(&pStartupThreadInfo1);
 //    }
 //
     if(pdwTrustEnumerationWaitSeconds) {
@@ -1203,7 +1202,7 @@ LsaAdStartupThread(
     if(pInfo && pInfo->bSignalThread)
     {
         pInfo->Thread_Info.bTrustEnumerationIsDone = TRUE;
-        if(pInfo->Thread_Info.pTrustEnumerationCondition) 
+        if(pInfo->Thread_Info.pTrustEnumerationCondition)
         {
             LsaStartupThreadAcquireMutex(pInfo->Thread_Info.pTrustEnumerationMutex);
             pthread_cond_signal(pInfo->Thread_Info.pTrustEnumerationCondition);
@@ -1212,7 +1211,7 @@ LsaAdStartupThread(
     }
 
     // Replace the minimal state with the fully
-    // initialized state. 
+    // initialized state.
     dwError = AD_ReplaceStateInList(pState);
     BAIL_ON_LSA_ERROR(dwError);
     bRemoveFromList = FALSE;
@@ -1245,7 +1244,7 @@ AD_ShutdownProvider(
     DWORD dwError = 0;
 
     AD_DestroyStateList();
-    
+
     ADUnprovPlugin_Cleanup();
 
     pthread_mutex_destroy(&gADDefaultDomainLock);
@@ -1374,7 +1373,7 @@ AD_Activate(
     dwError = LsaDmWrapLdapPingTcp(
                   pState->hDmState,
                   pState->pszDomainName);
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+    if ((LW_ERROR_DOMAIN_IS_OFFLINE == dwError) || (DNS_ERROR_BAD_PACKET == dwError))
     {
         bIsDomainOffline = TRUE;
         dwError = 0;
@@ -1480,7 +1479,7 @@ AD_Deactivate(
         MediaSenseStop(&pState->MediaSenseHandle);
         pState->MediaSenseHandle = NULL;
     }
-    
+
     if (pState->bIsDefault)
     {
         LsaUmCleanup();
@@ -1741,7 +1740,7 @@ AD_AuthenticateUserEx(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -1802,7 +1801,7 @@ AD_ValidateUser(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -1932,7 +1931,7 @@ error:
             LSA_LOG_ERROR("Error: Failed to validate restricted membership. [Error code: %u]", dwError);
             break;
     }
-    
+
 
     goto cleanup;
 }
@@ -1952,7 +1951,7 @@ AD_FindUserObjectById(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -2015,7 +2014,7 @@ AD_EnumUsersFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -2137,7 +2136,7 @@ AD_RemoveUserByNameFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -2224,7 +2223,7 @@ AD_RemoveUserByIdFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -2395,13 +2394,14 @@ AD_JoinDomain(
     PSTR pszCanonicalDnsDomainName = NULL;
     PSTR pszCanonicalHostname = NULL;
     PSTR pszCanonicalHostDnsDomain = NULL;
+    PSTR pszServicePrincipalNameList = NULL;
 
     if (peerUID != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataContext));
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2423,7 +2423,7 @@ AD_JoinDomain(
     LSA_LOG_TRACE("Domain join request: %s", pszMessage);
 
     // Note that IPC spec disallows NULL strings for all but OU.
-    
+
     dwError = LwAllocateString(pRequest->pszDomain, &pszCanonicalDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2473,10 +2473,10 @@ AD_JoinDomain(
     // the domain and no one else should.  When
     // the join is complete, we will replace it
     // with a fully initialized provider state.
-    // We cannot update the minimal state in 
+    // We cannot update the minimal state in
     // place because we would have to maintain a
     // write lock on the state and anything
-    // (LsaEnableDomainGroupMembership) which 
+    // (LsaEnableDomainGroupMembership) which
     // calls AD_GetPasswordInfo to obtain the
     // machine account information before we are
     // done would deadlock when AD_GetPasswordInfo
@@ -2501,6 +2501,10 @@ AD_JoinDomain(
     dwError = LsaPstoreDeletePasswordInfoA(pszCanonicalDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_GetServicePrincipalNameFromRegistry(
+                &pszServicePrincipalNameList);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaJoinDomainUac(
         pszCanonicalHostname,
         pszCanonicalHostDnsDomain,
@@ -2512,7 +2516,8 @@ AD_JoinDomain(
         pRequest->pszOSVersion,
         pRequest->pszOSServicePack,
         pRequest->dwFlags,
-        pRequest->dwUac);
+        pRequest->dwUac,
+        pszServicePrincipalNameList);
     BAIL_ON_LSA_ERROR(dwError);
 
     // All old RPC connections are keyed with the old machine account
@@ -2542,6 +2547,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszCanonicalHostname);
     LW_SAFE_FREE_MEMORY(pszCanonicalHostDnsDomain);
     LW_SAFE_FREE_MEMORY(pszMessage);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
 
     AD_DereferenceProviderState(pStateMinimal);
     AD_DereferenceProviderState(pState);
@@ -2817,16 +2823,16 @@ AD_LeaveDomainInternal(
                                            pszPassword,
                                            pszDeleteAccountDN);
         if (dwError) {
-            LSA_LOG_ERROR("Failed to delete computer account, error = %d symbol = %s %s", 
+            LSA_LOG_ERROR("Failed to delete computer account, error = %d symbol = %s %s",
                     dwError,
-                    LwWin32ExtErrorToName(dwError), 
+                    LwWin32ExtErrorToName(dwError),
                     LwWin32ExtErrorToDescription(dwError));
         }
 
         // where it clarifies the error, map the underlying error
         // to specific "can't delete account errors"
         switch(dwError) {
-            case LW_ERROR_LDAP_INSUFFICIENT_ACCESS: 
+            case LW_ERROR_LDAP_INSUFFICIENT_ACCESS:
                 dwError = LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_FAILED_INSUFFICIENT_ACCESS;
                 break;
             default:
@@ -2899,7 +2905,7 @@ AD_LeaveDomain(
         dwError = LW_ERROR_ACCESS_DENIED;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
+
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataContext));
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3194,7 +3200,7 @@ AD_EnumGroupsFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3315,7 +3321,7 @@ AD_RemoveGroupByNameFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3403,7 +3409,7 @@ AD_RemoveGroupByIdFromCache(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3461,7 +3467,7 @@ AD_ChangePassword(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3745,7 +3751,7 @@ AD_CloseSession(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3830,7 +3836,7 @@ AD_FindNSSArtefactByKey(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3880,7 +3886,7 @@ AD_BeginEnumNSSArtefacts(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3946,7 +3952,7 @@ AD_EnumNSSArtefacts(
 
     dwError = AD_ResolveProviderState(pEnum->pProviderContext, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -4778,7 +4784,7 @@ AD_FindUserObjectByName(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -4945,7 +4951,7 @@ AD_FindObjects(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -5027,7 +5033,7 @@ AD_OpenEnumObjects(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -5100,10 +5106,12 @@ AD_EnumObjects(
     PAD_PROVIDER_CONTEXT pContext = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     DWORD dwObjectsCount = 0;
+    DWORD dwOfflineDomains = 0;
+    PSTR *ppszOfflineDomains = NULL;
 
     dwError = AD_ResolveProviderState(pEnum->pProviderContext, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -5122,7 +5130,9 @@ AD_EnumObjects(
             hEnum,
             dwMaxObjectsCount,
             &dwObjectsCount,
-            &ppObjects);
+            &ppObjects,
+            &dwOfflineDomains,
+            &ppszOfflineDomains);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -5137,6 +5147,10 @@ AD_EnumObjects(
     *pppObjects = ppObjects;
 
 cleanup:
+
+    LwFreeStringArray(ppszOfflineDomains, dwOfflineDomains);
+    ppszOfflineDomains = NULL;
+    dwOfflineDomains = 0;
 
     AD_ClearProviderState(pContext);
 
@@ -5169,7 +5183,7 @@ AD_OpenEnumMembers(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -5192,7 +5206,7 @@ AD_OpenEnumMembers(
 
     AD_ReferenceProviderContext(pContext);
     pEnum->pProviderContext = pContext;
-   
+
     if (AD_IsOffline(pContext->pState))
     {
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
@@ -5302,10 +5316,12 @@ AD_QueryMemberOf(
 {
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
+    DWORD dwGroupSidCount = 0;
+    PSTR* ppszGroupSids = NULL;
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED ||
         FindFlags & LSA_FIND_FLAGS_LOCAL)
     {
@@ -5324,20 +5340,30 @@ AD_QueryMemberOf(
             FindFlags,
             dwSidCount,
             ppszSids,
-            pdwGroupSidCount,
-            pppszGroupSids);
+            &dwGroupSidCount,
+            &ppszGroupSids);
     }
 
     if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
+        if (ppszGroupSids)
+        {
+            LwFreeStringArray(ppszGroupSids, dwGroupSidCount);
+            dwGroupSidCount = 0;
+            ppszGroupSids = NULL;
+        }
+
         dwError = AD_OfflineQueryMemberOf(
             pContext,
             FindFlags,
             dwSidCount,
             ppszSids,
-            pdwGroupSidCount,
-            pppszGroupSids);
+            &dwGroupSidCount,
+            &ppszGroupSids);
     }
+
+    *pdwGroupSidCount = dwGroupSidCount;
+    *pppszGroupSids = ppszGroupSids;
 
 cleanup:
 
@@ -5353,6 +5379,7 @@ error:
 DWORD
 AD_GetSmartCardUserObject(
     IN HANDLE hProvider,
+    IN OPTIONAL PCSTR pszSmartcardUser,
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     )
@@ -5421,8 +5448,9 @@ AD_InitializeOperatingMode(
                 pState->pszDomainName,
                 pszSamAccountName);
     }
-    // If we are offline, do the offline case
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+
+    // If we fail to initialize online, fallback to offline
+    if (LW_ERROR_SUCCESS != dwError)
     {
         dwError = AD_OfflineInitializeOperatingMode(
                 &pProviderData,
@@ -5657,7 +5685,7 @@ AD_RemoveCredCache(
 {
     DWORD dwError = 0;
     PCSTR pszCachePath = NULL;
- 
+
     if (pszCredCache)
     {
         // Remove cache type
@@ -5736,7 +5764,7 @@ LsaAdProviderLogServiceStartEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "Likewise authentication service provider initialization %s.\r\n\r\n" \
+                 "AD Bridge authentication service provider initialization %s.\r\n\r\n" \
                  "     Authentication provider:   %s\r\n\r\n" \
                  "     Hostname:                  %s\r\n" \
                  "     Domain:                    %s\r\n" \
@@ -5820,7 +5848,7 @@ LsaAdProviderLogConfigReloadEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "Likewise authentication service provider configuration settings have been reloaded.\r\n\r\n" \
+                 "AD Bridge authentication service provider configuration settings have been reloaded.\r\n\r\n" \
                  "     Authentication provider:           %s\r\n" \
                  "     Current settings are...\r\n" \
                  "     Cache entry expiry (secs):         %u\r\n" \
@@ -5959,7 +5987,7 @@ LsaAdProviderLogRequireMembershipOfChangeEvent(
              LSASS_EVENT_INFO_REQUIRE_MEMBERSHIP_OF_UPDATED,
              SERVICE_EVENT_CATEGORY,
              pszDescription,
-             NULL);
+             pszMemberList);
 
 cleanup:
 
@@ -5995,7 +6023,7 @@ LsaAdProviderLogEventLogEnableChangeEvent(
 
     LsaSrvLogServiceSuccessEvent(
              pState->config.bEnableEventLog ?
-                 LSASS_EVENT_INFO_AUDITING_CONFIGURATION_ENABLED : 
+                 LSASS_EVENT_INFO_AUDITING_CONFIGURATION_ENABLED :
                  LSASS_EVENT_INFO_AUDITING_CONFIGURATION_DISABLED,
              SERVICE_EVENT_CATEGORY,
              pszDescription,
@@ -6082,13 +6110,13 @@ AD_ResolveConfiguredLists(
                 LsaSrvFreeNameInfo(pLoginInfo);
                 pLoginInfo = NULL;
             }
-            
+
             // Ensure Groups and Users configured via Group Policy still work when
             // an alternate DomainSeparator is specified
             if (LsaSrvDomainSeparator() != '\\')
             {
                 PSTR pszDomainSeparator = strchr(pszMember, '\\');
-                
+
                 if (pszDomainSeparator)
                 {
                     *pszDomainSeparator = LsaSrvDomainSeparator();
@@ -6099,7 +6127,7 @@ AD_ResolveConfiguredLists(
                 pszMember,
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             switch (pLoginInfo->nameType)
             {
             case NameType_NT4:
@@ -6115,7 +6143,7 @@ AD_ResolveConfiguredLists(
             }
 
             QueryList.ppszStrings = (PCSTR*) &pszMember;
-            
+
             dwError = AD_FindObjects(
                 pContext,
                 0,
@@ -6125,7 +6153,7 @@ AD_ResolveConfiguredLists(
                 QueryList,
                 &ppObjects);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
             if (!ppObjects[0] ||
                 (ppObjects[0]->type != LSA_OBJECT_TYPE_USER &&
                  ppObjects[0]->type != LSA_OBJECT_TYPE_GROUP))
@@ -6147,7 +6175,7 @@ AD_ResolveConfiguredLists(
             else if (ppObjects[0]->type == LSA_OBJECT_TYPE_GROUP)
             {
                 LSA_LOG_VERBOSE("Adding entry to allow login for group [%s]", pszMember);
-                
+
                 dwError = AD_AddAllowedMember(
                     pContext->pState,
                     ppObjects[0]->pszObjectSid,
@@ -6357,7 +6385,7 @@ LsaStartupThreadInfoCreate(
     IN DWORD* pdwWaitTimeForTrustEnumeration,
     IN PLSA_AD_PROVIDER_STATE pLsaAdProviderState,
     IN BOOLEAN bSignalThread,
-    OUT PLSA_STARTUP_THREAD_INFO* ppInfo 
+    OUT PLSA_STARTUP_THREAD_INFO* ppInfo
     )
 {
     DWORD dwError = 0;
@@ -6366,15 +6394,15 @@ LsaStartupThreadInfoCreate(
 
     dwError = LwAllocateMemory(sizeof(*pInfo), (PVOID*) &pInfo);
     BAIL_ON_LSA_ERROR(dwError);
-   
+
     if(pLsaAdProviderState) {
         pInfo->pLsaAdProviderState = pLsaAdProviderState;
     }
-        
+
     pInfo->bSignalThread = bSignalThread;
     pInfo->Thread_Info.pTrustEnumerationMutex = NULL;
     pInfo->Thread_Info.pTrustEnumerationCondition = NULL;
-    
+
     if(pInfo->bSignalThread)
     {
        dwError = LsaStartupThreadCreateMutex(&pInfo->Thread_Info.pTrustEnumerationMutex);
@@ -6382,7 +6410,7 @@ LsaStartupThreadInfoCreate(
 
        dwError = LsaStartupThreadCreateCond(&pInfo->Thread_Info.pTrustEnumerationCondition);
        BAIL_ON_LSA_ERROR(dwError);
-    
+
        pInfo->Thread_Info.bTrustEnumerationIsDone = FALSE;
 
        if (gettimeofday(&now, NULL) < 0)
@@ -6411,7 +6439,7 @@ error:
     }
     else {
        LwFreeMemory(pInfo);
-       pInfo = NULL;         
+       pInfo = NULL;
     }
     goto cleanup;
 }
@@ -6443,7 +6471,7 @@ LsaGetTrustEnumerationValue(
    BAIL_ON_LSA_ERROR(dwError);
 
    memset(pdwTrustEnumerationWaitSeconds1, 0, sizeof(pdwTrustEnumerationWaitSeconds1) * dwDomainCount);
-   memset(pdwTrustEnumerationWaitEnabled1, 0, sizeof(pdwTrustEnumerationWaitEnabled1)* dwDomainCount);   
+   memset(pdwTrustEnumerationWaitEnabled1, 0, sizeof(pdwTrustEnumerationWaitEnabled1)* dwDomainCount);
 
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
@@ -6468,37 +6496,37 @@ LsaGetTrustEnumerationValue(
              *pdwTrustEnumerationWait = 1;
          }
 
-         // Condition to retrieve the MaxValue for TrustEnumerationWait 
+         // Condition to retrieve the MaxValue for TrustEnumerationWait
          if(pdwTrustEnumerationWaitEnabled1[dwIndex] !=0  &&
              (((signed)pdwTrustEnumerationWaitSeconds1[dwIndex] > 0) &&
              ((signed)pdwTrustEnumerationWaitSeconds1[dwIndex] < TRUST_ENUMERATIONWAIT_MAXLIMIT))) {
              if((signed)dwTrustEnumerationWaitSecondsMaxValue < pdwTrustEnumerationWaitSeconds1[dwIndex]) {
                  dwTrustEnumerationWaitSecondsMaxValue = pdwTrustEnumerationWaitSeconds1[dwIndex];
-             } 
+             }
         }
      }
-     /* Setting Default Value of 300sec  for TrustEnumerationWait 
+     /* Setting Default Value of 300sec  for TrustEnumerationWait
             if TrustEnumerationWaitSeconds is less than or equal to 0 */
      for(dwIndex = 0; dwIndex < dwDomainCount; dwIndex++) {
-        if(pdwTrustEnumerationWaitEnabled1[dwIndex] && (signed)pdwTrustEnumerationWaitSeconds1[dwIndex] <= 0 && 
+        if(pdwTrustEnumerationWaitEnabled1[dwIndex] && (signed)pdwTrustEnumerationWaitSeconds1[dwIndex] <= 0 &&
            (signed) dwTrustEnumerationWaitSecondsMaxValue < TRUST_ENUMERATIONWAIT_DEFAULTVALUE) {
             dwTrustEnumerationWaitSecondsMaxValue = TRUST_ENUMERATIONWAIT_DEFAULTVALUE;
             break;
         }
     }
 
-    if(pdwTrustEnumerationWaitSecondsMaxValue) 
+    if(pdwTrustEnumerationWaitSecondsMaxValue)
     {
         *pdwTrustEnumerationWaitSecondsMaxValue = dwTrustEnumerationWaitSecondsMaxValue;
     }
 
-    if(pdwTrustEnumerationWaitSeconds) 
+    if(pdwTrustEnumerationWaitSeconds)
     {
         *pdwTrustEnumerationWaitSeconds = (PDWORD)pdwTrustEnumerationWaitSeconds1;
     }
 
-    if(pdwTrustEnumerationWaitEnabled) 
-    { 
+    if(pdwTrustEnumerationWaitEnabled)
+    {
         *pdwTrustEnumerationWaitEnabled = (PDWORD)pdwTrustEnumerationWaitEnabled1;
     }
 
@@ -6515,7 +6543,7 @@ error:
        free(pdwTrustEnumerationWaitEnabled1);
        pdwTrustEnumerationWaitEnabled1 = NULL;
     }
-    
+
     goto cleanup;
 
 }

@@ -35,7 +35,10 @@
 /*
  * Force inclusion of SVID stuff since we need it if we're compiling in
  * gcc-wall wall mode
+ *
+ * Use both _SVID_SOURCE AND _DEFAULT_SOURCE (glibc 2.20 +) to avoid warnings
  */
+#define _DEFAULT_SOURCE
 #define _SVID_SOURCE
 
 #include "config.h"
@@ -221,7 +224,7 @@ static int get_node_id(unsigned char *node_id)
 	for (i = 0; i < n; i+= ifreq_size(*ifrp) ) {
 		ifrp = (struct ifreq *)((char *) ifc.ifc_buf+i);
 		strncpy(ifr.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-#if defined(SIOCGIFHWADDR) && !defined(SOLARIS_11)
+#if defined(SIOCGIFHWADDR) && !defined(SOLARIS_11) && !defined(AIX_6)
 		if (ioctl(sd, SIOCGIFHWADDR, &ifr) < 0)
 			continue;
 		a = (unsigned char *) &ifr.ifr_hwaddr.sa_data;

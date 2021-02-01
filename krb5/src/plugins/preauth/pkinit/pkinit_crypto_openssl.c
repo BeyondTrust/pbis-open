@@ -3465,6 +3465,12 @@ pkinit_login(krb5_context context,
         if (r != CKR_OK) {
             pkiDebug("C_Login: %s\n", pkinit_pkcs11_code_to_text(r));
             r = KRB5KDC_ERR_PREAUTH_FAILED;
+            // Smartcard gui login. Need to release session if the PIN
+            // provided is not valid. To reproduce, attempt to login with
+            // a bad pin(CKR_PIN_INCORRECT), then a valid pin. 
+            // Response prior to this fix is CKR_USER_ALREADY_LOGGED_IN.
+            id_cryptoctx->p11->C_CloseSession(id_cryptoctx->session);
+            id_cryptoctx->session = CK_INVALID_HANDLE;
         }
     }
     free(rdat.data);

@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -34,12 +33,18 @@
 #include "djpamconf.h"
 #include "djcli.h"
 #include "djauditing.h"
+#include "djpbps.h"
 #include "ctprocutils.h"
 #include "lwexc.h"
+#include "linenoise.h"
 #include <lw/rtllog.h>
 #include <lwstr.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
+
+const char *LN_COMPUTER_NAME_HISTORY_FILE = ".pbis-djname-hist";
+const char *LN_JOINLEAVE_HISTORY_FILE = ".pbis-djjoin-hist";
+const int LN_MAX_HISTORY_LEN = 64;
 
 static
 void
@@ -57,19 +62,48 @@ ShowUsage(const BOOLEAN isEnterprise)
     fprintf(stdout, "  and commands are:\n\n");
     fprintf(stdout, "    query\n");
     fprintf(stdout, "    setname <computer name>\n");
-    fprintf(stdout, "    join [--notimesync] [--enable <module> --disable <module> ...] [--ou <organizationalUnit>] [--multiple] <domain name> <user name> [<password>]\n");
-    fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
-    fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] [--trustEnumerationWaitSeconds <seconds>] <domain name>\n");
-    fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, (isEnterprise)
-            ? "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--keepLicense] [user name] [password]\n"
-              "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n"
-            : "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [--deleteAccount <user name> [<password>]]\n");
+            ? "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n"
+              "    join [join options] [--ou <organizationalUnit>] --configFile <configuration file> <domain name>\n"
+            : "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
+    fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
+    fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
+    fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--nogssapi] [--ignore-pam] [--enable <module> --disable <module> ...]\n");
+    fprintf(stdout, (isEnterprise)
+            ?       "                  [--assumeDefaultCell {auto|no|force}] [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n"
+            :       "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
+    fprintf(stdout, (isEnterprise)
+            ?       "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>] [--unprovisioned {auto|no|force}]\n\n"
+            :       "                  [--uac-flags <flags>] [--trustEnumerationWaitSeconds <seconds>]\n\n");
+    fprintf(stdout, (isEnterprise)
+            ? "    leave [--enable <module> --disable <module> ...] [--keepLicense] [user name] [password]\n"
+              "    leave [--enable <module> --disable <module> ...] [--deleteAccount <user name> [<password>]]\n"
+              "    leave [--enable <module> --disable <module> ...] [--deleteAccount --configFile <configuration file>]\n"
+            : "    leave [--enable <module> --disable <module> ...] [--deleteAccount <user name> [<password>]]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n");
     fprintf(stdout, "\n");
-    fprintf(stdout, "  Example:\n");
-    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  Examples:\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  This example shows three different non-interactive domain joins. Each uses the supplied domain\n");
+    fprintf(stdout, "  and AD user name. The second and third examples show joining to an OU within the domain, specified\n");
+    fprintf(stdout, "  in AD canonical name (without the domain prefix), and Distinguised Name (DN) formats.\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n");
+    fprintf(stdout, "    domainjoin-cli join --ou Eng/Dev MYDOMAIN.COM MyJoinAccount\n");
+    fprintf(stdout, "    domainjoin-cli join --ou OU=Dev,OU=Eng,DC=MYDOMAIN,DC=COM MYDOMAIN.COM MyJoinAccount\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "  This example shows how domainjoin-cli will prompt for the domain, user name and OU parameters if\n");
+    fprintf(stdout, "  they are not supplied. In the first example, domainjoin-cli will prompt for domain and user name.\n");
+    fprintf(stdout, "  In the second, domainjoin-cli will prompt for the domain, user name and OU. In the final example,\n");
+    fprintf(stdout, "  domainjoin-cli will prompt for the OU and user name. Here -- is used to indicate the OU parameter\n");
+    fprintf(stdout, "  is not supplied, otherwise domainjoin-cli would parse MYDOMAIN.COM as the OU.\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "    domainjoin-cli join\n");
+    fprintf(stdout, "    domainjoin-cli join --ou\n");
+    fprintf(stdout, "    domainjoin-cli join --ou -- MYDOMAIN.COM \n");
+    fprintf(stdout, "\n");
 }
 
 static
@@ -80,9 +114,9 @@ ShowUsageInternal(const BOOLEAN isEnterprise)
 
     fprintf(stdout, "  Internal debug commands:\n");
     fprintf(stdout, "    fixfqdn\n");
-    fprintf(stdout, "    configure { --enable | --disable } pam [--testprefix <dir>]\n");
-    fprintf(stdout, "    configure { --enable | --disable } nsswitch [--testprefix <dir>]\n");
-    fprintf(stdout, "    configure { --enable | --disable } ssh [--testprefix <dir>]\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] pam\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] nsswitch\n");
+    fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] ssh\n");
     fprintf(stdout, "    configure { --enable | --disable } [--testprefix <dir>] [--long <longdomain>] [--short <shortdomain>] krb5\n");
     fprintf(stdout, "    configure { --enable | --disable } eventfwdd\n");
     fprintf(stdout, "    configure { --enable | --disable } reapsysld\n");
@@ -90,8 +124,86 @@ ShowUsageInternal(const BOOLEAN isEnterprise)
     fprintf(stdout, "    get_arch\n");
     fprintf(stdout, "    get_distro\n");
     fprintf(stdout, "    get_distro_version\n");
-    fprintf(stdout, "    raise_error <error code | error name | 0xhex error code>\n");
     fprintf(stdout, "\n");
+}
+
+/* Strip leading/trailing whitespace from user entry */
+static
+char *
+linenoise_strip_whitespace(
+    const char *prompt
+    )
+{
+    char *input = NULL;
+    input = linenoise(prompt);
+    if (input)
+    {
+        LwStripWhitespace(input, TRUE, TRUE);
+    }
+
+    return input;
+}
+
+/* return the home directory or NULL if there is
+ * any error,
+ *
+ * the returned string should be freed */
+char *homeDirectory()
+{
+    char *home = NULL;
+    char *ret = NULL;
+    struct passwd *pw = NULL;
+
+    if (!(home = getenv("HOME")))
+    {
+        pw = getpwuid(geteuid());
+        if (pw)
+        {
+            home = pw->pw_dir;
+        }
+    }
+
+    LwStrDupOrNull(home, &ret);
+    return ret;
+}
+
+static
+char *
+linenoise_history_file(const char *filename)
+{
+    PSTR historyFile = NULL;
+    DWORD dwError = ERROR_SUCCESS;
+
+    char *homeDir = homeDirectory();
+    if (homeDir)
+    {
+        dwError = LwAllocateStringPrintf(&historyFile, "%s/%s", homeDir, filename);
+    }
+    else
+    {
+        dwError = LwStrDupOrNull(filename, &historyFile);
+    }
+    BAIL_ON_CENTERIS_ERROR(dwError);
+
+cleanup:
+    CT_SAFE_FREE_STRING(homeDir);
+    return historyFile;
+
+
+error:
+    CT_SAFE_FREE_STRING(historyFile);
+    goto cleanup;
+}
+
+/* Add to linenoise history if not null or empty */
+static
+void
+linenoise_history_add(const char *line)
+{
+    if (line && *line)
+    {
+        linenoiseHistoryAdd(line);
+    }
 }
 
 static
@@ -113,10 +225,11 @@ FillMissingPassword(
         ceError = GetPassword(&pszPassword);
         BAIL_ON_CENTERIS_ERROR(ceError);
         fprintf(stdout, "\n");
+        DJ_LOG_INFO("Using user entered password");
     }
     else
     {
-        DJ_LOG_WARNING("Retrieved password from envionmental variable");
+        DJ_LOG_WARNING("Retrieved password from environmental variable");
         ceError = CTStrdup(pszEnvPassword, &pszPassword);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
@@ -295,24 +408,91 @@ void PrintModuleStates(BOOLEAN showTristate, JoinProcessOptions *options)
     }
 }
 
-void DoJoin(int argc, char **argv, int columns, LWException **exc)
+static
+char * ouHintsCallback(const char *buffer, int *color, int *bold)
+{
+    *color = 34; /* blue */
+    *bold = 1;
+    return " [e.g. Eng/pbis/dev | OU=Dev,OU=Eng,DC=MYDOMAIN,DC=COM]";
+}
+
+static
+BOOLEAN isOptionValueEnabled(const char *value) {
+    return (!strcasecmp(value, "auto")
+            || !strcasecmp(value, "automatic")
+            || !strcasecmp(value, "dynamic")
+            || !strcasecmp(value, "on"));
+}
+
+static
+BOOLEAN isOptionValueDisabled(const char *value) {
+    return (!strcasecmp(value, "no")
+            || !strcasecmp(value, "false")
+            || !strcasecmp(value, "disable")
+            || !strcasecmp(value, "disabled")
+            || !strcasecmp(value, "off"));
+}
+
+static
+BOOLEAN isOptionValueOn(const char *value) {
+    return (!strcasecmp(value, "yes")
+            || !strcasecmp(value, "on")
+            || !strcasecmp(value, "true"));
+}
+
+static
+BOOLEAN isOptionValueOff(const char *value) {
+    return isOptionValueDisabled(value);
+}
+
+static
+BOOLEAN isOptionValueForced(const char *value) {
+    return (!strcasecmp(value, "force"));
+}
+
+static void DJValidateJoinOptions(JoinProcessOptions *pOptions, LWException **exc)
+{
+    if (pOptions->isEnterprise
+            && pOptions->assumeDefaultCellMode > False
+            && pOptions->unprovisionedMode > False) {
+        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "You cannot enable both --assumeDefaultCell and --unprovisioned modes; please specify only one.", "");
+    }
+}
+
+void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWException **exc)
 {
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
-    BOOLEAN bTrustEnumeration = FALSE;
+    BOOLEAN mustSupplyOU = FALSE;
+    BOOLEAN mustSupplyUsername = TRUE;
+    BOOLEAN mustSupplyConfigFile = FALSE;
+    BOOLEAN haveConfigFile = FALSE;
     DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
     size_t i;
-    int passwordIndex = -1;
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
+    PSTR joinLeaveHistoryFile = NULL;
+    PPbpsApiHandle_t pPbpsApiHandle = NULL;
 
     DJZeroJoinProcessOptions(&options);
+    options.isEnterprise = isEnterprise;
+
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
     memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
+
+    /* initialize linenoise history; if we couldn't allocate a history
+     * file name, we just won't be able to load/persist history between
+     * runs */
+    linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+    joinLeaveHistoryFile = linenoise_history_file(LN_JOINLEAVE_HISTORY_FILE);
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistoryLoad(joinLeaveHistoryFile);
+    }
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
@@ -330,11 +510,36 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             options.disableTimeSync = TRUE;
         else if(!strcmp(argv[0], "--multiple"))
             options.enableMultipleJoins = TRUE;
+        else if(!strcmp(argv[0], "--nogssapi"))
+            options.disableGSSAPI = TRUE;
         else if(!strcmp(argv[0], "--nohosts"))
         {
             PCSTR module = "hostname";
             LW_CLEANUP_CTERR(exc, CTArrayAppend(&disableModules, sizeof(PCSTR), &module, 1));
         }
+        else if(!strcmp(argv[0], "--ou"))
+        {
+            /* set the prompt for the ou flag if necessary, either no more options or the
+             * next argument is another option; we will prompt for it later to
+             * allow option processing validation to finish */
+            if (argc > 1 && strncmp("--", argv[1], 2))
+            {
+                DJ_LOG_INFO("Domainjoin invoked with option --ou %s", argv[1]);
+                CT_SAFE_FREE_STRING(options.ouName);
+                LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.ouName));
+                argv++;
+                argc--;
+            }
+            else
+            {
+                mustSupplyOU = TRUE;
+            }
+        }
+        else if(!strcmp(argv[0], "--"))
+        {
+            /* marks the "end" of the options */
+        }
+        // remaining options take two parameters
         else if(argc < 2)
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
@@ -370,14 +575,6 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             argv++;
             argc--;
         }
-        else if(!strcmp(argv[0], "--ou"))
-        {
-            DJ_LOG_INFO("Domainjoin invoked with option --ou %s", argv[1]);
-            CT_SAFE_FREE_STRING(options.ouName);
-            LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.ouName));
-            argv++;
-            argc--;
-        }
         else if(!strcmp(argv[0], "--uac-flags"))
         {
             DJ_LOG_INFO("Domainjoin invoked with option --uac-flags %s", argv[1]);
@@ -391,14 +588,11 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             DJ_LOG_INFO("Domainjoin invoked with option --assumeDefaultDomain");
             options.setAssumeDefaultDomain = TRUE;
 
-            if (!strcasecmp(argv[1], "yes") || !strcasecmp(argv[1], "true") ||
-                !strcasecmp(argv[1], "on"))
+            if (isOptionValueOn(argv[1]))
             {
                 options.assumeDefaultDomain = TRUE;
             }
-            else if (!strcasecmp(argv[1], "no") ||
-                !strcasecmp(argv[1], "false") ||
-                !strcasecmp(argv[1], "off"))
+            else if (isOptionValueOff(argv[1]))
             {
                 options.assumeDefaultDomain = FALSE;
             }
@@ -427,14 +621,77 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             options.dwTrustEnumerationWaitSeconds = strtoul(argv[1], NULL, 0);
             // Verify the supported range. Zero disables the functionality.
             // Range is the same as the GPO.
-            if (options.dwTrustEnumerationWaitSeconds > 1000) 
+            if (options.dwTrustEnumerationWaitSeconds > 1000)
             {
                 LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
                 goto cleanup;
             }
-            bTrustEnumeration = TRUE;
             argv++;
             argc--;
+        }
+        else if(!strcmp(argv[0], "--assumeDefaultCell") && isEnterprise)
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option %s %s", argv[0], argv[1]);
+
+            if (isOptionValueEnabled(argv[1]))
+            {
+                options.assumeDefaultCellMode = True;
+            }
+            else if (isOptionValueDisabled(argv[1]))
+            {
+                options.assumeDefaultCellMode = False;
+            }
+            else if (isOptionValueForced(argv[1]))
+            {
+                options.assumeDefaultCellMode = Force;
+            }
+            else
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            argv++;
+            argc--;
+        }
+        else if(!strcmp(argv[0], "--unprovisioned") && isEnterprise)
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option %s %s", argv[0], argv[1]);
+
+            if (isOptionValueEnabled(argv[1]))
+            {
+                options.unprovisionedMode = True;
+            }
+            else if (isOptionValueDisabled(argv[1]))
+            {
+                options.unprovisionedMode = False;
+            }
+            else if (isOptionValueForced(argv[1]))
+            {
+                options.unprovisionedMode = Force;
+            }
+            else
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            argv++;
+            argc--;
+        }
+        else if ((!strcmp(argv[0], "--configFile")) && isEnterprise)
+        {
+            if (argc > 1 && strncmp("--", argv[1], 2))
+            {
+               DJ_LOG_INFO("Domainjoin invoked with option --configFile %s", argv[1]);
+               CT_SAFE_FREE_STRING(options.pszConfigFile);
+               LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.pszConfigFile));
+               haveConfigFile = TRUE;
+               argv++;
+               argc--;
+            }
+            else
+            {
+               mustSupplyConfigFile = TRUE;
+            }
         }
         else
         {
@@ -445,34 +702,87 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         argc--;
     }
 
-    if(argc == 3)
-    {
-        LW_CLEANUP_CTERR(exc, CTStrdup(argv[2], &options.password));
-        passwordIndex = 2;
-    }
-    // The join username is not required in preview or details mode.
-    else if(argc == 1 && (preview || detailModules.size != 0 || bTrustEnumeration) )
-        ;
-    else if(argc != 2)
-    {
-        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
-        goto cleanup;
-    }
-    options.joiningDomain = TRUE;
+    DJ_LOG_INFO("Validating join options.");
+    LW_TRY(exc, DJValidateJoinOptions(&options, &LW_EXC));
 
     DJ_LOG_INFO("Domainjoin invoked with %d arg(s) to the join command:", argc);
-    for(i = 0; i < argc; i++)
+
+    /*  prompt for the OU if required */
+    if (mustSupplyOU)
     {
-        DJ_LOG_INFO("    [%s]", i == passwordIndex ? "<password>" : argv[i]);
+        linenoiseSetHintsCallback(ouHintsCallback);
+        options.ouName = linenoise_strip_whitespace("Computer object location (OU): ");
+        linenoise_history_add(options.ouName);
+        linenoiseSetHintsCallback(NULL);
+
+        if (LW_IS_NULL_OR_EMPTY_STR(options.ouName))
+        {
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Invalid OU", "");
+            goto cleanup;
+        }
     }
 
-    LW_CLEANUP_CTERR(exc, CTStrdup(
-        argv[0], &options.domainName));
-    if(argc > 1)
+    if (argc > 0)
     {
-        LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.username));
+        DJ_LOG_INFO("    [%s]", argv[0]);
+        LW_CLEANUP_CTERR(exc, CTStrdup(argv[0], &options.domainName));
+        argv++;
+        argc--;
+    }
+    else
+    {
+        options.domainName = linenoise_strip_whitespace("AD Domain: ");
+        linenoise_history_add(options.domainName);
+        DJ_LOG_INFO("    Domain: [%s]", options.domainName);
     }
 
+    if (mustSupplyConfigFile)
+    {
+        options.pszConfigFile = linenoise_strip_whitespace("configFile: ");
+        linenoise_history_add(options.pszConfigFile);
+        DJ_LOG_INFO("    configFile: [%s]", options.pszConfigFile);
+        haveConfigFile = TRUE;
+    }
+
+    if (!haveConfigFile)
+    {
+       mustSupplyUsername = (!(preview || detailModules.size != 0));
+       if (argc > 0)
+       {
+           DJ_LOG_INFO("    [%s]", argv[0]);
+           LW_CLEANUP_CTERR(exc, CTStrdup(argv[0], &options.username));
+           argv++;
+           argc--;
+       }
+       else if (mustSupplyUsername)
+       {
+           options.username = linenoise_strip_whitespace("Username: ");
+           linenoise_history_add(options.username);
+           DJ_LOG_INFO("    Username: [%s]", options.username);
+       }
+
+       /*  user will be prompted later if password is needed and not supplied */
+       if (argc > 0)
+       {
+           DJ_LOG_INFO("    [<password>]");
+           LW_CLEANUP_CTERR(exc, CTStrdup(argv[0], &options.password));
+           argv++;
+           argc--;
+       }
+    }
+
+    if (isEnterprise && haveConfigFile && options.pszConfigFile)
+    {
+        CT_SAFE_FREE_STRING(options.username);
+        CT_SAFE_FREE_STRING(options.password);
+        LW_CLEANUP_CTERR(exc, PbpsApiCredentialGet(
+                                 options.pszConfigFile,
+                                 &options.username,
+                                 &options.password,
+                                 &pPbpsApiHandle));
+    }
+
+    options.joiningDomain = TRUE;
     options.warningCallback = PrintWarning;
     options.showTraces = advanced;
     LW_CLEANUP_CTERR(exc, DJGetComputerName(&options.computerName));
@@ -586,6 +896,13 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
     DJ_LOG_INFO("Join SUCCESS");
 
 cleanup:
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistorySave(joinLeaveHistoryFile);
+    }
+
+    PbpsApiCredentialRelease(&pPbpsApiHandle);
+
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
@@ -593,6 +910,7 @@ cleanup:
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);
+    CT_SAFE_FREE_STRING(joinLeaveHistoryFile);
 }
 
 void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWException **exc)
@@ -600,21 +918,38 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     JoinProcessOptions options;
     BOOLEAN advanced = FALSE;
     BOOLEAN preview = FALSE;
+    BOOLEAN mustSupplyUsername = FALSE;
+    BOOLEAN haveConfigFile = FALSE;
+    BOOLEAN mustSupplyConfigFile = FALSE;
     DynamicArray enableModules, disableModules, ignoreModules;
     DynamicArray detailModules;
     ssize_t i;
     PSTR moduleDetails = NULL;
     PSTR wrapped = NULL;
     int passwordIndex = -1;
+    PSTR joinLeaveHistoryFile = NULL;
+    PPbpsApiHandle_t pPbpsApiHandle = NULL;
 
     DJZeroJoinProcessOptions(&options);
+    options.isEnterprise = isEnterprise;
+
     memset(&enableModules, 0, sizeof(enableModules));
     memset(&disableModules, 0, sizeof(disableModules));
     memset(&ignoreModules, 0, sizeof(ignoreModules));
     memset(&detailModules, 0, sizeof(detailModules));
 
-    // Enterprise default is to release the license 
+    // Enterprise default is to release the license
     options.releaseLicense = isEnterprise;
+
+    /* initialize linenoise history; if we couldn't allocate a history
+     * file name, we just won't be able to load/persist history between
+     * runs */
+    linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+    joinLeaveHistoryFile = linenoise_history_file(LN_JOINLEAVE_HISTORY_FILE);
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistoryLoad(joinLeaveHistoryFile);
+    }
 
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
@@ -624,16 +959,34 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
             preview = TRUE;
         else if (!strcmp(argv[0], "--keepLicense"))
             options.releaseLicense = FALSE;
-        else if (!strcmp(argv[0], "--deleteAccount")) {
-            if (argc < 2) {
-                // User hasn't supplied at least a user name
-                // If user name supplied but not password, user will be prompted to enter it later
-                fprintf(stdout, "--deleteAccount must be followed by a user name and a password.\n");
-                goto cleanup;
-            }
+        else if (!strcmp(argv[0], "--deleteAccount"))
+        {
             options.deleteAccount = TRUE;
+
+            if (haveConfigFile)
+               mustSupplyUsername = FALSE;
+            else
+               mustSupplyUsername = TRUE;
         }
-        // remaining options require at least two options 
+        else if ((!strcmp(argv[0], "--configFile")) && isEnterprise)
+        {
+           if (options.deleteAccount)
+              mustSupplyUsername = FALSE;
+
+            if (argc > 1 && strncmp("--", argv[1], 2))
+            {
+               DJ_LOG_INFO("Domain leave invoked with option --configFile %s", argv[1]);
+               CT_SAFE_FREE_STRING(options.pszConfigFile);
+               LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.pszConfigFile));
+               haveConfigFile = TRUE;
+
+               argv++;
+               argc--;
+            }
+            else
+               mustSupplyConfigFile = TRUE;
+        }
+        // remaining options require at least one parameter
         else if(argc < 2)
         {
             LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
@@ -685,29 +1038,57 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
         argc--;
     }
 
-    if(argc == 2)
+    if ((mustSupplyConfigFile) && (!haveConfigFile))
     {
-        LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.password));
-        passwordIndex = 1;
+      fprintf(stdout, "Missing config file\n");
+      goto cleanup;
     }
-    else if(argc > 2)
+
+
+    if (!haveConfigFile)
     {
-        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
-        goto cleanup;
+       if(argc == 2)
+       {
+           LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.password));
+           passwordIndex = 1;
+       }
+       else if(argc > 2)
+       {
+           LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+           goto cleanup;
+       }
+
+       DJ_LOG_INFO("Domainjoin invoked with %d arg(s) to the leave command:", argc);
+       for(i = 0; i < argc; i++)
+       {
+           DJ_LOG_INFO("    [%s]", i == passwordIndex ? "<password>" : argv[i]);
+       }
+
+       /* n.b. must set username before initializing module states */
+       if (argc > 0)
+       {
+           LW_CLEANUP_CTERR(exc, CTStrdup(argv[0], &options.username));
+       }
+       else if (mustSupplyUsername)
+       {
+           options.username = linenoise_strip_whitespace("Username: ");
+           DJ_LOG_INFO("    Username: [%s]", options.username);
+       }
     }
+
+    if (isEnterprise && haveConfigFile && options.pszConfigFile)
+    {
+        CT_SAFE_FREE_STRING(options.username);
+        CT_SAFE_FREE_STRING(options.password);
+        LW_CLEANUP_CTERR(exc, PbpsApiCredentialGet(
+                                 options.pszConfigFile,
+                                 &options.username,
+                                 &options.password,
+                                 &pPbpsApiHandle));
+    }
+
+
     options.joiningDomain = FALSE;
-
-    DJ_LOG_INFO("Domainjoin invoked with %d arg(s) to the leave command:", argc);
-    for(i = 0; i < argc; i++)
-    {
-        DJ_LOG_INFO("    [%s]", i == passwordIndex ? "<password>" : argv[i]);
-    }
-
-    if(argc > 0)
-    {
-        LW_CLEANUP_CTERR(exc, CTStrdup(argv[0], &options.username));
-    }
-
     options.warningCallback = PrintWarning;
     options.showTraces = advanced;
     LW_CLEANUP_CTERR(exc, DJGetComputerName(&options.computerName));
@@ -777,10 +1158,12 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
         }
         PrintModuleState(state);
     }
+
     if(detailModules.size > 0)
     {
         PrintStateKey();
     }
+
     for(i = 0; i < detailModules.size; i++)
     {
         PCSTR module = *(PCSTR *)CTArrayGetItem(
@@ -792,6 +1175,7 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
         LW_CLEANUP_CTERR(exc, CTWordWrap(moduleDetails, &wrapped, 4, columns));
         fprintf(stdout, "\nDetails for '%s':\n%s\n", state->module->longName, wrapped);
     }
+
     if(detailModules.size > 0)
         goto cleanup;
 
@@ -820,6 +1204,13 @@ void DoLeaveNew(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExce
     DJ_LOG_INFO("Leave SUCCESS");
 
 cleanup:
+    if (joinLeaveHistoryFile)
+    {
+        linenoiseHistorySave(joinLeaveHistoryFile);
+    }
+
+    PbpsApiCredentialRelease(&pPbpsApiHandle);
+
     DJFreeJoinProcessOptions(&options);
     CTArrayFree(&enableModules);
     CTArrayFree(&disableModules);
@@ -827,6 +1218,7 @@ cleanup:
     CTArrayFree(&detailModules);
     CT_SAFE_FREE_STRING(moduleDetails);
     CT_SAFE_FREE_STRING(wrapped);
+    CT_SAFE_FREE_STRING(joinLeaveHistoryFile);
 }
 
 #ifndef ENABLE_MINIMAL
@@ -1184,15 +1576,51 @@ int main(
 
     if(!strcmp(argPos[0], "setname"))
     {
-        PSTR pDomainSuffix = 0;
+        PSTR pComputerName = NULL;
+        PSTR pDomainSuffix = NULL;
+
         argPos++;
-        if(--remainingArgs != 1)
+        remainingArgs--;
+
+        if (remainingArgs > 1)
         {
             ShowUsage(isEnterprise);
             goto cleanup;
         }
 
-        pDomainSuffix = strchr(argPos[0], '.');
+        if (remainingArgs == 1)
+        {
+            pComputerName = argPos[0];
+        }
+        else
+        {
+            PSTR setNameHistoryFile = NULL;
+            setNameHistoryFile = linenoise_history_file(LN_COMPUTER_NAME_HISTORY_FILE);
+
+            linenoiseHistorySetMaxLen(LN_MAX_HISTORY_LEN);
+            if (setNameHistoryFile)
+            {
+                linenoiseHistoryLoad(setNameHistoryFile);
+            }
+
+            /* n.b. ignoring this leak */
+            pComputerName = linenoise_strip_whitespace("Computer name: ");
+            if (!pComputerName)
+            {
+                pComputerName = "";
+            }
+
+            linenoise_history_add(pComputerName);
+
+            if (setNameHistoryFile)
+            {
+                linenoiseHistorySave(setNameHistoryFile);
+            }
+
+            CT_SAFE_FREE_STRING(setNameHistoryFile);
+        }
+
+        pDomainSuffix = strchr(pComputerName, '.');
         if (pDomainSuffix)
         {
             *pDomainSuffix = 0;
@@ -1202,13 +1630,13 @@ int main(
         {
             pDomainSuffix = "";
         }
-        LW_TRY(&exc, DJSetComputerName(argPos[0], pDomainSuffix, &LW_EXC));
+        LW_TRY(&exc, DJSetComputerName(pComputerName, pDomainSuffix, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "join"))
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DoJoin(remainingArgs, argPos, columns, &LW_EXC));
+        LW_TRY(&exc, DoJoin(remainingArgs, argPos, columns, isEnterprise, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "leave"))
     {

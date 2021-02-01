@@ -19,16 +19,6 @@
 #include "LWIDirNodeQuery.h"
 #include "LWIRecordQuery.h"
 
-// Mac OS X Version Names
-#define MAC_OS_X_VERSION_NAME_10_4 "Tiger"
-#define MAC_OS_X_VERSION_NAME_10_5 "Leopard"
-#define MAC_OS_X_VERSION_NAME_10_6 "Snow Leopard"
-#define MAC_OS_X_VERSION_NAME_10_7 "Lion"
-#define MAC_OS_X_VERSION_NAME_10_8 "Mountain Lion"
-#define MAC_OS_X_VERSION_NAME_10_9 "Mavericks"
-#define MAC_OS_X_VERSION_NAME_10_10 "Yosemite"
-#define MAC_OS_X_VERSION_NAME_10_11 "El Capitan"
-
 // Local helper functions
 //
 
@@ -39,11 +29,6 @@ static long GetDomainJoinState(
         PSTR* ppszDomain
         );
 
-static long GetGPONodes(
-        PCSTR pszDomain,
-        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-        PBOOLEAN pbOffline
-        );
 
 static long UpdateGPONodes(
         PCSTR pszDomain,
@@ -240,8 +225,7 @@ long PlugInShell_Initialize(void)
     long macError = eDSNoErr;
     bool gotUnameInfo = false;
     PSTR pszVersion = NULL;
-    PCSTR pszVersionName = NULL;
-    bool isUnsupported = false;
+
     PNETADAPTERINFO pTempNetInfo = NULL;
     struct utsname info;
     BOOLEAN bMergeModeMCX = FALSE;
@@ -292,51 +276,6 @@ long PlugInShell_Initialize(void)
         macError = LWCaptureOutput((char*)"sw_vers -productVersion", &pszVersion);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        if (strstr(pszVersion, "10.4.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags & (~LWE_DS_FLAG_IS_LEOPARD);
-            GlobalState.Flags = GlobalState.Flags & (~LWE_DS_FLAG_IS_SNOW_LEOPARD);
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_4;
-        }
-        else if (strstr(pszVersion, "10.5.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_5;
-        }
-        else if (strstr(pszVersion, "10.6.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
-        }
-        else if (strstr(pszVersion, "10.7.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
-        }
-        else if (strstr(pszVersion, "10.8.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
-        }
-        else if (strstr(pszVersion, "10.9.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
-        }
-        else if (strstr(pszVersion, "10.10.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
-        }
-        else if (strstr(pszVersion, "10.11.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_ELCAPITAN;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_11;
-        }
-        else
-        {
-            isUnsupported = true;
-        }
     }
     else
     {
@@ -345,56 +284,10 @@ long PlugInShell_Initialize(void)
         macError = LwAllocateString(info.release, &pszVersion);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        if (strstr(pszVersion, "8.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags & ~LWE_DS_FLAG_IS_LEOPARD;
-            GlobalState.Flags = GlobalState.Flags & ~LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_4;
-        }
-        else if (strstr(pszVersion, "9.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_5;
-        }
-        else if (strstr(pszVersion, "10.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_SNOW_LEOPARD;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
-        }
-        else if (strstr(pszVersion, "11.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LION;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
-        }
-        else if (strstr(pszVersion, "12.") == pszVersion)
-        {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MOUNTAIN_LION;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_8;
-        } else if (strstr(pszVersion, "13.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_MAVERICKS;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_9;
-        } else if (strstr(pszVersion, "14.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_YOSEMITE;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_10;
-        } else if (strstr(pszVersion, "15.") == pszVersion) {
-            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_ELCAPITAN;
-            pszVersionName = MAC_OS_X_VERSION_NAME_10_11;
-        } else {
-            isUnsupported = true;
-        }
     }
-    if (isUnsupported)
-    {
-        pszVersionName = "unsupported";
-    }
-    LOG("Starting up PBIS - Active directory DS plug-in, detected %s Mac OS X %s(%s)",
-            pszVersionName, gotUnameInfo ? "kernel " : "", pszVersion);
-    if (isUnsupported)
-    {
-        macError = ePlugInFailedToInitialize;
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
+    LOG("Starting up BeyondTrust AD Bridge - Active directory DS plug-in, detected %s Mac OS X %s",
+             gotUnameInfo ? "kernel " : "", pszVersion);
+   
     /* Get the network adpater details - We only care about the ENetAddress info */
     macError = LWGetNetAdapterList(true, &GlobalState.pNetAdapterList);
     GOTO_CLEANUP_ON_MACERROR(macError);
@@ -467,7 +360,7 @@ long PlugInShell_Initialize(void)
         {
             if (macError == eDSAuthUnknownUser)
             {
-                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszAllowAdministrationBy);
+                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by BeyondTrust AD Bridge authentication daemon. Recommend checking that system administrator has enabled the items here in the AD Bridge cell that applies to this computer.", pszAllowAdministrationBy);
             }
             else
             {
@@ -520,11 +413,6 @@ long PlugInShell_Initialize(void)
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     LWICRC::Initialize();
-
-    // Allow WGM policy options to define Login/Logoff Hook scripts. We do this to automatically support settings
-    // we get from group policies.
-    macError = SetupMCXLoginScriptsSupport();
-    GOTO_CLEANUP_ON_MACERROR(macError);
 
     GlobalState.IsInitialized = true;
     GlobalState.PluginState = kInitialized | kInactive;
@@ -584,7 +472,7 @@ cleanup:
 long
 PlugInShell_ProcessRequest(void *inData)
 {
-    long macError = eDSNoErr;    
+    long macError = eDSNoErr;
     bool isAcquired = false;
     sHeader * pMsgHdr = (sHeader *)inData;
     unsigned long msgType = pMsgHdr ? pMsgHdr->fType : 0;
@@ -599,7 +487,7 @@ PlugInShell_ProcessRequest(void *inData)
 
     GS_ACQUIRE_SHARED();
     isAcquired = true;
-    
+
     GS_VERIFY_INITIALIZED(macError);
 
     //
@@ -610,7 +498,7 @@ PlugInShell_ProcessRequest(void *inData)
         macError = ePlugInNotActive;
         GOTO_CLEANUP();
     }
-    
+
     //
     // We also do not handle anything while not "startup complete".
     //
@@ -981,8 +869,7 @@ long PlugInShell_PeriodicTask(void)
 
     if (offlineTimerCount == 0)
     {
-        macError = GetGPONodes(pszDomain, &pCurrentGPOs, &bOffline);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+
 
         if (bOffline)
         {
@@ -1020,7 +907,7 @@ long PlugInShell_PeriodicTask(void)
             {
                 if (macError == eDSAuthUnknownUser)
                 {
-                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by PBIS authentication daemon. Recommend checking that system administrator has enabled the items here in the PBIS cell that applies to this computer.", pszCurrentAllowedAdminsList);
+                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by BeyondTrust AD Bridge authentication daemon. Recommend checking that system administrator has enabled the items here in the AD Bridge cell that applies to this computer.", pszCurrentAllowedAdminsList);
                 }
                 else
                 {
@@ -1213,7 +1100,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszDomain);
     GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
 
-
+    LOG_LEAVE("--> %d", macError);
     return macError;
 }
 
@@ -1459,45 +1346,6 @@ cleanup:
     return macError;
 }
 
-static long GetGPONodes(
-        PCSTR pszDomain,
-        PGROUP_POLICY_OBJECT *ppCurrentGPOs,
-        PBOOLEAN pbOffline
-    )
-{
-    long macError = eDSNoErr;
-    PGROUP_POLICY_OBJECT pCurrentGPOs = NULL;
-    BOOLEAN bOffline = false;
-
-    if (pszDomain)
-    {
-        macError = EnumWorkgroupManagerEnabledGPOs(pszDomain, &pCurrentGPOs);
-        if (macError == eDSReceiveFailed ||
-                macError == eDSBogusServer ||
-                macError == eDSSendFailed ||
-            macError == eDSAuthMasterUnreachable)
-        {
-            LOG("EnumWorkgroupManagerEnableGPOs failed %d, treating as okay", macError);
-            bOffline = true;
-            macError = eDSNoErr;
-        }
-        else if (macError)
-        {
-            LOG("EnumWorkgroupManagerEnableGPOs failed unexpectedly (error = %d)", macError);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-    }
-
-    *pbOffline = bOffline;
-    *ppCurrentGPOs = pCurrentGPOs;
-    pCurrentGPOs = NULL;
-
-cleanup:
-
-    GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
-
-    return macError;
-}
 
 static long UpdateGPONodes(
         PCSTR pszDomain,

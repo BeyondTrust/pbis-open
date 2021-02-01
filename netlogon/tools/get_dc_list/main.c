@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Site Manager
+ *        BeyondTrust Site Manager
  *
  *        Client Test Program - LWNetGetDCList
  *
@@ -61,7 +60,7 @@ ShowUsage()
     printf("        [--force] [--ds-required] [--gc-required]\n");
     printf("        [--pdc-required] [--background-only] [--kdc-required]\n");
     printf("        [--timeserv-required] [--writeable-required] [--good-timeserv-required]\n");
-    printf("        [--avoid-self]\n\n"); 
+    printf("        [--avoid-self]\n\n");
 }
 
 DWORD
@@ -72,7 +71,7 @@ AddFlag(
 {
     DWORD dwError = 0;
     DWORD dwFlags = *pdwFlags;
-    
+
     if(dwFlags & dwFlag)
     {
         printf("Duplicate flag entered: [0x%.8X]\n", dwFlag);
@@ -84,15 +83,15 @@ AddFlag(
         dwError = ERROR_INVALID_PARAMETER;
     }
     BAIL_ON_LWNET_ERROR(dwError);
-    
+
     dwFlags |= dwFlag;
-    
+
     *pdwFlags = dwFlags;
-    
-    
+
+
 error:
     return dwError;
-    
+
 }
 
 DWORD
@@ -124,11 +123,11 @@ ParseArgs(
         {
             break;
         }
-        
+
         switch (parseMode)
         {
             case PARSE_MODE_OPEN:
-        
+
                 if ((strcmp(pszArg, "--help") == 0) ||
                     (strcmp(pszArg, "-h") == 0))
                 {
@@ -139,7 +138,7 @@ ParseArgs(
                 {
                     dwError = LWNetAllocateString(pszArg, &pszTargetFQDN);
                     BAIL_ON_LWNET_ERROR(dwError);
-        
+
                     parseMode = PARSE_MODE_OPTIONS;
                 }
                 break;
@@ -199,7 +198,7 @@ ParseArgs(
                     dwError = AddFlag(DS_AVOID_SELF, &dwFlags);
                     BAIL_ON_LWNET_ERROR(dwError);
                 }
-                else 
+                else
                 {
                     LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
                     dwError = ERROR_INVALID_PARAMETER;
@@ -207,30 +206,30 @@ ParseArgs(
                 }
                 break;
             case PARSE_MODE_SITENAME:
-                
+
                 if(!IsNullOrEmptyString(pszSiteName))
                 {
                     LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
                     dwError = ERROR_INVALID_PARAMETER;
                     BAIL_ON_LWNET_ERROR(dwError);
                 }
-                
+
                 dwError = LWNetAllocateString(pszArg, &pszSiteName);
                 BAIL_ON_LWNET_ERROR(dwError);
-                
+
                 parseMode = PARSE_MODE_OPTIONS;
                 break;
         }
-        
+
     } while (iArg < argc);
 
-    
+
     if(IsNullOrEmptyString(pszTargetFQDN))
     {
         ShowUsage();
         exit(0);
     }
-    
+
 error:
     if (dwError)
     {
@@ -248,7 +247,7 @@ error:
 
 void
 safePrintString(
-    PSTR pszStringName, 
+    PSTR pszStringName,
     PSTR pszStringValue
     )
 {
@@ -285,7 +284,7 @@ main(
     PLWNET_DC_ADDRESS pDcList = NULL;
     DWORD dwDcCount = 0;
     INT i = 0;
-    
+
     dwError = ParseArgs(
                 argc,
                 argv,
@@ -301,7 +300,7 @@ main(
                 dwFlags,
                 &pDcList,
                 &dwDcCount);
-    BAIL_ON_LWNET_ERROR(dwError); 
+    BAIL_ON_LWNET_ERROR(dwError);
 
     printf("Got %u DCs:\n"
            "===========\n",
@@ -323,7 +322,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the LWNET Agent.  Error code %u (%s).\n%s\n",
+                 "Failed communication with the AD Bridge Netlogon Agent.  Error code %u (%s).\n%s\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)),
                  szErrorBuf);
@@ -332,7 +331,7 @@ error:
         {
             fprintf(
                  stderr,
-                 "Failed communication with the LWNET Agent.  Error code %u (%s).\n",
+                 "Failed communication with the AD Bridge Netlogon Agent.  Error code %u (%s).\n",
                  dwError,
                  LW_PRINTF_STRING(LwWin32ExtErrorToName(dwError)));
         }

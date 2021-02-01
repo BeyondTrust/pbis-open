@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -196,7 +195,7 @@ MU_TEST(dcethread_join, interrupt_post)
 
     ts.tv_nsec = 100000000;
     ts.tv_sec = 0;
-  
+
     MU_TRY_DCETHREAD( dcethread_create(&thread, NULL, join_thread, NULL) );
     MU_TRY_DCETHREAD( dcethread_delay(&ts) );
     MU_TRY_DCETHREAD( dcethread_interrupt(thread) );

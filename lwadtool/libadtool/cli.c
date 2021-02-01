@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -528,7 +528,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
      * Action.
      */
     i = 0;
-    struct poptOption **newUserAction = MakeOptions(12);
+    struct poptOption **newUserAction = MakeOptions(14);
     ADT_BAIL_ON_ALLOC_FAILURE(newUserAction);
     MakeOption(&((*newUserAction)[i++]),
                "dn",
@@ -552,7 +552,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_STRING,
                &(appContext->action.newUser.name),
                0,
-               "Logon name of the new user.  (use \'-\' for stdin input) [X]",
+               "Logon name of the new user. Sets upn attribute. (use \'-\' for stdin input) [X]",
                NULL);
     MakeOption(&((*newUserAction)[i++]),
                "pre-win-2000-name",
@@ -593,6 +593,22 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.newUser.password),
                0,
                "User\'s password. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*newUserAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newUser.servicePrincipalNameList),
+               0,
+               "Set new user account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, http/\"). Default is an empty SPN attribute.",
+               NULL);
+    MakeOption(&((*newUserAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newUser.keytab),
+               0,
+               "Generate a keytab file for the user. Specify /path/to/file.keytab.",
                NULL);
     MakeOption(&((*newUserAction)[i++]),
                "no-must-change-password",
@@ -705,7 +721,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*newOuAction)[i++])));
 
     i = 0;
-    struct poptOption **newComputerAction = MakeOptions(6);
+    struct poptOption **newComputerAction = MakeOptions(9);
     ADT_BAIL_ON_ALLOC_FAILURE(newComputerAction);
     MakeOption(&((*newComputerAction)[i++]),
                "dn",
@@ -747,6 +763,34 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                0,
                "Fully-Qualified DNS name of the computer",
                NULL);
+    MakeOption(&((*newComputerAction)[i++]),
+               "password",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.password),
+               0,
+               "Computer\'s password. (use \'-\' for stdin input)",
+               NULL);
+
+
+    MakeOption(&((*newComputerAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.servicePrincipalNameList),
+               0,
+               "Set new computer account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, host/\"). Default is --spn=\"host\". For an empty SPN attribute use --spn=\"\".",
+               NULL);
+
+    MakeOption(&((*newComputerAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.newComputer.keytab),
+               0,
+               "Generate a keytab file for the computer. Specify /path/to/file.keytab. By default keytab file is generated with \"host\" service class",
+               NULL);
+
     MakeOption(ADT_TABLEEND(&((*newComputerAction)[i++])));
 
     i = 0;
@@ -988,7 +1032,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     */
 
     i = 0;
-    struct poptOption **resetUserPasswordAction = MakeOptions(5);
+    struct poptOption **resetUserPasswordAction = MakeOptions(7);
     ADT_BAIL_ON_ALLOC_FAILURE(resetUserPasswordAction);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "name",
@@ -1005,6 +1049,22 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                &(appContext->action.resetUserPassword.password),
                0,
                "User\'s password. If omitted only the password\'s properties may be changed but not the password itself. (use \'-\' for stdin input)",
+               NULL);
+    MakeOption(&((*resetUserPasswordAction)[i++]),
+               "spn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.resetUserPassword.servicePrincipalNameList),
+               0,
+               "Modify user account service principal name attribute. A comma separated list can be specified (eg. --spn=\"nfs, http/\").",
+               NULL);
+    MakeOption(&((*resetUserPasswordAction)[i++]),
+               "keytab-file",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.resetUserPassword.keytab),
+               0,
+               "Modify/Generate a keytab file for the user. Specify /path/to/file.keytab.",
                NULL);
     MakeOption(&((*resetUserPasswordAction)[i++]),
                "no-must-change-password",
@@ -1129,10 +1189,43 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
     MakeOption(ADT_TABLEEND(&((*unlockAccountAction)[i++])));
 
     /**
+     ** Set attribute options.
+     **/
+    i = 0;
+    struct poptOption **setAttrAction = MakeOptions(4);
+    ADT_BAIL_ON_ALLOC_FAILURE(setAttrAction);
+    MakeOption(&((*setAttrAction)[i++]),
+               "dn",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.dn),
+               0,
+               "DN.[X]",
+               NULL);
+    MakeOption(&((*setAttrAction)[i++]),
+               "attrName",
+               '\0',
+               POPT_ARG_STRING,
+               &(appContext->action.setAttribute.attrName),
+               0,
+               "Name of attribute.[X]",
+               NULL);
+
+    MakeOption(&((*setAttrAction)[i++]),
+               "attrValue",
+               '\0',
+               POPT_ARG_STRING | POPT_ARGFLAG_OPTIONAL,
+               &(appContext->action.setAttribute.attrValue),
+               0,
+               "Value of attribute. Multi-value attributes are delimited with a semi-colon. To unset an attribute do not provide the attrValue argument.",
+               NULL);
+    MakeOption(ADT_TABLEEND(&((*setAttrAction)[i++])));
+
+    /**
      * Open Edition options.
      */
     i = 0;
-    struct poptOption **openActionsTable = MakeOptions(19);
+    struct poptOption **openActionsTable = MakeOptions(20);
     ADT_BAIL_ON_ALLOC_FAILURE(openActionsTable);
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1278,6 +1371,16 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                AdtSearchUserAction,
                ADT_SEARCH_USER_ACT " - search for users, print DNs.",
                NULL);
+
+    MakeOption(&((*openActionsTable)[i++]),
+               NULL,
+               'O',
+               POPT_ARG_INCLUDE_TABLE,
+               *setAttrAction,
+               AdtSetAttrAction,
+               ADT_SET_ATTR_ACT " - set/un-set attribute.",
+               NULL);
+
     /*
     MakeOption(&((*openActionsTable)[i++]),
                NULL,
@@ -1318,7 +1421,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_INCLUDE_TABLE,
                *openActionsTable,
                0,
-               "PowerBroker Identity Services - Open Edition:\n---------------------",
+               "BeyondTrust AD Bridge - Open Edition:\n---------------------",
                NULL);
     MakeOption(&((*actionsTable)[i++]),
                NULL,
@@ -1349,6 +1452,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
         LW_SAFE_FREE_MEMORY(addToGroupAction);
         LW_SAFE_FREE_MEMORY(removeFromGroupAction);
         LW_SAFE_FREE_MEMORY(unlockAccountAction);
+        LW_SAFE_FREE_MEMORY(setAttrAction);
         /*
         LW_SAFE_FREE_MEMORY(enableComputerAction);
         LW_SAFE_FREE_MEMORY(disableComputerAction);
@@ -1431,7 +1535,7 @@ PrintActionsList(IN struct poptOption *table, IN INT argc, IN PCSTR *argv) {
             fprintf(stdout, "  --------------------------------\n\n");
         }
         if(i == 1) {
-            fprintf(stdout, "\n  PowerBroker Cell management actions:\n");
+            fprintf(stdout, "\n  AD Bridge Cell management actions:\n");
             fprintf(stdout, "  --------------------------------\n\n");
             fprintf(stdout, "  * Available only in Enterprise edition\n\n");
         }
@@ -1511,7 +1615,7 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a new-ou --dn OU=TestOu,DC=department,DC=company,DC=com"
             NL_STR
-            "Create PowerBroker Cell in OU TestOU setting the default login shell property to /bin/ksh:"
+            "Create AD Bridge Cell in OU TestOU setting the default login shell property to /bin/ksh:"
             NL_STR2
             "adtool -a new-ou --dn OU=TestOu --default-login-shell=/bin/ksh"
             NL_STR
@@ -1563,11 +1667,12 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a move-object --from OU=OldName,DC=department,DC=company,DC=com --to OU=NewName,OU=TestOU,DC=department,DC=company,DC=com"
             NL_STR
-            "Add group TestGroup to PowerBroker Cell in TestOU:"
+#ifdef __ADTOOL_ENTERPRISE__
+            "Add group TestGroup to AD Bridge Cell in TestOU:"
             NL_STR2
             "adtool -a add-to-cell --dn OU=TestOU,DC=department,DC=company,DC=com --group=TestGroup"
             NL_STR
-            "Remove user TestUser from PowerBroker Cell in TestOU:"
+            "Remove user TestUser from AD Bridge Cell in TestOU:"
             NL_STR2
             "adtool -a remove-from-cell --dn OU=TestOU,DC=department,DC=company,DC=com --user=TestUser"
             NL_STR
@@ -1583,11 +1688,11 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a unlink-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
             NL_STR
-            "Change the default login shell property of PowerBroker Cell in TestOU:"
+            "Change the default login shell property of AD Bridge Cell in TestOU:"
             NL_STR2
             "adtool -a edit-cell --dn OU=TestOU --default-login-shell=/bin/csh"
             NL_STR
-            "Find cells linked to PowerBroker Cell in OU=TestOU,DC=department,DC=company,DC=com:"
+            "Find cells linked to AD Bridge Cell in OU=TestOU,DC=department,DC=company,DC=com:"
             NL_STR2
             "adtool -a lookup-cell --dn OU=TestOU --linked-cells"
             NL_STR
@@ -1603,25 +1708,36 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a delete-object --dn OU=TestOU --force"
             NL_STR
-            "Search for PowerBroker Cells in root naming context containing user TestUser:"
+            "Search for AD Bridge Cells in root naming context containing user TestUser:"
             NL_STR2
             "adtool -a search-cells --user TestUser"
             NL_STR
-            "Create a new PowerBroker Cell in OU=department:"
+            "Create a new AD Bridge Cell in OU=department:"
             NL_STR2
             "adtool -a new-cell --dn OU=department,DC=country,DC=company,DC=com"
             NL_STR
-            "Create default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
+            "Create default AD Bridge Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a new-cell --dn DC=country,DC=company,DC=com"
             NL_STR
-            "Delete the default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
+            "Delete the default AD Bridge Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
+            NL_STR
+#endif
+            "Modify an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName --attrValue \"Test User\""
+            NL_STR
+            "Modify a multi-value attribute using a semi-colon as the delimiter. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName otherHomePhone --attrValue \"546-872-8383;453-857-9844;954-723-9765\""
+            NL_STR
+            "Unset an attribute. Note: Attribute value validation is not done. Use with care:"
+            NL_STR2
+            "adtool -a set-attr --dn CN=TestUser,CN=Users,DC=company,DC=com --attrName displayName"
             ;
 
     fprintf(stdout, "%s\n", s);
     fprintf(stdout, "%s\n", ADT_APP_HELP_ACTIONS_LIST);
 }
-
-

@@ -274,7 +274,7 @@ _mk_build_deb()
     do
         if [ "${MK_GPG_KEY_SIGN_DEB}" = "yes" ] 
         then
-           mk_run_or_fail dpkg-sig -s builder -k C9CEECEF --passphrase-file /home/builder/.gnupg/passphrase-file "$i" 
+           mk_run_or_fail dpkg-sig -s builder -k 7237D0AC --passphrase-file /home/builder/.gnupg/passphrase-file "$i" 
         fi
         mk_run_or_fail mv -f "$i" "${MK_ROOT_DIR}/${MK_PACKAGE_DEB_DIR}/${1}"
         mk_msg "built ${i##*/}"

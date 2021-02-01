@@ -3,34 +3,33 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Centeris Corporation 2004-2007
- * Copyright (C) Likewise Software 2007
+ * Copyright (C) BeyondTrust Corporation 2004-2007
+ * Copyright (C) BeyondTrust Software 2007
  * All rights reserved.
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
@@ -203,6 +202,7 @@ cleanup:
     return (dwError);
 
 error:
+    EVT_LOG_ERROR("Failed to check allowed access.  Error code: [%u]", dwError);
     goto cleanup;
 }
 
@@ -821,6 +821,8 @@ EVTCreateAccessDescriptor(
                 SECURITY_DESCRIPTOR_REVISION));
     BAIL_ON_EVT_ERROR(dwError);
 
+    EVT_LOG_DEBUG("Resolving Read ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowReadTo));
+
     dwError = EVTStringSplit(
                 pszAllowReadTo,
                 &dwCount,
@@ -833,17 +835,20 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwReadCount,
                 &ppReadList);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    if (dwReadCount < dwCount)
+    
+    if (dwError || dwReadCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all read SIDs.  Error code: %u/%u [%u]", dwReadCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
         ppszArray,
         dwCount);
     ppszArray = NULL;
+
+    EVT_LOG_DEBUG("Resolving Write ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowWriteTo));
 
     dwError = EVTStringSplit(
                 pszAllowWriteTo,
@@ -857,17 +862,20 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwWriteCount,
                 &ppWriteList);
-    BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwWriteCount < dwCount)
+    if (dwError || dwWriteCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all write SIDs.  Error code: %u/%u [%u]", dwWriteCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
         ppszArray,
         dwCount);
     ppszArray = NULL;
+
+    EVT_LOG_DEBUG("Resolving Delete ACL SIDs for [%s]", LW_SAFE_LOG_STRING(pszAllowDeleteTo));
 
     dwError = EVTStringSplit(
                 pszAllowDeleteTo,
@@ -881,11 +889,12 @@ EVTCreateAccessDescriptor(
                 ppszArray,
                 &dwDeleteCount,
                 &ppDeleteList);
-    BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwDeleteCount < dwCount)
+    if (dwError || dwDeleteCount < dwCount)
     {
+        EVT_LOG_ERROR("Failed to resolve all delete SIDs.  Error code: %u/%u [%u]", dwDeleteCount, dwCount, dwError);
         bFullyResolved = FALSE;
+        dwError = 0;
     }
 
     LwFreeStringArray(
@@ -982,6 +991,8 @@ cleanup:
     return dwError;
 
 error:
+    EVT_LOG_ERROR("Failed to create access descriptor.  Error code: [%u]", dwError);
+    
     EVTFreeSecurityDescriptor(pDescriptor);
     *ppDescriptor = NULL;
     if (pbFullyResolved)

@@ -7,7 +7,7 @@
  *   NT status and Win32 error code mapping table
  *
  *   Some of these definitions were written from scratch.
- * 
+ *
  *   NT status codes are unsigned 32-bit hex values
  *
  *   Win32 error codes are unsigned 32-bit decimal values
@@ -77,7 +77,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DUPLICATE_DOMAINNAME, -1, "A duplicate
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_KRB5_CALL_FAILED, -1, "The call to Kerberos 5 failed" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GSS_CALL_FAILED, -1, "The GSS call failed" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_FIND_DC, -1, "Failed to find the domain controller" )
-S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NO_SUCH_CELL, -1, "Failed to find the Cell in Active Directory" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NO_SUCH_CELL, -1, "Failed to find a Cell in Active Directory" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GROUP_IN_USE, -1, "The specified group is currently being used" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_CREATE_HOMEDIR, -1, "Failed to create home directory for user" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_PASSWORD_TOO_WEAK, -1, "The specified password is not strong enough" )
@@ -401,6 +401,16 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_MACHINE_ACCT_DELETE_F
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_LEAVE_DELETE_FAILED_LIC_NOT_RELEASED , -1, "The domain leave completed but the computer account was not deleted because the license could not be released" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_CANNOT_DELETE , -1, "Cannot use --deleteAccount when the domain is offline." )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAIN_IS_OFFLINE_USE_KEEPLICENSE , -1, "Cannot release license or delete account when domain is offline. Use --keepLicense to proceed with leave." )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GP_RSOP_FAILED, -1, "Could not complete GPO RSOP; check the logs for failed CSEs" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_CANNOT_PARSE, -1, "Could not parse domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_MISSING_SECTION, -1, "Section is missing in domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_MISSING_ATTRIBUTE, -1, "Section is missing an attribute in domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_BAD_VALUE, -1, "Attribute is set to an invalid type in domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_OUT_OF_RANGE, -1, "Attribute value is out of range in domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_INVALID_CERTIFICATE, -1, "Certificate in domain join configuration file is not valid")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CONFIG_CANT_VERIFY_CERTIFICATE, -1, "Cannot verify PasswordSafe server using certificate in domain join configuration file")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_CANNOT_RESOLVE_HOST, -1, "Cannot resolve host")
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DOMAINJOIN_PASSWORD_REQUEST_CONFLICT, -1, "Conflicting request exists. This user or another user has already requested a password for the specified account")
 
 
 #include "lwerror-table-krb5.h"

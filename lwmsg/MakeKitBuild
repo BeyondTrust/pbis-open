@@ -63,6 +63,15 @@ configure()
         mk_define SOLARIS_11 1
     fi
 
+    # Temporary check for transitional lf64 calls
+    # Solaris only; attempting to determine cause of Github issue 59
+    if [ "$MK_HOST_OS" = "solaris" ]
+    then
+        mk_check_functions \
+            HEADERDEPS="sys/stat.h" \
+            fstat64
+    fi
+
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
         mk_check_endian

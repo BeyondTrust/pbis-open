@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "../includes.h"
@@ -302,74 +301,6 @@ error:
     goto cleanup;
 }
 
-DWORD
-CreateLwIoCredsFromKrb5UserCache(
-    uid_t uid,
-    LW_PIO_CREDS *ppCreds
-    )
-{
-    DWORD dwError = 0;
-    krb5_error_code ret = 0;
-    krb5_context ctx = NULL;
-    krb5_ccache cc = NULL;
-    krb5_principal client_principal = NULL;
-    PSTR pszCachePath = NULL;
-    PSTR pszPrincipal = NULL;
-    LW_PIO_CREDS pCreds = NULL;
-
-    dwError = LwAllocateStringPrintf(&pszCachePath, "/tmp/krb5cc_%u", uid);
-    BAIL_ON_ERROR(dwError);
-
-    ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_resolve(ctx, pszCachePath, &cc);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_get_principal(ctx, cc, &client_principal);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    if (client_principal->realm.length && client_principal->data->length)
-    {
-        dwError = LwAllocateStringPrintf(&pszPrincipal, "%s@%s",
-                client_principal->data->data, client_principal->realm.data);
-        BAIL_ON_ERROR(dwError);
-    }
-    else
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = LwIoCreateKrb5CredsA(pszPrincipal, pszCachePath, &pCreds);
-    BAIL_ON_ERROR(dwError);
-
-    *ppCreds = pCreds;
-
-cleanup:
-
-    if (ctx)
-    {
-        if(client_principal)
-        {
-            krb5_free_principal(ctx, client_principal);
-        }
-        krb5_free_context(ctx);
-    }
-    LW_SAFE_FREE_STRING(pszPrincipal);
-    LW_SAFE_FREE_STRING(pszCachePath);
-    return dwError;
-
-error:
-
-    if (pCreds)
-    {
-        LwIoDeleteCreds(pCreds);
-        pCreds = NULL;
-    }
-    goto cleanup;
-}
-
 VOID
 ConvertPath(
     IN uid_t uid,
@@ -379,33 +310,11 @@ ConvertPath(
     OUT PSTR *ppszPath
     )
 {
-    LW_PIO_CREDS pUserCreds = NULL;
-    LW_PIO_CREDS pOldCreds = NULL;
     PSTR pszServer = NULL;
     PSTR pszShare = NULL;
     PSTR pszPath = NULL;
 
-    CreateLwIoCredsFromKrb5UserCache(uid, &pUserCreds);
-    if (pUserCreds)
-    {
-        LwIoGetThreadCreds(&pOldCreds);
-        if (LwIoSetThreadCreds(pUserCreds) != 0)
-        {
-            LwIoDeleteCreds(pUserCreds);
-            pUserCreds = NULL;
-        }
-    }
-
     ConvertPathInternal(pszOriginalUncPath, &pszServer, &pszShare, &pszPath);
-
-    if(pUserCreds)
-    {
-        LwIoSetThreadCreds(pOldCreds);
-        pOldCreds = NULL;
-
-        LwIoDeleteCreds(pUserCreds);
-        pUserCreds = NULL;
-    }
 
     if (ppszServer)
     {

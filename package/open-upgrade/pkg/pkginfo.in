@@ -1,5 +1,5 @@
 PKG=PBISopeng
-NAME=PowerBroker Identity Services Open Upgrade Helper
+NAME=BeyondTrust AD Bridge Open Upgrade Helper
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
 CATEGORY=system

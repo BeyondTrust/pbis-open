@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Active Directory Authentication Provider
  *
@@ -77,6 +76,13 @@ AD_SetConfig_RequireMembershipOf(
     );
 
 static
+VOID
+AD_SetConfig_ServicePrincipalNameList(
+    PLSA_AD_CONFIG pConfig, 
+    PCSTR pszServicePrincipalNameMultiString
+    );
+
+static
 DWORD
 AD_SetConfig_MachinePasswordLifespan(
     PLSA_AD_CONFIG pConfig,
@@ -90,7 +96,6 @@ AD_SetConfig_DomainManager_TrustExceptionList(
     PLSA_AD_CONFIG pConfig,
     PCSTR pszTrustsListMultiString
     );
-
 
 DWORD
 AD_TransferConfigContents(
@@ -124,6 +129,7 @@ AD_InitializeConfig(
     pConfig->dwCacheEntryExpirySecs   = AD_CACHE_ENTRY_EXPIRY_DEFAULT_SECS;
     pConfig->dwCacheSizeCap           = 0;
     pConfig->dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
+    pConfig->pszServicePrincipalNameList = NULL;
     pConfig->dwUmask          = AD_DEFAULT_UMASK;
 
     pConfig->bEnableEventLog = FALSE;
@@ -205,6 +211,7 @@ AD_FreeConfigContents(
     LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreUserNameList);
     LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreGroupNameList);
     LW_SAFE_FREE_STRING(pConfig->pszUserDomainPrefix);
+    LW_SAFE_FREE_STRING(pConfig->pszServicePrincipalNameList);
 
     if (pConfig->pUnresolvedMemberList)
     {
@@ -246,6 +253,7 @@ AD_ReadRegistry(
     DWORD dwMachinePasswordSyncLifetime = 0;
     PSTR pszExcludeTrustsListMultiString = NULL;
     PSTR pszIncludeTrustsListMultiString = NULL;
+    PSTR pszServicePrincipalNameMultiString = NULL;
     LSA_AD_CONFIG StagingConfig;
 
     const PCSTR CellSupport[] = {
@@ -327,6 +335,16 @@ AD_ReadRegistry(
             MAXDWORD, /* AD_MACHINE_PASSWORD_SYNC_MAXIMUM_SECS] */
             NULL,
             &dwMachinePasswordSyncLifetime,
+            NULL
+        },
+        {
+            "ServicePrincipalName",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszServicePrincipalNameMultiString,
             NULL
         },
         {
@@ -669,6 +687,8 @@ AD_ReadRegistry(
              pszIncludeTrustsListMultiString :
              pszExcludeTrustsListMultiString));
 
+    AD_SetConfig_ServicePrincipalNameList(&StagingConfig, pszServicePrincipalNameMultiString);
+
     AD_ReadRegistryForDomain(pszDomainName, &StagingConfig);
 
     AD_TransferConfigContents(&StagingConfig, pConfig);
@@ -680,6 +700,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszUnresolvedMemberList);
     LW_SAFE_FREE_STRING(pszExcludeTrustsListMultiString);
     LW_SAFE_FREE_STRING(pszIncludeTrustsListMultiString);
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameMultiString);
 
     AD_FreeConfigContents(&StagingConfig);
 
@@ -843,65 +864,6 @@ error:
 
 static
 DWORD
-AD_ConvertMultiStringToStringArray(
-    IN PCSTR pszMultiString,
-    OUT PSTR** pppszStringArray,
-    OUT PDWORD pdwCount
-    )
-{
-    DWORD dwError = 0;
-    PSTR* ppszStringArray = NULL;
-    DWORD dwCount = 0;
-    PCSTR pszIter = NULL;
-    DWORD dwIndex = 0;
-
-    dwCount = 0;
-    for (pszIter = pszMultiString;
-         pszIter && *pszIter;
-         pszIter += strlen(pszIter) + 1)
-    {
-        dwCount++;
-    }
-
-    if (dwCount)
-    {
-        dwError = LwAllocateMemory(
-                        dwCount * sizeof(*ppszStringArray),
-                        OUT_PPVOID(&ppszStringArray));
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwIndex = 0;
-    for (pszIter = pszMultiString;
-         pszIter && *pszIter;
-         pszIter += strlen(pszIter) + 1)
-    {
-        dwError = LwAllocateString(pszIter, &ppszStringArray[dwIndex]);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwIndex++;
-    }
-
-    LSA_ASSERT(dwIndex == dwCount);
-
-cleanup:
-
-    *pppszStringArray = ppszStringArray;
-    *pdwCount = dwCount;
-
-    return dwError;
-
-error:
-
-    LwFreeStringArray(ppszStringArray, dwCount);
-    ppszStringArray = NULL;
-    dwCount = 0;
-
-    goto cleanup;
-}
-
-static
-DWORD
 AD_SetConfig_RequireMembershipOf(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
@@ -957,6 +919,63 @@ error:
     goto cleanup;
 }
 
+static
+VOID
+AD_SetConfig_ServicePrincipalNameList(
+    PLSA_AD_CONFIG pConfig, 
+    PCSTR pszServicePrincipalNameMultiString
+    )
+{
+    DWORD dwError = 0;
+    PSTR *ppszServicePrincipalNameList = NULL;
+    DWORD dwServicePrincipalNameCount = 0;
+    PSTR pszTmpList = NULL;
+    PSTR pszNewList = NULL;
+    DWORD i = 0;
+
+    dwError = LwConvertMultiStringToStringArray(
+                    pszServicePrincipalNameMultiString,
+                    &ppszServicePrincipalNameList,
+                    &dwServicePrincipalNameCount);
+
+    // Convert string array to a comma separated string.
+    for (i = 0; i < dwServicePrincipalNameCount; i++)
+    {
+        if (pszNewList)
+        {
+           dwError = LwAllocateStringPrintf(&pszTmpList, "%s,%s", pszNewList, ppszServicePrincipalNameList[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+           LW_SAFE_FREE_STRING(pszNewList);
+           pszNewList = pszTmpList;
+        }
+        else
+        {
+           dwError = LwAllocateStringPrintf(&pszNewList, "%s", ppszServicePrincipalNameList[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+    if (pszNewList)
+       pConfig->pszServicePrincipalNameList = pszNewList;
+    else
+    {
+       LwStrDupOrNull(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, &pConfig->pszServicePrincipalNameList);
+    }
+
+
+cleanup:
+
+    if (ppszServicePrincipalNameList)
+    {
+       LwFreeStringArray(ppszServicePrincipalNameList,
+                         dwServicePrincipalNameCount);
+    }
+
+    return;
+
+error:
+    goto cleanup;
+}
 
 static
 DWORD
@@ -1005,7 +1024,7 @@ AD_SetConfig_DomainManager_TrustExceptionList(
     PCSTR pszTrustsListMultiString
     )
 {
-    return AD_ConvertMultiStringToStringArray(
+    return LwConvertMultiStringToStringArray(
                     pszTrustsListMultiString,
                     &pConfig->DomainManager.ppszTrustExceptionList,
                     &pConfig->DomainManager.dwTrustExceptionCount);
@@ -1214,6 +1233,24 @@ AD_GetMachinePasswordSyncPwdLifetime(
     LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwMachinePasswordSyncPwdLifetime;
+}
+
+DWORD
+AD_GetServicePrincipalNameList(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT PSTR* ppszServicePrincipalNameList
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+    dwError = LwStrDupOrNull(
+                    pState->config.pszServicePrincipalNameList,
+                    ppszServicePrincipalNameList);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return dwError;
 }
 
 DWORD
@@ -2152,4 +2189,82 @@ AD_ConfigLockRelease(
 
     status = pthread_rwlock_unlock(pState->pConfigLock);
     LW_ASSERT(status == 0);
+}
+
+DWORD
+AD_GetServicePrincipalNameFromRegistry(PSTR* ppszServicePrincipalNameList)
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PSTR pszServicePrincipalNameMultiString = NULL;
+    PSTR *ppszServicePrincipalNameArray = NULL;
+    DWORD dwServicePrincipalNameCount = 0;
+    PSTR pszTmpList = NULL;
+    PSTR pszNewList = NULL;
+    DWORD i = 0;
+
+    LWREG_CONFIG_ITEM ADConfigDescription[] =
+    {
+        {
+            "ServicePrincipalName",
+            TRUE,
+            LwRegTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszServicePrincipalNameMultiString,
+            NULL
+        }
+    };
+
+    dwError = RegProcessConfig(
+                AD_PROVIDER_REGKEY,
+                AD_PROVIDER_POLICY_REGKEY,
+                ADConfigDescription,
+                sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwConvertMultiStringToStringArray(
+                    pszServicePrincipalNameMultiString,
+                    &ppszServicePrincipalNameArray,
+                    &dwServicePrincipalNameCount);
+
+    // Convert string array to a comma separated string.
+    for (i = 0; i < dwServicePrincipalNameCount; i++)
+    {
+        if (pszNewList)
+        {
+           dwError = LwAllocateStringPrintf(&pszTmpList, "%s,%s", pszNewList, ppszServicePrincipalNameArray[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+           LW_SAFE_FREE_STRING(pszNewList);
+           pszNewList = pszTmpList;
+        }
+        else
+        {
+           dwError = LwAllocateStringPrintf(&pszNewList, "%s", ppszServicePrincipalNameArray[i]);
+           BAIL_ON_LSA_ERROR(dwError);
+        }        
+    }
+
+    if (pszNewList)
+    {
+      *ppszServicePrincipalNameList = pszNewList;
+    }
+    else
+    {
+      LwStrDupOrNull(DEFAULT_SERVICE_PRINCIPAL_NAME_LIST, ppszServicePrincipalNameList);
+    }
+ 
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszServicePrincipalNameMultiString);
+    if (ppszServicePrincipalNameArray)
+    {
+       LwFreeStringArray(ppszServicePrincipalNameArray, 
+                         dwServicePrincipalNameCount);
+    }
+
+    return dwError;
+error:
+
+    goto cleanup;
 }

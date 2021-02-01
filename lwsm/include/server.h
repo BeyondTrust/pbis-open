@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -37,8 +37,8 @@
  */
 
 /**
- * @file 
- * @brief Server side (lwsmd) definitions of lwsm functionality 
+ * @file
+ * @brief Server side (lwsmd) definitions of lwsm functionality
  */
 #ifndef __LWSM_SERVER_H__
 #define __LWSM_SERVER_H__
@@ -105,10 +105,10 @@ typedef struct _SM_TABLE_ENTRY
     /* Data */
     void* pData;
     /* Reference count
-       
+
        This is the number of holders of a reference to
        this entry -- in particular, by service handles.
-       
+
        The reference count is protected by the table lock
        and not the entry lock */
     DWORD volatile dwRefCount;
@@ -120,7 +120,7 @@ typedef struct _SM_TABLE_ENTRY
 typedef struct _SM_TABLE
 {
     pthread_mutex_t  lock;
-    pthread_mutex_t* pLock; 
+    pthread_mutex_t* pLock;
     SM_LINK entries;
 } SM_TABLE;
 
@@ -257,7 +257,7 @@ LwSmTableAddEntry(
     );
 
 /**
- * @brief Update the service info for the service entry 
+ * @brief Update the service info for the service entry
  * with the supplied information as indicated by the mask.
  */
 DWORD
@@ -382,7 +382,7 @@ LwSmRegistryEnumServices(
     PWSTR** pppwszNames
     );
 
-    
+
 DWORD
 LwSmRegistryReadServiceInfo(
     HANDLE hReg,
@@ -394,13 +394,13 @@ LwSmRegistryReadServiceInfo(
  * @brief Write a string value to the registry
  *
  * Writes a string value to the specified registry key.
- * The key may be a path, but must exist. 
+ * The key may be a path, but must exist.
  *
  * @param [in] hReg the registry handle
  * @param [in] pRootKey the root key handle
  * @param [in] pszParentKey the registry key to which the value will be written
- * @param [in] pszValueName the value name 
- * @param [in] pszValue the value 
+ * @param [in] pszValueName the value name
+ * @param [in] pszValue the value
  */
 DWORD
 LwSmRegistryWriteStringA(
@@ -500,7 +500,8 @@ LwSmSetLoggerToPath(
 
 DWORD
 LwSmSetLoggerToSyslog(
-    PCSTR pFacility
+    PCSTR pFacility,
+    PCSTR pSyslogFacility
     );
 
 DWORD

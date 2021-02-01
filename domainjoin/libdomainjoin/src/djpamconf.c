@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -984,7 +983,7 @@ static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const cha
 
         // A backslash followed by a newline seems to be treated as whitespace.
         // Two backslashes followed by a newline turns into one backslash then
-        // whitespace. 
+        // whitespace.
         while (CTStrEndsWith(buffer, "\\\n") || CTStrEndsWith(buffer,
                     "\\\r\n"))
         {
@@ -1910,13 +1909,6 @@ static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char 
      */
     if(!strcmp(buffer, "pam_aix"))
         return FALSE;
-    /* libpam_unix.so.1 on HP-UX will prompt with "System Password:" if the
-       existing password is incorrect. The module name will get normalized to
-       pam_unix, which Linux systems also use (but it works on them). So the
-       prefix of the unnormalized module name is also checked.
-       */
-    if(!strcmp(buffer, "pam_unix") && CTStrStartsWith(moduleBasename, "lib"))
-        return FALSE;
 
     /* pam_unix2 on OpenSuse 11, and SLES 9.x is known to not support this
      * option. The man page also says it is not supported. No distros that use
@@ -2621,6 +2613,7 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
     char *pam_deny_option = NULL;
     StringBuffer comment;
     BOOLEAN doingPasswdForAIX = FALSE;
+    BOOLEAN doingPasswdForSolaris11 = FALSE;
     LWException *nestedException = NULL;
     PSTR newMessage = NULL;
     DWORD ceError = 0;
@@ -2694,6 +2687,17 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
         LW_CLEANUP_CTERR(exc, ceError);
         if(includeService != NULL)
         {
+#ifdef __LWI_SOLARIS__
+            /* For Solaris 11 the configuration has been moved into the pam_authtok_common
+             * we need to be added before this to fix #81441
+             */
+            if (!strcmp(phase, "password") && !strcmp(includeService, "pam_authtok_common"))
+            {
+                doingPasswdForSolaris11 = TRUE;
+                break;
+            }
+#endif
+
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             state->includeLevel++;
             PamLwidentityEnable(testPrefix, distro, conf, includeService, phase, pam_lwidentity, state, &nestedException);
@@ -3099,16 +3103,35 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 goto cleanup;
             }
 
+            /* On solaris 11.4 service sshd-gsapi, sshd-hostbased and 
+             * sshd-pubkey fallback is password prompt should any of 
+             * these modules fail authentication. 
+             */
+            if (!strcmp(normalizedService, "sshd-gssapi"))
+            {
+                goto cleanup;
+            }
+
+            if (!strcmp(normalizedService, "sshd-hostbased"))
+            {
+                goto cleanup;
+            }
+
+            if (!strcmp(normalizedService, "sshd-pubkey"))
+            {
+                goto cleanup;
+            }
+
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM module", "The PowerBroker Identity Services PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM module", "The PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
             else if(state->includeLevel == 0)
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM configuration", "The PowerBroker Identity Services PAM module cannot be configured for the %s service.  Either this service is unprotected (does not require a valid password for access), or it is using a PAM module that this program is unfamiliar with.  Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM configuration", "The PAM module cannot be configured for the %s service.  Either this service is unprotected (does not require a valid password for access), or it is using a PAM module that this program is unfamiliar with.  Please email technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
             }
             goto cleanup;
         }
@@ -3223,6 +3246,11 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
                 /* Definitely use the new password */
                 LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "use_authtok"));
             }
+        }
+        if(doingPasswdForSolaris11)
+        {
+            /* Try the previously stacked password */
+            LW_CLEANUP_CTERR(exc, AddOption(conf, lwidentityLine, "try_first_pass"));
         }
         if(doingPasswdForAIX)
         {
@@ -3745,7 +3773,7 @@ void DJUpdatePamConf(const char *testPrefix,
              */
             DJ_LOG_WARNING("Ignoring pam service vmware-authd because 32bit pam libraries are not available on this system");
             continue;
-        }        
+        }
         for(j = 0; phases[j] != NULL; j++)
         {
             memset(&state, 0, sizeof(state));
@@ -3907,8 +3935,8 @@ cleanup:
     CT_SAFE_FREE_STRING(pamauthupdateconf);
 }
 
-// The purpose of this function is to parse the given source file and either add or 
-// remove the use-authtok option from password phase. The results are written to the 
+// The purpose of this function is to parse the given source file and either add or
+// remove the use-authtok option from password phase. The results are written to the
 // destination file.  The function assumes the source file is /usr/lib/pam-configs/unix.
 static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUseAuthtok)
 {
@@ -3955,7 +3983,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
 
        ceError = CTReadNextLine(fSrcHandle, &buffer, &bEndOfFile);
        BAIL_ON_CENTERIS_ERROR(ceError);
-    
+
        if (bEndOfFile)
          break;
 
@@ -4027,7 +4055,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
                    // First write the use_authtok option followed by the exitsting options.
                    ceError = CTFilePrintf(fDstHandle, "%s ", pUseAuthTok);
                    BAIL_ON_CENTERIS_ERROR(ceError);
-               } 
+               }
 
                for (i = 0; i < lineObj.optionCount; i++)
                {
@@ -4044,7 +4072,7 @@ static DWORD ParseUnixFile(const char *srcFile, const char* dstFile, BOOLEAN bUs
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
    }
-   
+
 cleanup:
 
    if (fDstHandle != NULL)
@@ -4093,7 +4121,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
      // Nothing to do.
      goto cleanup;
    }
-   
+
    ceError = CTCheckFileOrLinkExists(pFilePamConfigsCrack, &pamConfigCrackExists);
    BAIL_ON_CENTERIS_ERROR(ceError);
 
@@ -4106,7 +4134,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
       // Before modifing backup the original pam-configs/unix file.
       ceError = CTCheckDirectoryExists(pDirPamConfigsPbis, &pamConfigsPbisDirExists);
       BAIL_ON_CENTERIS_ERROR(ceError);
- 
+
       if (!pamConfigsPbisDirExists)
       {
          ceError = CTCreateDirectory(pDirPamConfigsPbis, 0700);
@@ -4128,7 +4156,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
 
       BAIL_ON_CENTERIS_ERROR(ceError);
 
-      // Go ahead and remove or add the use_authtok option. Result is written to a 
+      // Go ahead and remove or add the use_authtok option. Result is written to a
       // temporary file.
       ceError = ParseUnixFile(pFilePamConfigsUnix, pFileUnixTemp, useAuthtok);
       BAIL_ON_CENTERIS_ERROR(ceError);
@@ -4139,7 +4167,7 @@ ModifyPamConfigUnixFile(BOOLEAN useAuthtok)
 
    if (pamConfigUnixExists && pamConfigCrackExists && !useAuthtok)
    {
-       // Dont modify pam-unix password entry which would have the use_authtok option. 
+       // Dont modify pam-unix password entry which would have the use_authtok option.
        // Mostly likely pam-cracklib is above pam-unix.
        goto cleanup;
    }
@@ -4276,15 +4304,7 @@ void DJNewConfigurePamForADLogin(
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.6, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && (
-            !strncmp(distro.version, "10.11", strlen("10.11")) ||
-            !strncmp(distro.version, "10.10", strlen("10.10")) ||
-            !strncmp(distro.version, "10.9", strlen("10.9")) ||
-            !strncmp(distro.version, "10.8", strlen("10.8")) ||
-            !strncmp(distro.version, "10.7", strlen("10.7")) ||
-            !strncmp(distro.version, "10.6", strlen("10.6")) ||
-            !strncmp(distro.version, "10.5", strlen("10.5")))
-       )
+    if (distro.os == OS_DARWIN) 
     {
         DJ_LOG_INFO("Ignoring pam configuration phase of domainjoin utility for this OS. Mac OS X 10.5 or higher uses a common PAM module for all authentication plugins registered with DirectoryService (pam_opendirectory.so). Therefore no action is needed for this join module.");
         goto cleanup;
@@ -4495,7 +4515,7 @@ DJCopyPamToRootDir(
         CT_SAFE_FREE_STRING(destPath);
         GCE(ceError = CTAllocateStringPrintf(&destPath, "%s/etc/pam.d", destPrefix));
         GCE(ceError = CTCopyDirectoryIgnoreErrors(srcPath, destPath, TRUE, &missingFile));
-        
+
     }
 
     CT_SAFE_FREE_STRING(srcPath);
@@ -4511,7 +4531,7 @@ DJCopyPamToRootDir(
 cleanup:
     if(missingFile != NULL)
     {
-        fprintf(stdout, "\nFile not found: %s\n", missingFile);               
+        fprintf(stdout, "\nFile not found: %s\n", missingFile);
     }
     CT_SAFE_FREE_STRING(srcPath);
     CT_SAFE_FREE_STRING(destPath);
@@ -4570,15 +4590,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.5, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && (
-            !strncmp(distro.version, "10.11", strlen("10.11")) ||
-            !strncmp(distro.version, "10.10", strlen("10.10")) ||
-            !strncmp(distro.version, "10.9", strlen("10.9")) ||
-            !strncmp(distro.version, "10.8", strlen("10.8")) ||
-            !strncmp(distro.version, "10.7", strlen("10.7")) ||
-            !strncmp(distro.version, "10.6", strlen("10.6")) ||
-            !strncmp(distro.version, "10.5", strlen("10.5")))
-       )
+    if (distro.os == OS_DARWIN)
     {
         DJ_LOG_INFO("No action is needed for PAM join module on Mac OS X 10.5 or higher. Returning module result of FullyConfigured.");
         result = FullyConfigured;
@@ -4717,7 +4729,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
     BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
 
     memset(&conf, 0, sizeof(conf));
-    
+
     LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
     if (bPamAuthUpdateSupported)
     {
@@ -4755,7 +4767,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
         else
         {
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf( &ret,
-"All references to PowerBroker Identity Services PAM modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
+"All references to BeyondTrust AD Bridge PAM modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
         }
     }
 

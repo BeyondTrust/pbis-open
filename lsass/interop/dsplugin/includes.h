@@ -58,12 +58,10 @@
 #define KRB5_PRIVATE 1
 #ifndef KRB5_DEPRECATED
 #define KRB5_DEPRECATED 1
-#include <krb5.h>
+
 #endif
 #endif
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_generic.h>
-#include <gssapi/gssapi_krb5.h>
+
 #ifndef LDAP_DEPRECATED
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
@@ -88,7 +86,6 @@ extern "C" {
 #include "macadutil/api.h"
 #include "macadutil/adinfo.h"
 #include "macadutil/aduserinfo.h"
-#include "macadutil/adukrb5.h"
 #include "macadutil/aducopy.h"
 #include "macadutil/cfgparser.h"
 #include "macadutil/credcontext.h"
@@ -97,7 +94,6 @@ extern "C" {
 #include "macadutil/gss.h"
 #include "macadutil/gpcache.h"
 #include "macadutil/macerror.h"
-#include "macadutil/mcxutil.h"
 #include "macadutil/notify.h"
 #include "macadutil/netinfo.h"
 #include "macadutil/policyutils.h"

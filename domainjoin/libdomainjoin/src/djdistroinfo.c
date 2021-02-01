@@ -3,35 +3,35 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
 #include "djdistroinfo.h"
 #include <sys/utsname.h>
 #include <sys/types.h>
+#include <string.h>
 #include <regex.h>
 #ifdef HAVE_SYS_SYSTEMINFO_H
 #include <sys/systeminfo.h>
@@ -134,7 +134,7 @@ DJGetPListVersion(
     // Do not free. This is returned by a mac function following the "get"
     // rule.
     CFStringRef pVers = NULL;
-    CFStringRef pError = NULL;
+    CFErrorRef pError = NULL;
     PSTR pVersionString = NULL;
     CFPropertyListRef pPList = NULL;
     PSTR pErrorString = NULL;
@@ -189,17 +189,20 @@ DJGetPListVersion(
         GCE(error);
     }*/
 
-    pPList = CFPropertyListCreateFromXMLData(
+    pPList = CFPropertyListCreateWithData(
                     kCFAllocatorDefault,
                     fileContent,
                     kCFPropertyListImmutable,
+                    NULL,
                     &pError);
     if (!pPList)
     {
-        GetPstrFromStringRef(pError, &pErrorString);
+        CFStringRef pErrorDesc = CFErrorCopyDescription(pError);
+        GetPstrFromStringRef(pErrorDesc, &pErrorString);
         DJ_LOG_ERROR("Error '%s' parsing OS X version file",
                 LW_SAFE_LOG_STRING(pErrorString));
         error = ERROR_PRODUCT_VERSION;
+        CFRelease(pErrorDesc);
         GCE(error);
     }
 
@@ -567,8 +570,12 @@ DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info)
             $ uname -r
             5.8
             */
+            /* distro version is os release, e.g. 5.11 */
             GCE(ceError = CTAllocateStringPrintf(&info->version,
                         "%s", unameStruct.release));
+            /* distro extended for solaris is solaris version, e.g. 11.4 */
+            GCE(ceError = CTAllocateStringPrintf(&info->extended,
+                        "%s", unameStruct.version));
             break;
         case OS_DARWIN:
             info->distro = DISTRO_DARWIN;
@@ -824,7 +831,7 @@ struct
 {
     LwArchType value;
     const char *name;
-} static const archList[] = 
+} static const archList[] =
 {
     { ARCH_X86_32, "x86_32" },
     { ARCH_X86_32, "i386" },
@@ -870,13 +877,52 @@ void DJFreeDistroInfo(LwDistroInfo *info)
 }
 
 
+BOOLEAN
+DJGetSolarisVersion(const LwDistroInfo * const info, int *major, int *minor)
+{
+    char *osversion = NULL;
+    char *tok = NULL;
+    char *ptr = NULL;
+    long int value = 0;
+    BOOLEAN bSuccess = FALSE;
+
+    if (info->os != OS_SUNOS || !info->extended) {
+        return bSuccess;
+    }
+
+    osversion = strdup(info->extended);
+    tok = strtok(osversion, ".");
+
+    /* return 'true' if major version specified,
+     * and default minor to 0 if major is specified */
+    if (tok) {
+        value = strtol(tok, &ptr, 10);
+        if (ptr != tok) {
+            bSuccess = TRUE;
+
+            *major = value;
+            *minor = 0;
+
+            tok = strtok(NULL, ".");
+            if (tok) {
+                value = strtol(tok, &ptr, 10);
+                *minor = (ptr != tok) ? value : 0;
+            }
+        }
+    }
+
+    CT_SAFE_FREE_STRING(osversion);
+
+    return bSuccess;
+}
+
 /**
  * @brief Returns TRUE is this is Enterprise.
  *
  * This is a simple check for the existent of the Enterprise data file.
  */
-BOOLEAN 
-DJGetIsEnterprise(void) 
+BOOLEAN
+DJGetIsEnterprise(void)
 {
     DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bIsEnterprise = FALSE;

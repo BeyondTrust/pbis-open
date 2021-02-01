@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -43,7 +42,7 @@ int
 dcethread_attr_getprio(dcethread_attr* attr)
 {
     struct sched_param sp;
-    
+
     if (dcethread__set_errno(pthread_attr_getschedparam(attr, &sp)))
     {
 	return -1;

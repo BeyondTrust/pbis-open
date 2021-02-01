@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -533,6 +532,13 @@ MemCacheLoadFile(
         status = 0;
         goto cleanup;
     }
+    else if (status != LWMSG_STATUS_SUCCESS)
+    {
+        // If the cache file is corrupt, log a warning and continue with no cache.
+        LSA_LOG_WARNING("The in-memory cache file is corrupt");
+        status = 0;
+        goto cleanup;
+    }
     dwError = MAP_LWMSG_ERROR(status);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -992,6 +998,9 @@ MemCacheFindUserByName(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("User cache entry for %s not found", pszKey);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1051,6 +1060,9 @@ MemCacheFindUserById(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("User cache entry for id %lu not found", (unsigned long)uid);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1136,6 +1148,9 @@ MemCacheFindGroupByName(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("Group cache entry for %s not found", pszKey);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1192,6 +1207,9 @@ MemCacheFindGroupById(
     if (dwError == ERROR_NOT_FOUND)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+
+        LSA_LOG_DEBUG("Group cache entry for id %lu not found", (unsigned long)gid);
+        goto error;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3081,6 +3099,16 @@ MemCacheRemoveMembershipsBySid(
     }
 }
 
+/**
+ * This function stores the Parent to Child relationships in the membership cache. 
+ * For a given Group, store the objects Child User and Group entries.
+ * 
+ * @param hDb Handle to the LSA Cache instance
+ * @param pszParentSid SID of the Parent Group
+ * @param sMemberCount Number of group membership entries
+ * @param ppMembers Array of sMemberCount group membership entries
+ * @return LSA status code
+ */
 DWORD
 MemCacheStoreGroupMembership(
     IN LSA_DB_HANDLE hDb,
@@ -3257,6 +3285,17 @@ error:
     goto cleanup;
 }
 
+/**
+ * This function stores the Child to Parent relationships in the membership cache. 
+ * For a given User or Group, store the objects Parent Group entries.
+ * 
+ * @param hDb Handle to the LSA Cache instance
+ * @param pszChildSid SID of the Child User/Group
+ * @param sMemberCount Number of group membership entries
+ * @param ppMembers Array of sMemberCount group membership entries
+ * @param bIsPacAuthoritative Flags the set of group memberships being from a PAC
+ * @return LSA status code 
+ */
 DWORD
 MemCacheStoreGroupsForUser(
     IN LSA_DB_HANDLE hDb,
@@ -3333,7 +3372,7 @@ MemCacheStoreGroupsForUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwHashGetValue(
-                    pConn->pParentSIDToMembershipList,
+                    pConn->pChildSIDToMembershipList,
                     pszChildSid,
                     (PVOID*)&pGuardian);
     if (dwError == ERROR_NOT_FOUND)
@@ -3350,7 +3389,7 @@ MemCacheStoreGroupsForUser(
 
         while(pPos != pGuardian)
         {
-            pExistingMembership = PARENT_NODE_TO_MEMBERSHIP(pPos);
+            pExistingMembership = CHILD_NODE_TO_MEMBERSHIP(pPos);
             if (pExistingMembership->membership.bIsInPac ||
                 pExistingMembership->membership.bIsDomainPrimaryGroup)
             {

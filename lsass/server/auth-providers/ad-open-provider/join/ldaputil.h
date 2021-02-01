@@ -3,29 +3,28 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #ifndef _LDAP_UTIL_H_
@@ -38,6 +37,30 @@
         LSA_LOG_DEBUG("Ldap error code: %u ", (e)); \
         goto error;                 \
     }
+
+#define LW_GUID_COMPUTERS_CONTAINER "AA312825768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_DELETED_OBJECTS_CONTAINER "18E2EA80684F11D2B9AA00C04F79F805"
+
+#define LW_GUID_DOMAIN_CONTROLLERS_CONTAINER "A361B2FFFFD211D1AA4B00C04FD7D83A"
+
+#define LW_GUID_FOREIGNSECURITYPRINCIPALS_CONTAINER "22B70C67D56E4EFB91E9300FCA3DC1AA"
+
+#define LW_GUID_INFRASTRUCTURE_CONTAINER "2FBAC1870ADE11D297C400C04FD8D5CD"
+
+#define LW_GUID_LOSTANDFOUND_CONTAINER "AB8153B7768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_MICROSOFT_PROGRAM_DATA_CONTAINER "F4BE92A4C777485E878E9421D53087DB"
+
+#define LW_GUID_NTDS_QUOTAS_CONTAINER "6227F0AF1FC2410D8E3BB10615BB5B0F"
+
+#define LW_GUID_PROGRAM_DATA_CONTAINER "09460C08AE1E4A4EA0F64AEE7DAA1E5A"
+
+#define LW_GUID_SYSTEMS_CONTAINER "AB1D30F3768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_USERS_CONTAINER "A9D1CA15768811D1ADED00C04FD8D5CD"
+
+#define LW_GUID_MANAGED_SERVICE_ACCOUNTS_CONTAINER "1EB93889E40C45DF9F0C64D23BBB6237"
 
 int
 LdapMessageFree(
@@ -61,6 +84,13 @@ LdapGetDirectoryInfo(
     LDAPMessage **info,
     LDAPMessage **result,
     LDAP *ld
+    );
+
+wchar16_t*
+LdapGetWellKnownObject(
+    LDAP *ld, 
+    const wchar16_t *dn,
+    const char *wko
     );
 
 wchar16_t**
@@ -91,6 +121,7 @@ LdapAttrValSvcPrincipalName(
 int
 LdapMachAcctCreate(
     LDAP *ld,
+    const wchar16_t *machine_name,
     const wchar16_t *machacct_name,
     const wchar16_t *ou
     );
@@ -99,10 +130,9 @@ int
 LdapMachDnsNameSearch(
     LDAPMessage **out,
     LDAP *ld,
-    const wchar16_t *name,
-    const wchar16_t *dns_domain_name,
-    const wchar16_t *base,
-    PCWSTR pSchemaContext
+    const wchar16_t *fqdn,
+    const wchar16_t *machname,
+    const wchar16_t *base
     );
 
 int

@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -39,6 +39,9 @@
  */
 
 #include "includes.h"
+
+static
+DWORD  SetMachinePassword(IN AdtActionTP action);
 
 /***************************************************************************/
 /*                          New OU action                                  */
@@ -299,14 +302,20 @@ DWORD ValidateAdtNewUserAction(IN AdtActionTP action)
     dwError = ProcessADUserPassword(&(action->newUser.password));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
+    if((action->newUser.keytab) && (!action->newUser.password)) {
+        dwError = ADT_ERR_ARG_MISSING_PASSWD;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
+
     dn = NULL;
     name = NULL;
 
     cleanup:
+        LW_SAFE_FREE_MEMORY(tmp);
         return dwError;
 
     error:
-        LW_SAFE_FREE_MEMORY(tmp);
         LW_SAFE_FREE_MEMORY(dn);
         LW_SAFE_FREE_MEMORY(name);
 
@@ -436,23 +445,21 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
                                         action->newUser.namePreWin2000,
                                         action->newUser.password);
         ADT_BAIL_ON_ERROR_NP(dwError);
-
-        if(action->newUser.isNoMustChangePasswd) {
-            dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
-            ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
-
-            avpTime[0].attr = "pwdLastSet";
-            avpTime[0].vals[0] = "-1";
-
-            dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
-            //fprintf(stderr, "Setting time to %s\n", avpTime[0].vals[0]);
-            ADT_BAIL_ON_ERROR_NP(dwError);
-        }
-
     }
+
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    avpTime[0].attr = "pwdLastSet";
+
+    avpTime[0].vals[0] = action->newUser.isNoMustChangePasswd ? "-1" : "0";
+
+    dwError = ModifyADObject(appContext, action->newUser.dn, avpTime, 2);
+
+    ADT_BAIL_ON_ERROR_NP(dwError);
 
     if(isSet) {
         dwError = AdtNetUserSetInfoFlags(appContext,
@@ -477,6 +484,54 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
                         "%s: Account has been created for user %s.\n",
                         appContext->actionName, action->newUser.name);
         }
+    }
+
+    // If --spn option not provided, then default is an empty 
+    // servicePrincipalNameAttribute.
+    dwError = SetObjectSPNAttribute(action, NULL);
+    if (dwError)
+    {
+       PrintResult(appContext,
+                   LogLevelNone,
+                   "%s: Failed to update %s service principal name attribute.%s\n",
+                   appContext->actionName, action->newUser.name,
+                   AdtGetErrorMsg(dwError));
+       dwError = LW_ERROR_SUCCESS;
+    }
+
+    if (action->newUser.keytab)
+    {
+       dwError = CreateNewUserKeytabFile(action);
+       if (dwError)
+       {
+           PrintResult(appContext,
+                       LogLevelNone,
+                       "%s: Failed to create keytab file for user %s.\n",
+                       appContext->actionName, action->newUser.name);
+           // Ignore the failure. Leave it up to the admin to delete new user and retry or use
+           // adtool reset-user-password to try and create a keytab file for the user.
+           dwError = 0; 
+       }
+       else
+       {
+          if(!appContext->gopts.isQuiet) 
+          {
+              PrintResult(appContext,
+                          LogLevelNone,
+                          "%s: Keytab file created for user %s.\n",
+                          appContext->actionName, action->newUser.name);
+
+              if (!action->newUser.isNoMustChangePasswd)
+              {
+                  PrintResult(appContext,
+                              LogLevelInfo,
+                              "\tNote: Since --no-must-change-password option was not specified,\n"\
+                              "\tthe new user AD account was created with \"User must change password\n"\
+                              "\tat next logon\" enabled. The entries in the keytab file was generated\n"\
+                              "\tusing the password given on the command line.\n");
+              }
+          }
+       }
     }
 
     cleanup:
@@ -701,6 +756,114 @@ DWORD InitAdtNewComputerAction(IN AdtActionTP action)
     return InitBaseAction(action);
 }
 
+// Input:  nfs, NFS, http/linuxhostbox, host, HOST/, http/linuxhostbox2
+// Output: NFS, HOST, http/linuxhostbox, http/linuxhostbox2
+static
+DWORD GroomSpnList(AdtActionTP action, PSTR *ppGroomedServicePrincipalList)
+{
+   DWORD dwError = LW_ERROR_SUCCESS;
+   BOOLEAN bIsServiceClass = FALSE;
+   PSTR pszServicePrincipalNameList = NULL;
+   PSTR saveStrPtr = NULL;
+   PSTR aStr = NULL;
+   PSTR isStrThere = NULL;
+   PSTR pszTempStr = NULL;
+   PSTR pszNewServicePrincipalNameList = NULL;
+   PSTR pszFqdnList = NULL;
+   PSTR pszServiceClassList = NULL;
+
+   if (action->base.actionCode == AdtNewComputerAction)
+   {
+      if (action->newComputer.servicePrincipalNameList)
+        LwAllocateString(action->newComputer.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_COMPUTER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else if (action->base.actionCode == AdtNewUserAction)
+   {
+      if (action->newUser.servicePrincipalNameList)
+        LwAllocateString(action->newUser.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else if (action->base.actionCode == AdtResetUserPasswordAction)
+   {
+      if (action->resetUserPassword.servicePrincipalNameList)
+        LwAllocateString(action->resetUserPassword.servicePrincipalNameList, &pszServicePrincipalNameList);
+      else
+        LwAllocateString(DEFAULT_USER_SERVICE_PRINCIPAL_NAME_LIST, &pszServicePrincipalNameList);
+   }
+   else
+   {
+     dwError = ADT_ERR_ACTION_NOT_SUPPORTED;
+     ADT_BAIL_ON_ERROR_NP(dwError);
+   }
+
+   // Tokenize the user provided SPN list checking for duplicates SPN values
+   // and upper casing SPN.
+   aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
+   while (aStr != NULL)
+   {
+      GroomSpn(&aStr, &bIsServiceClass);
+
+      if (bIsServiceClass)
+      {
+         LwStrToUpper(aStr);
+         LwStrStr(pszServiceClassList, aStr, &isStrThere);
+         if (!isStrThere)
+         {
+            if (pszServiceClassList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszServiceClassList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+ 
+            LW_SAFE_FREE_STRING(pszServiceClassList);
+            pszServiceClassList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+      else
+      {
+         LwStrStr(pszFqdnList, aStr, &isStrThere);
+         if ((!isStrThere) || (strlen(aStr) != (strlen(isStrThere))))
+         {
+            if (pszFqdnList)
+               LwAllocateStringPrintf(&pszTempStr, "%s,%s", pszFqdnList, aStr);
+            else
+               LwAllocateStringPrintf(&pszTempStr, "%s", aStr);
+
+            LW_SAFE_FREE_STRING(pszFqdnList);
+            pszFqdnList = pszTempStr;
+            pszTempStr = NULL;
+         }
+      }
+
+      aStr = strtok_r(NULL, ",", &saveStrPtr);
+   }
+
+   if (pszFqdnList && pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s,%s", pszServiceClassList, pszFqdnList);
+   else if (pszFqdnList && !pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszFqdnList);
+   else if (pszServiceClassList)
+     LwAllocateStringPrintf(&pszNewServicePrincipalNameList, "%s", pszServiceClassList);
+   else
+     pszNewServicePrincipalNameList = NULL;
+
+   // pszNewServicePrincipalNameList contains non-duplicated, uppercase service class.
+   // Fully qualified SPN is added as is.
+   *ppGroomedServicePrincipalList = pszNewServicePrincipalNameList;
+
+cleanup:
+   LW_SAFE_FREE_STRING(pszFqdnList);
+   LW_SAFE_FREE_STRING(pszServiceClassList);
+
+   return dwError;
+
+error:
+   goto cleanup;
+
+}
 
 DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
 {
@@ -752,6 +915,14 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
+    dwError = ProcessDash(&(action->newComputer.password));
+    ADT_BAIL_ON_ERROR_NP(dwError);
+
+    if((action->newComputer.keytab) && (!action->newComputer.password)) {
+        dwError = ADT_ERR_ARG_MISSING_PASSWD;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
     if(!action->newComputer.namePreWin2000) {
         dwError = LwStrDupOrNull(action->newComputer.name, &(action->newComputer.namePreWin2000));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
@@ -772,7 +943,7 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
     if(!action->newComputer.desc) {
         dwError = LwStrDupOrNull("adtool created", &(action->newComputer.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
-    }   
+    }
 
     dn = NULL;
     name = NULL;
@@ -818,8 +989,8 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         action->newComputer.namePreWin2000,
         NULL
     };
-    
-     PSTR userAccountControl[] = {
+
+    PSTR userAccountControl[] = {
         "4128",
         NULL
     };
@@ -831,7 +1002,7 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         { "sAMAccountName", samAccountName },
         { "description", desc },
         { "userAccountControl", userAccountControl },
-        { "dnsHostName", dnsHostName },        
+        { "dnsHostName", dnsHostName },
         { NULL, NULL }
     };
     
@@ -851,8 +1022,6 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
     PrintStderr(appContext, LogLevelVerbose, "%s: Creating computer - done \n",
                 appContext->actionName);
 
-    // TODO: Set account controls and password here via RPC
-
     if(appContext->gopts.isPrintDN) {
         PrintResult(appContext, LogLevelNone, "%s\n", action->newComputer.dn);
     }
@@ -860,6 +1029,49 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
         if(!appContext->gopts.isQuiet) {
             PrintResult(appContext, LogLevelNone, "Computer %s has been created.\n", action->newComputer.name);
         }
+    }
+
+    if (action->newComputer.password)
+    {
+        dwError = SetMachinePassword(action);
+        ADT_BAIL_ON_ERROR_STR(dwError, "Password set failed");
+
+        PrintStderr(appContext, LogLevelVerbose, "Password set successfully.\n");
+    }
+
+    // If --spn option not provided, then default is host.
+    dwError = SetObjectSPNAttribute(action, NULL);
+    if (dwError)
+    {
+       PrintResult(appContext,
+                   LogLevelNone,
+                   "%s: Failed to update %s service principal name attribute. %s\n",
+                   appContext->actionName, action->newComputer.name,
+                   AdtGetErrorMsg(dwError));
+       dwError = LW_ERROR_SUCCESS;
+    }
+
+    if (action->newComputer.keytab)
+    {
+
+       dwError = CreateNewComputerKeytabFile(action);
+       if (dwError)
+       {
+          PrintResult(appContext,
+                      LogLevelError,
+                      "%s: Failed to create keytab file %s for %s.\n",
+                      appContext->actionName, action->newComputer.keytab, action->newComputer.name);
+          // Ignore the failure. Leave it up to the admin to delete new computer account and retry.
+          dwError = 0;
+       }
+       else
+       {
+           PrintResult(appContext,
+                       LogLevelInfo,
+                       "%s: Keytab file %s created for computer %s.\n",
+                       appContext->actionName, action->newComputer.keytab, action->newComputer.name);
+       }
+
     }
 
     cleanup:
@@ -872,4 +1084,205 @@ DWORD ExecuteAdtNewComputerAction(IN AdtActionTP action)
 DWORD CleanUpAdtNewComputerAction(IN AdtActionTP action)
 {
     return CleanUpBaseAction(action);
+}
+
+
+static
+DWORD  SetMachinePassword(IN AdtActionTP action)
+{
+    DWORD dwError = 0;
+    PSTR pszPassword = NULL;
+    PSTR pszDn = NULL;
+    AttrValsT *avp = NULL;
+    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+
+    PrintStdout(appContext,
+                LogLevelVerbose,
+                "%s: SetMachinePassword. Name=%s Password=%s sAMAccountName=%s DnsHostName=%s\n",
+                appContext->actionName, 
+                action->newComputer.name,
+                action->newComputer.password,
+                action->newComputer.namePreWin2000,
+                action->newComputer.dnsHostName);
+
+    if (!action->newComputer.password)
+    {
+       dwError = ADT_ERR_ARG_MISSING_PASSWD;
+       ADT_BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwAllocateString(action->newComputer.password, &pszPassword);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    if (!action->newComputer.dn)
+    {
+       dwError = ADT_ERR_ARG_MISSING_DN;
+       ADT_BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwAllocateString(action->newComputer.dn, &pszDn);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    avp[0].attr = "samAccountName";
+
+    dwError = GetObjectAttrs(appContext, pszDn, avp);
+    ADT_BAIL_ON_ERROR(dwError);
+
+    if(!avp[0].vals || !avp[0].vals[0]) 
+    {
+        dwError = ADT_ERR_FAILED_AD_GET_ATTR;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
+    dwError = AdtNetUserSetPassword(appContext, avp[0].vals[0], pszPassword);
+    ADT_BAIL_ON_ERROR(dwError);
+
+
+    PrintStdout(appContext, LogLevelVerbose,
+                "%s: SetMachinePassword. Changed password successfully.\n",
+                appContext->actionName);
+
+    cleanup:
+
+        LW_SAFE_FREE_MEMORY(pszPassword);
+        LW_SAFE_FREE_MEMORY(pszDn);
+
+        return dwError;
+
+    error:
+
+        goto cleanup;
+}
+
+DWORD SetObjectSPNAttribute(IN AdtActionTP action, IN PCSTR pszUserName)
+{
+   DWORD dwError = 0;
+   DWORD dwMaxValues = 100;
+   DWORD i, j = 0;
+   PSTR aStr = NULL;
+   PSTR saveStrPtr = NULL;
+   PSTR pszDn = NULL;
+   PSTR pszDomainFromDn = NULL;
+   PSTR pszMachineName = NULL;
+   AttrValsT *avp = NULL;
+   AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+   BOOLEAN bIsServiceClass = FALSE;
+   PSTR pszServicePrincipalNameList = NULL;
+
+   dwError = GroomSpnList(action, &pszServicePrincipalNameList);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   if (pszServicePrincipalNameList == NULL)
+    goto cleanup;
+
+   PrintStdout(appContext, LogLevelVerbose,
+               "%s: Setting SPN Attribute using: %s\n",
+               appContext->actionName, pszServicePrincipalNameList);
+
+   dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
+   ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+   dwError = LwStrDupOrNull("servicePrincipalName", &avp[0].attr);
+   ADT_BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateMemory(dwMaxValues * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    for (i = 0; i < dwMaxValues; i++)
+       avp[0].vals[i] = NULL;
+
+   if (action->base.actionCode == AdtNewComputerAction)
+   {
+      dwError = LwStrDupOrNull(action->newComputer.dn, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
+
+      dwError = LwStrDupOrNull(action->newComputer.name, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else if (action->base.actionCode == AdtNewUserAction)
+   {
+      dwError = LwStrDupOrNull(action->newUser.dn, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
+
+      dwError = LwStrDupOrNull(action->newUser.name, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else if (action->base.actionCode == AdtResetUserPasswordAction)
+   {
+      dwError = LwStrDupOrNull(action->resetUserPassword.name, &pszDn);
+      ADT_BAIL_ON_ERROR(dwError);
+
+      dwError = LwStrDupOrNull(pszUserName, &pszMachineName);
+      ADT_BAIL_ON_ERROR(dwError);
+   }
+   else
+   {
+     dwError = ADT_ERR_ACTION_NOT_SUPPORTED;
+     ADT_BAIL_ON_ERROR(dwError);
+   }
+
+   LwStrToLower(pszMachineName);
+
+   dwError = GetDomainFromDN(pszDn, &pszDomainFromDn);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   LwStrToLower(pszDomainFromDn);
+
+   aStr = strtok_r(pszServicePrincipalNameList, ",", &saveStrPtr);
+   i = 0;
+   while ((aStr != NULL) && (i < dwMaxValues))
+   {
+      GroomSpn(&aStr, &bIsServiceClass);
+      if (bIsServiceClass)
+      {
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i], "%s/%s", aStr, pszMachineName);
+         ADT_BAIL_ON_ERROR(dwError);
+
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i+1],"%s/%s.%s", aStr, pszMachineName, pszDomainFromDn);
+         ADT_BAIL_ON_ERROR(dwError);
+         i+=2;
+      }
+      else
+      {
+         dwError = LwAllocateStringPrintf(&avp[0].vals[i], "%s", aStr);
+         ADT_BAIL_ON_ERROR(dwError);
+         i++; 
+      }
+      aStr = strtok_r(NULL, ",", &saveStrPtr);
+   }
+ 
+   dwError = ModifyADObject(appContext, pszDn, avp, 2);
+   ADT_BAIL_ON_ERROR(dwError);
+
+   PrintStdout(appContext, LogLevelVerbose,
+               "%s: Successfully updated servicePrincipalName.\n",
+               appContext->actionName);
+
+cleanup:
+   LW_SAFE_FREE_STRING(pszServicePrincipalNameList);
+   LW_SAFE_FREE_MEMORY(pszDn);
+   LW_SAFE_FREE_MEMORY(pszMachineName);
+   LW_SAFE_FREE_MEMORY(pszDomainFromDn);
+
+   if (avp)
+   {
+      for (i = 0; avp[i].vals; ++i)
+      {
+         for (j = 0; avp[i].vals[j]; ++j)
+            LW_SAFE_FREE_MEMORY(avp[i].vals[j]);
+
+         LW_SAFE_FREE_MEMORY(avp[i].vals);
+     }
+
+     LW_SAFE_FREE_MEMORY(avp);
+   }
+
+
+   return dwError;
+
+error:
+   goto cleanup;
 }

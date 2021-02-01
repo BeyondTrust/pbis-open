@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Name Server Switch (Likewise LSASS)
+ *        Name Server Switch (BeyondTrust LSASS)
  *
  *        Handle NSS Group Information (Common)
  *
@@ -93,6 +92,8 @@ LsaNssGetNumberGroupMembers(
     return dwNumMembers;
 }
 
+PCSTR pszPBIS = "PBIS";
+
 DWORD
 LsaNssComputeGroupStringLength(
     DWORD dwAlignBytes,
@@ -104,12 +105,14 @@ LsaNssComputeGroupStringLength(
     DWORD dwNumMembers = 0;
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszName)) {
-       dwLength += strlen(pGroupInfo->pszName) + 1;
+       dwLength += strlen(pGroupInfo->pszName) + 1;  // Plus 1 for terminator
     }
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszPasswd)) {
-       dwLength += strlen(pGroupInfo->pszPasswd) + 1;
+       dwLength += strlen(pGroupInfo->pszPasswd) + 1; // Plus 1 for terminator
     }
+    else
+       dwLength += strlen(pszPBIS) + 1;  // Add one for null terminator
 
     /* Adding space for group members */
     dwLength += dwAlignBytes;
@@ -119,11 +122,14 @@ LsaNssComputeGroupStringLength(
         ppszMember++)
     {
         dwLength += sizeof(PSTR);
-        dwLength += strlen(*ppszMember) + 1;
+        dwLength += strlen(*ppszMember) + 1; // Add one for null terminator
         dwNumMembers++;
     }
     // Account for terminating NULL always
     dwLength += sizeof(PSTR);
+
+    // Pad out to word align.
+    dwLength = dwLength + sizeof(PSTR) - (dwLength % sizeof(PSTR));
 
     return dwLength;
 }
@@ -187,7 +193,9 @@ LsaNssWriteGroupInfo(
             PSTR pszMemberMarker = NULL;
             DWORD iMember = 0;
 
-            // This is where we start writing the members
+            // MemberMarker is where we start writing the members. 
+            // Marker is where we start writing the pointer for each member
+            // Plus 1 to skip past the null terminator for the list of pointers.
             pszMemberMarker = pszMarker + (sizeof(PSTR) * (dwNumMembers + 1));
 
             for (iMember = 0; iMember < dwNumMembers; iMember++)
@@ -195,9 +203,10 @@ LsaNssWriteGroupInfo(
                 *(pResultGroup->gr_mem+iMember) = pszMemberMarker;
                 pszMarker += sizeof(PSTR);
 
-                dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember));
+                // Plus 1 so memcpy includes the null string terminator
+                dwLen = strlen(*(pGroupInfo_1->ppszMembers + iMember)) + 1;
                 memcpy(pszMemberMarker, *(pGroupInfo_1->ppszMembers + iMember), dwLen);
-                pszMemberMarker += dwLen + 1;
+                pszMemberMarker += dwLen;
             }
             // Handle the terminating NULL
             *(pResultGroup->gr_mem+iMember) = NULL;
@@ -205,24 +214,26 @@ LsaNssWriteGroupInfo(
         }
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszName)) {
-           dwLen = strlen(pGroupInfo_1->pszName);
+           // Plus 1 so memcpy includes the null string terminator
+           dwLen = strlen(pGroupInfo_1->pszName) + 1;
            memcpy(pszMarker, pGroupInfo_1->pszName, dwLen);
            pResultGroup->gr_name = pszMarker;
-           pszMarker += dwLen + 1;
+           pszMarker += dwLen;
         }
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pGroupInfo_1->pszPasswd)) {
-           dwLen = strlen(pGroupInfo_1->pszPasswd);
+           // Plus 1 so memcpy includes the null string terminator
+           dwLen = strlen(pGroupInfo_1->pszPasswd) + 1;
            memcpy(pszMarker, pGroupInfo_1->pszPasswd, dwLen);
            pResultGroup->gr_passwd = pszMarker;
-           pszMarker += dwLen + 1;
+           pszMarker += dwLen;
         }
         else{
-            PCSTR pszPBIS = "PBIS";
-            dwLen = strlen(pszPBIS);
+            // Plus 1 so memcpy includes the null string terminator
+            dwLen = strlen(pszPBIS) + 1;
             memcpy(pszMarker, pszPBIS, dwLen);
             pResultGroup->gr_passwd = pszMarker;
-            pszMarker += dwLen + 1;
+            pszMarker += dwLen;
         }
     }
     else
@@ -352,6 +363,7 @@ LsaNssCommonGroupGetgrent(
     int                       ret = NSS_STATUS_NOTFOUND;
     HANDLE hLsaConnection = pConnection->hLsaConnection;
     PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
+    BOOLEAN bIgnoreEntry;
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -360,56 +372,75 @@ LsaNssCommonGroupGetgrent(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    if (!pEnumGroupsState->bTryAgain)
+    do
     {
-        if (!pEnumGroupsState->idxGroup ||
-            (pEnumGroupsState->idxGroup >= pEnumGroupsState->dwNumGroups))
+        bIgnoreEntry = FALSE;
+
+        if (!pEnumGroupsState->bTryAgain)
         {
-            if (pEnumGroupsState->ppGroupInfoList) {
-                LsaFreeGroupInfoList(
-                   pEnumGroupsState->dwGroupInfoLevel,
-                   pEnumGroupsState->ppGroupInfoList,
-                   pEnumGroupsState->dwNumGroups);
-                pEnumGroupsState->ppGroupInfoList = NULL;
-                pEnumGroupsState->dwNumGroups = 0;
-                pEnumGroupsState->idxGroup = 0;
+            if (!pEnumGroupsState->idxGroup ||
+                    (pEnumGroupsState->idxGroup >= pEnumGroupsState->dwNumGroups))
+            {
+                if (pEnumGroupsState->ppGroupInfoList)
+                {
+                    LsaFreeGroupInfoList(
+                            pEnumGroupsState->dwGroupInfoLevel,
+                            pEnumGroupsState->ppGroupInfoList,
+                            pEnumGroupsState->dwNumGroups);
+                    pEnumGroupsState->ppGroupInfoList = NULL;
+                    pEnumGroupsState->dwNumGroups = 0;
+                    pEnumGroupsState->idxGroup = 0;
+                }
+
+                if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+                {
+                    ret = MAP_LSA_ERROR(pErrorNumber,
+                            LsaEnumGroups(
+                            hLsaConnection,
+                            pEnumGroupsState->hResume,
+                            &pEnumGroupsState->dwNumGroups,
+                            &pEnumGroupsState->ppGroupInfoList));
+                    BAIL_ON_NSS_ERROR(ret);
+                }
             }
 
-            if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+        }
+
+        if (pEnumGroupsState->dwNumGroups)
+        {
+            PLSA_GROUP_INFO_1 pGroupInfo =
+                    (PLSA_GROUP_INFO_1)*(pEnumGroupsState->ppGroupInfoList + pEnumGroupsState->idxGroup);
+
+            if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+            {
+                bIgnoreEntry = TRUE;
+            }
+            else 
             {
                 ret = MAP_LSA_ERROR(pErrorNumber,
-                               LsaEnumGroups(
-                                   hLsaConnection,
-                                   pEnumGroupsState->hResume,
-                                   &pEnumGroupsState->dwNumGroups,
-                                   &pEnumGroupsState->ppGroupInfoList));
+                        LsaNssWriteGroupInfo(
+                        pEnumGroupsState->dwGroupInfoLevel,
+                        pGroupInfo,
+                        pResultGroup,
+                        &pszBuf,
+                        bufLen));
                 BAIL_ON_NSS_ERROR(ret);
+                
+                ret = NSS_STATUS_SUCCESS;
+            }
+            
+            pEnumGroupsState->idxGroup++;
+        }
+        else
+        {
+            ret = NSS_STATUS_UNAVAIL;
+
+            if (pErrorNumber)
+            {
+                *pErrorNumber = ENOENT;
             }
         }
-
-    }
-
-    if (pEnumGroupsState->dwNumGroups) {
-        PLSA_GROUP_INFO_1 pGroupInfo =
-            (PLSA_GROUP_INFO_1)*(pEnumGroupsState->ppGroupInfoList+pEnumGroupsState->idxGroup);
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaNssWriteGroupInfo(
-                                pEnumGroupsState->dwGroupInfoLevel,
-                                pGroupInfo,
-                                pResultGroup,
-                                &pszBuf,
-                                bufLen));
-        BAIL_ON_NSS_ERROR(ret);
-        pEnumGroupsState->idxGroup++;
-
-        ret = NSS_STATUS_SUCCESS;
-    } else {
-        ret = NSS_STATUS_UNAVAIL;
-
-        if (pErrorNumber) {
-            *pErrorNumber = ENOENT;
-        }
-    }
+    } while (bIgnoreEntry);
 
     pEnumGroupsState->bTryAgain = FALSE;
 
@@ -466,8 +497,7 @@ LsaNssCommonGroupGetgrgid(
     PVOID pGroupInfo = NULL;
     DWORD dwGroupInfoLevel = 1;
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -479,6 +509,12 @@ LsaNssCommonGroupGetgrgid(
                             dwGroupInfoLevel,
                             &pGroupInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteGroupInfo(
@@ -530,8 +566,7 @@ LsaNssCommonGroupGetgrnam(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    ret = MAP_LSA_ERROR(NULL,
-            LsaNssCommonEnsureConnected(pConnection));
+    ret = MAP_LSA_ERROR(NULL, LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
     hLsaConnection = pConnection->hLsaConnection;
 
@@ -543,6 +578,12 @@ LsaNssCommonGroupGetgrnam(
                             dwGroupInfoLevel,
                             &pGroupInfo));
     BAIL_ON_NSS_ERROR(ret);
+
+    if (LsaShouldIgnoreGroupInfo(pGroupInfo))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaNssWriteGroupInfo(

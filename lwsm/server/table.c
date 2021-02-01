@@ -1,26 +1,26 @@
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -54,7 +54,7 @@ LwSmTableFreeEntry(
     PSM_TABLE_ENTRY pEntry
     );
 
-static SM_TABLE gServiceTable = 
+static SM_TABLE gServiceTable =
 {
     .lock = PTHREAD_MUTEX_INITIALIZER,
     .pLock = &gServiceTable.lock,
@@ -88,7 +88,7 @@ LwSmTableGetEntry(
          pLink = LwSmLinkNext(pLink))
     {
         pEntry = STRUCT_FROM_MEMBER(pLink, SM_TABLE_ENTRY, link);
-        
+
         if (LwRtlWC16StringIsEqual(pEntry->pInfo->pwszName, pwszName, TRUE))
         {
             pEntry->dwRefCount++;
@@ -214,7 +214,7 @@ LwSmTableAddEntry(
     pEntry->bValid = TRUE;
 
     dwError = LwSmCopyServiceInfo(pInfo, &pEntry->pInfo);
-    
+
     dwError = LwMapErrnoToLwError(pthread_mutex_init(&pEntry->lock, NULL));
     BAIL_ON_ERROR(dwError);
     pEntry->pLock = &pEntry->lock;
@@ -351,7 +351,7 @@ LwSmTableRetainEntry(
     LOCK(bTableLocked, gServiceTable.pLock);
 
     ++pEntry->dwRefCount;
-    
+
     UNLOCK(bTableLocked, gServiceTable.pLock);
 }
 
@@ -446,7 +446,7 @@ LwSmTableStartEntry(
 
                 dwError = LwWc16sToMbs(pEntry->pInfo->pwszName, &pszServiceName);
                 BAIL_ON_ERROR(dwError);
-                
+
                 SM_LOG_INFO("Starting service: %s", pszServiceName);
 
                 if (pEntry->bDirty)
@@ -625,7 +625,7 @@ LwSmTableGetEntryStatus(
     BOOLEAN bLocked = FALSE;
 
     LOCK(bLocked, pEntry->pLock);
-    
+
     if (!pEntry->bValid)
     {
         dwError = LW_ERROR_INVALID_HANDLE;
@@ -634,9 +634,9 @@ LwSmTableGetEntryStatus(
 
     dwError = LwSmTablePollEntry(pEntry, pStatus);
     BAIL_ON_ERROR(dwError);
-    
+
 error:
-    
+
     UNLOCK(bLocked, pEntry->pLock);
 
     return dwError;
@@ -912,7 +912,7 @@ LwSmTableNotifyEntryStateChanged(
     PSM_ENTRY_NOTIFY pNotify = NULL;
     PSTR pServiceName = NULL;
     time_t now = 0;
-    
+
     LOCK(bLocked, pEntry->pLock);
 
     for (pLink = LwSmLinkBegin(&pEntry->waiters);
@@ -1038,16 +1038,16 @@ LwSmTableRegisterEntryNotify(
     {
         dwError = LwAllocateMemory(sizeof(*pNotify), OUT_PPVOID(&pNotify));
         BAIL_ON_ERROR(dwError);
-        
+
         LwSmLinkInit(&pNotify->link);
         pNotify->pfnNotifyEntryStateChange = pfnNotifyEntryStateChange;
         pNotify->pData = pData;
-        
+
         LwSmLinkInsertBefore(&pEntry->waiters, &pNotify->link);
     }
-    
+
 cleanup:
-    
+
     UNLOCK(bLocked, pEntry->pLock);
 
     return dwError;
@@ -1071,7 +1071,7 @@ LwSmTableUnregisterEntryNotify(
     PSM_LINK pLink = NULL;
     PSM_LINK pNext = NULL;
     PSM_ENTRY_NOTIFY pNotify = NULL;
-    
+
     LOCK(bLocked, pEntry->pLock);
 
     for (pLink = LwSmLinkBegin(&pEntry->waiters);
@@ -1141,15 +1141,15 @@ LwSmTableGetEntryDependencyClosureHelper(
 
             pwszDepName = NULL;
         }
-        
+
         LwSmTableReleaseEntry(pDepEntry);
         pDepEntry = NULL;
     }
 
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszDepName);
-    
+
     if (pInfo)
     {
         LwSmCommonFreeServiceInfo(pInfo);
@@ -1238,7 +1238,7 @@ LwSmTableGetEntryReverseDependencyClosureHelper(
                 ppwszAllServices,
                 pppwszServiceList);
             BAIL_ON_ERROR(dwError);
-            
+
             dwError = LwAllocateWc16String(&pwszDepName, pDepInfo->pwszName);
             BAIL_ON_ERROR(dwError);
 

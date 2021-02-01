@@ -3,33 +3,32 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Pluggable Authentication Module
  *
@@ -64,15 +63,36 @@ pam_sm_chauthtok(
     PSTR pszPassword = NULL;
     PPAMCONTEXT pPamContext = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
+    PSTR pszLoginId = NULL;
     int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("pam_sm_chauthtok::begin");
+
+    dwError = LsaPamGetContext(
+                    pamh,
+                    flags,
+                    argc,
+                    argv,
+                    &pPamContext);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaPamGetLoginId(
+            pamh,
+            pPamContext,
+            &pszLoginId,
+            TRUE);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        dwError = LW_ERROR_IGNORE_THIS_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LsaPamGetConfig(&pConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaPamSetLogLevel(pConfig->dwLogLevel);
-
 
     if (!(flags & PAM_UPDATE_AUTHTOK) &&
         !(flags & PAM_PRELIM_CHECK))
@@ -118,6 +138,7 @@ pam_sm_chauthtok(
 cleanup:
 
     LW_SECURE_FREE_STRING(pszPassword);
+    LW_SAFE_FREE_STRING(pszLoginId);
 
     if (pConfig)
     {
@@ -131,7 +152,7 @@ cleanup:
         with PAM_UPDATE_AUTHTOK; AIX will think the password change has
         finished and was successful. It seems like any error code other
         than PAM_SUCCESS will convince AIX to call back.
- 
+
         On AIX 5.3 TL6, PAM_SUCCESS can be returned, however most other
         error codes (including PAM_NEW_AUTHTOK_REQD) will cause AIX to
         think an unrecoverable error occurred.
@@ -161,6 +182,10 @@ error:
     if (dwError ==  LW_ERROR_NO_SUCH_USER)
     {
         LSA_LOG_PAM_DEBUG("pam_sm_chauthtok failed since the user could not be found [error code: %u]", dwError);
+    }
+    else if (dwError == LW_ERROR_IGNORE_THIS_USER)
+    {
+        LSA_LOG_PAM_WARNING("pam_sm_chauthtok bypassing lsass for ignore user %s", pszLoginId);
     }
     else
     {
@@ -271,7 +296,7 @@ LsaPamMustCheckCurrentPassword(
     if (((PLSA_USER_INFO_1)pUserInfo)->bIsLocalUser)
     {
         // Local root user does not have to
-        // provider a user's old password.
+        // provide a user's old password.
         bCheckOldPassword = (getuid() != 0);
     }
     else
@@ -338,7 +363,7 @@ LsaPamUpdatePassword(
     }
     if (pPamContext->bPasswordChangeSuceeded)
     {
-        LSA_LOG_PAM_DEBUG("Password change already suceeded");
+        LSA_LOG_PAM_DEBUG("Password change already succeeded");
         goto cleanup;
     }
 
@@ -358,7 +383,7 @@ LsaPamUpdatePassword(
     dwError = LsaFindObjects(
                     hLsaConnection,
                     NULL,
-                    LSA_FIND_FLAGS_NSS,
+                    0,
                     LSA_OBJECT_TYPE_USER,
                     LSA_QUERY_TYPE_BY_NAME,
                     1,
@@ -425,6 +450,19 @@ cleanup:
     return dwError;
 
 error:
+
+    if ( dwError == LW_ERROR_INVALID_PASSWORD && ppUser && ppUser[0])
+    {
+        if (getuid() == 0 && ppUser[0]->bIsLocal) {
+            LsaPamConverse(
+                pamh,
+                "Ignoring root password change for BeyondTrust AD Bridge AD user. Please use '/opt/pbis/bin/adtool' to manage AD user account passwords.",
+                PAM_ERROR_MSG,
+                NULL);
+
+            dwError = LW_ERROR_SUCCESS;
+        }
+    }
 
     if ( dwError == LW_ERROR_PASSWORD_RESTRICTION )
     {
@@ -632,7 +670,7 @@ LsaPamGetOldPassword(
        /* HP-UX clears PAM_OLDAUTHTOK between the two phases of chauthtok, so
           save a copy of the old password where we can find it later */
 
-       /* For Solaris, we read PAM_LSASS_OLDAUTHTOK instead of 
+       /* For Solaris, we read PAM_LSASS_OLDAUTHTOK instead of
           PAM_OLDAUTHTOK. */
        dwError = LsaPamSetDataString(pamh, PAM_LSASS_OLDAUTHTOK, pszPassword);
        BAIL_ON_LSA_ERROR(dwError);

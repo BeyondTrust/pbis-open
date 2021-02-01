@@ -3,7 +3,7 @@
  *  DomainJoin
  *
  *  Created by Sriram Nambakam on 8/8/07.
- *  Copyright 2007 Centeris Corporation. All rights reserved.
+ *  Copyright (c) BeyondTrust Software. All rights reserved.
  *
  */
 
@@ -65,7 +65,7 @@ DomainJoinWindow::GetComputerName()
 	   std::string errMsg("Failed to get computer name from control");
 	   throw DomainJoinException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 
@@ -79,7 +79,7 @@ DomainJoinWindow::GetDomainName()
 	   std::string errMsg("Failed to get domain name from control");
 	   throw DomainJoinException(-1, "Domain Join Error", errMsg);
 	}
-	
+
 	return result;
 }
 
@@ -147,7 +147,7 @@ DomainJoinWindow::GetCredentialsDialog()
 	{
 	   _credentialsDialog = new CredentialsDialog(GetAppSignature(), *this);
 	}
-	
+
 	return *_credentialsDialog;
 }
 
@@ -193,8 +193,8 @@ DomainJoinWindow::ValidateHostname(const std::string& hostName)
 	   {
 	       char ch = (char)hostName[i];
 		   if (!(isdigit(ch) ||
-				 ((ch >= 'a') && (ch <= 'z')) || 
-				 ((ch >= 'A') && (ch <= 'Z')) || 
+				 ((ch >= 'a') && (ch <= 'z')) ||
+				 ((ch >= 'A') && (ch <= 'Z')) ||
 				 (ch == '-')
 				)
 			  )
@@ -234,7 +234,7 @@ DomainJoinWindow::ValidateData()
 {
     bool result = false;
 	std::string domainName;
-	
+
     try
 	{
             domainName = GetDomainName();
@@ -295,7 +295,7 @@ DomainJoinWindow::ValidateData()
 					   NULL,
 					   &outItemHit);
 	}
-	
+
 	return result;
 }
 
@@ -397,9 +397,9 @@ DomainJoinWindow::HandleJoinDomain()
     catch(DomainJoinException& dje)
     {
         SInt16 outItemHit;
-        const char* err = dje.what();	
+        const char* err = dje.what();
         const char* message = dje.GetLongErrorMessage();
-        DialogRef dialog;	
+        DialogRef dialog;
         CFStringRef msgStrRef = CFStringCreateWithCString(NULL, message, kCFStringEncodingASCII);
         CFStringGetPascalString(msgStrRef, (StringPtr)message, strlen(message), kCFStringEncodingASCII);
         CFStringRef errStrRef = CFStringCreateWithCString(NULL, err, kCFStringEncodingASCII);
@@ -417,7 +417,7 @@ DomainJoinWindow::HandleJoinDomain()
                     &outItemHit);
     }
 }
-	    	
+
 //--------------------------------------------------------------------------------------------
 Boolean
 DomainJoinWindow::HandleCommand( const HICommandExtended& inCommand )
@@ -455,7 +455,7 @@ DomainJoinWindow::HandleCommand( const HICommandExtended& inCommand )
                 GetCredentials();
             }
             return true;
- 
+
         case CREDENTIALS_CMD_OK:
         {
             CredentialsDialog& credsDialog = dynamic_cast<CredentialsDialog&>(GetCredentialsDialog());
@@ -464,10 +464,10 @@ DomainJoinWindow::HandleCommand( const HICommandExtended& inCommand )
             HandleJoinDomain();
         }
         return true;
-			 
+
         case CREDENTIALS_CMD_CANCEL:
             return true;
-     
+
         default:
             return false;
     }

@@ -3,33 +3,34 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "includes.h"
 #include "lam-group.h"
+
+static const DWORD MAX_NUM_GROUPS = 500;
 
 void
 LsaNssFreeLastGroup(
@@ -174,7 +175,8 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrGid(gid_t gid)
+static 
+struct group *_LsaNssGetGrGid(gid_t gid)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -221,7 +223,21 @@ error:
     goto cleanup;
 }
 
-struct group *LsaNssGetGrNam(PCSTR pszName)
+struct group *LsaNssGetGrGid(gid_t gid)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrGid(gid);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static 
+struct group *_LsaNssGetGrNam(PCSTR pszName)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_GROUP_INFO_1 pInfo = NULL;
@@ -274,8 +290,22 @@ error:
     goto cleanup;
 }
 
+struct group *LsaNssGetGrNam(PCSTR pszName)
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrNam(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 struct group *
-LsaNssGetGrAcct(
+_LsaNssGetGrAcct(
         PVOID pId,
         int iType
         )
@@ -343,8 +373,26 @@ error:
     goto cleanup;
 }
 
+struct group *
+LsaNssGetGrAcct(
+        PVOID pId,
+        int iType
+        )
+{
+    struct group *rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrAcct(pId, iType);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
+static
 PSTR
-LsaNssGetGrSet(
+_LsaNssGetGrSet(
         PSTR pszName
         )
 {
@@ -410,6 +458,22 @@ error:
     goto cleanup;
 }
 
+PSTR
+LsaNssGetGrSet(
+        PSTR pszName
+        )
+{
+    PSTR rc = NULL;
+    
+    NSS_LOCK();
+    
+    rc = _LsaNssGetGrSet(pszName);
+    
+    NSS_UNLOCK();
+    
+    return rc;
+}
+
 DWORD
 LsaNssListGroups(
         HANDLE hLsaConnection,
@@ -418,15 +482,26 @@ LsaNssListGroups(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     const DWORD dwInfoLevel = 0;
-    const DWORD dwEnumLimit = 100000;
+    const DWORD dwEnumLimit = MAX_NUM_GROUPS;
     DWORD dwIndex = 0;
+    DWORD dwTotalIndex = 0;
     DWORD dwGroupsFound = 0;
     HANDLE hResume = (HANDLE)NULL;
-    size_t sRequiredMem = 0;
+    size_t sRequiredMem = 1;
+    size_t sUsedMem = 0;
     PLSA_GROUP_INFO_0* ppGroupList = NULL;
     PSTR pszListStart = NULL;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
     // Do not free
     PSTR pszPos = NULL;
+
+    LSA_LOG_PAM_DEBUG("Enumerating groups");
+
+    if (pDisabled) 
+    {
+        pResult->attr_flag = ENOENT;
+        goto error;
+    }
 
     dwError = LsaBeginEnumGroups(
                 hLsaConnection,
@@ -436,47 +511,64 @@ LsaNssListGroups(
                 &hResume);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaEnumGroups(
-                hLsaConnection,
-                hResume,
-                &dwGroupsFound,
-                (PVOID**)&ppGroupList);
-    BAIL_ON_LSA_ERROR(dwError);
+    do {
+        if (ppGroupList != NULL)
+        {
+            LsaFreeGroupInfoList(
+                    dwInfoLevel,
+                    (PVOID*)ppGroupList,
+                    dwGroupsFound);
 
-    if (dwGroupsFound == dwEnumLimit)
-    {
-        pResult->attr_flag = ENOMEM;
-        goto error;
-    }
+            ppGroupList = NULL;
+            dwGroupsFound = 0;
+        }
 
-    sRequiredMem = 1;
-    for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
-    {
-        sRequiredMem += strlen(ppGroupList[dwIndex]->pszName) + 1;
-    }
-    if (dwIndex == 0)
-    {
-        sRequiredMem++;
-    }
+        dwError = LsaEnumGroups(
+                    hLsaConnection,
+                    hResume,
+                    &dwGroupsFound,
+                    (PVOID**)&ppGroupList);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateMemory(
-                sRequiredMem,
-                (PVOID*)&pszListStart);
-    BAIL_ON_LSA_ERROR(dwError);
-    pszPos = pszListStart;
+        if (dwGroupsFound == 0) continue;
 
-    for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
-    {
-        strcpy(pszPos, ppGroupList[dwIndex]->pszName);
-        pszPos += strlen(pszPos) + 1;
-    }
-    if (dwIndex == 0)
-    {
+        LSA_LOG_PAM_DEBUG("Found %u groups", (unsigned int)dwGroupsFound);
+
+        for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
+        {
+            if (ppGroupList[dwIndex]->pszName) 
+            {
+                sRequiredMem += strlen(ppGroupList[dwIndex]->pszName) + 1;
+            }
+        }
+
+        dwError = LwReallocMemory(
+                    pszListStart,
+                    (PVOID*)&pszListStart,
+                    sRequiredMem);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszPos = pszListStart + sUsedMem;
+
+        for (dwIndex = 0; dwIndex < dwGroupsFound; dwIndex++)
+        {
+            if (ppGroupList[dwIndex]->pszName) 
+            {
+                strcpy(pszPos, ppGroupList[dwIndex]->pszName);
+                pszPos += strlen(pszPos) + 1;
+            }
+        }
+        
+        sUsedMem = pszPos - pszListStart;
+        
+        dwTotalIndex += dwGroupsFound;
+
+    } while (dwGroupsFound > 0);
+    
+    if (pszPos) {
         *pszPos++ = 0;
+        assert(pszPos == pszListStart + sRequiredMem);
     }
-    *pszPos++ = 0;
-
-    assert(pszPos == pszListStart + sRequiredMem);
 
     pResult->attr_un.au_char = pszListStart;
     pResult->attr_flag = 0;
@@ -729,7 +821,7 @@ LsaNssGetGroupAttr(
 
     if (!strcmp(pszAttribute, S_ID))
     {
-        pResult->attr_un.au_long = pInfo->gid;
+        pResult->attr_un.au_int = pInfo->gid;
     }
     else if (!strcmp(pszAttribute, S_PWD))
     {

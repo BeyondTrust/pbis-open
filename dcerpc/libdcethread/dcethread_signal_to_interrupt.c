@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * 
+ *
  * (c) Copyright 1990 OPEN SOFTWARE FOUNDATION, INC.
  * (c) Copyright 1990 HEWLETT-PACKARD COMPANY
  * (c) Copyright 1990 DIGITAL EQUIPMENT CORPORATION
@@ -49,7 +48,7 @@
  * Packard Company, nor Digital Equipment Corporation makes any
  * representations about the suitability of this software for any
  * purpose.
- * 
+ *
  */
 
 #include <dce/dcethread.h>
@@ -70,9 +69,9 @@ static pthread_t helper_thread = (pthread_t)0;
 
 /* -------------------------------------------------------------------- */
 
-/* 
+/*
  * A S Y N C _ S I G N A L _ H A N D L E R
- * 
+ *
  * This async signal handler is already running on the correct thread
  * stack.   ALL async signals map to a "cancel".  A cancel unwind happens
  * only at well defined points, so we can't RAISE the exception; just
@@ -104,13 +103,13 @@ static void *async_signal_handler(void *dummy)
  * thread.  This helper thread will sigwait() on all async signals of
  * interest and will convert specific asynchronous signals (defined in the
  * async signal handler) to exceptions.  The helper thread then posts the
- * cancel to the thread that initialized the exception package for 
+ * cancel to the thread that initialized the exception package for
  * 'handling'.
  */
 void
 dcethread_signal_to_interrupt(sigset_t *sigset, dcethread* thread)
 {
-    /* 
+    /*
      * The helper thread will need the thread id of the first thread
      * to initialize the exception package.  The thread that initialized
      * the exception package will receive a cancel when an asynchronous
@@ -127,12 +126,12 @@ dcethread_signal_to_interrupt(sigset_t *sigset, dcethread* thread)
         pthread_detach(helper_thread);
     }
 
-    /* 
+    /*
      * Create a 'helper thread' to catch aynchronous signals.
      */
     pthread_create(&helper_thread, NULL, async_signal_handler, 0);
 
-    /* 
+    /*
      * The 'helper thread' will never be joined so toss any pthread package
      * internal record of the thread away to conserve resources.
      */
@@ -140,4 +139,3 @@ dcethread_signal_to_interrupt(sigset_t *sigset, dcethread* thread)
 
     dcethread_unlock_global();
 }
-

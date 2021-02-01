@@ -3,28 +3,28 @@
  * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewise.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
@@ -740,7 +740,6 @@ typedef struct _COMMON_STANDARD_ACE SYSTEM_AUDIT_ACE, *PSYSTEM_AUDIT_ACE;
 typedef struct _COMMON_STANDARD_ACE SYSTEM_ALARM_ACE, *PSYSTEM_ALARM_ACE;
 #endif
 
-#if 0
 // TODO-Need GUID definition
 #if 1
 typedef struct _ACCESS_ALLOWED_OBJECT_ACE {
@@ -795,7 +794,6 @@ typedef struct _COMMON_OBJECT_ACE ACCESS_ALLOWED_OBJECT_ACE, *PACCESS_ALLOWED_OB
 typedef struct _COMMON_OBJECT_ACE ACCESS_DENIED_OBJECT_ACE, *PACCESS_DENIED_OBJECT_ACE;
 typedef struct _COMMON_OBJECT_ACE SYSTEM_AUDIT_OBJECT_ACE, *PSYSTEM_AUDIT_OBJECT_ACE;
 typedef struct _COMMON_OBJECT_ACE SYSTEM_ALARM_OBJECT_ACE, *PSYSTEM_ALARM_OBJECT_ACE;
-#endif
 #endif
 
 //
@@ -1167,6 +1165,26 @@ typedef struct _PRIVILEGE_SET {
 #define _PRIVILEGE_SET_MAX_SIZE \
     _SID_GET_SIZE_REQUIRED(_PRIVILEGE_SET_MAX_PRIVILEGE_COUNT)
 
+
+#ifndef _DCE_IDL_
+// internal errors returned by validate relative security descriptor routines
+enum SecurityDescriptorVerificationErrors {
+    REL_SD_VALID_SECURITY_DESCRIPTOR,
+    REL_SD_INVALID_SECURITY_INFORMATION_MASK,
+    REL_SD_INVALID_LENGTH,
+    REL_SD_NOT_SELF_RELATIVE,
+    REL_SD_MISSING_OWNER,
+    REL_SD_MISSING_GROUP,
+    REL_SD_MISSING_SACL,
+    REL_SD_MISSING_DACL,
+    REL_SD_INVALID_OFFSET_OWNER,
+    REL_SD_INVALID_OFFSET_GROUP,
+    REL_SD_INVALID_OFFSET_SACL,
+    REL_SD_INVALID_OFFSET_DACL,
+    REL_SD_INVALID_OFFSET_SIZE,
+    ABS_SD_INVALID_HEADER
+};
+#endif
 
 //
 // Access Token

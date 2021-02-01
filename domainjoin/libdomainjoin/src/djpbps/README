@@ -1,0 +1,66 @@
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
+
+/*
+ * Copyright Beyondtrust Software    2018
+ * All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
+ */
+
+/*
+ * The purpose of this module is to communicate with a Password Safe server
+ * to pull down credentials for a user. Refer to the Pasword Safe API User
+ * Guide. The steps used for retrieving a password are:
+ *
+ * 0) Retrieve configuration information from a file
+ * 1) POST <base>/Auth/SignAppin
+ * 2) GET<base>/ManagedAccounts
+ * 3) POST <base>/Requests
+ * 4) GET <base>/Credentials/{requestId}
+ * 5) PUT <base>/Requests/{requestId}/Checkin
+ * 6) POST <base>/Auth/Signout
+ *
+ * Step 3) returns a requestId which is used in steps 4) and 5).
+ *
+ * For each of the steps, the corresponding functions below are:
+ *
+ * 0) PbpsApiGetConfig()
+ * 1) PbpsApiSignIn()
+ * 2) PbpsApiManagedAccountsGet()
+ * 3) PbpsApiRequestId()
+ * 4) PbpsApiCredentialsGet()
+ * 5) PbpsApiRequestCheckin()
+ * 6) PbpsApiSignOut()
+ *
+ * Functions 0 to 6 should not be called directly from outside the djpbps/
+ * directory.
+ *
+ * Instead PbpsApiGetCredentials() is a wrapper around steps 0 to 6 and as such
+ * should be invoked at domainjoin join and leave.
+ *
+ * /opt/pbis/bin/domainjoin-cli join --ou <OU> --configFile <aConfigFile> DOMAIN.NET
+ *
+ * /opt/pbis/bin/domainjoin-cli leave --deleteAccount --configFile <aConfigFile>
+ *
+ */
+

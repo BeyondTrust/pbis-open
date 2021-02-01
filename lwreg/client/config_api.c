@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -121,20 +120,96 @@ NtRegReadConfigEnum(
     PDWORD  pdwValue
     );
 
-/**
- * Read configuration values from the registry
- *
- * This function loops through a configuration table reading all given values
- * from a registry key.  If an entry is not found in the registry
- * @dwConfigEntries determines whether an error is returned.
- *
- * @param[in] pszConfigKey Registry key path
- * @param[in] pszPolicyKey Registry policy key path
- * @param[in] pConfig Configuration table specifying parameter names
- * @param[in] dwConfigEntries Number of table entries
- *
- * @return STATUS_SUCCESS, or appropriate error.
- */
+
+NTSTATUS 
+NtRegUpdateConfigItemRange(
+    IN PCSTR pszConfigKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    )
+{
+    PLWREG_CURRENT_VALUEINFO* DONT_RETRIEVE_CURRENT_VALUE = NULL;
+    PCSTR NO_POLICY_KEY = NULL;
+
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLWREG_CONFIG_REG pReg = NULL;
+    DWORD dwEntry = 0;
+    PWSTR pwszSubKey = NULL;
+    PWSTR pwszValueName = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+
+    ntStatus = NtRegOpenConfig(pszConfigKey, NO_POLICY_KEY, &pReg);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (pReg == NULL)
+    {
+        goto error;
+    }
+
+    ntStatus = LwRtlWC16StringAllocateFromCString(&pwszSubKey, pReg->pszConfigKey);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    for (dwEntry = 0; dwEntry < dwConfigEntries; ntStatus = STATUS_SUCCESS, dwEntry++)
+    {
+        if (pwszValueName) 
+        {
+            free(pwszValueName);
+            pwszValueName = NULL;
+        }
+    
+        ntStatus = LwRtlWC16StringAllocateFromCString(&pwszValueName, pConfig[dwEntry].pszName);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = NtRegGetValueAttributesW(
+                pReg->hConnection,
+                pReg->hKey,
+                pwszSubKey,
+                pwszValueName,
+                DONT_RETRIEVE_CURRENT_VALUE,
+                &pValueAttributes
+                );
+
+        if (ntStatus == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            continue;
+        }
+
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        if (pValueAttributes 
+                && pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_INTEGER) 
+        {
+            pConfig[dwEntry].dwMin = pValueAttributes->Range.RangeInteger.Min;
+            pConfig[dwEntry].dwMax = pValueAttributes->Range.RangeInteger.Max;
+        }
+    }
+
+cleanup:
+
+    if (pwszValueName) 
+    {
+        free(pwszValueName);
+        pwszValueName = NULL;
+    }
+
+    if (pwszSubKey) 
+    {
+        free(pwszSubKey);
+        pwszSubKey = NULL;
+    }
+
+    if (pReg) 
+    {
+        NtRegCloseConfig(pReg);
+        pReg = NULL;
+    }
+
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
 NTSTATUS
 NtRegProcessConfig(
     PCSTR pszConfigKey,
@@ -218,6 +293,157 @@ NtRegProcessConfig(
     }
 
 cleanup:
+    NtRegCloseConfig(pReg);
+    pReg = NULL;
+
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+NtRegProcessConfigUsingAttributeRanges(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWREG_CONFIG_ITEM pConfig,
+    DWORD dwConfigEntries
+    )
+{
+    PLWREG_CURRENT_VALUEINFO* DONT_RETRIEVE_CURRENT_VALUE = NULL;
+
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwEntry = 0;
+    PLWREG_CONFIG_REG pReg = NULL;
+
+    PWSTR pwszConfigKey = NULL;
+    PWSTR pwszValueName = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+
+    ntStatus = NtRegOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (pReg == NULL)
+    {
+        goto error;
+    }
+
+    ntStatus = LwRtlWC16StringAllocateFromCString(&pwszConfigKey, pReg->pszConfigKey);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    for (dwEntry = 0; dwEntry < dwConfigEntries; dwEntry++)
+    {
+        ntStatus = STATUS_SUCCESS;
+    
+        pValueAttributes = NULL;
+        if (pwszValueName) 
+        {
+            free(pwszValueName);
+            pwszValueName = NULL;
+        }
+        
+        switch (pConfig[dwEntry].Type)
+        {
+            case LwRegTypeString:
+                ntStatus = NtRegReadConfigString(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
+                break;
+
+            case LwRegTypeMultiString:
+                ntStatus = NtRegReadConfigMultiString(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
+                break;
+
+            case LwRegTypeDword:
+                ntStatus = LwRtlWC16StringAllocateFromCString(&pwszValueName, pConfig[dwEntry].pszName);
+                if (ntStatus) 
+                {
+                    break;
+                }
+
+                ntStatus = NtRegGetValueAttributesW(
+                        pReg->hConnection,
+                        pReg->hKey,
+                        pwszConfigKey,
+                        pwszValueName,
+                        DONT_RETRIEVE_CURRENT_VALUE,
+                        &pValueAttributes
+                        );
+
+                if (ntStatus == STATUS_OBJECT_NAME_NOT_FOUND)
+                {
+                    ntStatus = STATUS_SUCCESS;
+                } 
+
+                if (ntStatus) 
+                {
+                    break;
+                }
+
+                ntStatus = NtRegReadConfigDword(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            ((pValueAttributes && pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_INTEGER) 
+                                ? pValueAttributes->Range.RangeInteger.Min
+                                : pConfig[dwEntry].dwMin),
+                            ((pValueAttributes && pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_INTEGER) 
+                                ? pValueAttributes->Range.RangeInteger.Max
+                                : pConfig[dwEntry].dwMax),
+                            pConfig[dwEntry].pValue);
+                break;
+
+            case LwRegTypeBoolean:
+                ntStatus = NtRegReadConfigBoolean(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            pConfig[dwEntry].pValue);
+                break;
+
+            case LwRegTypeEnum:
+                ntStatus = NtRegReadConfigEnum(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            pConfig[dwEntry].dwMin,
+                            pConfig[dwEntry].dwMax,
+                            pConfig[dwEntry].ppszEnumNames,
+                            pConfig[dwEntry].pValue);
+                break;
+
+            default:
+                break;
+        }
+
+        if (ntStatus == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            ntStatus = STATUS_SUCCESS;
+        }
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+cleanup:
+    if (pwszValueName) 
+    {
+        free(pwszValueName);
+        pwszValueName = NULL;
+    }
+
+    if (pwszConfigKey) 
+    {
+        free(pwszConfigKey);
+        pwszConfigKey = NULL;
+    }
+
     NtRegCloseConfig(pReg);
     pReg = NULL;
 
@@ -540,6 +766,7 @@ error:
     goto cleanup;
 }
 
+
 /**
  * \brief Reads the specified DWORD value from the 
  * registry and returns it in pdwValue.
@@ -705,6 +932,20 @@ error:
     goto cleanup;
 }
 
+DWORD 
+RegUpdateConfigItemRange(
+    IN PCSTR pszConfigKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegUpdateConfigItemRange(
+                pszConfigKey,
+                pConfig,
+                dwConfigEntries));
+}
+
 
 DWORD
 RegProcessConfig(
@@ -716,6 +957,22 @@ RegProcessConfig(
 {
     return RegNtStatusToWin32Error(
             NtRegProcessConfig(
+                pszConfigKey,
+                pszPolicyKey,
+                pConfig,
+                dwConfigEntries));
+}
+
+DWORD
+RegProcessConfigUsingAttributeRanges(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegProcessConfigUsingAttributeRanges(
                 pszConfigKey,
                 pszPolicyKey,
                 pConfig,

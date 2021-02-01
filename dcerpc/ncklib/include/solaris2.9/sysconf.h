@@ -43,7 +43,8 @@
 
 /******************************************************************************/
 
-#include <dce/pthread_exc.h>
+#define DCETHREAD_USE_THROW
+#include <dce/dcethread.h>
 #include <dce/dce.h>
 #include <assert.h>
 #include <stdio.h>
@@ -144,6 +145,12 @@
 extern void rpc__cma_atfork (void *);
 
 /****************************************************************************/
+
+/* Define BSD_4_4_SOCKET if we are using XPG5 */
+
+#if _XOPEN_SOURCE >= 500
+#define BSD_4_4_SOCKET 1
+#endif
 
 
 #endif /* _SYSCONF_H */

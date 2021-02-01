@@ -20,6 +20,7 @@ make()
 	nss-group.c \
 	nss-main.c \
 	nss-user.c \
+	nss-shadow.c \
         nss-netgrp.c\
         globals.c"
 

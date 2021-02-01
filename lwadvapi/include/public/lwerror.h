@@ -3,28 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #ifndef __LW_ERROR_H__
@@ -387,6 +387,7 @@
 #define LW_ERROR_LDAP_ASSERTION_FAILED                     40353
 #define LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN             40354
 #define LW_ERROR_IGNORE_THIS_USER                          40355
+#define LW_ERROR_LDAP_RENAME_FAILED                        40356
 
 
 #define LW_ERROR_UID_TOO_LOW                               40400
@@ -752,6 +753,16 @@
 #define LW_ERROR_DOMAIN_IS_OFFLINE_CANNOT_DELETE           42512
 #define LW_ERROR_DOMAIN_IS_OFFLINE_USE_KEEPLICENSE         42513
 
+#define LW_ERROR_DOMAINJOIN_CONFIG_CANNOT_PARSE            42514
+#define LW_ERROR_DOMAINJOIN_CONFIG_MISSING_SECTION         42515
+#define LW_ERROR_DOMAINJOIN_CONFIG_MISSING_ATTRIBUTE       42516
+#define LW_ERROR_DOMAINJOIN_CONFIG_BAD_VALUE               42517
+#define LW_ERROR_DOMAINJOIN_CONFIG_OUT_OF_RANGE            42518
+#define LW_ERROR_DOMAINJOIN_CONFIG_INVALID_CERTIFICATE     42519
+#define LW_ERROR_DOMAINJOIN_CONFIG_CANT_VERIFY_CERTIFICATE 42520
+#define LW_ERROR_DOMAINJOIN_CANNOT_RESOLVE_HOST            42521
+#define LW_ERROR_DOMAINJOIN_PASSWORD_REQUEST_CONFLICT      42522
+
 // Range 42600 - 42560 is reserved for autoenroll
 #define LW_ERROR_AUTOENROLL_FAILED                         42600
 #define LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED            42601
@@ -803,6 +814,8 @@
 #define LW_ERROR_GP_LOAD_EXTENSIONS_FAILED                 50028
 #define LW_ERROR_GP_REFRESH_CONFIGURATION_FAILED           50029
 #define LW_ERROR_GP_XML_PROPERTY_NOT_FOUND                 50030
+#define LW_ERROR_GP_RSOP_FAILED                            50031
+#define LW_ERROR_GP_XML_ALLOC_FAILED                       50032
 
 LW_BEGIN_EXTERN_C
 

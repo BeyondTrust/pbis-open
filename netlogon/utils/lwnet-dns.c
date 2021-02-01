@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Site Manager
+ *        BeyondTrust Site Manager
  *
  *        DNS Utilities
  *
@@ -1351,15 +1350,14 @@ LWNetDnsQueryWithBuffer(
     union
     {
         struct __res_state res;
-#ifdef __LWI_AIX__
         // struct __res_state was enlarged from 720 in AIX 5.2 to 824 in AIX
         // 5.3. This means calling res_ninit on AIX 5.3 on a structure compiled
         // on AIX 5.2 will result in a buffer overflow. Furthermore, even on
         // AIX 5.3, res_ninit seems to expect 1596 bytes in the structure (1491
         // on AIX 5.2). As a workaround, this padding will ensure enough space
         // is allocated on the stack.
+        // EDR-48600 - Add the padding on all platforms
         char buffer[2048];
-#endif
     } resLocal = { {0} };
     res_state res = &resLocal.res;
 #else
@@ -1367,6 +1365,8 @@ LWNetDnsQueryWithBuffer(
 #endif
 
     LWNET_LOCK_RESOLVER_API(bInLock);
+    
+    LWNET_LOG_DEBUG("%s(%p(%s), %d, %d, %p, %d, %p)", __FUNCTION__, pszQuestion, LW_SAFE_LOG_STRING(pszQuestion), bReInit, bUseTcp, pBuffer, dwBufferSize, pdwResponseSize);
 
 #if HAVE_DECL_RES_NINIT
     if (res_ninit(res) != 0)
@@ -1401,6 +1401,9 @@ LWNetDnsQueryWithBuffer(
 #else
     responseSize = res_query(pszQuestion, ns_c_in, ns_t_srv, (PBYTE) pBuffer, dwBufferSize);
 #endif
+    
+    LWNET_LOG_DEBUG("DNS lookup for '%s' returned %d bytes", LW_SAFE_LOG_STRING(pszQuestion), responseSize);
+
     if (responseSize < 0)
     {
         LWNET_LOG_VERBOSE("DNS lookup for '%s' failed with errno %d, h_errno = %d", pszQuestion, errno, h_errno);
@@ -1530,6 +1533,8 @@ LWNetDnsSrvQuery(
     PDNS_SERVER_INFO pServerArray = NULL;
     DWORD dwServerCount = 0;
 
+    LWNET_LOG_DEBUG("%s(%s, %s, %d, %p, %p)", __FUNCTION__, pszDnsDomainName, LW_SAFE_LOG_STRING(pszSiteName), dwDsFlags, ppServerArray, pdwServerCount);
+
     // TODO - Handle trailing dot in domain; handle no dots in domain
 
     dwError = LWNetDnsGetSrvRecordQuestion(&pszQuestion, pszDnsDomainName,
@@ -1547,6 +1552,7 @@ LWNetDnsSrvQuery(
     pResponse = (PDNS_RESPONSE_HEADER) pBuffer;
     if (LWNetDnsIsTruncatedResponse(pResponse))
     {
+        LWNET_LOG_DEBUG("Truncated DNS response");
         dwError = LWNetDnsQueryWithBuffer(pszQuestion, FALSE, TRUE,
                                           pBuffer, dwBufferSize,
                                           &dwResponseSize);
@@ -1573,6 +1579,7 @@ LWNetDnsSrvQuery(
     dwError = LWNetDnsBuildServerArray(pSRVRecordList,
                                        &pServerArray, &dwServerCount);
     BAIL_ON_LWNET_ERROR(dwError);
+    LWNET_LOG_DEBUG("LWNetDnsBuildServerArray %d servers found", dwServerCount);
 
 error:
     LWNET_SAFE_FREE_STRING(pszQuestion);

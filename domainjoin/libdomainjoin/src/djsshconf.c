@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
- * 
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -257,7 +256,7 @@ static DWORD SetOption(struct SshConf *conf, const char *name, const char *value
     }
 
     /*If the option wasn't even in a comment, just add the option at the
-      end of the file
+      end of the file before Match blocks
       */
     if(!found)
     {
@@ -271,8 +270,20 @@ static DWORD SetOption(struct SshConf *conf, const char *name, const char *value
             &lineObj.value.value));
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrdup("",
             &lineObj.value.trailingSeparator));
-        BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_data,
-                    sizeof(struct SshLine), &lineObj, 1));
+        
+        line = FindOption(conf, 0, "Match");
+        if (line == -1)
+        {
+            BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_data,
+                        sizeof(struct SshLine), &lineObj, 1));
+        }
+        else 
+        {
+            // If there's a Match clause add the settings before this
+            BAIL_ON_CENTERIS_ERROR(ceError = CTArrayInsert(&conf->private_data,
+                        line, sizeof(struct SshLine), &lineObj, 1));
+        }
+
         memset(&lineObj, 0, sizeof(lineObj));
         conf->modified = 1;
     }
@@ -738,8 +749,13 @@ static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
         &command, "%s%s %s -o %s=yes -o BadOption=yes 2>&1",
         rootPrefix, binary, testFlag, optionName));
+    
+    DJ_LOG_VERBOSE("Running test: %s", command);
 
     ceError = CTCaptureOutput(command, &commandOutput);
+
+    DJ_LOG_VERBOSE("Results: %s", commandOutput);
+
     /* Some versions of sshd will return an error code because an invalid
        option was passed, but not all will. */
     if(ceError == ERROR_BAD_COMMAND)
@@ -752,7 +768,7 @@ static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, 
         goto cleanup;
     }
 
-    if(strstr(commandOutput, "BadOption") == NULL)
+    if(strstr(commandOutput, "BadOption") == NULL && strstr(commandOutput, "badoption") == NULL)
     {
         DJ_LOG_INFO("Sshd does not support -o");
         goto cleanup;
@@ -986,25 +1002,45 @@ static QueryResult UpdateSshdConf(struct SshConf *conf, PCSTR testPrefix,
                 }
             }
         }
-        for(i = 0; optionalSshdOptions[i] != NULL; i++)
-        {
-            PCSTR option = optionalSshdOptions[i];
-            LW_TRY(exc, supported = TestOption(testPrefix, conf, binaryPath, "-t", option, &LW_EXC));
-            if(supported)
+        
+        if (options && options->disableGSSAPI) {
+            conf->modified = FALSE;
+            LW_CLEANUP_CTERR(exc, RemoveOption(conf, "GSSAPIAuthentication"));
+            if(conf->modified)
             {
-                conf->modified = FALSE;
-                LW_CLEANUP_CTERR(exc, SetOption(conf, option, "yes"));
-                if(conf->modified)
+                if(changeDescription != NULL)
                 {
-                    modified = TRUE;
-                    temp = optionalOptions;
-                    optionalOptions = NULL;
-                    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&optionalOptions, "%s\t%s\n", temp, option));
-                    CT_SAFE_FREE_STRING(temp);
+                    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+                                changeDescription,
+                                "In %s, GSSAPIAuthentication will be removed.\n",
+                                conf->filename));
+                }
+                result = NotConfigured;
+            }
+            else
+                result = FullyConfigured;
+        } else {
+            for(i = 0; optionalSshdOptions[i] != NULL; i++)
+            {
+                PCSTR option = optionalSshdOptions[i];
+                LW_TRY(exc, supported = TestOption(testPrefix, conf, binaryPath, "-t", option, &LW_EXC));
+                if(supported)
+                {
+                    conf->modified = FALSE;
+                    LW_CLEANUP_CTERR(exc, SetOption(conf, option, "yes"));
+                    if(conf->modified)
+                    {
+                        modified = TRUE;
+                        temp = optionalOptions;
+                        optionalOptions = NULL;
+                        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&optionalOptions, "%s\t%s\n", temp, option));
+                        CT_SAFE_FREE_STRING(temp);
+                    }
                 }
             }
+
+            result = FullyConfigured;
         }
-        result = FullyConfigured;
         if(strlen(optionalOptions) > 0)
         {
             temp = optionalOptions;

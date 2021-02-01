@@ -3,33 +3,32 @@
  * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  * Authors: Gerald Carter <gcarter@likewise.com>
  *
@@ -200,7 +199,7 @@ static DWORD InitLsaAuthParams(
     }
 
     if (params->workstation_name) {
-        dwErr = LwAllocateString(params->workstation_name, 
+        dwErr = LwAllocateString(params->workstation_name,
                                   &pLsaParams->pszWorkstation);
         BAIL_ON_LSA_ERR(dwErr);
     }
@@ -241,7 +240,7 @@ CopyLsaUserInfoToWbcInfo(
     BAIL_ON_NULL_PTR_PARAM(pWbcUserInfo, dwErr);
     BAIL_ON_NULL_PTR_PARAM(pLsaUserInfo, dwErr);
 
-    memset(pWbcUserInfo, 0, sizeof(struct wbcAuthUserInfo));    
+    memset(pWbcUserInfo, 0, sizeof(struct wbcAuthUserInfo));
 
     pWbcUserInfo->user_flags = pLsaUserInfo->dwUserFlags;
 
@@ -272,17 +271,17 @@ CopyLsaUserInfoToWbcInfo(
 
     pWbcUserInfo->acct_flags = pLsaUserInfo->dwAcctFlags;
 
-    if (pLsaUserInfo->pSessionKey) {        
+    if (pLsaUserInfo->pSessionKey) {
         memcpy(pWbcUserInfo->user_session_key,
                LsaDataBlobBuffer(pLsaUserInfo->pSessionKey),
                sizeof(pWbcUserInfo->user_session_key));
     }
 
-    if (pLsaUserInfo->pLmSessionKey) {        
+    if (pLsaUserInfo->pLmSessionKey) {
         memcpy(pWbcUserInfo->lm_session_key,
                LsaDataBlobBuffer(pLsaUserInfo->pLmSessionKey),
                sizeof(pWbcUserInfo->lm_session_key));
-    }    
+    }
 
     pWbcUserInfo->logon_count        = pLsaUserInfo->LogonCount;
     pWbcUserInfo->bad_password_count = pLsaUserInfo->BadPasswordCount;
@@ -481,7 +480,7 @@ MapLsaErrorToNtStatus(
         ntStatus = STATUS_PASSWORD_EXPIRED;
         break;
     case LW_ERROR_ACCOUNT_EXPIRED:
-        ntStatus = STATUS_ACCOUNT_EXPIRED;        
+        ntStatus = STATUS_ACCOUNT_EXPIRED;
         break;
     case LW_ERROR_ACCOUNT_LOCKED:
         ntStatus = STATUS_ACCOUNT_LOCKED_OUT;
@@ -490,10 +489,10 @@ MapLsaErrorToNtStatus(
         ntStatus = STATUS_ACCOUNT_DISABLED;
         break;
     default:
-        break;        
+        break;
     }
 
-    return ntStatus;    
+    return ntStatus;
 }
 
 DWORD
@@ -510,12 +509,12 @@ wbcFillErrorInfo(
     pError = _wbc_malloc_zero(sizeof(struct wbcAuthErrorInfo),
                   FreeWbcErrorInfo);
     BAIL_ON_NULL_PTR(pError, dwErr);
-    
+
     /* Fill in errors here */
 
-    ntStatus = MapLsaErrorToNtStatus(dwError);    
+    ntStatus = MapLsaErrorToNtStatus(dwError);
 
-    pError->nt_status = ntStatus;    
+    pError->nt_status = ntStatus;
 
     *ppWbcError = pError;
 
@@ -541,6 +540,16 @@ wbcAuthenticateUserEx(
     /* Sanity and setup */
 
     BAIL_ON_NULL_PTR_PARAM(params, dwErr);
+
+    if (params->level == WBC_AUTH_USER_LEVEL_PAC)
+    {
+        // Samba now makes a call with WBC_AUTH_USER_LEVEL_PAC to prime the cache with the PAC
+        // BeyondTrust AD Bridge currently does not implement or require this functionality.
+        // As this is merely a cache priming mechanism it is safe to ignore.
+        return WBC_ERR_SUCCESS;
+    }
+
+
     BAIL_ON_NULL_PTR_PARAM(params->account_name, dwErr);
 
     dwErr = LwAllocateMemory(sizeof(LSA_AUTH_USER_PARAMS), (PVOID*)&pLsaParams);
@@ -758,4 +767,3 @@ wbcAddNamedBlob(
 
     return LW_ERROR_NOT_IMPLEMENTED;
 }
-

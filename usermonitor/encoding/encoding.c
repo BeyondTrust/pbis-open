@@ -3,37 +3,36 @@
  * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
- *        packing.c
+ *        encoding.c
  *
  * Abstract:
  *
@@ -380,6 +379,137 @@ EncodeGroupMembershipChange(
     BAIL_ON_ERR_STATUS(status);
 
     GROUP_MEMBERSHIP_CHANGE_Encode(encodingHandle, pValue);
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+cleanup:
+    return dwError;
+
+error:
+
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+
+    goto cleanup;
+}
+
+VOID
+FreeADUserInfoContents(
+    PAD_USER_INFO pValue
+    )
+{
+    rpc_ss_client_free(pValue->pszDN);
+    rpc_ss_client_free(pValue->pszObjectSid);
+    rpc_ss_client_free(pValue->pszNetbiosDomainName);
+    rpc_ss_client_free(pValue->pszSamAccountName);
+    rpc_ss_client_free(pValue->pszPrimaryGroupSid);
+    rpc_ss_client_free(pValue->pszUPN);
+    rpc_ss_client_free(pValue->pszAliasName);
+    rpc_ss_client_free(pValue->pw_name);
+    rpc_ss_client_free(pValue->pw_passwd);
+    rpc_ss_client_free(pValue->pw_gecos);
+    rpc_ss_client_free(pValue->pw_shell);
+    rpc_ss_client_free(pValue->pw_dir);
+    rpc_ss_client_free(pValue->pDisplayName);
+    rpc_ss_client_free(pValue->pszWindowsHomeFolder);
+    rpc_ss_client_free(pValue->pszLocalWindowsHomeFolder);
+}
+
+VOID
+LW_USERMONITORLIB_API
+FreeADUserChange(
+    PAD_USER_CHANGE pValue
+    )
+{
+    if (pValue == NULL)
+    {
+        return;
+    }
+
+    FreeADUserInfoContents(&pValue->OldValue);
+    FreeADUserInfoContents(&pValue->ADNewValue);
+    rpc_ss_client_free(pValue);
+}
+
+DWORD
+LW_USERMONITORLIB_API
+DecodeADUserChange(
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PAD_USER_CHANGE* ppValue
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+    PAD_USER_CHANGE pValue = NULL;
+
+    idl_es_decode_buffer(
+            (idl_byte *)pBuffer,
+            sBufferLen,
+            &encodingHandle,
+            &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    DCETHREAD_TRY
+    AD_USER_CHANGE_Decode(encodingHandle, &pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+    *ppValue = pValue;
+
+cleanup:
+    return dwError;
+
+error:
+    if (pValue != NULL)
+    {
+        FreeADUserChange(pValue);
+    }
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+    goto cleanup;
+}
+
+DWORD
+LW_USERMONITORLIB_API
+EncodeADUserChange(
+    IN PAD_USER_CHANGE pValue,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+
+    idl_es_encode_dyn_buffer(
+        (idl_byte**) (void*) ppEncodedBuffer,
+        (idl_ulong_int*) pdwEncodedSize,
+        &encodingHandle,
+        &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    DCETHREAD_TRY
+    AD_USER_CHANGE_Encode(encodingHandle, pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&encodingHandle, &status);

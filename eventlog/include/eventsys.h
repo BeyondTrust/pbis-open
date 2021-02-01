@@ -1,6 +1,6 @@
 /*
- * Copyright (C) Centeris Corporation 2004-2007
- * Copyright (C) Likewise Software 2007
+ * Copyright (C) BeyondTrust Corporation 2004-2007
+ * Copyright (C) BeyondTrust Software 2007
  * All rights reserved.
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)

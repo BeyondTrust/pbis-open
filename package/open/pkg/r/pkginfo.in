@@ -1,6 +1,6 @@
 PKG=PBISopenr
 SUNW_PKGTYPE=root
-NAME=PowerBroker Identity Services Open (root files)
+NAME=BeyondTrust AD Bridge Open (root files)
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
 CATEGORY=system

@@ -59,7 +59,7 @@
 <section section="PBIS Services">
     <report>
         <name>PBISServiceStarting</name>
-        <description>Displays events recorded for any PBIS services starting for the specified computer</description>
+        <description>Displays events recorded for any BeyondTrust AD Bridge services starting for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1000')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1000')))"
@@ -68,7 +68,7 @@
     </report>
     <report>
         <name>PBISServiceStopping</name>
-        <description>Displays events recorded for any PBIS services stopping for the specified computer</description>
+        <description>Displays events recorded for any BeyondTrust AD Bridge services stopping for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1002')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1002')))"
@@ -77,7 +77,7 @@
     </report>
     <report>
         <name>PBISServiceFailures</name>
-        <description>Displays failure events recorded for any PBIS services for the specified computer</description>
+        <description>Displays failure events recorded for any BeyondTrust AD Bridge services for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1001' OR EventSourceID = '1003')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1001' OR EventSourceID = '1003')))"
@@ -86,7 +86,7 @@
     </report>
     <report>
         <name>LsassFailures</name>
-        <description>Displays failure events recorded for the PBIS Authentication service (lsassd) for the specified computer</description>
+        <description>Displays failure events recorded for the BeyondTrust AD Bridge Authentication service (lsassd) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >
@@ -94,7 +94,7 @@
     </report>
     <report>
         <name>NetlogonFailures</name>
-        <description>Displays failure events recorded for the PBIS AD Sites service (netlogond) for the specified computer</description>
+        <description>Displays failure events recorded for the BeyondTrust AD Bridge AD Sites service (netlogond) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >
@@ -105,7 +105,7 @@
 <section section="PBIS Configuration">
     <report>
         <name>PBISServiceChanged</name>
-        <description>Displays configuration changed events recorded for any PBIS services for the specified computer</description>
+        <description>Displays configuration changed events recorded for any BeyondTrust AD Bridge services for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1004')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1004')))"
@@ -114,7 +114,7 @@
     </report>
     <report>
         <name>LsassChanged</name>
-        <description>Displays configuration changed events recorded for the PBIS Authentication service (lsassd) for the specified computer</description>
+        <description>Displays configuration changed events recorded for the BeyondTrust AD Bridge Authentication service (lsassd) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1004'))"
             >
@@ -122,7 +122,7 @@
     </report>
     <report>
         <name>NetlogonChanged</name>
-        <description>Displays configuration changed events recorded for the PBIS AD Sites service (netlogond) for the specified computer</description>
+        <description>Displays configuration changed events recorded for the BeyondTrust AD Bridge AD Sites service (netlogond) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >

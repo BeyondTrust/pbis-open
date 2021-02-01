@@ -238,6 +238,19 @@
             <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
+    <capability>
+        <name>NssApplyAccessControl</name>
+        <description>Filter users returned by NSS based on RequireMembershipOf</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\PAM\NssApplyAccessControl"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\PAM\NssApplyAccessControl" >
+            <description>Filter users returned by NSS based on RequireMembershipOf</description>
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
     <xi:include href="file://@lwconfigdir@/lwconfig_lsass_pam.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
@@ -463,6 +476,20 @@
         </registry>
     </capability>
     <capability>
+        <name>ServicePrincipalName</name>
+        <description>Update the local krb5 keytab file and computer account service principal name attribute in AD with the provided list of instances. Changes take affect upon domain join. Default adds host service class.</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\ServicePrincipalName"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\ServicePrincipalName" >
+            <description>Example: nfs/,http/wwww.linuxcomputer.com</description>
+            <default>
+                <value>host</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply inform="Domainjoin required to update the computer object's SPN" />
+        </registry>
+    </capability>
+    <capability>
         <name>MemoryCacheSizeCap</name>
         <description>The maximum bytes to use for the in-memory cache. Old data will be purged if the total cache size exceeds this limit. A value of 0 indicates no limit.</description>
         <registry type="dword"
@@ -476,6 +503,20 @@
             <unit suffix="KB" multiplier="1024" />
             <unit suffix="MB" multiplier="1048576" />
             <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>HomeDirForceLowercase</name>
+        <description>Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured, /etc/pbis/user-override file takes precedence.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirForceLowercase"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirForceLowercase" >
+            <description>Set true if home directory to be created in lower case.</description>
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -508,7 +549,7 @@
     </capability>
     <capability>
         <name>RemoteHomeDirTemplate</name>
-        <description>Format string for the mount path of the remote Windows Folder. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</description>
+        <description>Format string for the mount path of the remote Windows Folder. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U). Please ensure you can manually mount cifs shares when using this setting</description>
         <registry type="string"
             lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate"
             gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate" >
@@ -652,6 +693,18 @@
         </registry>
     </capability>
     <capability>
+        <name>SmartcardRedirector</name>
+        <description>Smartcard redirector services will not be used when disabled</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRedirector"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRedirector" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
         <name>SmartcardRequiredForLogin</name>
         <description>Smartcard will be required for login</description>
         <registry type="boolean"
@@ -746,6 +799,9 @@
             <default>
                 <value>1800</value>
             </default>
+            <accept>
+               <range min="60" max="1000000" />
+            </accept>
             <unit suffix="s" multiplier="1" />
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />

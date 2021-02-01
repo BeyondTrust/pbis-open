@@ -3,32 +3,32 @@
  */
 
 /*
- * Copyright (c) Likewise Software.  All rights Reserved.
+ * Copyright © BeyondTrust Software 2004 - 2019
+ * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -36,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Advanced API (lwadvapi)
+ *        BeyondTrust Advanced API (lwadvapi)
  *
  *        LDAP API
  *
@@ -282,7 +282,7 @@ LwLdapOpenDirectoryServerSingleAttempt(
     LDAP * ld = NULL;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     int rc = LDAP_VERSION3;
-    int maxbufsize = LW_LDAP_16MB;
+    ber_len_t maxbufsize = LW_LDAP_16MB;
     DWORD dwPort = 389;
     struct timeval timeout = {0};
     BOOLEAN bLdapSeal = FALSE;
@@ -1623,7 +1623,7 @@ LwLdapGetStringsWithExtDnResult(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
-    PSTR *ppszLDAPValues = NULL;
+    struct berval **ppszLDAPValues = NULL;
     PSTR *ppszValues = NULL;
     INT iNum = 0;
     DWORD dwNumValues = 0;
@@ -1633,10 +1633,10 @@ LwLdapGetStringsWithExtDnResult(
     pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
     LW_BAIL_ON_INVALID_POINTER(pMessage);
 
-    ppszLDAPValues = (PSTR*)ldap_get_values(pDirectory->ld, pMessage, pszFieldName);
+    ppszLDAPValues = ldap_get_values_len(pDirectory->ld, pMessage, pszFieldName);
     if (ppszLDAPValues)
     {
-        iNum = ldap_count_values(ppszLDAPValues);
+        iNum = ldap_count_values_len(ppszLDAPValues);
         if (iNum < 0)
         {
             dwError = LW_ERROR_LDAP_ERROR;
@@ -1652,12 +1652,21 @@ LwLdapGetStringsWithExtDnResult(
             {
                 if (bDoSidParsing)
                 {
-                    dwError = LwLdapParseExtendedDNResult(ppszLDAPValues[iValue], &ppszValues[dwNumValues]);
+                    // Check if the value looks like a binary SID representation
+                    if (ppszLDAPValues[iValue]->bv_val[0] == SID_REVISION)
+                    {
+                        dwError = LwSidBytesToString((UCHAR*)ppszLDAPValues[iValue]->bv_val, ppszLDAPValues[iValue]->bv_len, &ppszValues[dwNumValues]);                        
+                    }
+                    else
+                    {
+                        dwError = LwLdapParseExtendedDNResult(ppszLDAPValues[iValue]->bv_val, &ppszValues[dwNumValues]);
+                    }
+
                     BAIL_ON_LW_ERROR(dwError);
                 }
                 else
                 {
-                    dwError = LwAllocateString(ppszLDAPValues[iValue], &ppszValues[dwNumValues]);
+                    dwError = LwAllocateString(ppszLDAPValues[iValue]->bv_val, &ppszValues[dwNumValues]);
                     BAIL_ON_LW_ERROR(dwError);
                 }
                 if (ppszValues[dwNumValues])
@@ -1673,7 +1682,7 @@ LwLdapGetStringsWithExtDnResult(
 
 cleanup:
     if (ppszLDAPValues) {
-        ldap_value_free(ppszLDAPValues);
+        ldap_value_free_len(ppszLDAPValues);
     }
 
     return dwError;
@@ -2146,6 +2155,30 @@ LwLdapSetOption(IN DWORD dwSaslMaxBufSize)
     return dwError;
 }
 
+DWORD
+LwLdapSetControl(    
+    IN HANDLE hDirectory,
+    IN PSTR pszIOD,
+    IN BOOLEAN bCritical,
+    IN BerValue *pbvValue
+    )
+{
+    DWORD dwError = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+
+    if (pszIOD) {
+        LDAPControl ctrl = {pszIOD, {0}, (char)bCritical};
+        LDAPControl *ctrls[2] = {&ctrl, NULL};
+
+        if (pbvValue) ctrl.ldctl_value = *pbvValue;
+
+        dwError = ldap_set_option(pDirectory->ld, LDAP_OPT_SERVER_CONTROLS, ctrls);
+    } else {
+        dwError = ldap_set_option(pDirectory->ld, LDAP_OPT_SERVER_CONTROLS, NULL);
+    }
+
+    return dwError;
+}
 
 /*
 local variables:

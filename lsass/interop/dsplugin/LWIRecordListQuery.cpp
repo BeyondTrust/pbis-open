@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 // sGetRecordList
@@ -229,7 +228,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
     pGetRecordList->fInDataBuff->fBufferLength = 0;
     pGetRecordList->fOutRecEntryCount = 0;
 
-    if ((UInt32)pGetRecordList->fIOContinueData != 0 && 
+    if ((UInt32)pGetRecordList->fIOContinueData != 0 &&
         (UInt32)pGetRecordList->fIOContinueData != SPECIAL_DS_CONTINUE_HANDLE)
     {
         macError = GetQueryFromContextList(pGetRecordList->fIOContinueData, &pQuery);
@@ -239,7 +238,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
             goto HandleResponse;
         }
     }
-    
+
     macError = LWIQuery::Create(!pGetRecordList->fInAttribInfoOnly,
                                 true, // The query results will support fIOContinue (split large results over many calls)
                                 pGetRecordList->fInNodeRef,
@@ -290,7 +289,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
                 resultCount++;
             }
         }
- 
+
         if (pQuery->ShouldQueryComputerInformation())
         {
             macError_computerQuery = pQuery->QueryComputerInformationByName(szNames);
@@ -303,7 +302,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
                 resultCount++;
             }
         }
- 
+
         if (pQuery->ShouldQueryComputerGroupInformation())
         {
             macError_computergroupQuery = pQuery->QueryComputerGroupInformationByName(szNames);
@@ -316,7 +315,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
                 resultCount++;
             }
         }
- 
+
         if (pQuery->ShouldQueryComputerListInformation())
         {
             macError_computerlistQuery = pQuery->QueryComputerListInformationByName(szNames);
@@ -333,7 +332,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flag
         dsDataNodeDeAllocate(0, pDataNode);
         pDataNode = NULL;
     }
-    
+
     // If both queries failed, it is a problem
     if (resultCount == 0 &&
         (macError_userQuery != eDSNoErr) &&
@@ -398,7 +397,7 @@ cleanup:
     {
         pGetRecordList->fIOContinueData = (tContextData)SPECIAL_DS_CONTINUE_HANDLE;
     }
-    
+
     LOG_LEAVE("fOutRecEntryCount = %d, fInDataBuff = { length = %d, size = %d }, fIOContinueData = %d, macError = %d",
               pGetRecordList->fOutRecEntryCount,
               pGetRecordList->fInDataBuff->fBufferLength,
@@ -427,7 +426,7 @@ LWIRecordListQuery::ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseCon
         // Special continue handle value, no actual cached query for this one.
         goto cleanup;
     }
-              
+
     macError = GetQueryFromContextList(pReleaseContinueData->fInContinueData, &pQuery);
     if (macError == eDSNoErr && pQuery)
     {
@@ -464,7 +463,7 @@ LWIRecordListQuery::GetRecordEntry(sGetRecordEntry* pGetRecordEntry)
               pGetRecordEntry->fInRecEntryIndex,
               pGetRecordEntry->fOutAttrListRef,
               pGetRecordEntry->fOutRecEntryPtr);
-    
+
     macError = eNotYetImplemented;
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -578,4 +577,3 @@ cleanup:
 
     return macError;
 }
-

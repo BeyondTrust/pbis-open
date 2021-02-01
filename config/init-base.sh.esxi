@@ -1,6 +1,5 @@
 # Generic cross-platform init script logic
-# Copyright (c) Likewise Software, Inc.
-# All rights reserved.
+# Copyright (c) BeyondTrust Software. All rights reserved.
 #
 # Authors: Jerry Carter (gcarter@likewisesoftware.com)
 #          Kyle Stemen (kstemen@likewisesoftware.com)
@@ -26,8 +25,8 @@ PLATFORM=""
 if [ -f /etc/init.d/functions ]; then
     . /etc/init.d/functions
     PLATFORM="REDHAT"
-elif [ "`uname -s`" = 'VMkernel' ]; then                                  
-    PLATFORM="ESXI"                             
+elif [ "`uname -s`" = 'VMkernel' ]; then
+    PLATFORM="ESXI"
 else
     PLATFORM="UNKNOWN"
 fi
@@ -39,7 +38,7 @@ LOCKFILE="/var/lock/subsys/${SCRIPTNAME}"
 ##
 
 status_success() {
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo_success
             echo
@@ -52,7 +51,7 @@ status_success() {
 
 status_failed() {
     status=$1
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo_failure
             echo
@@ -112,10 +111,10 @@ generic_status()
 		return 0
             fi
 	fi
-	
+
         #Program is dead, but lock file exists
 	[ -f "${LOCKFILE}" ] && return 2
-	
+
         #Program is dead, but pid file exists
 	return 1
     else
@@ -150,7 +149,7 @@ daemon_start() {
 	${STARTHOOK}
     fi
 
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo -n $"Starting `basename ${PROG_BIN}`: "
             daemon ${PROG_BIN} ${PROG_ARGS}
@@ -187,7 +186,7 @@ daemon_start() {
 }
 
 daemon_stop() {
-    case "${PLATFORM}" in 
+    case "${PLATFORM}" in
         REDHAT)
             echo -n $"Stopping `basename ${PROG_BIN}`: "
             killproc `basename ${PROG_BIN}`
@@ -291,7 +290,7 @@ generic_killall()
 ## Main init script code
 ##
 
-case "$1" in 
+case "$1" in
     start)
         daemon_start
         ret=$?
@@ -312,7 +311,7 @@ case "$1" in
         ret=$?
         print_status $ret
         ;;
-        
+
     status)
         daemon_status
         ;;

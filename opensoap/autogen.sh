@@ -6,7 +6,7 @@ chmod 666 configure.h.in
 if test ! -d config; then mkdir config; fi
 #aclocal  --force -I config || exit $?
 #libtoolize --force --copy
-libtoolize -fic || exit $?
+libtoolize -f -c || exit $?
 aclocal  --force || exit $?
 autoheader -f || exit $?
 automake --foreign --add-missing --copy

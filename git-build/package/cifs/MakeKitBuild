@@ -134,6 +134,7 @@ common_files()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/netlogon/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \

@@ -3,35 +3,34 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -52,6 +51,22 @@
 
 #include <reg/reg.h>
 #include <reg/lwntreg.h>
+
+// Registry error utility functions
+
+/**
+ * @brief Return TRUE if dwError is
+ * a registry specific error.
+ *
+ * @param dwError
+ *
+ * @return TRUE if dwError is
+ * a registry specific error.
+ */
+BOOLEAN
+LwRegIsRegistrySpecificError(
+    IN const DWORD dwError
+    );
 
 size_t
 LwRegGetErrorString(
@@ -493,8 +508,78 @@ LwRegDeleteValueAttributesW(
     IN PCWSTR pwszValueName
     );
 
+/**
+ * @brief Update config item ranges with registry attributes.
+ *
+ * Update the ranges for each config item with the ranges
+ * defined in the registry for that value. Only applies to
+ * integer ranges.
+ *
+ * This is typically used in conjunction with
+ * LwRegProcessConfig()
+ *
+ * @param pszConfigKey the path to the registry key
+ * @param pConfig an array of config item, registry values
+ *  under the config key
+ * @param dwConfigEntries the number of config entries
+ *
+ * @return LW_ERROR_SUCCESS or error
+ */
+DWORD
+LwRegUpdateConfigItemRange(
+    IN PCSTR pszConfigKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
+
+/**
+ * Read configuration values from the registry
+ *
+ * This function loops through a configuration table reading all given values
+ * from a registry key. If an entry is not found in the registry
+ * no error is returned.
+ *
+ * @deprecated new code should use LwRegProcessConfigUsingAttributeRanges()
+ *  as this function does NOT restrict config values based on
+ *  acceptable ranges defined in the registry
+ *
+ * @param[in] pszConfigKey Registry key path
+ * @param[in] pszPolicyKey Registry policy key path
+ * @param[in] pConfig Configuration table specifying parameter names
+ * @param[in] dwConfigEntries Number of table entries
+ *
+ * @return STATUS_SUCCESS, or appropriate error.
+ */
 DWORD
 LwRegProcessConfig(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
+
+/**
+ * Read configuration values from the registry
+ *
+ * This function loops through a configuration table reading all given values
+ * from a registry key. If an entry is not found in the registry
+ * no error is returned.
+ *
+ * For REG_DWORD values with defined integer ranges, the returned
+ * value will be clamped to the range.
+ *
+ * This assumes ranges are defined on the pszConfigKey value and NOT
+ * on the pszPolicyKey value.
+ *
+ * @param[in] pszConfigKey Registry key path
+ * @param[in] pszPolicyKey Registry policy key path
+ * @param[in] pConfig Configuration table specifying parameter names
+ * @param[in] dwConfigEntries Number of table entries
+ *
+ * @return STATUS_SUCCESS, or appropriate error.
+ */
+DWORD
+LwRegProcessConfigUsingAttributeRanges(
     IN PCSTR pszConfigKey,
     IN PCSTR pszPolicyKey,
     IN OUT PLWREG_CONFIG_ITEM pConfig,
@@ -565,7 +650,9 @@ LwRegProcessConfig(
 #define RegDeleteValueAttributesA LwRegDeleteValueAttributesA
 #define RegDeleteValueAttributesW LwRegDeleteValueAttributesW
 
+#define RegUpdateConfigItemRange LwRegUpdateConfigItemRange
 #define RegProcessConfig LwRegProcessConfig
+#define RegProcessConfigUsingAttributeRanges LwRegProcessConfigUsingAttributeRanges
 
 #endif /* ! LW_STRICT_NAMESPACE */
 

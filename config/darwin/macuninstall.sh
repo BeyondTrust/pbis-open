@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script completely uninstalls PowerBroker Identity Services from the Mac
+# This script completely uninstalls AD Bridge from the Mac
 
 warn()
 {
@@ -17,66 +17,6 @@ exit_on_error()
         fi
         exit $1
     fi
-}
-
-gather_version_info()
-{
-    IS_10_4=
-    IS_10_5=
-    IS_10_6=
-    IS_10_7=
-    IS_10_8=
-    IS_10_9=
-    IS_10_10=
-    IS_10_11=
-    HAVE_LAUNCHCTL_V2=
-
-    _get_os_version=`uname -r`
-    case "${_get_os_version}" in
-        8.*)
-            IS_10_4=1
-            echo "This is a Tiger (10.4) version of Mac OS X"
-            ;;
-        9.*)
-            IS_10_5=1
-            echo "This is a Leopard (10.5) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        10.*)
-            IS_10_6=1
-            echo "This is a Snow Leopard (10.6) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        11.*)
-            IS_10_7=1
-            echo "This is a Lion (10.7) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        12.*)
-            IS_10_8=1
-            echo "This is a Mountain Lion (10.8) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        13.*)
-            IS_10_9=1
-            echo "This is a Mavericks (10.9) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        14.*)
-            IS_10_10=1
-            echo "This is a Yosemite (10.10) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        15.*)
-            IS_10_11=1
-            echo "This is an El Capitan (10.11) version of Mac OS X"
-            HAVE_LAUNCHCTL_V2=1
-            ;;
-        *)
-            echo "Unsupported Mac OS X version (uname -r = '${_get_os_version}')."
-            return 1
-    esac
-    return 0
 }
 
 pkg_list_pbis()
@@ -283,7 +223,7 @@ usage()
 {
     echo "usage: `basename $0` [--test]"
     echo ""
-    echo "    This script completely uninstalls all Likewise products from the Mac."
+    echo "    This script completely uninstalls all AD Bridge products from the Mac."
     echo ""
     exit 1
 }
@@ -315,8 +255,6 @@ main()
             ;;
     esac
 
-    gather_version_info
-    exit_on_error $?
 
     echo "Uninstall started."
 

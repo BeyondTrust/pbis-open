@@ -1,7 +1,7 @@
 #! /bin/sh
 # ex: set tabstop=4 expandtab shiftwidth=4:
 #
-# Copyright (c) Likewise Corporation 2011
+# Copyright (c) BeyondTrust Software. All rights reserved.
 # Author: Gerald Carter <jerry@likewise.com>
 #
 #LWI_STARTUP_TYPE_REDHAT###

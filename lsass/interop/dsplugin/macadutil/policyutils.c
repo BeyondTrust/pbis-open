@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "../includes.h"
@@ -150,131 +149,6 @@ ADUFindMatch(
     return(FALSE);
 }
 
-static
-DWORD
-ADUGetAllMCXGPEntries(
-    HANDLE hDirectory,
-    PCSTR   pszObjectDN,
-    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PGROUP_POLICY_OBJECT pGPOList = NULL;
-    PGROUP_POLICY_OBJECT pTemp = NULL, pPrev = NULL, pDel = NULL;
-
-    dwError = ADUGetAllMCXPolicies(
-        hDirectory,
-        pszObjectDN,
-        &pGPOList
-        );
-    BAIL_ON_MAC_ERROR(dwError);
-
-    pTemp = pGPOList;
-    while (pTemp) {
-        dwError =  ADUGetPolicyInformation(
-            hDirectory,
-            pTemp->pszPolicyDN,
-            pTemp
-            );
-        if (dwError == LDAP_REFERRAL) {
-            LOG("LDAP Directory search resulted in LDAP_REFERRAL error, continuing processing...");
-
-            /* Remove GPO from list and resume... */
-            pDel = pTemp;
-            if (pPrev) {
-                /* Maintain a pointer to the node before */
-                pPrev->pNext = pTemp->pNext;
-            } else {
-                /* Are we affecting the first node in our list? */
-                if ( pGPOList == pTemp ) {
-                    pGPOList = pTemp->pNext;
-                }
-            }
-            pTemp = pTemp->pNext;
-            pDel->pNext = NULL;
-            ADUFreeGPOObject(pDel);
-            dwError = MAC_AD_ERROR_SUCCESS;
-            continue;
-        }
-        BAIL_ON_MAC_ERROR(dwError);
-
-        pPrev = pTemp;
-        pTemp = pTemp->pNext;
-    }
-    
-    dwError = ADUReverseGPOList(pGPOList, &pGPOList);
-    BAIL_ON_MAC_ERROR(dwError);
-    
-    *ppGroupPolicyObjects = pGPOList;
-    pGPOList = NULL;
-    return dwError;
-
-cleanup:
-
-    ADU_SAFE_FREE_GPO_LIST( pGPOList );
-
-    *ppGroupPolicyObjects = NULL;
-
-    return dwError;
-
-error:
-
-    if (ppGroupPolicyObjects)
-        *ppGroupPolicyObjects = NULL;
-
-    goto cleanup;
-}
-
-static
-DWORD
-ADUGetMCXGPEntry(
-    HANDLE hDirectory,
-    PCSTR   pszObjectDN,
-    PCSTR   pszGPOName,
-    PGROUP_POLICY_OBJECT * ppGPO
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PGROUP_POLICY_OBJECT pGPO = NULL;
-
-    dwError = ADUGetMCXPolicy(
-        hDirectory,
-        pszObjectDN,
-        pszGPOName,
-        &pGPO
-        );
-    BAIL_ON_MAC_ERROR(dwError);
-
-    if (pGPO) {
-        dwError = ADUGetPolicyInformation(hDirectory,
-                                          pGPO->pszPolicyDN,
-                                          pGPO);
-        if (dwError == LDAP_REFERRAL) {
-            LOG("LDAP Directory search resulted in LDAP_REFERRAL error, continuing processing...");
-
-            ADUFreeGPOObject(pGPO);
-            dwError = MAC_AD_ERROR_SUCCESS;
-        }
-        BAIL_ON_MAC_ERROR(dwError);
-    }
-    
-    *ppGPO = pGPO;
-    pGPO = NULL;
-
-cleanup:
-
-    ADU_SAFE_FREE_GPO_LIST( pGPO );
-
-    return dwError;
-
-error:
-
-    if (ppGPO)
-        *ppGPO = NULL;
-
-    goto cleanup;
-}
-
 DWORD
 ADUComputeDeletedList(
     PGROUP_POLICY_OBJECT pGPOCurrentList,
@@ -380,86 +254,6 @@ error:
 
     goto cleanup;
 }
-
-DWORD
-ADUGetAllMCXGPOList(
-    HANDLE hDirectory,
-    PCSTR  pszObjectDN,
-    PGROUP_POLICY_OBJECT * ppGPOList
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    /*LDAPMessage *pResults = NULL;*/
-    PGROUP_POLICY_OBJECT pGroupPolicyObjects = NULL;
-
-    if (!pszObjectDN || !*pszObjectDN) {
-        return(MAC_AD_ERROR_INVALID_PARAMETER);
-    }
-
-    dwError = ADUGetAllMCXGPEntries(
-        hDirectory,
-        pszObjectDN,
-        &pGroupPolicyObjects);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    *ppGPOList = pGroupPolicyObjects;
-    pGroupPolicyObjects = NULL;
-
-cleanup:
-
-    ADU_SAFE_FREE_GPO_LIST(pGroupPolicyObjects);
-
-    return dwError;
-
-error:
-
-    if (ppGPOList)
-        *ppGPOList = NULL;
-
-    goto cleanup;
-}
-
-DWORD
-ADUGetMCXGPO(
-    HANDLE hDirectory,
-    PCSTR  pszObjectDN,
-    PCSTR  pszGPOName,
-    PGROUP_POLICY_OBJECT * ppGPO
-    )
-{
-    DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PGROUP_POLICY_OBJECT pGPO = NULL;
-
-    if (!pszObjectDN || !*pszObjectDN || !pszGPOName || !*pszGPOName) {
-        return(MAC_AD_ERROR_INVALID_PARAMETER);
-    }
-
-    dwError = ADUGetMCXGPEntry(
-        hDirectory,
-        pszObjectDN,
-        pszGPOName,
-        &pGPO);
-    BAIL_ON_MAC_ERROR(dwError);
-
-    LOG("pszObjectDN: %s pszGPOName: %s pGPO=[%.8x]", pszObjectDN, pszGPOName, pGPO);
-
-    *ppGPO = pGPO;
-    pGPO = NULL;
-
-cleanup:
-
-    ADU_SAFE_FREE_GPO_LIST(pGPO);
-
-    return dwError;
-
-error:
-
-    if (ppGPO)
-        *ppGPO = NULL;
-
-    goto cleanup;
-}
-
 
 DWORD
 ADUPrependGPList(

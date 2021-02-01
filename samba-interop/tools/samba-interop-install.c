@@ -3,33 +3,32 @@
  * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Install program for Likewise Samba interop pieces
+ *        Install program for BeyondTrust Samba interop pieces
  *
  * Authors: Kyle Stemen <kstemen@likewise.com>
  *
@@ -172,7 +171,7 @@ FindFileInPath(
                     LWFILE_REGULAR,
                     &exists);
         BAIL_ON_LSA_ERROR(error);
-        
+
         if (!exists)
         {
             error = LwCheckFileTypeExists(
@@ -237,19 +236,19 @@ CaptureOutputWithStderr(
     {
         *ppOutput = NULL;
     }
-    
+
     if (pipe(pipeFds))
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
-    
+
     pid = fork();
-    
+
     if (pid < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);     
+        BAIL_ON_LSA_ERROR(error);
     }
     else if (pid == 0)
     {
@@ -273,18 +272,18 @@ CaptureOutputWithStderr(
         execvp(pCommand, (char **)ppArgs);
         abort();
     }
-    
+
     if (close(pipeFds[1]))
     {
         pipeFds[1] = -1;
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);     
+        BAIL_ON_LSA_ERROR(error);
     }
     pipeFds[1] = -1;
-    
+
     error = LwAllocateMemory(bufferCapacity, (PVOID*) &pTempOutput);
     BAIL_ON_LSA_ERROR(error);
-    
+
     while ((readCount = read(pipeFds[0], pTempOutput + inBuffer, bufferCapacity - inBuffer)) > 0)
     {
         inBuffer += readCount;
@@ -300,21 +299,21 @@ CaptureOutputWithStderr(
             pTempOutput = pNewOutput;
         }
     }
-    
+
     if (readCount < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
-    
+
     if (close(pipeFds[0]) < 0)
     {
         pipeFds[0] = -1;
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
     pipeFds[0] = -1;
-    
+
     if (waitpid(pid, &status, 0) != pid)
     {
         error = LwMapErrnoToLwError(errno);
@@ -326,7 +325,7 @@ CaptureOutputWithStderr(
         *ppOutput = pTempOutput;
         pTempOutput = NULL;
     }
-    
+
     if (pExitCode != NULL)
     {
         *pExitCode = WEXITSTATUS(status);
@@ -334,10 +333,10 @@ CaptureOutputWithStderr(
     else if (status)
     {
         error = ERROR_BAD_COMMAND;
-        BAIL_ON_LSA_ERROR(error); 
+        BAIL_ON_LSA_ERROR(error);
     }
-    
-cleanup:   
+
+cleanup:
     if (pipeFds[0] >= 0)
     {
         close(pipeFds[0]);
@@ -523,13 +522,7 @@ CheckSambaVersion(
             BAIL_ON_LSA_ERROR(error);
         }
     }
-    else if (!strncmp(pVersionString, "4.0.", sizeof("4.0.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.1.", sizeof("4.1.") - 1))
-    {
-    }
-    else if (!strncmp(pVersionString, "4.2.", sizeof("4.2.") - 1))
+    else if (!strncmp(pVersionString, "4.", sizeof("4.") - 1))
     {
     }
     else
@@ -610,7 +603,7 @@ InstallWbclient(
         if (unlink(pWbClient) < 0)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
     else
@@ -620,7 +613,7 @@ InstallWbclient(
             if (errno != ENOENT)
             {
                 error = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(error);   
+                BAIL_ON_LSA_ERROR(error);
             }
         }
     }
@@ -628,7 +621,7 @@ InstallWbclient(
     if (symlink(pLikewiseWbClient, pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
@@ -700,7 +693,7 @@ UninstallWbclient(
     if (unlink(pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     if (stat(pWbClientOriginal, &statBuf) < 0)
@@ -715,7 +708,7 @@ UninstallWbclient(
             LW_RTL_LOG_ERROR("Cannot find original wbclient library at %s",
                     pWbClientOriginal);
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
     else
@@ -723,7 +716,7 @@ UninstallWbclient(
         if (symlink(pWbClientOriginal, pWbClient) < 0)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
 
         LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
@@ -879,7 +872,7 @@ GetSecretsPath(
                 pSambaPrivateDir
                 );
         BAIL_ON_LSA_ERROR(error);
-        
+
         // Verify the path exists
         if (stat(pPath, &statBuf) < 0)
         {
@@ -894,7 +887,7 @@ GetSecretsPath(
                 LW_RTL_LOG_ERROR("Cannot find secrets.tdb at %s",
                         pPath);
                 error = LwMapErrnoToLwError(errno);
-                BAIL_ON_LSA_ERROR(error);   
+                BAIL_ON_LSA_ERROR(error);
             }
         }
     }
@@ -979,7 +972,7 @@ InstallLwiCompat(
         if (errno != ENOENT)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
 
@@ -990,7 +983,7 @@ InstallLwiCompat(
         {
             LW_RTL_LOG_ERROR("Cannot access idmap directory %s. Please ensure you have winbind installed", pSambaDir);
         }
-        BAIL_ON_LSA_ERROR(error);   
+        BAIL_ON_LSA_ERROR(error);
     }
 
     LW_RTL_LOG_INFO("Linked idmapper %s to %s", pLwiCompat, pLikewiseLwiCompat);
@@ -1028,7 +1021,7 @@ UninstallLwiCompat(
         if (errno != ENOENT)
         {
             error = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(error);   
+            BAIL_ON_LSA_ERROR(error);
         }
     }
 
@@ -1310,7 +1303,7 @@ SynchronizePassword(
         &pPasswordInfo);
     if (error == NERR_SetupNotJoined)
     {
-        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because PowerBroker Identity Services is not joined. The password will be written to secrets.tdb on the next successful join attempt");
+        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because AD Bridge is not joined. The password will be written to secrets.tdb on the next successful join attempt");
         error = 0;
     }
     else
@@ -1451,7 +1444,7 @@ ShowUsage(
     fprintf(stderr, "\n");
     fputs(
 "Installs interop libraries into directories used by Samba and copies the\n"
-"machine password from the PowerBroker Identity Services' database to Samba's.\n",
+"machine password from the AD Bridge' database to Samba's.\n",
     stderr);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options are:\n");
@@ -1490,6 +1483,7 @@ main(
     PCSTR pErrorSymbol = NULL;
     PSTR pVersion = NULL;
     BOOLEAN smbdExists = FALSE;
+    BOOLEAN force = FALSE;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
     {
@@ -1520,6 +1514,17 @@ main(
             if (mode == UNSET)
             {
                 mode = UNINSTALL;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--force"))
+        {
+            if (mode == INSTALL || mode== UNINSTALL)
+            {
+                force = TRUE;
             }
             else
             {
@@ -1599,7 +1604,7 @@ main(
                 LWFILE_REGULAR,
                 &smbdExists);
     BAIL_ON_LSA_ERROR(error);
-    
+
     if (!smbdExists)
     {
         error = LwCheckFileTypeExists(
@@ -1615,7 +1620,10 @@ main(
     }
 
     error = CheckSambaVersion(pSmbdPath, &pVersion);
-    BAIL_ON_LSA_ERROR(error);
+    if (force == FALSE)
+    {
+       BAIL_ON_LSA_ERROR(error);
+    }
 
     if (mode == CHECK_VERSION)
     {
@@ -1623,10 +1631,16 @@ main(
     }
     else if (mode == INSTALL)
     {
+        if (geteuid() != 0)
+        {
+            fprintf(stderr, "Please use the root account to install the Samba interop libraries\n");
+            goto cleanup;
+        }
+
         error = InstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 
-        if (!strncmp(pVersion, "3.0.", sizeof("3.0.") - 1))
+        if (pVersion && strncmp(pVersion, "3.0.", sizeof("3.0.") - 1) == 0)
         {
             // Only Samba 3.0.x needs this
             error = InstallLwiCompat(pSmbdPath);
@@ -1641,6 +1655,12 @@ main(
     }
     else if (mode == UNINSTALL)
     {
+        if (geteuid() != 0)
+        {
+            fprintf(stderr, "Please use the root account to uninstall the Samba interop libraries\n");
+            goto cleanup;
+        }
+
         error = UninstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 

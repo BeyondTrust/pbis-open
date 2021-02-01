@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -235,8 +234,8 @@ RemoveCacheFiles()
 
 	ceError = CTCheckFileExists(file, &bFileExists);
 	BAIL_ON_CENTERIS_ERROR(ceError);
-	
-	if (bFileExists) 
+
+	if (bFileExists)
 	{
 	    DJ_LOG_VERBOSE("Removing cache file %s", file);
 	    ceError = CTRemoveFile(file);
@@ -291,7 +290,7 @@ RemoveCacheFiles()
     (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
 
     /* Revert any system configuration files that may have been changed by previous domain GPOs */
-    ceError = CTCheckDirectoryExists( "/var/lib/pbis/grouppolicy", 
+    ceError = CTCheckDirectoryExists( "/var/lib/pbis/grouppolicy",
                                       &bDirExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
     if (bDirExists) {
@@ -306,7 +305,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/krb5.conf.lwidentity-gp.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/krb5.conf.lwidentity-gp.orig file to /etc/krb5.conf");
         ceError = CTMoveFile("/etc/krb5.conf.lwidentity-gp.orig", "/etc/krb5.conf");
@@ -343,12 +342,12 @@ RemoveCacheFiles()
         }
 
     }
-   
+
     /* /etc/motd */
     ceError = CTCheckFileExists("/etc/motd.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/motd.lwidentity.orig file to /etc/motd");
         ceError = CTMoveFile("/etc/motd.lwidentity.orig", "/etc/motd");
@@ -359,7 +358,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/syslog.conf.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/syslog.conf.lwidentity.orig file to /etc/syslog.conf");
         ceError = CTMoveFile("/etc/syslog.conf.lwidentity.orig", "/etc/syslog.conf");
@@ -371,7 +370,7 @@ RemoveCacheFiles()
         ceError = CTCheckFileExists("/etc/syslog-ng/syslog-ng.conf.lwidentity.orig", &bFileExists);
         BAIL_ON_CENTERIS_ERROR(ceError);
 
-        if (bFileExists) 
+        if (bFileExists)
         {
             DJ_LOG_VERBOSE("Restoring /etc/syslog-ng/syslog-ng.conf.lwidentity.orig file to /etc/syslog-ng/syslog-ng.conf");
             ceError = CTMoveFile("/etc/syslog-ng/syslog-ng.conf.lwidentity.orig", "/etc/syslog-ng/syslog-ng.conf");
@@ -384,7 +383,7 @@ RemoveCacheFiles()
             ceError = CTCheckFileExists("/etc/rsyslog.conf.lwidentity.orig", &bFileExists);
             BAIL_ON_CENTERIS_ERROR(ceError);
 
-            if (bFileExists) 
+            if (bFileExists)
             {
                 DJ_LOG_VERBOSE("Restoring /etc/rsyslog.conf.lwidentity.orig file to /etc/rsyslog.conf");
                 ceError = CTMoveFile("/etc/rsyslog.conf.lwidentity.orig", "/etc/rsyslog.conf");
@@ -397,7 +396,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/crontab.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/crontab.lwidentity.orig file to /etc/crontab");
         ceError = CTMoveFile("/etc/crontab.lwidentity.orig", "/etc/crontab");
@@ -408,7 +407,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/logrotate.conf.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/logrotate.conf.lwidentity.orig file to /etc/logrotate.conf");
         ceError = CTMoveFile("/etc/logrotate.conf.lwidentity.orig", "/etc/logrotate.conf");
@@ -419,7 +418,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/issue.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/issue.lwidentity.orig file to /etc/issue");
         ceError = CTMoveFile("/etc/issue.lwidentity.orig", "/etc/issue");
@@ -430,7 +429,7 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/selinux/config.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/selinux/config.lwidentity.orig file to /etc/selinux/config.lwidentity.orig");
         ceError = CTMoveFile("/etc/selinux/config.lwidentity.orig", "/etc/selinux/config");
@@ -441,30 +440,30 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/fstab.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/fstab.lwidentity.orig file to /etc/fstab");
         ceError = CTMoveFile("/etc/fstab.lwidentity.orig", "/etc/fstab");
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
-    else 
+    else
     {
 
         ceError = CTCheckFileExists("/etc/vfstab.lwidentity.orig", &bFileExists);
         BAIL_ON_CENTERIS_ERROR(ceError);
 
-        if (bFileExists) 
+        if (bFileExists)
         {
             DJ_LOG_VERBOSE("Restoring /etc/vfstab.lwidentity.orig file to /etc/vfstab");
             ceError = CTMoveFile("/etc/vfstab.lwidentity.orig", "/etc/vfstab");
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
-        else 
+        else
         {
             ceError = CTCheckFileExists("/etc/filesystems.lwidentity.orig", &bFileExists);
             BAIL_ON_CENTERIS_ERROR(ceError);
 
-            if (bFileExists) 
+            if (bFileExists)
             {
                 DJ_LOG_VERBOSE("Restoring /etc/filesystems.lwidentity.orig file to /etc/filesystems");
                 ceError = CTMoveFile("/etc/filesystems.lwidentity.orig", "/etc/filesystems");
@@ -477,18 +476,18 @@ RemoveCacheFiles()
     ceError = CTCheckFileExists("/etc/auto.master.lwidentity.orig", &bFileExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (bFileExists) 
+    if (bFileExists)
     {
         DJ_LOG_VERBOSE("Restoring /etc/auto.master.lwidentity.orig file to /etc/auto.master");
         ceError = CTMoveFile("/etc/auto.master.lwidentity.orig", "/etc/auto.master");
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
-    else 
+    else
     {
         ceError = CTCheckFileExists("/etc/auto_master.lwidentity.orig", &bFileExists);
         BAIL_ON_CENTERIS_ERROR(ceError);
 
-        if (bFileExists) 
+        if (bFileExists)
         {
             DJ_LOG_VERBOSE("Restoring /etc/auto_master.lwidentity.orig file to /etc/auto_master");
             ceError = CTMoveFile("/etc/auto_master.lwidentity.orig", "/etc/auto_master");
@@ -806,8 +805,8 @@ static QueryResult QueryDoJoin(const JoinProcessOptions *options, LWException **
         return CannotConfigure;
     }
 
-    //This module sets its moduleData after it is finished making changes. By
-    //reading it we can tell if this module has already been run.
+    // This module sets its moduleData after it is finished making changes. By
+    // reading it we can tell if this module has already been run.
     if(state != NULL && state->moduleData == (void *)1)
     {
         return FullyConfigured;
@@ -820,21 +819,18 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
     PSTR pszCanonicalizedOU = NULL;
     ModuleState *state = DJGetModuleStateByName(options, "join");
 
-    if (!IsNullOrEmptyString(getenv("LD_LIBRARY_PATH")) || 
+    if (!IsNullOrEmptyString(getenv("LD_LIBRARY_PATH")) ||
         !IsNullOrEmptyString(getenv("LD_PRELOAD")))
     {
         if (options->warningCallback != NULL)
         {
             options->warningCallback(options, "Unsupported loader flags set",
-                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environmental variables. PowerBroker Identity Services does not support environments where either variable is set.\n"
+                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environment variables.\n"
                                   "\n"
-                                 "If this operation fails you should stop all PowerBroker Identity Services daemons, clear the environmental variable, then retry the join operation.\n"
+                                 "If this operation fails you should stop all BeyondTrust AD Bridge daemons, clear the environment variable, then retry the join operation.\n"
                                  "\n"
-                                 "For more information, see the PowerBroker Identity Services guide online at:\n"
-                                 "http://www.beyondtrust.com/Technical-Support/Downloads/files/pbiso/Manuals/likewise-open-guide.html#AgentRequirements\n"
-                                 "\n"
-                                 "Or a local PDF file is available in:\n"
-                                 "/opt/pbis/docs/likewise-open-guide.pdf (See section 4.2 Requirements for the Agent");
+                                 "For more information, see the 'BeyondTrust AD Bridge Installation Guide' online at:\n"
+                                 "http://www.beyondtrust.com\n");
         }
     }
 
@@ -853,10 +849,14 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
     DJStartService("lsass");
 
     LW_TRY(exc, SetLsassTimeSync(!options->disableTimeSync, &LW_EXC));
-
+    if (options->isEnterprise)
+    {
+        LW_TRY(exc, DJSetUserEnabledADProviderModes(options->assumeDefaultCellMode,
+                                options->unprovisionedMode, &LW_EXC));
+    }
     LW_TRY(exc, DJCreateComputerAccount(&options->shortDomainName, options, &LW_EXC));
 
-    //Indicate that the join was successful incase QueryDoJoin is called later
+    // Indicate that the join was successful in case QueryDoJoin is called later
     state->moduleData = (void *)1;
 
 cleanup:
@@ -966,7 +966,9 @@ cleanup:
 static void DoLeave(JoinProcessOptions *options, LWException **exc)
 {
     LWException *inner = NULL;
+
     DJDisableComputerAccount(options->username, options->password, options, &inner);
+
 #ifndef ENABLE_MINIMAL
     BOOLEAN nscdRunning = FALSE;
 #endif
@@ -1216,6 +1218,16 @@ void DJCreateComputerAccount(
     {
         switch(dwError)
         {
+            case LW_ERROR_LDAP_ALREADY_EXISTS:
+                if (options->ouName)
+                {
+                    LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists in the requested OU.");
+                }
+                else
+                {
+                    LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists in the default container.");
+                }
+                break;
             case LW_ERROR_LDAP_NO_SUCH_OBJECT:
                 LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The OU is invalid.");
                 break;
@@ -1233,7 +1245,7 @@ void DJCreateComputerAccount(
                     !strcasecmp(dnsDomain + strlen(dnsDomain) -
                         sizeof(".local") + 1, ".local"))
                 {
-                    LW_RAISE_EX(exc, dwError, "Lsass Error", "%s. Failure to lookup a domain name ending in \".local\" may be the result of configuring the local system's hostname resolution (or equivalent) to use Multi-cast DNS. Please refer to the manual at http://www.beyondtrust.com/Technical-Support/Downloads/files/pbiso/Manuals/likewise-open-guide.html#ConfigNsswitch for more information.", LwWin32ExtErrorToDescription(dwError));
+                    LW_RAISE_EX(exc, dwError, "Lsass Error", "%s. Failure to lookup a domain name ending in \".local\" may be the result of configuring the local system's hostname resolution (or equivalent) to use Multi-cast DNS. Please refer to the 'Power Broker Identity Services Installation Guide' at http://www.beyondtrust.com for information on configuring nsswitch to support this.", LwWin32ExtErrorToDescription(dwError));
                 }
                 else
                 {
@@ -1244,12 +1256,15 @@ void DJCreateComputerAccount(
                 LW_RAISE_EX(exc, ERROR_NOT_ENOUGH_QUOTA, "Lsass Error", "The account's computer join limit has been exceeded. Talk to your Windows administrators about the limits assigned to your account.");
                 break;
             case LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN:
-                
+
                 sprintf(duplicateSPNErrorMsg, "The computer failed to join the domain \"%s\". \
 Please contact your domain administrator and indicate that the computer failed to update \
 the dnsHostName and/or servicePrincipalName(SPN) attribute in its Active Directory computer account. \
 Once the problem is resolved, you may join the computer to the \"%s\" domain.\n", options->domainName, options->domainName);
                 LW_RAISE_EX(exc, LW_ERROR_LDAP_CONSTRAINT_VIOLATION_SPN, "Lsass Error", duplicateSPNErrorMsg);
+                break;
+            case LW_ERROR_LDAP_RENAME_FAILED:
+                LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The computer name already exists and could not be moved to the requested OU. Please verify the requested OU exists.");
                 break;
             default:
                 LW_RAISE_LSERR(exc, dwError);
@@ -1257,11 +1272,11 @@ Once the problem is resolved, you may join the computer to the \"%s\" domain.\n"
         }
         goto cleanup;
     }
-    
+
     LW_TRY(exc, DJGuessShortDomainName(
                                  options->domainName,
                                  shortDomainName, &LW_EXC));
-    
+
     LW_TRY(exc, DJUpdateRegistryTrustEnumeration(options, &LW_EXC));
 
 
@@ -1313,7 +1328,7 @@ void DJDisableComputerAccount(PCSTR username,
     HANDLE lsa = NULL;
     LSA_NET_JOIN_FLAGS leaveFlags = 0;
 
-    if (options->releaseLicense) 
+    if (options->releaseLicense)
     {
         leaveFlags |= LSA_NET_LEAVE_DOMAIN_LICENSE_RELEASE;
     }
@@ -1825,3 +1840,35 @@ cleanup:
    return;
 }
 
+void DJSetUserEnabledADProviderModes(
+    EnableForceBoolean assumeDefaultCellMode,
+    EnableForceBoolean unprovisionedMode,
+    LWException **exc)
+{
+    PCSTR adProviderKey =  "Services\\lsass\\Parameters\\Providers\\ActiveDirectory";
+    PCSTR cellSupportValue = "CellSupport";
+    PCSTR unprovisionedModeValue = "UnprovisionedModeEnabled";
+    PCSTR assumeDefaultCellModeValue = "AssumeDefaultCellModeEnabled";
+
+    if (assumeDefaultCellMode > False && unprovisionedMode == False)
+    {
+        LW_CLEANUP_CTERR(exc, SetStringRegistryValue(adProviderKey, cellSupportValue, "full"));
+        LW_CLEANUP_CTERR(exc, DeleteValueFromRegistry(adProviderKey, unprovisionedModeValue));
+        LW_CLEANUP_CTERR(exc, SetStringRegistryValue(adProviderKey, assumeDefaultCellModeValue, assumeDefaultCellMode == True ? "enabled" : "forced"));
+    }
+    else if (unprovisionedMode > False && assumeDefaultCellMode == False)
+    {
+        LW_CLEANUP_CTERR(exc, SetStringRegistryValue(adProviderKey, cellSupportValue, "full"));
+        LW_CLEANUP_CTERR(exc, DeleteValueFromRegistry(adProviderKey, assumeDefaultCellModeValue));
+        LW_CLEANUP_CTERR(exc, SetStringRegistryValue(adProviderKey, unprovisionedModeValue, unprovisionedMode == True ? "enabled" : "forced"));
+    }
+    else if (unprovisionedMode == False && assumeDefaultCellMode == False)
+    {
+        LW_CLEANUP_CTERR(exc, DeleteValueFromRegistry(adProviderKey, cellSupportValue));
+        LW_CLEANUP_CTERR(exc, DeleteValueFromRegistry(adProviderKey, assumeDefaultCellModeValue));
+        LW_CLEANUP_CTERR(exc, DeleteValueFromRegistry(adProviderKey, unprovisionedModeValue));
+    }
+
+cleanup:
+   return;
+}

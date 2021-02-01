@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -834,13 +833,14 @@ DJConfigureDHCPService(
             NULL
         };
 #endif
-    PSTR ppszSystemCtlArgs[] = 
+    PSTR ppszSystemCtlArgs[] =
     {
         "/bin/systemctl",
         "restart",
-        "network"
+        "network",
+        NULL
     };
-    
+
     PPROCINFO pProcInfo = NULL;
     LONG status = 0;
     PSTR pszFinalPath = NULL;
@@ -891,9 +891,9 @@ DJConfigureDHCPService(
     /* Restart network */
 
     /*try init.d first, otherwise systemctl*/
-	bFileExists = FALSE;
-	CTCheckFileExists(ppszNetArgs[0], &bFileExists);
-	
+    bFileExists = FALSE;
+    CTCheckFileExists(ppszNetArgs[0], &bFileExists);
+
     if(bFileExists)
     {
         ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
@@ -902,7 +902,7 @@ DJConfigureDHCPService(
     {
         ceError = DJSpawnProcess(ppszSystemCtlArgs[0], ppszSystemCtlArgs, &pProcInfo);
     }
-    
+
     CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(pProcInfo, &status);
@@ -970,6 +970,8 @@ FixNetworkInterfaces(
 
     if (bDirExists) {
 
+        // network configuration scripts to look for, these generally exclude files
+        // containing . to exclude backup files
         struct
         {
             PCSTR dir;
@@ -984,6 +986,8 @@ FixNetworkInterfaces(
             //  /etc/sysconfig/network/ifcfg-ctc-bus-ccw-0.0.0004
             {"/etc/sysconfig/network", "ifcfg-qeth-bus.*\\.[0-9]\\+$"},
             {"/etc/sysconfig/network", "ifcfg-ctc-bus.*\\.[0-9]\\+$"},
+            // SLES 13 appears to use a scheme similar to RHEL7
+            {"/etc/sysconfig/network", "ifcfg-en[^.]*$"},
             // Redhat uses /etc/sysconfig/network-scripts/ifcfg-eth<number>
             {"/etc/sysconfig/network-scripts", "ifcfg-eth[^.]*$"},
             // RHEL 6 uses this
@@ -993,11 +997,19 @@ FixNetworkInterfaces(
             {"/etc/sysconfig/network-scripts", "ifcfg-vswif[^.]*$"},
             // RHEL 7: network interface naming seems to be ensXX or enoXXXX, etc.
             {"/etc/sysconfig/network-scripts", "ifcfg-en[^.]*$"},
+            // RHEL 6 on zSeries: ctc and hsi adapter
+            {"/etc/sysconfig/network-scripts", "ifcfg-ctc[^.]*$"},
+            {"/etc/sysconfig/network-scripts", "ifcfg-hsi[^.]*$"},
+            // RHEL 7 on zSeries: enccw<bus_id> for both qeth and lcs
+            // e.g. enccw0.0.0700
+            {"/etc/sysconfig/network-scripts", "ifcfg-en.*[0-9a-fA-F]+$"},
             {NULL, NULL}
         };
 
         // Find the ifcfg file
         pszPathifcfg = NULL;
+
+        DJ_LOG_VERBOSE("Searching for ifcfg file");
 
         for(iPath = 0; searchPaths[iPath].dir != NULL && pszPathifcfg == NULL; iPath++)
         {
@@ -1006,6 +1018,10 @@ FixNetworkInterfaces(
                 CTFreeStringArray(ppszPaths, nPaths);
                 ppszPaths = NULL;
             }
+
+            DJ_LOG_VERBOSE("Looking in dir '%s' for files matching '%s'",
+                    searchPaths[iPath].dir,
+                    searchPaths[iPath].glob);
 
             ceError = CTGetMatchingFilePathsInFolder(searchPaths[iPath].dir,
                                                          searchPaths[iPath].glob,
@@ -1025,6 +1041,7 @@ FixNetworkInterfaces(
         }
 
         if (IsNullOrEmptyString(pszPathifcfg)) {
+            DJ_LOG_INFO("Failed to find any ifcfg file.");
             LW_CLEANUP_CTERR(exc, ERROR_FILE_NOT_FOUND);
         }
 
@@ -1588,7 +1605,7 @@ DJIsValidComputerName(
         LWHandle(&exc);
     }
 
-    if (ceError == ERROR_INVALID_COMPUTERNAME || 
+    if (ceError == ERROR_INVALID_COMPUTERNAME ||
             ceError == ERROR_INVALID_COMPUTERNAME)
     {
         ceError = ERROR_SUCCESS;

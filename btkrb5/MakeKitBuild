@@ -1,0 +1,30 @@
+configure()
+{
+    mk_check_headers \
+       unistd.h sys/stat.h sys/types.h 
+}
+
+make()
+{
+    mk_headers \
+        MASTER="btkrb5.h" \
+        HEADERS="\
+           keytab.h \
+           ktldap.h"
+
+    COMMON_HEADERDEPS="popt.h lw/types.h lw/attrs.h \
+ lwstr.h lwmem.h lwerror.h lwldap.h lwtime.h lwsecurityidentifier.h krb5.h \
+ lwnet.h"
+
+    LIBKEYTAB_SOURCES="\
+	keytab.c \
+	ktldap.c "
+
+
+    mk_library \
+	LIB=btkrb5 \
+	SOURCES="$LIBKEYTAB_SOURCES" \
+	HEADERDEPS="$COMMON_HEADERDEPS" \
+ 	INCLUDEDIRS=". ../lwadvapi/include" \
+	LIBDEPS="lwbase krb5 gssapi_krb5 k5crypto ldap_r lber popt lwadvapi"
+}

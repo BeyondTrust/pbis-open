@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright 2008-2011 Likewise Software, 2011-2014 BeyondTrust Software
+# Copyright 2008-2011 Likewise Software, 2011-2019 BeyondTrust Software
 # by Robert Auch
 # gather information for emailing to support.
 #
@@ -51,6 +51,12 @@
 # v2.9.3  2015-09-18 RCA add additional AIX and additional information to gather
 # v2.10   2015-10-21 RCA add auto-detection of logfiles from syslog.conf/rsyslog.conf (no syslog-ng yet)
 # v2.11   2015-12-16 RCA add --performance flag
+# v2.11.1 2016-08-17 RCA add 8.5 and 8.6 detection and fix group policy testing with --gpagent and --gpo
+# v2.12   2017-10-30 RCA fix logfile break on OSX
+# v2.13   2018-09-28 RCA add alarm handling for runTool() so if commands time out, the script will continue.
+# v2.14   2018-10-01 RCA add alarm handling for all calls to System() so if commands time out, the script will continue.
+# v2.15   2019-05-14 DCM support ADBridge 9+ and "future proof" version checks
+# v2.16   2019-06-14 RCA fix logging capture for smart cards and auto enrollment
 #
 # Data structures explained at bottom of file
 #
@@ -77,7 +83,7 @@ use sigtrap qw (handler cleanup old-interface-signals normal-signals);
 
 
 # Define global variables
-my $gVer = "2.11.0";
+my $gVer = "2.16";
 my $gDebug = 0;  #the system-wide log level. Off by default, changable by switch --loglevel
 my $gOutput = \*STDOUT;
 my $gRetval = 0; #used to determine exit status of program with bitmasks below:
@@ -120,14 +126,14 @@ sub usage($$)
 
     my $helplines = "
 $scriptName version $gVer
-(C)2008-2011, Likewise Software, 2011-2014 BeyondTrust Software
+(C)2008-2011, Likewise Software, 2011-2019 BeyondTrust Software
 
 usage: $scriptName [tests] [log choices] [options]
 
-    This is the PBIS support tool.  It creates a log as specified by
-    the options, and creates a gzipped tarball in:
-    $opt->{tarballdir}/$opt->{tarballfile}$opt->{tarballext}, for emailing to
-    $info->{emailaddress}
+This is the PBIS support tool.  It creates a log as specified by
+the options, and creates a gzipped tarball in:
+$opt->{tarballdir}/$opt->{tarballfile}$opt->{tarballext}, for emailing to
+$info->{emailaddress}
 
 Tests to be performed:
 
@@ -167,17 +173,17 @@ Tests to be performed:
     -dt --delaytime <seconds> (default = $opt->{delaytime})
     -dj --domainjoin (default = ".&getOnOff($opt->{domainjoin}).")
         Set flags for attempting to join AD, then launch the join interactively
-        --djcommand
+        --djcommand <command>
             command for domainjoin-cli, such as 'join', 'query', 'leave'
-        --djoptions
+        --djoptions <options in quotes>
             Enter domainjoin args such as '--disable hostname --ou AZ/Phoenix/Server'
-        --djdomain
+        --djdomain <domain>
             Name of domain to attempt to join
         --djlog (default = $opt->{djlog})
             Path of the domainjoin log.
         Use '--sshuser' for the domainjoin username, or be prompted
 
-Log choices:
+    Log choices:
 
     --(no)lsassd (--winbindd) (default = ".&getOnOff($opt->{lsassd}).")
         Gather lsassd debug logs
@@ -216,7 +222,7 @@ Log choices:
         Gathers full process list from this system
     -m --memory (default = ".&getOnOff($opt->{memory}).")
 
-Options:
+    Options:
 
     -r --(no)restart (default = ".&getOnOff($opt->{restart}).")
         Allow restart of the PBIS daemons to separate logs
@@ -229,19 +235,22 @@ Options:
         Choose the logfile to write data to.
     -t --tarballdir <path> (default = $opt->{tarballdir} )
         Choose where to create the gzipped tarball of log data
+    --alarm <seconds> (default = $opt->{alarmtime} )
+        How long to allow tasks to run before they time out
+        (sometimes enumerating users or groups can take 10 minutes)
 
-    Examples:
+Examples:
 
-    $scriptName --ssh --lsassd --nomessages --restart -l pbis.log
-    $scriptName --restart --regdaemon -c
-        Capture a tcpdump or snoop of all daemons starting up
-        as well as full logs
+$scriptName --ssh --lsassd --nomessages --restart -l pbis.log
+$scriptName --restart --regdaemon -c
+    Capture a tcpdump or snoop of all daemons starting up
+    as well as full logs
 
 ";
-#    --cleanup (default = ".&getOnOff($opt->{cleanup}).")
-#        Run cleanup routines if tool gets cancelled in the middle
-#        of running.
-#        Will generate a tarball of output.
+    #    --cleanup (default = ".&getOnOff($opt->{cleanup}).")
+    #        Run cleanup routines if tool gets cancelled in the middle
+    #        of running.
+    #        Will generate a tarball of output.
     return $helplines;
 }
 
@@ -255,7 +264,7 @@ Options:
 
 sub cleanup {
     logData("");
-    logError("Recieved CTRL-C, cleaning up...!");
+    logError("Received CTRL-C, cleaning up...!");
     logData("");
     if ($info->{scriptstatus}->{tcpdump}) {
         tcpdumpStop($info, $opt);
@@ -303,7 +312,7 @@ sub daemonRestart($$) {
         $startscript = $info->{svcctl}->{stop1}.$info->{svcctl}->{stop2}.$info->{svcctl}->{stop3};
         $startscript =~ s/daemonname/$options->{daemon}/;
         logDebug("Calling $options->{daemon} stop as: ".$startscript);
-        $result = System("$startscript"); #removed for Mac Stpuidness:  > /dev/null 2>&1"); #2011-04-12 RCA
+        $result = System("$startscript", undef, $opt->{alarmtime}); #removed for Mac Stpuidness:  > /dev/null 2>&1"); #2011-04-12 RCA
         if ($options->{daemon}=~/^lwsm/) {
             logInfo("Sleeping 30 seconds for $options->{daemon} to safely stop");
             sleep 30;
@@ -313,7 +322,7 @@ sub daemonRestart($$) {
 
         my $proc=findProcess($options->{daemon}, $info);
         if (($info->{OStype} eq "darwin") and defined($proc->{pid})) {
-            $result = System("$startscript > /dev/null 2>&1");
+            $result = System("$startscript > /dev/null 2>&1", undef, $opt->{alarmtime});
             # Darwin 10.6 seems to need 2 "launchctl stop" commands in testing - 2011-04-12 RCA
             sleep 2;
         }
@@ -354,7 +363,7 @@ sub daemonRestart($$) {
         $startscript = $info->{svcctl}->{start1}.$info->{svcctl}->{start2}.$info->{svcctl}->{start3};
         $startscript =~ s/daemonname/$options->{daemon}/;
         logDebug("Calling $options->{daemon} start as: '$startscript'");
-        $result = System("$startscript"); # removed for Mac stupidness:  > /dev/null 2>&1");
+        $result = System("$startscript", undef, $opt->{alarmtime}); # removed for Mac stupidness:  > /dev/null 2>&1");
         if ($result) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Failed to start $options->{daemon}");
@@ -390,7 +399,7 @@ sub daemonContainerStop($$) {
     if ($proc) {
         $script=$info->{lw}->{path}."/".$info->{lwsm}->{control}." stop ".$options->{daemon};
         logVerbose("Running: $script");
-        $result = System("$script");
+        $result = System("$script", undef, $opt->{alarmtime});
     }
     if (defined($info->{$options->{daemon}}->{pid}) and $info->{$options->{daemon}}->{pid}) {
         logWarning("$options->{daemon} failed to stop, killing process by stored pid $info->{$options->{daemon}}->{pid}");
@@ -410,9 +419,9 @@ sub daemonContainerStop($$) {
     }
     if (exists $info->{$options->{daemon}}->{pid}) {
         delete $info->{$options->{daemon}}->{pid};
-#        I don't think I have handles in use in this portion of the code. But if they are, here's how to clean them up.
-#        close $info->{$options->{daemon}}->{handle};
-#        delete $info->{$options->{daemon}}->{handle};
+        #        I don't think I have handles in use in this portion of the code. But if they are, here's how to clean them up.
+        #        close $info->{$options->{daemon}}->{handle};
+        #        delete $info->{$options->{daemon}}->{handle};
         logVerbose("Clearing pid for $options->{daemon}");
     }
     return $result;
@@ -432,7 +441,7 @@ sub daemonContainerStart($$) {
         $startscript = $startscript."--loglevel $options->{loglevel} ";
         $startscript = $startscript."--logfile ".$info->{logpath}."/".$options->{daemon}.".log";
         logInfo("Starting container $startscript...");
-        $result = System("$startscript &");
+        $result = System("$startscript &", undef, $opt->{alarmtime});
         if (not $result) {
             my $proc=findProcess($options->{daemon}, $info);
             $info->{$options->{daemon}}->{pid} = $proc->{pid};
@@ -445,7 +454,7 @@ sub daemonContainerStart($$) {
     }
     $startscript = $info->{lw}->{path}."/".$info->{lwsm}->{control}." start ".$options->{daemon};
     logVerbose("Running: $startscript");
-    $result = System($startscript);
+    $result = System($startscript, undef, $opt->{alarmtime});
     if ($result) {
         logError("Failed to start daemon $options->{daemon} via lwsm!");
         $gRetval |= ERR_SYSTEM_CALL;
@@ -551,9 +560,10 @@ sub findLogFile {
                 }
                 if ($_=~/(^|\b)$facility(\.|,[^.]+.)(\*|err|crit|notice|warn|info|verbose|debug)(;[^\s]+)?\s+-?([^\s]+)/) {
                     $file=$6;
-                    logVerbose("Matched $file for $facility.");
                     if ( -f "$file" ) {
+                        logVerbose("Matched $file for $facility.");
                         push(@files, $file);
+                        last PATH;
                         # we have our match, and $file is scoped to the sub.
                     } else {
                         logVerbose("Matched $file for $facility, but it's not a file, continuing.");
@@ -875,9 +885,9 @@ sub logger($$) {
     $error = print $gOutput "$line\n";
     $gRetval |= ERR_FILE_ACCESS unless $error;
     if ($gOutput != \*STDOUT ) {
-    print "$line\n";
-}
-return $gRetval;
+        print "$line\n";
+    }
+    return $gRetval;
 }
 
 sub killProc($$$) {
@@ -1006,46 +1016,59 @@ sub runTool($$$$;$) {
         $cmd = "$tool 2>&1";
     }
     logVerbose("Attempting to run '$cmd'");
-    if ($action eq "bury") {
-        $data=`$cmd 2>&1`;
-        $data="" unless ($?);
-    } elsif ($action eq "print") {
-        if (open(my $RT, "$cmd |")) {
-            while (<$RT>) {
-                logData("$_");
-            }
-            close RT;
-        } else {
-            logError("Could not run '$cmd'!");
-        }
-        $data="";
-    } elsif ($action eq "grep") {
-        if (open(RT, "$cmd | ")) {
-            my @results;
-            while (<RT>) {
-                if ($_=~/$filter/) {
-                    if ($1) {
-                        push(@results, $1);
-                    } else {
-                        push(@results, $_);
+    my $ret = "";
+    my $alarmtimeout=$opt->{alarmtime};
+    logInfo("Setting alarm timeout to $alarmtimeout.");
+    {
+        # disable alarm to prevent possible race condition between end of eval and execution of alarm(0) after eval
+        local $SIG{ALRM} = sub { };
+        $ret = eval {
+            local $SIG{ALRM} = sub { die $data };
+            alarm($alarmtimeout);
+            if ($action eq "bury") {
+                $data=`$cmd 2>&1`;
+                $data="" unless ($?);
+            } elsif ($action eq "print") {
+                if (open(my $RT, "$cmd |")) {
+                    while (<$RT>) {
+                        logData("$_");
                     }
+                    close RT;
+                } else {
+                    logError("Could not run '$cmd'!");
                 }
+                $data="";
+            } elsif ($action eq "grep") {
+                if (open(RT, "$cmd | ")) {
+                    my @results;
+                    while (<RT>) {
+                        if ($_=~/$filter/) {
+                            if ($1) {
+                                push(@results, $1);
+                            } else {
+                                push(@results, $_);
+                            }
+                        }
+                    }
+                    close RT;
+                    $data=join("\n", @results);
+                } else {
+                    $data="";
+                    logError("Could not run '$cmd' to grep for '$filter'!!");
+                }
+            } else { # ($action eq "return")
+                $data=`$cmd`;
             }
-            close RT;
-            $data=join("\n", @results);
-        } else {
-            $data="";
-            logError("Could not run '$cmd' to grep for '$filter'!!");
-        }
-    } else { # ($action eq "return")
-        $data=`$cmd`;
-    }
-    if ($?) {
-        $gRetval |= ERR_SYSTEM_CALL;
-        logError("Error running $tool!");
-        logInfo("$data");
-        $data = "";
-    }
+            if ($?) {
+                $gRetval |= ERR_SYSTEM_CALL;
+                logError("Error running $tool!");
+                logInfo("$data");
+                $data = "";
+            };
+            $data;
+        };
+        alarm(0);
+    };
     return $data;
 }
 
@@ -1086,7 +1109,6 @@ sub System($;$$)
     if (defined($print) && $print=~/^\d+$/) {
         logDebug("RUN: $command");
     }
-
     if ($timeout) {
         my $pid = fork();
         if (not defined $pid) {
@@ -1148,15 +1170,15 @@ sub tarFiles($$$$) {
         logInfo("$file is a link, adding its target first.");
         tarFiles($info, $opt, $tar, abs_path($file));
     } else {
-        logVerbose("No errors looking for existance of $file, continuing.");
+        logVerbose("No errors looking for existence of $file, continuing.");
     }
 
     logInfo("Adding file $file to $tar");
     my $error;
     if (-e $tar) {
-        $error = System("tar -rf $tar $file > /dev/null 2>&1");
+        $error = System("tar -rf $tar $file > /dev/null 2>&1", undef, $opt->{alarmtime});
     } else {
-        $error = System("tar -cf $tar $file > /dev/null 2>&1");
+        $error = System("tar -cf $tar $file > /dev/null 2>&1", undef, $opt->{alarmtime});
     }
     if ($error) {
         $gRetval |= ERR_SYSTEM_CALL;
@@ -1175,7 +1197,7 @@ sub tcpdumpStart($$) {
     }
     my $dumpcmd = "$info->{tcpdump}->{startcmd} $iface $info->{tcpdump}->{args} $opt->{capturefile} $info->{tcpdump}->{filter}";
     logVerbose("Trying to run: $dumpcmd");
-    my $error = System("$dumpcmd &");
+    my $error = System("$dumpcmd &", undef, $opt->{alarmtime});
     if ($error) {
         $gRetval |= ERR_SYSTEM_CALL;
         logError("Could not start capture command: $dumpcmd");
@@ -1194,7 +1216,7 @@ sub tcpdumpStop($$) {
         $error = killProc("$info->{tcpdump}->{startcmd}", 9, $info);
     } else {
         logVerbose("Sending stop command...");
-        my $error = System($stopcmd);
+        my $error = System($stopcmd, undef, $opt->{alarmtime});
         if ($error) {
             logWarning("There was an error running: '$stopcmd', trying to kill via kill -9.");
             $error=killProc($info->{tcpdump}->{startcmd}, 9, $info);
@@ -1329,9 +1351,9 @@ sub changeLoggingBySyslog($$$) {
             runTool($info, $opt, "$info->{lw}->{logging}->{syslogreaper} error", "bury") if ($opt->{reapsysld} and defined($info->{lw}->{logging}->{syslogreaper}));
             runTool($info, $opt, "$info->{lw}->{logging}->{regdaemon} error", "bury") if ($opt->{lwregd} and defined($info->{lw}->{logging}->{regdaemon}));
             runTool($info, $opt, "$info->{lw}->{logging}->{gpagent} error", "bury") if ($opt->{gpagentd} and defined($info->{lw}->{logging}->{gpagent}));
-#TODO Put in changes for lw 4.1
+            #TODO Put in changes for lw 4.1
         } else {
-# Force the "messages" option on, since that's where we'll gather data from
+            # Force the "messages" option on, since that's where we'll gather data from
             $opt->{messages} = 1;
             logWarning("system has syslog.conf, editing to capture debug logs");
             lineInsert($info->{logedit}->{file}, $info->{logedit}->{line});
@@ -1415,7 +1437,7 @@ sub changeLoggingStandalone($$$) {
         logInfo("attempting restart of auth daemon");
         $options->{daemon} = $info->{lw}->{daemons}->{authdaemon};
         if ($info->{lw}->{version} eq "4.1") {
-#TODO add code to edit lwiauthd.conf
+            #TODO add code to edit lwiauthd.conf
         }
         if ($info->{OStype} eq "darwin") {
             killProc("DirectoryService", "USR1", $info);
@@ -1486,7 +1508,7 @@ sub changeLoggingWithContainer($$$) {
         $options->{daemon} = $daemon;
         daemonContainerStop($info, $options);
     };
-    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpcks11 lwsc lwcert autoenroll)){
+    foreach my $daemon(qw(netlogon lwio eventlog lsass gpagent eventfwd usermonitor reapsysl lwpkcs11 lwsc lwcert autoenroll)){
         logDebug("Checking if I need to restart $daemon daemon...");
         my $daemonopt=$daemon."d";
         next unless(defined($opt->{$daemonopt}) and $opt->{$daemonopt});
@@ -1557,7 +1579,7 @@ sub cleanupaftermyself {
         my $stopcmd = $info->{svccontrol}->{stop1}.$info->{svccontrol}->{stop2}.$info->{svccontrol}->{stop3};
         $stopcmd=~s/daemonname/lwsmd/;
         logVerbose("Attempting to stop lwsmd via: '$stopcmd', then waiting 30 seconds for full shutdown.");
-        System($stopcmd);
+        System($stopcmd, undef, $opt->{alarmtime});
         sleep 30;
         logVerbose("Attempting to kill lwsmd, just in case");
         KillProc("lwsmd", 9, $info);
@@ -1571,7 +1593,7 @@ sub cleanupaftermyself {
         if ($info->{lw}->{lwsm}->{control} eq "lwsm") {
             $startcmd =~s/daemonname/lwsmd/;
             logInfo("Attemping to start lwsmd via '$startcmd'");
-            System($startcmd);
+            System($startcmd, undef, $opt->{alarmtime});
             runTool($info, $opt, "lwsm autostart", "bury");
             waitForDomain($info, $opt);
         } else {
@@ -1760,13 +1782,21 @@ sub determineOS($$) {
     }
     $info->{logfiles}=[];
     foreach my $facility (("kern", "daemon", "auth")) {
+        logVerbose("Trying to find $facility logs in syslog config...");
         my @logs=findLogFile($facility);
-        push(@{$info->{logfiles}}, @logs) if (@logs);
-        if ($facility eq "daemon") {
+        if ((scalar @logs) < 1) {
+            logVerbose("Did not find any entries from findLogFile('$facility').");
+            push(@logs, $info->{logpath}."/".$info->{logfile});  #don't add the default value, if syslog review has found better information
+        }
+        if ($facility eq "daemon" and ((scalar @logs) > 0)) {
+            # if we DID find better information in syslog review, rewrite the info->logfile values with the updated info
             $info->{logpath} = dirname($logs[0]);
             $info->{logfile} = basename($logs[0]);
-            logInfo("Found $info->{logfile} via syslog config.");
+            logInfo("Found $info->{logpath}/$info->{logfile} via syslog config.");
+        } else {
+            logVerbose("Not overriding logpath or logfile variables.");
         }
+        push(@{$info->{logfiles}}, @logs);  #need this so that the tarball can find them to add them - 2019-06-14 RCA
     }
     logData("OS: $info->{OStype}");
 
@@ -1851,7 +1881,7 @@ sub waitForDomain($$) {
     my ($error, $i) = (0,0);
     for ($i = 0; $i < 24; $i++) {
         sleep 5;
-        $error = System("$info->{lw}->{path}/$info->{lw}->{tools}->{status} >/dev/null 2>&1");
+        $error = System("$info->{lw}->{path}/$info->{lw}->{tools}->{status} >/dev/null 2>&1", undef, $opt->{alarmtime});
         unless ($error) {
             # lw-get-status returns 0 for success, 2 if lsassd hasn't started yet
             $error=runTool($info, $opt, $info->{lw}->{tools}->{status}, "grep", "Domain:");
@@ -1942,9 +1972,9 @@ sub memoryStats {
 
 sub getLikewiseVersion($$) {
 
-# determine PBIS / Likewise version installed
-# look in reverse order, in case a bad upgrade was done
-# we can get the current running version
+    # determine PBIS / Likewise version installed
+    # look in reverse order, in case a bad upgrade was done
+    # we can get the current running version
 
     my $info = shift;
     my $opt = shift;
@@ -1959,7 +1989,8 @@ sub getLikewiseVersion($$) {
         }
         close VF;
         my @tmparray = split(/\./, $info->{lw}->{version});
-        $info->{lw}->{majorVersion} = $tmparray[0];
+        $info->{lw}->{majorVersion} = $tmparray[0]+0;
+        $info->{lw}->{minorVersion} = $tmparray[1]+0;
         logDebug("PBIS $info->{lw}->{majorVersion} is $info->{lw}->{version}.");
     } else {
         logInfo("No Version File found, determining version from binaries installed");
@@ -1987,7 +2018,9 @@ sub getLikewiseVersion($$) {
         }
     }
     my $gporefresh = findInPath("gporefresh", ["/opt/centeris/bin/", "/usr/centeris/bin", "/opt/likewise/bin", "/opt/pbis/bin"]);
-    if ($info->{lw}->{version}=~/^8\.\d+\./) {
+
+    # versions 8.0+
+    if (defined($info->{lw}->{majorVersion}) && $info->{lw}->{majorVersion} >= 8) {
         $info->{lw}->{base} = "/opt/pbis";
         $info->{lw}->{path} = "/opt/pbis/bin";
         $info->{lw}->{daemons}->{smbdaemon} = "lwio";
@@ -2000,7 +2033,9 @@ sub getLikewiseVersion($$) {
         $info->{lw}->{daemons}->{syslogreaper} = "reapsysl";
         $info->{lw}->{daemons}->{registry} = "lwreg";
         $info->{lw}->{daemons}->{lwsm} = "lwsm";
-        if ($info->{lw}->{version}=~/^8\.[2-5]/) {
+
+        # lwcert and autoenroll exist in 8.2+
+        if ($info->{lw}->{majorVersion} > 8 || $info->{lw}->{minorVersion} >= 2) {
             $info->{lw}->{daemons}->{certmgr} = "lwcert";
             $info->{lw}->{daemons}->{autoenroll} = "autoenroll";
         }
@@ -2341,9 +2376,9 @@ sub getLikewiseVersion($$) {
     }
 
     if (not defined($gporefresh->{path})) {
-# PBIS / Likewise Open doesn't include gporefresh or the following daemons, so mark them undef,
-# This way, we won't attempt to restart them later, or do anything with them.
-# Reduces errors printed to screen.
+        # PBIS / Likewise Open doesn't include gporefresh or the following daemons, so mark them undef,
+        # This way, we won't attempt to restart them later, or do anything with them.
+        # Reduces errors printed to screen.
         undef $info->{lw}->{daemons}->{gpdaemon};
         undef $info->{lw}->{daemons}->{eventfwd};
         undef $info->{lw}->{daemons}->{syslogreaper};
@@ -2384,13 +2419,14 @@ sub outputReport($$) {
         $tarballfile = $tarballfile.$opt->{tarballext};
     }
     if ($tarballfile=~/\.gz$/) {
-#now that we know that the gz file is safe to create,
-#strip the .gz extension, so it can be gzipped later
+        #now that we know that the gz file is safe to create,
+        #strip the .gz extension, so it can be gzipped later
         logDebug("Creating tarball as tar only, will gzip at end.");
         $tarballfile=~s/\.gz$//;
     }
     logVerbose("Creating tarball $tarballfile and adding logs");
-    if ($opt->{restart} or $info->{lwsm}->{type} eq "container") {
+    if ($opt->{restart} or ($info->{lwsm}->{type} eq "container")) {
+        logVerbose("Looking for and adding individual log files.");
         if ($opt->{lsassd}) {
             logInfo("Adding auth daemon log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{authdaemon}.".log";
@@ -2436,16 +2472,29 @@ sub outputReport($$) {
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{syslogreaper}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
+        if ($opt->{smartcard} and defined($info->{lw}->{daemons}->{smartcard})) {
+            logInfo("Adding smartcard log");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{smartcard}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
         if ($opt->{usermonitor} and defined($info->{lw}->{daemons}->{usermonitor})) {
             logInfo("Adding usermonitor log");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{usermonitor}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
-        if ($opt->{certmgr} and defined($info->{lw}->{daemons}->{certmgr})) {
+        if ($opt->{lwcertd} and defined($info->{lw}->{daemons}->{certmgr})) {
             logInfo("Adding lwcert logs.");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{certmgr}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
+        if ($opt->{autoenrolld} and defined($info->{lw}->{daemons}->{autoenroll})) {
+            logInfo("Adding autoenroll logs.");
             $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{autoenroll}.".log";
+            tarFiles($info, $opt, $tarballfile, $appendfile);
+        }
+        if ($opt->{lwpkcs11d} and defined($info->{lw}->{daemons}->{pkcs11})) {
+            logInfo("Adding pkcs11 logs.");
+            $appendfile = $info->{logpath}."/".$info->{lw}->{daemons}->{pkcs11}.".log";
             tarFiles($info, $opt, $tarballfile, $appendfile);
         }
     }
@@ -2520,7 +2569,7 @@ sub outputReport($$) {
         tarFiles($info, $opt, $tarballfile, "/var/lib/pbis/grouppolicy");
     }
 
-# Files to add under all circumstances
+    # Files to add under all circumstances
     logInfo("Adding PBIS Configuration...");
     tarFiles($info, $opt, $tarballfile, "/etc/likewise");
     tarFiles($info, $opt, $tarballfile, "/etc/pbis");
@@ -2566,7 +2615,7 @@ sub outputReport($$) {
     }
     if ($opt->{tarballext}=~/\.gz$/) {
         logInfo("Output gathered, now gzipping for email");
-        $error = System("gzip $tarballfile");
+        $error = System("gzip $tarballfile", undef, $opt->{alarmtime});
         if ($error) {
             $gRetval |= ERR_SYSTEM_CALL;
             logError("Can't gzip $tarballfile - $!");
@@ -2584,7 +2633,7 @@ sub runTests($$) {
     my $data;
 
     gatherMemory($info, $opt);
-# It makes no sense to run most of the below tests if you're not joined, so... let's do that test first
+    # It makes no sense to run most of the below tests if you're not joined, so... let's do that test first
     if ($opt->{domainjoin}) {
         sectionBreak("domainjoin");
         my ($djoptions, $djcommand, $domain, $user, $djlog)=("","","","","");
@@ -2656,7 +2705,7 @@ sub runTests($$) {
         runTool($info, $opt, "$info->{lw}->{tools}->{domainjoin} $djlog $djcommand $djoptions $domain $user", "print");
         gatherMemory($info, $opt);
     }
-# Run tests that run every time no matter what
+    # Run tests that run every time no matter what
 
     sectionBreak("lw-get-status");
     runTool($info, $opt, "$info->{lw}->{tools}->{status}", "print");
@@ -2679,7 +2728,7 @@ sub runTests($$) {
         push(@domains, $domain);
     }
     gatherMemory($info, $opt);
-# run optional tests
+    # run optional tests
 
     if ($opt->{dns}) {
         sectionBreak("DNS Tests");
@@ -2784,12 +2833,12 @@ sub runTests($$) {
         #if (not $time->{path}) {
         #    logError("Can't run performance testing - can't find 'time' command in: /usr/bin, /bin, /usr/local/bin, /usr/csw/bin, /usr/sfw/bin!!");
         #} else {
-            foreach my $flag (("-ln", "-l")) {
-                foreach my $dir (("/home", "/tmp", "/var/tmp", "/etc")) {
-                    logData("# ".scalar(localtime()));
-                    runTool($info, $opt, "time ls $flag $dir", "print");
-                }
+        foreach my $flag (("-ln", "-l")) {
+            foreach my $dir (("/home", "/tmp", "/var/tmp", "/etc")) {
+                logData("# ".scalar(localtime()));
+                runTool($info, $opt, "time ls $flag $dir", "print");
             }
+        }
         #}
         gatherMemory($info, $opt);
     }
@@ -2806,14 +2855,14 @@ sub runTests($$) {
 
     if ($opt->{smb}) {
         sectionBreak("SMB Tests");
-#TODO Write
+        #TODO Write
     }
 
     if ($opt->{sudo}) {
         sectionBreak("Sudo Test");
         logWarning("Opening a bash shell in this window.");
         logWarning("Perform the sudoers tests required, then type 'exit'");
-#TODO Fix this sudoers test not working
+        #TODO Fix this sudoers test not working
         logError("Some output may not print to screen - this is OK");
         my $file = findInPath("bash", ["/bin", "/usr/bin", "/usr/local/bin"]);
         $data = `$file->{path}`;
@@ -2926,6 +2975,7 @@ sub main() {
         psoutput => 1,
         djlog => "/var/log/domainjoin-verbose.log",
         pbislevel => "debug",
+        alarmtime => "600",
     };
 
     my $ok = GetOptions($opt,
@@ -2963,8 +3013,8 @@ sub main() {
         'lwsmd|svcctl|lwsm|svcctld!',
         'reapsysld|syslogreaper|reaper!',
         'lwscd|smartcard|lwsc!',
-        'lwpcks11d|lwpcks11!',
-        'lwcertd|lwcert!',
+        'lwpkcs11d|lwpkcs11!',
+        'lwcertd|lwcert|certmgr!',
         'autoenrolld|autoenroll!',
         'usermonitor!',
         'pbislevel|pbisloglevel=s',
@@ -2983,6 +3033,7 @@ sub main() {
         'delay!',
         'delaytime|dt=s',
         'cleanup!',
+        'alarmtime|alarm=s',
     );
     my $more = shift @ARGV;
     my $errors;
@@ -2992,18 +3043,6 @@ sub main() {
         $opt->{restart} = 1;
         $opt->{other} = 1;
         $opt->{tcpdump} =1;
-    }
-    if (not defined $opt->{restart}) {
-        $opt->{restart} = 1 if not $opt->{syslog};
-        $opt->{restart} = 0 if $opt->{syslog};
-    } else {
-        $opt->{syslog} = 0 if $opt->{restart};
-        $opt->{syslog} = 1 if not $opt->{restart};
-    }
-
-    if ($opt->{help} or not $ok) {
-        $gRetval |= ERR_OPTIONS;
-        print usage($opt, $info);
     }
 
     if ($opt->{sudo} or $opt->{ssh} or $opt->{other} or $opt->{delay}) {
@@ -3024,6 +3063,41 @@ sub main() {
         print $errors.usage($opt, $info);
     }
 
+    if (defined($opt->{gpagentd} and $opt->{gpagentd} == 1)) {
+        $opt->{gpo} = 1;  #turn on GPO testing since we're doing gpagentd logging.
+    }
+    if (defined($opt->{gpo} and $opt->{gpo} == 1)) {
+        $opt->{gpagentd} = 1;  #turn on GPO testing since we're doing gpagentd logging.
+    }
+
+    if (defined($opt->{performance}) and $opt->{performance}) {
+        #set specific options because of this kind of test
+
+        # turn on restarts, so that the capture gets readable ldap traffic
+        $opt->{restart} = 1;
+        $opt->{syslog} = 0;
+        $opt->{capture} = 1;
+        $opt->{memory} = 1;
+        # specifically disable user/group enumeration
+        # because we don't want to pre-fill the cache and screw up data analysis
+        $opt->{users} = 0;
+        $opt->{groups} = 0;
+    }
+
+    #if the user has set a "--restart" option, that takes precedence over everything else
+    if (not defined $opt->{restart}) {
+        $opt->{restart} = 1 if not $opt->{syslog};
+        $opt->{restart} = 0 if $opt->{syslog};
+    } else {
+        $opt->{syslog} = 0 if $opt->{restart};
+        $opt->{syslog} = 1 if not $opt->{restart};
+    }
+
+    if ($opt->{help} or not $ok) {
+        $gRetval |= ERR_OPTIONS;
+        print usage($opt, $info);
+    }
+
     exit $gRetval if $gRetval;
 
     if (defined($opt->{logfile}) && $opt->{logfile} ne "-") {
@@ -3037,9 +3111,6 @@ sub main() {
         sleep 5;
     }
 
-    if (defined($opt->{gpagentd} and $opt->{gpagentd} == 1)) {
-        $opt->{gpo} = 1;  #turn on GPO testing since we're doing gpagentd logging.
-    }
 
     if (defined($opt->{verbose})) {
         $gDebug = $opt->{verbose};
@@ -3070,22 +3141,8 @@ sub main() {
         logError("$opt->{tarballdir} is not a directory!");
     }
 
-    if (defined($opt->{performance}) and $opt->{performance}) {
-        #set specific options because of this kind of test
-
-        # turn on restarts, so that the capture gets readable ldap traffic
-        $opt->{restart} = 1;
-        $opt->{syslog} = 0;
-        $opt->{capture} = 1;
-        $opt->{memory} = 1;
-        # specifically disable user/group enumeration
-        # because we don't want to pre-fill the cache and screw up data analysis
-        $opt->{users} = 0;
-        $opt->{groups} = 0;
-    }
 
     exit $gRetval if $gRetval;
-
 
     sectionBreak("OS Information");
     logDebug("Determining OS info");
@@ -3178,106 +3235,116 @@ usage: pbis-support.pl [tests] [log choices] [options]
 
 =head2 Usage
 
-
-    Tests to be performed:
+Tests to be performed:
 
     --(no)ssh (default = off)
-    Test ssh logon interactively and gather logs
+        Test ssh logon interactively and gather logs
     --sshcommand <command> (default = 'exit')
     --sshuser <name> (instead of interactive prompt)
-    --(no)gpo --grouppolicy (default = off)
-    Perform Group Policy tests and capture Group Policy cache
+    --(no)gpo --grouppolicy (default = on)
+        Perform Group Policy tests and capture Group Policy cache
     -u --(no)users (default = on)
-    Enumerate all users
+        Enumerate all users
     -g --(no)groups (default = on)
-    Enumerate all groups
+        Enumerate all groups
     --autofs --(no)automounts (default = off)
-    Capture /etc/lwi_automount in tarball
+        Capture /etc/lwi_automount in tarball
     --(no)dns (default = off)
-    DNS lookup tests
+        DNS lookup tests
     -c --(no)tcpdump (--capture) (default = off)
-    Capture network traffic using OS default tool
-    (tcpdump, nettl, snoop, etc.)
-    --capturefile <file> (default = /tmp/lw-cap)
-    --captureiface <iface> (default = "")
+        Capture network traffic using OS default tool
+        (tcpdump, nettl, snoop, etc.)
+    --capturefile <file> (default = /tmp/pbis-cap)
+    --captureiface <iface> (default = )
     --(no)smb (default = off)
-    run smbclient against local samba server
+        run smbclient against local samba server
     -o --(no)othertests (--other) (default = off)
-    Pause to allow other tests (interactive logon,
-    multiple ssh tests, etc.) to be run and logged.
+        Pause to allow other tests (interactive logon,
+        multiple ssh tests, etc.) to be run and logged.
     --(no)delay (default = off)
-    Pause the script for 90 seconds to gather logging
-    data, for example from GUI logons.
-    -m --memory
-    Gather memory statistics to look for or
-    prove/disprove memory leaks
-    -p --performance
-    do some specific timing tests to look for performance drains
+        Pause the script for 180 seconds to gather logging
+        data, for example from GUI logons.
+    -m --memory (default = off)
+        Gather memory utilization statistics to help find/disprove
+        memory leaks.
+    -p --performance (default = off)
+        Run specific set of tests for performance troubleshooting
+        of NSS modules and user lookups.
     -dt --delaytime <seconds> (default = 180)
-    -dj --domainjoin (default = on)
+    -dj --domainjoin (default = off)
         Set flags for attempting to join AD, then launch the join interactively
-        --djcommand
+        --djcommand <command>
             command for domainjoin-cli, such as 'join', 'query', 'leave'
-        --djoptions
+        --djoptions <options in quotes>
             Enter domainjoin args such as '--disable hostname --ou AZ/Phoenix/Server'
-        --djdomain
+        --djdomain <domain>
             Name of domain to attempt to join
         --djlog (default = /var/log/domainjoin-verbose.log)
             Path of the domainjoin log.
         Use '--sshuser' for the domainjoin username, or be prompted
 
-    Log choices:
+   Log choices:
 
     --(no)lsassd (--winbindd) (default = on)
-    Gather lsassd debug logs
+        Gather lsassd debug logs
     --(no)lwiod (--lwrdrd | --npcmuxd) (default = on)
-    Gather lwrdrd debug logs
+        Gather lwrdrd debug logs
     --(no)netlogond (default = on)
-    Gather netlogond debug logs
+        Gather netlogond debug logs
     --(no)gpagentd (default = on)
-    Gather gpagentd debug logs
+        Gather gpagentd debug logs
     --(no)eventlogd (default = off)
-    Gather eventlogd debug logs
+        Gather eventlogd debug logs
     --(no)eventfwdd (default = off)
-    Gather eventfwdd debug logs
+        Gather eventfwdd debug logs
     --(no)reapsysld (default = off)
-    Gather reapsysld debug logs
+        Gather reapsysld debug logs
     --(no)regdaemon (default = off)
-    Gather regdaemon debug logs
+        Gather regdaemon debug logs
     --(no)lwsm (default = off)
-    Gather lwsm debug logs
+        Gather lwsm debug logs
     --(no)smartcard (default = off)
-    Gather smartcard daemon debug logs
+        Gather smartcard daemon debug logs
+    --(no)certmgr (default = off)
+        Gather smartcard daemon debug logs
+    --(no)autoenroll (default = off)
+        Gather smartcard daemon debug logs
+    --pbisloglevel (default = debug)
+        What loglevel to run PBIS daemons at (useful for
+        long-running captures).
     --(no)messages (default = on)
-    Gather syslog logs
-    --(no)gatherdb (default = off)
-    Gather PBIS Databases
+        Gather syslog logs
+    --(no)gatherdb (default = on)
+        Gather PBIS Databases
     --(no)sambalogs (default = off)
-    Gather logs and config for Samba server
-    -ps --(no)psoutput (default = off)
-    Gather's full process list from this system
+        Gather logs and config for Samba server
+    -ps --(no)psoutput (default = on)
+        Gathers full process list from this system
+    -m --memory (default = off)
 
     Options:
 
-    -r --(no)restart (default = on)
-    Allow restart of the PBIS daemons to separate logs
-    --(no)syslog (default = off)
-    Allow editing syslog.conf during the debug run if not
-    restarting daemons (exclusive of -r)
+    -r --(no)restart (default = off)
+        Allow restart of the PBIS daemons to separate logs
+    --(no)syslog (default = on)
+        Allow editing syslog.conf during the debug run if not
+        restarting daemons (exclusive of -r)
     -V --loglevel {error,warning,info,verbose,debug}
-    Changes the logging level. (default = info )
-    -l --log --logfile <path> (default = /tmp/pbis-support.log )
-    Choose the logfile to write data to.
+        Changes this tool's logging level. (default = info )
+    -l --log --logfile <path> (default = /tmp/pbis-support-kubuntu10.log )
+        Choose the logfile to write data to.
     -t --tarballdir <path> (default = /tmp )
-    Choose where to create the gzipped tarball of log data
+        Choose where to create the gzipped tarball of log data
+    --alarm <seconds> (default = 600 )
+        How long to allow tasks to run before they time out
+        (sometimes enumerating users or groups can take 10 minutes)
 
-    Examples:
+Examples:
 
-    pbis-support.pl --ssh --lsassd --nomessages --restart -l pbis.log
-
-
-
-
+pbis-support.pl --ssh --lsassd --nomessages --restart -l pbis.log
+pbis-support.pl --restart --regdaemon -c
+    Capture a tcpdump or snoop of all daemons starting up
+    as well as full logs
 
 =head1 Programmer's data
 
@@ -3401,7 +3468,7 @@ $opt is a hash reference, with keys as below, grouped for ease of reading (no gr
         eventfwdd
         reapsysld
         lwregd
-        lwpcks11d
+        lwpkcs11d
         lwscd
         lwsmd
         lwcertd

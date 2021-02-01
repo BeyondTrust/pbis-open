@@ -110,7 +110,11 @@
     doc = "Message displayed at console logon failed attempt"
 }
 "SmartCardServices" = {
-    default = sza:"gdm" "gnome-screensaver" "sudo"
+    default = sza:"gdm-password" "gdm" "gnome-screensaver" "sudo"
+    doc = ""
+}
+"SmartCardRemoteServices" = {
+    default = sza:"sudo" "sshd" "sshd-kbdint"
     doc = ""
 }
 "SmartCardPromptGecos" = {
@@ -128,6 +132,11 @@
 "OtherPasswordPrompt" = {
     default = ""
     doc = "Password prompt for non-local, non-ActiveDirectory users"
+}
+"NssApplyAccessControl" = {
+    default = dword:00000000
+    doc = "Filter users returned by NSS based on RequireMembershipOf"
+    range = boolean
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
@@ -162,6 +171,11 @@
     default = "%H/local/%D/%U"
     doc = ""
 }
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
+}
 "RemoteHomeDirTemplate" = {
     default = ""
     doc = ""
@@ -181,6 +195,10 @@
     doc = "Machine password expiration lifespan in seconds."
     range = integer:3600-31536000
 }
+"ServicePrincipalName" = {
+    default = sza:"host"
+    doc = "Update krb5 keytab file with list of instances. Changes take affect upon domain join or MachinePasswordLifespan. Host instance is always added to keytab file"
+}
 "AssumeDefaultDomain" = {
     default = @DEFAULT_AD_PROVIDER_ASSUME_DEFAULT_DOMAIN@
     doc = "Apply domain name prefix to account name at logon"
@@ -198,6 +216,14 @@
 "RequireMembershipOf" = {
     default = sza:""
     doc = "Restrict logon access to computer to specific users or group members, or SIDs"
+}
+"HostAccessTemplate" = {
+    default = sza:""
+    doc = "List of host access template filters to be used for Host Access Control."
+}
+"HostAccessGroup" = {
+    default = sza:""
+    doc = "List of groups to be used for Host Access Control."
 }
 "CreateK5Login" = {
     default = @DEFAULT_AD_PROVIDER_CREATE_K5LOGIN@
@@ -290,6 +316,8 @@
     range = boolean
 }
 
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HostAccess]
+
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]
 "Id" = {
     default = "lsa-local-provider"
@@ -311,6 +339,11 @@
 "HomeDirTemplate" = {
     default = "%H/local/%D/%U"
     doc = "Format string for user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U)."
+}
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
 }
 "CreateHomeDir" = {
     default = dword:00000001
@@ -406,6 +439,11 @@
 "HomeDirTemplate" = {
     default = "%H/local/%D/%U"
     doc = ""
+}
+"HomeDirForceLowercase" = {
+    default = dword:00000000
+    doc = "Forces the home directory (/.../domainname/username) to be lowercase. Lowercase home directory is created upon user login. If configured /etc/pbis/user-override file takes precedence."
+    range = boolean
 }
 "RegisterTcpIp" = {
     default = dword:00000000

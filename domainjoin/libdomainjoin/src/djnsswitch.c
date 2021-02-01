@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -469,7 +468,7 @@ cleanup:
     return ceError;
 }
 
-static DWORD RemoveModule(NsswitchConf *conf, 
+static DWORD RemoveModule(NsswitchConf *conf,
         int line, int moduleIndex)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -555,7 +554,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
 			}
 		}
 	}
-	
+
     if(!bFileExists)
     {
         bFileExists = TRUE;
@@ -589,7 +588,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
         GCE(ceError = CTAllocateStringPrintf(
           &defaultFilePath, "%s%s", testPrefix, NSSWITCH_LWIDEFAULTS));
         GCE(ceError = CTCheckFileExists(defaultFilePath, &bFileExists));
-      
+
         if (bFileExists) {
             ceError = ReadNsswitchFile(conf, testPrefix, NSSWITCH_LWIDEFAULTS);
             GCE(ceError);
@@ -772,6 +771,15 @@ cleanup:
     return result;
 }
 
+static BOOLEAN IsSolaris11_4Plus(const LwDistroInfo * const distro) {
+    int major = 0;
+    int minor = 0;
+
+    DJGetSolarisVersion(distro, &major, &minor);
+
+    return (major > 11) || ((major == 11) && (minor > 3));
+}
+
 DWORD
 UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 {
@@ -858,7 +866,7 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
     }
 
-    // If initgroups is present, it overrides the groups line 
+    // If initgroups is present, it overrides the groups line
     // and has different semantics.
     // As soon as a module reports success, processing stops. We don't want
     // that so we need to add '[SUCCESS=continue]'
@@ -904,17 +912,22 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         {
             if(enable)
             {
-                sprintf(szCommand,
-                   "svccfg -s name-service/switch setprop config/password=\\\"files %s\\\"",
-                   moduleName);
+                /*  can't backslash escape the password group prop values on solaris 11.4 */
+                BOOLEAN solaris11_4 = IsSolaris11_4Plus(&distro);
+                const char * const password_setprop = (solaris11_4)
+                    ? "svccfg -s name-service/switch setprop config/password=\"files %s\""
+                    : "svccfg -s name-service/switch setprop config/password=\\\"files %s\\\"";
+                const char * const group_setprop = (solaris11_4)
+                    ? "svccfg -s name-service/switch setprop config/group=\"files %s\""
+                    : "svccfg -s name-service/switch setprop config/group=\\\"files %s\\\"";
+
+                sprintf(szCommand, password_setprop, moduleName);
                 if(system(szCommand) < 0)
                 {
                    goto cleanup;
                 }
                 memset(szCommand, 0, sizeof(szCommand));
-                sprintf(szCommand,
-                   "svccfg -s name-service/switch setprop config/group=\\\"files %s\\\"",
-                   moduleName);
+                sprintf(szCommand,group_setprop, moduleName);
                 if(system(szCommand) < 0)
                 {
                    goto cleanup;
@@ -1149,7 +1162,7 @@ static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
                 "mr,", &usingMr));
 
     if(usingMr)
-        addString = 
+        addString =
 PREFIXDIR "/lib/*.so*            mr,\n"
 PREFIXDIR "/lib64/*.so*          mr,\n"
 LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
@@ -1189,7 +1202,7 @@ LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
     {
         ceError = CTFindFileInPath("apparmor", "/etc/init.d/apparmor", &restartPath);
     }
-    
+
     if(ceError == ERROR_FILE_NOT_FOUND)
     {
         ceError = ERROR_SUCCESS;
@@ -1243,7 +1256,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
             goto cleanup;
         }
         LW_CLEANUP_CTERR(exc, ceError);
-        
+
         LW_TRY(exc, result = RemoveCompat(&conf, NULL, &LW_EXC));
         if(result == CannotConfigure || result == NotConfigured)
         {
@@ -1266,7 +1279,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
             result = NotConfigured;
             goto cleanup;
         }
-        
+
         LW_CLEANUP_CTERR(exc, DJHasMethodsCfg(&exists));
 
         if(exists)
@@ -1518,18 +1531,18 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
     LW_CLEANUP_CTERR(exc, UpdateNsswitchConf(&conf, options->joiningDomain));
 
     if(options->joiningDomain && conf.modified)
-        configureSteps = 
+        configureSteps =
 "The following steps are required and can be performed automatically:\n"
 "\t* Edit nsswitch apparmor profile to allow libraries in the " PREFIXDIR "/lib  and " PREFIXDIR "/lib64 directories\n"
 "\t* List lwidentity module in /usr/lib/security/methods.cfg (AIX only)\n"
 "\t* Add lwidentity to passwd and group/groups line /etc/nsswitch.conf or /etc/netsvc.conf\n";
     else if(conf.modified)
-        configureSteps = 
+        configureSteps =
 "The following steps are required and can be performed automatically:\n"
 "\t* Remove lwidentity module from /usr/lib/security/methods.cfg (AIX only)\n"
 "\t* Remove lwidentity from passwd and group/groups line /etc/nsswitch.conf or /etc/netsvc.conf\n"
 "The following step is optional:\n"
-"\t* Remove apparmor exception for pbis nsswitch libraries\n";
+"\t* Remove apparmor exception for nsswitch libraries\n";
     else
         configureSteps = "";
 
@@ -1552,4 +1565,4 @@ cleanup:
     return ret;
 }
 
-const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable PowerBroker Identity Services nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };
+const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };

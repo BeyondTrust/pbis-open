@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,7 +36,7 @@
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        BeyondTrust Security and Authentication Subsystem (LSASS)
  *
  *        Service Entry API
  *
@@ -52,6 +51,8 @@
 #include "lwdscache.h"
 #include "lsasrvutils.h"
 #include "openssl/crypto.h"
+
+#include <ldap.h>
 
 #ifdef ENABLE_STATIC_PROVIDERS
 #ifdef ENABLE_AD
@@ -89,6 +90,10 @@ static unsigned long lsa_id_function(void) {
     return (unsigned long) pthread_self();
 }
 
+static void lsa_ldap_trace(const char *msg)
+{
+    LSA_LOG_TRACE("LDAP debug: %s", LSA_SAFE_LOG_STRING(msg));
+}
 
 NTSTATUS
 LsaSvcmInit(
@@ -99,6 +104,16 @@ LsaSvcmInit(
     DWORD dwError = 0;
     int num_locks = CRYPTO_num_locks();
     int i;
+    int debug_level = -1;
+
+    if (ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, lsa_ldap_trace) != LBER_OPT_SUCCESS) {
+        LW_RTL_LOG_WARNING("Failed to set LDAP logging hook");
+    }
+
+    if (ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug_level) != LDAP_SUCCESS)
+    {
+        LW_RTL_LOG_WARNING("Failed to set LDAP log level");
+    }
 
     gmutex_buf = calloc(num_locks, sizeof(pthread_mutex_t));
     if (gmutex_buf == NULL) dwError = LW_ERROR_OUT_OF_MEMORY;

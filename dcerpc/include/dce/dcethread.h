@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2008, Likewise Software, Inc.
- * All rights reserved.
+ * Copyright (c) BeyondTrust Software. All rights reserved.
  */
 
 /*
  * Copyright (c) 2007, Novell, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -32,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * 
+ *
  * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
  * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
  * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
@@ -49,7 +48,7 @@
  * Packard Company, nor Digital Equipment Corporation makes any
  * representations about the suitability of this software for any
  * purpose.
- * 
+ *
  */
 
 #ifndef __DCETHREAD_H__
@@ -274,7 +273,7 @@ typedef struct _dcethread_exc
     union
     {
         int value;
-        struct _dcethread_exc *address;       
+        struct _dcethread_exc *address;
     } match;
     const char* name;
 } dcethread_exc;
@@ -315,7 +314,7 @@ void dcethread_frame_pop(dcethread_frame* frame);
 									\
 	if (!__dcethread_live)						\
 	{								\
-	    /* Try block code goes here */				
+	    /* Try block code goes here */
 
 #define DCETHREAD_CATCH(_exc)						 \
         }								 \

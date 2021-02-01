@@ -30,7 +30,7 @@ make()
             INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
             HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
             LDFLAGS="-Wl,-eLsaNssInitialize" \
-            LIBDEPS="lsaauth lsaclient"
+            LIBDEPS="lsaauth lsaclient pthread"
         
         mk_dlo \
             DLO="$NETSVC_NAME" \
@@ -39,6 +39,6 @@ make()
             GROUPS="../common/common" \
             INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
             HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
-            LIBDEPS="lsaauth lsaclient"
+            LIBDEPS="lsaauth lsaclient pthread"
     mk_multiarch_done
 }

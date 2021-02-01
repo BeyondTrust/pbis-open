@@ -3,29 +3,28 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 #include "domainjoin.h"
@@ -263,12 +262,12 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
 
     GCE(ceError = CTAllocateMemory(sizeof(*line), (void**) (void*)&line));
 
-    /* Find the leading whitespace in the line */
+    // Find the leading whitespace in the line
     token_start = pos;
     while(isblank(*pos)) pos++;
     if(*pos == '#' || *pos == ';')
     {
-        //This is a comment line. The whole line is leading white space
+        // This is a comment line. The whole line is leading white space
         while(*pos != '\0' && *pos != '\n' && *pos != '\r') pos++;
     }
     GCE(ceError = CTStrndup(token_start, pos - token_start, &line->leadingWhiteSpace));
@@ -276,12 +275,10 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
     if(*pos == '\0' || *pos == '\n' || *pos == '\r')
     {
         DJ_LOG_VERBOSE("Found krb5 comment '%s'", linestr);
-        //This is a comment line
     }
     else if(*pos == '}')
     {
         DJ_LOG_VERBOSE("Found krb5 compound end '%s'", linestr);
-        //This is the end of a compound statement
         if(!IsGroupEntry(*parent))
         {
             DJ_LOG_ERROR("Expecting line '%s' to end a compound statement, but no compound statement appears before it",
@@ -297,12 +294,12 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
     {
         size_t len;
         DJ_LOG_VERBOSE("Found krb5 stanza '%s'", linestr);
-        //This is a stanza
+        // This is a stanza
         *parent = GetRootNode(*parent);
-        //Trim [
+        // Trim [
         pos++;
         GCE(ceError = CTReadToken(&pos, &line->name, "", "\r\n", " \t"));
-        //Trim ]
+        // Trim ]
         len = strlen(line->name.value);
         if(line->name.value[len - 1] == ']')
             line->name.value[len - 1] = 0;
@@ -312,42 +309,54 @@ static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **end
                     line->name.value);
             GCE(ceError = ERROR_BAD_FORMAT);
         }
-        //Add future lines under this stanza
+        // Add future lines under this stanza
         expectChildren = TRUE;
     }
     else
     {
-        //This is either a name value pair, or a compound element
+        // This is either a name value pair, a compound element,
+        // or a (currently unsupported) directive
+        // For now, treat anything we don't understand/support as a comment
+        // so that we don't break with every change to the format
         GCE(ceError = CTReadToken(&pos, &line->name, " \t", "=\r\n", ""));
+
         if(*pos != '=')
         {
-            DJ_LOG_ERROR("Expecting krb5 name value or compound statement '%s' to have a = at position %d",
-                    linestr, pos - linestr);
-            GCE(ceError = ERROR_BAD_FORMAT);
-        }
-        oldpos = pos;
-        GCE(ceError = CTReadToken(&pos, &line->beginSeparator, " \t", "\r\n", ""));
-        if(*pos == '{')
-        {
-            DJ_LOG_VERBOSE("Found krb5 compound statement '%s'", linestr);
-            //Oops, looks like this was really a compound statement, so we want to store the = and the { in the beginSeparator.
-            CTFreeParseTokenContents(&line->beginSeparator);
-            pos = oldpos;
-            GCE(ceError = CTReadToken(&pos, &line->beginSeparator, "", "\r\n", " \t"));
-            if(!CTStrEndsWith(line->beginSeparator.value, "{"))
-            {
-                DJ_LOG_ERROR("Expecting krb5 compound statement line '%s' to end with a {",
-                        linestr);
-                GCE(ceError = ERROR_BAD_FORMAT);
+            // Not a nv-pair, or compound element
+            CTFreeParseTokenContents(&line->name);
+            while(*pos != '\0' && *pos != '\n' && *pos != '\r') {
+                pos++;
             }
-            //Add future lines under this statement
-            expectChildren = TRUE;
-        }
-        else
-        {
-            DJ_LOG_VERBOSE("Found krb5 name value pair '%s'", linestr);
-            //This is name value statement
-            GCE(ceError = CTReadToken(&pos, &line->value, "", "\r\n", " \t"));
+            GCE(ceError = CTStrndup(token_start, pos - token_start, &line->leadingWhiteSpace));
+
+            DJ_LOG_WARNING("Ignoring unsupported krb5 line '%s'; line will be included in krb5.conf but won't be parsed",
+                    line->leadingWhiteSpace);
+        } else {
+            oldpos = pos;
+            GCE(ceError = CTReadToken(&pos, &line->beginSeparator, " \t", "\r\n", ""));
+
+            if(*pos == '{')
+            {
+                DJ_LOG_VERBOSE("Found krb5 compound statement '%s'", linestr);
+                //Oops, looks like this was really a compound statement, so we want to store the = and the { in the beginSeparator.
+                CTFreeParseTokenContents(&line->beginSeparator);
+                pos = oldpos;
+                GCE(ceError = CTReadToken(&pos, &line->beginSeparator, "", "\r\n", " \t"));
+                if(!CTStrEndsWith(line->beginSeparator.value, "{"))
+                {
+                    DJ_LOG_ERROR("Expecting krb5 compound statement line '%s' to end with a {",
+                            linestr);
+                    GCE(ceError = ERROR_BAD_FORMAT);
+                }
+                //Add future lines under this statement
+                expectChildren = TRUE;
+            }
+            else
+            {
+                DJ_LOG_VERBOSE("Found krb5 name value pair '%s'", linestr);
+                //This is name value statement
+                GCE(ceError = CTReadToken(&pos, &line->value, "", "\r\n", " \t"));
+            }
         }
     }
 
@@ -929,7 +938,7 @@ GatherDomainMappings(
         }
     }
     *pszJoinForest = pszForestName;
-    
+
     if (mappings->size == 0)
     {
         // Put in the default entry
@@ -1025,7 +1034,7 @@ CreateMacKeberosFile(
             GCE(ceError);
         }
 
-        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during PowerBroker Identity Services domain join.\n"));
+        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during BeyondTrust AD Bridge domain join.\n"));
         GCE(ceError = CTFilePrintf(file, "# Any previous version of edu.mit.Kerberos is backed up to\n"));
         GCE(ceError = CTFilePrintf(file, "# /Likewise/Preferences/edu.mit.Kerberos.orig\n"));
         GCE(ceError = CTFilePrintf(file, "# Leaving the current domain will restore the file above.\n"));
@@ -1064,7 +1073,7 @@ Krb5LeaveDomain(Krb5Entry *conf)
        /* Upon domain join, it was possible that the default_ccache_name was commented out. We now
           want to undo this. ParseLine() function treats a commented out line as all leadingWhiteSpace.
           So need to search for #BT and parse the leadingWhiteSpace in order to extract the
-          name value pair. */ 
+          name value pair. */
        Krb5Entry *child = GetChild(libdefaults, i);
        if(child->leadingWhiteSpace != NULL &&
                strstr(child->leadingWhiteSpace, "#BT default_ccache_name"))
@@ -1086,7 +1095,7 @@ cleanup:
     return ceError;
 }
 
-static DWORD 
+static DWORD
 getTail(PSTR inputDN, PSTR *tail)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -1104,7 +1113,7 @@ getTail(PSTR inputDN, PSTR *tail)
 	    break;
 	}
     }
-    *tail = pszTail; 
+    *tail = pszTail;
 cleanup:
     if(ceError)
         CT_SAFE_FREE_STRING(pszTail);
@@ -1248,7 +1257,7 @@ Krb5JoinDomain(
             CTStrToUpper(pszforestUpper);
             if(strcmp(pszforestUpper,pszJoinForest)  &&
 	          (strcmp(pszLongNameUpper, pszforestUpper) ||
-                   strcmp(pszJoinDomain, pszJoinForest)))  
+                   strcmp(pszJoinDomain, pszJoinForest)))
             {
                 GCE(ceError = EnsureGroupNode(capaths, pszLongNameUpper, &capathsGroup));
                 if(strcmp(pszJoinDomain,pszJoinForest))
@@ -1270,10 +1279,10 @@ Krb5JoinDomain(
                     length = strlen(pszLongNameUpper);
                     for( dn = pszLongNameUpper; dn < &pszLongNameUpper[length]; dn++)
                     {
-                        if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue; 
+                        if( (*dn!= '.') && (&dn[1] != &pszLongNameUpper[length]) ) continue;
                         ch = &dn[1];
-                        if( !strcmp(ch,pszforestUpper) || 
-                            !strcmp(ch,pszTail)) 
+                        if( !strcmp(ch,pszforestUpper) ||
+                            !strcmp(ch,pszTail))
                         {
                             break;
                         }
@@ -1294,10 +1303,10 @@ Krb5JoinDomain(
                 {
                     for( dn = pszJoinDomain; dn < &pszJoinDomain[length]; dn++)
                     {
-                        if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue; 
+                        if( (*dn!= '.') && (&dn[1] != &pszJoinDomain[length]) ) continue;
                         ch = &dn[1];
-                        if( !strcmp(ch,pszforestUpper) || 
-                            !strcmp(ch,pszTail)) 
+                        if( !strcmp(ch,pszforestUpper) ||
+                            !strcmp(ch,pszTail))
                         {
                             break;
                         }
@@ -1785,7 +1794,7 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
     ceError = ReadKrb5Configuration(tempDir, &conf, &modified);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to BeyondTrust AD Bridge technical support.");
         goto cleanup;
     }
     else
@@ -1982,7 +1991,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     ceError = ReadKrb5Configuration(tempDir, &conf, NULL);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to BeyondTrust AD Bridge technical support.");
         goto cleanup;
     }
     else
@@ -1992,12 +2001,12 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     if(libdefaults == NULL)
     {
 #ifdef __LWI_SOLARIS__
-        /* The krb5.conf may exist, but is relatively empty - usually because there was 
+        /* The krb5.conf may exist, but is relatively empty - usually because there was
 	   no default krb5.conf file.  Therefore on Solaris setup a symlink to where
 	   we will create the keytab
 	*/
 	CTCheckFileOrLinkExists("/etc/krb5/krb5.keystab", &exists);
-	if(! exists) 
+	if(! exists)
             CTCreateSymLink("/etc/krb5.keytab","/etc/krb5/krb5.keytab");
 #endif
 
@@ -2022,7 +2031,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
             (void) CTRemoveFile("/etc/krb5.keytab");
             LW_CLEANUP_CTERR(exc, CTCreateSymLink("/etc/krb5/krb5.keytab",
                             "/etc/krb5.keytab"));
-#else			
+#else
             LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
                         "default_keytab_name", "/etc/krb5.keytab"));
 #endif

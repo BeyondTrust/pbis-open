@@ -3,33 +3,32 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright © BeyondTrust Software 2004 - 2019
  * All rights reserved.
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation; either version 2.1 of the license, or (at
- * your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
- * General Public License for more details.  You should have received a copy
- * of the GNU Lesser General Public License along with this program.  If
- * not, see <http://www.gnu.org/licenses/>.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
- * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
- * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
- * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
- * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
- * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * BEYONDTRUST MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING TERMS AS
+ * WELL. IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT WITH
+ * BEYONDTRUST, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE TERMS OF THAT
+ * SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE APACHE LICENSE,
+ * NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU HAVE QUESTIONS, OR WISH TO REQUEST
+ * A COPY OF THE ALTERNATE LICENSING TERMS OFFERED BY BEYONDTRUST, PLEASE CONTACT
+ * BEYONDTRUST AT beyondtrust.com/contact
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Copyright (C) BeyondTrust Software. All rights reserved.
  *
  * Module Name:
  *
@@ -37,8 +36,8 @@
  *
  * Abstract:
  *
- *        Likewise Dynamic DNS Updates (LWDNS)
- * 
+ *        BeyondTrust Dynamic DNS Updates (LWDNS)
+ *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
@@ -89,7 +88,7 @@ DNSAllocateMemory(
         memset(pMemory,0, dwSize);
         *ppMemory = pMemory;
     }
-    
+
     return (dwError);
 }
 
@@ -112,7 +111,7 @@ DNSReallocMemory(
     {
         pNewMemory = realloc(pMemory, dwSize);
     }
-    
+
     if (!pNewMemory)
     {
         dwError = ENOMEM;
@@ -235,27 +234,27 @@ DNSGetDomainNameLength(
         dwError = EINVAL;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
-    
+
     pDomainLabel = pDomainName->pLabelList;
 
     while(pDomainLabel) {
-        
+
         dwLength += pDomainLabel->dwLength;
         dwLength++;
-        
+
         pDomainLabel = pDomainLabel->pNext;
     }
 
     *pdwLength = ++dwLength;
-    
+
 cleanup:
 
     return (dwError);
-    
+
 error:
 
     *pdwLength = 0;
-    
+
     goto cleanup;
 }
 
@@ -280,20 +279,20 @@ DNSCopyDomainName(
     while (pDomainLabel)
     {
         BYTE len = (BYTE)pDomainLabel->dwLength;
-        
+
         memcpy(pBuffer + dwCopied, &len, sizeof(len));
         dwCopied += sizeof(BYTE);
-        
+
         memcpy(pBuffer + dwCopied, pDomainLabel->pszLabel, pDomainLabel->dwLength);
         dwCopied += pDomainLabel->dwLength;
-        
+
         pDomainLabel = pDomainLabel->pNext;
     }
     memcpy(pBuffer + dwCopied, &endChar, sizeof(BYTE));
     dwCopied += sizeof(BYTE);
 
     *pdwCopied =  dwCopied;
-    
+
 cleanup:
 
     return(dwError);
@@ -301,7 +300,7 @@ cleanup:
 error:
 
     *pdwCopied = 0;
-    
+
     goto cleanup;
 }
 
@@ -323,7 +322,7 @@ DNSGenerateKeyName(
     BAIL_ON_LWDNS_ERROR(dwError);
 
     *ppszKeyName = pszKeyName;
-    
+
 cleanup:
 
      return dwError;
@@ -331,9 +330,9 @@ cleanup:
 error:
 
     *ppszKeyName = NULL;
-    
+
     LWDNS_SAFE_FREE_STRING(pszKeyName);
-    
+
     goto cleanup;
 }
 
@@ -355,8 +354,8 @@ DNSDomainNameFromString(
     }
 
     dwError = DNSBuildLabelList(
-                pszDomainName, 
-                &dwPosition, 
+                pszDomainName,
+                &dwPosition,
                 &pLabelList);
     BAIL_ON_LWDNS_ERROR(dwError);
 
@@ -379,7 +378,7 @@ error:
     {
         DNSFreeLabelList(pLabelList);
     }
-    
+
     *ppDomainName = NULL;
 
     goto cleanup;
@@ -436,7 +435,7 @@ DNSAppendLabel(
 
     (*ppLabelList)->pNext = pLabel;
     *ppNewLabelList = pLabelList;
-    
+
 done:
 
     return(dwError);
@@ -467,7 +466,7 @@ DNSBuildLabelList(
                 &dwToken,
                 pdwPosition);
     BAIL_ON_LWDNS_ERROR(dwError);
-    
+
     if (dwToken != TOKEN_LABEL) {
         dwError = EINVAL;
         BAIL_ON_LWDNS_ERROR(dwError);
@@ -479,11 +478,11 @@ DNSBuildLabelList(
     memset(szToken, 0, 64);
     dwError = DNSGetToken(
                 pszString,
-                szToken, 
-                &dwToken, 
+                szToken,
+                &dwToken,
                 pdwPosition);
     BAIL_ON_LWDNS_ERROR(dwError);
-    
+
     if (dwToken == TOKEN_SEPARATOR)
     {
         dwError = DNSBuildLabelList(
@@ -499,7 +498,7 @@ DNSBuildLabelList(
     //{
     //    *ppList = pLabel;
     //}
-    
+
     *ppList = pLabel;
 
 cleanup:
@@ -511,7 +510,7 @@ error:
     if (pLabel) {
         DNSFreeLabel(pLabel);
     }
-    
+
     if (pList) {
         DNSFreeLabelList(pList);
     }
@@ -540,9 +539,9 @@ DNSBuildLabel(
 
     pLabel->pszLabel = pszLabel;
     pLabel->dwLength = (DWORD)strlen(pszLabel);
-    
+
     *ppLabel = pLabel;
-    
+
 cleanup:
 
     return(dwError);
@@ -555,7 +554,7 @@ error:
         DNSFreeLabel(pLabel);
     }
     *ppLabel = NULL;
-    
+
     goto cleanup;
 }
 
@@ -621,7 +620,7 @@ DNSGetToken(
     }
     *pdwPosition = dwPosition;
     *pdwToken = dwToken;
-    
+
     return(dwError);
 }
 
@@ -633,9 +632,9 @@ DNSFreeLabelList(
     while(pLabelList)
     {
         PDNS_DOMAIN_LABEL pTemp = pLabelList;
-        
+
         pLabelList = pLabelList->pNext;
-        
+
         DNSFreeLabel(pTemp);
     }
 }
@@ -650,7 +649,7 @@ DNSFreeLabel(
         LWDNS_SAFE_FREE_STRING(pLabel->pszLabel);
         DNSFreeMemory(pLabel);
     }
-    
+
     return;
 }
 
@@ -682,7 +681,7 @@ DNSInet6ValidateAddress(
         goto cleanup;
     }
 
-    //check each charecter for hexadecimal number in range of 0 to 9; a to f 
+    //check each charecter for hexadecimal number in range of 0 to 9; a to f
     //and for colon(:)
     strcpy(szTempBuffer,pszInet6InputAddr);
 
@@ -693,7 +692,7 @@ DNSInet6ValidateAddress(
         else {
             bIsInValid = TRUE;
             goto cleanup;
-        }  
+        }
         dwTempIndex++;
     }
 
@@ -725,9 +724,9 @@ DNSInet6ValidateAddress(
     //copy the input string to dwQuadCount_string to count the number of quads
     strcpy(szQuadCountString, pszInet6InputAddr);
 
-    //tokenize each quad and count it 
+    //tokenize each quad and count it
     pTemp = strtok(szQuadCountString,":");
-    if (pTemp != NULL ) 
+    if (pTemp != NULL )
     {
 	    dwQuadCount++;
     }
@@ -736,7 +735,7 @@ DNSInet6ValidateAddress(
     }
 
     //copy the input string to temp string to count the colons
-    strcpy(szTempBuffer,pszInet6InputAddr); 
+    strcpy(szTempBuffer,pszInet6InputAddr);
     dwInputIndex = 0;
 
     //count the number of colons in input string
@@ -782,9 +781,9 @@ DNSInet6ValidateAddress(
     //check for : or 1
     if(strlen(pszInet6InputAddr)  <= 1)
         bIsInValid = TRUE;
-    //check for :1: 
+    //check for :1:
     if(strstr(pszInet6InputAddr,"::") == NULL && dwColonCount == 2)
-        bIsInValid = TRUE; 
+        bIsInValid = TRUE;
 
 cleanup:
 
@@ -827,7 +826,7 @@ DNSInet6Canonicalize(
     DNSInet6AddressReverse(pszInet6InputAddr);
     //take the first token from the input string
     pToken = strtok(pszInet6InputAddr,":");
-    //Take each charecter from token and add charecter with a 
+    //Take each charecter from token and add charecter with a
     //dot(.) to output string
     if(pToken != NULL){
         while(*(pToken+dwTokenCount) != '\0'){
@@ -876,7 +875,7 @@ DNSInet6FillUpZeros(
     dwInputIndex = strlen(strInput);
     dwOutputIndex = strlen(strOutput);
 
-    //comparing the input string with output string from backside 
+    //comparing the input string with output string from backside
     //so until the input index becomes -1 keep looping
     while(dwInputIndex != -1 ){
         //if ':' is not encountered in input string copy it to output
@@ -884,10 +883,10 @@ DNSInet6FillUpZeros(
             strOutput[dwOutputIndex--] = strInput[dwInputIndex--];
         else
             {
-                //if colon is encountered then decrement the input 
+                //if colon is encountered then decrement the input
                 //index to point to next nibble
                 dwInputIndex--;
-                //Until output string reaches the next colon keep 
+                //Until output string reaches the next colon keep
                 //decrement the index so that it will go hand in hand with input string
                 while(strOutput[dwOutputIndex--] != ':' );
             }
@@ -901,7 +900,7 @@ DNSInet6ExpandAddress(
     PSTR pszInet6InputAddr
     )
 {
-    DWORD dwTempStringIndex = 0; 
+    DWORD dwTempStringIndex = 0;
     PSTR pStartOfColon = NULL;
     DWORD dwInputIndex = 0;
     DWORD dwTotalInputLength = strlen(pszInet6InputAddr);
@@ -936,7 +935,7 @@ DNSInet6ExpandAddress(
 
         if ( pStartOfColon == pszInet6InputAddr )
         {
-            strcpy ( szTempStringMid, pStartOfColon+2 ); 
+            strcpy ( szTempStringMid, pStartOfColon+2 );
             while(dwZeroNumberOfQuads--)
             {
                  strcpy(pszInet6InputAddr+dwTempStringIndex,"0000:");
@@ -945,8 +944,8 @@ DNSInet6ExpandAddress(
             strcat( pszInet6InputAddr , szTempStringMid );
             strcpy(szTempInputSring,pszInet6InputAddr);
         }
-        else if ( *(pszInet6InputAddr+dwTotalInputLength-1) == ':' && 
-            *(pszInet6InputAddr+dwTotalInputLength-2) == ':') 
+        else if ( *(pszInet6InputAddr+dwTotalInputLength-1) == ':' &&
+            *(pszInet6InputAddr+dwTotalInputLength-2) == ':')
         {
             *(pszInet6InputAddr+dwTotalInputLength-2) = '\0';
             while(dwZeroNumberOfQuads--)
@@ -956,7 +955,7 @@ DNSInet6ExpandAddress(
             strcpy(szTempInputSring, pszInet6InputAddr);
         }
         else
-        { 
+        {
             strcpy ( szTempStringMid, pStartOfColon+1);
             while(dwZeroNumberOfQuads--)
             {
@@ -964,7 +963,7 @@ DNSInet6ExpandAddress(
                 pStartOfColon = pStartOfColon+5;
             }
             strcat(pStartOfColon, szTempStringMid);
-            strcpy(szTempInputSring, pszInet6InputAddr);            
+            strcpy(szTempInputSring, pszInet6InputAddr);
         }
         DNSInet6FillUpZeros(szTempInputSring, szOutput);
     }
@@ -990,14 +989,15 @@ DNSInet6GetPtrAddress(
     if(DNSInet6ValidateAddress(szInput)){
         return DNS_ERROR_INVALID_IP_ADDRESS;
     }
+
     pSzOutputAddr = (PSTR) malloc(sizeof(CHAR) * CANONICAL_INET6_ADDRSTRLEN);
     DNSInet6ExpandAddress(szInput);
     DNSInet6Canonicalize(szInput,szOutput);
-    strncat(szOutput,"ip6.arpa",8);
+    strncat(szOutput,"ip6.arpa", (sizeof(szOutput) - strlen(szOutput) - 1));
     strcpy(pSzOutputAddr,szOutput);
 
     *ppSzInet6OutputAddr = pSzOutputAddr;
-    return 0; 
+    return 0;
 }
 
 DWORD
@@ -1011,21 +1011,19 @@ DNSInet6GetPtrZoneAddress(
     PSTR pSzOutputAddr = NULL;
     DWORD dwSubNetMask = SUBNET_MASK;
     DWORD dwIpaddressToChop = dwSubNetMask / HEXADECIMAL_BASE;
- 
+
     strcpy(szInput,pszInet6InputAddr);
 
     if(DNSInet6ValidateAddress(szInput)){
         return DNS_ERROR_INVALID_IP_ADDRESS;
     }
 
-    pSzOutputAddr = (PSTR) malloc(sizeof(CHAR) * CANONICAL_INET6_ADDRSTRLEN);
-
     DNSInet6ExpandAddress(szInput);
-
     DNSInet6Canonicalize(szInput,szOutput);
 
+    pSzOutputAddr = (PSTR) malloc(sizeof(CHAR) * CANONICAL_INET6_ADDRSTRLEN);
     strcpy(pSzOutputAddr,szOutput+(dwIpaddressToChop * 8));
-    strncat(pSzOutputAddr,"ip6.arpa",8);
+    strncat(pSzOutputAddr,"ip6.arpa", (sizeof(pSzOutputAddr) - strlen(pSzOutputAddr) - 1));
 
     *ppSzInet6OutputAddr = pSzOutputAddr;
     return 0;

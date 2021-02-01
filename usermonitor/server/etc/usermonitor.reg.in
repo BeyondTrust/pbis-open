@@ -39,6 +39,7 @@
 "CheckInterval" = {
     default = dword:00000708
     doc = "Frequency of checking for new users"
+    range = integer:60-1000000
 }
 "SkipNoLogin" = {
     default = dword:00000000
