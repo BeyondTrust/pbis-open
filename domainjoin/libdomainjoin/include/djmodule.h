@@ -96,6 +96,7 @@ struct _JoinProcessOptions
     BOOLEAN disableTimeSync;
     BOOLEAN enableMultipleJoins;
     BOOLEAN ignorePam;
+    BOOLEAN noPreAccount;
     BOOLEAN ignoreSsh;
     BOOLEAN releaseLicense;
     BOOLEAN deleteAccount;

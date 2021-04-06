@@ -68,7 +68,7 @@ ShowUsage(const BOOLEAN isEnterprise)
             : "    join [join options] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
-    fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--nogssapi] [--ignore-pam] [--enable <module> --disable <module> ...]\n");
+    fprintf(stdout, "    join options: [--notimesync] [--nohosts] [--nogssapi] [--ignore-pam] [--enable <module> --disable <module> ...] [--no-pre-account]\n");
     fprintf(stdout, (isEnterprise)
             ?       "                  [--assumeDefaultCell {auto|no|force}] [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n"
             :       "                  [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>]\n");
@@ -506,6 +506,8 @@ void DoJoin(int argc, char **argv, int columns, BOOLEAN isEnterprise, LWExceptio
         }
         else if(!strcmp(argv[0], "--ignore-pam"))
             options.ignorePam = TRUE;
+        else if(!strcmp(argv[0], "--no-pre-account"))
+            options.noPreAccount = TRUE;
         else if(!strcmp(argv[0], "--notimesync"))
             options.disableTimeSync = TRUE;
         else if(!strcmp(argv[0], "--multiple"))
