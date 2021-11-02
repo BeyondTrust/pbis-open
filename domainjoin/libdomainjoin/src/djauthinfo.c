@@ -1169,6 +1169,11 @@ void DJCreateComputerAccount(
         dwFlags |= LSA_NET_JOIN_DOMAIN_MULTIPLE;
     }
 
+    if (options->noPreAccount)
+    {
+        dwFlags |= LSA_NET_JOIN_DOMAIN_NO_PRE_COMPUTER_ACCOUNT;
+    }
+
     LW_CLEANUP_CTERR(exc, DJGetFQDN(&shortHostname, &hostFqdn));
 
     if (hostFqdn && (strlen(hostFqdn) > (strlen(shortHostname) + 1)))

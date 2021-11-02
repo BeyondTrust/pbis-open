@@ -315,6 +315,11 @@ LsaJoinDomainUac(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (dwFlags & LSA_NET_JOIN_DOMAIN_NO_PRE_COMPUTER_ACCOUNT)
+    {
+        dwOptions |= LSAJOIN_NO_PRE_COMPUTER_ACCOUNT;
+    }
+
     // TODO-2011/01/13-dalmeida -- Ensure we use UPN.
     // Otherwise, whether this works depends on krb5.conf.
     // Can cons up UPN if needed since we have domain.
@@ -756,7 +761,10 @@ LsaJoinDomainInternal(
 
     if (pwszAccountOu == NULL)
     {
-        pwszComputerContainer = pwszAccountOu = LdapGetWellKnownObject(pLdap, pwszBaseDn, LW_GUID_COMPUTERS_CONTAINER);
+        if (!(dwJoinFlags & LSAJOIN_NO_PRE_COMPUTER_ACCOUNT))
+        {
+            pwszComputerContainer = pwszAccountOu = LdapGetWellKnownObject(pLdap, pwszBaseDn, LW_GUID_COMPUTERS_CONTAINER);
+        }
     }
 
     /* Pre-create a disabled machine
