@@ -4,6 +4,7 @@
 # Version 1.0 - initial version, required setting sid and domain in code
 # Version 1.5 - allowed setting site name
 # Version 2.0 - add flags for dynamic domain/sid/site name. Fix ability to run multiple times on single host
+# Version 2.1 - allow setting the computer password during offline join, for better security and to ease automation.
 
 #use warnings;
 use strict;
@@ -14,6 +15,7 @@ my $domainname="";
 my %domain;
 $domain{sid} = "";
 $domain{site} = "";
+my $password = "";
 
 
 Getopt::Long::Configure('ignore_case', 'no_auto_abbrev') || die;
@@ -26,12 +28,14 @@ my $ok = GetOptions($opt,
         'domain=s',
         'sid=s',
         'site=s',
+        'password=s',
         'loglevel|v=s',
    );
 
 $domainname=$opt->{domain} if (defined($opt->{domain}) and $opt->{domain});
 $domain{sid}=$opt->{sid} if (defined($opt->{sid}) and $opt->{sid});
 $domain{site}=$opt->{site} if (defined($opt->{site}) and $opt->{site});
+$password=$opt->{password} if (defined($opt->{password}) and $opt->{password});
 if (defined($opt->{help}) and $opt->{help}) {
     print <<EOF
 
@@ -51,7 +55,7 @@ Options:
     --domain <dnsname>  = the DNS name of the domain to join
     --sid <SID> = the SID of that domain (get this from your AD team or from the get-status output of a running computer)
     --site <sitename> (optional) = the Site the computer is in, if site lookups are failing.
-
+    --password <computer password> (optional) = the computer password to use during join — note that this MUST already be set correctly on the prestaged computer account! You can use "adtool -a new-computer --password=***" to accomplish this.
 
 EOF
 ;
@@ -103,7 +107,7 @@ sub main() {
     getAdInfo();
     exit_if_error();
     my $djbasekey='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainJoin';
-	if ($domain{site}) {
+    if ($domain{site}) {
         #only add these if the site has been set in the CLI.
         if (defined($pbcmd{siteNamePlugin})) {
             addRegValue('[HKEY_THIS_MACHINE\Services\netlogon\Parameters]', "PluginPath", "REG_SZ", $pbcmd{siteNamePlugin});
@@ -114,6 +118,7 @@ sub main() {
         `$pbcmd{lwsm} refresh`;
         `$pbcmd{lwsm} restart netlogon`;
     }
+    $password=lc($hostname) unless $password;
     addRegValue($djbasekey."]", "Default", "REG_SZ", $domain{ucDnsName});
     # Do we need DomainTrust info, or can lsass find that on first start?
     addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\DomainTrust]', "DomainTrustOrder", "REG_MULTI_SZ", $domain{nt4Name});
@@ -152,7 +157,7 @@ sub main() {
     addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\Pstore]', "NetbiosDomainName", "REG_SZ", $domain{nt4Name});
     addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\Pstore]', "SamAccountName", "REG_SZ", uc($hostname)."\$");
     addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\Pstore]', "UnixLastChangeTime", "REG_DWORD", 0);
-    addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\Pstore\PasswordInfo]', "Password", "REG_SZ", lc($hostname));
+    addRegValue($djbasekey.'\\'.$domain{ucDnsName}.'\Pstore\PasswordInfo]', "Password", "REG_SZ", $password);
     exit_if_error();
     `domainjoin-cli configure --enable pam`;
     `domainjoin-cli configure --enable nsswitch`;
