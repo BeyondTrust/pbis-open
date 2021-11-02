@@ -1,3 +1,11 @@
+configure()
+{
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        lber
+}
+
 make()
 {
     LSAJOIN_SOURCES="\

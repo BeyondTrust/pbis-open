@@ -133,6 +133,10 @@ my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers 
 # Warn that "make depend" should be run?
 my $warn_make_depend = 0;
 
+# There are no separate CFLAGS/CPPFLAGS/LDFLAGS, set everything in CFLAGS
+my $debian_cflags = `dpkg-buildflags --get CFLAGS` . `dpkg-buildflags --get CPPFLAGS` . `dpkg-buildflags --get LDFLAGS` . "-Wa,--noexecstack -Wall";
+$debian_cflags =~ s/\n/ /g;
+
 my $strict_warnings = 0;
 
 my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
@@ -369,6 +373,10 @@ my %table=(
 "osf1-alpha-cc",  "cc:-std1 -tune host -O4 -readonly_strings::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:alpha-osf1-shared:::.so",
 "tru64-alpha-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${alpha_asm}:dlfcn:alpha-osf1-shared::-msym:.so",
 
+# Debian GNU/* (various architectures)
+"debian-mips64",   "gcc:-DB_ENDIAN ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debian-mips64el",   "gcc:-DL_ENDIAN ${debian_cflags}::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+
 ####
 #### Variety of LINUX:-)
 ####
@@ -413,6 +421,8 @@ my %table=(
 "linux-mips32",	"gcc:-mabi=32 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-mips64",   "gcc:-mabi=n32 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:n32:dlfcn:linux-shared:-fPIC:-mabi=n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::32",
 "linux64-mips64",   "gcc:-mabi=64 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+"linux-mips64el",   "gcc:-mabi=64 -EL -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+"linux64-mips64el",   "gcc:-mabi=64 -EL -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
 #### IA-32 targets...
 "linux-ia32-icc",	"icc:-DL_ENDIAN -O2::-D_REENTRANT::-ldl -no_cpprt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-elf",	"gcc:-DL_ENDIAN -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -1082,6 +1092,11 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 	{
 	$disabled{"ssl3"} = "forced";
 	$disabled{"tls1"} = "forced";
+	}
+
+if (defined($disabled{"tls1"}))
+	{
+	$disabled{"tlsext"} = "forced";
 	}
 
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})

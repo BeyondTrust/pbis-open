@@ -134,6 +134,12 @@ _mk_at_system_string()
                     ;;
             esac
             ;;
+         mips64)
+            __arch="mips64-unknown"
+            ;;
+         mips64el)
+            __arch="mips64el-unknown"
+            ;;
         *)
             __arch="unknown-unknown"
             ;;

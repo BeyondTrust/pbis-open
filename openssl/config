@@ -613,7 +613,7 @@ case "$GUESSOS" in
 	;;
   ppc64le-*-linux2) OUT="linux-ppc64le" ;;
   ppc-*-linux2) OUT="linux-ppc" ;;
-  mips64*-*-linux2)
+  mips64-*-linux2)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke './Configure linux64-mips64' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
@@ -622,6 +622,7 @@ case "$GUESSOS" in
 	fi
 	OUT="linux-mips64"
 	;;
+  mips64el-*-linux2) OUT="linux-mips64el" ;;
   mips*-*-linux2) OUT="linux-mips32" ;;
   ppc60x-*-vxworks*) OUT="vxworks-ppc60x" ;;
   ppcgen-*-vxworks*) OUT="vxworks-ppcgen" ;;

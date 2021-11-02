@@ -18,6 +18,11 @@ configure()
         esac
       done
    fi
+   
+   # Required libraries
+   mk_check_libraries \
+       FAIL=yes \
+       curl
 }
 
 

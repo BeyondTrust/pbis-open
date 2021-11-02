@@ -2171,6 +2171,16 @@ option()
                     _default_cxxflags="-std=gnu99 -m64"
                     _default_ldflags=""
                     ;;
+                *-linux-mips64)
+                   _default_cflags="-std=gnu99 -march=mips64r2 -mabi=64 -EB"
+                   _default_cxxflags="-std=gnu99 -march=mips64r2 -mabi=64 -EB"
+                   _default_ldflags=""
+                   ;;
+                *-linux-mips64el)
+                   _default_cflags="-std=gnu99 -march=mips64r2 -mabi=64 -EL"
+                   _default_cxxflags="-std=gnu99 -march=mips64r2 -mabi=64 -EL"
+                   _default_ldflags=""
+                   ;;
                 *)
                     _default_cflags=""
                     _default_cxxflags=""
