@@ -1,3 +1,7 @@
+
+| :exclamation:  PowerBroker Open is no longer maintained and will be archived. If you are interested in an Enterprise version of pbis-open, please visit our website https://www.beyondtrust.com/privilege-management/active-directory-bridge   |
+|-----------------------------------------|
+
 # BeyondTrust AD Bridge Open
 
 BeyondTrust AD Bridge Open has several goals:
